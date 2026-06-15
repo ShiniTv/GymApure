@@ -125,6 +125,21 @@ TWILIO_AUTH_TOKEN=...
 TWILIO_FROM_NUMBER=+1234567890
 ```
 
+### WhatsApp con Meta Cloud API (recomendado para miembros)
+
+Guía completa paso a paso: **[docs/GUIA-WHATSAPP-META.md](docs/GUIA-WHATSAPP-META.md)**
+
+Variables mínimas en `.env`:
+
+```env
+WHATSAPP_PROVIDER=meta
+WHATSAPP_ACCESS_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_API_VERSION=v21.0
+```
+
+Prueba desde **Dashboard → Notificaciones → Probar WhatsApp**. En modo desarrollo debes registrar tu número en el panel de Meta como destinatario de prueba.
+
 ## Roadmap de calidad
 
 Ver auditoría en el historial del proyecto. Fases implementadas:

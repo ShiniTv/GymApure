@@ -28,10 +28,16 @@ const expirySettingsSchema = z.object({
   notify_routine_assigned: z.boolean().optional(),
 });
 
-const testSchema = z.object({
-  channel: z.enum(['email', 'whatsapp', 'sms']),
-  target: z.string().trim().min(3),
-});
+const testSchema = z
+  .object({
+    channel: z.enum(['email', 'whatsapp', 'sms']),
+    target: z.string().trim().min(3),
+  })
+  .superRefine((data, ctx) => {
+    if (data.channel === 'email' && !z.string().email().safeParse(data.target).success) {
+      ctx.addIssue({ code: 'custom', message: 'Email inválido', path: ['target'] });
+    }
+  });
 
 function providerStatus() {
   return {
@@ -116,18 +122,24 @@ router.post('/notifications/test', authorize(['admin']), async (req: AuthRequest
           ? isWhatsAppConfigured()
           : isSmsConfigured();
 
+    const mock = !sent && !configured;
+
     res.json({
       success: sent,
       channel,
       configured,
       whatsappProvider: channel === 'whatsapp' ? getWhatsAppProvider() : undefined,
       whatsappProviderLabel: channel === 'whatsapp' ? getWhatsAppProviderLabel() : undefined,
-      mock: !sent,
+      mock,
       message: sent
-        ? 'Mensaje enviado'
-        : channel === 'whatsapp'
-          ? 'No se pudo enviar (revisa WHATSAPP_ACCESS_TOKEN + WHATSAPP_PHONE_NUMBER_ID o Twilio en .env). En desarrollo sin proveedor, revisa la consola del servidor.'
-          : 'No se pudo enviar (revisa credenciales SMTP/Twilio en .env). En desarrollo sin proveedor, revisa la consola del servidor.',
+        ? 'Mensaje enviado correctamente. Revisa tu bandeja de entrada.'
+        : mock
+          ? channel === 'email'
+            ? 'Prueba simulada (sin SMTP). El mensaje se registró en la consola del servidor. Añade SMTP_HOST, SMTP_USER y SMTP_PASS en .env y reinicia para envío real.'
+            : channel === 'whatsapp'
+              ? 'Prueba simulada (sin WhatsApp). Revisa la consola del servidor o configura WHATSAPP_ACCESS_TOKEN / Twilio en .env.'
+              : 'Prueba simulada (sin SMS). Revisa la consola del servidor o configura Twilio en .env.'
+          : 'No se pudo enviar. Revisa credenciales en .env (usuario, contraseña o token incorrectos).',
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno';

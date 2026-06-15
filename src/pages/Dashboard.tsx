@@ -106,8 +106,15 @@ export default function Dashboard() {
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
+  const [settingsMessageTone, setSettingsMessageTone] = useState<'success' | 'info' | 'error'>('info');
   const [testTarget, setTestTarget] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === 'admin' && user.email && !testTarget) {
+      setTestTarget(user.email);
+    }
+  }, [user, testTarget]);
 
   useEffect(() => {
     if (!user) return;
@@ -384,6 +391,7 @@ export default function Dashboard() {
 
     const sendTestNotification = async (channel: 'email' | 'whatsapp' | 'sms') => {
       if (!testTarget.trim()) {
+        setSettingsMessageTone('error');
         setSettingsMessage('Ingresa un email o teléfono para la prueba');
         return;
       }
@@ -395,10 +403,25 @@ export default function Dashboard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ channel, target: testTarget.trim() }),
         });
-        const data = await parseJsonResponse<{ message?: string }>(res);
+        const data = await parseJsonResponse<{
+          message?: string;
+          success?: boolean;
+          configured?: boolean;
+          mock?: boolean;
+        }>(res);
         if (!res.ok) throw new Error((data as { error?: string }).error || 'Error');
-        setSettingsMessage(data.message ?? 'Prueba enviada');
+        if (data.success) {
+          setSettingsMessageTone('success');
+          setSettingsMessage(data.message ?? 'Mensaje enviado correctamente');
+        } else if (data.mock) {
+          setSettingsMessageTone('info');
+          setSettingsMessage(data.message ?? 'Prueba simulada — configura credenciales en .env');
+        } else {
+          setSettingsMessageTone('error');
+          setSettingsMessage(data.message ?? 'No se pudo enviar — revisa credenciales en .env');
+        }
       } catch (err) {
+        setSettingsMessageTone('error');
         setSettingsMessage(err instanceof Error ? err.message : 'Error en prueba');
       } finally {
         setSettingsSaving(false);
@@ -636,7 +659,17 @@ export default function Dashboard() {
               Cron automático cada hora (EXPIRY_CRON_INTERVAL_MS). WhatsApp: Meta Cloud API (WHATSAPP_ACCESS_TOKEN) o Twilio (TWILIO_WHATSAPP_FROM); usa WHATSAPP_PROVIDER=meta|twilio para forzar uno. Sin credenciales, los mensajes aparecen en la consola del servidor.
             </p>
             {settingsMessage && (
-              <p className="text-xs font-bold text-orange-600 dark:text-orange-400 mt-3">{settingsMessage}</p>
+              <p
+                className={`text-xs font-bold mt-3 ${
+                  settingsMessageTone === 'success'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : settingsMessageTone === 'info'
+                      ? 'text-sky-600 dark:text-sky-400'
+                      : 'text-orange-600 dark:text-orange-400'
+                }`}
+              >
+                {settingsMessage}
+              </p>
             )}
           </div>
         )}
