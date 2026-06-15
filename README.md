@@ -11,7 +11,7 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 
 ## Configuración local
 
-> **¿Otro PC o instalación nueva?** Guía completa: **[docs/SETUP-OTRO-EQUIPO.md](docs/SETUP-OTRO-EQUIPO.md)** (plantilla `.env` mínima incluida).
+> **¿Otro PC o instalación nueva?** Guía completa: **[docs/SETUP-OTRO-EQUIPO.md](docs/SETUP-OTRO-EQUIPO.md)** · Plantilla `.env` para copiar: **[docs/COPIAR-ENV.md](docs/COPIAR-ENV.md)** · Archivo texto: **[docs/plantilla.env.txt](docs/plantilla.env.txt)**
 
 1. Instalar dependencias:
 
