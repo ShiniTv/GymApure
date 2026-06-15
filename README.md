@@ -11,6 +11,8 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 
 ## Configuración local
 
+> **¿Otro PC o instalación nueva?** Guía completa: **[docs/SETUP-OTRO-EQUIPO.md](docs/SETUP-OTRO-EQUIPO.md)** (plantilla `.env` mínima incluida).
+
 1. Instalar dependencias:
 
    ```bash
