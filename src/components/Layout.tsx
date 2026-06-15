@@ -15,7 +15,8 @@ import {
   Sun,
   Moon,
   BarChart2,
-  BookOpen
+  BookOpen,
+  ScrollText
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -29,6 +30,7 @@ export default function Layout() {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member'] },
     { name: 'Miembros', href: '/members', icon: Users, roles: ['admin', 'trainer'] },
     { name: 'Membresías', href: '/memberships', icon: CreditCard, roles: ['admin'] },
+    { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, roles: ['admin'] },
     { name: 'Asistencias', href: '/attendance', icon: BarChart2, roles: ['admin'] },
     { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },

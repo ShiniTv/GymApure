@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Plus, Upload, Check, X } from 'lucide-react';
+import { apiFetch, parseJsonResponse, paymentProofUrl } from '../lib/api';
+import { Plus, Upload, Check, X, FileImage } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface Payment {
@@ -12,6 +12,7 @@ interface Payment {
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   reference: string;
+  proof_url?: string | null;
 }
 
 const EXCHANGE_RATE = Number(import.meta.env.VITE_EXCHANGE_RATE ?? 40.5);
@@ -167,21 +168,37 @@ export default function Payments() {
                 <th className="px-8 py-5">Monto (USD)</th>
                 <th className="px-8 py-5">Método</th>
                 <th className="px-8 py-5">Referencia</th>
+                <th className="px-8 py-5">Comprobante</th>
                 <th className="px-8 py-5">Estado</th>
                 <th className="px-8 py-5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loading ? (
-                 <tr><td colSpan={6} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Cargando pagos...</td></tr>
+                 <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Cargando pagos...</td></tr>
               ) : payments.length === 0 ? (
-                <tr><td colSpan={6} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">No hay pagos registrados</td></tr>
+                <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">No hay pagos registrados</td></tr>
               ) : payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
                   <td className="px-8 py-5 font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">{payment.user_name}</td>
                   <td className="px-8 py-5 font-black text-zinc-900 dark:text-white italic tracking-tighter">${payment.amount_usd}</td>
                   <td className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-500">{payment.method.replace('_', ' ')}</td>
                   <td className="px-8 py-5 font-mono text-[10px] font-black tracking-tighter opacity-50">{payment.reference}</td>
+                  <td className="px-8 py-5">
+                    {payment.proof_url ? (
+                      <a
+                        href={paymentProofUrl(payment.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-500"
+                      >
+                        <FileImage className="h-4 w-4" />
+                        Ver
+                      </a>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">—</span>
+                    )}
+                  </td>
                   <td className="px-8 py-5">
                     <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${
                       payment.status === 'approved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500' :

@@ -22,12 +22,6 @@ export function resolveMediaUrl(url: string | null | undefined): string {
   return url;
 }
 
-export function resolveProofUrl(url: string | null | undefined): string {
-  if (!url) return '';
-  if (url.startsWith('/api/files/proofs/')) return url;
-  if (url.startsWith('/uploads/')) {
-    const filename = url.slice('/uploads/'.length);
-    return `/api/files/proofs/${filename}`;
-  }
-  return url;
+export function paymentProofUrl(paymentId: number): string {
+  return `/api/payments/${paymentId}/proof`;
 }

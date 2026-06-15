@@ -2,6 +2,7 @@ import multer from 'multer';
 import type { Request } from 'express';
 import path from 'path';
 import fs from 'fs';
+import { isSupabaseStorageConfigured } from './supabaseAdmin.ts';
 
 const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
 const PROOFS_DIR = path.join(UPLOADS_ROOT, 'proofs');
@@ -24,13 +25,15 @@ function proofFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFi
 }
 
 export const proofUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, PROOFS_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname) || '.bin';
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    },
-  }),
+  storage: isSupabaseStorageConfigured()
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, PROOFS_DIR),
+        filename: (_req, file, cb) => {
+          const ext = path.extname(file.originalname) || '.bin';
+          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+        },
+      }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: proofFilter,
 });

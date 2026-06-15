@@ -17,6 +17,7 @@ const Exercises = lazy(() => import('./pages/Exercises'));
 const MemberRoutine = lazy(() => import('./pages/MemberRoutine'));
 const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
 const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
+const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 
 function PageLoader() {
   return (
@@ -82,6 +83,11 @@ function AppRoutes() {
         <Route path="memberships" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Memberships />
+          </ProtectedRoute>
+        } />
+        <Route path="audit-logs" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AuditLogs />
           </ProtectedRoute>
         } />
         <Route path="members/:id/routines" element={

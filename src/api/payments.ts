@@ -3,7 +3,13 @@ import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { assignSubscription } from '../lib/subscriptions.ts';
 import { logAudit } from '../lib/audit.ts';
-import { proofApiPath, proofUpload } from '../lib/uploadStorage.ts';
+import { proofUpload } from '../lib/uploadStorage.ts';
+import {
+  isProofStorageRemote,
+  localProofPathFromUpload,
+  streamPaymentProof,
+  uploadPaymentProof,
+} from '../lib/proofStorage.ts';
 
 const router = Router();
 
@@ -27,8 +33,37 @@ router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) =>
   try {
     const { rows } = await query(sql, params);
     res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/:id/proof', authorize(['admin', 'member']), async (req: AuthRequest, res) => {
+  const paymentId = parseInt(req.params.id, 10);
+  if (Number.isNaN(paymentId)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  try {
+    const { rows } = await query<{ user_id: number; proof_url: string | null }>(
+      'SELECT user_id, proof_url FROM payments WHERE id = $1',
+      [paymentId]
+    );
+    const payment = rows[0];
+    if (!payment?.proof_url) {
+      return res.status(404).json({ error: 'Este pago no tiene comprobante' });
+    }
+
+    const user = req.user!;
+    if (user.role !== 'admin' && user.id !== Number(payment.user_id)) {
+      return res.status(403).json({ error: 'Permisos insuficientes' });
+    }
+
+    await streamPaymentProof(payment.proof_url, res);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
   }
 });
 
@@ -41,19 +76,35 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
     return res.status(400).json({ error: 'user_id requerido' });
   }
 
-  const proof_url = req.file ? proofApiPath(req.file.filename) : null;
-
   try {
     const { rows } = await query(
       `INSERT INTO payments (user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ($1, $2, $3, $4, $5, $6, NULL)
        RETURNING id`,
-      [user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url]
+      [user_id, amount_usd, amount_bs, exchange_rate, method, reference]
     );
 
-    res.json({ id: rows[0].id, status: 'pending' });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const paymentId = Number(rows[0].id);
+    let proof_url: string | null = null;
+
+    if (req.file) {
+      try {
+        if (isProofStorageRemote()) {
+          proof_url = await uploadPaymentProof(req.file, user_id, paymentId);
+        } else {
+          proof_url = localProofPathFromUpload(req.file);
+        }
+        await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [proof_url, paymentId]);
+      } catch (uploadErr) {
+        await query('DELETE FROM payments WHERE id = $1', [paymentId]);
+        throw uploadErr;
+      }
+    }
+
+    res.json({ id: paymentId, status: 'pending', proof_url });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
   }
 });
 

@@ -10,6 +10,7 @@ import routineRoutes from './routines.ts';
 import workoutRoutes from './workouts.ts';
 import exerciseRoutes from './exercises.ts';
 import statsRoutes from './stats.ts';
+import auditLogsRoutes from './auditLogs.ts';
 import fileRoutes from './files.ts';
 import { authenticate } from './middleware/auth.ts';
 import { authRateLimiter, checkInRateLimiter } from './middleware/rateLimit.ts';
@@ -37,6 +38,7 @@ router.use('/routines', routineRoutes);
 router.use('/workouts', workoutRoutes);
 router.use('/exercises', exerciseRoutes);
 router.use('/stats', statsRoutes);
+router.use('/audit-logs', auditLogsRoutes);
 router.use('/files', fileRoutes);
 
 router.use((_req, res) => {

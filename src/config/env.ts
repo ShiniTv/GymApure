@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+function deriveSupabaseUrlFromDatabaseUrl(databaseUrl: string): string | null {
+  const match = databaseUrl.match(/postgres\.([a-z0-9]+):/i);
+  if (!match) return null;
+  return `https://${match[1]}.supabase.co`;
+}
+
 const WEAK_JWT_SECRETS = new Set([
   'supersecretkey',
   'change-me',
@@ -22,6 +28,8 @@ const envSchema = z.object({
     }),
   PORT: z.coerce.number().int().positive().default(3000),
   KIOSK_API_KEY: z.string().min(16).optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -41,7 +49,16 @@ function parseEnv(): Env {
 }
 
 /** Validated environment; call once at process startup before serving. */
-export const env = parseEnv();
+const parsedEnv = parseEnv();
+
+export const env = {
+  ...parsedEnv,
+  SUPABASE_URL:
+    parsedEnv.SUPABASE_URL?.trim() ||
+    deriveSupabaseUrlFromDatabaseUrl(parsedEnv.DATABASE_URL) ||
+    undefined,
+  SUPABASE_SERVICE_ROLE_KEY: parsedEnv.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined,
+};
 
 function resolveAllowPublicRegister(): boolean {
   const raw = process.env.ALLOW_PUBLIC_REGISTER?.trim().toLowerCase();

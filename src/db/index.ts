@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { env } from '../config/env.ts';
+import { isSupabaseStorageConfigured } from '../lib/supabaseAdmin.ts';
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
@@ -38,6 +39,14 @@ export async function initDb() {
   if (parseInt(rows[0].count, 10) === 0) {
     console.warn(
       '[db] Base de datos sin usuarios. Ejecuta: npm run db:restore-demo (requiere DEMO_PASSWORD en .env).'
+    );
+  }
+
+  if (isSupabaseStorageConfigured()) {
+    console.log('[storage] Comprobantes de pago → Supabase Storage (payment-proofs)');
+  } else {
+    console.warn(
+      '[storage] Comprobantes en disco local (uploads/proofs). Define SUPABASE_SERVICE_ROLE_KEY para persistencia en Supabase.'
     );
   }
 }
