@@ -1,8 +1,11 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { assignSubscription } from '../lib/subscriptions.ts';
 import { logAudit } from '../lib/audit.ts';
+import { formatZodError } from '../lib/passwordPolicy.ts';
+import { AppError } from './middleware/errorHandler.ts';
 import { proofUpload } from '../lib/uploadStorage.ts';
 import {
   isProofStorageRemote,
@@ -17,6 +20,15 @@ import {
 } from '../lib/notifications/eventNotifier.ts';
 
 const router = Router();
+
+const paymentReportSchema = z.object({
+  amount_usd: z.coerce.number().positive('Monto USD inválido'),
+  amount_bs: z.coerce.number().optional().nullable(),
+  exchange_rate: z.coerce.number().optional().nullable(),
+  method: z.string().trim().min(1, 'Método requerido').max(50),
+  reference: z.string().trim().max(200).optional().nullable(),
+  user_id: z.coerce.number().int().positive().optional(),
+});
 
 router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) => {
   const user = req.user!;
@@ -73,9 +85,15 @@ router.get('/:id/proof', authorize(['admin', 'member']), async (req: AuthRequest
 });
 
 router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), async (req: AuthRequest, res) => {
-  const { amount_usd, amount_bs, exchange_rate, method, reference } = req.body;
+  const parsed = paymentReportSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { amount_usd, amount_bs, exchange_rate, method, reference } = parsed.data;
   const user = req.user!;
-  const user_id = user.role === 'member' ? user.id : parseInt(String(req.body.user_id), 10);
+  const user_id =
+    user.role === 'member' ? user.id : parsed.data.user_id ?? parseInt(String(req.body.user_id), 10);
 
   if (user.role === 'admin' && Number.isNaN(user_id)) {
     return res.status(400).json({ error: 'user_id requerido' });
@@ -86,7 +104,7 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
       `INSERT INTO payments (user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url)
        VALUES ($1, $2, $3, $4, $5, $6, NULL)
        RETURNING id`,
-      [user_id, amount_usd, amount_bs, exchange_rate, method, reference]
+      [user_id, amount_usd, amount_bs ?? null, exchange_rate ?? null, method, reference ?? null]
     );
 
     const paymentId = Number(rows[0].id);
@@ -130,8 +148,10 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
     await withTransaction(async (client) => {
       const paymentResult = await client.query('SELECT * FROM payments WHERE id = $1', [id]);
       const payment = paymentResult.rows[0];
-      if (!payment) throw new Error('Pago no encontrado');
-      if (payment.status !== 'pending') throw new Error('El pago ya ha sido procesado');
+      if (!payment) throw new AppError('Pago no encontrado', 404, 'Pago no encontrado');
+      if (payment.status !== 'pending') {
+        throw new AppError('El pago ya ha sido procesado', 400);
+      }
 
       approvedUserId = Number(payment.user_id);
       approvedAmount = Number(payment.amount_usd);
@@ -169,6 +189,10 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
       console.error('[notify] payment approved', err)
     );
   } catch (err: unknown) {
+    if (err instanceof AppError) {
+      res.status(err.statusCode).json({ error: err.clientMessage ?? err.message });
+      return;
+    }
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
   }
