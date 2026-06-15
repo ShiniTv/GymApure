@@ -12,6 +12,8 @@
     "lint": "tsc --noEmit",
     "test:smoke": "tsx scripts/smoke-api.ts",
     "test:integration": "npm run test:smoke && npm run test:sprint4 && npm run test:sprint5 && npm run test:sprint6",
+    "test:auth-checklist": "tsx scripts/test-auth-checklist.ts",
+    "test:memberships-checkin": "tsx scripts/test-memberships-checkin.ts",
     "test:alerts": "tsx scripts/verify-alerts-panel.ts",
     "test:sprint1": "tsx scripts/test-sprint1.ts",
     "test:sprint2": "tsx scripts/test-sprint2.ts",
