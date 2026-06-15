@@ -43,13 +43,13 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 
    > Si prefieres hacerlo manualmente: abre el SQL Editor de Supabase y pega los archivos de `supabase/migrations/` en orden alfabético.
 
-5. Restaurar cuentas demo (desarrollo):
+5. Crear la primera cuenta administrador:
 
    ```bash
-   npm run db:restore-demo
+   npm run db:create-admin
    ```
 
-   Usa el valor de `DEMO_PASSWORD` del `.env` para iniciar sesión.
+   Indica nombre, email y contraseña (mín. 8 caracteres). También puedes definir `ADMIN_FULL_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env` para modo no interactivo.
 
 6. Arrancar en desarrollo:
 
@@ -71,19 +71,16 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 | `npm run dev:clean` | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
 | `npm run db:migrate` | Aplica migraciones SQL pendientes en Supabase/Postgres |
 | `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy |
-| `npm run db:restore-demo` | Restaura cuentas demo (requiere `DEMO_PASSWORD` en `.env`) |
+| `npm run db:create-admin` | Crea o actualiza la cuenta administrador inicial |
+| `npm run db:restore-demo` | Solo CI/tests automáticos — cuentas demo ficticias |
 
-## Usuarios de prueba (desarrollo)
+## Cuentas y acceso
 
-Cuentas demo (admin, trainer, member):
+- **Administrador:** créalo con `npm run db:create-admin` e inicia sesión en `/login`.
+- **Miembros:** registro público en `/register` (activo en desarrollo; desactivado en producción por defecto).
+- **Staff (entrenador/admin):** el administrador los crea en **Miembros → Nuevo Usuario** con contraseña inicial.
 
-| Email | Rol |
-|-------|-----|
-| `admin@gym.com` | admin |
-| `trainer@gym.com` | trainer |
-| `member@gym.com` | member |
-
-Contraseña: valor de `DEMO_PASSWORD` en tu `.env`. Restáuralas con `npm run db:restore-demo`.
+> `npm run db:restore-demo` queda reservado para **CI y scripts de prueba** (`test:sprint*`). No lo uses para el flujo normal de la app.
 
 ## Alertas de vencimiento
 
@@ -103,7 +100,7 @@ Las alertas **ya funcionan solas** al arrancar el servidor (`npm run dev`). No n
    npm run dev
    ```
 
-3. Entra como `admin@gym.com` → **Dashboard** → sección **Configuración de Alertas** (ajusta días, guarda).
+3. Entra con tu cuenta admin → **Dashboard** → sección **Configuración de Alertas** (ajusta días, guarda).
 
 Eso es todo para uso básico. El cron revisa vencimientos cada hora automáticamente.
 

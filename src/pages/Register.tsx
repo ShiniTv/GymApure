@@ -10,10 +10,12 @@ export default function Register() {
     full_name: '',
     email: '',
     password: '',
+    confirm_password: '',
     cedula: '',
     phone: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -21,20 +23,34 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+
+    if (formData.password !== formData.confirm_password) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (!formData.cedula.trim()) {
+      setError('La cédula es obligatoria para el check-in en el gym');
+      return;
+    }
+
     setLoading(true);
     
     try {
+      const { confirm_password: _, ...payload } = formData;
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      if (!res.ok) throw new Error(data.error || 'No se pudo completar el registro');
       
       login(data.user);
+      if (data.message) setSuccess(data.message);
       navigate('/');
     } catch (err: any) {
       setError(err.message);
@@ -60,6 +76,12 @@ export default function Register() {
         </div>
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          {success && (
+            <div className="rounded-xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+              {success}
+            </div>
+          )}
+
           {error && (
             <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-500 border border-red-500/20">
               {error}
@@ -106,8 +128,9 @@ export default function Register() {
                 </div>
                 <input
                   type="text"
+                  required
                   className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="CÉDULA"
+                  placeholder="CÉDULA (OBLIGATORIA)"
                   value={formData.cedula}
                   onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
                 />
@@ -139,6 +162,23 @@ export default function Register() {
                   placeholder="CONTRASEÑA (MÍN. 8 CARACTERES)"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Lock className="h-4 w-4 text-zinc-400" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
+                  placeholder="CONFIRMAR CONTRASEÑA"
+                  value={formData.confirm_password}
+                  onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
                 />
               </div>
             </div>

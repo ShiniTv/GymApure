@@ -121,11 +121,6 @@ export default function Login() {
             </div>
           )}
 
-          {import.meta.env.DEV && (
-            <p className="text-center text-xs text-zinc-500">
-              Desarrollo: cuentas demo en README.md (contraseña en <code className="text-zinc-400">DEMO_PASSWORD</code> del .env).
-            </p>
-          )}
         </form>
       </div>
     </div>

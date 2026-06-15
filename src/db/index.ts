@@ -38,7 +38,7 @@ export async function initDb() {
   const { rows } = await query<{ count: string }>('SELECT COUNT(*)::text AS count FROM users');
   if (parseInt(rows[0].count, 10) === 0) {
     console.warn(
-      '[db] Base de datos sin usuarios. Ejecuta: npm run db:restore-demo (requiere DEMO_PASSWORD en .env).'
+      '[db] Base de datos sin usuarios. Crea el primer admin: npm run db:create-admin'
     );
   }
 

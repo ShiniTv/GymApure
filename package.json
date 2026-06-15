@@ -20,6 +20,7 @@
     "test:sprint5": "tsx scripts/test-sprint5.ts",
     "test:sprint6": "tsx scripts/test-sprint6.ts",
     "db:migrate": "tsx scripts/apply-migrations.ts",
+    "db:create-admin": "tsx scripts/create-admin.ts",
     "db:migrate-from-sqlite": "tsx scripts/migrate-sqlite-to-pg.ts",
     "db:restore-demo": "tsx scripts/restore-demo-users.ts"
   },

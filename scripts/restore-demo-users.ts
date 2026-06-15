@@ -1,5 +1,6 @@
 /**
- * Restaura (o actualiza) las cuentas demo de desarrollo.
+ * Restaura cuentas demo ficticias para CI y scripts test:sprint*.
+ * No usar para el flujo normal de la app — usa npm run db:create-admin y /register.
  * Uso: npm run db:restore-demo
  */
 import 'dotenv/config';

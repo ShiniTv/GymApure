@@ -35,7 +35,9 @@ export default function Members() {
     full_name: '',
     email: '',
     cedula: '',
-    role: 'member'
+    password: '',
+    confirm_password: '',
+    role: 'member',
   });
   const [assignTarget, setAssignTarget] = useState<Member | null>(null);
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
@@ -75,6 +77,14 @@ export default function Members() {
       }
     }
 
+    if (!newMember.password || newMember.password.length < 8) {
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    }
+
+    if (newMember.password !== newMember.confirm_password) {
+      newErrors.confirm_password = 'Las contraseñas no coinciden';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -109,13 +119,26 @@ export default function Members() {
       const res = await apiFetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMember),
+        body: JSON.stringify({
+          full_name: newMember.full_name,
+          email: newMember.email,
+          cedula: newMember.cedula || undefined,
+          password: newMember.password,
+          role: newMember.role,
+        }),
       });
 
       if (res.ok) {
         setIsAdding(false);
         setErrors({});
-        setNewMember({ full_name: '', email: '', cedula: '', role: 'member' });
+        setNewMember({
+          full_name: '',
+          email: '',
+          cedula: '',
+          password: '',
+          confirm_password: '',
+          role: 'member',
+        });
         apiFetchMembers();
       } else {
         const data = await res.json();
@@ -281,6 +304,40 @@ export default function Members() {
                 {errors.cedula && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.cedula}</p>}
               </div>
               
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Contraseña inicial</label>
+                <input
+                  type="password"
+                  minLength={8}
+                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.password ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  value={newMember.password}
+                  onChange={(e) => {
+                    setNewMember({ ...newMember, password: e.target.value });
+                    if (errors.password) setErrors({ ...errors, password: '' });
+                  }}
+                  placeholder="Mínimo 8 caracteres"
+                />
+                {errors.password && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.password}</p>}
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Confirmar contraseña</label>
+                <input
+                  type="password"
+                  minLength={8}
+                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.confirm_password ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  value={newMember.confirm_password}
+                  onChange={(e) => {
+                    setNewMember({ ...newMember, confirm_password: e.target.value });
+                    if (errors.confirm_password) setErrors({ ...errors, confirm_password: '' });
+                  }}
+                  placeholder="Repite la contraseña"
+                />
+                {errors.confirm_password && (
+                  <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.confirm_password}</p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Rol de Usuario</label>
                 <select 

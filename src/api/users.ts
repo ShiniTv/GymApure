@@ -7,6 +7,7 @@ import { requireSelfOrRoles } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
 import { notifyRoutineAssigned } from '../lib/notifications/eventNotifier.ts';
 import { avatarApiPath, avatarUpload } from '../lib/uploadStorage.ts';
+import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 
 const router = Router();
@@ -247,36 +248,54 @@ router.delete('/:id/routines/:routineId', authorize(['admin', 'trainer']), async
 });
 
 router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const { full_name, email, cedula, role } = req.body;
-  const requestedRole = typeof role === 'string' ? role : 'member';
+  const parsed = createUserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { full_name, email, password, cedula, role: requestedRole } = parsed.data;
+  const normalizedEmail = email.toLowerCase();
+
   const assignedRole =
     req.user!.role === 'admin'
-      ? requestedRole
-      : requestedRole === 'member'
-        ? 'member'
-        : null;
+      ? requestedRole ?? 'member'
+      : 'member';
 
-  if (!assignedRole || !['admin', 'trainer', 'member'].includes(assignedRole)) {
+  if (!['admin', 'trainer', 'member'].includes(assignedRole)) {
     return res.status(403).json({ error: 'Los entrenadores solo pueden crear miembros' });
   }
 
-  const initialPassword = process.env.DEMO_PASSWORD?.trim();
-  if (!initialPassword || initialPassword.length < 12) {
-    return res.status(500).json({
-      error: 'Define DEMO_PASSWORD en .env (mín. 12 caracteres) para crear usuarios',
-    });
+  if (req.user!.role === 'trainer' && assignedRole !== 'member') {
+    return res.status(403).json({ error: 'Los entrenadores solo pueden crear miembros' });
   }
 
   try {
-    const hashedPassword = bcrypt.hashSync(initialPassword, 10);
+    const emailTaken = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    if (emailTaken.rows.length > 0) {
+      return res.status(400).json({ error: 'Este correo ya está registrado' });
+    }
+
+    if (cedula?.trim()) {
+      const cedulaTaken = await query('SELECT id FROM users WHERE cedula = $1', [cedula.trim()]);
+      if (cedulaTaken.rows.length > 0) {
+        return res.status(400).json({ error: 'Esta cédula ya está registrada' });
+      }
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
     const { rows } = await query(
       `INSERT INTO users (full_name, email, cedula, role, password, status)
        VALUES ($1, $2, $3, $4, $5, 'active')
        RETURNING id`,
-      [full_name, email, cedula ?? null, assignedRole, hashedPassword]
+      [full_name, normalizedEmail, cedula?.trim() || null, assignedRole, hashedPassword]
     );
 
-    res.json({ id: rows[0].id, success: true });
+    await logAudit(req.user!.id, 'user.create', {
+      target_id: rows[0].id,
+      role: assignedRole,
+    });
+
+    res.status(201).json({ id: rows[0].id, success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

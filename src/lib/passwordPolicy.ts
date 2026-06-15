@@ -5,15 +5,32 @@ export const passwordSchema = z
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
   .max(128, 'La contraseña es demasiado larga');
 
+export const loginSchema = z.object({
+  email: z.string().trim().email('Email inválido'),
+  password: z.string().min(1, 'Contraseña requerida'),
+});
+
 export const registerSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
   email: z.string().trim().email('Email inválido'),
   password: passwordSchema,
-  cedula: z.string().trim().max(50).optional(),
+  cedula: z
+    .string()
+    .trim()
+    .min(1, 'La cédula es obligatoria para el check-in en el gym')
+    .max(50),
   phone: z.string().trim().max(50).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const createUserSchema = z.object({
+  full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
+  email: z.string().trim().email('Email inválido'),
+  password: passwordSchema,
+  cedula: z.string().trim().max(50).optional().nullable(),
+  role: z.enum(['admin', 'trainer', 'member']).optional(),
+});
 
 export const changePasswordSchema = z
   .object({

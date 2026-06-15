@@ -5,25 +5,41 @@ import { query } from '../db/index.ts';
 import { authCookieOptions, clearAuthCookieOptions } from '../config/cookies.ts';
 import { JWT_EXPIRES_IN, JWT_SECRET, type JwtUserPayload } from '../config/jwt.ts';
 import { allowPublicRegister } from '../config/env.ts';
-import { changePasswordSchema, formatZodError, registerSchema } from '../lib/passwordPolicy.ts';
+import {
+  changePasswordSchema,
+  formatZodError,
+  loginSchema,
+  registerSchema,
+} from '../lib/passwordPolicy.ts';
 import { authenticate, type AuthRequest } from './middleware/auth.ts';
 import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 
 const router = Router();
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const { rows } = await query('SELECT * FROM users WHERE email = $1', [email]);
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const { email, password } = parsed.data;
+    const normalizedEmail = email.toLowerCase();
+
+    const { rows } = await query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
     const user = rows[0];
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: 'Credenciales incorrectas' });
+      res.status(401).json({ error: 'Credenciales incorrectas' });
+      return;
     }
 
     if (user.status !== 'active') {
-      return res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
+      res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
+      return;
     }
 
     const userId = Number(user.id);
@@ -37,31 +53,42 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     res.cookie('token', token, authCookieOptions);
+    await logAudit(userId, 'auth.login', {});
+
     res.json({
       user: { id: userId, email: user.email, role: user.role, name: user.full_name },
     });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
-  }
-});
+  })
+);
 
-router.post('/register', async (req, res) => {
-  if (!allowPublicRegister) {
-    return res.status(403).json({ error: 'El registro público está deshabilitado' });
-  }
+router.post(
+  '/register',
+  asyncHandler(async (req, res) => {
+    if (!allowPublicRegister) {
+      res.status(403).json({ error: 'El registro público está deshabilitado' });
+      return;
+    }
 
-  const parsed = registerSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
-  }
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
 
-  const { full_name, email, password, cedula, phone } = parsed.data;
+    const { full_name, email, password, cedula, phone } = parsed.data;
+    const normalizedEmail = email.toLowerCase();
+    const normalizedCedula = cedula.trim();
 
-  try {
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already registered' });
+    const existingEmail = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    if (existingEmail.rows.length > 0) {
+      res.status(400).json({ error: 'Este correo ya está registrado' });
+      return;
+    }
+
+    const existingCedula = await query('SELECT id FROM users WHERE cedula = $1', [normalizedCedula]);
+    if (existingCedula.rows.length > 0) {
+      res.status(400).json({ error: 'Esta cédula ya está registrada' });
+      return;
     }
 
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -69,35 +96,51 @@ router.post('/register', async (req, res) => {
       `INSERT INTO users (full_name, email, password, role, cedula, phone, status)
        VALUES ($1, $2, $3, 'member', $4, $5, 'active')
        RETURNING id`,
-      [full_name, email, hashedPassword, cedula || null, phone || null]
+      [full_name, normalizedEmail, hashedPassword, normalizedCedula, phone?.trim() || null]
     );
 
     const id = Number(insert.rows[0].id);
-    const payload: JwtUserPayload = { id, role: 'member', name: full_name, email };
+    const payload: JwtUserPayload = { id, role: 'member', name: full_name, email: normalizedEmail };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     res.cookie('token', token, authCookieOptions);
-    res.status(201).json({ user: { id, email, role: 'member', name: full_name } });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
-  }
-});
+    await logAudit(id, 'auth.register', { email: normalizedEmail });
 
-router.post('/logout', (_req, res) => {
+    res.status(201).json({
+      user: { id, email: normalizedEmail, role: 'member', name: full_name },
+      message: 'Cuenta creada. Un administrador debe activar tu membresía para acceder al gym.',
+    });
+  })
+);
+
+router.post('/logout', asyncHandler(async (req, res) => {
+  const token = req.cookies.token;
+  let userId: number | undefined;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
+      userId = Number(decoded.id);
+    } catch {
+      /* token expirado o inválido */
+    }
+  }
+
   res.clearCookie('token', clearAuthCookieOptions);
-  res.json({ message: 'Logged out' });
-});
+  if (userId) {
+    await logAudit(userId, 'auth.logout', {});
+  }
+  res.json({ message: 'Sesión cerrada' });
+}));
 
 router.get('/me', (req, res) => {
   const token = req.cookies.token;
-  if (!token) return res.status(401).json({ error: 'Not authenticated' });
+  if (!token) return res.status(401).json({ error: 'No autenticado' });
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
     res.json({ user: { ...decoded, id: Number(decoded.id) } });
   } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Sesión expirada' });
   }
 });
 

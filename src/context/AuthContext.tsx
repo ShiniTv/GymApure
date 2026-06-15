@@ -22,15 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in (e.g. check cookie or local storage)
-    // For now, we'll just simulate a check or rely on the API
-    // In a real app, we'd call /api/auth/me
     apiFetch('/api/auth/me')
-      .then(res => {
+      .then((res) => {
         if (res.ok) return res.json();
         throw new Error('Not authenticated');
       })
-      .then(data => setUser(data.user))
+      .then((data) => setUser(data.user))
       .catch(() => setUser(null))
       .finally(() => setIsLoading(false));
   }, []);
@@ -40,7 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    apiFetch('/api/auth/logout', { method: 'POST' }).then(() => setUser(null));
+    apiFetch('/api/auth/logout', { method: 'POST' })
+      .then(() => setUser(null))
+      .catch(() => setUser(null));
   };
 
   return (
