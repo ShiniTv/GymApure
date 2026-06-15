@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Base Styles */
+@layer base {
+  body {
+    @apply transition-colors duration-300 bg-zinc-50 text-zinc-900;
+  }
+
+  .dark body {
+    @apply bg-zinc-950 text-zinc-100;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #18181b; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db; 
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; 
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525b; 
+}
+
+/* Fix for reacharts tooltip in light mode */
+.recharts-default-tooltip {
+  @apply !border-zinc-200 !bg-white !shadow-sm !rounded-lg text-zinc-900;
+}
+
+.dark .recharts-default-tooltip {
+  @apply !border-zinc-800 !bg-zinc-900 !shadow-xl !rounded-lg text-white;
+}

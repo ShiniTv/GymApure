@@ -1,0 +1,262 @@
+import { Router } from 'express';
+import type { PoolClient } from 'pg';
+import { query, withTransaction } from '../db/index.ts';
+import { AuthRequest, authorize } from './middleware/auth.ts';
+
+const router = Router();
+
+async function getRoutineTrainerId(routineId: string | number): Promise<number | null> {
+  const { rows } = await query<{ trainer_id: number }>(
+    'SELECT trainer_id FROM routines WHERE id = $1',
+    [routineId]
+  );
+  return rows[0]?.trainer_id ?? null;
+}
+
+function assertTrainerOwnsRoutine(req: AuthRequest, trainerId: number | null): boolean {
+  if (req.user!.role === 'admin') return true;
+  if (req.user!.role === 'trainer' && trainerId === req.user!.id) return true;
+  return false;
+}
+
+async function assertMemberAssigned(userId: number, routineId: string | number): Promise<boolean> {
+  const { rows } = await query(
+    'SELECT id FROM user_routines WHERE user_id = $1 AND routine_id = $2',
+    [userId, routineId]
+  );
+  return rows.length > 0;
+}
+
+router.get('/', async (req: AuthRequest, res) => {
+  try {
+    const trainerId = req.user?.role === 'trainer' ? req.user.id : null;
+    const params: unknown[] = [];
+    let where = '';
+    if (trainerId) {
+      where = ' WHERE r.trainer_id = $1';
+      params.push(trainerId);
+    }
+
+    const { rows } = await query(
+      `SELECT r.*, u.full_name as trainer_name,
+      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
+      FROM routines r
+      JOIN users u ON r.trainer_id = u.id
+      ${where}
+      ORDER BY r.name ASC`,
+      params
+    );
+    res.json(rows);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
+
+  try {
+    const params: unknown[] = [];
+    let trainerFilter = '';
+    if (trainerId) {
+      trainerFilter = ' AND r.trainer_id = $1';
+      params.push(trainerId);
+    }
+
+    const { rows } = await query(
+      `SELECT
+        u.id as user_id,
+        u.full_name,
+        u.profile_image,
+        r.id as routine_id,
+        r.name as routine_name,
+        r.difficulty,
+        ur.assigned_at,
+        ur.start_date,
+        ur.end_date,
+        (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
+      FROM user_routines ur
+      JOIN users u ON ur.user_id = u.id
+      JOIN routines r ON ur.routine_id = r.id
+      WHERE 1=1${trainerFilter}
+      ORDER BY u.full_name ASC, ur.assigned_at DESC`,
+      params
+    );
+
+    const grouped = rows.reduce((acc: Record<string, any>, curr: any) => {
+      const { user_id, full_name, profile_image, ...routine } = curr;
+      if (!acc[user_id]) {
+        acc[user_id] = {
+          id: user_id,
+          full_name,
+          profile_image,
+          routines: [],
+        };
+      }
+      acc[user_id].routines.push(routine);
+      return acc;
+    }, {});
+
+    res.json(Object.values(grouped));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id', async (req: AuthRequest, res) => {
+  try {
+    const routineResult = await query('SELECT * FROM routines WHERE id = $1', [req.params.id]);
+    const routine = routineResult.rows[0];
+
+    if (!routine) return res.status(404).json({ error: 'Routine not found' });
+
+    if (req.user!.role === 'member') {
+      const assigned = await assertMemberAssigned(req.user!.id, req.params.id);
+      if (!assigned) {
+        return res.status(403).json({ error: 'Rutina no asignada' });
+      }
+    }
+
+    const exercisesResult = await query(
+      `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.id as routine_exercise_id
+       FROM routine_exercises re
+       JOIN exercises e ON re.exercise_id = e.id
+       WHERE re.routine_id = $1`,
+      [req.params.id]
+    );
+
+    res.json({ ...routine, exercises: exercisesResult.rows });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/', authorize(['admin', 'trainer']), async (req, res) => {
+  const { name, difficulty, trainer_id } = req.body;
+  try {
+    const { rows } = await query(
+      'INSERT INTO routines (name, difficulty, trainer_id) VALUES ($1, $2, $3) RETURNING id',
+      [name, difficulty, trainer_id]
+    );
+    res.json({ id: rows[0].id, success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const { name, difficulty } = req.body;
+  const trainerId = await getRoutineTrainerId(req.params.id);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para editar esta rutina' });
+  }
+  try {
+    await query('UPDATE routines SET name = $1, difficulty = $2 WHERE id = $3', [
+      name,
+      difficulty,
+      req.params.id,
+    ]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const routineId = parseInt(req.params.id, 10);
+  if (isNaN(routineId)) return res.status(400).json({ error: 'ID de rutina inválido' });
+
+  const trainerId = await getRoutineTrainerId(routineId);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para eliminar esta rutina' });
+  }
+
+  try {
+    await withTransaction(async (client: PoolClient) => {
+      await client.query(
+        `DELETE FROM workout_logs
+         WHERE session_id IN (SELECT id FROM workout_sessions WHERE routine_id = $1)`,
+        [routineId]
+      );
+      await client.query('DELETE FROM workout_sessions WHERE routine_id = $1', [routineId]);
+      await client.query('DELETE FROM routine_exercises WHERE routine_id = $1', [routineId]);
+      await client.query('DELETE FROM user_routines WHERE routine_id = $1', [routineId]);
+
+      const result = await client.query('DELETE FROM routines WHERE id = $1', [routineId]);
+      if (result.rowCount === 0) {
+        throw new Error('La rutina no existe o ya fue eliminada');
+      }
+    });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('Delete routine error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const { exercise_id, sets, reps, rest_seconds, weight_suggestion } = req.body;
+  const routineId = req.params.id;
+
+  const trainerId = await getRoutineTrainerId(routineId);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+  }
+
+  try {
+    const { rows } = await query(
+      `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id`,
+      [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion]
+    );
+
+    res.json({ id: rows[0].id, success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const { sets, reps, rest_seconds, weight_suggestion } = req.body;
+  const trainerId = await getRoutineTrainerId(req.params.id);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+  }
+  try {
+    await query(
+      `UPDATE routine_exercises
+       SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4
+       WHERE id = $5 AND routine_id = $6`,
+      [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const trainerId = await getRoutineTrainerId(req.params.id);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+  }
+  try {
+    await query('DELETE FROM routine_exercises WHERE id = $1 AND routine_id = $2', [
+      req.params.routineExerciseId,
+      req.params.id,
+    ]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
