@@ -33,9 +33,15 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
    - **KIOSK_API_KEY** y **VITE_KIOSK_KEY:** misma clave aleatoria (mín. 16 caracteres).
    - **DEMO_PASSWORD:** contraseña para cuentas demo en desarrollo (mín. 12 caracteres).
 
-4. Aplicar el esquema en Supabase (SQL Editor o CLI):
+4. Aplicar migraciones de base de datos:
 
-   - Archivo: `supabase/migrations/20260518000000_init_gym_schema.sql`
+   ```bash
+   npm run db:migrate
+   ```
+
+   Este comando aplica automáticamente todos los archivos en `supabase/migrations/` que aún no se hayan ejecutado. Solo necesitas correrlo **una vez** después de actualizar el código (o al configurar el proyecto por primera vez).
+
+   > Si prefieres hacerlo manualmente: abre el SQL Editor de Supabase y pega los archivos de `supabase/migrations/` en orden alfabético.
 
 5. Restaurar cuentas demo (desarrollo):
 
@@ -63,6 +69,7 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 | `npm run lint` | Comprobación TypeScript (`tsc --noEmit`) |
 | `npm run test:smoke` | Pruebas smoke de la API (servidor en marcha) |
 | `npm run dev:clean` | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
+| `npm run db:migrate` | Aplica migraciones SQL pendientes en Supabase/Postgres |
 | `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy |
 | `npm run db:restore-demo` | Restaura cuentas demo (requiere `DEMO_PASSWORD` en `.env`) |
 
@@ -77,6 +84,49 @@ Cuentas demo (admin, trainer, member):
 | `member@gym.com` | member |
 
 Contraseña: valor de `DEMO_PASSWORD` en tu `.env`. Restáuralas con `npm run db:restore-demo`.
+
+## Alertas de vencimiento
+
+Las alertas **ya funcionan solas** al arrancar el servidor (`npm run dev`). No necesitas configurar email para probarlas.
+
+### Lo que tienes que hacer tú (2 pasos)
+
+1. **Actualizar la base de datos** (solo una vez después de bajar el código nuevo):
+
+   ```bash
+   npm run db:migrate
+   ```
+
+2. **Arrancar el servidor**:
+
+   ```bash
+   npm run dev
+   ```
+
+3. Entra como `admin@gym.com` → **Dashboard** → sección **Configuración de Alertas** (ajusta días, guarda).
+
+Eso es todo para uso básico. El cron revisa vencimientos cada hora automáticamente.
+
+### Email y SMS (opcional, para producción)
+
+Sin configurar nada extra, los avisos se imprimen en la **consola del servidor** (donde corre `npm run dev`). Para enviar emails reales, añade en `.env`:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu-correo@gmail.com
+SMTP_PASS=contraseña-de-aplicacion
+SMTP_FROM=Caribean Gym <noreply@tudominio.com>
+ADMIN_NOTIFY_EMAILS=admin@gym.com
+```
+
+Para SMS con Twilio (opcional):
+
+```env
+TWILIO_ACCOUNT_SID=...
+TWILIO_AUTH_TOKEN=...
+TWILIO_FROM_NUMBER=+1234567890
+```
 
 ## Roadmap de calidad
 

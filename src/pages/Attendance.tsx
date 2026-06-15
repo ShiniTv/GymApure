@@ -1,28 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, parseJsonResponse } from '../lib/api';
 import { getKioskClientKey } from '../lib/kiosk';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Fingerprint, TrendingUp, Users, Calendar, Clock } from 'lucide-react';
+import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+interface ExpiringMember {
+  user_id: number;
+  full_name: string;
+  membership_name: string;
+  days_remaining: number;
+  end_date: string;
+}
+
+interface LastDoorAlert {
+  full_name: string;
+  membership_name: string;
+  days_remaining: number;
+  check_in_time: string;
+}
 
 export default function Attendance() {
   const [data, setData] = useState<any[]>([]);
   const [hourlyData, setHourlyData] = useState<any[]>([]);
+  const [expiring, setExpiring] = useState<ExpiringMember[]>([]);
+  const [lastDoorAlert, setLastDoorAlert] = useState<LastDoorAlert | null>(null);
+  const [alertDays, setAlertDays] = useState(7);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       apiFetch('/api/attendance/volume').then(res => res.json()),
-      apiFetch('/api/attendance/hourly').then(res => res.json())
+      apiFetch('/api/attendance/hourly').then(res => res.json()),
+      apiFetch('/api/memberships/expiring').then(res => parseJsonResponse<{
+        expiring: ExpiringMember[];
+        lastDoorAlert: LastDoorAlert | null;
+        days: number;
+      }>(res)),
     ])
-      .then(([volume, hourly]) => {
+      .then(([volume, hourly, expiry]) => {
         setData(Array.isArray(volume) ? volume : []);
         setHourlyData(Array.isArray(hourly) ? hourly : []);
+        setExpiring(Array.isArray(expiry.expiring) ? expiry.expiring : []);
+        setLastDoorAlert(expiry.lastDoorAlert ?? null);
+        setAlertDays(expiry.days ?? 7);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
         setData([]);
         setHourlyData([]);
+        setExpiring([]);
+        setLastDoorAlert(null);
         setLoading(false);
       });
   }, []);
@@ -192,7 +222,7 @@ export default function Attendance() {
           </div>
           
           <div className="space-y-4">
-             <p className="text-xs font-medium text-zinc-500">Ingresa la cédula del usuario para simular el escaneo de huella y validar acceso.</p>
+             <p className="text-xs font-medium text-zinc-500">Ingresa la cédula para simular entrada o salida en el kiosk.</p>
              <div className="flex gap-2">
                 <input 
                   id="sim-cedula"
@@ -200,6 +230,8 @@ export default function Attendance() {
                   placeholder="V-12345678"
                   className="flex-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500"
                 />
+             </div>
+             <div className="flex gap-2">
                 <button 
                   onClick={() => {
                     const el = document.getElementById('sim-cedula') as HTMLInputElement;
@@ -208,7 +240,7 @@ export default function Attendance() {
                     
                     const feedbackEl = document.getElementById('sim-feedback');
                     if (feedbackEl) {
-                      feedbackEl.innerText = 'Validando...';
+                      feedbackEl.innerText = 'Validando entrada...';
                       feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2 text-center';
                     }
 
@@ -233,22 +265,81 @@ export default function Attendance() {
                     .then(data => {
                       if (feedbackEl) {
                         if (data.error) {
-                          feedbackEl.innerText = `Acceso Denegado: ${data.error}`;
+                          feedbackEl.innerText = `Entrada denegada: ${data.error}`;
                           feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-red-500 mt-2 text-center';
                         } else {
-                          feedbackEl.innerText = data.already_checked_in
-                            ? `Ya registrado hoy: ${data.user_name}`
-                            : `Acceso Concedido: ${data.user_name}`;
-                          feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-emerald-500 mt-2 text-center';
-                          el.value = '';
-                          setTimeout(() => window.location.reload(), 1500);
+                          const base = data.already_checked_in
+                            ? `Ingreso activo: ${data.user_name}`
+                            : `Entrada OK: ${data.user_name}`;
+                          feedbackEl.innerText = data.expiry_warning
+                            ? `${base} — ${data.expiry_warning}`
+                            : base;
+                          feedbackEl.className = data.expiry_warning
+                            ? 'text-[10px] font-black uppercase tracking-widest text-orange-500 mt-2 text-center'
+                            : 'text-[10px] font-black uppercase tracking-widest text-emerald-500 mt-2 text-center';
+                          if (!data.already_checked_in) {
+                            setTimeout(() => window.location.reload(), 1500);
+                          }
                         }
                       }
                     });
                   }}
-                  className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                  className="flex-1 bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                 >
                   SIMULAR ENTRADA
+                </button>
+                <button 
+                  onClick={() => {
+                    const el = document.getElementById('sim-cedula') as HTMLInputElement;
+                    const cedula = el.value;
+                    if (!cedula) return;
+                    
+                    const feedbackEl = document.getElementById('sim-feedback');
+                    if (feedbackEl) {
+                      feedbackEl.innerText = 'Validando salida...';
+                      feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2 text-center';
+                    }
+
+                    const kioskKey = getKioskClientKey();
+                    if (!kioskKey) {
+                      if (feedbackEl) {
+                        feedbackEl.innerText = 'Kiosk no configurado (falta VITE_KIOSK_KEY)';
+                        feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-red-500 mt-2 text-center';
+                      }
+                      return;
+                    }
+
+                    apiFetch('/api/attendance/check-out', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-Kiosk-Key': kioskKey,
+                      },
+                      body: JSON.stringify({ cedula })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                      if (feedbackEl) {
+                        if (data.error) {
+                          feedbackEl.innerText = `Salida denegada: ${data.error}`;
+                          feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-red-500 mt-2 text-center';
+                        } else {
+                          const base = data.already_checked_out
+                            ? `Ya salió hoy: ${data.user_name}`
+                            : `Salida OK: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`;
+                          feedbackEl.innerText = base;
+                          feedbackEl.className = 'text-[10px] font-black uppercase tracking-widest text-blue-500 mt-2 text-center';
+                          el.value = '';
+                          if (!data.already_checked_out) {
+                            setTimeout(() => window.location.reload(), 1500);
+                          }
+                        }
+                      }
+                    });
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                >
+                  SIMULAR SALIDA
                 </button>
              </div>
              <p id="sim-feedback" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2 text-center"></p>
@@ -265,12 +356,54 @@ export default function Attendance() {
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
-           <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-6">Próximos Vencimientos</h3>
+           <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+             <AlertTriangle className="h-4 w-4 text-orange-500" />
+             Próximos Vencimientos ({alertDays}d)
+           </h3>
            <div className="space-y-4">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Información sincronizada con el control de acceso.</p>
-              <div className="p-6 border border-zinc-100 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50">
-                 <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Última alerta en puerta:</p>
-                 <p className="text-sm font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">Juan Pérez - Membresía vence en 2 días</p>
+              {lastDoorAlert && (
+                <div className="p-4 border border-orange-500/20 rounded-2xl bg-orange-500/5">
+                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">Última alerta en puerta:</p>
+                  <p className="text-sm font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">
+                    {lastDoorAlert.full_name} — {lastDoorAlert.membership_name} —{' '}
+                    {lastDoorAlert.days_remaining === 0
+                      ? 'vence hoy'
+                      : lastDoorAlert.days_remaining === 1
+                      ? 'vence mañana'
+                      : `vence en ${lastDoorAlert.days_remaining} días`}
+                  </p>
+                  <p className="text-[10px] text-zinc-400 mt-1">
+                    {format(new Date(lastDoorAlert.check_in_time), "dd MMM yyyy · HH:mm", { locale: es })}
+                  </p>
+                </div>
+              )}
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {expiring.length === 0 ? (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                    No hay membresías por vencer en los próximos {alertDays} días.
+                  </p>
+                ) : (
+                  expiring.map((member) => (
+                    <div
+                      key={member.user_id}
+                      className={`flex items-center justify-between p-3 rounded-xl border ${
+                        member.days_remaining <= 3
+                          ? 'border-red-500/20 bg-red-500/5'
+                          : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50'
+                      }`}
+                    >
+                      <div>
+                        <p className="text-xs font-black text-zinc-800 dark:text-zinc-200 uppercase">{member.full_name}</p>
+                        <p className="text-[10px] text-zinc-400">{member.membership_name}</p>
+                      </div>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                        member.days_remaining <= 3 ? 'text-red-500' : 'text-orange-500'
+                      }`}>
+                        {member.days_remaining === 0 ? 'Hoy' : `${member.days_remaining}d`}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
            </div>
         </div>

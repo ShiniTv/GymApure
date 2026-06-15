@@ -1,11 +1,23 @@
 import { Router } from 'express';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
+import {
+  getExpiringCount,
+  getExpiringSubscriptions,
+  getExpiredThisWeekCount,
+} from '../lib/expiringSubscriptions.ts';
+import { getExpiryAlertDays, getExpirySettings } from '../lib/gymSettings.ts';
+import { isEmailConfigured } from '../lib/notifications/email.ts';
+import { isSmsConfigured } from '../lib/notifications/sms.ts';
+import { isWhatsAppConfigured, getWhatsAppProvider, getWhatsAppProviderLabel } from '../lib/notifications/whatsapp.ts';
 
 const router = Router();
 
 router.get('/admin', authorize(['admin']), async (_req, res) => {
   try {
+    const alertDays = await getExpiryAlertDays();
+    const expirySettings = await getExpirySettings();
+
     const totalUsers = await query<{ count: string }>(
       'SELECT COUNT(*)::text AS count FROM users'
     );
@@ -34,12 +46,32 @@ router.get('/admin', authorize(['admin']), async (_req, res) => {
       ORDER BY month ASC`
     );
 
+    const [expiringSoon, expiredThisWeek, expiringList] = await Promise.all([
+      getExpiringCount(alertDays),
+      getExpiredThisWeekCount(),
+      getExpiringSubscriptions(alertDays),
+    ]);
+
     res.json({
       totalUsers: parseInt(totalUsers.rows[0]?.count || '0', 10),
       totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),
       pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
       activeSubscriptions: parseInt(activeSubscriptions.rows[0]?.count || '0', 10),
       todayCheckIns: parseInt(todayCheckIns.rows[0]?.count || '0', 10),
+      expiringSoon,
+      expiredThisWeek,
+      expiringList,
+      expiryAlertDays: alertDays,
+      expirySettings: {
+        ...expirySettings,
+        providers: {
+          email: isEmailConfigured(),
+          sms: isSmsConfigured(),
+          whatsapp: isWhatsAppConfigured(),
+          whatsappProvider: getWhatsAppProvider(),
+          whatsappProviderLabel: getWhatsAppProviderLabel(),
+        },
+      },
       revenueHistory: revenueHistory.rows,
     });
   } catch (err: unknown) {
@@ -56,7 +88,9 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
       "SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'"
     );
     const activeSessions = await query<{ count: string }>(
-      "SELECT COUNT(*)::text AS count FROM attendance WHERE check_in_time >= NOW() - INTERVAL '2 hours'"
+      `SELECT COUNT(*)::text AS count FROM attendance
+       WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+         AND check_out_time IS NULL`
     );
 
     const todayWorkoutsSql = trainerId
@@ -121,6 +155,7 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
 
 router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   const userId = req.user!.id;
+  const expiryAlertDays = await getExpiryAlertDays();
 
   try {
     const subscription = await query(
@@ -179,6 +214,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       assignedRoutinesCount: routines.rows.length,
       pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
       lastWorkout: lastWorkout.rows[0] ?? null,
+      expiryAlertDays,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

@@ -5,7 +5,10 @@ import { query } from '../db/index.ts';
 import { authCookieOptions, clearAuthCookieOptions } from '../config/cookies.ts';
 import { JWT_EXPIRES_IN, JWT_SECRET, type JwtUserPayload } from '../config/jwt.ts';
 import { allowPublicRegister } from '../config/env.ts';
-import { formatZodError, registerSchema } from '../lib/passwordPolicy.ts';
+import { changePasswordSchema, formatZodError, registerSchema } from '../lib/passwordPolicy.ts';
+import { authenticate, type AuthRequest } from './middleware/auth.ts';
+import { logAudit } from '../lib/audit.ts';
+import { asyncHandler } from './middleware/asyncHandler.ts';
 
 const router = Router();
 
@@ -97,5 +100,45 @@ router.get('/me', (req, res) => {
     res.status(401).json({ error: 'Invalid token' });
   }
 });
+
+router.post(
+  '/change-password',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const parsed = changePasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const { current_password, new_password } = parsed.data;
+    const userId = req.user!.id;
+
+    const { rows } = await query<{ password: string }>(
+      'SELECT password FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    if (!bcrypt.compareSync(current_password, rows[0].password)) {
+      res.status(401).json({ error: 'Contraseña actual incorrecta' });
+      return;
+    }
+
+    if (bcrypt.compareSync(new_password, rows[0].password)) {
+      res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
+      return;
+    }
+
+    const hashedPassword = bcrypt.hashSync(new_password, 10);
+    await query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+    await logAudit(userId, 'auth.change_password', {});
+
+    res.json({ success: true, message: 'Contraseña actualizada' });
+  })
+);
 
 export default router;

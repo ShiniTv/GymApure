@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard } from 'lucide-react';
+import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -41,7 +41,16 @@ export default function Members() {
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [assignError, setAssignError] = useState('');
+  const [expiringFilter, setExpiringFilter] = useState(false);
+  const [alertDays, setAlertDays] = useState(7);
   const navigate = useNavigate();
+
+  const getExpiryBadge = (days: number | null | undefined) => {
+    if (days == null) return null;
+    if (days <= 3) return { label: days === 0 ? 'Vence hoy' : `${days}d`, className: 'bg-red-500/10 text-red-600 dark:text-red-500' };
+    if (days <= 7) return { label: `${days}d`, className: 'bg-orange-500/10 text-orange-600 dark:text-orange-500' };
+    return null;
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -85,7 +94,13 @@ export default function Members() {
 
   useEffect(() => {
     apiFetchMembers();
-  }, []);
+    if (user?.role === 'admin') {
+      apiFetch('/api/settings/expiry')
+        .then((res) => parseJsonResponse<{ expiry_alert_days: number }>(res))
+        .then((data) => setAlertDays(data.expiry_alert_days ?? 7))
+        .catch(() => setAlertDays(7));
+    }
+  }, [user?.role]);
 
   const handleAddMember = async () => {
     if (!validateForm()) return;
@@ -179,10 +194,15 @@ export default function Members() {
     apiFetchMembers();
   };
 
-  const filteredMembers = members.filter(m =>
-    m.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    m.cedula?.includes(search)
-  );
+  const filteredMembers = members.filter(m => {
+    const matchesSearch =
+      m.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      m.cedula?.includes(search);
+    const matchesExpiring =
+      !expiringFilter ||
+      (m.role === 'member' && m.days_remaining != null && m.days_remaining <= alertDays);
+    return matchesSearch && matchesExpiring;
+  });
 
   return (
     <div className="space-y-6">
@@ -287,15 +307,31 @@ export default function Members() {
         </div>
       )}
 
-      <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4 w-full max-w-md shadow-sm focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
-        <Search className="h-5 w-5 text-zinc-400" />
-        <input 
-          type="text"
-          placeholder="Buscar por nombre o identificación..."
-          className="bg-transparent border-none focus:outline-none text-zinc-900 dark:text-white ml-3 w-full placeholder-zinc-400 font-bold"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4 w-full max-w-md shadow-sm focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
+          <Search className="h-5 w-5 text-zinc-400" />
+          <input 
+            type="text"
+            placeholder="Buscar por nombre o identificación..."
+            className="bg-transparent border-none focus:outline-none text-zinc-900 dark:text-white ml-3 w-full placeholder-zinc-400 font-bold"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        {user?.role === 'admin' && (
+          <button
+            type="button"
+            onClick={() => setExpiringFilter((v) => !v)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+              expiringFilter
+                ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-500'
+                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'
+            }`}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            Por vencer ({alertDays}d)
+          </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
@@ -339,10 +375,22 @@ export default function Members() {
                     <td className="px-8 py-5">
                       {member.role === 'member' ? (
                         member.membership_name ? (
+                          (() => {
+                            const badge = getExpiryBadge(member.days_remaining);
+                            return (
                           <div>
-                            <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
+                              {badge && (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${badge.className}`}>
+                                  {badge.label}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] text-zinc-400">{member.days_remaining ?? 0} días restantes</p>
                           </div>
+                            );
+                          })()
                         ) : (
                           <span className="text-[10px] font-black uppercase text-zinc-400">Sin plan</span>
                         )

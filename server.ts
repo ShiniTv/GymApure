@@ -9,6 +9,7 @@ import apiRouter from './src/api/index.ts';
 import { initDb } from './src/db/index.ts';
 import { env } from './src/config/env.ts';
 import { errorHandler, notFoundHandler } from './src/api/middleware/errorHandler.ts';
+import { startExpiryCron } from './src/jobs/expiryCron.ts';
 
 async function startServer() {
   await initDb();
@@ -33,6 +34,7 @@ async function startServer() {
   }
   fs.mkdirSync(path.join(uploadsDir, 'proofs'), { recursive: true });
   fs.mkdirSync(path.join(uploadsDir, 'videos'), { recursive: true });
+  fs.mkdirSync(path.join(uploadsDir, 'avatars'), { recursive: true });
 
   app.use('/api', apiRouter);
 
@@ -55,6 +57,7 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    startExpiryCron();
   });
 }
 

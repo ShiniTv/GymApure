@@ -6,6 +6,11 @@ import { requireSelfOrRoles } from './middleware/access.ts';
 import { assignSubscription } from '../lib/subscriptions.ts';
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
+import {
+  getExpiringSubscriptions,
+  getLastDoorAlert,
+} from '../lib/expiringSubscriptions.ts';
+import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 
 const router = Router();
 
@@ -13,6 +18,22 @@ const membershipSchema = z.object({
   name: z.string().trim().min(1, 'Nombre requerido').max(100),
   duration_days: z.coerce.number().int().positive('Duración inválida'),
   price_usd: z.coerce.number().positive('Precio inválido'),
+});
+
+router.get('/expiring', authorize(['admin']), async (req, res) => {
+  const defaultDays = await getExpiryAlertDays();
+  const days = Math.min(90, Math.max(1, parseInt(String(req.query.days ?? defaultDays), 10) || defaultDays));
+
+  try {
+    const [expiring, lastDoorAlert] = await Promise.all([
+      getExpiringSubscriptions(days),
+      getLastDoorAlert(days),
+    ]);
+    res.json({ days, expiring, lastDoorAlert });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
 });
 
 router.get('/', authorize(['admin', 'trainer', 'member']), async (_req, res) => {

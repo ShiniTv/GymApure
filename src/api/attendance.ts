@@ -9,6 +9,7 @@ router.get('/stats', authorize(['admin']), async (req, res) => {
     const { rows } = await query(`
       SELECT COUNT(*)::int AS count FROM attendance
       WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+        AND check_out_time IS NULL
     `);
     res.json({ current_capacity: rows[0].count });
   } catch (err: unknown) {

@@ -31,6 +31,35 @@ router.get('/proofs/:filename', async (req: AuthRequest, res) => {
   }
 });
 
+/** Profile avatar — owner or staff. */
+router.get('/avatars/:filename', async (req: AuthRequest, res) => {
+  const filename = req.params.filename;
+  const filePath = resolveFilePath('avatars', filename);
+  if (!filePath) return res.status(404).json({ error: 'Archivo no encontrado' });
+
+  try {
+    const avatarPath = `/api/files/avatars/${filename}`;
+    const { rows } = await query<{ id: number }>(
+      `SELECT id FROM users
+       WHERE profile_image IN ($1, $2) OR profile_image LIKE $3`,
+      [avatarPath, `/uploads/avatars/${filename}`, `%${filename}`]
+    );
+
+    if (!rows[0]) return res.status(404).json({ error: 'Avatar no encontrado' });
+
+    const ownerId = Number(rows[0].id);
+    const isStaff = req.user!.role === 'admin' || req.user!.role === 'trainer';
+    if (!isStaff && req.user!.id !== ownerId) {
+      return res.status(403).json({ error: 'Permisos insuficientes' });
+    }
+
+    res.sendFile(filePath);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
 /** Exercise video — any authenticated user. */
 router.get('/videos/:filename', async (req: AuthRequest, res) => {
   const filename = req.params.filename;

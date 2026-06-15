@@ -18,6 +18,8 @@ const MemberRoutine = lazy(() => import('./pages/MemberRoutine'));
 const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
 const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Reports = lazy(() => import('./pages/Reports'));
 
 function PageLoader() {
   return (
@@ -90,6 +92,11 @@ function AppRoutes() {
             <AuditLogs />
           </ProtectedRoute>
         } />
+        <Route path="reports" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Reports />
+          </ProtectedRoute>
+        } />
         <Route path="members/:id/routines" element={
             <ProtectedRoute allowedRoles={['trainer']}>
               <MemberRoutine />
@@ -120,6 +127,7 @@ function AppRoutes() {
               <WorkoutHistory />
             </ProtectedRoute>
           } />
+          <Route path="profile" element={<Profile />} />
           <Route path="members/:id/history" element={
             <ProtectedRoute allowedRoles={['trainer']}>
               <WorkoutHistory />

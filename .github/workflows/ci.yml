@@ -47,19 +47,23 @@ jobs:
 
       - run: npm run build
 
-      - name: Apply database schema
-        run: |
-          psql "$DATABASE_URL" -f supabase/migrations/20260518000000_init_gym_schema.sql
-          psql "$DATABASE_URL" -f supabase/migrations/20260615000000_security_improvements.sql
+      - name: Apply database migrations
+        run: npm run db:migrate
 
       - name: Seed demo users
         run: npm run db:restore-demo
 
-      - name: Smoke tests
+      - name: Integration tests
         run: |
           npm start &
           for i in $(seq 1 30); do
-            curl -sf http://localhost:3000/api/health && break
+            if curl -sf http://localhost:3000/api/health; then
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Server did not become healthy in time"
+              exit 1
+            fi
             sleep 1
           done
-          npm run test:smoke
+          npm run test:integration

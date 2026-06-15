@@ -15,6 +15,19 @@ export const registerSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Contraseña actual requerida'),
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, 'Confirma la nueva contraseña'),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirm_password'],
+  });
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export function formatZodError(error: z.ZodError): string {
   return error.issues.map((issue) => issue.message).join('. ');
 }

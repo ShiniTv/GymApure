@@ -1,11 +1,27 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireSelfOrRoles } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
+import { notifyRoutineAssigned } from '../lib/notifications/eventNotifier.ts';
+import { avatarApiPath, avatarUpload } from '../lib/uploadStorage.ts';
+import { asyncHandler } from './middleware/asyncHandler.ts';
 
 const router = Router();
+
+const profileSchema = z.object({
+  phone: z.string().trim().max(20).optional().nullable(),
+  initial_weight: z.coerce.number().positive('Peso inválido').max(500).optional().nullable(),
+  height: z.coerce.number().positive('Altura inválida').max(300).optional().nullable(),
+  goal: z.string().trim().max(500).optional().nullable(),
+  dob: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
+    .optional()
+    .nullable(),
+});
 
 router.get('/', authorize(['admin', 'trainer']), async (req, res) => {
   try {
@@ -37,7 +53,7 @@ router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
-              initial_weight, height, goal
+              initial_weight, height, goal, profile_image, dob
        FROM users WHERE id = $1`,
       [req.params.id]
     );
@@ -47,6 +63,83 @@ router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res
     res.status(500).json({ error: err.message });
   }
 });
+
+router.patch(
+  '/:id/profile',
+  requireSelfOrRoles('id', 'admin'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const parsed = profileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+      return;
+    }
+
+    const targetId = parseInt(req.params.id, 10);
+    const data = parsed.data;
+    const fields = ['phone', 'initial_weight', 'height', 'goal', 'dob'] as const;
+    const sets: string[] = [];
+    const params: unknown[] = [];
+
+    for (const key of fields) {
+      if (key in data) {
+        sets.push(`${key} = $${params.length + 1}`);
+        params.push(data[key] ?? null);
+      }
+    }
+
+    if (sets.length === 0) {
+      res.status(400).json({ error: 'No hay campos para actualizar' });
+      return;
+    }
+
+    params.push(targetId);
+    const { rows } = await query(
+      `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}
+       RETURNING id, email, role, full_name, cedula, phone, status,
+                 initial_weight, height, goal, profile_image, dob`,
+      params
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    if (req.user!.id !== targetId) {
+      await logAudit(req.user!.id, 'user.profile_update', { target_id: targetId });
+    }
+
+    res.json(rows[0]);
+  })
+);
+
+router.post(
+  '/:id/avatar',
+  requireSelfOrRoles('id', 'admin'),
+  avatarUpload.single('avatar'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: 'Archivo requerido' });
+      return;
+    }
+
+    const targetId = parseInt(req.params.id, 10);
+    const profileImage = avatarApiPath(req.file.filename);
+
+    const { rows } = await query(
+      `UPDATE users SET profile_image = $1 WHERE id = $2
+       RETURNING id, profile_image`,
+      [profileImage, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    res.json({ profile_image: rows[0].profile_image });
+  })
+);
 
 router.get('/:id/routines', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
   try {
@@ -132,6 +225,10 @@ router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRe
       [req.params.id, routine_id, assigned_by, start_date, end_date]
     );
     res.json({ id: rows[0].id, success: true });
+
+    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err) =>
+      console.error('[notify] routine assigned', err)
+    );
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

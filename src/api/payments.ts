@@ -10,6 +10,11 @@ import {
   streamPaymentProof,
   uploadPaymentProof,
 } from '../lib/proofStorage.ts';
+import {
+  notifyPaymentApproved,
+  notifyPaymentRejected,
+  notifyPaymentReported,
+} from '../lib/notifications/eventNotifier.ts';
 
 const router = Router();
 
@@ -102,6 +107,9 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
     }
 
     res.json({ id: paymentId, status: 'pending', proof_url });
+    void notifyPaymentReported(paymentId, user_id, Number(amount_usd)).catch((err) =>
+      console.error('[notify] payment reported', err)
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -115,11 +123,18 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
     : null;
 
   try {
+    let approvedUserId = 0;
+    let approvedAmount = 0;
+    let membershipName: string | undefined;
+
     await withTransaction(async (client) => {
       const paymentResult = await client.query('SELECT * FROM payments WHERE id = $1', [id]);
       const payment = paymentResult.rows[0];
       if (!payment) throw new Error('Pago no encontrado');
       if (payment.status !== 'pending') throw new Error('El pago ya ha sido procesado');
+
+      approvedUserId = Number(payment.user_id);
+      approvedAmount = Number(payment.amount_usd);
 
       await client.query("UPDATE payments SET status = 'approved' WHERE id = $1", [id]);
 
@@ -142,12 +157,17 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
       }
 
       if (membership) {
-        await assignSubscription(client, Number(payment.user_id), Number(membership.id));
+        membershipName = membership.name;
+        await assignSubscription(client, approvedUserId, Number(membership.id));
       }
     });
 
     await logAudit(req.user!.id, 'payment.approve', { payment_id: id, membership_id: membershipId });
     res.json({ success: true });
+
+    void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName).catch((err) =>
+      console.error('[notify] payment approved', err)
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -158,8 +178,8 @@ router.post('/:id/reject', authorize(['admin']), async (req: AuthRequest, res) =
   const { id } = req.params;
 
   try {
-    const { rows } = await query<{ status: string }>(
-      'SELECT status FROM payments WHERE id = $1',
+    const { rows } = await query<{ status: string; user_id: number; amount_usd: number }>(
+      'SELECT status, user_id, amount_usd FROM payments WHERE id = $1',
       [id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Pago no encontrado' });
@@ -170,6 +190,10 @@ router.post('/:id/reject', authorize(['admin']), async (req: AuthRequest, res) =
     await query("UPDATE payments SET status = 'rejected' WHERE id = $1", [id]);
     await logAudit(req.user!.id, 'payment.reject', { payment_id: id });
     res.json({ success: true });
+
+    void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd)).catch((err) =>
+      console.error('[notify] payment rejected', err)
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

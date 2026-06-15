@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch, parseJsonResponse } from '../lib/api';
 import Logo from './Logo';
 import { 
   LayoutDashboard, 
@@ -16,7 +17,9 @@ import {
   Moon,
   BarChart2,
   BookOpen,
-  ScrollText
+  ScrollText,
+  UserCircle,
+  FileSpreadsheet
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -25,6 +28,31 @@ export default function Layout() {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [expiringCount, setExpiringCount] = useState(0);
+  const [memberExpiryDays, setMemberExpiryDays] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      apiFetch('/api/stats/admin')
+        .then((res) => parseJsonResponse<{ expiringSoon?: number }>(res))
+        .then((data) => setExpiringCount(data.expiringSoon ?? 0))
+        .catch(() => setExpiringCount(0));
+      setMemberExpiryDays(null);
+      return;
+    }
+
+    if (user?.role === 'member') {
+      setExpiringCount(0);
+      apiFetch(`/api/memberships/user/${user.id}`)
+        .then((res) => parseJsonResponse<{ days_remaining?: number } | null>(res))
+        .then((data) => setMemberExpiryDays(data?.days_remaining ?? null))
+        .catch(() => setMemberExpiryDays(null));
+      return;
+    }
+
+    setExpiringCount(0);
+    setMemberExpiryDays(null);
+  }, [user?.role, user?.id, location.pathname]);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member'] },
@@ -32,10 +60,12 @@ export default function Layout() {
     { name: 'Membresías', href: '/memberships', icon: CreditCard, roles: ['admin'] },
     { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, roles: ['admin'] },
     { name: 'Asistencias', href: '/attendance', icon: BarChart2, roles: ['admin'] },
+    { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, roles: ['admin'] },
     { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
     { name: 'Biblioteca', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
     { name: 'Historial', href: '/history', icon: History, roles: ['member', 'trainer'] },
+    { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member'] },
   ];
 
   const filteredNav = navigation.filter(item => item.roles.includes(user?.role || ''));
@@ -92,7 +122,19 @@ export default function Layout() {
                     )}
                   >
                     <item.icon className="h-5 w-5" />
-                    {item.name}
+                    <span className="flex-1">{item.name}</span>
+                    {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
+                      <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black">
+                        {expiringCount > 99 ? '99+' : expiringCount}
+                      </span>
+                    )}
+                    {user?.role === 'member' && item.href === '/' && memberExpiryDays != null && memberExpiryDays <= 5 && (
+                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-black ${
+                        memberExpiryDays <= 3 ? 'bg-red-500' : 'bg-orange-500'
+                      }`}>
+                        !
+                      </span>
+                    )}
                   </Link>
                 );
               })}
