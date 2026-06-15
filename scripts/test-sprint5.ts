@@ -64,12 +64,34 @@ async function kiosk(method: string, path: string, body: unknown) {
   return api(method, path, body, { 'X-Kiosk-Key': KIOSK_KEY! });
 }
 
+/** Cierra ingresos abiertos de corridas anteriores (p. ej. smoke tests). */
+async function closeOpenSessionIfAny() {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const out = await kiosk('POST', '/api/attendance/check-out', { cedula: MEMBER_CEDULA });
+    if (out.res.status === 400) return;
+
+    const data = out.data as { success?: boolean; already_checked_out?: boolean };
+    if (data.already_checked_out) return;
+    if (out.res.status === 200 && data.success) continue;
+
+    return;
+  }
+}
+
 async function main() {
   console.log('=== Sprint 5 — Check-out + Reportes ===\n');
 
-  // Check-out sin ingreso activo
+  await closeOpenSessionIfAny();
+
+  // Sin ingreso activo: 400 si nunca entró hoy, o 200 already_checked_out si ya salió
   const noCheckIn = await kiosk('POST', '/api/attendance/check-out', { cedula: MEMBER_CEDULA });
-  ok('Check-out sin ingreso activo → 400', noCheckIn.res.status === 400);
+  const noData = noCheckIn.data as { already_checked_out?: boolean };
+  ok(
+    'Check-out sin ingreso activo',
+    noCheckIn.res.status === 400 ||
+      (noCheckIn.res.status === 200 && noData.already_checked_out === true),
+    `status ${noCheckIn.res.status} ${JSON.stringify(noCheckIn.data)}`
+  );
 
   // Check-in
   const checkIn = await kiosk('POST', '/api/attendance/check-in', { cedula: MEMBER_CEDULA });

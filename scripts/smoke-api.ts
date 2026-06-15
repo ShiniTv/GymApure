@@ -107,6 +107,16 @@ async function main() {
     );
     const ok = res.status === 200 || res.status === 400;
     assert('check-in con clave → 200 o 400', ok, `status ${res.status} ${JSON.stringify(data)}`);
+
+    // Cerrar sesión abierta para no interferir con test:sprint5
+    if (res.status === 200 && (data as { success?: boolean }).success) {
+      await json(
+        'POST',
+        '/api/attendance/check-out',
+        { cedula: 'V-11223344' },
+        { 'X-Kiosk-Key': KIOSK_KEY }
+      );
+    }
   } else {
     console.warn('  SKIP check-in con clave (KIOSK_API_KEY no definido)\n');
   }
