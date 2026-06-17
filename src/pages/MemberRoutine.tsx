@@ -5,8 +5,9 @@ import { ArrowLeft, Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, Hi
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Modal, PageHeader, Label, Input, Select } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
+import { formatDifficulty } from '../lib/utils';
 
 interface Routine {
   id: number;
@@ -100,6 +101,8 @@ export default function MemberRoutine() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
   const [routineForm, setRoutineForm] = useState({ name: '', difficulty: 'Beginner' });
+  const [unassignTarget, setUnassignTarget] = useState<Routine | null>(null);
+  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{ routineId: number; exercise: Exercise } | null>(null);
 
   // Exercise Management State
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
@@ -303,14 +306,13 @@ export default function MemberRoutine() {
   };
 
   const handleUnassignRoutine = async (routineId: number) => {
-    if (!confirm('¿Estás seguro de que deseas quitar esta rutina al usuario?')) return;
-
     try {
       const res = await apiFetch(`/api/users/${id}/routines/${routineId}`, {
         method: 'DELETE',
       });
 
       await parseJsonResponse(res);
+      setUnassignTarget(null);
       await refreshUserRoutines();
     } catch (err) {
       clientLogger.error('Failed to unassign routine from member', err);
@@ -368,15 +370,15 @@ export default function MemberRoutine() {
     }
   };
 
-  const handleDeleteExercise = async (routineId: number, routineExerciseId: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este ejercicio de la rutina?')) return;
-
+  const confirmDeleteExercise = async () => {
+    if (!deleteExerciseTarget) return;
+    const { routineId, exercise } = deleteExerciseTarget;
     try {
-      const res = await apiFetch(`/api/routines/${routineId}/exercises/${routineExerciseId}`, {
+      const res = await apiFetch(`/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`, {
         method: 'DELETE',
       });
-
       await parseJsonResponse(res);
+      setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
@@ -411,7 +413,13 @@ export default function MemberRoutine() {
     }
   };
 
-  if (loading) return <div className="text-zinc-500 dark:text-white p-6">Cargando...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner />
+      </div>
+    );
+  }
   if (!member) return <div className="text-zinc-500 dark:text-white p-6">Miembro no encontrado</div>;
 
   return (
@@ -425,10 +433,14 @@ export default function MemberRoutine() {
       </button>
 
       <PageHeader
-        title={<>RUTINAS DE <span className="text-orange-500">{member.full_name?.toUpperCase()}</span></>}
+        title={
+          <>
+            Rutinas de <span className="text-orange-500">{member.full_name}</span>
+          </>
+        }
         subtitle="Gestionar planes de entrenamiento personalizados"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="ghost" onClick={() => navigate(`/members/${id}/history`)}>
               <History className="h-5 w-5" />
               Historial
@@ -455,6 +467,27 @@ export default function MemberRoutine() {
           </div>
         }
       />
+
+      <Card
+        padding="md"
+        rounded="2xl"
+        className="sticky top-4 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm"
+      >
+        <div>
+          <p className="text-sm font-black text-zinc-900 dark:text-white">{member.full_name}</p>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            {subscription
+              ? `${subscription.membership_name} · ${subscription.days_remaining} días restantes`
+              : 'Sin membresía activa'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {member.goal && <Badge variant="warning">{member.goal}</Badge>}
+          {routines.length > 0 && (
+            <Badge variant="default">{routines.length} rutina{routines.length !== 1 ? 's' : ''}</Badge>
+          )}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
@@ -607,14 +640,10 @@ export default function MemberRoutine() {
           </div>
           <div>
             <Label>Dificultad</Label>
-            <Select
+            <DifficultySelect
               value={routineForm.difficulty}
-              onChange={(e) => setRoutineForm({ ...routineForm, difficulty: e.target.value })}
-            >
-              <option value="Beginner">Principiante</option>
-              <option value="Intermediate">Intermedio</option>
-              <option value="Advanced">Avanzado</option>
-            </Select>
+              onChange={(difficulty) => setRoutineForm({ ...routineForm, difficulty })}
+            />
           </div>
           <Button
             className="w-full"
@@ -752,7 +781,7 @@ export default function MemberRoutine() {
             <Select value={selectedRoutineId} onChange={(e) => setSelectedRoutineId(e.target.value)}>
               <option value="">Selecciona una rutina...</option>
               {availableRoutines.filter((ar) => !routines.some((r) => r.id === ar.id)).map((r) => (
-                <option key={r.id} value={r.id}>{r.name} ({r.difficulty})</option>
+                <option key={r.id} value={r.id}>{r.name} ({formatDifficulty(r.difficulty)})</option>
               ))}
             </Select>
           </div>
@@ -780,12 +809,77 @@ export default function MemberRoutine() {
         </div>
       </Modal>
 
+      <Modal
+        open={!!unassignTarget}
+        onClose={() => setUnassignTarget(null)}
+        title="Quitar rutina"
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+          ¿Quitar <strong>{unassignTarget?.name}</strong> de {member.full_name}?
+        </p>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setUnassignTarget(null)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={() => unassignTarget && handleUnassignRoutine(unassignTarget.id)}
+          >
+            Quitar rutina
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!deleteExerciseTarget}
+        onClose={() => setDeleteExerciseTarget(null)}
+        title="Quitar ejercicio"
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+          ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta rutina?
+        </p>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setDeleteExerciseTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={confirmDeleteExercise}>
+            Quitar
+          </Button>
+        </div>
+      </Modal>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routines.length === 0 ? (
-          <Card className="col-span-full text-center py-12">
-            <Dumbbell className="h-12 w-12 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
-            <p className="text-zinc-500">No hay rutinas asignadas aún.</p>
-          </Card>
+          <EmptyState
+            className="col-span-full"
+            icon={Dumbbell}
+            title="Sin rutinas asignadas"
+            description={`${member.full_name} aún no tiene planes de entrenamiento.`}
+            action={
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsCreating(true);
+                    setRoutineForm({ name: '', difficulty: 'Beginner' });
+                  }}
+                >
+                  Crear rutina
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setIsAssigning(true);
+                    apiFetchAvailableRoutines();
+                  }}
+                >
+                  Asignar existente
+                </Button>
+              </div>
+            }
+          />
         ) : (
           routines.map((routine) => (
             <div key={routine.id} className="col-span-full">
@@ -796,11 +890,9 @@ export default function MemberRoutine() {
                     <Dumbbell className="h-6 w-6 text-orange-600 dark:text-orange-500" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">{routine.name}</h3>
+                    <h3 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight">{routine.name}</h3>
                     <div className="flex items-center gap-3 text-[10px] text-zinc-500 mt-1 font-black uppercase tracking-widest">
-                      <span className="px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                        {routine.difficulty}
-                      </span>
+                      <Badge variant="default">{formatDifficulty(routine.difficulty)}</Badge>
                       <span className="flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
                         Vigencia: {routine.start_date ? new Date(routine.start_date).toLocaleDateString() : 'N/A'} - {routine.end_date ? new Date(routine.end_date).toLocaleDateString() : 'N/A'}
@@ -824,7 +916,7 @@ export default function MemberRoutine() {
                     <Edit className="h-5 w-5" />
                   </button>
                   <button 
-                    onClick={() => handleUnassignRoutine(routine.id)}
+                    onClick={() => setUnassignTarget(routine)}
                     className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all active:scale-90"
                     title="Desvincular del Usuario"
                   >
@@ -894,7 +986,7 @@ export default function MemberRoutine() {
                             <Edit className="h-4 w-4" />
                           </button>
                           <button 
-                            onClick={() => handleDeleteExercise(routine.id, exercise.routine_exercise_id)}
+                            onClick={() => setDeleteExerciseTarget({ routineId: routine.id, exercise })}
                             className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Eliminar Ejercicio"
                           >

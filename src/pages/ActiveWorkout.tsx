@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2 } from 'lucide-react';
-import { Button, Modal, Label, Input, Select } from '../components/ui';
+import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell } from 'lucide-react';
+import { Button, Modal, Label, Input, Select, Spinner, EmptyState } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 
 interface Exercise {
@@ -57,6 +57,12 @@ export default function ActiveWorkout() {
   const [logs, setLogs] = useState<Record<string, LogEntry>>({});
   const [completedExercises, setCompletedExercises] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [setValidationError, setSetValidationError] = useState<string | null>(null);
+  const [finishError, setFinishError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showExecution, setShowExecution] = useState<Record<number, boolean>>({});
   const [timer, setTimer] = useState(0);
   
   // Rest Timer State
@@ -83,10 +89,13 @@ export default function ActiveWorkout() {
       .then((res) => parseJsonResponse<Routine>(res))
       .then((data) => {
         setRoutine(data);
+        setFetchError(null);
         setLoading(false);
       })
       .catch((err) => {
         clientLogger.error('Failed to fetch routine', err);
+        setRoutine(null);
+        setFetchError('No se pudo cargar la rutina. Verifica tu conexión e intenta de nuevo.');
         setLoading(false);
       });
 
@@ -316,6 +325,7 @@ export default function ActiveWorkout() {
 
     } catch (err) {
       clientLogger.error('Failed to start workout session', err);
+      setSessionError('No se pudo iniciar la sesión. Recarga la página para reintentar.');
     }
   };
 
@@ -351,9 +361,10 @@ export default function ActiveWorkout() {
     const entry = logs[key];
     
     if (!entry || !entry.weight || !entry.reps) {
-      alert('Please enter weight and reps');
+      setSetValidationError('Ingresa peso y repeticiones antes de marcar la serie.');
       return;
     }
+    setSetValidationError(null);
 
     // Optimistic update
     setLogs(prev => ({
@@ -400,54 +411,61 @@ export default function ActiveWorkout() {
   };
 
   const [isFinishing, setIsFinishing] = useState(false);
-  const [successStatus, setSuccessStatus] = useState<boolean | null>(null);
 
-  const finishWorkout = async () => {
+  const confirmFinish = async (success: boolean) => {
     if (!sessionId) {
-      alert('Error: Sesión no iniciada. Intenta recargar la página.');
-      return;
-    }
-    
-    if (successStatus === null) {
-      setIsFinishing(true);
+      setFinishError('Sesión no iniciada. Recarga la página e intenta de nuevo.');
       return;
     }
 
+    setFinishError(null);
     try {
       const res = await apiFetch('/api/workouts/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           session_id: sessionId,
-          success: successStatus 
+          success,
         }),
       });
-      
+
       await parseJsonResponse(res);
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+      setIsFinishing(false);
       navigate('/routines');
     } catch (err) {
       clientLogger.error('Failed to finish workout', err);
-      alert(err instanceof Error ? err.message : 'Error de conexión al finalizar el entrenamiento.');
+      setFinishError(err instanceof Error ? err.message : 'Error al finalizar el entrenamiento.');
     }
   };
 
-  const resetProgress = () => {
-    if (confirm('¿Estás seguro de que quieres vaciar todos los campos y reiniciar el progreso no guardado?')) {
-      if (sessionId) {
-        localStorage.removeItem(`active_workout_logs_${sessionId}`);
-        localStorage.removeItem(`active_workout_sets_${sessionId}`);
-        localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
-      }
-      // Re-start session by clearing sessionId and reloading routine
-      setSessionId(null);
-      setTimer(0);
-      setLogs({});
-      setCompletedExercises({});
-      window.location.reload();
+  const finishWorkout = () => {
+    if (!sessionId) {
+      setFinishError('Sesión no iniciada. Recarga la página e intenta de nuevo.');
+      return;
     }
+    setFinishError(null);
+    setIsFinishing(true);
+  };
+
+  const resetProgress = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetProgress = () => {
+    if (sessionId) {
+      localStorage.removeItem(`active_workout_logs_${sessionId}`);
+      localStorage.removeItem(`active_workout_sets_${sessionId}`);
+      localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+    }
+    setShowResetConfirm(false);
+    setSessionId(null);
+    setTimer(0);
+    setLogs({});
+    setCompletedExercises({});
+    window.location.reload();
   };
 
   const formatTime = (seconds: number) => {
@@ -456,7 +474,30 @@ export default function ActiveWorkout() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (loading || !routine) return <div className="p-6 text-zinc-500 dark:text-zinc-400">Cargando entrenamiento...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (fetchError || !routine) {
+    return (
+      <div className="space-y-6">
+        <EmptyState
+          icon={Dumbbell}
+          title="Rutina no disponible"
+          description={fetchError ?? 'No se encontró la rutina solicitada.'}
+          action={
+            <Button onClick={() => navigate('/routines')}>
+              Volver a rutinas
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -485,6 +526,18 @@ export default function ActiveWorkout() {
           </Button>
         </div>
       </div>
+
+      {sessionError && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">
+          {sessionError}
+        </div>
+      )}
+
+      {setValidationError && (
+        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm font-bold text-orange-700 dark:text-orange-400">
+          {setValidationError}
+        </div>
+      )}
 
       {user?.role === 'trainer' && (
         <div className="flex justify-end px-2">
@@ -577,29 +630,9 @@ export default function ActiveWorkout() {
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">{exercise.muscle_group.toUpperCase()} • Descanso: {exercise.rest_seconds}s</p>
                 {exercise.weight_suggestion && (
-                  <div className="mt-1 space-y-2">
-                    <p className="text-xs text-orange-600 dark:text-orange-400 font-bold">PRO TIP: {exercise.weight_suggestion}</p>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          clientLogger.info('Equipment buy request', { exercise: exercise.name });
-                          alert(`Buy equipment for: ${exercise.name}`);
-                        }}
-                        className="px-4 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest rounded-lg hover:opacity-90 active:bg-zinc-700 dark:active:bg-zinc-200 active:scale-95 transition-all shadow-sm"
-                      >
-                        Buy
-                      </button>
-                      <button 
-                        onClick={() => {
-                          clientLogger.info('Equipment rent request', { exercise: exercise.name });
-                          alert(`Rent equipment for: ${exercise.name}`);
-                        }}
-                        className="px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600 active:scale-95 transition-all"
-                      >
-                        Rent
-                      </button>
-                    </div>
-                  </div>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 font-bold mt-1">
+                    Consejo: {exercise.weight_suggestion}
+                  </p>
                 )}
                 
                 {(exercise.description || exercise.execution || exercise.video_url) && (
@@ -625,20 +658,18 @@ export default function ActiveWorkout() {
 
                       {exercise.execution && (
                         <button 
+                          type="button"
                           className="text-[10px] flex items-center gap-1.5 font-black text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors uppercase tracking-widest bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
-                          onClick={() => {
-                            const details = document.getElementById(`exec-${exercise.id}`);
-                            if (details) details.classList.toggle('hidden');
-                          }}
+                          onClick={() => setShowExecution((prev) => ({ ...prev, [exercise.id]: !prev[exercise.id] }))}
                         >
                           <BookOpen className="h-3.5 w-3.5" />
-                          Ejecución
+                          {showExecution[exercise.id] ? 'Ocultar' : 'Ejecución'}
                         </button>
                       )}
                     </div>
                     
-                    {exercise.execution && (
-                      <div id={`exec-${exercise.id}`} className="hidden w-full mt-3 p-4 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 rounded-2xl animate-in slide-in-from-top-2">
+                    {exercise.execution && showExecution[exercise.id] && (
+                      <div className="w-full mt-3 p-4 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 rounded-2xl animate-in slide-in-from-top-2">
                         <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-2">Pasos a seguir</h4>
                         <p className="text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-line leading-relaxed">
                           {exercise.execution}
@@ -695,20 +726,20 @@ export default function ActiveWorkout() {
                       </span>
                     </div>
                     <div className="col-span-3">
-                      <input
+                      <Input
                         type="number"
                         placeholder="0"
-                        className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-2 py-2.5 text-center text-zinc-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-sm"
+                        className="text-center font-bold"
                         value={logs[key]?.weight || ''}
                         onChange={(e) => handleLogChange(exercise.id, setNum, 'weight', e.target.value)}
                         disabled={isCompleted}
                       />
                     </div>
                     <div className="col-span-3">
-                      <input
+                      <Input
                         type="number"
                         placeholder={exercise.reps.toString()}
-                        className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-2 py-2.5 text-center text-zinc-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-sm"
+                        className="text-center font-bold"
                         value={logs[key]?.reps || ''}
                         onChange={(e) => handleLogChange(exercise.id, setNum, 'reps', e.target.value)}
                         disabled={isCompleted}
@@ -750,7 +781,7 @@ export default function ActiveWorkout() {
 
       <Modal
         open={isFinishing}
-        onClose={() => setIsFinishing(false)}
+        onClose={() => { setIsFinishing(false); setFinishError(null); }}
         title={<>¡Felicidades!</>}
       >
         <div className="text-center mb-8">
@@ -760,15 +791,14 @@ export default function ActiveWorkout() {
           <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
         </div>
 
+        {finishError && (
+          <p className="text-sm font-bold text-red-500 mb-4 text-center">{finishError}</p>
+        )}
+
         <div className="space-y-4">
           <button
-            onClick={() => {
-              setSuccessStatus(true);
-              setTimeout(() => {
-                const btn = document.getElementById('final-confirm-btn');
-                if (btn) btn.click();
-              }, 100);
-            }}
+            type="button"
+            onClick={() => void confirmFinish(true)}
             className="w-full flex items-center justify-between p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl group hover:border-emerald-500 transition-all"
           >
             <div className="text-left">
@@ -781,29 +811,36 @@ export default function ActiveWorkout() {
           </button>
 
           <button
-            onClick={() => {
-              setSuccessStatus(false);
-              setTimeout(() => {
-                const btn = document.getElementById('final-confirm-btn');
-                if (btn) btn.click();
-              }, 100);
-            }}
+            type="button"
+            onClick={() => void confirmFinish(false)}
             className="w-full flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl group hover:border-zinc-400 transition-all"
           >
             <div className="text-left">
               <p className="font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">No completamente</p>
-              <p className="text-[10px] text-zinc-500/60 font-black uppercase tracking-widest text">Faltaron algunos ejercicios</p>
+              <p className="text-[10px] text-zinc-500/60 font-black uppercase tracking-widest">Faltaron algunos ejercicios</p>
             </div>
           </button>
 
-          <button
-            id="final-confirm-btn"
-            className="hidden"
-            onClick={finishWorkout}
-          />
-
           <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setIsFinishing(false)}>
             Volver al entrenamiento
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        title="Reiniciar progreso"
+      >
+        <p className="text-sm text-zinc-500 mb-6">
+          ¿Vaciar todos los campos y reiniciar el progreso no guardado de esta sesión?
+        </p>
+        <div className="flex gap-4">
+          <Button variant="ghost" className="flex-1" onClick={() => setShowResetConfirm(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={confirmResetProgress}>
+            Reiniciar
           </Button>
         </div>
       </Modal>

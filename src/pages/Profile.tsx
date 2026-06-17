@@ -18,7 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Spinner } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea } from '../components/ui';
 import {
   expiryBannerClasses,
   formatExpiryCountdown,
@@ -498,11 +498,10 @@ export default function Profile() {
                 <Target className="h-3 w-3" />
                 Objetivo
               </Label>
-              <textarea
+              <Textarea
                 value={form.goal}
                 onChange={(e) => setForm({ ...form, goal: e.target.value })}
                 rows={3}
-                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                 placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
               />
             </div>

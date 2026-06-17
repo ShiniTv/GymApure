@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
 import { Plus, Search, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input, Label, Modal, PageHeader } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea } from '../components/ui';
+import { Link } from 'react-router-dom';
 import { clientLogger } from '../lib/clientLogger';
 
 interface Exercise {
@@ -19,6 +20,12 @@ export default function Exercises() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
@@ -35,6 +42,7 @@ export default function Exercises() {
   }, []);
 
   const apiFetchExercises = async () => {
+    setLoading(true);
     try {
       const res = await apiFetch('/api/exercises');
       const data = await parseJsonResponse<Exercise[]>(res);
@@ -42,6 +50,8 @@ export default function Exercises() {
     } catch (err) {
       clientLogger.error('Failed to fetch exercises', err);
       setExercises([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,10 +77,13 @@ export default function Exercises() {
       });
     }
     setIsModalOpen(true);
+    setSaveError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
     const url = editingExercise ? `/api/exercises/${editingExercise.id}` : '/api/exercises';
     const method = editingExercise ? 'PUT' : 'POST';
 
@@ -91,19 +104,26 @@ export default function Exercises() {
       apiFetchExercises();
     } catch (err) {
       clientLogger.error('Failed to save exercise', err);
-      alert(err instanceof Error ? err.message : 'Error al guardar');
+      setSaveError(err instanceof Error ? err.message : 'Error al guardar');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de eliminar este ejercicio? No se podrá eliminar si está en alguna rutina.')) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
 
     try {
-      const res = await apiFetch(`/api/exercises/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/exercises/${deleteTarget.id}`, { method: 'DELETE' });
       await parseJsonResponse(res);
+      setDeleteTarget(null);
       apiFetchExercises();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error al eliminar');
+      setDeleteError(err instanceof Error ? err.message : 'Error al eliminar');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -134,7 +154,23 @@ export default function Exercises() {
   };
 
   if (user?.role !== 'trainer' && user?.role !== 'admin') {
-    return <div className="p-8 text-center">Acceso denegado.</div>;
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Acceso denegado" subtitle="No tienes permiso para ver esta sección." />
+        <Card padding="lg" className="text-center">
+          <p className="text-sm text-zinc-500 mb-4">Contacta al administrador si crees que es un error.</p>
+          <Link to="/" className="text-orange-600 font-bold text-sm hover:underline">Volver al inicio</Link>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -151,19 +187,40 @@ export default function Exercises() {
       />
 
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-        <input 
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 z-10 pointer-events-none" />
+        <Input
           type="text"
           placeholder="Buscar ejercicio por nombre o grupo muscular..."
-          className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl pl-12 pr-4 py-4 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-sm"
+          className="pl-12 py-4 bg-white dark:bg-zinc-900 shadow-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExercises.map((exercise) => (
-          <div key={exercise.id} className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden group hover:border-orange-500/50 transition-all shadow-sm hover:shadow-xl ${expandedId === exercise.id ? 'col-span-full ring-2 ring-orange-500/20' : ''}`}>
+        {filteredExercises.length === 0 ? (
+          <div className="col-span-full">
+            <EmptyState
+              icon={Dumbbell}
+              title={search ? 'Sin resultados' : 'Sin ejercicios'}
+              description={search ? `No hay ejercicios que coincidan con «${search}».` : 'Agrega movimientos al catálogo para usarlos en tus rutinas.'}
+              action={
+                !search ? (
+                  <Button onClick={() => handleOpenModal()}>
+                    <Plus className="h-4 w-4" />
+                    Nuevo ejercicio
+                  </Button>
+                ) : undefined
+              }
+            />
+          </div>
+        ) : filteredExercises.map((exercise) => (
+          <Card
+            key={exercise.id}
+            padding="none"
+            rounded="3xl"
+            className={`overflow-hidden group hover:border-orange-500/50 transition-all hover:shadow-xl ${expandedId === exercise.id ? 'col-span-full ring-2 ring-orange-500/20' : ''}`}
+          >
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-2xl group-hover:bg-orange-500/10 transition-colors">
@@ -173,7 +230,7 @@ export default function Exercises() {
                   <button onClick={() => handleOpenModal(exercise)} className="p-2 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-xl transition-all">
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button onClick={() => handleDelete(exercise.id)} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                  <button onClick={() => { setDeleteError(null); setDeleteTarget(exercise); }} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -181,10 +238,8 @@ export default function Exercises() {
 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white uppercase tracking-tight">{exercise.name}</h3>
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2 py-1 rounded-lg">
-                      {exercise.muscle_group}
-                    </span>
+                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{exercise.name}</h3>
+                    <Badge variant="default" className="mt-2">{exercise.muscle_group}</Badge>
                   </div>
 
                   <div className="space-y-2">
@@ -287,9 +342,33 @@ export default function Exercises() {
                   </div>
                 </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Eliminar ejercicio"
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+          ¿Eliminar <strong>{deleteTarget?.name}</strong>?
+        </p>
+        <p className="text-xs text-zinc-500 mb-6">
+          No se podrá eliminar si está en alguna rutina.
+        </p>
+        {deleteError && (
+          <p className="text-sm text-red-500 mb-4">{deleteError}</p>
+        )}
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         open={isModalOpen}
@@ -312,22 +391,20 @@ export default function Exercises() {
                 </div>
                 <div className="space-y-2">
                   <Label>Grupo Muscular</Label>
-                  <select
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
+                  <Select
                     value={formData.muscle_group}
                     onChange={(e) => setFormData({...formData, muscle_group: e.target.value})}
                   >
                     {['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Full Body'].map(g => (
                       <option key={g} value={g}>{g}</option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Descripción</Label>
-                <textarea
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+                <Textarea
                   placeholder="Describe brevemente el objetivo del ejercicio..."
                   rows={2}
                   value={formData.description}
@@ -337,8 +414,7 @@ export default function Exercises() {
 
               <div className="space-y-2">
                 <Label>Ejecución paso a paso</Label>
-                <textarea
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+                <Textarea
                   rows={4}
                   value={formData.execution}
                   onChange={(e) => setFormData({...formData, execution: e.target.value})}
@@ -375,12 +451,13 @@ export default function Exercises() {
                 </label>
               </div>
 
+              {saveError && <p className="text-sm text-red-500">{saveError}</p>}
               <div className="pt-4 flex gap-4">
                 <Button type="button" variant="ghost" className="flex-1" size="lg" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" className="flex-1" size="lg">
-                  {editingExercise ? 'Guardar cambios' : 'Crear ejercicio'}
+                <Button type="submit" className="flex-1" size="lg" disabled={saving}>
+                  {saving ? 'Guardando...' : editingExercise ? 'Guardar cambios' : 'Crear ejercicio'}
                 </Button>
               </div>
             </form>

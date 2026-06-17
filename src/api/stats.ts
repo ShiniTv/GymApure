@@ -117,6 +117,7 @@ router.get('/admin', authorize(['admin']), async (_req, res) => {
 
 router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
   const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
+  const alertDays = await getExpiryAlertDays();
 
   try {
     const todayWorkoutsSql = trainerId
@@ -137,36 +138,81 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
       : `SELECT COUNT(DISTINCT user_id)::text AS count FROM user_routines`;
 
     const recentSql = trainerId
-      ? `SELECT u.full_name, r.name AS routine_name, ws.start_time
+      ? `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
          FROM workout_sessions ws
          JOIN users u ON ws.user_id = u.id
          JOIN routines r ON ws.routine_id = r.id
          WHERE r.trainer_id = $1
          ORDER BY ws.start_time DESC
          LIMIT 5`
-      : `SELECT u.full_name, r.name AS routine_name, ws.start_time
+      : `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
          FROM workout_sessions ws
          JOIN users u ON ws.user_id = u.id
          JOIN routines r ON ws.routine_id = r.id
          ORDER BY ws.start_time DESC
          LIMIT 5`;
 
+    const membersWithoutRoutinesSql = trainerId
+      ? `SELECT COUNT(*)::text AS count FROM users u
+         WHERE u.role = 'member' AND u.status = 'active'
+           AND NOT EXISTS (
+             SELECT 1 FROM user_routines ur
+             JOIN routines r ON r.id = ur.routine_id
+             WHERE ur.user_id = u.id AND r.trainer_id = $1
+           )`
+      : null;
+
+    const expiringMembersSql = trainerId
+      ? `SELECT DISTINCT u.id, u.full_name, sub.days_remaining
+         FROM users u
+         JOIN user_routines ur ON ur.user_id = u.id
+         JOIN routines r ON r.id = ur.routine_id AND r.trainer_id = $1
+         JOIN LATERAL (
+           SELECT GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
+           FROM subscriptions s
+           WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
+           ORDER BY s.end_date DESC
+           LIMIT 1
+         ) sub ON true
+         WHERE sub.days_remaining IS NOT NULL AND sub.days_remaining <= $2
+         ORDER BY sub.days_remaining ASC
+         LIMIT 5`
+      : null;
+
+    const baseQueries = await Promise.all([
+      query<{ count: string }>("SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'"),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM attendance
+         WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+           AND check_out_time IS NULL`
+      ),
+      query<{ count: string }>(todayWorkoutsSql, trainerId ? [trainerId] : []),
+      query<{ count: string }>(routinesSql, trainerId ? [trainerId] : []),
+      query<{ count: string }>(assignedMembersSql, trainerId ? [trainerId] : []),
+      query<{ user_id: number; full_name: string; routine_name: string; start_time: string }>(
+        recentSql,
+        trainerId ? [trainerId] : []
+      ),
+    ]);
+
+    let membersWithoutRoutines = 0;
+    let expiringMembers: { id: number; full_name: string; days_remaining: number }[] = [];
+
+    if (trainerId && membersWithoutRoutinesSql) {
+      const noRoutineResult = await query<{ count: string }>(membersWithoutRoutinesSql, [trainerId]);
+      membersWithoutRoutines = parseInt(noRoutineResult.rows[0]?.count || '0', 10);
+    }
+
+    if (trainerId && expiringMembersSql) {
+      const expiringResult = await query<{ id: number; full_name: string; days_remaining: number }>(
+        expiringMembersSql,
+        [trainerId, alertDays]
+      );
+      expiringMembers = expiringResult.rows;
+    }
+
     const [totalMembers, activeSessions, todayWorkouts, routinesCreated, assignedMembers, recentActivities] =
-      await Promise.all([
-        query<{ count: string }>("SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'"),
-        query<{ count: string }>(
-          `SELECT COUNT(*)::text AS count FROM attendance
-           WHERE check_in_time >= NOW() - INTERVAL '2 hours'
-             AND check_out_time IS NULL`
-        ),
-        query<{ count: string }>(todayWorkoutsSql, trainerId ? [trainerId] : []),
-        query<{ count: string }>(routinesSql, trainerId ? [trainerId] : []),
-        query<{ count: string }>(assignedMembersSql, trainerId ? [trainerId] : []),
-        query<{ full_name: string; routine_name: string; start_time: string }>(
-          recentSql,
-          trainerId ? [trainerId] : []
-        ),
-      ]);
+      baseQueries;
 
     res.json({
       totalMembers: parseInt(totalMembers.rows[0]?.count || '0', 10),
@@ -175,6 +221,9 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
       routinesCreated: parseInt(routinesCreated.rows[0]?.count || '0', 10),
       assignedMembers: parseInt(assignedMembers.rows[0]?.count || '0', 10),
       recentActivities: recentActivities.rows,
+      membersWithoutRoutines,
+      expiringMembers,
+      expiryAlertDays: alertDays,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

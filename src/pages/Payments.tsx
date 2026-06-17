@@ -3,6 +3,7 @@ import { apiFetch, parseJsonResponse, paymentProofUrl } from '../lib/api';
 import { Plus, Upload, Check, X, FileImage } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useSearchParams } from 'react-router-dom';
 import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
@@ -31,6 +32,9 @@ const EXCHANGE_RATE = Number(import.meta.env.VITE_EXCHANGE_RATE ?? 40.5);
 export default function Payments() {
   const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
+  const memberStats = useMemberStatsOptional();
+  const isMember = user?.role === 'member';
+  const isAdmin = user?.role === 'admin';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,7 @@ export default function Payments() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [rejectTarget, setRejectTarget] = useState<Payment | null>(null);
   const [actionError, setActionError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -108,6 +113,7 @@ export default function Payments() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError('');
     const formData = new FormData();
     formData.append('user_id', user!.id.toString());
     formData.append('amount_usd', amountUsd);
@@ -117,25 +123,23 @@ export default function Payments() {
     formData.append('exchange_rate', String(EXCHANGE_RATE));
     if (file) formData.append('proof', file);
 
-    const res = await apiFetch('/api/payments', {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      const res = await apiFetch('/api/payments', {
+        method: 'POST',
+        body: formData,
+      });
+      await parseJsonResponse(res);
 
-    if (!res.ok) {
-      try {
-        await parseJsonResponse(res);
-      } catch (err) {
-        alert(err instanceof Error ? err.message : 'No se pudo enviar el pago');
-      }
-      return;
+      setShowModal(false);
+      setAmountUsd('');
+      setReference('');
+      setFile(null);
+      setSelectedPlanId('');
+      void apiFetchPayments();
+      await memberStats?.refresh();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'No se pudo enviar el pago');
     }
-
-    setShowModal(false);
-    setAmountUsd('');
-    setReference('');
-    setFile(null);
-    apiFetchPayments();
   };
 
   const openApproveModal = async (payment: Payment) => {
@@ -187,15 +191,21 @@ export default function Payments() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={<>GESTIÓN DE <span className="text-orange-500">PAGOS</span></>}
+        title={
+          isMember ? (
+            <>Mis <span className="text-orange-500">pagos</span></>
+          ) : (
+            <>GESTIÓN DE <span className="text-orange-500">PAGOS</span></>
+          )
+        }
         subtitle={
-          user?.role === 'member'
+          isMember
             ? 'Reporta tu pago y el admin activará tu membresía al aprobarlo'
             : 'Administra y aprueba los reportes de ingresos'
         }
         action={
-          user?.role === 'member' ? (
-            <Button onClick={() => setShowModal(true)}>
+          isMember ? (
+            <Button onClick={() => { setSubmitError(''); setShowModal(true); }}>
               <Plus className="h-5 w-5" />
               Reportar Pago
             </Button>
@@ -203,7 +213,7 @@ export default function Payments() {
         }
       />
 
-      {user?.role === 'admin' && (
+      {isAdmin && (
         <div className="flex gap-3">
           <Select
             value={statusFilter}
@@ -222,6 +232,94 @@ export default function Payments() {
       )}
 
       <Card padding="none" rounded="3xl" className="overflow-hidden">
+        {isMember ? (
+          <>
+            <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+              {loading ? (
+                <div className="p-12 flex justify-center text-zinc-400 text-sm">Cargando pagos...</div>
+              ) : payments.length === 0 ? (
+                <div className="p-12 text-center text-zinc-400 text-sm">No hay pagos registrados</div>
+              ) : (
+                payments.map((payment) => (
+                  <div key={payment.id} className="p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-black text-zinc-900 dark:text-white">${payment.amount_usd}</p>
+                      <Badge
+                        variant={
+                          payment.status === 'approved'
+                            ? 'success'
+                            : payment.status === 'rejected'
+                              ? 'danger'
+                              : 'warning'
+                        }
+                      >
+                        {payment.status === 'approved'
+                          ? 'Aprobado'
+                          : payment.status === 'rejected'
+                            ? 'Rechazado'
+                            : 'Pendiente'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-zinc-500 uppercase tracking-wider">
+                      {payment.method.replace('_', ' ')} · {new Date(payment.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs font-mono text-zinc-400">Ref: {payment.reference}</p>
+                    {payment.proof_url && (
+                      <a
+                        href={paymentProofUrl(payment.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-500"
+                      >
+                        <FileImage className="h-4 w-4" />
+                        Ver comprobante
+                      </a>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
+                  <tr>
+                    <th className="px-8 py-5">Monto (USD)</th>
+                    <th className="px-8 py-5">Método</th>
+                    <th className="px-8 py-5">Referencia</th>
+                    <th className="px-8 py-5">Comprobante</th>
+                    <th className="px-8 py-5">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {loading ? (
+                    <tr><td colSpan={5} className="px-8 py-12 text-center text-zinc-400">Cargando pagos...</td></tr>
+                  ) : payments.length === 0 ? (
+                    <tr><td colSpan={5} className="px-8 py-12 text-center text-zinc-400">No hay pagos registrados</td></tr>
+                  ) : payments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-8 py-5 font-black text-zinc-900 dark:text-white">${payment.amount_usd}</td>
+                      <td className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">{payment.method.replace('_', ' ')}</td>
+                      <td className="px-8 py-5 font-mono text-[10px] opacity-50">{payment.reference}</td>
+                      <td className="px-8 py-5">
+                        {payment.proof_url ? (
+                          <a href={paymentProofUrl(payment.id)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-orange-600 hover:text-orange-500">
+                            <FileImage className="h-4 w-4" /> Ver
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="px-8 py-5">
+                        <Badge variant={payment.status === 'approved' ? 'success' : payment.status === 'rejected' ? 'danger' : 'warning'}>
+                          {payment.status === 'approved' ? 'Aprobado' : payment.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
@@ -295,6 +393,7 @@ export default function Payments() {
             </tbody>
           </table>
         </div>
+        )}
         <PaginationBar
           page={page}
           pageSize={pageSize}
@@ -306,13 +405,16 @@ export default function Payments() {
 
       <Modal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => { setShowModal(false); setSubmitError(''); }}
         title={<>REPORTAR <span className="text-orange-500">PAGO</span></>}
         maxWidth="xl"
         scrollable
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          {user?.role === 'member' && membershipPlans.length > 0 && (
+          {submitError && (
+            <p className="text-sm font-bold text-red-500">{submitError}</p>
+          )}
+          {isMember && membershipPlans.length > 0 && (
             <div>
               <Label>Plan (referencia de monto)</Label>
               <Select

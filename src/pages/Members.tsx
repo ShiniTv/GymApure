@@ -4,7 +4,7 @@ import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, Credit
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import {
   getExpiryBadgeInfo,
@@ -61,6 +61,8 @@ export default function Members() {
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [assignError, setAssignError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [expiringFilter, setExpiringFilter] = useState(false);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
@@ -80,6 +82,9 @@ export default function Members() {
     return () => window.clearTimeout(timer);
   }, [searchInput]);
 
+  const isTrainer = user?.role === 'trainer';
+  const colCount = isTrainer ? 5 : 6;
+
   const apiFetchMembers = useCallback(async () => {
     setLoading(true);
     try {
@@ -89,6 +94,7 @@ export default function Members() {
       });
       if (search) params.set('q', search);
       if (expiringFilter) params.set('expiring', 'true');
+      if (isTrainer) params.set('role', 'member');
 
       const res = await apiFetch(`/api/users?${params.toString()}`);
       const data = await parseJsonResponse<PaginatedUsers>(res);
@@ -101,7 +107,7 @@ export default function Members() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, expiringFilter]);
+  }, [page, pageSize, search, expiringFilter, isTrainer]);
 
   useEffect(() => {
     void apiFetchMembers();
@@ -180,16 +186,19 @@ export default function Members() {
     }
   };
 
-  const handleDeleteUser = async (id: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) return;
-
+  const confirmDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const res = await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/users/${deleteTarget.id}`, { method: 'DELETE' });
       if (res.ok) {
+        setDeleteTarget(null);
         apiFetchMembers();
       }
     } catch (err) {
       clientLogger.error('Failed to delete user', err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -253,13 +262,23 @@ export default function Members() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={<>GESTIÓN DE <span className="text-orange-500">USUARIOS</span></>}
-        subtitle="Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores."
+        title={
+          isTrainer ? (
+            <>Mis <span className="text-orange-500">miembros</span></>
+          ) : (
+            <>Gestión de <span className="text-orange-500">usuarios</span></>
+          )
+        }
+        subtitle={
+          isTrainer
+            ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
+            : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
+        }
         action={
           (user?.role === 'trainer' || user?.role === 'admin') ? (
             <Button onClick={() => setIsAdding(true)}>
               <Plus className="h-5 w-5" />
-              Nuevo Usuario
+              {isTrainer ? 'Nuevo miembro' : 'Nuevo usuario'}
             </Button>
           ) : undefined
         }
@@ -338,6 +357,7 @@ export default function Members() {
                   placeholder="Repite la contraseña"
                 />
               </div>
+              {!isTrainer && (
               <div>
                 <Label>Rol de Usuario</Label>
                 <select
@@ -345,11 +365,12 @@ export default function Members() {
                   value={newMember.role}
                   onChange={(e) => setNewMember({...newMember, role: e.target.value})}
                 >
-                  <option value="member">MIEMBRO / ATLETA</option>
-                  <option value="trainer">ENTRENADOR / STAFF</option>
-                  {user?.role === 'admin' && <option value="admin">ADMINISTRADOR</option>}
+                  <option value="member">Miembro / Atleta</option>
+                  <option value="trainer">Entrenador / Staff</option>
+                  {user?.role === 'admin' && <option value="admin">Administrador</option>}
                 </select>
               </div>
+              )}
               {errors.submit && <p className="text-xs font-black text-red-500 text-center uppercase tracking-widest">{errors.submit}</p>}
               <Button onClick={handleAddMember} className="w-full mt-4" size="lg">
                 Crear Usuario
@@ -358,12 +379,12 @@ export default function Members() {
       </Modal>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4 w-full max-w-md shadow-sm focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
-          <Search className="h-5 w-5 text-zinc-400" />
-          <input 
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 z-10 pointer-events-none" />
+          <Input
             type="text"
             placeholder="Buscar por nombre o identificación..."
-            className="bg-transparent border-none focus:outline-none text-zinc-900 dark:text-white ml-3 w-full placeholder-zinc-400 font-bold"
+            className="pl-12 py-4 bg-white dark:bg-zinc-900 shadow-sm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -392,28 +413,31 @@ export default function Members() {
           <table className="w-full text-left text-sm text-zinc-500">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
               <tr>
-                <th className="px-8 py-5">Nombre</th>
-                <th className="px-8 py-5">Rol</th>
-                <th className="px-8 py-5">Identificación</th>
-                <th className="px-8 py-5">Membresía</th>
-                <th className="px-8 py-5">Estado</th>
-                <th className="px-8 py-5 text-right">Acciones</th>
+                <th className="px-4 md:px-8 py-5">Nombre</th>
+                {!isTrainer && <th className="px-4 md:px-8 py-5">Rol</th>}
+                <th className="px-4 md:px-8 py-5">Identificación</th>
+                <th className="px-4 md:px-8 py-5">Membresía</th>
+                <th className="px-4 md:px-8 py-5">Estado</th>
+                <th className="px-4 md:px-8 py-5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest">Cargando miembros...</td>
+                  <td colSpan={colCount} className="px-8 py-12 text-center">
+                    <Spinner />
+                  </td>
                 </tr>
               ) : filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">No se encontraron miembros</td>
+                  <td colSpan={colCount} className="px-8 py-12 text-center text-zinc-400 text-sm">No se encontraron miembros</td>
                 </tr>
               ) : (
                 filteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
-                    <td className="px-8 py-5 font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">{member.full_name}</td>
-                    <td className="px-8 py-5">
+                    <td className="px-4 md:px-8 py-5 font-bold text-zinc-700 dark:text-zinc-200">{member.full_name}</td>
+                    {!isTrainer && (
+                    <td className="px-4 md:px-8 py-5">
                        <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${
                         member.role === 'admin' 
                           ? 'bg-purple-500/10 text-purple-600 dark:text-purple-500' 
@@ -424,8 +448,9 @@ export default function Members() {
                         {member.role.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-8 py-5 font-black tracking-tighter text-zinc-500 dark:text-zinc-500">{member.cedula || '-'}</td>
-                    <td className="px-8 py-5">
+                    )}
+                    <td className="px-4 md:px-8 py-5 text-zinc-500">{member.cedula || '-'}</td>
+                    <td className="px-4 md:px-8 py-5">
                       {member.role === 'member' ? (
                         member.membership_name ? (
                           (() => {
@@ -449,17 +474,13 @@ export default function Members() {
                         <span className="text-zinc-400">—</span>
                       )}
                     </td>
-                    <td className="px-8 py-5">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${
-                        member.status === 'active' 
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500' 
-                          : 'bg-red-500/10 text-red-600 dark:text-red-500'
-                      }`}>
-                        {member.status === 'active' ? 'ACTIVO' : 'INACTIVO'}
-                      </span>
+                    <td className="px-4 md:px-8 py-5">
+                      <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
+                        {member.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
                     </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
+                    <td className="px-4 md:px-8 py-5 text-right">
+                      <div className={`flex justify-end gap-2 ${isTrainer ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'} transition-all`}>
                         {user?.role === 'trainer' && member.role === 'member' && (
                           <>
                             <button 
@@ -498,7 +519,7 @@ export default function Members() {
                             </button>
                             {member.role === 'member' && member.id !== user?.id && (
                               <button 
-                                onClick={() => handleDeleteUser(member.id)}
+                                onClick={() => setDeleteTarget(member)}
                                 className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                 title="Eliminar miembro"
                               >
@@ -555,6 +576,24 @@ export default function Members() {
             </Button>
           </>
         )}
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Eliminar usuario"
+      >
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+          ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede deshacer.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button variant="danger" className="flex-1" onClick={confirmDeleteUser} disabled={deleting}>
+            {deleting ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </div>
       </Modal>
     </div>
   );

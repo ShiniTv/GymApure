@@ -26,6 +26,7 @@ import {
   ScrollText,
   UserCircle,
   FileSpreadsheet,
+  CalendarClock,
   Settings2,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -56,8 +57,9 @@ export default function Layout() {
     { name: 'Configuración', href: '/settings', icon: Settings2, roles: ['admin'] },
     { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
-    { name: 'Biblioteca', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
-    { name: 'Historial', href: '/history', icon: History, roles: ['member', 'trainer'] },
+    { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock, roles: ['trainer'] },
+    { name: 'Ejercicios', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
+    { name: 'Historial', href: '/history', icon: History, roles: ['member'] },
     { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member'] },
   ];
 

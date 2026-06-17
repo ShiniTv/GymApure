@@ -35,6 +35,7 @@ export interface MemberStats {
 interface MemberStatsContextValue {
   stats: MemberStats | null;
   loading: boolean;
+  error: string | null;
   refresh: () => Promise<void>;
 }
 
@@ -58,15 +59,18 @@ export function MemberStatsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [stats, setStats] = useState<MemberStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (user?.role !== 'member') return;
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchMemberStats();
       setStats(data);
     } catch {
       setStats(null);
+      setError('No se pudieron cargar tus datos. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -83,8 +87,8 @@ export function MemberStatsProvider({ children }: { children: ReactNode }) {
   }, [user?.role, user?.id, refresh]);
 
   const value = useMemo(
-    () => ({ stats, loading, refresh }),
-    [stats, loading, refresh]
+    () => ({ stats, loading, error, refresh }),
+    [stats, loading, error, refresh]
   );
 
   return (

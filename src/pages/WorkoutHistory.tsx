@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Calendar, Clock, Dumbbell, ArrowLeft } from 'lucide-react';
-import { Card, PageHeader, Spinner, PaginationBar } from '../components/ui';
+import { Card, PageHeader, Spinner, PaginationBar, Badge, EmptyState, Button } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 
 interface WorkoutSession {
@@ -103,11 +103,11 @@ export default function WorkoutHistory() {
   };
 
   const formatDuration = (start: string, end: string | null) => {
-    if (!end) return 'In Progress';
+    if (!end) return 'En curso';
     const startTime = new Date(start).getTime();
     const endTime = new Date(end).getTime();
     const diffMins = Math.round((endTime - startTime) / 60000);
-    return `${diffMins} mins`;
+    return `${diffMins} min`;
   };
 
   const displayName = id ? targetUser?.full_name : user?.name;
@@ -149,24 +149,76 @@ export default function WorkoutHistory() {
 
       <Card padding="none" rounded="3xl" className="overflow-hidden">
         {history.length === 0 && !loading ? (
-          <div className="p-12 text-center">
-            <Dumbbell className="h-12 w-12 text-zinc-100 dark:text-zinc-800 mx-auto mb-4" />
-            <p className="text-zinc-400 font-black uppercase tracking-widest text-[10px]">
-              No se encontró historial de entrenamiento.
-            </p>
-          </div>
+          <EmptyState
+            icon={Dumbbell}
+            title={id ? 'Sin historial' : 'Aún no tienes entrenamientos'}
+            description={
+              id
+                ? 'Este miembro no tiene sesiones registradas.'
+                : 'Cuando completes una rutina, tus sesiones aparecerán aquí.'
+            }
+            action={
+              !id ? (
+                <Link to="/routines">
+                  <Button size="sm">Ver mis rutinas</Button>
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card list */}
+            <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+              {loading ? (
+                <div className="p-12 flex justify-center"><Spinner /></div>
+              ) : (
+                history.map((session) => (
+                  <div key={session.id} className="p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-zinc-900 dark:text-white text-sm">
+                        {new Date(session.start_time).toLocaleDateString()}
+                      </p>
+                      <Badge variant={session.end_time ? 'default' : 'warning'}>
+                        {session.end_time ? 'Finalizado' : 'En curso'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-orange-600 dark:text-orange-500 font-bold">{session.routine_name}</p>
+                    <div className="flex flex-wrap gap-3 text-xs text-zinc-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        {formatDuration(session.start_time, session.end_time)}
+                      </span>
+                      <span>{session.sets_completed} series</span>
+                      {id ? (
+                        <Badge variant={session.success === 1 ? 'success' : 'danger'}>
+                          {session.success === 1 ? 'Exitoso' : 'Fallido'}
+                        </Badge>
+                      ) : (
+                        <button
+                          onClick={() => toggleSuccess(session.id, session.success)}
+                          className="inline-flex"
+                        >
+                          <Badge variant={session.success === 1 ? 'success' : 'danger'}>
+                            {session.success === 1 ? 'Exitoso' : 'Fallido'}
+                          </Badge>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
                 <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
                   <tr>
-                    <th className="px-8 py-5">Fecha</th>
-                    <th className="px-8 py-5">Rutina</th>
-                    <th className="px-8 py-5">Duración</th>
-                    <th className="px-8 py-5">Series</th>
-                    <th className="px-8 py-5">Éxito</th>
-                    <th className="px-8 py-5">Estado</th>
+                    <th className="px-4 lg:px-8 py-5">Fecha</th>
+                    <th className="px-4 lg:px-8 py-5">Rutina</th>
+                    <th className="px-4 lg:px-8 py-5">Duración</th>
+                    <th className="px-4 lg:px-8 py-5">Series</th>
+                    <th className="px-4 lg:px-8 py-5">Éxito</th>
+                    <th className="px-4 lg:px-8 py-5">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -182,11 +234,11 @@ export default function WorkoutHistory() {
                         key={session.id}
                         className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group"
                       >
-                        <td className="px-8 py-5 font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">
+                        <td className="px-4 lg:px-8 py-5 font-bold text-zinc-700 dark:text-zinc-200">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-orange-500" />
                             {new Date(session.start_time).toLocaleDateString()}
-                            <span className="text-[10px] text-zinc-400 font-black tracking-widest opacity-50">
+                            <span className="text-[10px] text-zinc-400">
                               {new Date(session.start_time).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -194,42 +246,35 @@ export default function WorkoutHistory() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-8 py-5 font-black text-orange-600 dark:text-orange-500 italic tracking-tighter uppercase">
+                        <td className="px-4 lg:px-8 py-5 font-bold text-orange-600 dark:text-orange-500">
                           {session.routine_name}
                         </td>
-                        <td className="px-8 py-5 font-black text-zinc-500 dark:text-zinc-400 tracking-tighter">
-                          <div className="flex items-center gap-2 opacity-70">
+                        <td className="px-4 lg:px-8 py-5 text-zinc-500">
+                          <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
                             {formatDuration(session.start_time, session.end_time)}
                           </div>
                         </td>
-                        <td className="px-8 py-5 font-black text-zinc-500 dark:text-zinc-400 tracking-tighter">
-                          {session.sets_completed}{' '}
-                          <span className="text-[10px] uppercase opacity-50">series</span>
+                        <td className="px-4 lg:px-8 py-5 text-zinc-500">
+                          {session.sets_completed} series
                         </td>
-                        <td className="px-8 py-5">
-                          <button
-                            onClick={() => toggleSuccess(session.id, session.success)}
-                            className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                              session.success === 1
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 hover:bg-emerald-500/20'
-                                : 'bg-red-500/10 text-red-600 dark:text-red-500 hover:bg-red-500/20'
-                            } ${id ? 'cursor-default' : 'cursor-pointer'}`}
-                            title={id ? '' : 'Click para cambiar estado'}
-                          >
-                            {session.success === 1 ? 'EXITOSO' : 'FALLIDO'}
-                          </button>
+                        <td className="px-4 lg:px-8 py-5">
+                          {id ? (
+                            <Badge variant={session.success === 1 ? 'success' : 'danger'}>
+                              {session.success === 1 ? 'Exitoso' : 'Fallido'}
+                            </Badge>
+                          ) : (
+                            <button onClick={() => toggleSuccess(session.id, session.success)}>
+                              <Badge variant={session.success === 1 ? 'success' : 'danger'}>
+                                {session.success === 1 ? 'Exitoso' : 'Fallido'}
+                              </Badge>
+                            </button>
+                          )}
                         </td>
-                        <td className="px-8 py-5">
-                          <span
-                            className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                              session.end_time
-                                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                                : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500'
-                            }`}
-                          >
-                            {session.end_time ? 'FINALIZADO' : 'EN CURSO'}
-                          </span>
+                        <td className="px-4 lg:px-8 py-5">
+                          <Badge variant={session.end_time ? 'default' : 'warning'}>
+                            {session.end_time ? 'Finalizado' : 'En curso'}
+                          </Badge>
                         </td>
                       </tr>
                     ))
