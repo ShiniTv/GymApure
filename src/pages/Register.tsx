@@ -1,209 +1,295 @@
-import React, { useState } from 'react';
-import { apiFetch } from '../lib/api';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, CreditCard, Phone, ArrowLeft } from 'lucide-react';
-import Logo from '../components/Logo';
-
-export default function Register() {
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-    cedula: '',
-    phone: '',
-  });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (formData.password !== formData.confirm_password) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-
-    if (!formData.cedula.trim()) {
-      setError('La cédula es obligatoria para el check-in en el gym');
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const { confirm_password: _, ...payload } = formData;
-      const res = await apiFetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'No se pudo completar el registro');
-      
-      login(data.user);
-      if (data.message) setSuccess(data.message);
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 transition-colors duration-300">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-zinc-900 p-8 shadow-xl border border-zinc-200 dark:border-zinc-800">
-        <div className="text-center relative">
-          <Link to="/login" className="absolute left-0 top-1 text-zinc-400 hover:text-orange-500 transition-colors">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 ring-1 ring-orange-500/50">
-            <Logo className="h-10 w-10" />
-          </div>
-          <h2 className="mt-6 text-2xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic">
-            ÚNETE A <span className="text-orange-500">CARIBEAN</span>
-          </h2>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Crea tu cuenta de miembro ahora</p>
-        </div>
-
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {success && (
-            <div className="rounded-xl bg-emerald-500/10 p-4 text-sm text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-              {success}
-            </div>
-          )}
-
-          {error && (
-            <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-500 border border-red-500/20">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-3">
-            <div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <User className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="NOMBRE COMPLETO"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Mail className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="CORREO ELECTRÓNICO"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <CreditCard className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="CÉDULA (OBLIGATORIA)"
-                  value={formData.cedula}
-                  onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-                />
-              </div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Phone className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="TELÉFONO"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="CONTRASEÑA (MÍN. 8 CARACTERES)"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-4 w-4 text-zinc-400" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  className="block w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 py-2.5 pl-10 text-zinc-900 dark:text-white placeholder:text-[10px] placeholder:font-black placeholder:uppercase placeholder:tracking-widest focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 sm:text-sm transition-all shadow-inner"
-                  placeholder="CONFIRMAR CONTRASEÑA"
-                  value={formData.confirm_password}
-                  onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-xl bg-orange-600 py-3 px-4 text-sm font-black text-white hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-lg shadow-orange-900/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'REGISTRANDO...' : 'CREAR CUENTA'}
-            </button>
-          </div>
-
-          <div className="text-center mt-4">
-            <p className="text-xs text-zinc-500">
-              ¿Ya tienes una cuenta?{' '}
-              <Link to="/login" className="font-bold text-orange-600 hover:text-orange-500 uppercase tracking-tighter italic">
-                Inicia Sesión
-              </Link>
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+import React, { useState } from 'react';
+import { apiFetch, parseJsonResponse } from '../lib/api';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { User, Mail, CreditCard, Phone } from 'lucide-react';
+import Logo from '../components/Logo';
+import AuthShell from '../components/AuthShell';
+import { Button, Card, Input, Label, PasswordInput, passwordStrength } from '../components/ui';
+import { cn } from '../lib/utils';
+
+const STEPS = ['Datos personales', 'Credenciales'] as const;
+
+export default function Register() {
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    confirm_password: '',
+    cedula: '',
+    phone: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const strength = passwordStrength(formData.password);
+
+  const validateStep1 = () => {
+    if (!formData.full_name.trim()) {
+      setError('El nombre es obligatorio');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError('El correo es obligatorio');
+      return false;
+    }
+    if (!formData.cedula.trim()) {
+      setError('La cédula es obligatoria para el check-in en el gym');
+      return false;
+    }
+    setError('');
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep1()) setStep(1);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (formData.password !== formData.confirm_password) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { confirm_password: _, ...payload } = formData;
+      const res = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await parseJsonResponse<{ user: Parameters<typeof login>[0]; message?: string }>(res);
+      login(data.user);
+      navigate('/');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'No se pudo completar el registro');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthShell backLink={{ to: '/login', label: 'Volver al login' }}>
+      <Card className="w-full space-y-6 shadow-xl mt-10" padding="lg">
+        <div className="text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/10 ring-1 ring-orange-500/50">
+            <Logo className="h-12 w-12" />
+          </div>
+          <h1 className="mt-6 text-3xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic">
+            Únete a <span className="text-orange-500">Caribean</span>
+          </h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Crea tu cuenta de miembro</p>
+        </div>
+
+        <div className="flex items-center justify-center gap-2">
+          {STEPS.map((label, i) => (
+            <div key={label} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'h-2.5 w-2.5 rounded-full transition-colors',
+                  i <= step ? 'bg-orange-500' : 'bg-zinc-200 dark:bg-zinc-700'
+                )}
+                aria-hidden
+              />
+              <span
+                className={cn(
+                  'text-[10px] font-black uppercase tracking-widest hidden sm:inline',
+                  i === step ? 'text-orange-600 dark:text-orange-500' : 'text-zinc-400'
+                )}
+              >
+                {label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <div className="w-6 h-px bg-zinc-200 dark:bg-zinc-700 hidden sm:block" aria-hidden />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <form
+          className="space-y-4"
+          onSubmit={step === 1 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}
+        >
+          {error && (
+            <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-500 border border-red-500/20">
+              {error}
+            </div>
+          )}
+
+          {step === 0 ? (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="full_name">Nombre completo</Label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                    <User className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <Input
+                    id="full_name"
+                    type="text"
+                    required
+                    autoComplete="name"
+                    className="pl-10"
+                    placeholder="Juan Pérez"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="email">Correo electrónico</Label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                    <Mail className="h-5 w-5 text-zinc-400" />
+                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    className="pl-10"
+                    placeholder="correo@ejemplo.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cedula">Cédula</Label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                      <CreditCard className="h-5 w-5 text-zinc-400" />
+                    </div>
+                    <Input
+                      id="cedula"
+                      type="text"
+                      required
+                      autoComplete="off"
+                      className="pl-10"
+                      placeholder="V-12345678"
+                      value={formData.cedula}
+                      onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 mt-1">Formato: V-12345678</p>
+                </div>
+                <div>
+                  <Label htmlFor="phone">Teléfono</Label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
+                      <Phone className="h-5 w-5 text-zinc-400" />
+                    </div>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      className="pl-10"
+                      placeholder="+58 412…"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" size="lg">
+                Continuar
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="password">Contraseña</Label>
+                <PasswordInput
+                  id="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  placeholder="Mínimo 8 caracteres"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                {formData.password && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map((level) => (
+                        <div
+                          key={level}
+                          className={cn(
+                            'h-1 flex-1 rounded-full transition-colors',
+                            strength.score >= level
+                              ? level === 1
+                                ? 'bg-red-500'
+                                : level === 2
+                                  ? 'bg-yellow-500'
+                                  : 'bg-emerald-500'
+                              : 'bg-zinc-200 dark:bg-zinc-700'
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                      Fortaleza: {strength.label}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="confirm_password">Confirmar contraseña</Label>
+                <PasswordInput
+                  id="confirm_password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  placeholder="Repite tu contraseña"
+                  value={formData.confirm_password}
+                  onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => { setStep(0); setError(''); }}
+                >
+                  Atrás
+                </Button>
+                <Button type="submit" disabled={loading} className="flex-1" size="lg">
+                  {loading ? 'Registrando…' : 'Crear cuenta'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <p className="text-center text-xs text-zinc-500">
+            ¿Ya tienes cuenta?{' '}
+            <Link to="/login" className="font-bold text-orange-600 hover:text-orange-500">
+              Inicia sesión
+            </Link>
+          </p>
+        </form>
+      </Card>
+    </AuthShell>
+  );
+}
+

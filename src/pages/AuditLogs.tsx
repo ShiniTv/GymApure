@@ -3,6 +3,8 @@ import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Shield, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Badge, Button, Card, Label, PageHeader, Select, Spinner } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
 
 interface AuditLogRow {
   id: number;
@@ -47,17 +49,10 @@ function actionLabel(action: string): string {
   return ACTION_LABELS[action] ?? action;
 }
 
-function actionBadgeClass(action: string): string {
-  if (action.startsWith('payment.approve')) {
-    return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500';
-  }
-  if (action.startsWith('payment.reject') || action.startsWith('user.delete')) {
-    return 'bg-red-500/10 text-red-600 dark:text-red-500';
-  }
-  if (action.startsWith('membership')) {
-    return 'bg-blue-500/10 text-blue-600 dark:text-blue-500';
-  }
-  return 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400';
+function actionBadgeVariant(action: string): 'success' | 'danger' | 'default' {
+  if (action.startsWith('payment.approve')) return 'success';
+  if (action.startsWith('payment.reject') || action.startsWith('user.delete')) return 'danger';
+  return 'default';
 }
 
 export default function AuditLogs() {
@@ -73,7 +68,7 @@ export default function AuditLogs() {
       const data = await parseJsonResponse<AuditLogRow[]>(res);
       setLogs(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      clientLogger.error('Failed to fetch audit logs', err);
       setLogs([]);
     } finally {
       setLoading(false);
@@ -86,43 +81,33 @@ export default function AuditLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase leading-tight">
-            REGISTRO DE <span className="text-orange-500">AUDITORÍA</span>
-          </h1>
-          <p className="text-zinc-500 font-medium">
-            Acciones sensibles realizadas por administradores
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={loadLogs}
-          className="inline-flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:border-orange-500/50 transition-colors"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Actualizar
-        </button>
-      </div>
+      <PageHeader
+        title={<>REGISTRO DE <span className="text-orange-500">AUDITORÍA</span></>}
+        subtitle="Acciones sensibles realizadas por administradores"
+        action={
+          <Button variant="ghost" size="sm" onClick={loadLogs}>
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-          Filtrar
-        </label>
-        <select
+        <Label className="mb-0">Filtrar</Label>
+        <Select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500"
+          className="w-auto min-w-[200px] py-2"
         >
           {ACTION_FILTERS.map((opt) => (
             <option key={opt.value || 'all'} value={opt.value}>
               {opt.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+      <Card padding="none" rounded="3xl" className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
@@ -136,8 +121,8 @@ export default function AuditLogs() {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
-                    Cargando registros...
+                  <td colSpan={4} className="px-6 py-12 text-center">
+                    <Spinner className="mx-auto" />
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
@@ -146,9 +131,6 @@ export default function AuditLogs() {
                     <Shield className="h-10 w-10 mx-auto text-zinc-300 dark:text-zinc-700 mb-3" />
                     <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
                       No hay registros de auditoría
-                    </p>
-                    <p className="text-xs text-zinc-500 mt-2">
-                      Aparecerán al aprobar pagos, asignar membresías o gestionar usuarios.
                     </p>
                   </td>
                 </tr>
@@ -167,11 +149,9 @@ export default function AuditLogs() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-lg text-[10px] font-black tracking-widest uppercase ${actionBadgeClass(log.action)}`}
-                      >
+                      <Badge variant={actionBadgeVariant(log.action)}>
                         {actionLabel(log.action)}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-zinc-600 dark:text-zinc-400 max-w-md">
                       {formatDetails(log.details)}
@@ -182,7 +162,7 @@ export default function AuditLogs() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

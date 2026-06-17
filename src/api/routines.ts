@@ -2,8 +2,43 @@ import { Router } from 'express';
 import type { PoolClient } from 'pg';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
+import { logger } from '../lib/logger.ts';
 
 const router = Router();
+
+interface AssignmentRow {
+  user_id: number;
+  full_name: string;
+  profile_image: string | null;
+  routine_id: number;
+  routine_name: string;
+  difficulty: string;
+  assigned_at: string;
+  start_date: string | null;
+  end_date: string | null;
+  exercise_count: number;
+}
+
+interface AssignmentRoutine {
+  routine_id: number;
+  routine_name: string;
+  difficulty: string;
+  assigned_at: string;
+  start_date: string | null;
+  end_date: string | null;
+  exercise_count: number;
+}
+
+interface GroupedAssignment {
+  id: number;
+  full_name: string;
+  profile_image: string | null;
+  routines: AssignmentRoutine[];
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Error interno';
+}
 
 async function getRoutineTrainerId(routineId: string | number): Promise<number | null> {
   const { rows } = await query<{ trainer_id: number }>(
@@ -64,7 +99,7 @@ router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: Auth
       params.push(trainerId);
     }
 
-    const { rows } = await query(
+    const { rows } = await query<AssignmentRow>(
       `SELECT
         u.id as user_id,
         u.full_name,
@@ -84,7 +119,7 @@ router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: Auth
       params
     );
 
-    const grouped = rows.reduce((acc: Record<string, any>, curr: any) => {
+    const grouped = rows.reduce<Record<number, GroupedAssignment>>((acc, curr) => {
       const { user_id, full_name, profile_image, ...routine } = curr;
       if (!acc[user_id]) {
         acc[user_id] = {
@@ -99,8 +134,8 @@ router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: Auth
     }, {});
 
     res.json(Object.values(grouped));
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -127,8 +162,8 @@ router.get('/:id', async (req: AuthRequest, res) => {
     );
 
     res.json({ ...routine, exercises: exercisesResult.rows });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -140,8 +175,8 @@ router.post('/', authorize(['admin', 'trainer']), async (req, res) => {
       [name, difficulty, trainer_id]
     );
     res.json({ id: rows[0].id, success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -159,8 +194,8 @@ router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res
       req.params.id,
     ]);
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -192,9 +227,9 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, 
     });
 
     res.json({ success: true });
-  } catch (err: any) {
-    console.error('Delete routine error:', err);
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    logger.error('Delete routine error', { error: getErrorMessage(err) });
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -217,8 +252,8 @@ router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthR
     );
 
     res.json({ id: rows[0].id, success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -237,8 +272,8 @@ router.put('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']),
       [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
     );
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -254,8 +289,8 @@ router.delete('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer'
       req.params.id,
     ]);
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 

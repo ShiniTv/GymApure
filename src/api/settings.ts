@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Response } from 'express';
 import { z } from 'zod';
 import { authorize, AuthRequest } from './middleware/auth.ts';
 import {
@@ -6,10 +6,12 @@ import {
   updateExpirySettings,
   type ExpirySettings,
 } from '../lib/gymSettings.ts';
+import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { sendEmail, isEmailConfigured } from '../lib/notifications/email.ts';
 import { sendSms, isSmsConfigured } from '../lib/notifications/sms.ts';
 import { sendWhatsApp, isWhatsAppConfigured, getWhatsAppProvider, getWhatsAppProviderLabel } from '../lib/notifications/whatsapp.ts';
 import { runExpiryJob } from '../lib/notifications/expiryNotifier.ts';
+import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { logAudit } from '../lib/audit.ts';
 
 const router = Router();
@@ -49,6 +51,21 @@ function providerStatus() {
   };
 }
 
+function authorizeCronOrAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const headerSecret =
+    (typeof req.headers['x-cron-secret'] === 'string' ? req.headers['x-cron-secret'] : null) ??
+    (typeof req.headers.authorization === 'string'
+      ? req.headers.authorization.replace(/^Bearer\s+/i, '')
+      : null);
+
+  if (cronSecret && headerSecret === cronSecret) {
+    return next();
+  }
+
+  return authorize(['admin'])(req, res, next);
+}
+
 router.get('/expiry', authorize(['admin']), async (_req, res) => {
   try {
     const settings = await getExpirySettings();
@@ -70,6 +87,7 @@ router.put('/expiry', authorize(['admin']), async (req: AuthRequest, res) => {
 
   try {
     const settings = await updateExpirySettings(parsed.data as Partial<ExpirySettings>);
+    invalidateAdminStatsCache();
     await logAudit(req.user!.id, 'settings.expiry.update', parsed.data);
     res.json({
       ...settings,
@@ -81,11 +99,15 @@ router.put('/expiry', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/expiry/run', authorize(['admin']), async (req: AuthRequest, res) => {
+router.post('/expiry/run', authorizeCronOrAdmin, async (req: AuthRequest, res) => {
   try {
+    const maintenance = await runDbMaintenanceIfDue();
     const result = await runExpiryJob();
-    await logAudit(req.user!.id, 'settings.expiry.run', { ...result });
-    res.json({ success: true, result });
+    invalidateAdminStatsCache();
+    if (req.user) {
+      await logAudit(req.user.id, 'settings.expiry.run', { ...result, maintenance });
+    }
+    res.json({ success: true, result, maintenance });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -100,6 +122,7 @@ router.post('/notifications/test', authorize(['admin']), async (req: AuthRequest
 
   const { channel, target } = parsed.data;
   const message = 'Mensaje de prueba desde Caribean Gym. Si lo recibes, las notificaciones están configuradas correctamente.';
+  const isProduction = process.env.NODE_ENV === 'production';
 
   try {
     let sent = false;
@@ -122,7 +145,8 @@ router.post('/notifications/test', authorize(['admin']), async (req: AuthRequest
           ? isWhatsAppConfigured()
           : isSmsConfigured();
 
-    const mock = !sent && !configured;
+    const simulated = !isProduction && !sent && !configured;
+    const mock = simulated;
 
     res.json({
       success: sent,
@@ -130,16 +154,19 @@ router.post('/notifications/test', authorize(['admin']), async (req: AuthRequest
       configured,
       whatsappProvider: channel === 'whatsapp' ? getWhatsAppProvider() : undefined,
       whatsappProviderLabel: channel === 'whatsapp' ? getWhatsAppProviderLabel() : undefined,
+      simulated,
       mock,
       message: sent
         ? 'Mensaje enviado correctamente. Revisa tu bandeja de entrada.'
-        : mock
+        : simulated
           ? channel === 'email'
             ? 'Prueba simulada (sin SMTP). El mensaje se registró en la consola del servidor. Añade SMTP_HOST, SMTP_USER y SMTP_PASS en .env y reinicia para envío real.'
             : channel === 'whatsapp'
               ? 'Prueba simulada (sin WhatsApp). Revisa la consola del servidor o configura WHATSAPP_ACCESS_TOKEN / Twilio en .env.'
               : 'Prueba simulada (sin SMS). Revisa la consola del servidor o configura Twilio en .env.'
-          : 'No se pudo enviar. Revisa credenciales en .env (usuario, contraseña o token incorrectos).',
+          : !configured
+            ? 'Proveedor no configurado. Define credenciales reales en .env para habilitar envíos.'
+            : 'No se pudo enviar. Revisa credenciales en .env (usuario, contraseña o token incorrectos).',
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno';

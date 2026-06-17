@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse, resolveAvatarUrl } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import {
   User,
   Scale,
@@ -12,22 +13,22 @@ import {
   TrendingUp,
   Minus,
   Dumbbell,
-  X,
   Lock,
   CreditCard,
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button, Card, Modal, PageHeader, Label, Input, Spinner } from '../components/ui';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { format, startOfMonth, isAfter } from 'date-fns';
+  expiryBannerClasses,
+  formatExpiryCountdown,
+  getExpirySeverity,
+  MEMBER_UI_ALERT_DAYS,
+  shouldShowExpiryAlert,
+} from '../lib/expiryUtils';
+
+const ProfileWeightChart = lazy(() => import('../components/ProfileWeightChart'));
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface UserProfile {
@@ -59,13 +60,9 @@ interface WorkoutSession {
   routine_name: string;
 }
 
-interface Subscription {
-  membership_name: string;
-  days_remaining: number;
-  end_date: string;
+interface PaginatedHistory {
+  items: WorkoutSession[];
 }
-
-const MEMBER_EXPIRY_ALERT_DAYS = 5;
 
 function StatMini({
   label,
@@ -77,18 +74,18 @@ function StatMini({
   sub?: string;
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5">
+    <Card padding="sm" className="p-5">
       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
       <p className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{value}</p>
       {sub && <p className="text-[10px] font-bold text-zinc-400 mt-1 uppercase tracking-widest">{sub}</p>}
-    </div>
+    </Card>
   );
 }
 
 export default function Profile() {
   const { user } = useAuth();
+  const memberStats = useMemberStatsOptional();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,26 +126,26 @@ export default function Profile() {
     if (!user) return;
     setLoading(true);
     try {
-      const [profileRes, measRes, histRes, subRes] = await Promise.all([
+      const requests: Promise<Response>[] = [
         apiFetch(`/api/users/${user.id}`),
         apiFetch(`/api/users/${user.id}/measurements`),
-        apiFetch(`/api/users/${user.id}/history`),
-        user.role === 'member'
-          ? apiFetch(`/api/memberships/user/${user.id}`)
-          : Promise.resolve(new Response(JSON.stringify(null), { status: 200 })),
-      ]);
+      ];
+
+      if (user.role === 'member') {
+        requests.push(apiFetch(`/api/users/${user.id}/history?limit=5`));
+      }
+
+      const [profileRes, measRes, histRes] = await Promise.all(requests);
       const profileData = await parseJsonResponse<UserProfile>(profileRes);
       const measData = await parseJsonResponse<Measurement[]>(measRes);
-      const histData = await parseJsonResponse<WorkoutSession[]>(histRes);
-      const subData =
-        user.role === 'member'
-          ? await parseJsonResponse<Subscription | null>(subRes)
-          : null;
+      const histData =
+        user.role === 'member' && histRes
+          ? await parseJsonResponse<PaginatedHistory>(histRes)
+          : { items: [] };
 
       setProfile(profileData);
-      setSubscription(subData);
       setMeasurements(Array.isArray(measData) ? measData : []);
-      setWorkouts(Array.isArray(histData) ? histData : []);
+      setWorkouts(Array.isArray(histData.items) ? histData.items : []);
       setForm({
         phone: profileData.phone ?? '',
         initial_weight: profileData.initial_weight?.toString() ?? '',
@@ -158,7 +155,6 @@ export default function Profile() {
       });
     } catch {
       setProfile(null);
-      setSubscription(null);
       setMeasurements([]);
       setWorkouts([]);
     } finally {
@@ -195,10 +191,8 @@ export default function Profile() {
     return Math.round((latestWeight / (h * h)) * 10) / 10;
   }, [latestWeight, profile?.height]);
 
-  const workoutsThisMonth = useMemo(() => {
-    const monthStart = startOfMonth(new Date());
-    return workouts.filter((w) => isAfter(new Date(w.start_time), monthStart)).length;
-  }, [workouts]);
+  const subscription = memberStats?.stats?.subscription ?? null;
+  const workoutsThisMonth = memberStats?.stats?.workoutsThisMonth ?? 0;
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -321,7 +315,7 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent" />
+        <Spinner />
       </div>
     );
   }
@@ -338,37 +332,27 @@ export default function Profile() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase">
-          Mi <span className="text-orange-500">Perfil</span>
-        </h1>
-        {saveMsg && (
-          <p className="text-sm font-black uppercase tracking-widest text-emerald-600">{saveMsg}</p>
-        )}
-        {saveError && (
-          <p className="text-sm font-black uppercase tracking-widest text-red-500">{saveError}</p>
-        )}
-      </div>
+      <PageHeader
+        title={<>Mi <span className="text-orange-500">Perfil</span></>}
+        action={
+          saveMsg ? (
+            <p className="text-sm font-black uppercase tracking-widest text-emerald-600">{saveMsg}</p>
+          ) : saveError ? (
+            <p className="text-sm font-black uppercase tracking-widest text-red-500">{saveError}</p>
+          ) : undefined
+        }
+      />
 
-      {user.role === 'member' && subscription && subscription.days_remaining <= MEMBER_EXPIRY_ALERT_DAYS && (
-        <div className={`rounded-2xl border px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-          subscription.days_remaining <= 3
-            ? 'border-red-500/30 bg-red-500/10'
-            : 'border-orange-500/30 bg-orange-500/10'
-        }`}>
+      {user.role === 'member' && subscription && shouldShowExpiryAlert(subscription.days_remaining, MEMBER_UI_ALERT_DAYS) && (() => {
+        const severity = getExpirySeverity(subscription.days_remaining, MEMBER_UI_ALERT_DAYS);
+        const classes = expiryBannerClasses(severity);
+        return (
+        <div className={`rounded-2xl border px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${classes.container}`}>
           <div className="flex items-start gap-3">
-            <AlertTriangle className={`h-5 w-5 shrink-0 mt-0.5 ${
-              subscription.days_remaining <= 3 ? 'text-red-500' : 'text-orange-500'
-            }`} />
+            <AlertTriangle className={`h-5 w-5 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`} />
             <div>
-              <p className={`text-sm font-bold ${
-                subscription.days_remaining <= 3 ? 'text-red-700 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'
-              }`}>
-                {subscription.days_remaining === 0
-                  ? `Tu plan ${subscription.membership_name} vence hoy.`
-                  : subscription.days_remaining === 1
-                  ? `Tu plan ${subscription.membership_name} vence mañana.`
-                  : `Tu plan ${subscription.membership_name} vence en ${subscription.days_remaining} días.`}
+              <p className={`text-sm font-bold ${classes.text}`}>
+                {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
               </p>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
@@ -377,13 +361,14 @@ export default function Profile() {
           </div>
           <Link
             to="/payments"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-orange-600 hover:text-orange-500 shrink-0"
+            className={`inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest shrink-0 ${classes.link}`}
           >
             <CreditCard className="h-4 w-4" />
             Renovar
           </Link>
         </div>
-      )}
+        );
+      })()}
 
       {user.role === 'member' && !subscription && (
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -417,7 +402,7 @@ export default function Profile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Formulario de perfil */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+        <Card>
           <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <User className="h-4 w-4" />
             Datos personales
@@ -472,80 +457,64 @@ export default function Profile() {
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-                Teléfono
-              </label>
-              <input
+              <Label>Teléfono</Label>
+              <Input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="+58 412 0000000"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-                Fecha de nacimiento
-              </label>
-              <input
+              <Label>Fecha de nacimiento</Label>
+              <Input
                 type="date"
                 value={form.dob}
                 onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-                  Peso inicial (kg)
-                </label>
-                <input
+                <Label>Peso inicial (kg)</Label>
+                <Input
                   type="number"
                   step="0.1"
                   value={form.initial_weight}
                   onChange={(e) => setForm({ ...form, initial_weight: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-                  Altura (cm)
-                </label>
-                <input
+                <Label>Altura (cm)</Label>
+                <Input
                   type="number"
                   step="0.1"
                   value={form.height}
                   onChange={(e) => setForm({ ...form, height: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>
             <div>
-              <label className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
+              <Label className="flex items-center gap-1">
                 <Target className="h-3 w-3" />
                 Objetivo
-              </label>
+              </Label>
               <textarea
                 value={form.goal}
                 onChange={(e) => setForm({ ...form, goal: e.target.value })}
                 rows={3}
-                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                 placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
               />
             </div>
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
-            >
+            <Button type="submit" variant="secondary" disabled={saving} className="w-full" size="lg">
               <Save className="h-4 w-4" />
               {saving ? 'Guardando...' : 'Guardar perfil'}
-            </button>
+            </Button>
           </form>
-        </div>
+        </Card>
 
         {/* Gráfica de peso */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+        <Card>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
               <Scale className="h-4 w-4" />
@@ -575,54 +544,9 @@ export default function Profile() {
           </div>
 
           {chartData.length >= 2 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="currentColor"
-                    className="text-zinc-100 dark:text-zinc-800"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke="currentColor"
-                    className="text-zinc-400"
-                    fontSize={10}
-                    fontWeight="900"
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="currentColor"
-                    className="text-zinc-400"
-                    fontSize={10}
-                    fontWeight="900"
-                    tickLine={false}
-                    axisLine={false}
-                    domain={['dataMin - 2', 'dataMax + 2']}
-                    tickFormatter={(v) => `${v} kg`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '12px',
-                      border: 'none',
-                      fontWeight: '900',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: number) => [`${value} kg`, 'Peso']}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="weight"
-                    stroke="#f97316"
-                    strokeWidth={3}
-                    dot={{ fill: '#f97316', r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <Suspense fallback={<div className="h-64 flex items-center justify-center"><Spinner /></div>}>
+              <ProfileWeightChart data={chartData} />
+            </Suspense>
           ) : chartData.length === 1 ? (
             <div className="h-64 flex flex-col items-center justify-center text-center">
               <p className="text-4xl font-black text-orange-500 italic">{chartData[0].weight} kg</p>
@@ -637,24 +561,19 @@ export default function Profile() {
               <p className="text-xs text-zinc-400 mt-1">Registra tu primera medición abajo</p>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* Mediciones */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+      <Card>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
             <Scale className="h-4 w-4" />
             Historial de mediciones
           </h2>
-          <button
-            type="button"
-            onClick={() => setIsAddingMeasurement(true)}
-            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-500 bg-orange-500/10 px-4 py-2 rounded-xl transition-colors"
-          >
+          <Button type="button" size="sm" onClick={() => setIsAddingMeasurement(true)}>
             <Plus className="h-3.5 w-3.5" />
             Nueva medición
-          </button>
+          </Button>
         </div>
 
         {measurements.length > 0 ? (
@@ -704,11 +623,11 @@ export default function Profile() {
             Sin mediciones registradas
           </p>
         )}
-      </div>
+      </Card>
 
       {/* Últimos entrenamientos */}
       {workouts.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+        <Card>
           <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
             <Dumbbell className="h-4 w-4" />
             Actividad reciente
@@ -728,11 +647,10 @@ export default function Profile() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Cambio de contraseña */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+      <Card>
         <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
           <Lock className="h-4 w-4" />
           Seguridad
@@ -745,138 +663,109 @@ export default function Profile() {
         )}
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-              Contraseña actual
-            </label>
-            <input
+            <Label>Contraseña actual</Label>
+            <Input
               type="password"
               autoComplete="current-password"
               value={passwordForm.current_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-              Nueva contraseña
-            </label>
-            <input
+            <Label>Nueva contraseña</Label>
+            <Input
               type="password"
               autoComplete="new-password"
               value={passwordForm.new_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
               minLength={8}
               required
             />
             <p className="text-[10px] text-zinc-400 mt-1">Mínimo 8 caracteres</p>
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-              Confirmar nueva contraseña
-            </label>
-            <input
+            <Label>Confirmar nueva contraseña</Label>
+            <Input
               type="password"
               autoComplete="new-password"
               value={passwordForm.confirm_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={passwordSaving}
-            className="py-3 px-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
-          >
+          <Button type="submit" variant="secondary" disabled={passwordSaving}>
             <Lock className="h-4 w-4" />
             {passwordSaving ? 'Actualizando...' : 'Cambiar contraseña'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      {isAddingMeasurement && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Nueva medición</h2>
-              <button
-                type="button"
-                onClick={() => setIsAddingMeasurement(false)}
-                className="text-zinc-400 hover:text-zinc-600"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            {measurementError && (
-              <p className="text-sm text-red-500 font-bold mb-4">{measurementError}</p>
-            )}
-            <form onSubmit={handleAddMeasurement} className="space-y-4">
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Fecha</label>
-                <input
-                  type="date"
-                  value={measurementForm.date}
-                  onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
-                  className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Peso (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.weight}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Grasa (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.body_fat_percentage}
-                    onChange={(e) =>
-                      setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })
-                    }
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Cintura (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.waist}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Brazo (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.arm}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest"
-              >
-                Guardar medición
-              </button>
-            </form>
+      <Modal
+        open={isAddingMeasurement}
+        onClose={() => setIsAddingMeasurement(false)}
+        title="Nueva medición"
+        maxWidth="xl"
+        scrollable
+      >
+        {measurementError && (
+          <p className="text-sm text-red-500 font-bold mb-4">{measurementError}</p>
+        )}
+        <form onSubmit={handleAddMeasurement} className="space-y-4">
+          <div>
+            <Label>Fecha</Label>
+            <Input
+              type="date"
+              value={measurementForm.date}
+              onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
+              required
+            />
           </div>
-        </div>
-      )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Peso (kg)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.weight}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Grasa (%)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.body_fat_percentage}
+                onChange={(e) =>
+                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Cintura (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.waist}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Brazo (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.arm}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button type="submit" className="w-full">
+            Guardar medición
+          </Button>
+        </form>
+      </Modal>
     </div>
   );
 }

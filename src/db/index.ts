@@ -1,9 +1,13 @@
 import pg from 'pg';
 import { env } from '../config/env.ts';
 import { isSupabaseStorageConfigured } from '../lib/supabaseAdmin.ts';
+import { logger } from '../lib/logger.ts';
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
   ssl: env.DATABASE_URL.includes('supabase')
     ? { rejectUnauthorized: false }
     : undefined,
@@ -37,17 +41,21 @@ export async function initDb() {
   await query('SELECT 1');
   const { rows } = await query<{ count: string }>('SELECT COUNT(*)::text AS count FROM users');
   if (parseInt(rows[0].count, 10) === 0) {
-    console.warn(
-      '[db] Base de datos sin usuarios. Crea el primer admin: npm run db:create-admin'
-    );
+    logger.warn('Base de datos sin usuarios', {
+      action: 'npm run db:create-admin',
+    });
   }
 
   if (isSupabaseStorageConfigured()) {
-    console.log('[storage] Comprobantes de pago → Supabase Storage (payment-proofs)');
+    logger.info('Storage de comprobantes configurado', {
+      backend: 'supabase',
+      bucket: 'payment-proofs',
+    });
   } else {
-    console.warn(
-      '[storage] Comprobantes en disco local (uploads/proofs). Define SUPABASE_SERVICE_ROLE_KEY para persistencia en Supabase.'
-    );
+    logger.warn('Storage de comprobantes en disco local', {
+      path: 'uploads/proofs',
+      recommendation: 'Definir SUPABASE_SERVICE_ROLE_KEY',
+    });
   }
 }
 

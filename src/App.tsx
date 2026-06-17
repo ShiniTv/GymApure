@@ -2,15 +2,18 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AdminStatsProvider } from './context/AdminStatsContext';
+import { MemberStatsProvider } from './context/MemberStatsContext';
 import Layout from './components/Layout';
+import { Spinner } from './components/ui';
+import Login from './pages/Login';
+import CheckIn from './pages/CheckIn';
 
-const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Members = lazy(() => import('./pages/Members'));
 const Payments = lazy(() => import('./pages/Payments'));
 const Attendance = lazy(() => import('./pages/Attendance'));
-const CheckIn = lazy(() => import('./pages/CheckIn'));
 const Memberships = lazy(() => import('./pages/Memberships'));
 const Routines = lazy(() => import('./pages/Routines'));
 const Exercises = lazy(() => import('./pages/Exercises'));
@@ -20,11 +23,15 @@ const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 function PageLoader() {
   return (
-    <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white font-bold tracking-widest uppercase">
-      Cargando...
+    <div className="flex h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+      <div className="flex flex-col items-center gap-3">
+        <Spinner />
+        <p className="font-bold tracking-widest uppercase text-xs text-zinc-500">Cargando...</p>
+      </div>
     </div>
   );
 }
@@ -68,7 +75,11 @@ function AppRoutes() {
         
         <Route path="/" element={
           <ProtectedRoute>
-            <Layout />
+            <AdminStatsProvider>
+              <MemberStatsProvider>
+                <Layout />
+              </MemberStatsProvider>
+            </AdminStatsProvider>
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
@@ -95,6 +106,11 @@ function AppRoutes() {
         <Route path="reports" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Reports />
+          </ProtectedRoute>
+        } />
+        <Route path="settings" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Settings />
           </ProtectedRoute>
         } />
         <Route path="members/:id/routines" element={

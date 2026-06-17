@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAdminStatsOptional } from '../context/AdminStatsContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useTheme } from '../context/ThemeContext';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import {
+  expiryNavDotClass,
+  MEMBER_UI_ALERT_DAYS,
+  shouldShowExpiryAlert,
+} from '../lib/expiryUtils';
 import Logo from './Logo';
 import { 
   LayoutDashboard, 
@@ -19,40 +25,26 @@ import {
   BookOpen,
   ScrollText,
   UserCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Settings2,
 } from 'lucide-react';
 import clsx from 'clsx';
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  trainer: 'Entrenador',
+  member: 'Miembro',
+};
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expiringCount, setExpiringCount] = useState(0);
-  const [memberExpiryDays, setMemberExpiryDays] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      apiFetch('/api/stats/admin')
-        .then((res) => parseJsonResponse<{ expiringSoon?: number }>(res))
-        .then((data) => setExpiringCount(data.expiringSoon ?? 0))
-        .catch(() => setExpiringCount(0));
-      setMemberExpiryDays(null);
-      return;
-    }
-
-    if (user?.role === 'member') {
-      setExpiringCount(0);
-      apiFetch(`/api/memberships/user/${user.id}`)
-        .then((res) => parseJsonResponse<{ days_remaining?: number } | null>(res))
-        .then((data) => setMemberExpiryDays(data?.days_remaining ?? null))
-        .catch(() => setMemberExpiryDays(null));
-      return;
-    }
-
-    setExpiringCount(0);
-    setMemberExpiryDays(null);
-  }, [user?.role, user?.id, location.pathname]);
+  const adminStats = useAdminStatsOptional();
+  const memberStats = useMemberStatsOptional();
+  const expiringCount = adminStats?.expiringSoon ?? 0;
+  const memberExpiryDays = memberStats?.stats?.subscription?.days_remaining ?? null;
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member'] },
@@ -61,6 +53,7 @@ export default function Layout() {
     { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, roles: ['admin'] },
     { name: 'Asistencias', href: '/attendance', icon: BarChart2, roles: ['admin'] },
     { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, roles: ['admin'] },
+    { name: 'Configuración', href: '/settings', icon: Settings2, roles: ['admin'] },
     { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
     { name: 'Biblioteca', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
@@ -128,10 +121,8 @@ export default function Layout() {
                         {expiringCount > 99 ? '99+' : expiringCount}
                       </span>
                     )}
-                    {user?.role === 'member' && item.href === '/' && memberExpiryDays != null && memberExpiryDays <= 5 && (
-                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-black ${
-                        memberExpiryDays <= 3 ? 'bg-red-500' : 'bg-orange-500'
-                      }`}>
+                    {user?.role === 'member' && item.href === '/' && memberExpiryDays != null && shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
+                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-black ${expiryNavDotClass(memberExpiryDays)}`}>
                         !
                       </span>
                     )}
@@ -161,7 +152,9 @@ export default function Layout() {
 
               <div className="px-3 py-2">
                 <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight italic">{user?.name}</p>
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mt-1">{user?.role}</p>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mt-1">
+                  {ROLE_LABELS[user?.role ?? ''] ?? user?.role}
+                </p>
               </div>
               <button
                 onClick={logout}

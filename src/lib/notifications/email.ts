@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { logger } from '../logger.ts';
 
 export interface EmailPayload {
   to: string;
@@ -52,7 +53,14 @@ function getTransporter(): nodemailer.Transporter | null {
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   const transport = getTransporter();
   if (!transport) {
-    console.log(`[email:mock] To: ${payload.to} | ${payload.subject}\n${payload.text}`);
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('SMTP no configurado. Envío cancelado.');
+    } else {
+      logger.info('Email simulado (sin SMTP)', {
+        to: payload.to,
+        subject: payload.subject,
+      });
+    }
     return false;
   }
 
@@ -66,7 +74,10 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     });
     return true;
   } catch (err) {
-    console.error('[email] Error enviando a', payload.to, err);
+    logger.error('Error enviando email', {
+      to: payload.to,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return false;
   }
 }

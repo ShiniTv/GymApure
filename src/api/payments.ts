@@ -18,6 +18,12 @@ import {
   notifyPaymentRejected,
   notifyPaymentReported,
 } from '../lib/notifications/eventNotifier.ts';
+import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
+import {
+  parsePaginationQuery,
+  parseSearchQuery,
+  type PaginatedResult,
+} from '../lib/pagination.ts';
 
 const router = Router();
 
@@ -32,24 +38,69 @@ const paymentReportSchema = z.object({
 
 router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) => {
   const user = req.user!;
+  const { page, pageSize, offset } = parsePaginationQuery(req.query, {
+    pageSize: user.role === 'member' ? 10 : 20,
+  });
+  const search = parseSearchQuery(req.query);
+  const status =
+    typeof req.query.status === 'string' && ['pending', 'approved', 'rejected'].includes(req.query.status)
+      ? req.query.status
+      : '';
 
-  let sql = `
-    SELECT p.*, u.full_name as user_name
-    FROM payments p
-    JOIN users u ON p.user_id = u.id
-  `;
+  const conditions: string[] = [];
   const params: unknown[] = [];
 
   if (user.role === 'member') {
-    sql += ` WHERE p.user_id = $1 `;
     params.push(user.id);
+    conditions.push(`p.user_id = $${params.length}`);
   }
 
-  sql += ` ORDER BY p.created_at DESC `;
+  if (status) {
+    params.push(status);
+    conditions.push(`p.status = $${params.length}`);
+  }
+
+  if (search && user.role === 'admin') {
+    params.push(`%${search.toLowerCase()}%`);
+    const idx = params.length;
+    conditions.push(
+      `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(p.reference, '')) LIKE $${idx})`
+    );
+  }
+
+  const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const countParams = [...params];
+  const listParams = [...params, pageSize, offset];
 
   try {
-    const { rows } = await query(sql, params);
-    res.json(rows);
+    const [countResult, listResult] = await Promise.all([
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM payments p
+         JOIN users u ON p.user_id = u.id
+         ${whereSql}`,
+        countParams
+      ),
+      query(
+        `SELECT p.*, u.full_name AS user_name
+         FROM payments p
+         JOIN users u ON p.user_id = u.id
+         ${whereSql}
+         ORDER BY p.created_at DESC
+         LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+        listParams
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
+    const payload: PaginatedResult<unknown> = {
+      items: listResult.rows,
+      total,
+      page,
+      pageSize,
+    };
+
+    res.json(payload);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -125,6 +176,7 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
     }
 
     res.json({ id: paymentId, status: 'pending', proof_url });
+    invalidateAdminStatsCache();
     void notifyPaymentReported(paymentId, user_id, Number(amount_usd)).catch((err) =>
       console.error('[notify] payment reported', err)
     );
@@ -183,6 +235,7 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
     });
 
     await logAudit(req.user!.id, 'payment.approve', { payment_id: id, membership_id: membershipId });
+    invalidateAdminStatsCache();
     res.json({ success: true });
 
     void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName).catch((err) =>
@@ -213,6 +266,7 @@ router.post('/:id/reject', authorize(['admin']), async (req: AuthRequest, res) =
 
     await query("UPDATE payments SET status = 'rejected' WHERE id = $1", [id]);
     await logAudit(req.user!.id, 'payment.reject', { payment_id: id });
+    invalidateAdminStatsCache();
     res.json({ success: true });
 
     void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd)).catch((err) =>

@@ -91,7 +91,7 @@ router.post(
       return;
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const insert = await query(
       `INSERT INTO users (full_name, email, password, role, cedula, phone, status)
        VALUES ($1, $2, $3, 'member', $4, $5, 'active')
@@ -166,17 +166,17 @@ router.post(
       return;
     }
 
-    if (!bcrypt.compareSync(current_password, rows[0].password)) {
+    if (!(await bcrypt.compare(current_password, rows[0].password))) {
       res.status(401).json({ error: 'Contraseña actual incorrecta' });
       return;
     }
 
-    if (bcrypt.compareSync(new_password, rows[0].password)) {
+    if (await bcrypt.compare(new_password, rows[0].password)) {
       res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
       return;
     }
 
-    const hashedPassword = bcrypt.hashSync(new_password, 10);
+    const hashedPassword = await bcrypt.hash(new_password, 10);
     await query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
     await logAudit(userId, 'auth.change_password', {});
 

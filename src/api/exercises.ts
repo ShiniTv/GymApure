@@ -1,39 +1,60 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { videoApiPath, videoUpload } from '../lib/uploadStorage.ts';
 
 const router = Router();
 
+const exercisePayloadSchema = z.object({
+  name: z.string().trim().min(2, 'Nombre inválido'),
+  muscle_group: z.string().trim().min(2, 'Grupo muscular inválido'),
+  description: z.string().trim().max(2000).optional().nullable(),
+  execution: z.string().trim().max(5000).optional().nullable(),
+  video_url: z.string().trim().max(1000).optional().nullable(),
+});
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Error interno';
+}
+
 router.get('/', async (req, res) => {
   try {
     const { rows } = await query('SELECT * FROM exercises ORDER BY name');
     res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
 router.post('/', authorize(['admin', 'trainer']), videoUpload.single('video'), async (req, res) => {
-  const { name, muscle_group, description, execution, video_url } = req.body;
+  const parsed = exercisePayloadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+  const { name, muscle_group, description, execution, video_url } = parsed.data;
   const videoPath = req.file ? videoApiPath(req.file.filename) : video_url;
 
   try {
-    const { rows } = await query(
+    const { rows } = await query<{ id: number }>(
       `INSERT INTO exercises (name, muscle_group, description, execution, video_url)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
       [name, muscle_group, description, execution, videoPath]
     );
     res.status(201).json({ id: rows[0].id });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
 router.put('/:id', authorize(['admin', 'trainer']), videoUpload.single('video'), async (req, res) => {
   const { id } = req.params;
-  const { name, muscle_group, description, execution, video_url } = req.body;
+  const parsed = exercisePayloadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+  const { name, muscle_group, description, execution, video_url } = parsed.data;
   const videoPath = req.file ? videoApiPath(req.file.filename) : video_url;
 
   try {
@@ -44,8 +65,8 @@ router.put('/:id', authorize(['admin', 'trainer']), videoUpload.single('video'),
       [name, muscle_group, description, execution, videoPath, id]
     );
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -66,8 +87,8 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req, res) => {
 
     await query('DELETE FROM exercises WHERE id = $1', [id]);
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 

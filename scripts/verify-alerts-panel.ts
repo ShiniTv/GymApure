@@ -49,7 +49,7 @@ async function main() {
   assert('expiringSoon es número', typeof stats.expiringSoon === 'number');
   assert('expiryAlertDays es número', typeof stats.expiryAlertDays === 'number');
   assert('expiringList es array', Array.isArray(stats.expiringList));
-  assert('expirySettings presente', stats.expirySettings?.expiry_alert_days != null);
+  assert('totalUsers no incluido', stats.totalUsers === undefined);
 
   const settingsRes = await fetch(`${BASE}/api/settings/expiry`, { headers });
   const settings = await settingsRes.json();

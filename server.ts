@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
@@ -10,6 +11,8 @@ import { initDb } from './src/db/index.ts';
 import { env } from './src/config/env.ts';
 import { errorHandler, notFoundHandler } from './src/api/middleware/errorHandler.ts';
 import { startExpiryCron } from './src/jobs/expiryCron.ts';
+import { logger } from './src/lib/logger.ts';
+import { requestMetricsMiddleware } from './src/api/middleware/requestMetrics.ts';
 
 async function startServer() {
   await initDb();
@@ -23,10 +26,12 @@ async function startServer() {
       crossOriginEmbedderPolicy: false,
     })
   );
+  app.use(compression());
 
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser());
+  app.use(requestMetricsMiddleware);
 
   const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
@@ -46,8 +51,19 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(
+      express.static(distPath, {
+        maxAge: '1y',
+        immutable: true,
+        setHeaders(res, filePath) {
+          if (filePath.endsWith('index.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+          }
+        },
+      })
+    );
     app.get('*', (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
@@ -56,12 +72,14 @@ async function startServer() {
   app.use(errorHandler);
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     startExpiryCron();
   });
 }
 
 startServer().catch((err) => {
-  console.error('Failed to start server:', err);
+  logger.error('Failed to start server', {
+    error: err instanceof Error ? err.message : String(err),
+  });
   process.exit(1);
 });

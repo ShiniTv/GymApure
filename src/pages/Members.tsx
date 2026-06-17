@@ -1,8 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAdminStatsOptional } from '../context/AdminStatsContext';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
+import {
+  getExpiryBadgeInfo,
+} from '../lib/expiryUtils';
+
+interface PaginatedUsers {
+  items: Member[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 interface Member {
   id: number;
@@ -26,9 +39,14 @@ interface MembershipPlan {
 
 export default function Members() {
   const { user } = useAuth();
+  const adminStats = useAdminStatsOptional();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
   const [isAdding, setIsAdding] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newMember, setNewMember] = useState({
@@ -44,15 +62,50 @@ export default function Members() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [assignError, setAssignError] = useState('');
   const [expiringFilter, setExpiringFilter] = useState(false);
-  const [alertDays, setAlertDays] = useState(7);
+  const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const getExpiryBadge = (days: number | null | undefined) => {
-    if (days == null) return null;
-    if (days <= 3) return { label: days === 0 ? 'Vence hoy' : `${days}d`, className: 'bg-red-500/10 text-red-600 dark:text-red-500' };
-    if (days <= 7) return { label: `${days}d`, className: 'bg-orange-500/10 text-orange-600 dark:text-orange-500' };
-    return null;
-  };
+  useEffect(() => {
+    if (searchParams.get('expiring') === 'true') {
+      setExpiringFilter(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+
+  const apiFetchMembers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(pageSize),
+      });
+      if (search) params.set('q', search);
+      if (expiringFilter) params.set('expiring', 'true');
+
+      const res = await apiFetch(`/api/users?${params.toString()}`);
+      const data = await parseJsonResponse<PaginatedUsers>(res);
+      setMembers(Array.isArray(data.items) ? data.items : []);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      clientLogger.error('Failed to fetch members', err);
+      setMembers([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, search, expiringFilter]);
+
+  useEffect(() => {
+    void apiFetchMembers();
+  }, [apiFetchMembers]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -89,29 +142,6 @@ export default function Members() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const apiFetchMembers = async () => {
-    try {
-      const res = await apiFetch('/api/users');
-      const data = await parseJsonResponse<Member[]>(res);
-      setMembers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-      setMembers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    apiFetchMembers();
-    if (user?.role === 'admin') {
-      apiFetch('/api/settings/expiry')
-        .then((res) => parseJsonResponse<{ expiry_alert_days: number }>(res))
-        .then((data) => setAlertDays(data.expiry_alert_days ?? 7))
-        .catch(() => setAlertDays(7));
-    }
-  }, [user?.role]);
-
   const handleAddMember = async () => {
     if (!validateForm()) return;
 
@@ -141,11 +171,11 @@ export default function Members() {
         });
         apiFetchMembers();
       } else {
-        const data = await res.json();
+        const data = await parseJsonResponse<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear usuario' });
       }
     } catch (err) {
-      console.error('Failed to add member', err);
+      clientLogger.error('Failed to add member', err);
       setErrors({ submit: 'Error de conexión' });
     }
   };
@@ -159,7 +189,7 @@ export default function Members() {
         apiFetchMembers();
       }
     } catch (err) {
-      console.error('Failed to delete user', err);
+      clientLogger.error('Failed to delete user', err);
     }
   };
 
@@ -175,7 +205,7 @@ export default function Members() {
         apiFetchMembers();
       }
     } catch (err) {
-      console.error('Failed to toggle status', err);
+      clientLogger.error('Failed to toggle member status', err);
     }
   };
 
@@ -185,7 +215,7 @@ export default function Members() {
     setSelectedPlanId('');
     try {
       const res = await apiFetch('/api/memberships');
-      const data = await res.json();
+      const data = await parseJsonResponse<MembershipPlan[]>(res);
       setMembershipPlans(Array.isArray(data) ? data : []);
     } catch {
       setMembershipPlans([]);
@@ -198,74 +228,54 @@ export default function Members() {
       return;
     }
 
-    const res = await apiFetch('/api/memberships/assign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: assignTarget.id,
-        membership_id: Number(selectedPlanId),
-      }),
-    });
+    try {
+      await parseJsonResponse(
+        await apiFetch('/api/memberships/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: assignTarget.id,
+            membership_id: Number(selectedPlanId),
+          }),
+        })
+      );
 
-    const data = await res.json();
-    if (!res.ok) {
-      setAssignError(data.error || 'Error al asignar');
-      return;
+      setAssignTarget(null);
+      apiFetchMembers();
+      await adminStats?.refresh();
+    } catch (err) {
+      setAssignError(err instanceof Error ? err.message : 'Error al asignar');
     }
-
-    setAssignTarget(null);
-    apiFetchMembers();
   };
 
-  const filteredMembers = members.filter(m => {
-    const matchesSearch =
-      m.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      m.cedula?.includes(search);
-    const matchesExpiring =
-      !expiringFilter ||
-      (m.role === 'member' && m.days_remaining != null && m.days_remaining <= alertDays);
-    return matchesSearch && matchesExpiring;
-  });
+  const filteredMembers = members;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase whitespace-pre-line leading-tight">
-            GESTIÓN DE <span className="text-orange-500">USUARIOS</span>
-          </h1>
-          <p className="text-zinc-500 font-medium">
-            Administra usuarios del gym. Solo puedes <strong className="text-zinc-700 dark:text-zinc-300">eliminar miembros</strong> (atletas), no entrenadores ni administradores.
-          </p>
-        </div>
-        {(user?.role === 'trainer' || user?.role === 'admin') && (
-          <button 
-            onClick={() => setIsAdding(true)}
-            className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95"
-          >
-            <Plus className="h-5 w-5" />
-            Nuevo Usuario
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title={<>GESTIÓN DE <span className="text-orange-500">USUARIOS</span></>}
+        subtitle="Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores."
+        action={
+          (user?.role === 'trainer' || user?.role === 'admin') ? (
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="h-5 w-5" />
+              Nuevo Usuario
+            </Button>
+          ) : undefined
+        }
+      />
 
-      {/* Add Member Modal */}
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">NUEVO <span className="text-orange-500">USUARIO</span></h2>
-              <button onClick={() => setIsAdding(false)} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
+      <Modal
+        open={isAdding}
+        onClose={() => setIsAdding(false)}
+        title={<>NUEVO <span className="text-orange-500">USUARIO</span></>}
+      >
+        <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Nombre Completo</label>
-                <input 
+                <Label>Nombre Completo</Label>
+                <Input
                   type="text"
-                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.full_name ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  error={errors.full_name}
                   value={newMember.full_name}
                   onChange={(e) => {
                     setNewMember({...newMember, full_name: e.target.value});
@@ -273,13 +283,12 @@ export default function Members() {
                   }}
                   placeholder="Ej: Juan Pérez"
                 />
-                {errors.full_name && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.full_name}</p>}
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Email</label>
-                <input 
+                <Label>Email</Label>
+                <Input
                   type="email"
-                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.email ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  error={errors.email}
                   value={newMember.email}
                   onChange={(e) => {
                     setNewMember({...newMember, email: e.target.value});
@@ -287,13 +296,12 @@ export default function Members() {
                   }}
                   placeholder="juan@ejemplo.com"
                 />
-                {errors.email && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.email}</p>}
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Cédula / ID</label>
-                <input 
+                <Label>Cédula / ID</Label>
+                <Input
                   type="text"
-                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.cedula ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  error={errors.cedula}
                   value={newMember.cedula}
                   onChange={(e) => {
                     setNewMember({...newMember, cedula: e.target.value});
@@ -301,15 +309,13 @@ export default function Members() {
                   }}
                   placeholder="V-00000000"
                 />
-                {errors.cedula && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.cedula}</p>}
               </div>
-              
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Contraseña inicial</label>
-                <input
+                <Label>Contraseña inicial</Label>
+                <Input
                   type="password"
                   minLength={8}
-                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.password ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  error={errors.password}
                   value={newMember.password}
                   onChange={(e) => {
                     setNewMember({ ...newMember, password: e.target.value });
@@ -317,15 +323,13 @@ export default function Members() {
                   }}
                   placeholder="Mínimo 8 caracteres"
                 />
-                {errors.password && <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.password}</p>}
               </div>
-
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Confirmar contraseña</label>
-                <input
+                <Label>Confirmar contraseña</Label>
+                <Input
                   type="password"
                   minLength={8}
-                  className={`w-full bg-zinc-50 dark:bg-zinc-800 border ${errors.confirm_password ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700'} rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all`}
+                  error={errors.confirm_password}
                   value={newMember.confirm_password}
                   onChange={(e) => {
                     setNewMember({ ...newMember, confirm_password: e.target.value });
@@ -333,14 +337,10 @@ export default function Members() {
                   }}
                   placeholder="Repite la contraseña"
                 />
-                {errors.confirm_password && (
-                  <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{errors.confirm_password}</p>
-                )}
               </div>
-
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Rol de Usuario</label>
-                <select 
+                <Label>Rol de Usuario</Label>
+                <select
                   className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
                   value={newMember.role}
                   onChange={(e) => setNewMember({...newMember, role: e.target.value})}
@@ -350,19 +350,12 @@ export default function Members() {
                   {user?.role === 'admin' && <option value="admin">ADMINISTRADOR</option>}
                 </select>
               </div>
-
               {errors.submit && <p className="text-xs font-black text-red-500 text-center uppercase tracking-widest">{errors.submit}</p>}
-              
-              <button 
-                onClick={handleAddMember}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95 mt-4"
-              >
+              <Button onClick={handleAddMember} className="w-full mt-4" size="lg">
                 Crear Usuario
-              </button>
-            </div>
-          </div>
+              </Button>
         </div>
-      )}
+      </Modal>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex items-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl px-6 py-4 w-full max-w-md shadow-sm focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
@@ -371,14 +364,17 @@ export default function Members() {
             type="text"
             placeholder="Buscar por nombre o identificación..."
             className="bg-transparent border-none focus:outline-none text-zinc-900 dark:text-white ml-3 w-full placeholder-zinc-400 font-bold"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
         {user?.role === 'admin' && (
           <button
             type="button"
-            onClick={() => setExpiringFilter((v) => !v)}
+            onClick={() => {
+              setExpiringFilter((v) => !v);
+              setPage(1);
+            }}
             className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
               expiringFilter
                 ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-500'
@@ -433,15 +429,13 @@ export default function Members() {
                       {member.role === 'member' ? (
                         member.membership_name ? (
                           (() => {
-                            const badge = getExpiryBadge(member.days_remaining);
+                            const badge = getExpiryBadgeInfo(member.days_remaining, alertDays);
                             return (
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
                               {badge && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest ${badge.className}`}>
-                                  {badge.label}
-                                </span>
+                                <Badge className={badge.className}>{badge.label}</Badge>
                               )}
                             </div>
                             <p className="text-[10px] text-zinc-400">{member.days_remaining ?? 0} días restantes</p>
@@ -521,19 +515,22 @@ export default function Members() {
             </tbody>
           </table>
         </div>
+        <PaginationBar
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          label="usuarios"
+        />
       </div>
 
-      {assignTarget && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-black uppercase italic tracking-tighter text-zinc-900 dark:text-white">
-                Membresía — <span className="text-orange-500">{assignTarget.full_name}</span>
-              </h2>
-              <button onClick={() => setAssignTarget(null)} className="text-zinc-400 hover:text-zinc-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <Modal
+        open={!!assignTarget}
+        onClose={() => setAssignTarget(null)}
+        title={assignTarget ? <>Membresía — <span className="text-orange-500">{assignTarget.full_name}</span></> : ''}
+      >
+        {assignTarget && (
+          <>
             {assignTarget.membership_name && (
               <p className="text-xs text-zinc-500 mb-4">
                 Plan actual: <strong>{assignTarget.membership_name}</strong> ({assignTarget.days_remaining} días).
@@ -553,15 +550,12 @@ export default function Members() {
               ))}
             </select>
             {assignError && <p className="text-xs text-red-500 mb-3">{assignError}</p>}
-            <button
-              onClick={handleAssignSubscription}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-2xl font-black uppercase tracking-widest"
-            >
+            <Button onClick={handleAssignSubscription} className="w-full bg-emerald-600 hover:bg-emerald-500">
               Asignar / Renovar
-            </button>
-          </div>
-        </div>
-      )}
+            </Button>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

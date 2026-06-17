@@ -141,7 +141,7 @@ CREATE TABLE workout_logs (
   UNIQUE (session_id, exercise_id, set_number)
 );
 
-CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX idx_subscriptions_user_status_end ON subscriptions (user_id, status, end_date DESC);
 CREATE INDEX idx_payments_user_id ON payments(user_id);
 CREATE INDEX idx_attendance_check_in ON attendance(check_in_time);
 CREATE INDEX idx_workout_sessions_user_id ON workout_sessions(user_id);

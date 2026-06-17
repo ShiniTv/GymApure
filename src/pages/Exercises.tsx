@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, resolveMediaUrl } from '../lib/api';
-import { Plus, Search, Trash2, Edit, X, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
+import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
+import { Plus, Search, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Button, Card, Input, Label, Modal, PageHeader } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
 
 interface Exercise {
   id: number;
@@ -35,14 +37,10 @@ export default function Exercises() {
   const apiFetchExercises = async () => {
     try {
       const res = await apiFetch('/api/exercises');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setExercises(data);
-      } else {
-        setExercises([]);
-      }
+      const data = await parseJsonResponse<Exercise[]>(res);
+      setExercises(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      clientLogger.error('Failed to fetch exercises', err);
       setExercises([]);
     }
   };
@@ -87,17 +85,13 @@ export default function Exercises() {
     }
 
     try {
-      const res = await apiFetch(url, {
-        method,
-        body: data,
-      });
-
-      if (res.ok) {
-        setIsModalOpen(false);
-        apiFetchExercises();
-      }
+      const res = await apiFetch(url, { method, body: data });
+      await parseJsonResponse(res);
+      setIsModalOpen(false);
+      apiFetchExercises();
     } catch (err) {
-      console.error(err);
+      clientLogger.error('Failed to save exercise', err);
+      alert(err instanceof Error ? err.message : 'Error al guardar');
     }
   };
 
@@ -106,14 +100,10 @@ export default function Exercises() {
 
     try {
       const res = await apiFetch(`/api/exercises/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        apiFetchExercises();
-      } else {
-        const error = await res.json();
-        alert(error.error || 'Error al eliminar');
-      }
+      await parseJsonResponse(res);
+      apiFetchExercises();
     } catch (err) {
-      console.error(err);
+      alert(err instanceof Error ? err.message : 'Error al eliminar');
     }
   };
 
@@ -149,21 +139,16 @@ export default function Exercises() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase">
-            BIBLIOTECA <span className="text-orange-500">EJERCICIOS</span>
-          </h1>
-          <p className="text-zinc-500 font-medium">Gestiona la base de datos de ejercicios del gimnasio</p>
-        </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-900/20 active:scale-95"
-        >
-          <Plus className="h-5 w-5" />
-          Nuevo Ejercicio
-        </button>
-      </div>
+      <PageHeader
+        title={<>BIBLIOTECA <span className="text-orange-500">EJERCICIOS</span></>}
+        subtitle="Gestiona la base de datos de ejercicios del gimnasio"
+        action={
+          <Button onClick={() => handleOpenModal()}>
+            <Plus className="h-5 w-5" />
+            Nuevo Ejercicio
+          </Button>
+        }
+      />
 
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
@@ -306,34 +291,28 @@ export default function Exercises() {
         ))}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white dark:bg-zinc-900 px-8 py-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center z-10">
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase">
-                {editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-orange-500">EJERCICIO</span>
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        maxWidth="xl"
+        scrollable
+        title={<>{editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-orange-500">EJERCICIO</span></>}
+      >
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Nombre del Ejercicio</label>
-                  <input 
+                  <Label>Nombre del Ejercicio</Label>
+                  <Input
                     required
                     type="text"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                     placeholder="Ej: Press de Banca"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Grupo Muscular</label>
-                  <select 
+                  <Label>Grupo Muscular</Label>
+                  <select
                     className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
                     value={formData.muscle_group}
                     onChange={(e) => setFormData({...formData, muscle_group: e.target.value})}
@@ -346,94 +325,66 @@ export default function Exercises() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Descripción (Vibe del ejercicio)</label>
-                <textarea 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
+                <Label>Descripción</Label>
+                <textarea
+                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
                   placeholder="Describe brevemente el objetivo del ejercicio..."
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                ></textarea>
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Ejecución Paso a Paso</label>
-                <textarea 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
-                  placeholder="1. Colócate en posición...
-2. Baja lentamente...
-3. Empuja con fuerza..."
+                <Label>Ejecución paso a paso</Label>
+                <textarea
+                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
                   rows={4}
                   value={formData.execution}
                   onChange={(e) => setFormData({...formData, execution: e.target.value})}
-                ></textarea>
+                />
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Video del Ejercicio</label>
-                  <div className="flex flex-col gap-4">
-                    <div className="relative">
-                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
-                      <input 
-                        type="url"
-                        className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl pl-12 pr-4 py-3 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-mono text-sm placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
-                        placeholder="Enlace de YouTube (opcional)..."
-                        value={formData.video_url}
-                        onChange={(e) => handleVideoUrlChange(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
-                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Ó subir archivo</span>
-                      <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-800"></div>
-                    </div>
-                    <div className="relative">
-                      <input 
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
-                        id="video-upload"
-                        onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                      />
-                      <label 
-                        htmlFor="video-upload"
-                        className="flex items-center justify-center gap-3 w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 cursor-pointer hover:border-orange-500/50 transition-all group"
-                      >
-                        <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl shadow-sm group-hover:text-orange-500 transition-colors">
-                          <Plus className="h-5 w-5" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-tight">
-                            {videoFile ? videoFile.name : 'Seleccionar Video MP4/MOV'}
-                          </p>
-                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Máx 100MB recomendado</p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
+                <Label>Video del ejercicio</Label>
+                <div className="relative">
+                  <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                  <Input
+                    type="url"
+                    className="pl-12 font-mono text-sm"
+                    placeholder="Enlace de YouTube (opcional)..."
+                    value={formData.video_url}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                  />
                 </div>
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  id="video-upload"
+                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                />
+                <label
+                  htmlFor="video-upload"
+                  className="flex items-center justify-center gap-3 w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 cursor-pointer hover:border-orange-500/50 transition-all"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span className="text-xs font-black uppercase">
+                    {videoFile ? videoFile.name : 'Seleccionar video MP4/MOV'}
+                  </span>
+                </label>
               </div>
 
               <div className="pt-4 flex gap-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 py-4 rounded-2xl font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
-                >
-                  CANCELAR
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 bg-orange-600 hover:bg-orange-500 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-orange-900/20 active:scale-95"
-                >
-                  {editingExercise ? 'GUARDAR CAMBIOS' : 'CREAR EJERCICIO'}
-                </button>
+                <Button type="button" variant="ghost" className="flex-1" size="lg" onClick={() => setIsModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="flex-1" size="lg">
+                  {editingExercise ? 'Guardar cambios' : 'Crear ejercicio'}
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

@@ -91,8 +91,9 @@ async function main() {
   const testPlanId = (created.data as { id?: number }).id ?? planId;
 
   // 5. Miembros con columna membresía
-  const users = await api('GET', '/api/users');
-  const userList = users.data as { id: number; role: string; full_name: string; email?: string; membership_name?: string }[];
+  const users = await api('GET', '/api/users?limit=100');
+  const userPayload = users.data as { items?: { id: number; role: string; full_name: string; email?: string; membership_name?: string }[] };
+  const userList = userPayload.items ?? [];
   const targetMember = userList.find((u) => u.email === 'member@gym.com') ?? userList.find((u) => u.role === 'member');
   ok('Listar usuarios con membresía', users.res.status === 200 && !!targetMember);
 

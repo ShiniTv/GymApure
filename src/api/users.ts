@@ -9,6 +9,14 @@ import { notifyRoutineAssigned } from '../lib/notifications/eventNotifier.ts';
 import { avatarApiPath, avatarUpload } from '../lib/uploadStorage.ts';
 import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
+import { logger } from '../lib/logger.ts';
+import {
+  parseBooleanQuery,
+  parsePaginationQuery,
+  parseSearchQuery,
+  type PaginatedResult,
+} from '../lib/pagination.ts';
+import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 
 const router = Router();
 
@@ -24,29 +32,159 @@ const profileSchema = z.object({
     .nullable(),
 });
 
+const measurementSchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
+    .optional(),
+  weight: z.coerce.number().positive('Peso inválido').max(500).optional().nullable(),
+  body_fat_percentage: z.coerce.number().min(0).max(100).optional().nullable(),
+  waist: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
+  arm: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
+  leg: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
+});
+
+async function findUserMeasurement(userId: number, measurementId: number) {
+  const { rows } = await query<{ id: number }>(
+    'SELECT id FROM user_measurements WHERE id = $1 AND user_id = $2',
+    [measurementId, userId]
+  );
+  return rows[0] ?? null;
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Error interno';
+}
+
+const USER_LIST_FROM = `
+  FROM users u
+  LEFT JOIN (
+    SELECT user_id, MAX(end_time) AS last_workout
+    FROM workout_sessions
+    GROUP BY user_id
+  ) lw ON lw.user_id = u.id
+  LEFT JOIN LATERAL (
+    SELECT m.name AS membership_name, s.end_date,
+           GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
+    FROM subscriptions s
+    JOIN memberships m ON m.id = s.membership_id
+    WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
+    ORDER BY s.end_date DESC
+    LIMIT 1
+  ) sub ON true
+`;
+
+function buildUserListFilters(
+  query: Record<string, unknown>,
+  alertDays: number
+): { whereSql: string; params: unknown[] } {
+  const search = parseSearchQuery(query);
+  const role = typeof query.role === 'string' ? query.role.trim() : '';
+  const expiringOnly = parseBooleanQuery(query.expiring);
+  const params: unknown[] = [];
+  const conditions: string[] = [];
+
+  if (search) {
+    params.push(`%${search.toLowerCase()}%`);
+    const idx = params.length;
+    conditions.push(
+      `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(u.cedula, '')) LIKE $${idx} OR LOWER(u.email) LIKE $${idx})`
+    );
+  }
+
+  if (role && ['admin', 'trainer', 'member'].includes(role)) {
+    params.push(role);
+    conditions.push(`u.role = $${params.length}`);
+  }
+
+  if (expiringOnly) {
+    params.push(alertDays);
+    conditions.push(
+      `u.role = 'member' AND sub.days_remaining IS NOT NULL AND sub.days_remaining <= $${params.length}`
+    );
+  }
+
+  const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { whereSql, params };
+}
+
+router.get('/options', authorize(['admin', 'trainer']), async (req, res) => {
+  try {
+    const search = parseSearchQuery(req.query);
+    const role = typeof req.query.role === 'string' ? req.query.role.trim() : 'member';
+    const params: unknown[] = [];
+    const conditions: string[] = [];
+
+    if (['admin', 'trainer', 'member'].includes(role)) {
+      params.push(role);
+      conditions.push(`role = $${params.length}`);
+    }
+
+    if (search) {
+      params.push(`%${search.toLowerCase()}%`);
+      const idx = params.length;
+      conditions.push(
+        `(LOWER(full_name) LIKE $${idx} OR LOWER(COALESCE(cedula, '')) LIKE $${idx})`
+      );
+    }
+
+    const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    params.push(200);
+
+    const { rows } = await query<{ id: number; full_name: string; cedula: string | null; role: string }>(
+      `SELECT id, full_name, cedula, role
+       FROM users
+       ${whereSql}
+       ORDER BY full_name ASC
+       LIMIT $${params.length}`,
+      params
+    );
+
+    res.json(rows);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
 router.get('/', authorize(['admin', 'trainer']), async (req, res) => {
   try {
-    const { rows } = await query(`
-      SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
-      (SELECT MAX(end_time) FROM workout_sessions WHERE user_id = u.id) as last_workout,
-      sub.membership_name,
-      sub.end_date AS subscription_end,
-      sub.days_remaining
-      FROM users u
-      LEFT JOIN LATERAL (
-        SELECT m.name AS membership_name, s.end_date,
-               GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-        FROM subscriptions s
-        JOIN memberships m ON m.id = s.membership_id
-        WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-        ORDER BY s.end_date DESC
-        LIMIT 1
-      ) sub ON true
-      ORDER BY u.full_name ASC
-    `);
-    res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const { page, pageSize, offset } = parsePaginationQuery(req.query);
+    const alertDays = await getExpiryAlertDays();
+    const { whereSql, params } = buildUserListFilters(req.query, alertDays);
+
+    const countParams = [...params];
+    const listParams = [...params, pageSize, offset];
+
+    const [countResult, listResult] = await Promise.all([
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count ${USER_LIST_FROM} ${whereSql}`,
+        countParams
+      ),
+      query(
+        `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
+                lw.last_workout,
+                sub.membership_name,
+                sub.end_date AS subscription_end,
+                sub.days_remaining
+         ${USER_LIST_FROM}
+         ${whereSql}
+         ORDER BY u.full_name ASC
+         LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+        listParams
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
+    const payload: PaginatedResult<unknown> = {
+      items: listResult.rows,
+      total,
+      page,
+      pageSize,
+    };
+
+    res.json(payload);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -60,8 +198,8 @@ router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res
     );
     if (!rows[0]) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -146,16 +284,21 @@ router.get('/:id/routines', requireSelfOrRoles('id', 'admin', 'trainer'), async 
   try {
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
-              (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) AS exercise_count
+              COALESCE(ec.exercise_count, 0)::int AS exercise_count
        FROM routines r
        JOIN user_routines ur ON r.id = ur.routine_id
+       LEFT JOIN (
+         SELECT routine_id, COUNT(*)::int AS exercise_count
+         FROM routine_exercises
+         GROUP BY routine_id
+       ) ec ON ec.routine_id = r.id
        WHERE ur.user_id = $1
        ORDER BY ur.assigned_at DESC`,
       [req.params.id]
     );
     res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -170,13 +313,18 @@ router.get('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), as
       [req.params.id]
     );
     res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
 router.post('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
-  const { date, weight, body_fat_percentage, waist, arm, leg } = req.body;
+  const parsed = measurementSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { date, weight, body_fat_percentage, waist, arm, leg } = parsed.data;
   try {
     const { rows } = await query(
       `INSERT INTO user_measurements (user_id, date, weight, body_fat_percentage, waist, arm, leg)
@@ -193,25 +341,130 @@ router.post('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), a
       ]
     );
     res.status(201).json(rows[0]);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
-router.get('/:id/history', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
-  try {
+router.patch(
+  '/:id/measurements/:measurementId',
+  requireSelfOrRoles('id', 'admin', 'trainer'),
+  asyncHandler(async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    const measurementId = parseInt(req.params.measurementId, 10);
+    if (Number.isNaN(userId) || Number.isNaN(measurementId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const parsed = measurementSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const existing = await findUserMeasurement(userId, measurementId);
+    if (!existing) {
+      res.status(404).json({ error: 'Medición no encontrada' });
+      return;
+    }
+
+    const data = parsed.data;
+    const fields = ['date', 'weight', 'body_fat_percentage', 'waist', 'arm', 'leg'] as const;
+    const sets: string[] = [];
+    const params: unknown[] = [];
+
+    for (const key of fields) {
+      if (key in data) {
+        sets.push(`${key} = $${params.length + 1}`);
+        params.push(data[key] ?? null);
+      }
+    }
+
+    if (sets.length === 0) {
+      res.status(400).json({ error: 'No hay campos para actualizar' });
+      return;
+    }
+
+    params.push(measurementId, userId);
     const { rows } = await query(
-      `SELECT ws.id, ws.start_time, ws.end_time, ws.success, r.name as routine_name,
-      (SELECT COUNT(*)::int FROM workout_logs WHERE session_id = ws.id) as sets_completed
-      FROM workout_sessions ws
-      JOIN routines r ON ws.routine_id = r.id
-      WHERE ws.user_id = $1
-      ORDER BY ws.start_time DESC`,
-      [req.params.id]
+      `UPDATE user_measurements SET ${sets.join(', ')}
+       WHERE id = $${params.length - 1} AND user_id = $${params.length}
+       RETURNING id, date, weight, body_fat_percentage, waist, arm, leg, created_at`,
+      params
     );
-    res.json(rows);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+
+    res.json(rows[0]);
+  })
+);
+
+router.delete(
+  '/:id/measurements/:measurementId',
+  requireSelfOrRoles('id', 'admin', 'trainer'),
+  asyncHandler(async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+    const measurementId = parseInt(req.params.measurementId, 10);
+    if (Number.isNaN(userId) || Number.isNaN(measurementId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const existing = await findUserMeasurement(userId, measurementId);
+    if (!existing) {
+      res.status(404).json({ error: 'Medición no encontrada' });
+      return;
+    }
+
+    await query('DELETE FROM user_measurements WHERE id = $1 AND user_id = $2', [
+      measurementId,
+      userId,
+    ]);
+    res.json({ success: true });
+  })
+);
+
+router.get('/:id/history', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  const { page, pageSize, offset } = parsePaginationQuery(req.query, { pageSize: 20 });
+
+  try {
+    const [countResult, listResult] = await Promise.all([
+      query<{ count: string }>(
+        'SELECT COUNT(*)::text AS count FROM workout_sessions WHERE user_id = $1',
+        [userId]
+      ),
+      query(
+        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, r.name AS routine_name,
+                COALESCE(wl.sets_completed, 0)::int AS sets_completed
+         FROM workout_sessions ws
+         JOIN routines r ON ws.routine_id = r.id
+         LEFT JOIN (
+           SELECT session_id, COUNT(*)::int AS sets_completed
+           FROM workout_logs
+           GROUP BY session_id
+         ) wl ON wl.session_id = ws.id
+         WHERE ws.user_id = $1
+         ORDER BY ws.start_time DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, pageSize, offset]
+      ),
+    ]);
+
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
+    const payload: PaginatedResult<unknown> = {
+      items: listResult.rows,
+      total,
+      page,
+      pageSize,
+    };
+
+    res.json(payload);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -227,11 +480,13 @@ router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRe
     );
     res.json({ id: rows[0].id, success: true });
 
-    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err) =>
-      console.error('[notify] routine assigned', err)
+    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) =>
+      logger.error('Error enviando notificacion de rutina asignada', {
+        error: getErrorMessage(err),
+      })
     );
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -242,8 +497,8 @@ router.delete('/:id/routines/:routineId', authorize(['admin', 'trainer']), async
       req.params.routineId,
     ]);
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -282,7 +537,7 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
       }
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const { rows } = await query(
       `INSERT INTO users (full_name, email, cedula, role, password, status)
        VALUES ($1, $2, $3, $4, $5, 'active')
@@ -296,8 +551,8 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
     });
 
     res.status(201).json({ id: rows[0].id, success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -310,8 +565,8 @@ router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) 
       status,
     });
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -344,8 +599,8 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     await query('DELETE FROM users WHERE id = $1', [targetId]);
     await logAudit(req.user!.id, 'user.delete', { target_id: targetId, role: rows[0].role });
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 

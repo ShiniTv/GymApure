@@ -6,6 +6,7 @@ import { requireSelfOrRoles } from './middleware/access.ts';
 import { assignSubscription } from '../lib/subscriptions.ts';
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
+import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import {
   getExpiringSubscriptions,
   getLastDoorAlert,
@@ -91,23 +92,51 @@ router.put('/:id', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.delete('/:id', authorize(['admin']), async (req, res) => {
+router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
   try {
+    const { rows: planRows } = await query<{ name: string }>(
+      'SELECT name FROM memberships WHERE id = $1',
+      [id]
+    );
+    if (!planRows[0]) {
+      return res.status(404).json({ error: 'Plan no encontrado' });
+    }
+
     const active = await query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM subscriptions
        WHERE membership_id = $1 AND status = 'active' AND end_date >= CURRENT_DATE`,
-      [req.params.id]
+      [id]
     );
     if (parseInt(active.rows[0].count, 10) > 0) {
       return res.status(400).json({
-        error: 'No se puede eliminar un plan con suscripciones activas',
+        error: 'No se puede eliminar un plan con suscripciones activas. Espera a que venzan o reasigna a los miembros.',
       });
     }
 
-    const { rowCount } = await query('DELETE FROM memberships WHERE id = $1', [req.params.id]);
-    if (!rowCount) return res.status(404).json({ error: 'Plan no encontrado' });
+    await withTransaction(async (client) => {
+      await client.query('DELETE FROM subscriptions WHERE membership_id = $1', [id]);
+      await client.query('DELETE FROM memberships WHERE id = $1', [id]);
+    });
+
+    await logAudit(req.user!.id, 'membership.delete', {
+      membership_id: id,
+      name: planRows[0].name,
+    });
+
     res.json({ success: true });
   } catch (err: unknown) {
+    const pgCode =
+      err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+    if (pgCode === '23503') {
+      return res.status(400).json({
+        error: 'No se puede eliminar el plan porque tiene suscripciones asociadas.',
+      });
+    }
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
   }
@@ -170,6 +199,7 @@ router.post('/assign', authorize(['admin']), async (req: AuthRequest, res) => {
       membership_id: parsed.data.membership_id,
     });
 
+    invalidateAdminStatsCache();
     res.status(201).json({ success: true, ...result });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

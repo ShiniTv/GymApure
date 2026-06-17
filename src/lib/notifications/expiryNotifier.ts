@@ -11,7 +11,7 @@ import {
   isEmailConfigured,
 } from './email.ts';
 import { sendSms, isSmsConfigured } from './sms.ts';
-import { sendWhatsApp, isWhatsAppConfigured } from './whatsapp.ts';
+import { sendWhatsApp, sendWhatsAppMessage, isWhatsAppConfigured } from './whatsapp.ts';
 
 export interface ExpiryJobResult {
   markedExpired: number;
@@ -193,7 +193,18 @@ async function notifyMember(
       : await wasNotifiedToday(target.subscription_id, 'whatsapp', 'expiring_soon');
 
     if (!already) {
-      const sent = await sendWhatsApp(target.phone, message);
+      const sent = await sendWhatsAppMessage(target.phone, {
+        kind: alertType === 'expired' ? 'expired' : 'expiring',
+        bodyParams:
+          alertType === 'expired'
+            ? [target.full_name, target.membership_name]
+            : [
+                target.full_name,
+                target.membership_name,
+                String(target.days_remaining),
+              ],
+        fallbackText: message,
+      });
       if (sent) {
         await logNotification(target.user_id, target.subscription_id, 'whatsapp', alertType, target.days_remaining);
         result.whatsappSent += 1;

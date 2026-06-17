@@ -2,7 +2,7 @@ import { query } from '../../db/index.ts';
 import { getExpirySettings } from '../gymSettings.ts';
 import { sendEmail, getAdminNotifyEmails } from './email.ts';
 import { sendSms } from './sms.ts';
-import { sendWhatsApp } from './whatsapp.ts';
+import { sendWhatsApp, sendWhatsAppMessage } from './whatsapp.ts';
 
 export interface MemberContact {
   id: number;
@@ -43,8 +43,13 @@ export async function notifyMember(
 
   if (member.phone) {
     if (settings.whatsapp_notifications_enabled && settings.notify_members_whatsapp) {
-      result.whatsapp = await sendWhatsApp(member.phone, message);
-    } else if (settings.sms_notifications_enabled && settings.notify_members_sms) {
+      result.whatsapp = await sendWhatsAppMessage(member.phone, {
+        kind: 'generic',
+        bodyParams: [member.full_name, message],
+        fallbackText: message,
+      });
+    }
+    if (!result.whatsapp && settings.sms_notifications_enabled && settings.notify_members_sms) {
       result.sms = await sendSms(member.phone, message);
     }
   }

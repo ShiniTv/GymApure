@@ -138,7 +138,7 @@ async function main() {
 
   const memberPayments = await jsonApi('GET', '/api/payments');
   ok('Miembro ve sus pagos', memberPayments.res.status === 200);
-  const memberList = memberPayments.data as { id: number }[];
+  const memberList = (memberPayments.data as { items?: { id: number }[] }).items ?? [];
   ok('Lista filtrada al miembro', Array.isArray(memberList) && memberList.some((p) => Number(p.id) === Number(paymentIdApprove)));
 
   await login(MEMBER_REJECT_EMAIL, MEMBER_PASSWORD);
@@ -152,7 +152,7 @@ async function main() {
 
   await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   const adminPayments = await jsonApi('GET', '/api/payments');
-  const all = adminPayments.data as { id: number; status: string }[];
+  const all = (adminPayments.data as { items?: { id: number; status: string }[] }).items ?? [];
   ok('Admin ve todos los pagos', adminPayments.res.status === 200 && all.length >= 2);
 
   const approve = await jsonApi('POST', `/api/payments/${paymentIdApprove}/approve`, {
@@ -178,7 +178,7 @@ async function main() {
 
   await login(MEMBER_REJECT_EMAIL, MEMBER_PASSWORD);
   const rejectedList = await jsonApi('GET', '/api/payments');
-  const rejectedPayment = (rejectedList.data as { id: number; status: string }[]).find(
+  const rejectedPayment = ((rejectedList.data as { items?: { id: number; status: string }[] }).items ?? []).find(
     (p) => Number(p.id) === Number(paymentIdReject)
   );
   ok('Pago rechazado en lista', rejectedPayment?.status === 'rejected', JSON.stringify(rejectedPayment));

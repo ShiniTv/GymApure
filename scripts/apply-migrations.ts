@@ -25,6 +25,21 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM gym_settings WHERE key = 'whatsapp_notifications_enabled' LIMIT 1`,
   '20260616000000_payment_proofs_storage.sql': `
     SELECT 1 FROM storage.buckets WHERE id = 'payment-proofs' LIMIT 1`,
+  '20260617000000_enable_rls_internal_tables.sql': `
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'gym_settings' AND c.relrowsecurity = true
+    LIMIT 1`,
+  '20260617000001_lockdown_public_api_tables.sql': `
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'users' AND policyname = 'backend_only'
+    LIMIT 1`,
+  '20260617000002_unindexed_foreign_keys.sql': `
+    SELECT 1 FROM pg_indexes WHERE indexname = 'idx_subscriptions_membership_id' LIMIT 1`,
+  '20260617000003_drop_redundant_subscription_index.sql': `
+    SELECT 1 WHERE NOT EXISTS (
+      SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'idx_subscriptions_user_id'
+    )`,
 };
 
 /** Migraciones que solo aplican en Supabase (p. ej. storage.buckets). */

@@ -2,9 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Design tokens — Caribean Gym */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-brand: #f97316;
 }
 
 /* Base Styles */
@@ -56,4 +58,13 @@
 
 .dark .recharts-default-tooltip {
   @apply !border-zinc-800 !bg-zinc-900 !shadow-xl !rounded-lg text-white;
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+.animate-scan-line {
+  animation: scan-line 2s linear infinite;
 }

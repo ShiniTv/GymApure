@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from '../lib/logger.ts';
 
 function deriveSupabaseUrlFromDatabaseUrl(databaseUrl: string): string | null {
   const match = databaseUrl.match(/postgres\.([a-z0-9]+):/i);
@@ -42,7 +43,7 @@ function parseEnv(): Env {
     const details = result.error.issues
       .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
-    console.error('Configuración inválida (.env):\n' + details);
+    logger.error('Configuración inválida (.env)', { details });
     process.exit(1);
   }
   return result.data;
@@ -77,15 +78,13 @@ function resolveKioskApiKey(): string {
   }
 
   if (env.NODE_ENV === 'production') {
-    console.error(
-      'KIOSK_API_KEY es obligatorio en producción (mín. 16 caracteres). Añádelo al .env.'
-    );
+    logger.error('KIOSK_API_KEY faltante en producción', { minLength: 16 });
     process.exit(1);
   }
 
-  console.warn(
-    '[kiosk] KIOSK_API_KEY no definido; usando clave de desarrollo. Define KIOSK_API_KEY y VITE_KIOSK_KEY iguales en .env.'
-  );
+  logger.warn('KIOSK_API_KEY no definido; usando fallback de desarrollo', {
+    recommendation: 'Definir KIOSK_API_KEY y VITE_KIOSK_KEY iguales en .env',
+  });
   return DEV_KIOSK_FALLBACK;
 }
 

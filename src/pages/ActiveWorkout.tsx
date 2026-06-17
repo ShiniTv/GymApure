@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, resolveMediaUrl } from '../lib/api';
+import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, X, BookOpen, Edit2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2 } from 'lucide-react';
+import { Button, Modal, Label, Input, Select } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
 
 interface Exercise {
   id: number;
@@ -32,6 +34,19 @@ interface LogEntry {
   completed: boolean;
 }
 
+interface ExerciseOption {
+  id: number;
+  name: string;
+  muscle_group: string;
+}
+
+interface SessionLogResponse {
+  exercise_id: number;
+  set_number: number;
+  weight: number;
+  reps: number;
+}
+
 export default function ActiveWorkout() {
   const { id } = useParams(); // Routine ID
   const navigate = useNavigate();
@@ -52,7 +67,7 @@ export default function ActiveWorkout() {
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState<any[]>([]);
+  const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState({
     exercise_id: '',
     sets: 3,
@@ -65,12 +80,15 @@ export default function ActiveWorkout() {
     if (!id) return;
     // Fetch routine details
     apiFetch(`/api/routines/${id}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => parseJsonResponse<Routine>(res))
+      .then((data) => {
         setRoutine(data);
         setLoading(false);
       })
-      .catch(err => console.error(err));
+      .catch((err) => {
+        clientLogger.error('Failed to fetch routine', err);
+        setLoading(false);
+      });
 
     // Workout Timer
     const interval = setInterval(() => {
@@ -173,9 +191,17 @@ export default function ActiveWorkout() {
 
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
-      .then(res => res.json())
-      .then(data => setAvailableExercises(data))
-      .catch(err => console.error(err));
+      .then((res) => parseJsonResponse<ExerciseOption[]>(res))
+      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
+      .catch((err) => clientLogger.error('Failed to fetch exercises catalog', err));
+  };
+
+  const reloadRoutine = () => {
+    if (!id) return;
+    apiFetch(`/api/routines/${id}`)
+      .then((res) => parseJsonResponse<Routine>(res))
+      .then((data) => setRoutine(data))
+      .catch((err) => clientLogger.error('Failed to reload routine', err));
   };
 
   const handleAddExercise = async () => {
@@ -191,23 +217,18 @@ export default function ActiveWorkout() {
         }),
       });
 
-      if (res.ok) {
-        setIsAddingExercise(false);
-        // Refresh routine
-        apiFetch(`/api/routines/${id}`)
-          .then(res => res.json())
-          .then(data => setRoutine(data));
-        // Reset form
-        setNewExercise({
-          exercise_id: '',
-          sets: 3,
-          reps: 10,
-          rest_seconds: 60,
-          weight_suggestion: ''
-        });
-      }
+      await parseJsonResponse(res);
+      setIsAddingExercise(false);
+      reloadRoutine();
+      setNewExercise({
+        exercise_id: '',
+        sets: 3,
+        reps: 10,
+        rest_seconds: 60,
+        weight_suggestion: '',
+      });
     } catch (err) {
-      console.error('Failed to add exercise', err);
+      clientLogger.error('Failed to add exercise to routine', err);
     }
   };
 
@@ -231,7 +252,11 @@ export default function ActiveWorkout() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, routine_id: routineId }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse<{
+        id: number;
+        start_time?: string;
+        logs?: SessionLogResponse[];
+      }>(res);
       setSessionId(data.id);
 
       // Load completed exercises from localStorage
@@ -240,7 +265,7 @@ export default function ActiveWorkout() {
         try {
           setCompletedExercises(JSON.parse(savedCompletedStr));
         } catch (e) {
-          console.error('Failed to parse saved completed exercises', e);
+          clientLogger.error('Failed to parse saved completed exercises', e);
         }
       }
       
@@ -255,11 +280,11 @@ export default function ActiveWorkout() {
       }
 
       // Initialize Logs
-      if (data.logs && Array.isArray(data.logs)) {
+      if (Array.isArray(data.logs)) {
         const initialLogs: Record<string, LogEntry> = {};
         const maxSetsPerExercise: Record<number, number> = {};
 
-        data.logs.forEach((log: any) => {
+        data.logs.forEach((log) => {
           const key = `${log.exercise_id}-${log.set_number}`;
           initialLogs[key] = {
             exercise_id: log.exercise_id,
@@ -290,7 +315,7 @@ export default function ActiveWorkout() {
       }
 
     } catch (err) {
-      console.error('Failed to start session', err);
+      clientLogger.error('Failed to start workout session', err);
     }
   };
 
@@ -369,7 +394,7 @@ export default function ActiveWorkout() {
       }
 
     } catch (err) {
-      console.error('Failed to log set', err);
+      clientLogger.error('Failed to log workout set', err);
       // Revert on error (simplified)
     }
   };
@@ -398,20 +423,14 @@ export default function ActiveWorkout() {
         }),
       });
       
-      if (res.ok) {
-        // Clear local storage
-        localStorage.removeItem(`active_workout_logs_${sessionId}`);
-        localStorage.removeItem(`active_workout_sets_${sessionId}`);
-        localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
-        
-        navigate('/routines');
-      } else {
-        const errorData = await res.json();
-        alert(`Error al finalizar entrenamiento: ${errorData.error || 'Inténtalo de nuevo'}`);
-      }
+      await parseJsonResponse(res);
+      localStorage.removeItem(`active_workout_logs_${sessionId}`);
+      localStorage.removeItem(`active_workout_sets_${sessionId}`);
+      localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+      navigate('/routines');
     } catch (err) {
-      console.error('Failed to finish workout', err);
-      alert('Error de conexión al finalizar el entrenamiento.');
+      clientLogger.error('Failed to finish workout', err);
+      alert(err instanceof Error ? err.message : 'Error de conexión al finalizar el entrenamiento.');
     }
   };
 
@@ -461,113 +480,89 @@ export default function ActiveWorkout() {
           >
             Reiniciar
           </button>
-          <button 
-            onClick={finishWorkout}
-            disabled={!sessionId}
-            className={`px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-all active:scale-95 uppercase tracking-wider ${
-              sessionId ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/20' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
-            }`}
-          >
+          <Button onClick={finishWorkout} disabled={!sessionId} size="sm">
             Finalizar
-          </button>
+          </Button>
         </div>
       </div>
 
       {user?.role === 'trainer' && (
         <div className="flex justify-end px-2">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => {
               setIsAddingExercise(true);
               apiFetchAvailableExercises();
             }}
-            className="flex items-center gap-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white px-5 py-3 rounded-2xl font-black text-xs transition-all shadow-md active:scale-95 uppercase tracking-widest"
           >
             <Plus className="h-5 w-5" />
             Añadir Ejercicio
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Add Exercise Modal */}
-      {isAddingExercise && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Añadir Ejercicio</h2>
-              <button onClick={() => setIsAddingExercise(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
+      <Modal
+        open={isAddingExercise}
+        onClose={() => setIsAddingExercise(false)}
+        title="Añadir Ejercicio"
+        maxWidth="xl"
+        scrollable
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Seleccionar Ejercicio</Label>
+            <Select
+              value={newExercise.exercise_id}
+              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
+            >
+              <option value="">Selecciona un ejercicio...</option>
+              {availableExercises.map((e) => (
+                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Series</Label>
+              <Input
+                type="number"
+                value={newExercise.sets}
+                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+              />
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Seleccionar Ejercicio</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  value={newExercise.exercise_id}
-                  onChange={(e) => setNewExercise({...newExercise, exercise_id: e.target.value})}
-                >
-                  <option value="">Selecciona un ejercicio...</option>
-                  {availableExercises.map(e => (
-                    <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Series</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.sets}
-                    onChange={(e) => setNewExercise({...newExercise, sets: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Reps</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise({...newExercise, reps: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Descanso (seg)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.rest_seconds}
-                    onChange={(e) => setNewExercise({...newExercise, rest_seconds: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Sugerencia</label>
-                  <input 
-                    type="text"
-                    placeholder="Ej: Peso pesado"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.weight_suggestion}
-                    onChange={(e) => setNewExercise({...newExercise, weight_suggestion: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleAddExercise}
-                disabled={!newExercise.exercise_id}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Añadir a Rutina
-              </button>
+            <div>
+              <Label>Reps</Label>
+              <Input
+                type="number"
+                value={newExercise.reps}
+                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+              />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Descanso (seg)</Label>
+              <Input
+                type="number"
+                value={newExercise.rest_seconds}
+                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Sugerencia</Label>
+              <Input
+                type="text"
+                placeholder="Ej: Peso pesado"
+                value={newExercise.weight_suggestion}
+                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button className="w-full" onClick={handleAddExercise} disabled={!newExercise.exercise_id}>
+            Añadir a Rutina
+          </Button>
         </div>
-      )}
+      </Modal>
 
       <div className="space-y-8">
         {routine.exercises.map((exercise, index) => (
@@ -587,7 +582,7 @@ export default function ActiveWorkout() {
                     <div className="flex gap-2">
                       <button 
                         onClick={() => {
-                          console.log(`Buy request for: ${exercise.name}`);
+                          clientLogger.info('Equipment buy request', { exercise: exercise.name });
                           alert(`Buy equipment for: ${exercise.name}`);
                         }}
                         className="px-4 py-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest rounded-lg hover:opacity-90 active:bg-zinc-700 dark:active:bg-zinc-200 active:scale-95 transition-all shadow-sm"
@@ -596,7 +591,7 @@ export default function ActiveWorkout() {
                       </button>
                       <button 
                         onClick={() => {
-                          console.log(`Rent request for: ${exercise.name}`);
+                          clientLogger.info('Equipment rent request', { exercise: exercise.name });
                           alert(`Rent equipment for: ${exercise.name}`);
                         }}
                         className="px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600 active:scale-95 transition-all"
@@ -753,71 +748,65 @@ export default function ActiveWorkout() {
         ))}
       </div>
 
-      {/* Finish Workout Modal */}
-      {isFinishing && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="text-center mb-8">
-              <div className="h-16 w-16 bg-orange-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-orange-500/20">
-                <CheckCircle className="h-8 w-8" />
-              </div>
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">¡Felicidades!</h2>
-              <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
-            </div>
-            
-            <div className="space-y-4">
-              <button 
-                onClick={() => {
-                  setSuccessStatus(true);
-                  // Success status is set, now call finish
-                  setTimeout(() => {
-                    const btn = document.getElementById('final-confirm-btn');
-                    if (btn) btn.click();
-                  }, 100);
-                }}
-                className="w-full flex items-center justify-between p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl group hover:border-emerald-500 transition-all"
-              >
-                <div className="text-left">
-                  <p className="font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tight">Sí, la logré</p>
-                  <p className="text-[10px] text-emerald-600/60 dark:text-emerald-500/60 font-black uppercase tracking-widest">Todos los sets completados</p>
-                </div>
-                <div className="h-6 w-6 rounded-full border-2 border-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
-                  <CheckCircle className="h-4 w-4" />
-                </div>
-              </button>
-
-              <button 
-                onClick={() => {
-                  setSuccessStatus(false);
-                  setTimeout(() => {
-                    const btn = document.getElementById('final-confirm-btn');
-                    if (btn) btn.click();
-                  }, 100);
-                }}
-                className="w-full flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl group hover:border-zinc-400 transition-all"
-              >
-                <div className="text-left">
-                  <p className="font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">No completamente</p>
-                  <p className="text-[10px] text-zinc-500/60 font-black uppercase tracking-widest text">Faltaron algunos ejercicios</p>
-                </div>
-              </button>
-
-              <button 
-                id="final-confirm-btn"
-                className="hidden"
-                onClick={finishWorkout}
-              ></button>
-
-              <button 
-                onClick={() => setIsFinishing(false)}
-                className="w-full py-4 text-xs font-black text-zinc-400 hover:text-zinc-900 dark:hover:text-white uppercase tracking-widest transition-all mt-4"
-              >
-                Volver al entrenamiento
-              </button>
-            </div>
+      <Modal
+        open={isFinishing}
+        onClose={() => setIsFinishing(false)}
+        title={<>¡Felicidades!</>}
+      >
+        <div className="text-center mb-8">
+          <div className="h-16 w-16 bg-orange-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-orange-500/20">
+            <CheckCircle className="h-8 w-8" />
           </div>
+          <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
         </div>
-      )}
+
+        <div className="space-y-4">
+          <button
+            onClick={() => {
+              setSuccessStatus(true);
+              setTimeout(() => {
+                const btn = document.getElementById('final-confirm-btn');
+                if (btn) btn.click();
+              }, 100);
+            }}
+            className="w-full flex items-center justify-between p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl group hover:border-emerald-500 transition-all"
+          >
+            <div className="text-left">
+              <p className="font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tight">Sí, la logré</p>
+              <p className="text-[10px] text-emerald-600/60 dark:text-emerald-500/60 font-black uppercase tracking-widest">Todos los sets completados</p>
+            </div>
+            <div className="h-6 w-6 rounded-full border-2 border-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
+              <CheckCircle className="h-4 w-4" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setSuccessStatus(false);
+              setTimeout(() => {
+                const btn = document.getElementById('final-confirm-btn');
+                if (btn) btn.click();
+              }, 100);
+            }}
+            className="w-full flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl group hover:border-zinc-400 transition-all"
+          >
+            <div className="text-left">
+              <p className="font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">No completamente</p>
+              <p className="text-[10px] text-zinc-500/60 font-black uppercase tracking-widest text">Faltaron algunos ejercicios</p>
+            </div>
+          </button>
+
+          <button
+            id="final-confirm-btn"
+            className="hidden"
+            onClick={finishWorkout}
+          />
+
+          <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setIsFinishing(false)}>
+            Volver al entrenamiento
+          </Button>
+        </div>
+      </Modal>
 
       {/* Rest Timer Overlay */}
       {isResting && (
@@ -842,12 +831,13 @@ export default function ActiveWorkout() {
               >
                 +30s
               </button>
-              <button 
+              <Button
                 onClick={skipRest}
-                className="flex-2 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20"
+                className="flex-[2]"
+                size="sm"
               >
                 Saltar
-              </button>
+              </Button>
             </div>
           </div>
         </div>

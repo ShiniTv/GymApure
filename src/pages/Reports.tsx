@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { downloadReport } from '../lib/api';
 import { FileSpreadsheet, Download, Calendar, DollarSign, Users, Fingerprint } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { Button, Card, Input, Label, PageHeader } from '../components/ui';
 
 type ReportType = 'payments' | 'attendance' | 'members';
 
@@ -58,102 +59,76 @@ export default function Reports() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase">
-          Reportes <span className="text-orange-500">exportables</span>
-        </h1>
-        <p className="text-zinc-500 font-medium mt-1">
-          Descarga archivos CSV para contabilidad, cierre mensual y análisis operativo.
-        </p>
-      </div>
+      <PageHeader
+        title={<>Reportes <span className="text-orange-500">exportables</span></>}
+        subtitle="Descarga archivos CSV para contabilidad, cierre mensual y análisis operativo."
+      />
 
       {error && (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4">
+        <Card className="border-red-500/30 bg-red-500/10">
           <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
-        </div>
+        </Card>
       )}
 
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
+      <Card>
         <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           Rango de fechas (pagos y asistencias)
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-              Desde
-            </label>
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <Label>Desde</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="flex-1">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">
-              Hasta
-            </label>
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-orange-500"
-            />
+            <Label>Hasta</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {REPORTS.map((report) => {
           const Icon = report.icon;
           const isLoading = downloading === report.type;
           return (
-            <div
-              key={report.type}
-              className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm flex flex-col"
-            >
+            <Card key={report.type} className="flex flex-col">
               <div className="flex items-start gap-4 mb-4">
                 <div className="p-3 bg-orange-500/10 rounded-xl">
                   <Icon className="h-6 w-6 text-orange-600 dark:text-orange-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">
+                  <h3 className="font-black text-zinc-900 dark:text-white uppercase tracking-tight">
                     {report.title}
                   </h3>
-                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{report.description}</p>
+                  <p className="text-sm text-zinc-500 mt-1">{report.description}</p>
                 </div>
               </div>
-
-              <div className="mt-auto pt-4">
-                {report.hasDateRange && (
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">
-                    {from} → {to}
-                  </p>
+              <Button
+                className="mt-auto w-full"
+                disabled={isLoading}
+                onClick={() => handleDownload(report.type, report.hasDateRange)}
+              >
+                {isLoading ? (
+                  'Descargando...'
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Descargar CSV
+                  </>
                 )}
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => handleDownload(report.type, report.hasDateRange)}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <FileSpreadsheet className="h-4 w-4 animate-pulse" />
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Descargar CSV
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+              </Button>
+            </Card>
           );
         })}
       </div>
+
+      <Card className="flex items-center gap-3 text-zinc-500">
+        <FileSpreadsheet className="h-5 w-5 text-orange-500 shrink-0" />
+        <p className="text-sm font-medium">
+          Los archivos se generan en el servidor y se descargan con codificación UTF-8 compatible con Excel.
+        </p>
+      </Card>
     </div>
   );
 }

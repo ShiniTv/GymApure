@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { apiFetch } from '../lib/api';
 
 interface User {
@@ -32,18 +32,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (userData: User) => {
+  const login = useCallback((userData: User) => {
     setUser(userData);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     apiFetch('/api/auth/logout', { method: 'POST' })
       .then(() => setUser(null))
       .catch(() => setUser(null));
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, login, logout, isLoading }),
+    [user, login, logout, isLoading]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

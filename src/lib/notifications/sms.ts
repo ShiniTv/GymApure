@@ -1,3 +1,5 @@
+import { logger } from '../logger.ts';
+
 export function isSmsConfigured(): boolean {
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const token = process.env.TWILIO_AUTH_TOKEN?.trim();
@@ -20,13 +22,17 @@ export async function sendSms(to: string, body: string): Promise<boolean> {
   const from = process.env.TWILIO_FROM_NUMBER?.trim();
 
   if (!sid || !token || !from) {
-    console.log(`[sms:mock] To: ${to} | ${body}`);
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('Twilio no configurado. Envío SMS cancelado.');
+    } else {
+      logger.info('SMS simulado (sin Twilio)', { to });
+    }
     return false;
   }
 
   const normalized = normalizePhone(to);
   if (!normalized) {
-    console.warn('[sms] Teléfono inválido:', to);
+    logger.warn('Telefono invalido para SMS', { to });
     return false;
   }
 
@@ -50,12 +56,15 @@ export async function sendSms(to: string, body: string): Promise<boolean> {
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('[sms] Twilio error:', res.status, errText);
+      logger.error('Twilio respondio con error', { status: res.status, detail: errText });
       return false;
     }
     return true;
   } catch (err) {
-    console.error('[sms] Error enviando a', to, err);
+    logger.error('Error enviando SMS', {
+      to,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return false;
   }
 }

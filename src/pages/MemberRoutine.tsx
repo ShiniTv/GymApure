@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Dumbbell, Calendar, Plus, X, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
+import { Button, Card, Modal, PageHeader, Label, Input, Select } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
 
 interface Routine {
   id: number;
@@ -53,6 +55,18 @@ interface Measurement {
   leg: number | null;
 }
 
+interface RoutineOption {
+  id: number;
+  name: string;
+  difficulty: string;
+}
+
+interface ExerciseOption {
+  id: number;
+  name: string;
+  muscle_group: string;
+}
+
 export default function MemberRoutine() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -74,7 +88,7 @@ export default function MemberRoutine() {
   
   // Assignment Modal State
   const [isAssigning, setIsAssigning] = useState(false);
-  const [availableRoutines, setAvailableRoutines] = useState<any[]>([]);
+  const [availableRoutines, setAvailableRoutines] = useState<RoutineOption[]>([]);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
   const [assignDates, setAssignDates] = useState({
     start_date: new Date().toISOString().split('T')[0],
@@ -92,7 +106,7 @@ export default function MemberRoutine() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState<any[]>([]);
+  const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState({
     exercise_id: '',
     sets: 3,
@@ -101,22 +115,34 @@ export default function MemberRoutine() {
     weight_suggestion: ''
   });
 
+  const refreshUserRoutines = () =>
+    apiFetch(`/api/users/${id}/routines`)
+      .then((res) => parseJsonResponse<Routine[]>(res))
+      .then((data) => setRoutines(Array.isArray(data) ? data : []));
+
+  const refreshRoutineExercises = async (routineId: number) => {
+    const res = await apiFetch(`/api/routines/${routineId}`);
+    const data = await parseJsonResponse<{ exercises: Exercise[] }>(res);
+    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+    setRoutines((prev) => prev.map((r) => (r.id === routineId ? { ...r, exercises } : r)));
+  };
+
   useEffect(() => {
+    if (!id) return;
     Promise.all([
-      apiFetch(`/api/users/${id}`).then(res => res.json()),
-      apiFetch(`/api/users/${id}/routines`).then(res => res.json()),
-      apiFetch(`/api/memberships/user/${id}`).then(res => res.ok ? res.json() : null),
-      apiFetch(`/api/users/${id}/measurements`).then(res => res.json()),
-    ]).then(([userData, routinesData, subData, measurementsData]) => {
-      setMember(userData);
-      setRoutines(Array.isArray(routinesData) ? routinesData : []);
-      setSubscription(subData?.membership_name ? subData : null);
-      setMeasurements(Array.isArray(measurementsData) ? measurementsData : []);
-      setLoading(false);
-    }).catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
+      apiFetch(`/api/users/${id}`).then((res) => parseJsonResponse<User>(res)),
+      apiFetch(`/api/users/${id}/routines`).then((res) => parseJsonResponse<Routine[]>(res)),
+      apiFetch(`/api/memberships/user/${id}`).then((res) => parseJsonOptional<Subscription>(res)),
+      apiFetch(`/api/users/${id}/measurements`).then((res) => parseJsonResponse<Measurement[]>(res)),
+    ])
+      .then(([userData, routinesData, subData, measurementsData]) => {
+        setMember(userData);
+        setRoutines(Array.isArray(routinesData) ? routinesData : []);
+        setSubscription(subData?.membership_name ? subData : null);
+        setMeasurements(Array.isArray(measurementsData) ? measurementsData : []);
+      })
+      .catch((err) => clientLogger.error('Failed to load member routine context', err))
+      .finally(() => setLoading(false));
   }, [id]);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
@@ -136,29 +162,27 @@ export default function MemberRoutine() {
           leg: measurementForm.leg ? parseFloat(measurementForm.leg) : null,
         }),
       });
-      if (res.ok) {
-        const created = await res.json();
-        setMeasurements(prev => [created, ...prev]);
-        setIsAddingMeasurement(false);
-        setMeasurementForm({
-          date: new Date().toISOString().split('T')[0],
-          weight: '',
-          body_fat_percentage: '',
-          waist: '',
-          arm: '',
-          leg: '',
-        });
-      }
+      const created = await parseJsonResponse<Measurement>(res);
+      setMeasurements((prev) => [created, ...prev]);
+      setIsAddingMeasurement(false);
+      setMeasurementForm({
+        date: new Date().toISOString().split('T')[0],
+        weight: '',
+        body_fat_percentage: '',
+        waist: '',
+        arm: '',
+        leg: '',
+      });
     } catch (err) {
-      console.error('Failed to add measurement', err);
+      clientLogger.error('Failed to add member measurement', err);
     }
   };
 
   const apiFetchAvailableRoutines = () => {
     apiFetch('/api/routines')
-      .then(res => res.json())
-      .then(data => setAvailableRoutines(Array.isArray(data) ? data : []))
-      .catch(err => console.error(err));
+      .then((res) => parseJsonResponse<RoutineOption[]>(res))
+      .then((data) => setAvailableRoutines(Array.isArray(data) ? data : []))
+      .catch((err) => clientLogger.error('Failed to fetch routines catalog', err));
   };
 
   const handleInlineUpdate = async (routineId: number, exercise: Exercise, field: 'sets' | 'reps', value: number) => {
@@ -177,19 +201,22 @@ export default function MemberRoutine() {
         }),
       });
 
-      if (res.ok) {
-        setRoutines(prev => prev.map(r => {
+      await parseJsonResponse(res);
+      setRoutines((prev) =>
+        prev.map((r) => {
           if (r.id === routineId) {
             return {
               ...r,
-              exercises: r.exercises?.map(e => e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e)
+              exercises: r.exercises?.map((e) =>
+                e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e
+              ),
             };
           }
           return r;
-        }));
-      }
+        })
+      );
     } catch (err) {
-      console.error('Failed to inline update exercise', err);
+      clientLogger.error('Failed to inline update routine exercise', err);
     }
   };
 
@@ -208,15 +235,11 @@ export default function MemberRoutine() {
         }),
       });
 
-      if (res.ok) {
-        setIsAssigning(false);
-        // Refresh routines
-        apiFetch(`/api/users/${id}/routines`)
-          .then(res => res.json())
-          .then(data => setRoutines(Array.isArray(data) ? data : []));
-      }
+      await parseJsonResponse(res);
+      setIsAssigning(false);
+      await refreshUserRoutines();
     } catch (err) {
-      console.error('Failed to assign routine', err);
+      clientLogger.error('Failed to assign routine to member', err);
     }
   };
 
@@ -224,20 +247,18 @@ export default function MemberRoutine() {
     if (!user || !routineForm.name) return;
 
     try {
-      // 1. Create Routine
       const createRes = await apiFetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: routineForm.name,
           difficulty: routineForm.difficulty,
-          trainer_id: user.id
+          trainer_id: user.id,
         }),
       });
-      const createData = await createRes.json();
+      const createData = await parseJsonResponse<{ id: number }>(createRes);
 
-      if (createRes.ok) {
-        // 2. Assign to User
+      await parseJsonResponse(
         await apiFetch(`/api/users/${id}/routines`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -245,19 +266,16 @@ export default function MemberRoutine() {
             routine_id: createData.id,
             assigned_by: user.id,
             start_date: new Date().toISOString().split('T')[0],
-            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           }),
-        });
+        })
+      );
 
-        setIsCreating(false);
-        setRoutineForm({ name: '', difficulty: 'Beginner' });
-        // Refresh routines
-        apiFetch(`/api/users/${id}/routines`)
-          .then(res => res.json())
-          .then(data => setRoutines(Array.isArray(data) ? data : []));
-      }
+      setIsCreating(false);
+      setRoutineForm({ name: '', difficulty: 'Beginner' });
+      await refreshUserRoutines();
     } catch (err) {
-      console.error('Failed to create routine', err);
+      clientLogger.error('Failed to create routine for member', err);
     }
   };
 
@@ -270,21 +288,17 @@ export default function MemberRoutine() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: routineForm.name,
-          difficulty: routineForm.difficulty
+          difficulty: routineForm.difficulty,
         }),
       });
 
-      if (res.ok) {
-        setIsEditing(false);
-        setEditingRoutineId(null);
-        setRoutineForm({ name: '', difficulty: 'Beginner' });
-        // Refresh routines
-        apiFetch(`/api/users/${id}/routines`)
-          .then(res => res.json())
-          .then(data => setRoutines(Array.isArray(data) ? data : []));
-      }
+      await parseJsonResponse(res);
+      setIsEditing(false);
+      setEditingRoutineId(null);
+      setRoutineForm({ name: '', difficulty: 'Beginner' });
+      await refreshUserRoutines();
     } catch (err) {
-      console.error('Failed to update routine', err);
+      clientLogger.error('Failed to update member routine', err);
     }
   };
 
@@ -296,14 +310,10 @@ export default function MemberRoutine() {
         method: 'DELETE',
       });
 
-      if (res.ok) {
-        // Refresh routines
-        apiFetch(`/api/users/${id}/routines`)
-          .then(res => res.json())
-          .then(data => setRoutines(Array.isArray(data) ? data : []));
-      }
+      await parseJsonResponse(res);
+      await refreshUserRoutines();
     } catch (err) {
-      console.error('Failed to unassign routine', err);
+      clientLogger.error('Failed to unassign routine from member', err);
     }
   };
 
@@ -315,9 +325,9 @@ export default function MemberRoutine() {
 
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
-      .then(res => res.json())
-      .then(data => setAvailableExercises(Array.isArray(data) ? data : []))
-      .catch(err => console.error(err));
+      .then((res) => parseJsonResponse<ExerciseOption[]>(res))
+      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
+      .catch((err) => clientLogger.error('Failed to fetch exercise catalog', err));
   };
 
   const toggleExpandRoutine = async (routineId: number) => {
@@ -327,13 +337,10 @@ export default function MemberRoutine() {
     }
 
     try {
-      const res = await apiFetch(`/api/routines/${routineId}`);
-      const data = await res.json();
-      const exercises = Array.isArray(data?.exercises) ? data.exercises : [];
-      setRoutines(prev => prev.map(r => r.id === routineId ? { ...r, exercises } : r));
+      await refreshRoutineExercises(routineId);
       setExpandedRoutineId(routineId);
     } catch (err) {
-      console.error('Failed to apiFetch routine exercises', err);
+      clientLogger.error('Failed to fetch routine exercises', err);
     }
   };
 
@@ -352,16 +359,12 @@ export default function MemberRoutine() {
         }),
       });
 
-      if (res.ok) {
-        setIsEditingExercise(false);
-        setEditingExercise(null);
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${expandedRoutineId}`);
-        const data = await refreshRes.json();
-        setRoutines(prev => prev.map(r => r.id === expandedRoutineId ? { ...r, exercises: data.exercises } : r));
-      }
+      await parseJsonResponse(res);
+      setIsEditingExercise(false);
+      setEditingExercise(null);
+      await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
-      console.error('Failed to update exercise', err);
+      clientLogger.error('Failed to update routine exercise', err);
     }
   };
 
@@ -373,15 +376,10 @@ export default function MemberRoutine() {
         method: 'DELETE',
       });
 
-      if (res.ok) {
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${routineId}`);
-        const data = await refreshRes.json();
-        const exercises = Array.isArray(data?.exercises) ? data.exercises : [];
-        setRoutines(prev => prev.map(r => r.id === routineId ? { ...r, exercises } : r));
-      }
+      await parseJsonResponse(res);
+      await refreshRoutineExercises(routineId);
     } catch (err) {
-      console.error('Failed to delete exercise', err);
+      clientLogger.error('Failed to delete routine exercise', err);
     }
   };
 
@@ -398,22 +396,18 @@ export default function MemberRoutine() {
         }),
       });
 
-      if (res.ok) {
-        setIsAddingExercise(false);
-        setNewExercise({
-          exercise_id: '',
-          sets: 3,
-          reps: 10,
-          rest_seconds: 60,
-          weight_suggestion: ''
-        });
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${expandedRoutineId}`);
-        const data = await refreshRes.json();
-        setRoutines(prev => prev.map(r => r.id === expandedRoutineId ? { ...r, exercises: data.exercises } : r));
-      }
+      await parseJsonResponse(res);
+      setIsAddingExercise(false);
+      setNewExercise({
+        exercise_id: '',
+        sets: 3,
+        reps: 10,
+        rest_seconds: 60,
+        weight_suggestion: ''
+      });
+      await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
-      console.error('Failed to add exercise', err);
+      clientLogger.error('Failed to add exercise to routine', err);
     }
   };
 
@@ -430,47 +424,40 @@ export default function MemberRoutine() {
         Volver a Miembros
       </button>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase whitespace-pre-line leading-tight">
-            RUTINAS DE <span className="text-orange-500">{member.full_name?.toUpperCase()}</span>
-          </h1>
-          <p className="text-zinc-500 font-medium">Gestionar planes de entrenamiento personalizados</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => navigate(`/members/${id}/history`)}
-            className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 px-5 py-3 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105"
-          >
-            <History className="h-5 w-5" />
-            Historial
-          </button>
-          <button 
-            onClick={() => {
-              setIsCreating(true);
-              setRoutineForm({ name: '', difficulty: 'Beginner' });
-            }}
-            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95"
-          >
-            <Plus className="h-5 w-5" />
-            Crear Nueva
-          </button>
-          <button 
-            onClick={() => {
-              setIsAssigning(true);
-              apiFetchAvailableRoutines();
-            }}
-            className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-6 py-3 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105"
-          >
-            <Plus className="h-5 w-5" />
-            Asignar Existente
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title={<>RUTINAS DE <span className="text-orange-500">{member.full_name?.toUpperCase()}</span></>}
+        subtitle="Gestionar planes de entrenamiento personalizados"
+        action={
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate(`/members/${id}/history`)}>
+              <History className="h-5 w-5" />
+              Historial
+            </Button>
+            <Button
+              onClick={() => {
+                setIsCreating(true);
+                setRoutineForm({ name: '', difficulty: 'Beginner' });
+              }}
+            >
+              <Plus className="h-5 w-5" />
+              Crear Nueva
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setIsAssigning(true);
+                apiFetchAvailableRoutines();
+              }}
+            >
+              <Plus className="h-5 w-5" />
+              Asignar Existente
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6">
+        <Card>
           <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Perfil</h3>
           <div className="space-y-2 text-sm">
             {member.height != null && (
@@ -486,9 +473,9 @@ export default function MemberRoutine() {
               <p className="text-zinc-400 text-xs">Sin datos de perfil registrados.</p>
             )}
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6">
+        <Card>
           <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Membresía</h3>
           {subscription ? (
             <div>
@@ -501,9 +488,9 @@ export default function MemberRoutine() {
           ) : (
             <p className="text-sm text-zinc-400">Sin membresía activa</p>
           )}
-        </div>
+        </Card>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6">
+        <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
               <Scale className="h-4 w-4" />
@@ -536,350 +523,273 @@ export default function MemberRoutine() {
           ) : (
             <p className="text-sm text-zinc-400">Sin mediciones registradas</p>
           )}
-        </div>
+        </Card>
       </div>
 
-      {isAddingMeasurement && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Nueva medición</h2>
-              <button type="button" onClick={() => setIsAddingMeasurement(false)} className="text-zinc-400 hover:text-zinc-600">
-                <X className="h-5 w-5" />
-              </button>
+      <Modal
+        open={isAddingMeasurement}
+        onClose={() => setIsAddingMeasurement(false)}
+        title="Nueva medición"
+        maxWidth="xl"
+        scrollable
+      >
+        <form onSubmit={handleAddMeasurement} className="space-y-4">
+          <div>
+            <Label>Fecha</Label>
+            <Input
+              type="date"
+              value={measurementForm.date}
+              onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Peso (kg)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.weight}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
+              />
             </div>
-            <form onSubmit={handleAddMeasurement} className="space-y-4">
+            <div>
+              <Label>Grasa (%)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.body_fat_percentage}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Cintura (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.waist}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Brazo (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.arm}
+                onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button type="submit" className="w-full">
+            Guardar
+          </Button>
+        </form>
+      </Modal>
+
+      <Modal
+        open={isCreating || isEditing}
+        onClose={() => {
+          setIsCreating(false);
+          setIsEditing(false);
+        }}
+        title={isCreating ? 'Crear Rutina' : 'Editar Rutina'}
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Nombre de la Rutina</Label>
+            <Input
+              type="text"
+              value={routineForm.name}
+              onChange={(e) => setRoutineForm({ ...routineForm, name: e.target.value })}
+              placeholder="Ej: Piernas A"
+            />
+          </div>
+          <div>
+            <Label>Dificultad</Label>
+            <Select
+              value={routineForm.difficulty}
+              onChange={(e) => setRoutineForm({ ...routineForm, difficulty: e.target.value })}
+            >
+              <option value="Beginner">Principiante</option>
+              <option value="Intermediate">Intermedio</option>
+              <option value="Advanced">Avanzado</option>
+            </Select>
+          </div>
+          <Button
+            className="w-full"
+            onClick={isCreating ? handleCreateRoutine : handleUpdateRoutine}
+            disabled={!routineForm.name}
+          >
+            {isCreating ? 'Crear y Asignar' : 'Guardar Cambios'}
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isAddingExercise}
+        onClose={() => setIsAddingExercise(false)}
+        title="Añadir Ejercicio"
+        maxWidth="xl"
+        scrollable
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Seleccionar Ejercicio</Label>
+            <Select
+              value={newExercise.exercise_id}
+              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
+            >
+              <option value="">Selecciona un ejercicio...</option>
+              {availableExercises.map((e) => (
+                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Series</Label>
+              <Input
+                type="number"
+                value={newExercise.sets}
+                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Reps</Label>
+              <Input
+                type="number"
+                value={newExercise.reps}
+                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Descanso (seg)</Label>
+              <Input
+                type="number"
+                value={newExercise.rest_seconds}
+                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Sugerencia</Label>
+              <Input
+                type="text"
+                placeholder="Ej: Pesado"
+                value={newExercise.weight_suggestion}
+                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button className="w-full" onClick={handleAddExercise} disabled={!newExercise.exercise_id}>
+            Añadir Ejercicio
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isEditingExercise && !!editingExercise}
+        onClose={() => setIsEditingExercise(false)}
+        title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
+        maxWidth="xl"
+        scrollable
+      >
+        {editingExercise && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Fecha</label>
-                <input
-                  type="date"
-                  value={measurementForm.date}
-                  onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
-                  className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  required
+                <Label>Series</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.sets}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Peso (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.weight}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Grasa (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.body_fat_percentage}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Cintura (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.waist}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Brazo (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={measurementForm.arm}
-                    onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
-                    className="mt-1 w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase tracking-widest"
-              >
-                Guardar
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Create/Edit Modal */}
-      {(isCreating || isEditing) && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{isCreating ? 'Crear Rutina' : 'Editar Rutina'}</h2>
-              <button 
-                onClick={() => {
-                  setIsCreating(false);
-                  setIsEditing(false);
-                }} 
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Nombre de la Rutina</label>
-                <input 
+                <Label>Reps</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.reps}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Descanso (seg)</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.rest_seconds}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label>Sugerencia</Label>
+                <Input
                   type="text"
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                  value={routineForm.name}
-                  onChange={(e) => setRoutineForm({...routineForm, name: e.target.value})}
-                  placeholder="Ej: Piernas A"
+                  value={editingExercise.weight_suggestion}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value })}
                 />
               </div>
+            </div>
+            <Button className="w-full" onClick={handleUpdateExercise}>
+              Guardar Cambios
+            </Button>
+          </div>
+        )}
+      </Modal>
 
-              <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Dificultad</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                  value={routineForm.difficulty}
-                  onChange={(e) => setRoutineForm({...routineForm, difficulty: e.target.value})}
-                >
-                  <option value="Beginner">Principiante</option>
-                  <option value="Intermediate">Intermedio</option>
-                  <option value="Advanced">Avanzado</option>
-                </select>
-              </div>
-              
-              <button 
-                onClick={isCreating ? handleCreateRoutine : handleUpdateRoutine}
-                disabled={!routineForm.name}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                {isCreating ? 'Crear y Asignar' : 'Guardar Cambios'}
-              </button>
+      <Modal
+        open={isAssigning}
+        onClose={() => setIsAssigning(false)}
+        title="Asignar Rutina"
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Seleccionar Rutina</Label>
+            <Select value={selectedRoutineId} onChange={(e) => setSelectedRoutineId(e.target.value)}>
+              <option value="">Selecciona una rutina...</option>
+              {availableRoutines.filter((ar) => !routines.some((r) => r.id === ar.id)).map((r) => (
+                <option key={r.id} value={r.id}>{r.name} ({r.difficulty})</option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Fecha Inicio</Label>
+              <Input
+                type="date"
+                value={assignDates.start_date}
+                onChange={(e) => setAssignDates({ ...assignDates, start_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Fecha Fin</Label>
+              <Input
+                type="date"
+                value={assignDates.end_date}
+                onChange={(e) => setAssignDates({ ...assignDates, end_date: e.target.value })}
+              />
             </div>
           </div>
+          <Button className="w-full" onClick={handleAssignRoutine} disabled={!selectedRoutineId}>
+            Asignar Rutina
+          </Button>
         </div>
-      )}
-
-      {/* Add Exercise Modal */}
-      {isAddingExercise && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Añadir Ejercicio</h2>
-              <button onClick={() => setIsAddingExercise(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Seleccionar Ejercicio</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  value={newExercise.exercise_id}
-                  onChange={(e) => setNewExercise({...newExercise, exercise_id: e.target.value})}
-                >
-                  <option value="">Selecciona un ejercicio...</option>
-                  {availableExercises.map(e => (
-                    <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Series</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.sets}
-                    onChange={(e) => setNewExercise({...newExercise, sets: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Reps</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise({...newExercise, reps: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Descanso (seg)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.rest_seconds}
-                    onChange={(e) => setNewExercise({...newExercise, rest_seconds: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Sugerencia</label>
-                  <input 
-                    type="text"
-                    placeholder="Ej: Pesado"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={newExercise.weight_suggestion}
-                    onChange={(e) => setNewExercise({...newExercise, weight_suggestion: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleAddExercise}
-                disabled={!newExercise.exercise_id}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Añadir Ejercicio
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Exercise Modal */}
-      {isEditingExercise && editingExercise && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Editar {editingExercise.name}</h2>
-              <button onClick={() => setIsEditingExercise(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Series</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={editingExercise.sets}
-                    onChange={(e) => setEditingExercise({...editingExercise, sets: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Reps</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={editingExercise.reps}
-                    onChange={(e) => setEditingExercise({...editingExercise, reps: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Descanso (seg)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                    value={editingExercise.rest_seconds}
-                    onChange={(e) => setEditingExercise({...editingExercise, rest_seconds: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Sugerencia</label>
-                  <input 
-                    type="text"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                    value={editingExercise.weight_suggestion}
-                    onChange={(e) => setEditingExercise({...editingExercise, weight_suggestion: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleUpdateExercise}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Assignment Modal */}
-      {isAssigning && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Asignar Rutina</h2>
-              <button onClick={() => setIsAssigning(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Seleccionar Rutina</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                  value={selectedRoutineId}
-                  onChange={(e) => setSelectedRoutineId(e.target.value)}
-                >
-                  <option value="">Selecciona una rutina...</option>
-                  {availableRoutines.filter(ar => !routines.some(r => r.id === ar.id)).map(r => (
-                    <option key={r.id} value={r.id}>{r.name} ({r.difficulty})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Fecha Inicio</label>
-                  <input 
-                    type="date"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                    value={assignDates.start_date}
-                    onChange={(e) => setAssignDates({...assignDates, start_date: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Fecha Fin</label>
-                  <input 
-                    type="date"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
-                    value={assignDates.end_date}
-                    onChange={(e) => setAssignDates({...assignDates, end_date: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleAssignRoutine}
-                disabled={!selectedRoutineId}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Asignar Rutina
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routines.length === 0 ? (
-          <div className="col-span-full text-center py-12 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <Card className="col-span-full text-center py-12">
             <Dumbbell className="h-12 w-12 text-zinc-200 dark:text-zinc-800 mx-auto mb-4" />
             <p className="text-zinc-500">No hay rutinas asignadas aún.</p>
-          </div>
+          </Card>
         ) : (
           routines.map((routine) => (
-            <div key={routine.id} className="col-span-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+            <div key={routine.id} className="col-span-full">
+            <Card className="overflow-hidden" padding="none">
               <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-orange-500/10 rounded-xl">
@@ -999,6 +909,7 @@ export default function MemberRoutine() {
                   </div>
                 </div>
               )}
+            </Card>
             </div>
           ))
         )}

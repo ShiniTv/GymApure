@@ -1,4 +1,5 @@
 import { runExpiryJob } from '../lib/notifications/expiryNotifier.ts';
+import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -13,6 +14,7 @@ async function tick(): Promise<void> {
   if (running) return;
   running = true;
   try {
+    await runDbMaintenanceIfDue();
     await runExpiryJob();
   } catch (err) {
     console.error('[expiry-cron] Error:', err);

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { apiFetch } from '../lib/api';
-import { Plus, Play, ChevronLeft, ChevronRight, Trash2, X, Edit, Settings2, Users, Calendar, Clock, ChevronDown, UserPlus } from 'lucide-react';
+import { apiFetch, parseJsonResponse } from '../lib/api';
+import { Plus, Play, ChevronLeft, ChevronRight, Trash2, Edit, Settings2, Users, Calendar, Clock, ChevronDown, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Button, Card, Modal, PageHeader, Label, Input, Select } from '../components/ui';
+import { clientLogger } from '../lib/clientLogger';
 import { 
   format, 
   addMonths, 
@@ -39,11 +41,47 @@ interface Routine {
   exercises?: Exercise[];
 }
 
+interface Member {
+  id: number;
+  role: string;
+  full_name: string;
+  profile_image?: string | null;
+}
+
+interface AssignedRoutine {
+  routine_id: number;
+  routine_name: string;
+  difficulty: string;
+  assigned_at: string;
+  start_date: string | null;
+  end_date: string | null;
+  exercise_count: number;
+}
+
+interface RoutineAssignmentMember {
+  id: number;
+  full_name: string;
+  profile_image: string | null;
+  routines: AssignedRoutine[];
+}
+
+interface ExerciseOption {
+  id: number;
+  name: string;
+  muscle_group: string;
+}
+
+interface CalendarAssignment {
+  member_name: string;
+  routine_name: string;
+  difficulty: string;
+}
+
 export default function Routines() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [view, setView] = useState<'library' | 'assignments' | 'calendar'>('library');
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<RoutineAssignmentMember[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
@@ -61,7 +99,7 @@ export default function Routines() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState<any[]>([]);
+  const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState({
     exercise_id: '',
     sets: 3,
@@ -73,37 +111,37 @@ export default function Routines() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const refreshRoutineExercises = async (routineId: number) => {
+    const res = await apiFetch(`/api/routines/${routineId}`);
+    const data = await parseJsonResponse<{ exercises: Exercise[] }>(res);
+    setRoutines((prev) =>
+      prev.map((r) => (r.id === routineId ? { ...r, exercises: data.exercises } : r))
+    );
+  };
+
   const apiFetchRoutines = () => {
     if (user?.role === 'member' && user.id) {
       apiFetch(`/api/users/${user.id}/routines`)
-        .then((res) => res.json())
+        .then((res) => parseJsonResponse<(Routine & { exercise_count?: number })[]>(res))
         .then((data) => {
-          if (Array.isArray(data)) {
-            setRoutines(
-              data.map((r: Routine & { exercise_count?: number }) => ({
-                ...r,
-                exercise_count: r.exercise_count ?? 0,
-              }))
-            );
-          } else {
-            setRoutines([]);
-          }
+          setRoutines(
+            Array.isArray(data)
+              ? data.map((r) => ({
+                  ...r,
+                  exercise_count: r.exercise_count ?? 0,
+                }))
+              : []
+          );
         })
         .catch(() => setRoutines([]));
       return;
     }
 
     apiFetch('/api/routines')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setRoutines(data);
-        } else {
-          setRoutines([]);
-        }
-      })
-      .catch(err => {
-        console.error(err);
+      .then((res) => parseJsonResponse<Routine[]>(res))
+      .then((data) => setRoutines(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        clientLogger.error('Failed to fetch routines', err);
         setRoutines([]);
       });
   };
@@ -117,17 +155,11 @@ export default function Routines() {
   }, [user]);
 
   const apiFetchMembers = () => {
-    apiFetch('/api/users')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setMembers(data.filter((u: any) => u.role === 'member'));
-        } else {
-          setMembers([]);
-        }
-      })
-      .catch(err => {
-        console.error(err);
+    apiFetch('/api/users/options?role=member')
+      .then((res) => parseJsonResponse<Member[]>(res))
+      .then((data) => setMembers(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        clientLogger.error('Failed to fetch members for assignments', err);
         setMembers([]);
       });
   };
@@ -135,21 +167,13 @@ export default function Routines() {
   const apiFetchAssignments = () => {
     setLoadingAssignments(true);
     apiFetch('/api/routines/assignments/all')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setAssignments(data);
-        } else {
-          console.error('Assignments is not an array:', data);
-          setAssignments([]);
-        }
-        setLoadingAssignments(false);
-      })
-      .catch(err => {
-        console.error(err);
+      .then((res) => parseJsonResponse<RoutineAssignmentMember[]>(res))
+      .then((data) => setAssignments(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        clientLogger.error('Failed to fetch routine assignments', err);
         setAssignments([]);
-        setLoadingAssignments(false);
-      });
+      })
+      .finally(() => setLoadingAssignments(false));
   };
 
   const handleInlineUpdate = async (routineId: number, exercise: Exercise, field: 'sets' | 'reps', value: number) => {
@@ -168,19 +192,22 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setRoutines(prev => prev.map(r => {
+      await parseJsonResponse(res);
+      setRoutines((prev) =>
+        prev.map((r) => {
           if (r.id === routineId) {
             return {
               ...r,
-              exercises: r.exercises?.map(e => e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e)
+              exercises: r.exercises?.map((e) =>
+                e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e
+              ),
             };
           }
           return r;
-        }));
-      }
+        })
+      );
     } catch (err) {
-      console.error('Failed to inline update exercise', err);
+      clientLogger.error('Failed to inline update exercise', err);
     }
   };
 
@@ -197,13 +224,12 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setIsCreating(false);
-        setNewRoutine({ name: '', difficulty: 'Beginner' });
-        apiFetchRoutines();
-      }
+      await parseJsonResponse(res);
+      setIsCreating(false);
+      setNewRoutine({ name: '', difficulty: 'Beginner' });
+      apiFetchRoutines();
     } catch (err) {
-      console.error('Failed to create routine', err);
+      clientLogger.error('Failed to create routine', err);
     }
   };
 
@@ -220,12 +246,11 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setEditingRoutine(null);
-        apiFetchRoutines();
-      }
+      await parseJsonResponse(res);
+      setEditingRoutine(null);
+      apiFetchRoutines();
     } catch (err) {
-      console.error('Failed to update routine', err);
+      clientLogger.error('Failed to update routine', err);
     }
   };
 
@@ -237,14 +262,10 @@ export default function Routines() {
       const res = await apiFetch(`/api/routines/${id}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        apiFetchRoutines();
-      } else {
-        const data = await res.json();
-        alert(`Error al eliminar: ${data.error || 'Inténtalo de nuevo'}`);
-      }
+      await parseJsonResponse(res);
+      apiFetchRoutines();
     } catch (err) {
-      console.error('Failed to delete routine', err);
+      alert(err instanceof Error ? err.message : 'Error al eliminar');
     }
   };
 
@@ -255,27 +276,19 @@ export default function Routines() {
     }
 
     try {
-      const res = await apiFetch(`/api/routines/${routineId}`);
-      const data = await res.json();
-      setRoutines(prev => prev.map(r => r.id === routineId ? { ...r, exercises: data.exercises } : r));
+      await refreshRoutineExercises(routineId);
       setExpandedRoutineId(routineId);
     } catch (err) {
-      console.error('Failed to apiFetch routine exercises', err);
+      clientLogger.error('Failed to fetch routine exercises', err);
     }
   };
 
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setAvailableExercises(data);
-        } else {
-          setAvailableExercises([]);
-        }
-      })
+      .then((res) => parseJsonResponse<ExerciseOption[]>(res))
+      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
       .catch(err => {
-        console.error(err);
+        clientLogger.error('Failed to fetch exercise catalog', err);
         setAvailableExercises([]);
       });
   };
@@ -295,16 +308,12 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setIsEditingExercise(false);
-        setEditingExercise(null);
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${expandedRoutineId}`);
-        const data = await refreshRes.json();
-        setRoutines(prev => prev.map(r => r.id === expandedRoutineId ? { ...r, exercises: data.exercises } : r));
-      }
+      await parseJsonResponse(res);
+      setIsEditingExercise(false);
+      setEditingExercise(null);
+      await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
-      console.error('Failed to update exercise', err);
+      clientLogger.error('Failed to update routine exercise', err);
     }
   };
 
@@ -316,15 +325,11 @@ export default function Routines() {
         method: 'DELETE',
       });
 
-      if (res.ok) {
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${routineId}`);
-        const data = await refreshRes.json();
-        setRoutines(prev => prev.map(r => r.id === routineId ? { ...r, exercises: data.exercises } : r));
-        apiFetchRoutines(); // Update count
-      }
+      await parseJsonResponse(res);
+      await refreshRoutineExercises(routineId);
+      apiFetchRoutines();
     } catch (err) {
-      console.error('Failed to delete exercise', err);
+      clientLogger.error('Failed to delete routine exercise', err);
     }
   };
 
@@ -341,23 +346,19 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setIsAddingExercise(false);
-        setNewExercise({
-          exercise_id: '',
-          sets: 3,
-          reps: 10,
-          rest_seconds: 60,
-          weight_suggestion: ''
-        });
-        // Refresh exercises
-        const refreshRes = await apiFetch(`/api/routines/${expandedRoutineId}`);
-        const data = await refreshRes.json();
-        setRoutines(prev => prev.map(r => r.id === expandedRoutineId ? { ...r, exercises: data.exercises } : r));
-        apiFetchRoutines(); // Update count
-      }
+      await parseJsonResponse(res);
+      setIsAddingExercise(false);
+      setNewExercise({
+        exercise_id: '',
+        sets: 3,
+        reps: 10,
+        rest_seconds: 60,
+        weight_suggestion: ''
+      });
+      await refreshRoutineExercises(expandedRoutineId);
+      apiFetchRoutines();
     } catch (err) {
-      console.error('Failed to add exercise', err);
+      clientLogger.error('Failed to add exercise to routine', err);
     }
   };
 
@@ -376,13 +377,12 @@ export default function Routines() {
         }),
       });
 
-      if (res.ok) {
-        setIsAssigningFromCalendar(false);
-        setAssignForm(prev => ({ ...prev, user_id: '', routine_id: '' }));
-        apiFetchAssignments();
-      }
+      await parseJsonResponse(res);
+      setIsAssigningFromCalendar(false);
+      setAssignForm((prev) => ({ ...prev, user_id: '', routine_id: '' }));
+      apiFetchAssignments();
     } catch (err) {
-      console.error('Failed to assign routine', err);
+      clientLogger.error('Failed to assign routine', err);
     }
   };
 
@@ -396,11 +396,11 @@ export default function Routines() {
 
   const assignmentsByDay = useMemo(() => {
     if (!assignments.length) return {};
-    const map: Record<string, any[]> = {};
+    const map: Record<string, CalendarAssignment[]> = {};
     
-    assignments.forEach(member => {
+    assignments.forEach((member) => {
       if (!member.routines) return;
-      member.routines.forEach((routine: any) => {
+      member.routines.forEach((routine) => {
         if (!routine.start_date || !routine.end_date) return;
         
         try {
@@ -408,12 +408,8 @@ export default function Routines() {
           const end = parseISO(routine.end_date);
           
           if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return;
-          
-          // Optimization: only check days in the current calendar range
-          const calStart = calendarDays[0];
-          const calEnd = calendarDays[calendarDays.length - 1];
 
-          calendarDays.forEach(day => {
+          calendarDays.forEach((day) => {
             if (isWithinInterval(day, { start, end })) {
               const dateStr = format(day, 'yyyy-MM-dd');
               if (!map[dateStr]) map[dateStr] = [];
@@ -424,8 +420,8 @@ export default function Routines() {
               });
             }
           });
-        } catch (e) {
-          console.error("Error processing routine dates", e);
+        } catch (err) {
+          clientLogger.error('Error processing routine dates', err);
         }
       });
     });
@@ -435,381 +431,306 @@ export default function Routines() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase whitespace-pre-line leading-tight">
-            GESTIÓN DE <span className="text-orange-500">RUTINAS</span>
-          </h1>
-          <p className="text-zinc-500 font-medium">
-            {user?.role === 'member'
-              ? 'Tus rutinas asignadas por el entrenador'
-              : 'Gestiona plantillas y asignaciones de Caribean Gym'}
-          </p>
-        </div>
-        
-        {user?.role !== 'member' && (
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-2xl">
-            <button 
-              onClick={() => setView('library')}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                view === 'library' 
-                  ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-700'
-              }`}
-            >
-              Biblioteca
-            </button>
-            <button 
-              onClick={() => setView('assignments')}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                view === 'assignments' 
-                  ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-700'
-              }`}
-            >
-              Asignaciones
-            </button>
-            <button 
-              onClick={() => setView('calendar')}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                view === 'calendar' 
-                  ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm' 
-                  : 'text-zinc-500 hover:text-zinc-700'
-              }`}
-            >
-              Calendario
-            </button>
+      <PageHeader
+        title={<>GESTIÓN DE <span className="text-orange-500">RUTINAS</span></>}
+        subtitle={
+          user?.role === 'member'
+            ? 'Tus rutinas asignadas por el entrenador'
+            : 'Gestiona plantillas y asignaciones de Caribean Gym'
+        }
+        action={
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {user?.role !== 'member' && (
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-2xl">
+                <button
+                  onClick={() => setView('library')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    view === 'library'
+                      ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  Biblioteca
+                </button>
+                <button
+                  onClick={() => setView('assignments')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    view === 'assignments'
+                      ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  Asignaciones
+                </button>
+                <button
+                  onClick={() => setView('calendar')}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    view === 'calendar'
+                      ? 'bg-white dark:bg-zinc-700 text-orange-600 shadow-sm'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  Calendario
+                </button>
+              </div>
+            )}
+            {view === 'library' && (
+              <Button onClick={() => setIsCreating(true)}>
+                <Plus className="h-5 w-5" />
+                Nueva Rutina
+              </Button>
+            )}
           </div>
-        )}
+        }
+      />
 
-        {view === 'library' && (
-          <button 
-            onClick={() => setIsCreating(true)}
-            className="flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95"
+      <Modal
+        open={isAssigningFromCalendar}
+        onClose={() => setIsAssigningFromCalendar(false)}
+        title={<>ASIGNAR <span className="text-orange-500">RUTINA</span></>}
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Seleccionar Miembro</Label>
+            <Select
+              value={assignForm.user_id}
+              onChange={(e) => setAssignForm({ ...assignForm, user_id: e.target.value })}
+            >
+              <option value="">Selección...</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>{m.full_name}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label>Seleccionar Rutina</Label>
+            <Select
+              className="font-mono text-sm"
+              value={assignForm.routine_id}
+              onChange={(e) => setAssignForm({ ...assignForm, routine_id: e.target.value })}
+            >
+              <option value="">Selección...</option>
+              {routines.map((r) => (
+                <option key={r.id} value={r.id}>{r.name} ({r.difficulty})</option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Inicio</Label>
+              <Input
+                type="date"
+                value={assignForm.start_date}
+                onChange={(e) => setAssignForm({ ...assignForm, start_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Fin</Label>
+              <Input
+                type="date"
+                value={assignForm.end_date}
+                onChange={(e) => setAssignForm({ ...assignForm, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button
+            variant="secondary"
+            className="w-full"
+            size="lg"
+            onClick={handleQuickAssign}
+            disabled={!assignForm.user_id || !assignForm.routine_id}
           >
-            <Plus className="h-5 w-5" />
-            Nueva Rutina
-          </button>
+            <UserPlus className="h-5 w-5" />
+            Asignar Rutina
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isCreating}
+        onClose={() => setIsCreating(false)}
+        title={<>NUEVA <span className="text-orange-500">RUTINA</span></>}
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Nombre de la Rutina</Label>
+            <Input
+              type="text"
+              value={newRoutine.name}
+              onChange={(e) => setNewRoutine({ ...newRoutine, name: e.target.value })}
+              placeholder="Ej: Full Body"
+            />
+          </div>
+          <div>
+            <Label>Dificultad</Label>
+            <Select
+              className="uppercase tracking-tighter"
+              value={newRoutine.difficulty}
+              onChange={(e) => setNewRoutine({ ...newRoutine, difficulty: e.target.value })}
+            >
+              <option value="Beginner">PRINCIPIANTE</option>
+              <option value="Intermediate">INTERMEDIO</option>
+              <option value="Advanced">AVANZADO</option>
+            </Select>
+          </div>
+          <Button className="w-full" size="lg" onClick={handleCreateRoutine} disabled={!newRoutine.name}>
+            Crear Rutina
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={!!editingRoutine}
+        onClose={() => setEditingRoutine(null)}
+        title="Editar Rutina"
+      >
+        {editingRoutine && (
+          <div className="space-y-4">
+            <div>
+              <Label>Nombre de la Rutina</Label>
+              <Input
+                type="text"
+                value={editingRoutine.name}
+                onChange={(e) => setEditingRoutine({ ...editingRoutine, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Dificultad</Label>
+              <Select
+                value={editingRoutine.difficulty}
+                onChange={(e) => setEditingRoutine({ ...editingRoutine, difficulty: e.target.value })}
+              >
+                <option value="Beginner">Principiante</option>
+                <option value="Intermediate">Intermedio</option>
+                <option value="Advanced">Avanzado</option>
+              </Select>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setEditingRoutine(null)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" onClick={handleUpdateRoutine} disabled={!editingRoutine.name}>
+                Guardar
+              </Button>
+            </div>
+          </div>
         )}
-      </div>
+      </Modal>
 
-      {/* Assign Routine from Calendar Modal */}
-      {isAssigningFromCalendar && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">ASIGNAR <span className="text-orange-500">RUTINA</span></h2>
-              <button onClick={() => setIsAssigningFromCalendar(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
+      <Modal
+        open={isAddingExercise}
+        onClose={() => setIsAddingExercise(false)}
+        title="Añadir Ejercicio"
+        maxWidth="xl"
+        scrollable
+      >
+        <div className="space-y-4">
+          <div>
+            <Label>Seleccionar Ejercicio</Label>
+            <Select
+              value={newExercise.exercise_id}
+              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
+            >
+              <option value="">Selecciona un ejercicio...</option>
+              {availableExercises.map((e) => (
+                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
+              ))}
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Series</Label>
+              <Input
+                type="number"
+                value={newExercise.sets}
+                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+              />
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Seleccionar Miembro</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                  value={assignForm.user_id}
-                  onChange={(e) => setAssignForm({...assignForm, user_id: e.target.value})}
-                >
-                  <option value="">Selección...</option>
-                  {members.map(m => (
-                    <option key={m.id} value={m.id}>{m.full_name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Seleccionar Rutina</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all font-mono text-sm"
-                  value={assignForm.routine_id}
-                  onChange={(e) => setAssignForm({...assignForm, routine_id: e.target.value})}
-                >
-                  <option value="">Selección...</option>
-                  {routines.map(r => (
-                    <option key={r.id} value={r.id}>{r.name} ({r.difficulty})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Inicio</label>
-                  <input 
-                    type="date"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={assignForm.start_date}
-                    onChange={(e) => setAssignForm({...assignForm, start_date: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Fin</label>
-                  <input 
-                    type="date"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={assignForm.end_date}
-                    onChange={(e) => setAssignForm({...assignForm, end_date: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleQuickAssign}
-                disabled={!assignForm.user_id || !assignForm.routine_id}
-                className="w-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
-              >
-                <UserPlus className="h-5 w-5" />
-                Asignar Rutina
-              </button>
+            <div>
+              <Label>Reps</Label>
+              <Input
+                type="number"
+                value={newExercise.reps}
+                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+              />
             </div>
           </div>
-        </div>
-      )}
-      {isCreating && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">NUEVA <span className="text-orange-500">RUTINA</span></h2>
-              <button onClick={() => setIsCreating(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Descanso (seg)</Label>
+              <Input
+                type="number"
+                value={newExercise.rest_seconds}
+                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+              />
             </div>
-            
-            <div className="space-y-4">
+            <div>
+              <Label>Sugerencia</Label>
+              <Input
+                type="text"
+                placeholder="Ej: Pesado"
+                value={newExercise.weight_suggestion}
+                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+              />
+            </div>
+          </div>
+          <Button className="w-full" onClick={handleAddWorkoutExercise} disabled={!newExercise.exercise_id}>
+            Añadir Ejercicio
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isEditingExercise && !!editingExercise}
+        onClose={() => setIsEditingExercise(false)}
+        title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
+        maxWidth="xl"
+        scrollable
+      >
+        {editingExercise && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Nombre de la Rutina</label>
-                <input 
-                  type="text"
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder:font-normal"
-                  value={newRoutine.name}
-                  onChange={(e) => setNewRoutine({...newRoutine, name: e.target.value})}
-                  placeholder="Ej: Full Body"
+                <Label>Series</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.sets}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) })}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Dificultad</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all uppercase tracking-tighter"
-                  value={newRoutine.difficulty}
-                  onChange={(e) => setNewRoutine({...newRoutine, difficulty: e.target.value})}
-                >
-                  <option value="Beginner">PRINCIPIANTE</option>
-                  <option value="Intermediate">INTERMEDIO</option>
-                  <option value="Advanced">AVANZADO</option>
-                </select>
+                <Label>Reps</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.reps}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) })}
+                />
               </div>
-              
-              <button 
-                onClick={handleCreateRoutine}
-                disabled={!newRoutine.name}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-900/20 active:scale-95"
-              >
-                Crear Rutina
-              </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Routine Modal */}
-      {editingRoutine && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Editar Rutina</h2>
-              <button onClick={() => setEditingRoutine(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Nombre de la Rutina</label>
-                <input 
-                  type="text"
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                  value={editingRoutine.name}
-                  onChange={(e) => setEditingRoutine({...editingRoutine, name: e.target.value})}
+                <Label>Descanso (seg)</Label>
+                <Input
+                  type="number"
+                  value={editingExercise.rest_seconds}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Dificultad</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                  value={editingRoutine.difficulty}
-                  onChange={(e) => setEditingRoutine({...editingRoutine, difficulty: e.target.value})}
-                >
-                  <option value="Beginner">Principiante</option>
-                  <option value="Intermediate">Intermedio</option>
-                  <option value="Advanced">Avanzado</option>
-                </select>
-              </div>
-              
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setEditingRoutine(null)}
-                  className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 py-3 rounded-xl font-bold transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleUpdateRoutine}
-                  disabled={!editingRoutine.name}
-                  className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-                >
-                  Guardar
-                </button>
+                <Label>Sugerencia</Label>
+                <Input
+                  type="text"
+                  value={editingExercise.weight_suggestion}
+                  onChange={(e) => setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value })}
+                />
               </div>
             </div>
+            <Button className="w-full" onClick={handleUpdateExercise}>
+              Guardar Cambios
+            </Button>
           </div>
-        </div>
-      )}
-
-      {/* Add Exercise Modal */}
-      {isAddingExercise && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Añadir Ejercicio</h2>
-              <button onClick={() => setIsAddingExercise(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Seleccionar Ejercicio</label>
-                <select 
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                  value={newExercise.exercise_id}
-                  onChange={(e) => setNewExercise({...newExercise, exercise_id: e.target.value})}
-                >
-                  <option value="">Selecciona un ejercicio...</option>
-                  {availableExercises.map(e => (
-                    <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Series</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={newExercise.sets}
-                    onChange={(e) => setNewExercise({...newExercise, sets: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Reps</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise({...newExercise, reps: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Descanso (seg)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={newExercise.rest_seconds}
-                    onChange={(e) => setNewExercise({...newExercise, rest_seconds: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Sugerencia</label>
-                  <input 
-                    type="text"
-                    placeholder="Ej: Pesado"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={newExercise.weight_suggestion}
-                    onChange={(e) => setNewExercise({...newExercise, weight_suggestion: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleAddWorkoutExercise}
-                disabled={!newExercise.exercise_id}
-                className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Añadir Ejercicio
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Exercise Modal */}
-      {isEditingExercise && editingExercise && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Editar {editingExercise.name}</h2>
-              <button onClick={() => setIsEditingExercise(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Series</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={editingExercise.sets}
-                    onChange={(e) => setEditingExercise({...editingExercise, sets: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Reps</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={editingExercise.reps}
-                    onChange={(e) => setEditingExercise({...editingExercise, reps: parseInt(e.target.value)})}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Descanso (seg)</label>
-                  <input 
-                    type="number"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={editingExercise.rest_seconds}
-                    onChange={(e) => setEditingExercise({...editingExercise, rest_seconds: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Sugerencia</label>
-                  <input 
-                    type="text"
-                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold"
-                    value={editingExercise.weight_suggestion}
-                    onChange={(e) => setEditingExercise({...editingExercise, weight_suggestion: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleUpdateExercise}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20"
-              >
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {view === 'library' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -963,7 +884,7 @@ export default function Routines() {
         </div>
       ) : view === 'calendar' ? (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
+          <Card padding="lg" rounded="3xl">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase">
@@ -984,13 +905,10 @@ export default function Routines() {
                   </button>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsAssigningFromCalendar(true)}
-                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
-              >
+              <Button onClick={() => setIsAssigningFromCalendar(true)} size="sm">
                 <Plus className="h-4 w-4" />
                 Asignar Directo
-              </button>
+              </Button>
             </div>
 
             <div className="grid grid-cols-7 gap-px bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-inner">
@@ -1045,10 +963,10 @@ export default function Routines() {
                 );
               })}
             </div>
-          </div>
+          </Card>
 
           {selectedDay && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm animate-in slide-in-from-bottom-4 duration-300">
+            <Card padding="md" rounded="3xl" className="animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">
@@ -1089,7 +1007,7 @@ export default function Routines() {
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           )}
         </div>
       ) : (
@@ -1132,7 +1050,7 @@ export default function Routines() {
                   </div>
 
                   <div className="space-y-4">
-                    {member.routines.map((routine: any) => (
+                    {member.routines.map((routine) => (
                       <div 
                         key={routine.routine_id}
                         className="bg-zinc-50/50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-4 group hover:bg-white dark:hover:bg-zinc-800 transition-all cursor-pointer"

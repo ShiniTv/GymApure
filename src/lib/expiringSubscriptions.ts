@@ -47,11 +47,8 @@ export async function getExpiringSubscriptions(days = DEFAULT_EXPIRY_ALERT_DAYS)
 }
 
 export async function getExpiringCount(days = DEFAULT_EXPIRY_ALERT_DAYS): Promise<number> {
-  const { rows } = await query<{ count: string }>(
-    `SELECT COUNT(DISTINCT u.id)::text AS count ${EXPIRING_FROM}`,
-    [days]
-  );
-  return parseInt(rows[0]?.count || '0', 10);
+  const list = await getExpiringSubscriptions(days);
+  return list.length;
 }
 
 export async function getExpiredThisWeekCount(): Promise<number> {

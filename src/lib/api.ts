@@ -3,12 +3,53 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   return fetch(input, { credentials: 'include', ...init });
 }
 
+export class ApiError extends Error {
+  status: number;
+  requestId?: string;
+  details?: unknown;
+
+  constructor(message: string, options: { status: number; requestId?: string; details?: unknown }) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = options.status;
+    this.requestId = options.requestId;
+    this.details = options.details;
+  }
+}
+
 export async function parseJsonResponse<T = unknown>(res: Response): Promise<T> {
-  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+  const data = (await res.json().catch(() => ({}))) as T & {
+    error?: string;
+    requestId?: string;
+    details?: unknown;
+  };
   if (!res.ok) {
-    throw new Error(data.error || `Error HTTP ${res.status}`);
+    throw new ApiError(data.error || `Error HTTP ${res.status}`, {
+      status: res.status,
+      requestId: data.requestId,
+      details: data.details,
+    });
   }
   return data;
+}
+
+/** Parse JSON without throwing on HTTP errors (kiosk, simulators, health checks). */
+export async function parseJsonSafe<T = unknown>(res: Response): Promise<T & { error?: string }> {
+  return (await res.json().catch(() => ({}))) as T & { error?: string };
+}
+
+/** Parse JSON when the response is OK; otherwise null. */
+export async function parseJsonOptional<T>(res: Response): Promise<T | null> {
+  if (!res.ok) return null;
+  return parseJsonResponse<T>(res);
+}
+
+export function toDisplayErrorMessage(err: unknown, fallback = 'Error inesperado'): string {
+  if (err instanceof ApiError) {
+    return err.requestId ? `${err.message} (req: ${err.requestId})` : err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
 }
 
 /** Normalize legacy /uploads/ paths to authenticated API routes. */

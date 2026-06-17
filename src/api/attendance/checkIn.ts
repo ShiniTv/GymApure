@@ -1,6 +1,8 @@
 import type { RequestHandler } from 'express';
 import { query } from '../../db/index.ts';
 import { resolveKioskUser } from './kioskUser.ts';
+import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
+import { sqlTodayRange } from '../../lib/sqlDateRanges.ts';
 
 function normalizeCedula(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
@@ -28,7 +30,7 @@ export const checkInHandler: RequestHandler = async (req, res) => {
 
     const openSession = await query(
       `SELECT id FROM attendance
-       WHERE user_id = $1 AND check_in_time::date = CURRENT_DATE AND check_out_time IS NULL
+       WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')} AND check_out_time IS NULL
        LIMIT 1`,
       [user.id]
     );
@@ -45,6 +47,7 @@ export const checkInHandler: RequestHandler = async (req, res) => {
     }
 
     await query('INSERT INTO attendance (user_id) VALUES ($1)', [user.id]);
+    invalidateAdminStatsCache();
     res.json({
       success: true,
       user_name: user.full_name,

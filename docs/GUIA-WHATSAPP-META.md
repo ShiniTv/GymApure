@@ -144,7 +144,9 @@ Ejemplos que necesitarás crear en **WhatsApp Manager → Plantillas de mensajes
 | Pago aprobado | `Hola {{1}}, tu pago de ${{2}} USD fue aprobado.` |
 | Rutina asignada | `Hola {{1}}, tienes una nueva rutina: "{{2}}".` |
 
-> **Estado actual del código:** envía texto libre. Funciona en **modo prueba** y dentro de la ventana de 24 h si el usuario te escribió. Para producción masiva, habrá que adaptar el código a plantillas (próximo sprint).
+> **Estado actual del código:** usa plantillas Meta cuando `WHATSAPP_USE_TEMPLATES=true` (default). Nombres configurables con `WHATSAPP_TEMPLATE_EXPIRING`, `WHATSAPP_TEMPLATE_EXPIRED`, `WHATSAPP_TEMPLATE_GENERIC`. Si falla la plantilla, intenta texto libre (dev / ventana 24 h).
+
+Ver también: [RENDER-NOTIFICACIONES.md](./RENDER-NOTIFICACIONES.md)
 
 ### 2.4 Variables en Render
 

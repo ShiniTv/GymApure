@@ -1,6 +1,8 @@
 import type { RequestHandler } from 'express';
 import { query } from '../../db/index.ts';
 import { resolveKioskUser } from './kioskUser.ts';
+import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
+import { sqlTodayRange } from '../../lib/sqlDateRanges.ts';
 
 function normalizeCedula(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
@@ -35,7 +37,7 @@ export const checkOutHandler: RequestHandler = async (req, res) => {
 
     const openSession = await query<{ id: number; check_in_time: Date | string }>(
       `SELECT id, check_in_time FROM attendance
-       WHERE user_id = $1 AND check_in_time::date = CURRENT_DATE AND check_out_time IS NULL
+       WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')} AND check_out_time IS NULL
        ORDER BY check_in_time DESC
        LIMIT 1`,
       [user.id]
@@ -44,7 +46,7 @@ export const checkOutHandler: RequestHandler = async (req, res) => {
     if (!openSession.rows[0]) {
       const closedToday = await query(
         `SELECT id FROM attendance
-         WHERE user_id = $1 AND check_in_time::date = CURRENT_DATE AND check_out_time IS NOT NULL
+         WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')} AND check_out_time IS NOT NULL
          LIMIT 1`,
         [user.id]
       );
@@ -74,6 +76,8 @@ export const checkOutHandler: RequestHandler = async (req, res) => {
     );
 
     const durationMinutes = parseInt(durationResult.rows[0]?.minutes || '1', 10);
+
+    invalidateAdminStatsCache();
 
     res.json({
       success: true,
