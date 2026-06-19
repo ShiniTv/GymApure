@@ -60,9 +60,9 @@ export default function AuthShell({
         </button>
       </div>
 
-      <div className={cn('w-full relative z-10', isKiosk ? 'max-w-md' : 'max-w-md')}>
+      <div className={cn('w-full relative z-10', isKiosk ? 'max-w-lg' : 'max-w-md')}>
         {children}
-        {footer}
+        {footer && <div className="mt-6">{footer}</div>}
       </div>
     </div>
   );

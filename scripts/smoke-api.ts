@@ -85,6 +85,11 @@ async function main() {
     if (cookie) {
       const stats = await json('GET', '/api/stats/admin', undefined, { Cookie: cookie });
       assert('GET /api/stats/admin autenticado → 200', stats.res.status === 200);
+
+      const preview = await json('GET', '/api/reports/preview?from=2020-01-01&to=2099-12-31', undefined, { Cookie: cookie });
+      const counts = preview.data as { payments?: number; attendance?: number; members?: number };
+      assert('GET /api/reports/preview → 200', preview.res.status === 200);
+      assert('reports preview tiene conteos', typeof counts.payments === 'number' && typeof counts.attendance === 'number' && typeof counts.members === 'number');
     }
   }
 

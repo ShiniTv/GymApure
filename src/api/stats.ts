@@ -13,6 +13,7 @@ import {
   setCachedAdminStats,
 } from '../lib/adminStatsCache.ts';
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
+import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 
 const router = Router();
 
@@ -236,7 +237,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   const expiryAlertDays = await getExpiryAlertDays();
 
   try {
-    const [subscription, routines, pendingPayments, lastWorkout, workoutsThisMonth] = await Promise.all([
+    const [subscription, routines, pendingPayments, lastWorkout, workoutsThisMonth, workoutDays] = await Promise.all([
       query(
         `SELECT s.start_date, s.end_date, s.status,
                 m.name AS membership_name, m.duration_days, m.price_usd,
@@ -280,6 +281,12 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
          WHERE user_id = $1 AND start_time >= DATE_TRUNC('month', CURRENT_DATE)`,
         [userId]
       ),
+      query<{ d: string }>(
+        `SELECT DISTINCT DATE(start_time)::text AS d FROM workout_sessions
+         WHERE user_id = $1 AND end_time IS NOT NULL
+         ORDER BY d DESC LIMIT 90`,
+        [userId]
+      ),
     ]);
 
     const sub = subscription.rows[0] as {
@@ -308,6 +315,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       lastWorkout: lastWorkout.rows[0] ?? null,
       expiryAlertDays,
       workoutsThisMonth: parseInt(workoutsThisMonth.rows[0]?.count || '0', 10),
+      workoutStreak: computeWorkoutStreak(workoutDays.rows.map((r) => r.d)),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

@@ -143,10 +143,23 @@ export default function Memberships() {
                 ${plan.price_usd}
                 <span className="text-sm font-bold text-zinc-400 ml-1">USD</span>
               </p>
-              <p className="text-xs text-zinc-500 flex items-center gap-1.5 mb-6">
+              <p className="text-xs text-zinc-500 flex items-center gap-1.5 mb-4">
                 <Calendar className="h-3.5 w-3.5" />
                 Vigencia de {plan.duration_days} días calendario
               </p>
+
+              <div className="mb-6">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                  <span>Costo diario</span>
+                  <span>${(plan.price_usd / plan.duration_days).toFixed(2)}/día</span>
+                </div>
+                <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                  <div
+                    className="h-full bg-orange-500 rounded-full"
+                    style={{ width: `${Math.min(100, (plan.duration_days / 365) * 100)}%` }}
+                  />
+                </div>
+              </div>
 
               <div className="flex gap-2 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
                 <Button type="button" variant="ghost" size="sm" className="flex-1" onClick={() => openEdit(plan)}>

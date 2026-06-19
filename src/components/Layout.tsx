@@ -65,13 +65,38 @@ export default function Layout() {
 
   const filteredNav = navigation.filter(item => item.roles.includes(user?.role || ''));
 
+  const isNavActive = (href: string) => {
+    const [path, search = ''] = href.split('?');
+    if (location.pathname !== path) return false;
+    if (!search) {
+      // Default routines tab should not highlight Asignaciones
+      if (path === '/routines' && location.search.includes('view=')) return false;
+      return true;
+    }
+    const expected = new URLSearchParams(search);
+    const current = new URLSearchParams(location.search);
+    for (const [key, value] of expected.entries()) {
+      if (current.get(key) !== value) return false;
+    }
+    return true;
+  };
+
+  const currentPage = filteredNav.find((item) => isNavActive(item.href))?.name;
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <Logo className="h-8 w-8" />
-          <span className="font-bold text-lg tracking-tight uppercase">Caribean Gym</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Logo className="h-8 w-8 shrink-0" />
+          <div className="min-w-0">
+            <span className="font-bold text-lg tracking-tight uppercase block truncate">Caribean Gym</span>
+            {currentPage && (
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 truncate block">
+                {currentPage}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -103,7 +128,7 @@ export default function Layout() {
           <div className="flex flex-col justify-between h-[calc(100vh-4rem)] p-4">
             <nav className="space-y-1">
               {filteredNav.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = isNavActive(item.href);
                 return (
                   <Link
                     key={item.name}
@@ -171,7 +196,7 @@ export default function Layout() {
 
         {/* Main Content */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
-          <div className="max-w-7xl mx-auto">
+          <div key={location.pathname} className="max-w-7xl mx-auto page-enter">
             <Outlet />
           </div>
         </main>

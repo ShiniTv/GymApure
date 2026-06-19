@@ -93,9 +93,18 @@ export function RoutinesCalendarView({
                       {format(day, 'd')}
                     </span>
                     {dayAssignments.length > 0 && (
-                      <span className="text-[10px] font-black uppercase text-orange-600 bg-orange-500/10 px-1.5 py-0.5 rounded">
-                        {dayAssignments.length}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {dayAssignments.slice(0, 4).map((_, dotIdx) => (
+                          <span
+                            key={dotIdx}
+                            className="h-2 w-2 rounded-full bg-orange-500"
+                            title={`${dayAssignments.length} asignación(es)`}
+                          />
+                        ))}
+                        {dayAssignments.length > 4 && (
+                          <span className="text-[8px] font-black text-orange-600">+{dayAssignments.length - 4}</span>
+                        )}
+                      </div>
                     )}
                   </div>
 

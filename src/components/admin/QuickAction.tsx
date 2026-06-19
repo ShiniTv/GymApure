@@ -30,7 +30,7 @@ export function QuickAction({ to, icon: Icon, title, description, count, tone = 
     <Link
       to={to}
       aria-label={`${title}: ${description}`}
-      className="group flex items-start gap-4 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-orange-500/40 transition-colors"
+      className="group flex items-start gap-4 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-orange-500/40 transition-all active:scale-[0.98]"
     >
       <div className={cn('p-3 rounded-xl transition-colors shrink-0', toneMap[tone])}>
         <Icon className="h-5 w-5" />

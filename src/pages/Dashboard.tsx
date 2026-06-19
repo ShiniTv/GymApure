@@ -22,7 +22,7 @@ import {
 import { QuickAction } from '../components/admin/QuickAction';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { StatCard, Spinner, Card, PageHeader, Badge, EmptyState, Button } from '../components/ui';
+import { StatCard, Card, PageHeader, Badge, EmptyState, Button, DashboardSkeleton, Skeleton } from '../components/ui';
 
 import MemberDashboardView from './member/MemberDashboard';
 
@@ -102,9 +102,7 @@ export default function Dashboard() {
 
   if (pageLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner />
-      </div>
+      <DashboardSkeleton statCount={isAdmin ? 6 : isMember ? 3 : 4} />
     );
   }
 
@@ -122,16 +120,28 @@ export default function Dashboard() {
           badge="RESUMEN CONTABLE"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-          <StatCard title="Ingresos" value={`$${stats?.totalRevenue || 0}`} icon={DollarSign} color="emerald" />
-          <StatCard title="Pendientes" value={stats?.pendingPayments || 0} icon={AlertTriangle} color="red" />
-          <StatCard title={`Por Vencer (${alertDays}d)`} value={stats?.expiringSoon || 0} icon={CalendarClock} color="orange" />
-          <StatCard title="Vencidas Semana" value={stats?.expiredThisWeek || 0} icon={AlertTriangle} color="red" />
-          <StatCard title="Suscripciones Activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" />
-          <StatCard title="Check-ins Hoy" value={stats?.todayCheckIns || 0} icon={Clock} color="emerald" />
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-12 gap-4">
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title="Ingresos" value={`$${stats?.totalRevenue || 0}`} icon={DollarSign} color="emerald" />
+          </div>
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title="Pendientes" value={stats?.pendingPayments || 0} icon={AlertTriangle} color="red" />
+          </div>
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title={`Por Vencer (${alertDays}d)`} value={stats?.expiringSoon || 0} icon={CalendarClock} color="orange" />
+          </div>
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title="Vencidas Semana" value={stats?.expiredThisWeek || 0} icon={AlertTriangle} color="red" />
+          </div>
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title="Suscripciones Activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" />
+          </div>
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <StatCard title="Check-ins Hoy" value={stats?.todayCheckIns || 0} icon={Clock} color="emerald" />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <QuickAction
             to="/payments?status=pending"
             icon={AlertTriangle}
@@ -164,8 +174,8 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card padding="lg" rounded="3xl">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <Card padding="lg" rounded="3xl" className="xl:col-span-5">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-orange-500" />
@@ -215,9 +225,9 @@ export default function Dashboard() {
             </div>
           </Card>
 
-          <Card padding="lg" rounded="3xl">
+          <Card padding="lg" rounded="3xl" className="xl:col-span-7">
             <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-8">Flujo de Ingresos</h3>
-            <Suspense fallback={<div className="h-72 flex items-center justify-center"><Spinner /></div>}>
+            <Suspense fallback={<Skeleton className="h-72 w-full rounded-2xl" />}>
               <RevenueChart data={stats?.revenueHistory || []} />
             </Suspense>
           </Card>

@@ -31,6 +31,39 @@ function buildDateFilter(column: string, from: string | null, to: string | null)
   };
 }
 
+router.get('/preview', authorize(['admin']), async (req, res) => {
+  const from = parseDateParam(req.query.from);
+  const to = parseDateParam(req.query.to);
+  const paymentsFilter = buildDateFilter('p.created_at', from, to);
+  const attendanceFilter = buildDateFilter('a.check_in_time', from, to);
+
+  try {
+    const [payments, attendance, members] = await Promise.all([
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM payments p WHERE 1=1${paymentsFilter.sql}`,
+        paymentsFilter.params
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM attendance a WHERE 1=1${attendanceFilter.sql}`,
+        attendanceFilter.params
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'`,
+        []
+      ),
+    ]);
+
+    res.json({
+      payments: parseInt(payments.rows[0]?.count || '0', 10),
+      attendance: parseInt(attendance.rows[0]?.count || '0', 10),
+      members: parseInt(members.rows[0]?.count || '0', 10),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
 router.get('/payments', authorize(['admin']), async (req, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);

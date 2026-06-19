@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell } from 'lucide-react';
-import { Button, Modal, Label, Input, Select, Spinner, EmptyState } from '../components/ui';
+import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button, Modal, Label, Input, Select, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
+import { useMediaQuery } from '../lib/useMediaQuery';
+import { cn } from '../lib/utils';
 
 interface Exercise {
   id: number;
@@ -70,6 +72,8 @@ export default function ActiveWorkout() {
   const [isResting, setIsResting] = useState(false);
   const [restDuration, setRestDuration] = useState(0);
   const [showVideo, setShowVideo] = useState<Record<number, boolean>>({});
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const isMobileFocus = useMediaQuery('(max-width: 767px)');
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
@@ -84,7 +88,6 @@ export default function ActiveWorkout() {
 
   useEffect(() => {
     if (!id) return;
-    // Fetch routine details
     apiFetch(`/api/routines/${id}`)
       .then((res) => parseJsonResponse<Routine>(res))
       .then((data) => {
@@ -98,14 +101,14 @@ export default function ActiveWorkout() {
         setFetchError('No se pudo cargar la rutina. Verifica tu conexión e intenta de nuevo.');
         setLoading(false);
       });
+  }, [id]);
 
-    // Workout Timer
+  useEffect(() => {
     const interval = setInterval(() => {
       setTimer(t => t + 1);
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [id]);
+  }, []);
 
   useEffect(() => {
     if (user && routine && !sessionId && !loading) {
@@ -113,25 +116,29 @@ export default function ActiveWorkout() {
     }
   }, [user, routine, sessionId, loading]);
 
-  // Rest Timer Logic
+  // Rest timer — single interval while resting (avoids re-creating interval every second)
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isResting && restTimer > 0) {
-      interval = setInterval(() => {
-        setRestTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (restTimer === 0) {
-      setIsResting(false);
-    }
+    if (!isResting) return;
+    const interval = setInterval(() => {
+      setRestTimer((prev) => {
+        if (prev <= 1) {
+          setIsResting(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     return () => clearInterval(interval);
-  }, [isResting, restTimer]);
+  }, [isResting]);
 
-  // Save progress to localStorage
+  // Persist progress — debounced to avoid blocking the main thread on every keystroke
   useEffect(() => {
-    if (sessionId) {
+    if (!sessionId) return;
+    const timer = window.setTimeout(() => {
       localStorage.setItem(`active_workout_logs_${sessionId}`, JSON.stringify(logs));
       localStorage.setItem(`active_workout_completed_exercises_${sessionId}`, JSON.stringify(completedExercises));
-    }
+    }, 500);
+    return () => window.clearTimeout(timer);
   }, [logs, completedExercises, sessionId]);
 
   const toggleExerciseComplete = (exerciseId: number) => {
@@ -499,9 +506,21 @@ export default function ActiveWorkout() {
     );
   }
 
+  const completedCount = routine.exercises.filter((e) => completedExercises[e.id]).length;
+  const progressPct = routine.exercises.length
+    ? Math.round((completedCount / routine.exercises.length) * 100)
+    : 0;
+
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-4 z-10 border-b border-zinc-200 dark:border-zinc-800">
+      <Breadcrumbs
+        items={[
+          { label: 'Rutinas', href: '/routines' },
+          { label: routine.name },
+        ]}
+      />
+
+      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-4 z-10 border-b border-zinc-200 dark:border-zinc-800 -mx-1 px-1">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/routines')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400">
             <ArrowLeft className="h-6 w-6" />
@@ -524,6 +543,23 @@ export default function ActiveWorkout() {
           <Button onClick={finishWorkout} disabled={!sessionId} size="sm">
             Finalizar
           </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500">
+          <span>Progreso de sesión</span>
+          <span className="text-orange-600 dark:text-orange-500">{completedCount}/{routine.exercises.length} ejercicios · {progressPct}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+          <div
+            className="h-full bg-orange-500 rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+            role="progressbar"
+            aria-valuenow={progressPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
         </div>
       </div>
 
@@ -617,9 +653,60 @@ export default function ActiveWorkout() {
         </div>
       </Modal>
 
+      {isMobileFocus && routine.exercises.length > 1 && (
+        <div className="md:hidden flex items-center justify-between gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={focusedIndex === 0}
+            onClick={() => setFocusedIndex((i) => Math.max(0, i - 1))}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="text-center flex-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ejercicio</p>
+            <p className="text-sm font-black text-orange-600">
+              {focusedIndex + 1} / {routine.exercises.length}
+            </p>
+            <div className="flex justify-center gap-1.5 mt-2">
+              {routine.exercises.map((ex, i) => (
+                <button
+                  key={ex.id}
+                  type="button"
+                  onClick={() => setFocusedIndex(i)}
+                  className={cn(
+                    'h-2 rounded-full transition-all',
+                    i === focusedIndex ? 'w-6 bg-orange-500' : 'w-2 bg-zinc-300 dark:bg-zinc-700',
+                    completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
+                  )}
+                  aria-label={`Ir al ejercicio ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={focusedIndex >= routine.exercises.length - 1}
+            onClick={() => setFocusedIndex((i) => Math.min(routine.exercises.length - 1, i + 1))}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-8">
         {routine.exercises.map((exercise, index) => (
-          <div key={exercise.id} className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm transition-all ${completedExercises[exercise.id] ? 'opacity-50 ring-2 ring-emerald-500/50 scale-[0.98]' : 'hover:shadow-md'}`}>
+          <div
+            key={exercise.id}
+            className={cn(
+              'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm transition-all',
+              completedExercises[exercise.id] ? 'opacity-50 ring-2 ring-emerald-500/50 scale-[0.98]' : 'hover:shadow-md',
+              isMobileFocus && index !== focusedIndex && 'hidden'
+            )}
+          >
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-3 uppercase italic tracking-tighter">
@@ -729,7 +816,7 @@ export default function ActiveWorkout() {
                       <Input
                         type="number"
                         placeholder="0"
-                        className="text-center font-bold"
+                        className="text-center font-bold text-lg md:text-sm py-4 md:py-3 min-h-[48px]"
                         value={logs[key]?.weight || ''}
                         onChange={(e) => handleLogChange(exercise.id, setNum, 'weight', e.target.value)}
                         disabled={isCompleted}
@@ -739,7 +826,7 @@ export default function ActiveWorkout() {
                       <Input
                         type="number"
                         placeholder={exercise.reps.toString()}
-                        className="text-center font-bold"
+                        className="text-center font-bold text-lg md:text-sm py-4 md:py-3 min-h-[48px]"
                         value={logs[key]?.reps || ''}
                         onChange={(e) => handleLogChange(exercise.id, setNum, 'reps', e.target.value)}
                         disabled={isCompleted}
@@ -789,6 +876,9 @@ export default function ActiveWorkout() {
             <CheckCircle className="h-8 w-8" />
           </div>
           <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
+          <p className="text-xs font-black uppercase tracking-widest text-orange-600 mt-3">
+            {formatTime(timer)} · {completedCount}/{routine.exercises.length} ejercicios
+          </p>
         </div>
 
         {finishError && (

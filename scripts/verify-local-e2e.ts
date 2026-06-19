@@ -13,6 +13,13 @@ function npmBin(): string {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
+function spawnNpm(args: string[], options: Parameters<typeof spawn>[2] = {}) {
+  return spawn(npmBin(), args, {
+    shell: process.platform === 'win32',
+    ...options,
+  });
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -50,7 +57,7 @@ function killProcessTree(pid: number): Promise<void> {
 
 function runIntegrationTests(baseUrl: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(npmBin(), ['run', 'test:integration'], {
+    const child = spawnNpm(['run', 'test:integration'], {
       stdio: 'inherit',
       env: { ...process.env, SMOKE_BASE_URL: baseUrl },
     });
@@ -67,7 +74,7 @@ function runIntegrationTests(baseUrl: string): Promise<void> {
 
 async function main() {
   console.log(`Verificación local E2E → ${BASE}`);
-  const server = spawn(npmBin(), ['run', 'dev'], {
+  const server = spawnNpm(['run', 'dev'], {
     stdio: 'inherit',
     detached: process.platform !== 'win32',
     env: process.env,

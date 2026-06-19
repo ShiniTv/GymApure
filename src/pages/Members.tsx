@@ -4,7 +4,8 @@ import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, Credit
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner, DataCard, Avatar } from '../components/ui';
+import { useToastOptional } from '../context/ToastContext';
 import { clientLogger } from '../lib/clientLogger';
 import {
   getExpiryBadgeInfo,
@@ -67,6 +68,7 @@ export default function Members() {
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const toast = useToastOptional();
 
   useEffect(() => {
     if (searchParams.get('expiring') === 'true') {
@@ -194,6 +196,7 @@ export default function Members() {
       if (res.ok) {
         setDeleteTarget(null);
         apiFetchMembers();
+        toast?.success('Usuario eliminado');
       }
     } catch (err) {
       clientLogger.error('Failed to delete user', err);
@@ -252,6 +255,7 @@ export default function Members() {
       setAssignTarget(null);
       apiFetchMembers();
       await adminStats?.refresh();
+      toast?.success('Membresía asignada');
     } catch (err) {
       setAssignError(err instanceof Error ? err.message : 'Error al asignar');
     }
@@ -408,7 +412,62 @@ export default function Members() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="py-12 flex justify-center"><Spinner /></div>
+        ) : filteredMembers.length === 0 ? (
+          <p className="text-center text-zinc-400 text-sm py-12">No se encontraron miembros</p>
+        ) : (
+          filteredMembers.map((member) => (
+            <DataCard key={member.id}>
+              <div className="flex items-start gap-3">
+                <Avatar name={member.full_name} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-black text-zinc-900 dark:text-white uppercase tracking-tight truncate">
+                      {member.full_name}
+                    </p>
+                    <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
+                      {member.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">{member.cedula || 'Sin cédula'}</p>
+                  {!isTrainer && (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-1">
+                      {member.role}
+                    </p>
+                  )}
+                  {member.membership_name && (
+                    <p className="text-[10px] font-black uppercase text-emerald-600 mt-2">
+                      {member.membership_name} · {member.days_remaining ?? 0}d
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                {isTrainer && member.role === 'member' && (
+                  <>
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${member.id}/routines`)}>
+                      <Dumbbell className="h-4 w-4" /> Rutinas
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${member.id}/history`)}>
+                      <History className="h-4 w-4" /> Historial
+                    </Button>
+                  </>
+                )}
+                {user?.role === 'admin' && member.role === 'member' && (
+                  <Button size="sm" variant="ghost" onClick={() => openAssignSubscription(member)}>
+                    <CreditCard className="h-4 w-4" /> Membresía
+                  </Button>
+                )}
+              </div>
+            </DataCard>
+          ))
+        )}
+        <PaginationBar page={page} pageSize={pageSize} total={total} onPageChange={setPage} label="usuarios" />
+      </div>
+
+      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
@@ -480,7 +539,7 @@ export default function Members() {
                       </Badge>
                     </td>
                     <td className="px-4 md:px-8 py-5 text-right">
-                      <div className={`flex justify-end gap-2 ${isTrainer ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'} transition-all`}>
+                      <div className="flex justify-end gap-2 opacity-100 transition-all">
                         {user?.role === 'trainer' && member.role === 'member' && (
                           <>
                             <button 

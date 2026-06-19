@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
+import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 
@@ -117,6 +117,7 @@ export default function MemberRoutine() {
     rest_seconds: 60,
     weight_suggestion: ''
   });
+  const [coachingTab, setCoachingTab] = useState<'rutinas' | 'perfil' | 'mediciones'>('rutinas');
 
   const refreshUserRoutines = () =>
     apiFetch(`/api/users/${id}/routines`)
@@ -424,13 +425,13 @@ export default function MemberRoutine() {
 
   return (
     <div className="space-y-6">
-      <button 
-        onClick={() => navigate('/members')}
-        className="flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Volver a Miembros
-      </button>
+      <Breadcrumbs
+        items={[
+          { label: 'Miembros', href: '/members' },
+          { label: member.full_name, href: `/members/${id}/routines` },
+          { label: 'Rutinas' },
+        ]}
+      />
 
       <PageHeader
         title={
@@ -473,13 +474,16 @@ export default function MemberRoutine() {
         rounded="2xl"
         className="sticky top-4 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm"
       >
-        <div>
-          <p className="text-sm font-black text-zinc-900 dark:text-white">{member.full_name}</p>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            {subscription
-              ? `${subscription.membership_name} · ${subscription.days_remaining} días restantes`
-              : 'Sin membresía activa'}
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar name={member.full_name} size="md" />
+          <div>
+            <p className="text-sm font-black text-zinc-900 dark:text-white">{member.full_name}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {subscription
+                ? `${subscription.membership_name} · ${subscription.days_remaining} días restantes`
+                : 'Sin membresía activa'}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {member.goal && <Badge variant="warning">{member.goal}</Badge>}
@@ -489,7 +493,19 @@ export default function MemberRoutine() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <SegmentedControl
+        value={coachingTab}
+        onChange={setCoachingTab}
+        options={[
+          { value: 'rutinas', label: 'Rutinas' },
+          { value: 'perfil', label: 'Perfil' },
+          { value: 'mediciones', label: 'Mediciones' },
+        ]}
+        className="w-full sm:w-auto"
+      />
+
+      {coachingTab === 'perfil' && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Perfil</h3>
           <div className="space-y-2 text-sm">
@@ -522,7 +538,10 @@ export default function MemberRoutine() {
             <p className="text-sm text-zinc-400">Sin membresía activa</p>
           )}
         </Card>
+      </div>
+      )}
 
+      {coachingTab === 'mediciones' && (
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
@@ -540,9 +559,9 @@ export default function MemberRoutine() {
             )}
           </div>
           {measurements.length > 0 ? (
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {measurements.slice(0, 5).map((m) => (
-                <div key={m.id} className="flex justify-between text-xs border-b border-zinc-100 dark:border-zinc-800 pb-2">
+            <div className="space-y-2">
+              {measurements.map((m) => (
+                <div key={m.id} className="flex justify-between text-sm border-b border-zinc-100 dark:border-zinc-800 pb-3">
                   <span className="font-bold text-zinc-600 dark:text-zinc-300">
                     {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                   </span>
@@ -554,10 +573,10 @@ export default function MemberRoutine() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-zinc-400">Sin mediciones registradas</p>
+            <EmptyState icon={Scale} title="Sin mediciones" description="Registra la primera medición del miembro." />
           )}
         </Card>
-      </div>
+      )}
 
       <Modal
         open={isAddingMeasurement}
@@ -849,6 +868,7 @@ export default function MemberRoutine() {
         </div>
       </Modal>
 
+      {coachingTab === 'rutinas' && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routines.length === 0 ? (
           <EmptyState
@@ -1006,6 +1026,7 @@ export default function MemberRoutine() {
           ))
         )}
       </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Calendar, Clock, Dumbbell, ArrowLeft } from 'lucide-react';
-import { Card, PageHeader, Spinner, PaginationBar, Badge, EmptyState, Button } from '../components/ui';
+import { Card, PageHeader, Spinner, PaginationBar, Badge, EmptyState, Button, Breadcrumbs } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 
 interface WorkoutSession {
@@ -110,6 +110,11 @@ export default function WorkoutHistory() {
     return `${diffMins} min`;
   };
 
+  const workoutsThisWeek = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return history.filter((s) => new Date(s.start_time).getTime() >= weekAgo).length;
+  }, [history]);
+
   const displayName = id ? targetUser?.full_name : user?.name;
 
   if (loading && history.length === 0 && !displayName) {
@@ -122,11 +127,22 @@ export default function WorkoutHistory() {
 
   return (
     <div className="space-y-6">
+      {id && (
+        <Breadcrumbs
+          items={[
+            { label: 'Miembros', href: '/members' },
+            { label: displayName ?? 'Miembro', href: `/members/${id}/routines` },
+            { label: 'Historial' },
+          ]}
+        />
+      )}
+
       <div className="flex items-center gap-4">
         {id && (
           <button
             onClick={() => navigate('/members')}
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 dark:text-zinc-500 transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-400 dark:text-zinc-500 transition-colors lg:hidden"
+            aria-label="Volver a miembros"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -146,6 +162,19 @@ export default function WorkoutHistory() {
           subtitle="Sesiones pasadas y rendimiento en Caribean Gym"
         />
       </div>
+
+      {!id && history.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Card padding="sm" rounded="xl">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Esta semana</p>
+            <p className="text-2xl font-black text-orange-500 mt-1">{workoutsThisWeek}</p>
+          </Card>
+          <Card padding="sm" rounded="xl">
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total sesiones</p>
+            <p className="text-2xl font-black text-zinc-900 dark:text-white mt-1">{total}</p>
+          </Card>
+        </div>
+      )}
 
       <Card padding="none" rounded="3xl" className="overflow-hidden">
         {history.length === 0 && !loading ? (

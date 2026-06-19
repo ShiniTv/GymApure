@@ -93,10 +93,11 @@ export default function MemberDashboard() {
         );
       })()}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Entrenos del mes" value={workoutsMonth} icon={Activity} color="orange" />
-        <StatCard title="Días de plan" value={sub?.days_remaining ?? '—'} icon={CalendarClock} color="emerald" />
-        <StatCard title="Ejercicios hoy" value={routine?.exercise_count ?? 0} icon={Dumbbell} color="blue" />
+        <StatCard title="Racha activa" value={memberStats?.workoutStreak ?? 0} icon={CalendarClock} color="emerald" />
+        <StatCard title="Días de plan" value={sub?.days_remaining ?? '—'} icon={CalendarClock} color="blue" />
+        <StatCard title="Ejercicios hoy" value={routine?.exercise_count ?? 0} icon={Dumbbell} color="orange" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

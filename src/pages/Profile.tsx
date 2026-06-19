@@ -18,7 +18,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl } from '../components/ui';
+import { cn } from '../lib/utils';
 import {
   expiryBannerClasses,
   formatExpiryCountdown,
@@ -89,6 +90,7 @@ export default function Profile() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad'>('datos');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [saveError, setSaveError] = useState('');
@@ -384,25 +386,21 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Resumen de progreso */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatMini
-          label="Peso actual"
-          value={latestWeight != null ? `${latestWeight} kg` : '—'}
-          sub={
-            weightDelta != null
-              ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
-              : undefined
-          }
-        />
-        <StatMini label="IMC" value={bmi != null ? bmi.toString() : '—'} sub={profile.height ? `${profile.height} cm` : undefined} />
-        <StatMini label="Mediciones" value={String(measurements.length)} />
-        <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
-      </div>
+      <SegmentedControl
+        value={profileTab}
+        onChange={setProfileTab}
+        options={[
+          { value: 'datos', label: 'Datos' },
+          { value: 'progreso', label: 'Progreso' },
+          { value: 'seguridad', label: 'Seguridad' },
+        ]}
+        className="w-full sm:w-auto"
+      />
 
+      {profileTab === 'datos' && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Formulario de perfil */}
-        <Card>
+        <Card className="lg:col-span-2 max-w-2xl">
           <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <User className="h-4 w-4" />
             Datos personales
@@ -511,9 +509,28 @@ export default function Profile() {
             </Button>
           </form>
         </Card>
+      </div>
+      )}
 
-        {/* Gráfica de peso */}
-        <Card>
+      {profileTab === 'progreso' && (
+      <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatMini
+          label="Peso actual"
+          value={latestWeight != null ? `${latestWeight} kg` : '—'}
+          sub={
+            weightDelta != null
+              ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
+              : undefined
+          }
+        />
+        <StatMini label="IMC" value={bmi != null ? bmi.toString() : '—'} sub={profile.height ? `${profile.height} cm` : undefined} />
+        <StatMini label="Mediciones" value={String(measurements.length)} />
+        <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
               <Scale className="h-4 w-4" />
@@ -649,6 +666,10 @@ export default function Profile() {
         </Card>
       )}
 
+      </>
+      )}
+
+      {profileTab === 'seguridad' && (
       <Card>
         <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
           <Lock className="h-4 w-4" />
@@ -662,9 +683,9 @@ export default function Profile() {
         )}
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
           <div>
-            <Label>Contraseña actual</Label>
-            <Input
-              type="password"
+            <Label htmlFor="current_password">Contraseña actual</Label>
+            <PasswordInput
+              id="current_password"
               autoComplete="current-password"
               value={passwordForm.current_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
@@ -672,21 +693,47 @@ export default function Profile() {
             />
           </div>
           <div>
-            <Label>Nueva contraseña</Label>
-            <Input
-              type="password"
+            <Label htmlFor="new_password">Nueva contraseña</Label>
+            <PasswordInput
+              id="new_password"
               autoComplete="new-password"
               value={passwordForm.new_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
               minLength={8}
               required
             />
-            <p className="text-[10px] text-zinc-400 mt-1">Mínimo 8 caracteres</p>
+            {passwordForm.new_password && (() => {
+              const strength = passwordStrength(passwordForm.new_password);
+              return (
+                <div className="mt-2 space-y-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map((level) => (
+                      <div
+                        key={level}
+                        className={cn(
+                          'h-1 flex-1 rounded-full transition-colors',
+                          strength.score >= level
+                            ? level === 1
+                              ? 'bg-red-500'
+                              : level === 2
+                                ? 'bg-yellow-500'
+                                : 'bg-emerald-500'
+                            : 'bg-zinc-200 dark:bg-zinc-700'
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    Fortaleza: {strength.label}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
           <div>
-            <Label>Confirmar nueva contraseña</Label>
-            <Input
-              type="password"
+            <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
+            <PasswordInput
+              id="confirm_password"
               autoComplete="new-password"
               value={passwordForm.confirm_password}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
@@ -699,6 +746,7 @@ export default function Profile() {
           </Button>
         </form>
       </Card>
+      )}
 
       <Modal
         open={isAddingMeasurement}

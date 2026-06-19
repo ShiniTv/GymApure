@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Play, ChevronRight, Trash2, Edit, Settings2, Dumbbell } from 'lucide-react';
-import { Button, Card, Spinner, EmptyState } from '../../components/ui';
+import { Button, Card, Spinner, EmptyState, SegmentedControl } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
 import type { Routine, RoutineExercise } from './types';
 
@@ -40,6 +40,9 @@ export function RoutinesLibraryView({
   onEditExercise,
   onDeleteExercise,
 }: RoutinesLibraryViewProps) {
+  const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
+  const isTrainerView = userRole === 'trainer' || userRole === 'admin';
+
   if (loadingRoutines) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -72,11 +75,22 @@ export function RoutinesLibraryView({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="space-y-4">
+      {isTrainerView && (
+        <SegmentedControl
+          value={viewMode}
+          onChange={setViewMode}
+          options={[
+            { value: 'grid', label: 'Tarjetas' },
+            { value: 'compact', label: 'Compacta' },
+          ]}
+        />
+      )}
+    <div className={viewMode === 'compact' ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'}>
       {routines.map((routine) => (
         <Card
           key={routine.id}
-          padding="none"
+          padding={viewMode === 'compact' ? 'sm' : 'none'}
           rounded="2xl"
           className={`flex flex-col overflow-hidden hover:border-orange-500/50 hover:shadow-lg transition-all ${expandedRoutineId === routine.id ? 'col-span-full ring-2 ring-orange-500/20' : ''}`}
         >
@@ -225,6 +239,7 @@ export function RoutinesLibraryView({
           )}
         </Card>
       ))}
+    </div>
     </div>
   );
 }

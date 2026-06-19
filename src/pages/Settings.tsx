@@ -12,7 +12,7 @@ import {
   Bell,
   Activity,
 } from 'lucide-react';
-import { Button, Card, Input, Label, PageHeader, Badge, Spinner } from '../components/ui';
+import { Button, Card, Input, Label, PageHeader, Badge, Spinner, Accordion, AccordionItem } from '../components/ui';
 
 interface ExpirySettingsForm {
   expiry_alert_days: number;
@@ -80,6 +80,40 @@ const NOTIFICATION_TOGGLES = [
   { key: 'notify_admin_new_payment' as const, label: 'Aviso pago nuevo', icon: Bell },
   { key: 'notify_routine_assigned' as const, label: 'Rutina asignada', icon: Bell },
 ];
+
+const CHANNEL_TOGGLES = NOTIFICATION_TOGGLES.slice(0, 3);
+const MEMBER_TOGGLES = NOTIFICATION_TOGGLES.slice(3, 6);
+const ADMIN_TOGGLES = NOTIFICATION_TOGGLES.slice(6);
+
+function ToggleGrid({
+  toggles,
+  settings,
+  onChange,
+}: {
+  toggles: typeof NOTIFICATION_TOGGLES;
+  settings: ExpirySettingsForm;
+  onChange: (key: keyof ExpirySettingsForm, value: boolean) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {toggles.map(({ key, label, icon: Icon }) => (
+        <label
+          key={key}
+          className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 cursor-pointer"
+        >
+          <input
+            type="checkbox"
+            checked={settings[key] as boolean}
+            onChange={(e) => onChange(key, e.target.checked)}
+            className="h-4 w-4 rounded accent-orange-500"
+          />
+          <Icon className="h-4 w-4 text-zinc-400 shrink-0" />
+          <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">{label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export default function Settings() {
   const { user } = useAuth();
@@ -304,42 +338,46 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="expiry_alert_days">Días de anticipación</Label>
-              <Input
-                id="expiry_alert_days"
-                type="number"
-                min={1}
-                max={90}
-                value={expirySettings.expiry_alert_days}
-                onChange={(e) =>
-                  setExpirySettings({
-                    ...expirySettings,
-                    expiry_alert_days: Math.min(90, Math.max(1, parseInt(e.target.value, 10) || 1)),
-                  })
-                }
-              />
-            </div>
-
-            {NOTIFICATION_TOGGLES.map(({ key, label, icon: Icon }) => (
-              <label
-                key={key}
-                className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={expirySettings[key]}
-                  onChange={(e) =>
-                    setExpirySettings({ ...expirySettings, [key]: e.target.checked })
-                  }
-                  className="h-4 w-4 rounded accent-orange-500"
-                />
-                <Icon className="h-4 w-4 text-zinc-400 shrink-0" />
-                <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">{label}</span>
-              </label>
-            ))}
+          <div className="max-w-xs">
+            <Label htmlFor="expiry_alert_days">Días de anticipación</Label>
+            <Input
+              id="expiry_alert_days"
+              type="number"
+              min={1}
+              max={90}
+              value={expirySettings.expiry_alert_days}
+              onChange={(e) =>
+                setExpirySettings({
+                  ...expirySettings,
+                  expiry_alert_days: Math.min(90, Math.max(1, parseInt(e.target.value, 10) || 1)),
+                })
+              }
+            />
           </div>
+
+          <Accordion className="mt-6">
+            <AccordionItem title="Canales activos" icon={<Mail className="h-4 w-4 text-orange-500" />} defaultOpen>
+              <ToggleGrid
+                toggles={CHANNEL_TOGGLES}
+                settings={expirySettings}
+                onChange={(key, value) => setExpirySettings({ ...expirySettings, [key]: value })}
+              />
+            </AccordionItem>
+            <AccordionItem title="Notificaciones a miembros" icon={<Bell className="h-4 w-4 text-orange-500" />}>
+              <ToggleGrid
+                toggles={MEMBER_TOGGLES}
+                settings={expirySettings}
+                onChange={(key, value) => setExpirySettings({ ...expirySettings, [key]: value })}
+              />
+            </AccordionItem>
+            <AccordionItem title="Alertas administrativas" icon={<Settings2 className="h-4 w-4 text-orange-500" />}>
+              <ToggleGrid
+                toggles={ADMIN_TOGGLES}
+                settings={expirySettings}
+                onChange={(key, value) => setExpirySettings({ ...expirySettings, [key]: value })}
+              />
+            </AccordionItem>
+          </Accordion>
 
           {expirySettings.providers && (
             <div className="flex flex-wrap gap-3 mt-6">

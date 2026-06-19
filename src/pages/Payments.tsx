@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge, Spinner, Skeleton } from '../components/ui';
+import { useToastOptional } from '../context/ToastContext';
 import { clientLogger } from '../lib/clientLogger';
 
 interface Payment {
@@ -58,6 +59,7 @@ export default function Payments() {
   const [actionError, setActionError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [searchParams] = useSearchParams();
+  const toast = useToastOptional();
 
   useEffect(() => {
     const status = searchParams.get('status');
@@ -137,6 +139,7 @@ export default function Payments() {
       setSelectedPlanId('');
       void apiFetchPayments();
       await memberStats?.refresh();
+      toast?.success('Pago reportado correctamente');
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'No se pudo enviar el pago');
     }
@@ -169,8 +172,9 @@ export default function Payments() {
       setApproveTarget(null);
       apiFetchPayments();
       await adminStats?.refresh();
+      toast?.success('Pago aprobado');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'No se pudo aprobar');
+      toast?.error(err instanceof Error ? err.message : 'No se pudo aprobar');
     }
   };
 
@@ -183,6 +187,7 @@ export default function Payments() {
       setRejectTarget(null);
       apiFetchPayments();
       await adminStats?.refresh();
+      toast?.success('Pago rechazado');
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'No se pudo rechazar');
     }
@@ -320,7 +325,42 @@ export default function Payments() {
             </div>
           </>
         ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+          {loading ? (
+            <div className="p-12 flex justify-center"><Spinner className="h-6 w-6" /></div>
+          ) : payments.length === 0 ? (
+            <div className="p-12 text-center text-zinc-400 text-sm">No hay pagos registrados</div>
+          ) : (
+            payments.map((payment) => (
+              <div key={payment.id} className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-black text-zinc-900 dark:text-white uppercase text-sm">{payment.user_name}</p>
+                  <Badge variant={payment.status === 'approved' ? 'success' : payment.status === 'rejected' ? 'danger' : 'warning'}>
+                    {payment.status === 'approved' ? 'Aprobado' : payment.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                  </Badge>
+                </div>
+                <p className="text-2xl font-black text-orange-600">${payment.amount_usd}</p>
+                {payment.proof_url && (
+                  <a href={paymentProofUrl(payment.id)} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                    <img src={paymentProofUrl(payment.id)} alt="Comprobante" loading="lazy" decoding="async" className="w-full max-h-40 object-cover" />
+                  </a>
+                )}
+                {user?.role === 'admin' && payment.status === 'pending' && (
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500" onClick={() => openApproveModal(payment)}>
+                      <Check className="h-4 w-4" /> Aprobar
+                    </Button>
+                    <Button size="sm" variant="danger" className="flex-1" onClick={() => setRejectTarget(payment)}>
+                      <X className="h-4 w-4" /> Rechazar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
               <tr>
@@ -393,6 +433,7 @@ export default function Payments() {
             </tbody>
           </table>
         </div>
+        </>
         )}
         <PaginationBar
           page={page}
