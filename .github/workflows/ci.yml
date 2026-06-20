@@ -30,7 +30,7 @@ jobs:
       DEMO_PASSWORD: ci-demo-pass-12
       KIOSK_API_KEY: ci-kiosk-key-min16chars
       VITE_KIOSK_KEY: ci-kiosk-key-min16chars
-      NODE_ENV: development
+      NODE_ENV: production
       ALLOW_PUBLIC_REGISTER: 'true'
 
     steps:
