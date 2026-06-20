@@ -9,14 +9,19 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-const paddingMap = { none: '', sm: 'p-4', md: 'p-6', lg: 'p-8' };
+const paddingMap = {
+  none: '',
+  sm: 'p-3 sm:p-4',
+  md: 'p-4 sm:p-6',
+  lg: 'p-5 sm:p-8',
+};
 const roundedMap = { xl: 'rounded-xl', '2xl': 'rounded-2xl', '3xl': 'rounded-3xl' };
 
 export function Card({
   className,
   children,
   padding = 'md',
-  rounded = '2xl',
+  rounded = 'xl',
   ...props
 }: CardProps) {
   return (

@@ -1,10 +1,12 @@
 import { Response, NextFunction } from 'express';
 import { query } from '../../db/index.ts';
-import type { AuthRequest } from './auth.ts';
+import type { AuthRequest } from './authTypes.ts';
 import { asyncHandler } from './asyncHandler.ts';
+import { trainerHasMemberAccess } from '../../lib/trainerAccess.ts';
 
 /**
  * Staff roles bypass the check; members may only access their own user id (route param).
+ * @deprecated Prefer requireMemberAccess for routes that include trainers.
  */
 export function requireSelfOrRoles(paramName: string, ...staffRoles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -26,6 +28,46 @@ export function requireSelfOrRoles(paramName: string, ...staffRoles: string[]) {
   };
 }
 
+/**
+ * Members: self only. Full-access roles (admin, receptionist): any member.
+ * Trainers: only members assigned to one of their routines.
+ */
+export function requireMemberAccess(paramName: string, ...fullAccessRoles: string[]) {
+  return asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'No autorizado' });
+      return;
+    }
+
+    const targetId = parseInt(req.params[paramName], 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    if (user.id === targetId) {
+      next();
+      return;
+    }
+
+    if (fullAccessRoles.includes(user.role)) {
+      next();
+      return;
+    }
+
+    if (user.role === 'trainer') {
+      const allowed = await trainerHasMemberAccess(user.id, targetId);
+      if (allowed) {
+        next();
+        return;
+      }
+    }
+
+    res.status(403).json({ error: 'Permisos insuficientes' });
+  });
+}
+
 function resolveSessionId(req: AuthRequest): number | null {
   const raw = req.params.sessionId ?? req.body?.session_id;
   if (raw === undefined || raw === null || raw === '') return null;
@@ -33,7 +75,7 @@ function resolveSessionId(req: AuthRequest): number | null {
   return Number.isNaN(id) ? null : id;
 }
 
-/** Members may only mutate their own workout session; staff may mutate any. */
+/** Members: own session only. Admin: any. Trainers: assigned members only. */
 export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) => {
   const user = (req as AuthRequest).user;
   if (!user) {
@@ -41,7 +83,7 @@ export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) =
     return;
   }
 
-  if (user.role === 'admin' || user.role === 'trainer') {
+  if (user.role === 'admin') {
     next();
     return;
   }
@@ -62,11 +104,26 @@ export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) =
     return;
   }
 
-  // BIGINT columns come back as strings from node-pg — normalize before compare
-  if (Number(rows[0].user_id) !== Number(user.id)) {
-    res.status(403).json({ error: 'Permisos insuficientes' });
+  const ownerId = Number(rows[0].user_id);
+
+  if (user.role === 'member') {
+    if (ownerId !== Number(user.id)) {
+      res.status(403).json({ error: 'Permisos insuficientes' });
+      return;
+    }
+    next();
     return;
   }
 
-  next();
+  if (user.role === 'trainer') {
+    const allowed = await trainerHasMemberAccess(user.id, ownerId);
+    if (!allowed) {
+      res.status(403).json({ error: 'Permisos insuficientes' });
+      return;
+    }
+    next();
+    return;
+  }
+
+  res.status(403).json({ error: 'Permisos insuficientes' });
 });

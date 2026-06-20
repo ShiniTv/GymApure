@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
-import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge, EmptyState } from '../components/ui';
 
 interface Membership {
   id: number;
@@ -97,7 +97,7 @@ export default function Memberships() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={<>Planes de <span className="text-orange-500">membresía</span></>}
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
@@ -114,17 +114,21 @@ export default function Memberships() {
           <Spinner />
         </div>
       ) : plans.length === 0 ? (
-        <Card padding="lg" className="text-center">
-          <p className="text-sm font-bold text-zinc-500">No hay planes. Crea el primero.</p>
-          <Button className="mt-4" onClick={openCreate}>
-            <Plus className="h-5 w-5" />
-            Nuevo plan
-          </Button>
-        </Card>
+        <EmptyState
+          icon={DollarSign}
+          title="No hay planes de membresía"
+          description="Crea el primer plan para asignarlo al aprobar pagos o manualmente."
+          action={
+            <Button onClick={openCreate}>
+              <Plus className="h-5 w-5" />
+              Nuevo plan
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {plans.map((plan) => (
-            <Card key={plan.id} padding="lg" rounded="3xl" className="flex flex-col">
+            <Card key={plan.id} padding="lg" rounded="xl" className="flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-6">
                 <div>
                   <h3 className="text-xl font-bold text-zinc-900 dark:text-white">

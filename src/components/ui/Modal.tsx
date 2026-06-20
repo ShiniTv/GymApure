@@ -27,15 +27,14 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         className={cn(
-          'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full shadow-2xl',
-          scrollable ? 'max-h-[90vh] overflow-y-auto' : 'p-6',
-          !scrollable && 'p-6',
+          'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full shadow-2xl',
+          scrollable ? 'max-h-[90vh] scroll-area' : 'p-4 sm:p-5',
           maxWidthMap[maxWidth],
           className
         )}
       >
-        <div className={cn('flex justify-between items-center gap-4', scrollable ? 'sticky top-0 bg-white dark:bg-zinc-900 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 z-10' : 'mb-6')}>
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
+        <div className={cn('flex justify-between items-center gap-3', scrollable ? 'sticky top-0 bg-white dark:bg-zinc-900 px-4 sm:px-5 py-3 border-b border-zinc-100 dark:border-zinc-800 z-10' : 'mb-4')}>
+          <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">
             {title}
           </h2>
           <button
@@ -47,7 +46,7 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className={scrollable ? 'p-6' : undefined}>{children}</div>
+        <div className={scrollable ? 'p-4 sm:p-5' : undefined}>{children}</div>
       </div>
     </div>
   );

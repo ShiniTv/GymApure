@@ -54,7 +54,7 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
               fontWeight: '900',
               fontSize: '12px',
             }}
-            formatter={(value: number) => [`${value} kg`, 'Peso']}
+            formatter={(value) => [`${value ?? 0} kg`, 'Peso']}
           />
           <Line
             type="monotone"

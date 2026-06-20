@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../lib/dateLocale';
 import {
   Fingerprint,
   LogIn,
@@ -57,6 +57,11 @@ interface InsideMember {
 }
 
 type Tab = 'access' | 'inside' | 'register';
+
+/** Touch-friendly but not oversized — counter / kiosk inputs */
+const COUNTER_FIELD = 'min-h-[52px] h-[52px] text-lg font-semibold tracking-wide';
+const COUNTER_ACTION = 'min-h-[52px]';
+const COUNTER_SEARCH_BTN = 'h-[52px] w-[52px] shrink-0 p-0';
 
 export default function Reception() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -216,29 +221,31 @@ export default function Reception() {
   };
 
   const lookupPanel = (
-    <Card padding="lg" rounded="2xl" className="space-y-6">
-      <div className="space-y-4">
+    <Card padding="md" rounded="xl" className="space-y-3">
+      <div className="space-y-2">
         <label className="label-caps">Cédula del visitante</label>
-        <div className="flex gap-3">
-          <Input
-            ref={cedulaRef}
-            value={cedula}
-            onChange={(e) => setCedula(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && void doLookup()}
-            placeholder="V-12345678"
-            className={cn(
-              'min-h-[52px] text-lg font-semibold tracking-wider',
-              isCounterMode && 'min-h-[60px] text-xl'
-            )}
-            autoComplete="off"
-            autoCapitalize="characters"
-          />
+        <div className="flex gap-2 items-stretch">
+          <div className="flex-1 min-w-0">
+            <Input
+              ref={cedulaRef}
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && void doLookup()}
+              placeholder="V-12345678"
+              className={cn(isCounterMode && COUNTER_FIELD)}
+              autoComplete="off"
+              autoCapitalize="characters"
+            />
+          </div>
           <Button
             onClick={() => void doLookup()}
             disabled={lookupLoading || !cedula.trim()}
-            className={cn('min-h-[52px] min-w-[52px] px-4', isCounterMode && 'min-h-[60px] min-w-[60px]')}
+            size="md"
+            className={cn(
+              isCounterMode ? cn(COUNTER_SEARCH_BTN, 'min-h-0') : 'self-stretch aspect-square px-0 shrink-0'
+            )}
           >
-            {lookupLoading ? <Spinner className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            {lookupLoading ? <Spinner className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           </Button>
         </div>
         {isCounterMode && (
@@ -264,41 +271,43 @@ export default function Reception() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
-          size="lg"
-          className={cn('min-h-[56px] text-base', isCounterMode && 'min-h-[64px] text-lg')}
+          size={isCounterMode ? 'md' : 'sm'}
+          className={cn(isCounterMode && COUNTER_ACTION)}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
         >
-          <LogIn className="h-5 w-5 mr-2" />
-          Autorizar entrada
+          <LogIn className="h-4 w-4 shrink-0" />
+          <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
         </Button>
         <Button
-          size="lg"
+          size={isCounterMode ? 'md' : 'sm'}
           variant="secondary"
-          className={cn('min-h-[56px] text-base', isCounterMode && 'min-h-[64px] text-lg')}
+          className={cn(isCounterMode && COUNTER_ACTION)}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
         >
-          <LogOut className="h-5 w-5 mr-2" />
-          Registrar salida
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span className="truncate">{isCounterMode ? 'Salida' : 'Registrar salida'}</span>
         </Button>
       </div>
     </Card>
   );
 
   const memberPanel = (
-    <Card padding="lg" rounded="2xl">
+    <Card padding="md" rounded="xl" className={cn(isCounterMode && 'min-h-0')}>
       {lookupLoading ? (
-        <div className="flex items-center justify-center min-h-[200px]">
+        <div className="flex items-center justify-center py-10">
           <Spinner />
         </div>
       ) : lookup?.found && lookup.user ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{lookup.user.full_name}</h3>
+            <div className="min-w-0">
+              <h3 className={cn('font-bold text-zinc-900 dark:text-white', isCounterMode ? 'text-base' : 'text-lg')}>
+                {lookup.user.full_name}
+              </h3>
               <p className="text-sm text-zinc-500 mt-1">{lookup.user.cedula}</p>
               <p className="text-xs text-zinc-400 mt-1">{lookup.user.email}</p>
             </div>
@@ -334,34 +343,34 @@ export default function Reception() {
           )}
         </div>
       ) : lookup && !lookup.found ? (
-        <div className="text-center py-12 space-y-4">
-          <XCircle className="h-12 w-12 text-red-400 mx-auto" />
-          <p className="font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
+        <div className="text-center py-8 space-y-3">
+          <XCircle className="h-10 w-10 text-red-400 mx-auto" />
+          <p className="font-medium text-sm text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
           <Link to="/members">
-            <Button variant="secondary">
+            <Button variant="secondary" size="sm">
               <UserPlus className="h-4 w-4 mr-2" />
               Registrar nuevo miembro
             </Button>
           </Link>
         </div>
       ) : (
-        <div className="text-center py-12 text-zinc-400">
-          <Fingerprint className="h-16 w-16 mx-auto mb-4 opacity-30" />
-          <p className="font-medium text-sm label-caps">Ingrese una cédula para consultar</p>
+        <div className="text-center py-5 text-zinc-400">
+          <Fingerprint className="h-7 w-7 mx-auto mb-1.5 opacity-30" />
+          <p className="font-medium text-[11px] label-caps">Ingrese una cédula para consultar</p>
         </div>
       )}
     </Card>
   );
 
   const insideList = (
-    <Card padding="lg" rounded="2xl">
+    <Card padding="md" rounded="xl">
       <div className="flex items-center justify-between mb-4">
         <h3 className="section-title">Dentro del gym ({insideCount})</h3>
         <Button variant="ghost" size="sm" onClick={() => void loadStats()}>
           Actualizar
         </Button>
       </div>
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className={cn('scroll-area space-y-2', isCounterMode ? 'max-h-56' : 'max-h-72')}>
         {inside.map((m) => (
           <div
             key={m.id}
@@ -384,104 +393,124 @@ export default function Reception() {
   );
 
   if (isCounterMode) {
+    const showMemberPanel = lookupLoading || lookup != null;
+
     return (
-      <div className="space-y-4 -mx-2 lg:-mx-4">
-        <div className="flex items-center justify-between gap-4 px-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600">
-              <Monitor className="h-5 w-5" />
+      <div className="page-stack">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-600 shrink-0">
+              <Monitor className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-white truncate">Modo mostrador</h1>
-              <p className="text-xs text-zinc-500">{insideCount} personas dentro · F1 entrada · F2 salida</p>
+              <h1 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
+                Modo mostrador
+              </h1>
+              <p className="text-[11px] text-zinc-500 truncate">
+                {insideCount} dentro · F1 entrada · F2 salida
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link to="/">
-              <Button variant="ghost" size="sm" title="Ir al dashboard">
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Ir al dashboard">
                 <LayoutDashboard className="h-4 w-4" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" onClick={() => setCounterMode(false)} title="Salir del modo mostrador">
-              <X className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Salir</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2.5"
+              onClick={() => setCounterMode(false)}
+              title="Salir del modo mostrador"
+            >
+              <X className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs">Salir</span>
             </Button>
           </div>
         </div>
 
-        <SegmentedControl
-          value={tab}
-          onChange={(v) => changeTab(v as Tab)}
-          options={[
-            { value: 'access', label: 'Acceso', icon: Fingerprint },
-            { value: 'inside', label: `Dentro (${insideCount})`, icon: Users },
-            { value: 'register', label: 'Registro', icon: UserPlus },
-          ]}
-        />
+        <div className="panel-wide space-y-4">
+          <SegmentedControl
+            variant="compact"
+            value={tab}
+            onChange={(v) => changeTab(v as Tab)}
+            options={[
+              { value: 'access', label: 'Acceso', icon: Fingerprint },
+              { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
+              { value: 'register', label: 'Registro', icon: UserPlus },
+            ]}
+          />
 
-        {tab === 'access' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 px-2">
-            <div className="xl:col-span-2 space-y-4">
-              {lookupPanel}
-              {memberPanel}
+          {tab === 'access' && (
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div className="lg:col-span-3 space-y-4">
+                {lookupPanel}
+                {showMemberPanel ? memberPanel : (
+                  <p className="text-center text-[11px] text-zinc-400 label-caps py-1">
+                    Ingrese una cédula para ver el visitante
+                  </p>
+                )}
+              </div>
+              <aside className="lg:col-span-2 space-y-4">
+                {insideList}
+                <Card padding="md" rounded="xl">
+                  <h3 className="section-title mb-2">Actividad reciente</h3>
+                  <ReceptionActivityFeed limit={5} compact refreshKey={feedRefresh} />
+                </Card>
+              </aside>
             </div>
-            <div className="space-y-4">
-              {insideList}
-              <Card padding="lg" rounded="2xl">
-                <h3 className="section-title mb-3">Actividad reciente</h3>
-                <ReceptionActivityFeed limit={6} compact refreshKey={feedRefresh} />
-              </Card>
-            </div>
-          </div>
-        )}
+          )}
 
-        {tab === 'inside' && <div className="px-2">{insideList}</div>}
-        {tab === 'register' && (
-          <div className="px-2">
+          {tab === 'inside' && insideList}
+
+          {tab === 'register' && (
             <ReceptionWalkInWizard onComplete={() => void loadStats()} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
+        compact
         title={<>Control de <span className="text-orange-500">acceso</span></>}
         subtitle="Busque por cédula para autorizar entrada y salida"
-        badge={`${insideCount} dentro ahora`}
         action={
-          <Button onClick={() => setCounterMode(true)}>
-            <Monitor className="h-4 w-4 mr-2" />
+          <Button size="sm" className="w-full sm:w-auto" onClick={() => setCounterMode(true)}>
+            <Monitor className="h-4 w-4" />
             Modo mostrador
           </Button>
         }
       />
 
-      <SegmentedControl
-        value={tab}
-        onChange={(v) => changeTab(v as Tab)}
-        options={[
-          { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
-          { value: 'inside', label: 'Dentro ahora', icon: Users },
-          { value: 'register', label: 'Registro', icon: UserPlus },
-        ]}
-        className="max-w-xl"
-      />
+      <div className="panel-wide space-y-4">
+        <SegmentedControl
+          variant="compact"
+          value={tab}
+          onChange={(v) => changeTab(v as Tab)}
+          options={[
+            { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
+            { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
+            { value: 'register', label: 'Registro', icon: UserPlus },
+          ]}
+        />
 
-      {tab === 'access' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {lookupPanel}
-          {memberPanel}
-        </div>
-      )}
+        {tab === 'access' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {lookupPanel}
+            {memberPanel}
+          </div>
+        )}
 
-      {tab === 'inside' && insideList}
+        {tab === 'inside' && insideList}
 
-      {tab === 'register' && (
-        <ReceptionWalkInWizard onComplete={() => void loadStats()} />
-      )}
+        {tab === 'register' && (
+          <ReceptionWalkInWizard onComplete={() => void loadStats()} />
+        )}
+      </div>
     </div>
   );
 }

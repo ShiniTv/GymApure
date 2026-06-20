@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import { getRequestMetricsSnapshot } from './middleware/requestMetrics.ts';
 import { authenticate, authorize } from './middleware/auth.ts';
 
-const router = Router();
+const router = asyncRouter();
 const startedAt = Date.now();
 
 async function buildMetricsSnapshot() {

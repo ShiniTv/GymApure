@@ -22,7 +22,7 @@ import {
 import { QuickAction } from '../components/admin/QuickAction';
 import { DashboardSection } from '../components/admin/DashboardSection';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../lib/dateLocale';
 import { StatCard, Card, PageHeader, Badge, EmptyState, Button, DashboardSkeleton, Skeleton } from '../components/ui';
 
 import MemberDashboardView from './member/MemberDashboard';
@@ -65,7 +65,6 @@ export default function Dashboard() {
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
-  const stats = isAdmin ? adminStats.stats : trainerStats;
   const memberStats = memberStatsCtx?.stats ?? null;
   const pageLoading = isAdmin
     ? adminStats.loading && !adminStats.stats
@@ -120,10 +119,11 @@ export default function Dashboard() {
   }
 
   if (user?.role === 'admin') {
+    const stats = adminStats.stats;
     const alertDays = stats?.expiryAlertDays ?? 7;
 
     return (
-      <div className="space-y-8">
+      <div className="page-stack-loose">
         <PageHeader
           title={<>Administración <span className="text-orange-500">general</span></>}
           subtitle="Resumen financiero, operaciones y alertas del gym"
@@ -193,7 +193,7 @@ export default function Dashboard() {
                 Ver miembros
               </Link>
             </div>
-            <div className="space-y-3 max-h-72 overflow-y-auto">
+            <div className="scroll-area space-y-3 max-h-72">
               {(stats?.expiringList ?? []).map((item: {
                 user_id: number;
                 full_name: string;
@@ -206,7 +206,7 @@ export default function Dashboard() {
                 return (
                 <div
                   key={item.user_id}
-                  className={`flex items-center justify-between p-4 rounded-xl border ${classes.itemBorder}`}
+                  className={`flex items-center justify-between p-3 sm:p-4 rounded-xl border ${classes.itemBorder}`}
                 >
                   <div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
@@ -242,8 +242,9 @@ export default function Dashboard() {
   }
 
   // Trainer view
+  const stats = trainerStats;
   return (
-    <div className="space-y-8">
+    <div className="page-stack-loose">
       <PageHeader
         title={<>Control de <span className="text-orange-500">entrenamiento</span></>}
         subtitle="Resumen de tu actividad con los miembros asignados"
@@ -303,20 +304,19 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card padding="lg" rounded="2xl">
-        <h3 className="section-title mb-6">Actividad reciente</h3>
-        <div className="space-y-1">
+      <Card padding="md" rounded="xl">
+        <h3 className="section-title mb-4">Actividad reciente</h3>
+        <div className="scroll-area max-h-72 space-y-0">
           {stats?.recentActivities?.map((activity: TrainerActivity, i: number) => (
             <Link
               key={i}
               to={`/members/${activity.user_id}/history`}
-              className="flex items-center gap-4 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 -mx-2 px-2 rounded-xl transition-colors"
+              className="flex items-center gap-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 rounded-lg px-1 transition-colors"
             >
               <div className="relative shrink-0">
-                <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
-                  <Dumbbell className="h-5 w-5" />
+                <div className="h-9 w-9 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
+                  <Dumbbell className="h-4 w-4" />
                 </div>
-                <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-orange-500/30 rounded-full hidden sm:block" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{activity.full_name}</p>

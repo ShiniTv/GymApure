@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
+import {
+  useRoutinesLibraryQuery,
+  useMemberRoutinesQuery,
+  useMemberOptionsQuery,
+  useRoutineAssignmentsQuery,
+  useInvalidateRoutines,
+} from '../hooks/queries/useRoutinesQuery';
+import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
 import { Plus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +27,6 @@ import {
 import type {
   Routine,
   RoutineExercise,
-  Member,
   RoutineAssignmentMember,
   ExerciseOption,
   CalendarAssignment,
@@ -37,13 +44,9 @@ export default function Routines() {
     viewFromUrl === 'assignments' || viewFromUrl === 'calendar' ? viewFromUrl : 'library';
 
   const [routines, setRoutines] = useState<Routine[]>([]);
-  const [loadingRoutines, setLoadingRoutines] = useState(true);
   const [view, setView] = useState<RoutinesView>(initialView);
-  const [assignments, setAssignments] = useState<RoutineAssignmentMember[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isAssigningFromCalendar, setIsAssigningFromCalendar] = useState(false);
   const [assignForm, setAssignForm] = useState({
@@ -58,7 +61,6 @@ export default function Routines() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<RoutineExercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState({
     exercise_id: '',
     sets: 3,
@@ -74,6 +76,25 @@ export default function Routines() {
 
   const navigate = useNavigate();
   const { user } = useAuth();
+  const invalidateRoutines = useInvalidateRoutines();
+  const isMember = user?.role === 'member';
+  const isStaffRoutines = user?.role === 'admin' || user?.role === 'trainer';
+  const { data: libraryRoutines, isPending: libraryLoading } = useRoutinesLibraryQuery(!isMember && !!user);
+  const { data: memberRoutines, isPending: memberLoading } = useMemberRoutinesQuery(
+    user?.id,
+    isMember && !!user
+  );
+  const { data: members = [] } = useMemberOptionsQuery(!isMember && !!user);
+  const { data: exercisesCatalog = [] } = useExercisesQuery(isStaffRoutines);
+  const { data: assignments = [], isPending: loadingAssignments } =
+    useRoutineAssignmentsQuery(isStaffRoutines);
+  const loadingRoutines = isMember ? memberLoading : libraryLoading;
+  const availableExercises = exercisesCatalog as ExerciseOption[];
+
+  useEffect(() => {
+    const next = isMember ? (memberRoutines ?? []) : (libraryRoutines ?? []);
+    setRoutines(next);
+  }, [isMember, memberRoutines, libraryRoutines]);
 
   const changeView = (next: RoutinesView) => {
     setView(next);
@@ -101,61 +122,7 @@ export default function Routines() {
     );
   };
 
-  const apiFetchRoutines = () => {
-    setLoadingRoutines(true);
-    if (user?.role === 'member' && user.id) {
-      apiFetch(`/api/users/${user.id}/routines`)
-        .then((res) => parseJsonResponse<(Routine & { exercise_count?: number })[]>(res))
-        .then((data) => {
-          setRoutines(
-            Array.isArray(data)
-              ? data.map((r) => ({ ...r, exercise_count: r.exercise_count ?? 0 }))
-              : []
-          );
-        })
-        .catch(() => setRoutines([]))
-        .finally(() => setLoadingRoutines(false));
-      return;
-    }
-    apiFetch('/api/routines')
-      .then((res) => parseJsonResponse<Routine[]>(res))
-      .then((data) => setRoutines(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        clientLogger.error('Failed to fetch routines', err);
-        setRoutines([]);
-      })
-      .finally(() => setLoadingRoutines(false));
-  };
-
-  useEffect(() => {
-    apiFetchRoutines();
-    if (user?.role !== 'member') {
-      apiFetchAssignments();
-      apiFetchMembers();
-    }
-  }, [user]);
-
-  const apiFetchMembers = () => {
-    apiFetch('/api/users/options?role=member')
-      .then((res) => parseJsonResponse<Member[]>(res))
-      .then((data) => setMembers(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        clientLogger.error('Failed to fetch members for assignments', err);
-        setMembers([]);
-      });
-  };
-
-  const apiFetchAssignments = () => {
-    setLoadingAssignments(true);
-    apiFetch('/api/routines/assignments/all')
-      .then((res) => parseJsonResponse<RoutineAssignmentMember[]>(res))
-      .then((data) => setAssignments(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        clientLogger.error('Failed to fetch routine assignments', err);
-        setAssignments([]);
-      })
-      .finally(() => setLoadingAssignments(false));
-  };
+  const refreshRoutines = () => invalidateRoutines();
 
   const handleInlineUpdate = async (routineId: number, exercise: RoutineExercise, field: 'sets' | 'reps', value: number) => {
     if (value === exercise[field]) return;
@@ -195,7 +162,7 @@ export default function Routines() {
       await parseJsonResponse(res);
       setIsCreating(false);
       setNewRoutine({ name: '', difficulty: 'Beginner' });
-      apiFetchRoutines();
+      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to create routine', err);
     }
@@ -211,7 +178,7 @@ export default function Routines() {
       });
       await parseJsonResponse(res);
       setEditingRoutine(null);
-      apiFetchRoutines();
+      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to update routine', err);
     }
@@ -226,7 +193,7 @@ export default function Routines() {
       await parseJsonResponse(res);
       setDeleteRoutineTarget(null);
       if (expandedRoutineId === deleteRoutineTarget.id) setExpandedRoutineId(null);
-      apiFetchRoutines();
+      refreshRoutines();
     } catch (err) {
       setDeleteRoutineError(err instanceof Error ? err.message : 'Error al eliminar');
     } finally {
@@ -243,7 +210,7 @@ export default function Routines() {
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
-      apiFetchRoutines();
+      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
     } finally {
@@ -273,16 +240,6 @@ export default function Routines() {
     } catch (err) {
       clientLogger.error('Failed to fetch routine exercises', err);
     }
-  };
-
-  const apiFetchAvailableExercises = () => {
-    apiFetch('/api/exercises')
-      .then((res) => parseJsonResponse<ExerciseOption[]>(res))
-      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
-      .catch((err) => {
-        clientLogger.error('Failed to fetch exercise catalog', err);
-        setAvailableExercises([]);
-      });
   };
 
   const handleUpdateExercise = async () => {
@@ -319,7 +276,7 @@ export default function Routines() {
       setIsAddingExercise(false);
       setNewExercise({ exercise_id: '', sets: 3, reps: 10, rest_seconds: 60, weight_suggestion: '' });
       await refreshRoutineExercises(expandedRoutineId);
-      apiFetchRoutines();
+      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to add exercise to routine', err);
     }
@@ -341,7 +298,7 @@ export default function Routines() {
       await parseJsonResponse(res);
       setIsAssigningFromCalendar(false);
       setAssignForm((prev) => ({ ...prev, user_id: '', routine_id: '' }));
-      apiFetchAssignments();
+      invalidateRoutines();
     } catch (err) {
       clientLogger.error('Failed to assign routine', err);
     }
@@ -386,13 +343,13 @@ export default function Routines() {
   }, [assignments, calendarDays]);
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={
           user?.role === 'member' ? (
             <>Mis <span className="text-orange-500">rutinas</span></>
           ) : (
-            <>GESTIÓN DE <span className="text-orange-500">RUTINAS</span></>
+            <>Gestión de <span className="text-brand">rutinas</span></>
           )
         }
         subtitle={
@@ -474,10 +431,7 @@ export default function Routines() {
             setDeleteRoutineTarget(routine);
           }}
           onCreateRoutine={() => setIsCreating(true)}
-          onAddExercise={() => {
-            setIsAddingExercise(true);
-            apiFetchAvailableExercises();
-          }}
+          onAddExercise={() => setIsAddingExercise(true)}
           onInlineUpdate={handleInlineUpdate}
           onEditExercise={(exercise) => {
             setEditingExercise(exercise);

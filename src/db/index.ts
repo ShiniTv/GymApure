@@ -47,12 +47,12 @@ export async function initDb() {
   }
 
   if (isSupabaseStorageConfigured()) {
-    logger.info('Storage de comprobantes configurado', {
+    logger.debug('Storage de comprobantes configurado', {
       backend: 'supabase',
       bucket: 'payment-proofs',
     });
   } else {
-    logger.warn('Storage de comprobantes en disco local', {
+    logger.debug('Storage de comprobantes en disco local', {
       path: 'uploads/proofs',
       recommendation: 'Definir SUPABASE_SERVICE_ROLE_KEY',
     });

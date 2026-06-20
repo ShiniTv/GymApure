@@ -12,7 +12,7 @@ function resolveMinLevel(): LogLevel {
   if (raw === 'debug' || raw === 'info' || raw === 'warn' || raw === 'error') {
     return raw;
   }
-  return process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+  return process.env.NODE_ENV === 'production' ? 'info' : 'warn';
 }
 
 const minLevel = resolveMinLevel();

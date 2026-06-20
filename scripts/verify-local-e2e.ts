@@ -1,6 +1,6 @@
 /**
  * Verificación local end-to-end en un solo comando.
- * Levanta el servidor, espera healthcheck y ejecuta test:integration.
+ * Levanta el servidor, espera healthcheck y ejecuta test:e2e.
  */
 import 'dotenv/config';
 import { spawn } from 'child_process';
@@ -55,9 +55,9 @@ function killProcessTree(pid: number): Promise<void> {
   });
 }
 
-function runIntegrationTests(baseUrl: string): Promise<void> {
+function runNpmScript(script: string, baseUrl: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawnNpm(['run', 'test:integration'], {
+    const child = spawnNpm(['run', script], {
       stdio: 'inherit',
       env: { ...process.env, SMOKE_BASE_URL: baseUrl },
     });
@@ -66,7 +66,7 @@ function runIntegrationTests(baseUrl: string): Promise<void> {
         resolve();
         return;
       }
-      reject(new Error(`test:integration termino con codigo ${code ?? 'desconocido'}`));
+      reject(new Error(`${script} terminó con código ${code ?? 'desconocido'}`));
     });
     child.on('error', (err) => reject(err));
   });
@@ -82,8 +82,8 @@ async function main() {
 
   try {
     await waitForHealth(BASE);
-    console.log('Servidor healthy. Ejecutando test:integration...');
-    await runIntegrationTests(BASE);
+    console.log('Servidor healthy. Ejecutando test:e2e...');
+    await runNpmScript('test:e2e', BASE);
     console.log('Verificación local E2E completada.');
   } finally {
     if (server.pid) {

@@ -8,7 +8,8 @@ import { MemberStatsProvider } from './context/MemberStatsContext';
 import Layout from './components/Layout';
 import { Spinner } from './components/ui';
 import Login from './pages/Login';
-import CheckIn from './pages/CheckIn';
+
+const CheckIn = lazy(() => import('./pages/CheckIn'));
 
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -73,7 +74,11 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterRoute />} />
-        <Route path="/check-in" element={<CheckIn />} />
+        <Route path="/check-in" element={
+          <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
+            <CheckIn />
+          </ProtectedRoute>
+        } />
         
         <Route path="/" element={
           <ProtectedRoute>

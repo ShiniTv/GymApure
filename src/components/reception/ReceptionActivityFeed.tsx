@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../../lib/dateLocale';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { Badge, Spinner } from '../ui';

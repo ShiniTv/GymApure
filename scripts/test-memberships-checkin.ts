@@ -1,13 +1,13 @@
 /**
- * Checklist: membresías + check-in kiosk.
+ * Checklist: membresías + check-in recepción.
  * Requiere servidor en marcha y admin de checklist (npm run test:auth-checklist primero).
  */
 import 'dotenv/config';
+import { loginReceptionStaff, receptionCheckIn, receptionCheckOut } from './test-reception-auth.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';
 const ADMIN_PASSWORD = process.env.CHECKLIST_ADMIN_PASSWORD ?? 'ChecklistAdmin123!';
-const KIOSK_KEY = process.env.KIOSK_API_KEY ?? process.env.VITE_KIOSK_KEY;
 
 const MEMBER_EMAIL = `mc-member-${Date.now()}@test.local`;
 const MEMBER_PASSWORD = 'MemberCheck123!';
@@ -27,13 +27,12 @@ function ok(name: string, cond: boolean, detail?: string) {
   }
 }
 
-async function api(method: string, path: string, body?: unknown, headers?: Record<string, string>) {
+async function api(method: string, path: string, body?: unknown) {
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...(cookie ? { Cookie: cookie } : {}),
-      ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -49,17 +48,10 @@ function saveCookie(res: Response) {
   if (fromArr) cookie = fromArr.split(';')[0];
 }
 
-async function kiosk(method: string, path: string, body: unknown) {
-  return api(method, path, body, { 'X-Kiosk-Key': KIOSK_KEY! });
-}
-
 async function main() {
   console.log('=== Membresías + Check-in checklist ===\n');
 
-  if (!KIOSK_KEY) {
-    console.error('Falta KIOSK_API_KEY o VITE_KIOSK_KEY en .env');
-    process.exit(1);
-  }
+  const receptionCookie = await loginReceptionStaff();
 
   const adminLogin = await api('POST', '/api/auth/login', {
     email: ADMIN_EMAIL,
@@ -101,8 +93,9 @@ async function main() {
   });
   saveCookie(adminAgain.res);
 
-  const beforeKiosk = await kiosk('POST', '/api/attendance/check-in', { cedula: MEMBER_CEDULA });
-  ok('Check-in sin membresía → 403', beforeKiosk.res.status === 403);
+  const beforeCheckIn = await receptionCheckIn(receptionCookie, MEMBER_CEDULA);
+  const beforeData = await beforeCheckIn.json().catch(() => ({}));
+  ok('Check-in sin membresía → 403', beforeCheckIn.status === 403, JSON.stringify(beforeData));
 
   const assign = await api('POST', '/api/memberships/assign', {
     user_id: memberId,
@@ -113,14 +106,17 @@ async function main() {
   const sub = await api('GET', `/api/memberships/user/${memberId}`);
   ok('GET membresía del miembro', sub.res.status === 200 && sub.data != null);
 
-  const checkIn = await kiosk('POST', '/api/attendance/check-in', { cedula: MEMBER_CEDULA });
-  const ci = checkIn.data as { success?: boolean; days_remaining?: number };
-  ok('Check-in con membresía activa', checkIn.res.status === 200 && ci.success === true);
-  ok('Check-in incluye days_remaining', typeof ci.days_remaining === 'number');
+  const checkIn = await receptionCheckIn(receptionCookie, MEMBER_CEDULA);
+  const ci = await checkIn.json().catch(() => ({}));
+  ok(
+    'Check-in con membresía activa',
+    checkIn.status === 200 && (ci as { success?: boolean }).success === true
+  );
+  ok('Check-in incluye days_remaining', typeof (ci as { days_remaining?: number }).days_remaining === 'number');
 
-  const checkOut = await kiosk('POST', '/api/attendance/check-out', { cedula: MEMBER_CEDULA });
-  const co = checkOut.data as { success?: boolean };
-  ok('Check-out kiosk', checkOut.res.status === 200 && co.success === true);
+  const checkOut = await receptionCheckOut(receptionCookie, MEMBER_CEDULA);
+  const co = await checkOut.json().catch(() => ({}));
+  ok('Check-out recepción', checkOut.status === 200 && (co as { success?: boolean }).success === true);
 
   const expiring = await api('GET', '/api/memberships/expiring');
   ok('GET /api/memberships/expiring', expiring.res.status === 200);

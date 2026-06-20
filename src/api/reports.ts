@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { parseDateParam, toCsv } from '../lib/csv.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 function sendCsv(res: import('express').Response, filename: string, headers: string[], rows: unknown[][]) {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');

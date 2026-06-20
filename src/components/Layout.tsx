@@ -10,13 +10,13 @@ import {
   shouldShowExpiryAlert,
 } from '../lib/expiryUtils';
 import Logo from './Logo';
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  Dumbbell, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  Dumbbell,
+  LogOut,
+  Menu,
   X,
   History,
   Sun,
@@ -34,6 +34,9 @@ import clsx from 'clsx';
 import { ROLE_LABELS } from '../lib/roles';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
+
+const iconBtnClass =
+  'inline-flex items-center justify-center h-9 w-9 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -62,13 +65,12 @@ export default function Layout() {
     { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member', 'receptionist'] },
   ];
 
-  const filteredNav = navigation.filter(item => item.roles.includes(user?.role || ''));
+  const filteredNav = navigation.filter((item) => item.roles.includes(user?.role || ''));
 
   const isNavActive = (href: string) => {
     const [path, search = ''] = href.split('?');
     if (location.pathname !== path) return false;
     if (!search) {
-      // Default routines tab should not highlight Asignaciones
       if (path === '/routines' && location.search.includes('view=')) return false;
       return true;
     }
@@ -82,50 +84,62 @@ export default function Layout() {
 
   const currentPage = filteredNav.find((item) => isNavActive(item.href))?.name;
 
+  const brandMark = (
+    <span className="flex flex-col leading-none min-w-0">
+      <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white truncate">
+        Caribean
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-500 -mt-px truncate">
+        Gym
+      </span>
+    </span>
+  );
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300">
       {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
+      <div className="lg:hidden flex items-center justify-between gap-2 px-3 h-12 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-2 min-w-0">
-          <Logo className="h-8 w-8 shrink-0" />
+          <Logo className="h-7 w-7 shrink-0" />
           <div className="min-w-0">
-            <span className="font-bold text-lg tracking-tight block truncate">Caribean Gym</span>
+            {brandMark}
             {currentPage && (
-              <span className="text-xs font-semibold text-orange-500 truncate block">
+              <p className="text-[10px] font-medium text-zinc-400 truncate mt-0.5 leading-tight">
                 {currentPage}
-              </span>
+              </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={toggleTheme}
-            className="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-          >
-            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button type="button" onClick={toggleTheme} className={iconBtnClass} aria-label="Cambiar tema">
+            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-zinc-400 hover:text-white">
-            {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className={iconBtnClass}
+            aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className={clsx(
-          "fixed inset-y-0 left-0 z-40 w-64 transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          <div className="flex h-16 items-center gap-2 px-6 border-b border-zinc-200 dark:border-zinc-800">
-            <Logo className="h-10 w-10" />
-            <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight">
-              Caribean<br/>
-              <span className="text-orange-500 text-xs tracking-wide font-semibold">Gym</span>
-            </span>
+        <aside
+          className={clsx(
+            'fixed top-12 bottom-0 left-0 z-40 w-60 transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ease-in-out lg:top-0 lg:inset-y-0 lg:static lg:translate-x-0',
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <div className="hidden lg:flex h-14 items-center gap-2.5 px-3 border-b border-zinc-200 dark:border-zinc-800">
+            <Logo className="h-8 w-8 shrink-0" />
+            {brandMark}
           </div>
 
-          <div className="flex flex-col justify-between h-[calc(100vh-4rem)] p-4">
-            <nav className="space-y-1">
+          <div className="flex flex-col h-full lg:h-[calc(100vh-3.5rem)]">
+            <nav className="nav-stack flex-1 min-h-0 scroll-area px-2.5 py-2.5 lg:py-3">
               {filteredNav.map((item) => {
                 const isActive = isNavActive(item.href);
                 return (
@@ -133,79 +147,82 @@ export default function Layout() {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={clsx(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive 
-                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-500" 
-                        : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"
-                    )}
+                    className={clsx('nav-link', isActive ? 'nav-link-active' : 'nav-link-inactive')}
                   >
-                    <item.icon className="h-5 w-5" />
-                    <span className="flex-1">{item.name}</span>
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 truncate">{item.name}</span>
                     {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
-                      <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-semibold">
+                      <span className="nav-badge bg-orange-500 text-white">
                         {expiringCount > 99 ? '99+' : expiringCount}
                       </span>
                     )}
-                    {user?.role === 'member' && item.href === '/' && memberExpiryDays != null && shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
-                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-semibold ${expiryNavDotClass(memberExpiryDays)}`}>
-                        !
-                      </span>
-                    )}
+                    {user?.role === 'member' &&
+                      item.href === '/' &&
+                      memberExpiryDays != null &&
+                      shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
+                        <span
+                          className={clsx('nav-badge text-white', expiryNavDotClass(memberExpiryDays))}
+                        >
+                          !
+                        </span>
+                      )}
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 space-y-2">
-              <button 
+            <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 px-2.5 py-2.5 space-y-0.5">
+              <button
+                type="button"
                 onClick={toggleTheme}
-                className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white transition-colors"
-                title="Cambiar Tema"
+                className="nav-link nav-link-inactive w-full"
+                title="Cambiar tema"
               >
                 {theme === 'light' ? (
                   <>
-                    <Moon className="h-5 w-5" />
-                    Modo Oscuro
+                    <Moon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 text-left">Modo oscuro</span>
                   </>
                 ) : (
                   <>
-                    <Sun className="h-5 w-5" />
-                    Modo Claro
+                    <Sun className="h-4 w-4 shrink-0" />
+                    <span className="flex-1 text-left">Modo claro</span>
                   </>
                 )}
               </button>
 
-              <div className="px-3 py-2">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{user?.name}</p>
-                <p className="text-xs font-medium text-zinc-500 leading-none mt-1">
+              <div className="px-2.5 py-1.5">
+                <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-[10px] font-medium text-zinc-500 truncate mt-0.5">
                   {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                 </p>
               </div>
+
               <button
+                type="button"
                 onClick={logout}
-                className="flex w-full items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                className="nav-link w-full text-zinc-500 dark:text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
               >
-                <LogOut className="h-5 w-5" />
-                Cerrar sesión
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">Cerrar sesión</span>
               </button>
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
+        <main className="flex-1 p-3 sm:p-5 lg:p-8 overflow-y-auto h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
           <div key={location.pathname} className="max-w-7xl mx-auto page-enter">
             <Outlet />
           </div>
         </main>
       </div>
-      
-      {/* Overlay */}
+
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
+          aria-hidden
         />
       )}
     </div>

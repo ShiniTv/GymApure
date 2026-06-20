@@ -25,6 +25,8 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM gym_settings WHERE key = 'whatsapp_notifications_enabled' LIMIT 1`,
   '20260616000000_payment_proofs_storage.sql': `
     SELECT 1 FROM storage.buckets WHERE id = 'payment-proofs' LIMIT 1`,
+  '20260620000000_media_storage_buckets.sql': `
+    SELECT 1 FROM storage.buckets WHERE id = 'avatars' LIMIT 1`,
   '20260617000000_enable_rls_internal_tables.sql': `
     SELECT 1 FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -44,6 +46,10 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM pg_enum e
     JOIN pg_type t ON e.enumtypid = t.oid
     WHERE t.typname = 'user_role' AND e.enumlabel = 'receptionist'
+    LIMIT 1`,
+  '20260621000000_auth_token_version.sql': `
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'token_version'
     LIMIT 1`,
 };
 
@@ -67,7 +73,10 @@ async function ensureSupabaseApiRoles(pool: pg.Pool): Promise<void> {
 }
 
 /** Migraciones que solo aplican en Supabase (p. ej. storage.buckets). */
-const SUPABASE_ONLY_MIGRATIONS = new Set(['20260616000000_payment_proofs_storage.sql']);
+const SUPABASE_ONLY_MIGRATIONS = new Set([
+  '20260616000000_payment_proofs_storage.sql',
+  '20260620000000_media_storage_buckets.sql',
+]);
 
 async function hasSupabaseStorage(pool: pg.Pool): Promise<boolean> {
   try {

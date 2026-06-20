@@ -119,14 +119,14 @@ export default function WorkoutHistory() {
 
   if (loading && history.length === 0 && !displayName) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       {id && (
         <Breadcrumbs
           items={[

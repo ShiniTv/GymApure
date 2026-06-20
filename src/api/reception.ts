@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { logAudit } from '../lib/audit.ts';
@@ -8,7 +8,7 @@ import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { walkInHandler } from './reception/walkIn.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 router.use(authorize(RECEPTION_STAFF));
 

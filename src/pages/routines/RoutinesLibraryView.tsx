@@ -45,7 +45,7 @@ export function RoutinesLibraryView({
 
   if (loadingRoutines) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
@@ -75,7 +75,7 @@ export function RoutinesLibraryView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="page-stack-tight">
       {isTrainerView && (
         <SegmentedControl
           value={viewMode}
@@ -169,7 +169,7 @@ export function RoutinesLibraryView({
           </div>
 
           {expandedRoutineId === routine.id && (
-            <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
+            <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-4 sm:p-5 page-stack-tight animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center justify-between">
                 <h4 className="section-title">Ejercicios de la plantilla</h4>
                 <Button type="button" size="sm" onClick={onAddExercise}>

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
@@ -7,6 +7,7 @@ import { logAudit } from '../lib/audit.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import { AppError } from './middleware/errorHandler.ts';
 import { proofUpload } from '../lib/uploadStorage.ts';
+import { assertProofUpload } from '../lib/uploadValidation.ts';
 import {
   isProofStorageRemote,
   localProofPathFromUpload,
@@ -25,8 +26,9 @@ import {
   type PaginatedResult,
 } from '../lib/pagination.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { uploadRateLimiter } from './middleware/rateLimit.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const paymentReportSchema = z.object({
   amount_usd: z.coerce.number().positive('Monto USD inválido'),
@@ -136,7 +138,7 @@ router.get('/:id/proof', authorize(['admin', 'member', 'receptionist']), async (
   }
 });
 
-router.post('/', authorize(['admin', 'member', 'receptionist']), proofUpload.single('proof'), async (req: AuthRequest, res) => {
+router.post('/', authorize(['admin', 'member', 'receptionist']), uploadRateLimiter, proofUpload.single('proof'), async (req: AuthRequest, res) => {
   const parsed = paymentReportSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -166,6 +168,7 @@ router.post('/', authorize(['admin', 'member', 'receptionist']), proofUpload.sin
 
     if (req.file) {
       try {
+        assertProofUpload(req.file);
         if (isProofStorageRemote()) {
           proof_url = await uploadPaymentProof(req.file, user_id, paymentId);
         } else {

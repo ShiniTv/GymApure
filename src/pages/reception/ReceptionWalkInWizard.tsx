@@ -165,7 +165,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
 
   if (success) {
     return (
-      <Card padding="lg" rounded="2xl" className="max-w-2xl space-y-6">
+      <Card padding="md" rounded="2xl" className="max-w-2xl page-stack">
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
@@ -212,7 +212,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
   }
 
   return (
-    <Card padding="lg" rounded="2xl" className="max-w-2xl space-y-6">
+    <Card padding="md" rounded="2xl" className="max-w-2xl page-stack">
       <div>
         <h3 className="section-title flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-orange-500" />

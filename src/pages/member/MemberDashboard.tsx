@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../../lib/dateLocale';
 import {
   Activity,
   AlertTriangle,
@@ -8,7 +8,6 @@ import {
   Clock,
   CreditCard,
   Dumbbell,
-  Fingerprint,
   UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -40,7 +39,7 @@ export default function MemberDashboard() {
 
   if (statsError && !memberStats) {
     return (
-      <div className="space-y-6">
+      <div className="page-stack">
         <PageHeader
           title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
           subtitle="Tu espacio de entrenamiento"
@@ -56,7 +55,7 @@ export default function MemberDashboard() {
   }
 
   return (
-    <div className={cn('space-y-6', isMobile && routine && 'pb-24')}>
+    <div className={cn('page-stack', isMobile && routine && 'pb-24')}>
       <PageHeader
         title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
         subtitle="Tu espacio de entrenamiento en Caribean Gym"
@@ -112,7 +111,7 @@ export default function MemberDashboard() {
         />
         <QuickAction to="/payments" icon={CreditCard} title="Pagos" description="Reportar o renovar membresía" tone="emerald" />
         <QuickAction to="/history" icon={Clock} title="Historial" description="Tus sesiones anteriores" tone="blue" />
-        <QuickAction to="/check-in" icon={Fingerprint} title="Check-in" description="Registrar entrada al gym" tone="orange" />
+        <QuickAction to="/profile" icon={UserCircle} title="Mi perfil" description="Datos personales y medidas" tone="orange" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

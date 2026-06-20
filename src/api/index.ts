@@ -1,12 +1,10 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import authRoutes from './auth.ts';
 import healthRoutes from './health.ts';
 import userRoutes from './users.ts';
 import membershipRoutes from './memberships.ts';
 import paymentRoutes from './payments.ts';
 import attendanceRoutes from './attendance.ts';
-import { checkInHandler } from './attendance/checkIn.ts';
-import { checkOutHandler } from './attendance/checkOut.ts';
 import routineRoutes from './routines.ts';
 import workoutRoutes from './workouts.ts';
 import exerciseRoutes from './exercises.ts';
@@ -17,10 +15,9 @@ import fileRoutes from './files.ts';
 import reportsRoutes from './reports.ts';
 import receptionRoutes from './reception.ts';
 import { authenticate } from './middleware/auth.ts';
-import { authRateLimiter, checkInRateLimiter } from './middleware/rateLimit.ts';
-import { kioskAuth } from './middleware/kiosk.ts';
+import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 // Health (public, no auth)
 router.use(healthRoutes);
@@ -28,11 +25,8 @@ router.use(healthRoutes);
 // Public routes (rate-limited)
 router.use('/auth', authRateLimiter, authRoutes);
 
-// Kiosk check-in/out: no login; requires X-Kiosk-Key
-router.post('/attendance/check-in', checkInRateLimiter, kioskAuth, checkInHandler);
-router.post('/attendance/check-out', checkInRateLimiter, kioskAuth, checkOutHandler);
-
 // Protected routes (require login)
+router.use(apiRateLimiter);
 router.use(authenticate);
 
 router.use('/users', userRoutes);

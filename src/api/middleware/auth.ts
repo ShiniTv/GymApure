@@ -1,30 +1,27 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../../config/jwt.ts';
-import type { JwtUserPayload } from '../../config/jwt.ts';
+import { Response, NextFunction } from 'express';
+import type { AuthRequest } from './authTypes.ts';
+import { asyncHandler } from './asyncHandler.ts';
+import { verifySessionToken, sessionFailureStatus } from '../../lib/sessionAuth.ts';
 
-export interface AuthRequest extends Request {
-  user?: JwtUserPayload;
-}
+export type { AuthRequest } from './authTypes.ts';
+export { authorize } from './authorize.ts';
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.cookies.token;
-  if (!token) return res.status(401).json({ error: 'No autorizado - Inicie sesión' });
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
-    req.user = { ...decoded, id: Number(decoded.id) };
-    next();
-  } catch {
-    res.status(401).json({ error: 'Sesión expirada' });
+  if (!token) {
+    res.status(401).json({ error: 'No autorizado - Inicie sesión' });
+    return;
   }
-};
 
-export const authorize = (roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Permisos insuficientes' });
-    }
+  const result = await verifySessionToken(token);
+  if (result.type === 'success') {
+    req.user = result.user;
     next();
-  };
-};
+    return;
+  }
+
+  const status = sessionFailureStatus(result);
+  res.status(status!).json({
+    error: status === 403 ? 'Cuenta inactiva. Contacta al administrador.' : 'Sesión expirada',
+  });
+});

@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { isSupabaseStorageConfigured } from './supabaseAdmin.ts';
+import { safeExtensionForMime } from './uploadValidation.ts';
 
 const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
 const PROOFS_DIR = path.join(UPLOADS_ROOT, 'proofs');
@@ -16,13 +17,58 @@ for (const dir of [UPLOADS_ROOT, PROOFS_DIR, VIDEOS_DIR, AVATARS_DIR]) {
 }
 
 const ALLOWED_PROOF_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+const ALLOWED_VIDEO_MIMES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
+const ALLOWED_AVATAR_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+const ALLOWED_PROOF_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.pdf']);
+const ALLOWED_VIDEO_EXT = new Set(['.mp4', '.webm', '.mov']);
+const ALLOWED_AVATAR_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+
+function extensionAllowed(originalname: string, allowed: Set<string>): boolean {
+  const ext = path.extname(originalname).toLowerCase();
+  if (!ext) return true;
+  return allowed.has(ext);
+}
 
 function proofFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  if (ALLOWED_PROOF_MIMES.has(file.mimetype)) {
-    cb(null, true);
-  } else {
+  if (!ALLOWED_PROOF_MIMES.has(file.mimetype)) {
     cb(new Error('Tipo de archivo no permitido. Usa JPG, PNG, WebP o PDF.'));
+    return;
   }
+  if (!extensionAllowed(file.originalname, ALLOWED_PROOF_EXT)) {
+    cb(new Error('Extensión de archivo no permitida.'));
+    return;
+  }
+  cb(null, true);
+}
+
+function videoFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  if (!ALLOWED_VIDEO_MIMES.has(file.mimetype)) {
+    cb(new Error('Tipo de archivo no permitido. Usa MP4, WebM o MOV.'));
+    return;
+  }
+  if (!extensionAllowed(file.originalname, ALLOWED_VIDEO_EXT)) {
+    cb(new Error('Extensión de video no permitida.'));
+    return;
+  }
+  cb(null, true);
+}
+
+function avatarFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  if (!ALLOWED_AVATAR_MIMES.has(file.mimetype)) {
+    cb(new Error('Tipo de archivo no permitido. Usa JPG, PNG o WebP.'));
+    return;
+  }
+  if (!extensionAllowed(file.originalname, ALLOWED_AVATAR_EXT)) {
+    cb(new Error('Extensión de imagen no permitida.'));
+    return;
+  }
+  cb(null, true);
+}
+
+function safeDiskFilename(file: Express.Multer.File, kind: 'proof' | 'video' | 'avatar'): string {
+  const ext = safeExtensionForMime(file.mimetype, kind);
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 }
 
 export const proofUpload = multer({
@@ -30,24 +76,21 @@ export const proofUpload = multer({
     ? multer.memoryStorage()
     : multer.diskStorage({
         destination: (_req, _file, cb) => cb(null, PROOFS_DIR),
-        filename: (_req, file, cb) => {
-          const ext = path.extname(file.originalname) || '.bin';
-          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-        },
+        filename: (_req, file, cb) => cb(null, safeDiskFilename(file, 'proof')),
       }),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: proofFilter,
 });
 
 export const videoUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname) || '.mp4';
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    },
-  }),
+  storage: isSupabaseStorageConfigured()
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
+        filename: (_req, file, cb) => cb(null, safeDiskFilename(file, 'video')),
+      }),
   limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: videoFilter,
 });
 
 export function proofApiPath(filename: string): string {
@@ -62,24 +105,13 @@ export function avatarApiPath(filename: string): string {
   return `/api/files/avatars/${filename}`;
 }
 
-const ALLOWED_AVATAR_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
-function avatarFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  if (ALLOWED_AVATAR_MIMES.has(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Tipo de archivo no permitido. Usa JPG, PNG o WebP.'));
-  }
-}
-
 export const avatarUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, AVATARS_DIR),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname) || '.jpg';
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    },
-  }),
+  storage: isSupabaseStorageConfigured()
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, AVATARS_DIR),
+        filename: (_req, file, cb) => cb(null, safeDiskFilename(file, 'avatar')),
+      }),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: avatarFilter,
 });
@@ -118,4 +150,17 @@ export function extractFilename(storedUrl: string | null | undefined): string | 
     return storedUrl.replace('/uploads/', '');
   }
   return null;
+}
+
+/** Canonical API paths for exact DB lookups (no LIKE). */
+export function proofStoredPaths(filename: string): string[] {
+  return [`/api/files/proofs/${filename}`, `/uploads/${filename}`];
+}
+
+export function avatarStoredPaths(filename: string): string[] {
+  return [`/api/files/avatars/${filename}`, `/uploads/avatars/${filename}`];
+}
+
+export function videoStoredPaths(filename: string): string[] {
+  return [`/api/files/videos/${filename}`, `/uploads/${filename}`];
 }

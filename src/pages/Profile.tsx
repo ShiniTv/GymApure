@@ -30,66 +30,26 @@ import {
 
 const ProfileWeightChart = lazy(() => import('../components/ProfileWeightChart'));
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-
-interface UserProfile {
-  id: number;
-  email: string;
-  full_name: string;
-  cedula: string | null;
-  phone: string | null;
-  initial_weight: number | null;
-  height: number | null;
-  goal: string | null;
-  profile_image: string | null;
-  dob: string | null;
-}
-
-interface Measurement {
-  id: number;
-  date: string;
-  weight: number | null;
-  body_fat_percentage: number | null;
-  waist: number | null;
-  arm: number | null;
-  leg: number | null;
-}
-
-interface WorkoutSession {
-  id: number;
-  start_time: string;
-  routine_name: string;
-}
-
-interface PaginatedHistory {
-  items: WorkoutSession[];
-}
-
-function StatMini({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <Card padding="sm" className="p-5">
-      <p className="stat-label mb-1">{label}</p>
-      <p className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">{value}</p>
-      {sub && <p className="text-xs text-zinc-400 mt-1">{sub}</p>}
-    </Card>
-  );
-}
+import { dateLocale as es } from '../lib/dateLocale';
+import {
+  useProfileQuery,
+  useProfileMeasurementsQuery,
+  useProfileWorkoutHistoryQuery,
+  useInvalidateProfile,
+  type UserProfile,
+  type Measurement,
+} from '../hooks/queries/useProfileQuery';
+import { StatMini } from './profile/StatMini';
 
 export default function Profile() {
   const { user } = useAuth();
   const memberStats = useMemberStatsOptional();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [workouts, setWorkouts] = useState<WorkoutSession[]>([]);
-  const [loading, setLoading] = useState(true);
+  const invalidateProfile = useInvalidateProfile();
+  const isMember = user?.role === 'member';
+  const { data: profile, isPending: profileLoading } = useProfileQuery(user?.id);
+  const { data: measurements = [], isPending: measLoading } = useProfileMeasurementsQuery(user?.id);
+  const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(user?.id, isMember);
+  const loading = profileLoading || measLoading || (isMember && histLoading);
   const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad'>('datos');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -124,53 +84,20 @@ export default function Profile() {
     leg: '',
   });
 
-  const loadData = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const requests: Promise<Response>[] = [
-        apiFetch(`/api/users/${user.id}`),
-        apiFetch(`/api/users/${user.id}/measurements`),
-      ];
-
-      if (user.role === 'member') {
-        requests.push(apiFetch(`/api/users/${user.id}/history?limit=5`));
-      }
-
-      const [profileRes, measRes, histRes] = await Promise.all(requests);
-      const profileData = await parseJsonResponse<UserProfile>(profileRes);
-      const measData = await parseJsonResponse<Measurement[]>(measRes);
-      const histData =
-        user.role === 'member' && histRes
-          ? await parseJsonResponse<PaginatedHistory>(histRes)
-          : { items: [] };
-
-      setProfile(profileData);
-      setMeasurements(Array.isArray(measData) ? measData : []);
-      setWorkouts(Array.isArray(histData.items) ? histData.items : []);
-      setForm({
-        phone: profileData.phone ?? '',
-        initial_weight: profileData.initial_weight?.toString() ?? '',
-        height: profileData.height?.toString() ?? '',
-        goal: profileData.goal ?? '',
-        dob: profileData.dob ? profileData.dob.split('T')[0] : '',
-      });
-    } catch {
-      setProfile(null);
-      setMeasurements([]);
-      setWorkouts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadData();
-  }, [user?.id]);
+    if (!profile) return;
+    setForm({
+      phone: profile.phone ?? '',
+      initial_weight: profile.initial_weight?.toString() ?? '',
+      height: profile.height?.toString() ?? '',
+      goal: profile.goal ?? '',
+      dob: profile.dob ? profile.dob.split('T')[0] : '',
+    });
+  }, [profile]);
 
   const chartData = useMemo(() => {
     return [...measurements]
-      .filter((m) => m.weight != null)
+      .filter((m): m is typeof m & { weight: number } => m.weight != null)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map((m) => ({
         date: format(new Date(m.date), 'dd MMM', { locale: es }),
@@ -225,7 +152,8 @@ export default function Profile() {
         body: JSON.stringify(body),
       });
       const updated = await parseJsonResponse<UserProfile>(res);
-      setProfile(updated);
+      if (user) invalidateProfile(user.id);
+      void updated;
       setSaveMsg('Perfil actualizado');
       setTimeout(() => setSaveMsg(''), 3000);
     } catch (err) {
@@ -248,7 +176,8 @@ export default function Profile() {
         body: fd,
       });
       const data = await parseJsonResponse<{ profile_image: string }>(res);
-      setProfile((prev) => (prev ? { ...prev, profile_image: data.profile_image } : prev));
+      if (user) invalidateProfile(user.id);
+      void data;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Error al subir foto');
     } finally {
@@ -299,7 +228,8 @@ export default function Profile() {
         }),
       });
       const created = await parseJsonResponse<Measurement>(res);
-      setMeasurements((prev) => [created, ...prev]);
+      if (user) invalidateProfile(user.id);
+      void created;
       setIsAddingMeasurement(false);
       setMeasurementForm({
         date: new Date().toISOString().split('T')[0],
@@ -316,7 +246,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
@@ -333,7 +263,7 @@ export default function Profile() {
   const avatarUrl = resolveAvatarUrl(profile.profile_image);
 
   return (
-    <div className="space-y-8">
+    <div className="page-stack-loose">
       <PageHeader
         title={<>Mi <span className="text-orange-500">perfil</span></>}
         subtitle={user.role === 'member' ? 'Datos personales, progreso y seguridad' : 'Información de tu cuenta'}
@@ -395,13 +325,11 @@ export default function Profile() {
           { value: 'progreso', label: 'Progreso' },
           { value: 'seguridad', label: 'Seguridad' },
         ]}
-        className="w-full sm:w-auto"
       />
 
       {profileTab === 'datos' && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Formulario de perfil */}
-        <Card className="lg:col-span-2 max-w-2xl">
+      <div className="panel-content">
+        <Card>
           <h2 className="section-title mb-6 flex items-center gap-2">
             <User className="h-4 w-4 text-orange-500" />
             Datos personales
@@ -500,7 +428,7 @@ export default function Profile() {
                 placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
               />
             </div>
-            <Button type="submit" variant="secondary" disabled={saving} className="w-full" size="lg">
+            <Button type="submit" variant="secondary" disabled={saving} className="w-full sm:w-auto" size="md">
               <Save className="h-4 w-4" />
               {saving ? 'Guardando...' : 'Guardar perfil'}
             </Button>
@@ -681,7 +609,7 @@ export default function Profile() {
       )}
 
       {profileTab === 'seguridad' && (
-      <Card>
+      <Card className="panel-form">
         <h2 className="section-title mb-6 flex items-center gap-2">
           <Lock className="h-4 w-4 text-orange-500" />
           Seguridad
@@ -692,7 +620,7 @@ export default function Profile() {
         {passwordError && (
           <p className="text-sm font-medium text-red-500 mb-4">{passwordError}</p>
         )}
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+        <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
             <Label htmlFor="current_password">Contraseña actual</Label>
             <PasswordInput
@@ -769,7 +697,7 @@ export default function Profile() {
         {measurementError && (
           <p className="text-sm text-red-500 font-bold mb-4">{measurementError}</p>
         )}
-        <form onSubmit={handleAddMeasurement} className="space-y-4">
+        <form onSubmit={handleAddMeasurement} className="form-stack">
           <div>
             <Label>Fecha</Label>
             <Input

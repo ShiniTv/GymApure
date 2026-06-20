@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, Calendar, Clock } from 'lucide-react';
-import { Button, Spinner, EmptyState } from '../../components/ui';
+import { Button, Spinner, EmptyState, Avatar, PageState } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
 import type { RoutineAssignmentMember, RoutinesView } from './types';
 
@@ -19,19 +19,16 @@ export function RoutinesAssignmentsView({
 }: RoutinesAssignmentsViewProps) {
   if (loadingAssignments) {
     return (
-      <div className="space-y-8">
-        <div className="py-20 flex flex-col items-center justify-center">
-          <Spinner />
-          <p className="mt-4 text-zinc-500 text-sm">Cargando asignaciones...</p>
-        </div>
-      </div>
+      <PageState>
+        <Spinner />
+        <p className="mt-3 text-zinc-500 text-sm">Cargando asignaciones...</p>
+      </PageState>
     );
   }
 
   if (assignments.length === 0) {
     return (
-      <div className="space-y-8">
-        <EmptyState
+      <EmptyState
           icon={Users}
           title="Sin asignaciones activas"
           description="Asigna rutinas a tus miembros desde el calendario o desde su perfil."
@@ -41,28 +38,20 @@ export function RoutinesAssignmentsView({
             </Button>
           }
         />
-      </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
       {assignments.map((member) => (member.routines && member.routines.length > 0) && (
         <div
           key={member.id}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all"
         >
-          <div className="flex items-center gap-4 mb-6">
-            {member.profile_image ? (
-              <img src={member.profile_image} alt={member.full_name} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-orange-500/20" />
-            ) : (
-              <div className="h-14 w-14 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 font-bold text-xl shadow-sm">
-                {member.full_name.charAt(0)}
-              </div>
-            )}
-            <div>
-              <h3 className="font-bold text-zinc-900 dark:text-white text-lg leading-tight">{member.full_name}</h3>
+          <div className="flex items-center gap-3 mb-4">
+            <Avatar src={member.profile_image} name={member.full_name} size="md" className="rounded-xl" />
+            <div className="min-w-0">
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-base leading-tight truncate">{member.full_name}</h3>
               <button
                 onClick={() => onNavigateToMemberRoutines(member.id)}
                 className="text-xs font-semibold text-orange-600 dark:text-orange-500 hover:underline mt-0.5"
@@ -105,7 +94,6 @@ export function RoutinesAssignmentsView({
           </div>
         </div>
       ))}
-    </div>
     </div>
   );
 }

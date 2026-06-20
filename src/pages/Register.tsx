@@ -87,14 +87,11 @@ export default function Register() {
       backLink={{ to: '/login', label: 'Volver al login' }}
       footer={
         <p className="text-center text-xs text-zinc-500">
-          ¿Vienes al gym?{' '}
-          <Link to="/check-in" className="font-semibold text-orange-600 hover:text-orange-500">
-            Registro de entrada
-          </Link>
+          El check-in en el gym lo realiza el personal en recepción con tu cédula.
         </p>
       }
     >
-      <Card className="w-full space-y-6 shadow-xl mt-10 rounded-2xl" padding="lg">
+      <Card className="w-full page-stack shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
         <AuthBrandHeader subtitle="Crea tu cuenta de miembro" />
 
       <ol className="flex items-center gap-1 text-xs font-semibold mb-6" role="list" aria-label="Pasos del registro">
@@ -140,96 +137,76 @@ export default function Register() {
         </ol>
 
         <form
-          className="space-y-4"
+          className="form-stack"
           onSubmit={step === 1 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}
         >
           {error && (
             <div
               role="alert"
-              className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
+              className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
             >
               {error}
             </div>
           )}
 
           {step === 0 ? (
-            <div className="space-y-4">
+            <div className="form-stack">
               <div>
                 <Label htmlFor="full_name">Nombre completo</Label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-                    <User className="h-5 w-5 text-zinc-400" />
-                  </div>
-                  <Input
-                    id="full_name"
-                    type="text"
-                    required
-                    autoComplete="name"
-                    className="pl-10"
-                    placeholder="Juan Pérez"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  />
-                </div>
+                <Input
+                  id="full_name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  leadingIcon={<User />}
+                  placeholder="Juan Pérez"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                />
               </div>
 
               <div>
                 <Label htmlFor="email">Correo electrónico</Label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-                    <Mail className="h-5 w-5 text-zinc-400" />
-                  </div>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    className="pl-10"
-                    placeholder="correo@ejemplo.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  leadingIcon={<Mail />}
+                  placeholder="correo@ejemplo.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="cedula">Cédula</Label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-                      <CreditCard className="h-5 w-5 text-zinc-400" />
-                    </div>
-                    <Input
-                      id="cedula"
-                      type="text"
-                      required
-                      autoComplete="off"
-                      className="pl-10"
-                      placeholder="V-12345678"
-                      value={formData.cedula}
-                      onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-                    />
-                  </div>
+                  <Input
+                    id="cedula"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    leadingIcon={<CreditCard />}
+                    placeholder="V-12345678"
+                    value={formData.cedula}
+                    onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                  />
                   <p className="text-[10px] text-zinc-400 mt-1">Formato: V-12345678</p>
                 </div>
                 <div>
                   <Label htmlFor="phone">
                     Teléfono <span className="normal-case tracking-normal font-medium text-zinc-400">(opcional)</span>
                   </Label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-                      <Phone className="h-5 w-5 text-zinc-400" />
-                    </div>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      className="pl-10"
-                      placeholder="+58 412…"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                  </div>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    leadingIcon={<Phone />}
+                    placeholder="+58 412…"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
                 </div>
               </div>
 
@@ -238,7 +215,7 @@ export default function Register() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="form-stack">
               <div>
                 <Label htmlFor="password">Contraseña</Label>
                 <PasswordInput

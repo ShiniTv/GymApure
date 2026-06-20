@@ -32,8 +32,7 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
      openssl rand -base64 48
      ```
    - **DATABASE_URL:** cadena de conexión de Supabase (modo Transaction / puerto 6543).
-   - **KIOSK_API_KEY** y **VITE_KIOSK_KEY:** misma clave aleatoria (mín. 16 caracteres).
-   - **DEMO_PASSWORD:** contraseña para cuentas demo en desarrollo (mín. 12 caracteres).
+   - **DEMO_PASSWORD:** contraseña para cuentas demo en desarrollo y tests (mín. 12 caracteres).
 
 4. Aplicar migraciones de base de datos:
 
@@ -68,13 +67,17 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 | `npm run dev` | Servidor Express + Vite en modo desarrollo |
 | `npm run build` | Build frontend + bundle del servidor |
 | `npm start` | Servidor en producción (tras `build`) |
-| `npm run lint` | Comprobación TypeScript (`tsc --noEmit`) |
+| `npm run lint` | Comprobación TypeScript strict (`tsc --noEmit`) |
 | `npm run test:smoke` | Pruebas smoke de la API (servidor en marcha) |
+| `npm run test:e2e` | Suite completa: integración + seguridad + auth + recepción |
+| `npm run verify:local-e2e` | Levanta dev, espera healthcheck y ejecuta `test:e2e` |
 | `npm run dev:clean` | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
 | `npm run db:migrate` | Aplica migraciones SQL pendientes en Supabase/Postgres |
 | `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy |
 | `npm run db:create-admin` | Crea o actualiza la cuenta administrador inicial |
 | `npm run db:restore-demo` | Solo CI/tests automáticos — cuentas demo ficticias |
+
+> Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**
 
 ## Cuentas y acceso
 
@@ -144,29 +147,27 @@ Prueba desde **Dashboard → Notificaciones → Probar WhatsApp**. En modo desar
 
 ## Roadmap de calidad
 
-Ver auditoría en el historial del proyecto. Fases implementadas:
+Ver auditoría en [`docs/qa-audit-2026-06-19.md`](docs/qa-audit-2026-06-19.md). Fases recientes:
 
-- **Fase 0–1:** variables validadas, JWT sin fallback débil, cookies endurecidas (`sameSite`, `maxAge`).
-- **Fase 2:** helmet, límite de body 1MB, rate limit en `/api/auth`, errores globales sin filtrar SQL en producción.
+- **Fase 1 (seguridad crítica):** kiosk público eliminado; check-in solo staff autenticado; JWT revalidado contra BD; invalidación de sesiones (`token_version`).
+- **Fase 2 (IDOR y datos):** trainers solo miembros asignados; rutinas filtradas por rol; validación de uploads (magic bytes).
+- **Fase 3 (robustez):** `asyncRouter` global, rate limit API/uploads, React Query en páginas clave, TypeScript `strict`.
+- **Fase 4 (tests y CI):** `test:security-checklist`, `test:e2e`, CI unificado, documentación de pruebas.
 
-- **Fase 3:** RBAC en API (usuarios, entrenamientos, rutinas, asistencia, pagos).
-
-- **Fase 4:** check-in en `/check-in` sin login (cabecera `X-Kiosk-Key` + rate limit).
-
-- **Fase 5 (seguridad):** JWT y kiosk con secretos aleatorios, `DEMO_PASSWORD`, validación de registro, sin credenciales en UI de producción.
-
-- **Fase 6 (operaciones):** `/api/health`, smoke tests, CI GitHub Actions, code-splitting, `dev:clean`.
+Fases anteriores: helmet, rate limit auth, RBAC, health check, code-splitting, CI GitHub Actions.
 
 ### Monitoreo
 
 - **Health:** `GET /api/health` → `{ status, db, uptime_seconds }`
 - **Smoke tests:** con el servidor corriendo, `npm run test:smoke`
+- **E2E local:** `npm run verify:local-e2e` (ver [docs/TESTING.md](docs/TESTING.md))
 
-### Check-in kiosk
+### Check-in (solo personal autenticado)
 
-1. En `.env`, define la misma clave en `KIOSK_API_KEY` y `VITE_KIOSK_KEY` (mín. 16 caracteres).
-2. Abre `http://localhost:3000/check-in` sin iniciar sesión.
-3. Prueba con la cédula del miembro demo: `V-11223344` (requiere membresía activa).
+1. Inicia sesión como **admin** o **recepcionista**.
+2. Usa **Recepción** (`/reception`) o **Check-in** (`/check-in`) para entrada/salida por cédula.
+3. Modo tablet: `/check-in?kiosk=1` (requiere sesión; ya no hay API pública ni claves en el frontend).
+4. Tests: `npm run test:reception-checklist` y `npm run test:security-checklist`.
 
 ### Panel de recepción (staff autenticado)
 
@@ -183,11 +184,3 @@ npm run pr:open
 ```
 
 Abre el navegador en la página de compare de GitHub. Si ya estás logueado en github.com, solo hacé clic en **Create pull request** y pegá la descripción desde [`docs/pr-body.md`](docs/pr-body.md).
-
-### Rotar clave del kiosk
-
-```bash
-npm run kiosk:rotate-key
-```
-
-Copiá las dos líneas generadas a `.env` (`KIOSK_API_KEY` y `VITE_KIOSK_KEY` deben ser iguales) y reiniciá con `npm run dev:clean`.

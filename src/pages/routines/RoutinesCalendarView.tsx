@@ -10,7 +10,7 @@ import {
   endOfWeek,
   isWithinInterval,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../../lib/dateLocale';
 import { Button, Card } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
 import type { CalendarAssignment } from './types';
@@ -46,8 +46,8 @@ export function RoutinesCalendarView({
   }, [calendarDays, currentDate]);
 
   return (
-    <div className="space-y-6">
-      <Card padding="lg" rounded="2xl">
+    <div className="page-stack-tight">
+      <Card padding="md" rounded="xl">
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-bold text-zinc-900 dark:text-white capitalize">
@@ -75,7 +75,7 @@ export function RoutinesCalendarView({
         </div>
 
         {/* Desktop month grid — xl+ only; tablets use week agenda below */}
-        <div className="hidden xl:block overflow-x-auto -mx-1 px-1">
+        <div className="hidden xl:block scroll-x-bleed">
           <div className="grid grid-cols-7 gap-px min-w-[640px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-inner">
             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
               <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-3 text-center text-xs font-semibold text-zinc-400">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
+import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -7,6 +7,8 @@ import { Button, Modal, Label, Input, Select, Spinner, EmptyState, Breadcrumbs }
 import { clientLogger } from '../lib/clientLogger';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { cn } from '../lib/utils';
+import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
+import { formatWorkoutTime, getExerciseEmbedUrl } from './activeWorkout/utils';
 
 interface Exercise {
   id: number;
@@ -202,17 +204,7 @@ export default function ActiveWorkout() {
     setShowVideo(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.startsWith('/uploads/') || url.startsWith('/api/files/')) {
-      return resolveMediaUrl(url);
-    }
-    return url;
-  };
+  const getEmbedUrl = getExerciseEmbedUrl;
 
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
@@ -507,15 +499,11 @@ export default function ActiveWorkout() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatTime = formatWorkoutTime;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
@@ -523,7 +511,7 @@ export default function ActiveWorkout() {
 
   if (fetchError || !routine) {
     return (
-      <div className="space-y-6">
+      <div className="page-stack">
         <EmptyState
           icon={Dumbbell}
           title="Rutina no disponible"
@@ -544,7 +532,7 @@ export default function ActiveWorkout() {
     : 0;
 
   return (
-    <div className={cn('space-y-6', isMobileFocus ? 'pb-36' : 'pb-20')}>
+    <div className={cn('page-stack', isMobileFocus ? 'pb-36' : 'pb-20')}>
       <Breadcrumbs
         className="hidden md:flex"
         items={[
@@ -553,7 +541,7 @@ export default function ActiveWorkout() {
         ]}
       />
 
-      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-3 md:py-4 z-10 border-b border-zinc-200 dark:border-zinc-800 -mx-1 px-1">
+      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-2.5 sm:py-3 z-10 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
           <button onClick={() => navigate('/routines')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 shrink-0">
             <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
@@ -733,7 +721,7 @@ export default function ActiveWorkout() {
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="page-stack-loose">
         {routine.exercises.map((exercise, index) => (
           <div
             key={exercise.id}
@@ -805,6 +793,7 @@ export default function ActiveWorkout() {
                         <iframe 
                           src={getEmbedUrl(exercise.video_url)} 
                           className="w-full h-full" 
+                          loading="lazy"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                           allowFullScreen
                           title={exercise.name}
@@ -971,39 +960,13 @@ export default function ActiveWorkout() {
         </div>
       </Modal>
 
-      {/* Rest Timer Overlay */}
       {isResting && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 z-50 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8">
-          <div className="max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium text-zinc-400">Descanso</span>
-              <span className="text-3xl font-bold text-zinc-900 dark:text-white font-mono tabular-nums">{formatTime(restTimer)}</span>
-            </div>
-            
-            <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-3 mb-6 overflow-hidden">
-              <div 
-                className="bg-orange-500 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_12px_rgba(249,115,22,0.5)]"
-                style={{ width: `${(restTimer / restDuration) * 100}%` }}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button 
-                onClick={() => addRestTime(30)}
-                className="flex-1 py-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-2xl text-xs font-semibold transition-all"
-              >
-                +30s
-              </button>
-              <Button
-                onClick={skipRest}
-                className="flex-[2]"
-                size="sm"
-              >
-                Saltar
-              </Button>
-            </div>
-          </div>
-        </div>
+        <RestTimerOverlay
+          restTimer={restTimer}
+          restDuration={restDuration}
+          onAddTime={addRestTime}
+          onSkip={skipRest}
+        />
       )}
     </div>
   );

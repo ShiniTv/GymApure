@@ -1,4 +1,5 @@
-import { Router, type NextFunction, type Response } from 'express';
+import { type NextFunction, type Response } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { authorize, AuthRequest } from './middleware/auth.ts';
 import {
@@ -14,7 +15,7 @@ import { runExpiryJob } from '../lib/notifications/expiryNotifier.ts';
 import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { logAudit } from '../lib/audit.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const expirySettingsSchema = z.object({
   expiry_alert_days: z.coerce.number().int().min(1).max(90).optional(),

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Shield, RefreshCw, CreditCard, UserX, UserCheck, Trash2, Fingerprint, UserPlus, LogIn, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../lib/dateLocale';
 import { Badge, Button, Card, PageHeader, Spinner, EmptyState, FilterChips } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
@@ -109,7 +109,7 @@ export default function AuditLogs() {
   }, [loadLogs]);
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={<>Registro de <span className="text-orange-500">auditoría</span></>}
         subtitle="Acciones sensibles realizadas por el personal del gym"

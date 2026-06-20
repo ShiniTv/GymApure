@@ -108,6 +108,42 @@ async function main() {
     console.log(`✓ Suscripción activa para member@gym.com (check-in: cédula V-11223344)`);
   }
 
+  const trainerRow = await query<{ id: number }>(
+    `SELECT id FROM users WHERE email = 'trainer@gym.com'`
+  );
+  if (memberRow.rows[0] && trainerRow.rows[0]) {
+    const memberId = memberRow.rows[0].id;
+    const trainerId = trainerRow.rows[0].id;
+
+    let routineId: number;
+    const existingRoutine = await query<{ id: number }>(
+      `SELECT id FROM routines WHERE trainer_id = $1 AND name = 'Demo CI Routine' LIMIT 1`,
+      [trainerId]
+    );
+    if (existingRoutine.rows[0]) {
+      routineId = existingRoutine.rows[0].id;
+    } else {
+      const inserted = await query<{ id: number }>(
+        `INSERT INTO routines (name, difficulty, trainer_id)
+         VALUES ($1, $2, $3)
+         RETURNING id`,
+        ['Demo CI Routine', 'Beginner', trainerId]
+      );
+      routineId = inserted.rows[0].id;
+      console.log('✓ Rutina demo del entrenador creada');
+    }
+
+    await query(
+      `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
+       SELECT $1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM user_routines WHERE user_id = $1 AND routine_id = $2
+       )`,
+      [memberId, routineId, trainerId]
+    );
+    console.log('✓ Rutina demo asignada a member@gym.com (tests IDOR / rutinas)');
+  }
+
   console.log(`\nListo. Contraseña demo actualizada (valor en DEMO_PASSWORD de .env).`);
   process.exit(0);
 }

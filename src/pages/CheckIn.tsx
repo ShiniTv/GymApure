@@ -3,15 +3,13 @@ import { apiFetch, parseJsonSafe } from '../lib/api';
 import { CheckCircle, XCircle, LogIn, LogOut, Clock } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { getKioskClientKey } from '../lib/kiosk.ts';
+import { dateLocale as es } from '../lib/dateLocale';
 import { APP_VERSION } from '../lib/appVersion';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
 import Logo from '../components/Logo';
 import { Button, Card, Input, SegmentedControl, Spinner } from '../components/ui';
 import { cn } from '../lib/utils';
-
 type KioskMode = 'check-in' | 'check-out';
 
 export default function CheckIn() {
@@ -52,26 +50,16 @@ export default function CheckIn() {
     const started = Date.now();
 
     const finishScan = async () => {
-      const kioskKey = getKioskClientKey();
-      if (!kioskKey) {
-        setStatus('error');
-        setMessage('Kiosk no configurado (falta VITE_KIOSK_KEY en el servidor).');
-        setTimeout(() => setStatus('idle'), 5000);
-        return;
-      }
-
-      const endpoint = isCheckIn ? '/api/attendance/check-in' : '/api/attendance/check-out';
+      const endpoint = isCheckIn ? '/api/reception/check-in' : '/api/reception/check-out';
 
       try {
         const res = await apiFetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Kiosk-Key': kioskKey,
           },
           body: JSON.stringify({ cedula: cedula.trim() }),
         });
-
         const data = await parseJsonSafe<{
           error?: string;
           user_name?: string;
@@ -362,9 +350,8 @@ export default function CheckIn() {
   return (
     <AuthShell
       variant="kiosk"
-      backLink={{ to: '/login', label: 'Volver al login' }}
-    >
-      <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-8" />
+      backLink={{ to: '/reception', label: 'Volver a recepción' }}
+    >      <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-8" />
 
       <SegmentedControl
         variant="kiosk"
@@ -396,13 +383,12 @@ export default function CheckIn() {
             v{APP_VERSION}
           </div>
         </div>
-        <Link to="/login" className="text-xs text-zinc-500 hover:text-orange-500 transition-colors">
-          ¿Eres miembro? Inicia sesión
+        <Link to="/reception" className="text-xs text-zinc-500 hover:text-orange-500 transition-colors">
+          Panel de recepción
         </Link>
         <Link to="/check-in?kiosk=1" className="text-xs text-orange-600 hover:text-orange-500 font-semibold">
-          Abrir modo tablet (kiosk)
-        </Link>
-      </div>
+          Abrir modo tablet
+        </Link>      </div>
     </AuthShell>
   );
 }

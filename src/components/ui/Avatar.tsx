@@ -31,6 +31,8 @@ export function Avatar({ src, name = '', size = 'md', className }: AvatarProps) 
       <img
         src={resolved}
         alt={name || 'Avatar'}
+        loading="lazy"
+        decoding="async"
         className={cn('rounded-full object-cover ring-2 ring-orange-500/20', sizeMap[size], className)}
       />
     );

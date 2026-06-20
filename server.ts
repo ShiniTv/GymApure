@@ -31,7 +31,7 @@ async function startServer() {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   app.use(cookieParser());
-  app.use(requestMetricsMiddleware);
+  app.use('/api', requestMetricsMiddleware);
 
   const uploadsDir = path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadsDir)) {
@@ -47,6 +47,7 @@ async function startServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
+      logLevel: 'warn',
     });
     app.use(vite.middlewares);
   } else {
@@ -72,7 +73,11 @@ async function startServer() {
   app.use(errorHandler);
 
   app.listen(PORT, '0.0.0.0', () => {
-    logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
+    if (env.NODE_ENV !== 'production') {
+      console.log(`\n  Caribean Gym — http://localhost:${PORT}\n`);
+    } else {
+      logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
+    }
     startExpiryCron();
   });
 }

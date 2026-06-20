@@ -1,29 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
-import { Plus, Search, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
+import { useExercisesQuery, useInvalidateExercises, type Exercise } from '../hooks/queries/useExercisesQuery';
+import { Plus, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput } from '../components/ui';
 import { Link } from 'react-router-dom';
 import { clientLogger } from '../lib/clientLogger';
 
-interface Exercise {
-  id: number;
-  name: string;
-  muscle_group: string;
-  description: string | null;
-  execution: string | null;
-  video_url: string | null;
-}
-
 export default function Exercises() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const { data: exercises = [], isPending: loading } = useExercisesQuery();
+  const invalidateExercises = useInvalidateExercises();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
@@ -37,23 +29,7 @@ export default function Exercises() {
   });
   const { user } = useAuth();
 
-  useEffect(() => {
-    apiFetchExercises();
-  }, []);
-
-  const apiFetchExercises = async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch('/api/exercises');
-      const data = await parseJsonResponse<Exercise[]>(res);
-      setExercises(Array.isArray(data) ? data : []);
-    } catch (err) {
-      clientLogger.error('Failed to fetch exercises', err);
-      setExercises([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshExercises = () => invalidateExercises();
 
   const handleOpenModal = (exercise: Exercise | null = null) => {
     setVideoFile(null);
@@ -101,7 +77,7 @@ export default function Exercises() {
       const res = await apiFetch(url, { method, body: data });
       await parseJsonResponse(res);
       setIsModalOpen(false);
-      apiFetchExercises();
+      refreshExercises();
     } catch (err) {
       clientLogger.error('Failed to save exercise', err);
       setSaveError(err instanceof Error ? err.message : 'Error al guardar');
@@ -119,7 +95,7 @@ export default function Exercises() {
       const res = await apiFetch(`/api/exercises/${deleteTarget.id}`, { method: 'DELETE' });
       await parseJsonResponse(res);
       setDeleteTarget(null);
-      apiFetchExercises();
+      refreshExercises();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Error al eliminar');
     } finally {
@@ -155,7 +131,7 @@ export default function Exercises() {
 
   if (user?.role !== 'trainer' && user?.role !== 'admin') {
     return (
-      <div className="space-y-6">
+      <div className="page-stack">
         <PageHeader title="Acceso denegado" subtitle="No tienes permiso para ver esta sección." />
         <Card padding="lg" className="text-center">
           <p className="text-sm text-zinc-500 mb-4">Contacta al administrador si crees que es un error.</p>
@@ -167,14 +143,14 @@ export default function Exercises() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={<>Biblioteca de <span className="text-orange-500">ejercicios</span></>}
         subtitle="Gestiona la base de datos de ejercicios del gimnasio"
@@ -186,16 +162,12 @@ export default function Exercises() {
         }
       />
 
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 z-10 pointer-events-none" />
-        <Input
-          type="text"
-          placeholder="Buscar ejercicio por nombre o grupo muscular..."
-          className="pl-12 py-4 min-h-[48px] text-base bg-white dark:bg-zinc-900 shadow-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        containerClassName="max-w-md"
+        placeholder="Buscar ejercicio por nombre o grupo muscular..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredExercises.length === 0 ? (
@@ -218,7 +190,7 @@ export default function Exercises() {
           <Card
             key={exercise.id}
             padding="none"
-            rounded="3xl"
+            rounded="xl"
             className={`overflow-hidden group hover:border-orange-500/50 transition-all hover:shadow-xl ${expandedId === exercise.id ? 'col-span-full ring-2 ring-orange-500/20' : ''}`}
           >
             <div className="p-6">
@@ -253,7 +225,7 @@ export default function Exercises() {
                     )}
                     
                     {expandedId === exercise.id && (
-                      <div className="mt-8 space-y-8 animate-in slide-in-from-top-4 duration-300">
+                      <div className="mt-6 page-stack-loose animate-in slide-in-from-top-4 duration-300">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                           {/* Video Section */}
                           {exercise.video_url && (
@@ -266,6 +238,7 @@ export default function Exercises() {
                                   <iframe 
                                     src={getYouTubeEmbedUrl(exercise.video_url)!}
                                     className="w-full h-full"
+                                    loading="lazy"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
                                   ></iframe>
@@ -277,6 +250,7 @@ export default function Exercises() {
                                     className="w-full h-full object-cover"
                                     controls
                                     playsInline
+                                    preload="none"
                                   ></video>
                                 </div>
                               ) : (
@@ -377,7 +351,7 @@ export default function Exercises() {
         scrollable
         title={<>{editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-orange-500">EJERCICIO</span></>}
       >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="page-stack">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Nombre del Ejercicio</Label>

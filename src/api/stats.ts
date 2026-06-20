@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import {
@@ -16,7 +16,7 @@ import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 export interface AdminStatsPayload {
   totalRevenue: number;

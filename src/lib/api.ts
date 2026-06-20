@@ -52,9 +52,13 @@ export function toDisplayErrorMessage(err: unknown, fallback = 'Error inesperado
   return fallback;
 }
 
-/** Normalize legacy /uploads/ paths to authenticated API routes. */
+/** Normalize legacy /uploads/ paths and Supabase storage refs to authenticated API routes. */
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return '';
+  if (url.startsWith('sbmedia:videos:')) {
+    const key = url.slice('sbmedia:videos:'.length);
+    return `/api/files/media/videos?key=${encodeURIComponent(key)}`;
+  }
   if (url.startsWith('/api/files/')) return url;
   if (url.startsWith('/uploads/')) {
     const filename = url.slice('/uploads/'.length);
@@ -66,6 +70,10 @@ export function resolveMediaUrl(url: string | null | undefined): string {
 
 export function resolveAvatarUrl(url: string | null | undefined): string {
   if (!url) return '';
+  if (url.startsWith('sbmedia:avatars:')) {
+    const key = url.slice('sbmedia:avatars:'.length);
+    return `/api/files/media/avatars?key=${encodeURIComponent(key)}`;
+  }
   if (url.startsWith('/api/files/avatars/')) return url;
   if (url.startsWith('/uploads/avatars/')) {
     const filename = url.slice('/uploads/avatars/'.length);

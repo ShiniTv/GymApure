@@ -3,11 +3,11 @@
  * Requiere servidor en marcha y admin checklist.
  */
 import 'dotenv/config';
+import { loginReceptionStaff, receptionCheckIn } from './test-reception-auth.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';
 const ADMIN_PASSWORD = process.env.CHECKLIST_ADMIN_PASSWORD ?? 'ChecklistAdmin123!';
-const KIOSK_KEY = process.env.KIOSK_API_KEY ?? process.env.VITE_KIOSK_KEY;
 
 const MEMBER_APPROVE_EMAIL = `pay-approve-${Date.now()}@test.local`;
 const MEMBER_REJECT_EMAIL = `pay-reject-${Date.now()}@test.local`;
@@ -73,26 +73,10 @@ async function reportPayment(reference: string, amountUsd = 30) {
   return { res, data };
 }
 
-async function kiosk(path: string, cedula: string) {
-  const res = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Kiosk-Key': KIOSK_KEY!,
-    },
-    body: JSON.stringify({ cedula }),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { res, data };
-}
-
 async function main() {
   console.log('=== Pagos checklist ===\n');
 
-  if (!KIOSK_KEY) {
-    console.error('Falta KIOSK_API_KEY o VITE_KIOSK_KEY');
-    process.exit(1);
-  }
+  const receptionCookie = await loginReceptionStaff();
 
   const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   ok('Login admin', adminLogin.res.status === 200);
@@ -169,7 +153,8 @@ async function main() {
   const subAfter = await jsonApi('GET', `/api/memberships/user/${userId}`);
   ok('Membresía activa tras aprobar', subAfter.res.status === 200 && subAfter.data != null);
 
-  const checkIn = await kiosk('/api/attendance/check-in', CEDULA_APPROVE);
+  const checkInRes = await receptionCheckIn(receptionCookie, CEDULA_APPROVE);
+  const checkIn = { res: checkInRes, data: await checkInRes.json().catch(() => ({})) };
   ok('Check-in tras pago aprobado', checkIn.res.status === 200 && checkIn.data.success === true);
 
   await login(ADMIN_EMAIL, ADMIN_PASSWORD);

@@ -41,12 +41,8 @@ SUPABASE_SERVICE_ROLE_KEY=PEGAR_AQUI
 NODE_ENV=development
 PORT=3000
 
-# === KIOSK (check-in /check-in) — deben ser IGUALES ===
-KIOSK_API_KEY=PEGAR_AQUI
-VITE_KIOSK_KEY=PEGAR_AQUI
-
-# === Solo tests automáticos (opcional) ===
-DEMO_PASSWORD=PEGAR_AQUI
+# === Tests / cuentas demo (opcional) ===
+# DEMO_PASSWORD=PEGAR_AQUI
 
 # === EMAIL (opcional — dejar SMTP_PASS vacío si aún no tienes contraseña de aplicación Google) ===
 SMTP_HOST=smtp.gmail.com
@@ -74,9 +70,7 @@ SMTP_FROM=PEGAR_AQUI
 | `JWT_SECRET` | Misma línea completa |
 | `DATABASE_URL` | Misma línea completa |
 | `SUPABASE_SERVICE_ROLE_KEY` | Misma línea completa |
-| `KIOSK_API_KEY` | Misma línea completa |
-| `VITE_KIOSK_KEY` | Misma línea completa (debe coincidir con kiosk) |
-| `DEMO_PASSWORD` | Misma línea (opcional) |
+| `DEMO_PASSWORD` | Misma línea (opcional, tests) |
 | `SMTP_USER` | Tu Gmail configurado |
 | `SMTP_PASS` | Contraseña de aplicación Google (16 caracteres) |
 | `SMTP_FROM` | Ej. `Caribean Gym <tu@gmail.com>` |
@@ -91,8 +85,7 @@ DATABASE_URL=postgresql://postgres.xxxxx:TU_PASSWORD@aws-0-xx.pooler.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
 NODE_ENV=development
 PORT=3000
-KIOSK_API_KEY=clave_larga_aleatoria_16_chars
-VITE_KIOSK_KEY=clave_larga_aleatoria_16_chars
+DEMO_PASSWORD=opcional_para_tests
 SMTP_USER=tu@gmail.com
 SMTP_PASS=xxxx xxxx xxxx xxxx
 SMTP_FROM=Caribean Gym <tu@gmail.com>
@@ -128,7 +121,6 @@ Login con tu **mismo admin** (misma Supabase = mismos usuarios).
 ## Checklist
 
 - [ ] `.env` copiado o plantilla completada
-- [ ] `KIOSK_API_KEY` = `VITE_KIOSK_KEY`
 - [ ] `npm run db:migrate`
 - [ ] `npm run dev`
 - [ ] Login admin OK en http://localhost:3000

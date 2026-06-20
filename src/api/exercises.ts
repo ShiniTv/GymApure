@@ -1,10 +1,17 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
-import { videoApiPath, videoUpload } from '../lib/uploadStorage.ts';
+import { uploadRateLimiter } from './middleware/rateLimit.ts';
+import { videoUpload } from '../lib/uploadStorage.ts';
+import {
+  uploadMediaFile,
+  localVideoPathFromUpload,
+  isMediaStorageRemote,
+} from '../lib/mediaStorage.ts';
+import { assertVideoUpload } from '../lib/uploadValidation.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const exercisePayloadSchema = z.object({
   name: z.string().trim().min(2, 'Nombre inválido'),
@@ -18,6 +25,18 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
 }
 
+async function resolveVideoPath(
+  file: Express.Multer.File | undefined,
+  video_url: string | null | undefined
+): Promise<string | null | undefined> {
+  if (!file) return video_url;
+  assertVideoUpload(file);
+  if (isMediaStorageRemote()) {
+    return uploadMediaFile('videos', file, 'exercises');
+  }
+  return localVideoPathFromUpload(file);
+}
+
 router.get('/', async (req, res) => {
   try {
     const { rows } = await query('SELECT * FROM exercises ORDER BY name');
@@ -27,13 +46,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', authorize(['admin', 'trainer']), videoUpload.single('video'), async (req, res) => {
+router.post('/', authorize(['admin', 'trainer']), uploadRateLimiter, videoUpload.single('video'), async (req, res) => {
   const parsed = exercisePayloadSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
   const { name, muscle_group, description, execution, video_url } = parsed.data;
-  const videoPath = req.file ? videoApiPath(req.file.filename) : video_url;
+  let videoPath: string | null | undefined;
+  try {
+    videoPath = await resolveVideoPath(req.file, video_url);
+  } catch (err: unknown) {
+    return res.status(400).json({ error: getErrorMessage(err) });
+  }
 
   try {
     const { rows } = await query<{ id: number }>(
@@ -48,14 +72,19 @@ router.post('/', authorize(['admin', 'trainer']), videoUpload.single('video'), a
   }
 });
 
-router.put('/:id', authorize(['admin', 'trainer']), videoUpload.single('video'), async (req, res) => {
+router.put('/:id', authorize(['admin', 'trainer']), uploadRateLimiter, videoUpload.single('video'), async (req, res) => {
   const { id } = req.params;
   const parsed = exercisePayloadSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
   const { name, muscle_group, description, execution, video_url } = parsed.data;
-  const videoPath = req.file ? videoApiPath(req.file.filename) : video_url;
+  let videoPath: string | null | undefined;
+  try {
+    videoPath = await resolveVideoPath(req.file, video_url);
+  } catch (err: unknown) {
+    return res.status(400).json({ error: getErrorMessage(err) });
+  }
 
   try {
     await query(

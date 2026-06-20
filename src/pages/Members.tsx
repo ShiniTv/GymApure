@@ -1,35 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner, DataCard, Avatar, FilterChips, EmptyState } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, DataCard, Avatar, FilterChips, EmptyState, TableRowSkeleton, SearchInput, Card } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
+import { useMembersQuery, useInvalidateMembers, type Member } from '../hooks/queries/useMembersQuery';
 import { clientLogger } from '../lib/clientLogger';
 import {
   getExpiryBadgeInfo,
 } from '../lib/expiryUtils';
-
-interface PaginatedUsers {
-  items: Member[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-interface Member {
-  id: number;
-  full_name: string;
-  email: string;
-  cedula: string;
-  status: 'active' | 'inactive';
-  role: string;
-  last_workout: string | null;
-  membership_name?: string | null;
-  subscription_end?: string | null;
-  days_remaining?: number | null;
-}
 
 interface MembershipPlan {
   id: number;
@@ -41,12 +22,10 @@ interface MembershipPlan {
 export default function Members() {
   const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const invalidateMembers = useInvalidateMembers();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const pageSize = 20;
   const [isAdding, setIsAdding] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -89,33 +68,15 @@ export default function Members() {
   const isStaffMember = isTrainer || isReceptionist;
   const colCount = isStaffMember ? 5 : 6;
 
-  const apiFetchMembers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(pageSize),
-      });
-      if (search) params.set('q', search);
-      if (expiringFilter) params.set('expiring', 'true');
-      if (isTrainer) params.set('role', 'member');
-
-      const res = await apiFetch(`/api/users?${params.toString()}`);
-      const data = await parseJsonResponse<PaginatedUsers>(res);
-      setMembers(Array.isArray(data.items) ? data.items : []);
-      setTotal(data.total ?? 0);
-    } catch (err) {
-      clientLogger.error('Failed to fetch members', err);
-      setMembers([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, search, expiringFilter, isTrainer]);
-
-  useEffect(() => {
-    void apiFetchMembers();
-  }, [apiFetchMembers]);
+  const { data: membersData, isPending: loading } = useMembersQuery({
+    page,
+    pageSize,
+    search,
+    expiringFilter,
+    isTrainer,
+  });
+  const members = membersData?.items ?? [];
+  const total = membersData?.total ?? 0;
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -181,7 +142,7 @@ export default function Members() {
           confirm_password: '',
           role: 'member',
         });
-        apiFetchMembers();
+        invalidateMembers();
       } else {
         const data = await parseJsonResponse<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear usuario' });
@@ -199,7 +160,7 @@ export default function Members() {
       const res = await apiFetch(`/api/users/${deleteTarget.id}`, { method: 'DELETE' });
       if (res.ok) {
         setDeleteTarget(null);
-        apiFetchMembers();
+        invalidateMembers();
         toast?.success('Usuario eliminado');
       }
     } catch (err) {
@@ -218,7 +179,7 @@ export default function Members() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        apiFetchMembers();
+        invalidateMembers();
       }
     } catch (err) {
       clientLogger.error('Failed to toggle member status', err);
@@ -257,7 +218,7 @@ export default function Members() {
       );
 
       setAssignTarget(null);
-      apiFetchMembers();
+      invalidateMembers();
       await adminStats?.refresh();
       toast?.success('Membresía asignada');
     } catch (err) {
@@ -268,8 +229,9 @@ export default function Members() {
   const filteredMembers = members;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
+        compact
         title={
           isTrainer ? (
             <>Mis <span className="text-orange-500">miembros</span></>
@@ -288,8 +250,8 @@ export default function Members() {
         }
         action={
           (user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist') ? (
-            <Button onClick={() => setIsAdding(true)}>
-              <Plus className="h-5 w-5" />
+            <Button size="sm" className="w-full sm:w-auto" onClick={() => setIsAdding(true)}>
+              <Plus className="h-4 w-4" />
               {isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario'}
             </Button>
           ) : undefined
@@ -301,7 +263,7 @@ export default function Members() {
         onClose={() => setIsAdding(false)}
         title={<>Nuevo <span className="text-orange-500">usuario</span></>}
       >
-        <div className="space-y-4">
+        <div className="form-stack">
               <div>
                 <Label>Nombre Completo</Label>
                 <Input
@@ -391,19 +353,16 @@ export default function Members() {
         </div>
       </Modal>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 z-10 pointer-events-none" />
-          <Input
-            type="text"
-            placeholder="Buscar por nombre o identificación..."
-            className="pl-12 py-4 bg-white dark:bg-zinc-900 shadow-sm"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+        <SearchInput
+          containerClassName="w-full sm:max-w-sm"
+          placeholder="Buscar por nombre o identificación..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
         {user?.role === 'admin' && (
           <FilterChips
+            className="shrink-0 self-start sm:self-center"
             options={[
               { value: '', label: 'Todos' },
               { value: 'expiring', label: `Por vencer (${alertDays}d)` },
@@ -417,9 +376,16 @@ export default function Members() {
         )}
       </div>
 
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-2">
         {loading ? (
-          <div className="py-12 flex justify-center"><Spinner /></div>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-3 space-y-1.5">
+                <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+              </div>
+            ))}
+          </div>
         ) : filteredMembers.length === 0 ? (
           <EmptyState
             icon={Search}
@@ -483,26 +449,28 @@ export default function Members() {
         <PaginationBar page={page} pageSize={pageSize} total={total} onPageChange={setPage} label="usuarios" />
       </div>
 
-      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+      <Card padding="none" rounded="xl" className="hidden md:block table-shell overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 text-xs font-semibold">
               <tr>
-                <th className="px-4 md:px-8 py-5">Nombre</th>
-                {!isStaffMember && <th className="px-4 md:px-8 py-5">Rol</th>}
-                <th className="px-4 md:px-8 py-5">Identificación</th>
-                <th className="px-4 md:px-8 py-5">Membresía</th>
-                <th className="px-4 md:px-8 py-5">Estado</th>
-                <th className="px-4 md:px-8 py-5 text-right">Acciones</th>
+                <th className="px-4 lg:px-5 py-2.5">Nombre</th>
+                {!isStaffMember && <th className="px-4 lg:px-5 py-2.5">Rol</th>}
+                <th className="px-4 lg:px-5 py-2.5">Identificación</th>
+                <th className="px-4 lg:px-5 py-2.5">Membresía</th>
+                <th className="px-4 lg:px-5 py-2.5">Estado</th>
+                <th className="px-4 lg:px-5 py-2.5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loading ? (
-                <tr>
-                  <td colSpan={colCount} className="px-8 py-12 text-center">
-                    <Spinner />
-                  </td>
-                </tr>
+                <>
+                  <TableRowSkeleton cols={colCount} />
+                  <TableRowSkeleton cols={colCount} />
+                  <TableRowSkeleton cols={colCount} />
+                  <TableRowSkeleton cols={colCount} />
+                  <TableRowSkeleton cols={colCount} />
+                </>
               ) : filteredMembers.length === 0 ? (
                 <tr>
                   <td colSpan={colCount} className="px-8 py-12 text-center text-zinc-400 text-sm">No se encontraron miembros</td>
@@ -510,10 +478,10 @@ export default function Members() {
               ) : (
                 filteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
-                    <td className="px-4 md:px-8 py-5 font-bold text-zinc-700 dark:text-zinc-200">{member.full_name}</td>
+                    <td className="px-4 lg:px-5 py-2.5 font-semibold text-zinc-800 dark:text-zinc-100">{member.full_name}</td>
                     {!isStaffMember && (
-                    <td className="px-4 md:px-8 py-5">
-                       <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold capitalize ${
+                    <td className="px-4 lg:px-5 py-2.5">
+                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize ${
                         member.role === 'admin' 
                           ? 'bg-purple-500/10 text-purple-600 dark:text-purple-500' 
                           : member.role === 'trainer'
@@ -524,8 +492,8 @@ export default function Members() {
                       </span>
                     </td>
                     )}
-                    <td className="px-4 md:px-8 py-5 text-zinc-500">{member.cedula || '-'}</td>
-                    <td className="px-4 md:px-8 py-5">
+                    <td className="px-4 lg:px-5 py-2.5 text-zinc-500">{member.cedula || '-'}</td>
+                    <td className="px-4 lg:px-5 py-2.5">
                       {member.role === 'member' ? (
                         member.membership_name ? (
                           (() => {
@@ -549,56 +517,56 @@ export default function Members() {
                         <span className="text-zinc-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 md:px-8 py-5">
+                    <td className="px-4 lg:px-5 py-2.5">
                       <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
                         {member.status === 'active' ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </td>
-                    <td className="px-4 md:px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-100 transition-all">
+                    <td className="px-4 lg:px-5 py-2.5 text-right">
+                      <div className="flex justify-end gap-1 opacity-100 transition-all">
                         {user?.role === 'trainer' && member.role === 'member' && (
                           <>
                             <button 
                               onClick={() => navigate(`/members/${member.id}/routines`)}
-                              className="p-2 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
                               title="Ver Rutinas"
                             >
-                              <Dumbbell className="h-5 w-5" />
+                              <Dumbbell className="h-4 w-4" />
                             </button>
                             <button 
                               onClick={() => navigate(`/members/${member.id}/history`)}
-                              className="p-2 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
                               title="Historial de Entrenamiento"
                             >
-                              <History className="h-5 w-5" />
+                              <History className="h-4 w-4" />
                             </button>
                           </>
                         )}
                         {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
                           <button
                             onClick={() => openAssignSubscription(member)}
-                            className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            className="p-1.5 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
                             title="Asignar membresía"
                           >
-                            <CreditCard className="h-5 w-5" />
+                            <CreditCard className="h-4 w-4" />
                           </button>
                         )}
                         {user?.role === 'admin' && (
                           <>
                             <button 
                               onClick={() => handleToggleStatus(member)}
-                              className={`p-2 rounded-lg transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                              className={`p-1.5 rounded-lg transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
                               title={member.status === 'active' ? 'Desactivar' : 'Activar'}
                             >
-                              <Power className="h-5 w-5" />
+                              <Power className="h-4 w-4" />
                             </button>
                             {member.role === 'member' && member.id !== user?.id && (
                               <button 
                                 onClick={() => setDeleteTarget(member)}
-                                className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                                 title="Eliminar miembro"
                               >
-                                <Trash2 className="h-5 w-5" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             )}
                           </>
@@ -618,7 +586,7 @@ export default function Members() {
           onPageChange={setPage}
           label="usuarios"
         />
-      </div>
+      </Card>
 
       <Modal
         open={!!assignTarget}

@@ -16,8 +16,8 @@
   --radius-input: 0.75rem;
   --radius-button: 0.75rem;
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --touch-min: 48px;
-  --touch-comfort: 52px;
+  --touch-min: 44px;
+  --touch-comfort: 48px;
 }
 
 /* Base Styles */
@@ -34,11 +34,11 @@
 /* Typography utilities — titles bold; forms/body readable */
 @layer components {
   .page-title {
-    @apply text-3xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight;
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight;
   }
 
   .page-subtitle {
-    @apply text-zinc-500 font-medium mt-1 text-sm;
+    @apply text-xs sm:text-sm text-zinc-500 font-medium mt-0.5 sm:mt-1;
   }
 
   .section-title {
@@ -50,11 +50,119 @@
   }
 
   .stat-value {
-    @apply text-3xl font-bold text-zinc-900 dark:text-white tracking-tight;
+    @apply text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight;
   }
 
   .stat-label {
     @apply text-xs font-medium uppercase tracking-wide text-zinc-500;
+  }
+
+  .page-stack {
+    @apply space-y-4 sm:space-y-5 lg:space-y-6;
+  }
+
+  .page-stack-loose {
+    @apply space-y-5 sm:space-y-6 lg:space-y-8;
+  }
+
+  /* Constrain form / panel width so content does not stretch on tablet widths */
+  .panel-form {
+    @apply w-full max-w-lg;
+  }
+
+  .panel-content {
+    @apply w-full max-w-xl;
+  }
+
+  .panel-wide {
+    @apply w-full max-w-3xl;
+  }
+
+  .panel-narrow {
+    @apply w-full max-w-md;
+  }
+
+  .page-stack-tight {
+    @apply space-y-3 sm:space-y-4;
+  }
+
+  .form-stack {
+    @apply space-y-4;
+  }
+
+  .page-state-center {
+    @apply flex items-center justify-center min-h-[min(40vh,320px)] py-10;
+  }
+
+  .scroll-x-bleed {
+    @apply overflow-x-auto -mx-1 px-1;
+    scrollbar-gutter: stable;
+  }
+
+  .table-shell {
+    @apply bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm;
+  }
+
+  /* Sidebar / navigation */
+  .nav-stack {
+    @apply flex flex-col gap-0.5;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold min-h-9 transition-colors touch-manipulation;
+  }
+
+  .nav-link-active {
+    @apply bg-brand/10 text-brand dark:text-brand shadow-sm;
+  }
+
+  .nav-link-inactive {
+    @apply text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white;
+  }
+
+  .nav-badge {
+    @apply min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full text-[9px] font-bold leading-none;
+  }
+
+  .scroll-area {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    padding-inline-end: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  .dark .scroll-area {
+    scrollbar-color: #52525b transparent;
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-area::-webkit-scrollbar-track {
+    margin-block: 2px;
+    background: transparent;
+  }
+
+  .scroll-area::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .dark .scroll-area::-webkit-scrollbar-thumb {
+    background-color: #52525b;
+  }
+
+  .scroll-area::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+  }
+
+  .dark .scroll-area::-webkit-scrollbar-thumb:hover {
+    background-color: #71717a;
   }
 }
 

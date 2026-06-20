@@ -1,9 +1,10 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest } from './middleware/auth.ts';
 import { requireWorkoutSessionAccess } from './middleware/access.ts';
+import { trainerHasMemberRoutineAccess } from '../lib/trainerAccess.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 router.post('/start', async (req: AuthRequest, res) => {
   const { user_id, routine_id } = req.body;
@@ -26,6 +27,11 @@ router.post('/start', async (req: AuthRequest, res) => {
       );
       if (!assigned.rows[0]) {
         return res.status(403).json({ error: 'Rutina no asignada' });
+      }
+    } else if (user.role === 'trainer') {
+      const allowed = await trainerHasMemberRoutineAccess(user.id, targetUserId, routine_id);
+      if (!allowed) {
+        return res.status(403).json({ error: 'Rutina no asignada a este miembro' });
       }
     }
 

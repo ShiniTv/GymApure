@@ -21,31 +21,50 @@ export function Label({ children, htmlFor, className }: LabelProps) {
   );
 }
 
+/** Shared field styles for Input, Select, PasswordInput */
+export const fieldClassName = cn(
+  'w-full bg-zinc-50 dark:bg-zinc-800 border rounded-xl px-3 py-2.5',
+  'text-sm text-zinc-900 dark:text-white font-medium outline-none',
+  'min-h-[var(--touch-min)]',
+  'focus:ring-2 focus:ring-orange-500 transition-all',
+  'border-zinc-200 dark:border-zinc-700'
+);
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
+  leadingIcon?: ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, error, ...props }, ref) {
-    return (
-    <div>
-      <input
-        ref={ref}
-        className={cn(
-          'w-full bg-zinc-50 dark:bg-zinc-800 border rounded-xl px-4 py-3 min-h-[var(--touch-min)]',
-          'text-zinc-900 dark:text-white font-medium outline-none',
-          'focus:ring-2 focus:ring-orange-500 transition-all',
-          error ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-700',
-          className
+  { className, error, leadingIcon, ...props },
+  ref
+) {
+  const hasLeading = Boolean(leadingIcon);
+
+  return (
+    <div className="w-full">
+      <div className={cn(hasLeading && 'relative')}>
+        {hasLeading && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10 text-zinc-400 [&>svg]:h-4 [&>svg]:w-4">
+            {leadingIcon}
+          </div>
         )}
-        {...props}
-      />
+        <input
+          ref={ref}
+          className={cn(
+            fieldClassName,
+            error && 'border-red-500',
+            hasLeading && 'pl-10',
+            className
+          )}
+          {...props}
+        />
+      </div>
       {error && (
         <p className="text-xs font-medium text-red-500 mt-1 ml-1">{error}</p>
       )}
     </div>
-    );
-  }
-);
+  );
+});
 
 Input.displayName = 'Input';

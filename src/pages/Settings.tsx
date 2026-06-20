@@ -299,14 +299,14 @@ export default function Settings() {
 
   if (settingsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="page-stack-loose">
       <PageHeader
         title={<>Configuración <span className="text-orange-500">del sistema</span></>}
         subtitle="Notificaciones automáticas y salud operativa del servidor."
@@ -321,7 +321,7 @@ export default function Settings() {
       />
 
       {expirySettings && (
-        <Card padding="lg" rounded="2xl">
+        <Card padding="lg" rounded="2xl" className="panel-wide">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <h2 className="section-title flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-orange-500" />
@@ -441,7 +441,7 @@ export default function Settings() {
         </Card>
       )}
 
-      <Card padding="lg" rounded="2xl">
+      <Card padding="lg" rounded="2xl" className="panel-wide">
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <h2 className="section-title flex items-center gap-2">
             <Activity className="h-4 w-4 text-orange-500" />

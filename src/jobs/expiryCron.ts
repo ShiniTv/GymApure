@@ -1,5 +1,6 @@
 import { runExpiryJob } from '../lib/notifications/expiryNotifier.ts';
 import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
+import { logger } from '../lib/logger.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -24,8 +25,12 @@ async function tick(): Promise<void> {
 }
 
 export function startExpiryCron(): void {
+  if (process.env.NODE_ENV !== 'production' && process.env.EXPIRY_CRON_IN_DEV !== 'true') {
+    return;
+  }
+
   const intervalMs = resolveIntervalMs();
-  console.log(`[expiry-cron] Activo — cada ${Math.round(intervalMs / 60_000)} min`);
+  logger.info('Cron de vencimientos activo', { intervalMinutes: Math.round(intervalMs / 60_000) });
   void tick();
   setInterval(() => void tick(), intervalMs);
 }

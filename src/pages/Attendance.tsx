@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../lib/dateLocale';
 import { Badge, Card, PageHeader, Spinner, StatCard } from '../components/ui';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
@@ -61,7 +61,7 @@ export default function Attendance() {
   const avgEntries = data.length > 0 ? (totalEntries / data.length).toFixed(1) : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={<>Asistencias</>}
         subtitle="Análisis de volumen, horas pico y membresías por vencer"
@@ -142,7 +142,7 @@ export default function Attendance() {
               </p>
             </div>
           )}
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="scroll-area space-y-2 max-h-56 sm:max-h-64">
             {expiring.length === 0 ? (
               <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
                 No hay membresías por vencer en los próximos {alertDays} días.

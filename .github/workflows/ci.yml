@@ -28,8 +28,6 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gym_test
       JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-long
       DEMO_PASSWORD: ci-demo-pass-12
-      KIOSK_API_KEY: ci-kiosk-key-min16chars
-      VITE_KIOSK_KEY: ci-kiosk-key-min16chars
       NODE_ENV: production
       ALLOW_PUBLIC_REGISTER: 'true'
 
@@ -47,6 +45,12 @@ jobs:
 
       - run: npm run build
 
+      - name: Lighthouse baseline (login shell)
+        continue-on-error: true
+        run: |
+          npx lighthouse --version || npm install -g lighthouse@12
+          npm run lighthouse:ci
+
       - name: Apply database migrations
         run: npm run db:migrate
 
@@ -60,7 +64,10 @@ jobs:
           ADMIN_FULL_NAME: Checklist Admin
         run: npm run db:create-admin
 
-      - name: Integration tests
+      - name: Integration & E2E tests
+        env:
+          CHECKLIST_ADMIN_EMAIL: checklist-admin@test.local
+          CHECKLIST_ADMIN_PASSWORD: ChecklistAdmin123!
         run: |
           set -e
           npm start > /tmp/server.log 2>&1 &
@@ -78,7 +85,5 @@ jobs:
             fi
             sleep 1
           done
-          npm run test:integration
-          npm run test:auth-checklist
-          npm run test:reception-checklist
+          npm run test:e2e
           kill "$SERVER_PID" 2>/dev/null || true

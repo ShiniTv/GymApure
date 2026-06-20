@@ -42,10 +42,8 @@ JWT_SECRET=[PEGA_AQUI_UN_SECRETO_ALEATORIO_LARGO]
 # Elige "Transaction pooler" / puerto 6543 (NO el 5432 directo)
 DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 
-# === RECOMENDADO (kiosk / check-in sin login) ===
-# Misma clave en ambas. Generar: openssl rand -base64 24
-KIOSK_API_KEY=[CLAVE_ALEATORIA_16_CARACTERES_O_MAS]
-VITE_KIOSK_KEY=[LA_MISMA_CLAVE_QUE_KIOSK_API_KEY]
+# === RECOMENDADO (tests automáticos / cuentas demo) ===
+# DEMO_PASSWORD=contraseña_larga_para_tests
 
 # === ENTORNO LOCAL ===
 NODE_ENV=development
@@ -81,7 +79,7 @@ PORT=3000
 | `JWT_SECRET` | Generar nuevo en **cada equipo** (`openssl rand -base64 48`) o copiar el del PC original si quieres mismas sesiones JWT |
 | `DATABASE_URL` | [Supabase Dashboard](https://supabase.com/dashboard) → tu proyecto → **Project Settings** → **Database** → **Connection string** → URI con pooler **6543** |
 | `SUPABASE_SERVICE_ROLE_KEY` | Mismo proyecto → **Project Settings** → **API** → `service_role` (secret) |
-| `KIOSK_API_KEY` / `VITE_KIOSK_KEY` | Inventar una clave larga; **deben ser iguales** en ambas variables |
+| `DEMO_PASSWORD` | Solo tests / `db:restore-demo` (mín. 12 caracteres) |
 
 > **Importante:** El archivo `.env` **no está en GitHub**. Cópialo a mano, USB o gestor de contraseñas. No lo subas al repo.
 
@@ -125,7 +123,7 @@ Abre: **http://localhost:3000**
 
 - Login admin: cuenta creada con `db:create-admin`, o la del PC principal si compartes Supabase
 - Registro miembros: `/register` (activo en desarrollo)
-- Check-in kiosk: `/check-in` (requiere `KIOSK_API_KEY` = `VITE_KIOSK_KEY`)
+- Check-in staff: `/reception` o `/check-in` (requiere login admin/recepcionista)
 
 ---
 
@@ -137,7 +135,10 @@ Con el servidor corriendo (`npm run dev`), en **otra terminal**:
 # Health check
 curl http://localhost:3000/api/health
 
-# Checklists por módulo (admin debe existir en la DB)
+# Suite E2E (requiere DEMO_PASSWORD + db:restore-demo)
+npm run test:e2e
+
+# Checklists por módulo
 npm run test:auth-checklist
 npm run test:memberships-checkin
 npm run test:payments-checklist
@@ -157,7 +158,7 @@ En el navegador (como admin):
 
 Si ya tienes todo funcionando aquí:
 
-1. Copia tu archivo `.env` al otro PC (WhatsApp, email, Supabase, kiosk, etc.)
+1. Copia tu archivo `.env` al otro PC (WhatsApp, email, Supabase, etc.)
 2. `git clone` + `npm install` + `npm run db:migrate` + `npm run dev`
 3. Listo — mismos datos si la `DATABASE_URL` es la misma
 
@@ -172,7 +173,7 @@ Si ya tienes todo funcionando aquí:
 | `JWT_SECRET debe tener al menos 32 caracteres` | Genera uno más largo |
 | `DATABASE_URL es obligatorio` | Revisa `.env` en la raíz del proyecto |
 | Login falla / 401 | Admin no existe → `npm run db:create-admin` |
-| Check-in kiosk rechaza | `KIOSK_API_KEY` y `VITE_KIOSK_KEY` deben ser **iguales**; reinicia `npm run dev` |
+| Check-in rechaza | Inicia sesión como recepcionista/admin; la cédula debe tener membresía activa |
 | Puerto 3000 ocupado | Cierra el otro servidor o cambia `PORT=3001` en `.env` |
 | Migraciones fallan | Verifica `DATABASE_URL` (pooler 6543) y que el proyecto Supabase esté activo |
 | Email/WhatsApp "Mock" | Normal sin credenciales; ver README y `docs/GUIA-WHATSAPP-META.md` |
@@ -188,13 +189,14 @@ Si ya tienes todo funcionando aquí:
 | `npm run db:migrate` | Aplicar migraciones SQL |
 | `npm run db:create-admin` | Crear/actualizar admin |
 | `npm run lint` | Verificar TypeScript |
+| `npm run test:e2e` | Pruebas API completas (ver `docs/TESTING.md`) |
 
 ---
 
 ## Checklist final
 
 - [ ] `git clone` + `npm install`
-- [ ] `.env` creado con `JWT_SECRET`, `DATABASE_URL`, kiosk keys
+- [ ] `.env` creado con `JWT_SECRET`, `DATABASE_URL`
 - [ ] `npm run db:migrate`
 - [ ] Admin listo (`db:create-admin` o mismo Supabase)
 - [ ] `npm run dev` → http://localhost:3000

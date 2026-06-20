@@ -3,70 +3,21 @@ import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 
-interface Routine {
-  id: number;
-  name: string;
-  difficulty: string;
-  assigned_at: string;
-  start_date?: string;
-  end_date?: string;
-  exercises?: Exercise[];
-}
-
-interface Exercise {
-  id: number;
-  routine_exercise_id: number;
-  name: string;
-  muscle_group: string;
-  sets: number;
-  reps: number;
-  rest_seconds: number;
-  weight_suggestion: string;
-}
-
-interface User {
-  id: number;
-  full_name: string;
-  email: string;
-  initial_weight?: number | null;
-  height?: number | null;
-  goal?: string | null;
-}
-
-interface Subscription {
-  membership_name: string;
-  days_remaining: number;
-  end_date: string;
-  status: string;
-}
-
-interface Measurement {
-  id: number;
-  date: string;
-  weight: number | null;
-  body_fat_percentage: number | null;
-  waist: number | null;
-  arm: number | null;
-  leg: number | null;
-}
-
-interface RoutineOption {
-  id: number;
-  name: string;
-  difficulty: string;
-}
-
-interface ExerciseOption {
-  id: number;
-  name: string;
-  muscle_group: string;
-}
+import type {
+  Routine,
+  Exercise,
+  MemberUser as User,
+  Subscription,
+  Measurement,
+  RoutineOption,
+  ExerciseOption,
+} from './memberRoutine/types';
 
 export default function MemberRoutine() {
   const { id } = useParams();
@@ -416,7 +367,7 @@ export default function MemberRoutine() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="page-state-center">
         <Spinner />
       </div>
     );
@@ -424,7 +375,7 @@ export default function MemberRoutine() {
   if (!member) return <div className="text-zinc-500 dark:text-white p-6">Miembro no encontrado</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <Breadcrumbs
         items={[
           { label: 'Miembros', href: '/members' },

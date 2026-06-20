@@ -4,7 +4,7 @@ type AsyncRequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-) => Promise<void>;
+) => void | Promise<void>;
 
 /** Wraps async route handlers so rejected promises reach the global error middleware. */
 export function asyncHandler(fn: AsyncRequestHandler): RequestHandler {

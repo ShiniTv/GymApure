@@ -49,47 +49,41 @@ export default function Login() {
     <AuthShell
       footer={
         <p className="text-center text-xs text-zinc-500">
-          ¿Vienes al gym?{' '}
-          <Link to="/check-in" className="font-semibold text-orange-600 hover:text-orange-500">
-            Registro de entrada
+          Personal de recepción: inicia sesión y abre{' '}
+          <Link to="/check-in?kiosk=1" className="font-semibold text-orange-600 hover:text-orange-500">
+            control de acceso
           </Link>
         </p>
       }
     >
-      <Card className="w-full space-y-8 shadow-xl mt-10 rounded-2xl" padding="lg">
+      <Card className="w-full page-stack-loose shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
         <AuthBrandHeader subtitle="Inicia sesión en tu cuenta" />
 
-        <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
           {error && (
             <div
               role="alert"
-              className="rounded-xl bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
+              className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
             >
               {error}
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email">Correo electrónico</Label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-                  <Mail className="h-5 w-5 text-zinc-400" />
-                </div>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="pl-10"
-                  placeholder="correo@ejemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-            <div>
+          <div>
+            <Label htmlFor="email">Correo electrónico</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              leadingIcon={<Mail />}
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
               <Label htmlFor="password">Contraseña</Label>
               <PasswordInput
                 id="password"
@@ -100,7 +94,6 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
           </div>
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>

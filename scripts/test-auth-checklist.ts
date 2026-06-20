@@ -102,6 +102,15 @@ async function main() {
   });
   ok('Cambio de contraseña miembro', change.res.status === 200);
 
+  const staleSession = await api('GET', '/api/auth/me');
+  ok('Cookie invalidada tras cambio de contraseña', staleSession.res.status === 401);
+
+  const relogin = await api('POST', '/api/auth/login', {
+    email: MEMBER_EMAIL,
+    password: newPass,
+  });
+  ok('Re-login con nueva contraseña', relogin.res.status === 200);
+
   cookie = '';
   const adminAgain = await api('POST', '/api/auth/login', {
     email: ADMIN_EMAIL,

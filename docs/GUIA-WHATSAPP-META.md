@@ -18,12 +18,14 @@ Configura WhatsApp Business para Caribean Gym usando la **Meta WhatsApp Cloud AP
 
 ## Antes de empezar
 
-| Requisito | Detalle |
-|-----------|---------|
-| Cuenta Facebook/Meta | Personal, verificada |
+
+| Requisito                   | Detalle                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| Cuenta Facebook/Meta        | Personal, verificada                                                         |
 | Meta Business (recomendado) | [business.facebook.com](https://business.facebook.com) — crea “Caribean Gym” |
-| Teléfono de prueba | Tu móvil con WhatsApp (formato `+58412xxxxxxx`) |
-| Servidor local | `npm run dev` corriendo |
+| Teléfono de prueba          | Tu móvil con WhatsApp (formato `+58412xxxxxxx`)                              |
+| Servidor local              | `npm run dev` corriendo                                                      |
+
 
 ---
 
@@ -34,7 +36,7 @@ Configura WhatsApp Business para Caribean Gym usando la **Meta WhatsApp Cloud AP
 1. Entra en [developers.facebook.com](https://developers.facebook.com)
 2. **Mis apps** → **Crear app**
 3. Tipo: **Otro** → **Negocio**
-4. Nombre: `Caribean Gym`
+4. Nombre: 
 5. Email de contacto: tu correo
 6. Asocia tu **Portfolio comercial** (Business) si te lo pide
 
@@ -48,10 +50,12 @@ Configura WhatsApp Business para Caribean Gym usando la **Meta WhatsApp Cloud AP
 
 En **API Setup** verás:
 
-| Campo en Meta | Variable en `.env` |
-|---------------|-------------------|
-| **Temporary access token** (token temporal) | `WHATSAPP_ACCESS_TOKEN` |
+
+| Campo en Meta                                 | Variable en `.env`         |
+| --------------------------------------------- | -------------------------- |
+| **Temporary access token** (token temporal)   | `WHATSAPP_ACCESS_TOKEN`    |
 | **Phone number ID** (ID del número de prueba) | `WHATSAPP_PHONE_NUMBER_ID` |
+
 
 > El token temporal dura ~24 h. Sirve para probar. En producción usarás un **token permanente** (Parte 2).
 
@@ -121,8 +125,8 @@ Para que un miembro reciba alertas automáticas:
 2. **Añadir** → crea un usuario del sistema (ej. `caribean-gym-api`)
 3. Asígnale activos: tu app de WhatsApp + permiso **WhatsApp Business Management**
 4. Genera un **token de acceso** con permisos:
-   - `whatsapp_business_messaging`
-   - `whatsapp_business_management`
+  - `whatsapp_business_messaging`
+  - `whatsapp_business_management`
 5. Sustituye `WHATSAPP_ACCESS_TOKEN` en Render por ese token
 
 ### 2.2 Número de WhatsApp del gym (no el de prueba de Meta)
@@ -138,11 +142,13 @@ En producción, los mensajes **iniciados por el gym** (alertas automáticas sin 
 
 Ejemplos que necesitarás crear en **WhatsApp Manager → Plantillas de mensajes**:
 
-| Uso en Caribean Gym | Ejemplo de plantilla |
-|---------------------|----------------------|
+
+| Uso en Caribean Gym  | Ejemplo de plantilla                                    |
+| -------------------- | ------------------------------------------------------- |
 | Membresía por vencer | `Hola {{1}}, tu membresía "{{2}}" vence en {{3}} días.` |
-| Pago aprobado | `Hola {{1}}, tu pago de ${{2}} USD fue aprobado.` |
-| Rutina asignada | `Hola {{1}}, tienes una nueva rutina: "{{2}}".` |
+| Pago aprobado        | `Hola {{1}}, tu pago de ${{2}} USD fue aprobado.`       |
+| Rutina asignada      | `Hola {{1}}, tienes una nueva rutina: "{{2}}".`         |
+
 
 > **Estado actual del código:** usa plantillas Meta cuando `WHATSAPP_USE_TEMPLATES=true` (default). Nombres configurables con `WHATSAPP_TEMPLATE_EXPIRING`, `WHATSAPP_TEMPLATE_EXPIRED`, `WHATSAPP_TEMPLATE_GENERIC`. Si falla la plantilla, intenta texto libre (dev / ventana 24 h).
 
@@ -167,11 +173,13 @@ Redeploy después de guardar.
 
 El proyecto normaliza automáticamente:
 
-| Lo que escribes | Se envía como |
-|---------------|---------------|
-| `04121234567` | `584121234567` |
+
+| Lo que escribes | Se envía como  |
+| --------------- | -------------- |
+| `04121234567`   | `584121234567` |
 | `+584121234567` | `584121234567` |
-| `584121234567` | `584121234567` |
+| `584121234567`  | `584121234567` |
+
 
 Mínimo 10 dígitos. Sin teléfono válido en el perfil → no se envía WhatsApp a ese miembro.
 
@@ -179,14 +187,16 @@ Mínimo 10 dígitos. Sin teléfono válido en el perfil → no se envía WhatsAp
 
 ## Solución de problemas
 
-| Síntoma | Causa probable | Qué hacer |
-|---------|----------------|-----------|
-| Badge sigue *Mock* | `.env` sin vars o servidor sin reiniciar | Revisa vars y `npm run dev` de nuevo |
-| `(#131030) Recipient phone number not in allowed list` | Número no registrado como prueba | Añádelo en API Setup → phone list |
-| Token expirado | Token temporal (~24 h) | Genera uno nuevo o usa token permanente |
-| `401 Unauthorized` | Token incorrecto o revocado | Regenera token en Meta |
-| Mensaje no llega | Formato de teléfono | Usa `+58…` |
-| Error en producción con clientes nuevos | Falta plantilla aprobada | Crea plantillas en WhatsApp Manager |
+
+| Síntoma                                                | Causa probable                           | Qué hacer                               |
+| ------------------------------------------------------ | ---------------------------------------- | --------------------------------------- |
+| Badge sigue *Mock*                                     | `.env` sin vars o servidor sin reiniciar | Revisa vars y `npm run dev` de nuevo    |
+| `(#131030) Recipient phone number not in allowed list` | Número no registrado como prueba         | Añádelo en API Setup → phone list       |
+| Token expirado                                         | Token temporal (~24 h)                   | Genera uno nuevo o usa token permanente |
+| `401 Unauthorized`                                     | Token incorrecto o revocado              | Regenera token en Meta                  |
+| Mensaje no llega                                       | Formato de teléfono                      | Usa `+58…`                              |
+| Error en producción con clientes nuevos                | Falta plantilla aprobada                 | Crea plantillas en WhatsApp Manager     |
+
 
 Revisa la **consola del servidor** (`npm run dev`): errores de Meta aparecen como `[whatsapp:meta] Graph API error: …`
 
@@ -225,3 +235,4 @@ Sandbox Twilio: solo números que hayas unido al sandbox. Ver `.env.example`.
 - [API Setup (panel)](https://developers.facebook.com/apps/)
 - [Plantillas de mensajes](https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates)
 - [Precios WhatsApp Business](https://developers.facebook.com/docs/whatsapp/pricing)
+

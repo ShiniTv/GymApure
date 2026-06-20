@@ -2,6 +2,8 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { Modal } from './Modal';
 export { Input, Label } from './Input';
+export { SearchInput } from './SearchInput';
+export { PageState } from './PageState';
 export { Textarea } from './Textarea';
 export { DifficultySelect } from './DifficultySelect';
 export { PasswordInput, passwordStrength } from './PasswordInput';

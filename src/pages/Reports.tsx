@@ -186,7 +186,7 @@ export default function Reports() {
 
   return (
 
-    <div className="space-y-8">
+    <div className="page-stack-loose">
 
       <PageHeader
 

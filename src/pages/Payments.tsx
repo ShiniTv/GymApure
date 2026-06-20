@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, paymentProofUrl } from '../lib/api';
 import { Plus, Upload, Check, X, FileImage } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge, Spinner, Skeleton, FilterChips } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge, TableRowSkeleton, Skeleton, FilterChips } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { clientLogger } from '../lib/clientLogger';
+import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePaymentsQuery';
+import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
 
 interface Payment {
   id: number;
@@ -21,13 +23,6 @@ interface Payment {
   proof_url?: string | null;
 }
 
-interface PaginatedPayments {
-  items: Payment[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 const EXCHANGE_RATE = Number(import.meta.env.VITE_EXCHANGE_RATE ?? 40.5);
 
 export default function Payments() {
@@ -37,13 +32,19 @@ export default function Payments() {
   const isMember = user?.role === 'member';
   const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
   const isAdmin = user?.role === 'admin';
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const invalidatePayments = useInvalidatePayments();
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const pageSize = user?.role === 'member' ? 10 : 20;
+
+  const { data: paymentsData, isPending: loading } = usePaymentsQuery({
+    page,
+    pageSize,
+    statusFilter,
+  });
+  const payments = paymentsData?.items ?? [];
+  const total = paymentsData?.total ?? 0;
 
   // Form state
   const [amountUsd, setAmountUsd] = useState('');
@@ -52,9 +53,7 @@ export default function Payments() {
   const [reference, setReference] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [approveTarget, setApproveTarget] = useState<Payment | null>(null);
-  const [membershipPlans, setMembershipPlans] = useState<
-    { id: number; name: string; price_usd: number; duration_days: number }[]
-  >([]);
+  const { data: membershipPlans = [] } = useMembershipPlansQuery(isMember || isStaffPayment);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [rejectTarget, setRejectTarget] = useState<Payment | null>(null);
   const [actionError, setActionError] = useState('');
@@ -70,40 +69,7 @@ export default function Payments() {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (user?.role === 'member') {
-      apiFetch('/api/memberships')
-        .then((res) => parseJsonResponse<typeof membershipPlans>(res))
-        .then((data) => setMembershipPlans(Array.isArray(data) ? data : []))
-        .catch(() => setMembershipPlans([]));
-    }
-  }, [user?.id, user?.role]);
-
-  const apiFetchPayments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(pageSize),
-      });
-      if (statusFilter) params.set('status', statusFilter);
-
-      const res = await apiFetch(`/api/payments?${params.toString()}`);
-      const data = await parseJsonResponse<PaginatedPayments>(res);
-      setPayments(Array.isArray(data.items) ? data.items : []);
-      setTotal(data.total ?? 0);
-    } catch (err) {
-      clientLogger.error('Failed to fetch payments', err);
-      setPayments([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, statusFilter]);
-
-  useEffect(() => {
-    void apiFetchPayments();
-  }, [apiFetchPayments]);
+  const apiFetchPayments = () => invalidatePayments();
 
   useEffect(() => {
     const usd = parseFloat(amountUsd);
@@ -146,16 +112,9 @@ export default function Payments() {
     }
   };
 
-  const openApproveModal = async (payment: Payment) => {
+  const openApproveModal = (payment: Payment) => {
     setApproveTarget(payment);
     setSelectedPlanId('');
-    try {
-      const res = await apiFetch('/api/memberships');
-      const data = await parseJsonResponse<typeof membershipPlans>(res);
-      setMembershipPlans(Array.isArray(data) ? data : []);
-    } catch {
-      setMembershipPlans([]);
-    }
   };
 
   const handleApprove = async () => {
@@ -195,7 +154,7 @@ export default function Payments() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={
           isMember ? (
@@ -235,7 +194,7 @@ export default function Payments() {
         />
       )}
 
-      <Card padding="none" rounded="3xl" className="overflow-hidden">
+      <Card padding="none" rounded="xl" className="overflow-hidden">
         {isMember ? (
           <>
             <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -327,7 +286,7 @@ export default function Payments() {
         <>
         <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800">
           {loading ? (
-            <div className="p-12 flex justify-center"><Spinner className="h-6 w-6" /></div>
+            <div className="p-12 flex justify-center"><Skeleton className="h-6 w-6 rounded-full" /></div>
           ) : payments.length === 0 ? (
             <div className="p-12 text-center text-zinc-400 text-sm">No hay pagos registrados</div>
           ) : (
@@ -450,7 +409,7 @@ export default function Payments() {
         maxWidth="xl"
         scrollable
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="page-stack">
           {submitError && (
             <p className="text-sm font-bold text-red-500">{submitError}</p>
           )}

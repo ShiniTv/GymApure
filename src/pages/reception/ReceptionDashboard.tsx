@@ -29,11 +29,10 @@ export default function ReceptionDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-stack">
       <PageHeader
         title={<>Recepción <span className="text-orange-500">Caribean Gym</span></>}
         subtitle="Resumen del día — use el modo mostrador para operaciones de acceso"
-        badge={stats?.insideNow ? `${stats.insideNow} dentro` : undefined}
         action={
           <Link to="/reception?mode=counter">
             <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-sm font-semibold shadow-lg shadow-orange-900/20 transition-colors">

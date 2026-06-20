@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 100;

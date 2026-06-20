@@ -28,12 +28,12 @@ export function StatCard({ title, value, icon: Icon, trend, color = 'emerald', c
           <p className="stat-label leading-none mb-1">{title}</p>
           <p className="stat-value">{value}</p>
         </div>
-        <div className={cn('p-3 rounded-lg', colorMap[color])}>
-          <Icon className="h-6 w-6" />
+        <div className={cn('p-2.5 rounded-lg', colorMap[color])}>
+          <Icon className="h-5 w-5" />
         </div>
       </div>
       {trend && (
-        <div className="mt-4 flex items-center text-sm">
+        <div className="mt-3 flex items-center text-xs sm:text-sm">
           <span className="text-emerald-600 dark:text-emerald-500 font-medium flex items-center">
             <TrendingUp className="h-4 w-4 mr-1" />
             {trend}

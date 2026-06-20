@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
-import { requireSelfOrRoles } from './middleware/access.ts';
+import { requireMemberAccess } from './middleware/access.ts';
 import { assignSubscription } from '../lib/subscriptions.ts';
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
@@ -14,7 +14,7 @@ import {
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const membershipSchema = z.object({
   name: z.string().trim().min(1, 'Nombre requerido').max(100),
@@ -143,7 +143,7 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/user/:userId', requireSelfOrRoles('userId', 'admin', 'trainer'), async (req, res) => {
+router.get('/user/:userId', requireMemberAccess('userId', 'admin'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT s.id, s.start_date, s.end_date, s.status,

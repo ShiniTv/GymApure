@@ -1,12 +1,18 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
-import { requireSelfOrRoles } from './middleware/access.ts';
+import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
 import { notifyRoutineAssigned } from '../lib/notifications/eventNotifier.ts';
-import { avatarApiPath, avatarUpload } from '../lib/uploadStorage.ts';
+import { avatarUpload } from '../lib/uploadStorage.ts';
+import {
+  uploadMediaFile,
+  localAvatarPathFromUpload,
+  isMediaStorageRemote,
+} from '../lib/mediaStorage.ts';
+import { assertImageUpload } from '../lib/uploadValidation.ts';
 import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logger } from '../lib/logger.ts';
@@ -19,8 +25,9 @@ import {
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { uploadRateLimiter } from './middleware/rateLimit.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 const profileSchema = z.object({
   phone: z.string().trim().max(20).optional().nullable(),
@@ -210,7 +217,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
   }
 });
 
-router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer', 'receptionist'), async (req, res) => {
+router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
@@ -277,6 +284,7 @@ router.patch(
 router.post(
   '/:id/avatar',
   requireSelfOrRoles('id', 'admin'),
+  uploadRateLimiter,
   avatarUpload.single('avatar'),
   asyncHandler(async (req: AuthRequest, res) => {
     if (!req.file) {
@@ -284,8 +292,17 @@ router.post(
       return;
     }
 
+    try {
+      assertImageUpload(req.file);
+    } catch (err: unknown) {
+      res.status(400).json({ error: getErrorMessage(err) });
+      return;
+    }
+
     const targetId = parseInt(req.params.id, 10);
-    const profileImage = avatarApiPath(req.file.filename);
+    const profileImage = isMediaStorageRemote()
+      ? await uploadMediaFile('avatars', req.file, String(targetId))
+      : localAvatarPathFromUpload(req.file);
 
     const { rows } = await query(
       `UPDATE users SET profile_image = $1 WHERE id = $2
@@ -302,7 +319,7 @@ router.post(
   })
 );
 
-router.get('/:id/routines', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+router.get('/:id/routines', requireMemberAccess('id', 'admin'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
@@ -324,7 +341,7 @@ router.get('/:id/routines', requireSelfOrRoles('id', 'admin', 'trainer'), async 
   }
 });
 
-router.get('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+router.get('/:id/measurements', requireMemberAccess('id', 'admin'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT id, date, weight, body_fat_percentage, waist, arm, leg, created_at
@@ -340,7 +357,7 @@ router.get('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), as
   }
 });
 
-router.post('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+router.post('/:id/measurements', requireMemberAccess('id', 'admin'), async (req, res) => {
   const parsed = measurementSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -370,7 +387,7 @@ router.post('/:id/measurements', requireSelfOrRoles('id', 'admin', 'trainer'), a
 
 router.patch(
   '/:id/measurements/:measurementId',
-  requireSelfOrRoles('id', 'admin', 'trainer'),
+  requireMemberAccess('id', 'admin'),
   asyncHandler(async (req, res) => {
     const userId = parseInt(req.params.id, 10);
     const measurementId = parseInt(req.params.measurementId, 10);
@@ -422,7 +439,7 @@ router.patch(
 
 router.delete(
   '/:id/measurements/:measurementId',
-  requireSelfOrRoles('id', 'admin', 'trainer'),
+  requireMemberAccess('id', 'admin'),
   asyncHandler(async (req, res) => {
     const userId = parseInt(req.params.id, 10);
     const measurementId = parseInt(req.params.measurementId, 10);
@@ -445,7 +462,7 @@ router.delete(
   })
 );
 
-router.get('/:id/history', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'ID inválido' });
@@ -633,7 +650,10 @@ router.patch(
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;
   try {
-    await query('UPDATE users SET status = $1 WHERE id = $2', [status, req.params.id]);
+    await query(
+      'UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2',
+      [status, req.params.id]
+    );
     await logAudit(req.user!.id, 'user.status_change', {
       target_id: req.params.id,
       status,

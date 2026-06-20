@@ -6,7 +6,6 @@ import 'dotenv/config';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
-const KIOSK_KEY = process.env.KIOSK_API_KEY ?? process.env.VITE_KIOSK_KEY;
 
 let passed = 0;
 let failed = 0;
@@ -100,30 +99,26 @@ async function main() {
 
   {
     const { res } = await json('POST', '/api/attendance/check-in', { cedula: 'V-11223344' });
-    assert('check-in sin clave → 401', res.status === 401);
+    assert('check-in público eliminado → 401', res.status === 401);
   }
 
-  if (KIOSK_KEY) {
-    const { res, data } = await json(
-      'POST',
-      '/api/attendance/check-in',
-      { cedula: 'V-11223344' },
-      { 'X-Kiosk-Key': KIOSK_KEY }
+  if (DEMO_PASSWORD) {
+    const { loginReceptionStaff, receptionCheckIn, receptionCheckOut } = await import(
+      './test-reception-auth.ts'
     );
-    const ok = res.status === 200 || res.status === 400;
-    assert('check-in con clave → 200 o 400', ok, `status ${res.status} ${JSON.stringify(data)}`);
+    try {
+      const receptionCookie = await loginReceptionStaff();
+      const checkIn = await receptionCheckIn(receptionCookie, 'V-11223344');
+      const checkInData = await checkIn.json().catch(() => ({}));
+      const ok = checkIn.status === 200 || checkIn.status === 400;
+      assert('check-in recepción → 200 o 400', ok, `status ${checkIn.status} ${JSON.stringify(checkInData)}`);
 
-    // Cerrar sesión abierta para no interferir con test:sprint5
-    if (res.status === 200 && (data as { success?: boolean }).success) {
-      await json(
-        'POST',
-        '/api/attendance/check-out',
-        { cedula: 'V-11223344' },
-        { 'X-Kiosk-Key': KIOSK_KEY }
-      );
+      if (checkIn.status === 200 && (checkInData as { success?: boolean }).success) {
+        await receptionCheckOut(receptionCookie, 'V-11223344');
+      }
+    } catch (err) {
+      console.warn(`  SKIP check-in recepción (${err instanceof Error ? err.message : err})\n`);
     }
-  } else {
-    console.warn('  SKIP check-in con clave (KIOSK_API_KEY no definido)\n');
   }
 
   console.log(`\n${passed} passed, ${failed} failed`);

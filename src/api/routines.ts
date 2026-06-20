@@ -1,10 +1,16 @@
-import { Router } from 'express';
+import { asyncRouter } from './middleware/asyncRouter.ts';
 import type { PoolClient } from 'pg';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { logger } from '../lib/logger.ts';
+import { formatZodError } from '../lib/passwordPolicy.ts';
+import {
+  routineCreateSchema,
+  routineExerciseSchema,
+  routineUpdateSchema,
+} from '../lib/routineSchemas.ts';
 
-const router = Router();
+const router = asyncRouter();
 
 interface AssignmentRow {
   user_id: number;
@@ -64,12 +70,18 @@ async function assertMemberAssigned(userId: number, routineId: string | number):
 
 router.get('/', async (req: AuthRequest, res) => {
   try {
-    const trainerId = req.user?.role === 'trainer' ? req.user.id : null;
+    const user = req.user!;
     const params: unknown[] = [];
     let where = '';
-    if (trainerId) {
+
+    if (user.role === 'trainer') {
       where = ' WHERE r.trainer_id = $1';
-      params.push(trainerId);
+      params.push(user.id);
+    } else if (user.role === 'member') {
+      where = ` WHERE r.id IN (
+        SELECT routine_id FROM user_routines WHERE user_id = $1
+      )`;
+      params.push(user.id);
     }
 
     const { rows } = await query(
@@ -151,6 +163,11 @@ router.get('/:id', async (req: AuthRequest, res) => {
       if (!assigned) {
         return res.status(403).json({ error: 'Rutina no asignada' });
       }
+    } else if (req.user!.role === 'trainer') {
+      const trainerId = await getRoutineTrainerId(req.params.id);
+      if (!assertTrainerOwnsRoutine(req, trainerId)) {
+        return res.status(403).json({ error: 'No tienes permiso para ver esta rutina' });
+      }
     }
 
     const exercisesResult = await query(
@@ -167,12 +184,32 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/', authorize(['admin', 'trainer']), async (req, res) => {
-  const { name, difficulty, trainer_id } = req.body;
+router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+  const parsed = routineCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { name, difficulty } = parsed.data;
+  const trainerId =
+    req.user!.role === 'trainer' ? req.user!.id : parsed.data.trainer_id;
+
+  if (!trainerId) {
+    return res.status(400).json({ error: 'trainer_id es obligatorio' });
+  }
+
   try {
+    const trainerCheck = await query<{ id: number }>(
+      `SELECT id FROM users WHERE id = $1 AND role = 'trainer'`,
+      [trainerId]
+    );
+    if (!trainerCheck.rows[0]) {
+      return res.status(400).json({ error: 'Entrenador inválido' });
+    }
+
     const { rows } = await query(
       'INSERT INTO routines (name, difficulty, trainer_id) VALUES ($1, $2, $3) RETURNING id',
-      [name, difficulty, trainer_id]
+      [name, difficulty, trainerId]
     );
     res.json({ id: rows[0].id, success: true });
   } catch (err: unknown) {
@@ -181,7 +218,12 @@ router.post('/', authorize(['admin', 'trainer']), async (req, res) => {
 });
 
 router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const { name, difficulty } = req.body;
+  const parsed = routineUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { name, difficulty } = parsed.data;
   const trainerId = await getRoutineTrainerId(req.params.id);
   if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
   if (!assertTrainerOwnsRoutine(req, trainerId)) {
@@ -234,7 +276,12 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, 
 });
 
 router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const { exercise_id, sets, reps, rest_seconds, weight_suggestion } = req.body;
+  const parsed = routineExerciseSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { exercise_id, sets, reps, rest_seconds, weight_suggestion } = parsed.data;
   const routineId = req.params.id;
 
   const trainerId = await getRoutineTrainerId(routineId);
@@ -258,7 +305,14 @@ router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthR
 });
 
 router.put('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const { sets, reps, rest_seconds, weight_suggestion } = req.body;
+  const parsed = routineExerciseSchema
+    .omit({ exercise_id: true })
+    .safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { sets, reps, rest_seconds, weight_suggestion } = parsed.data;
   const trainerId = await getRoutineTrainerId(req.params.id);
   if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
   if (!assertTrainerOwnsRoutine(req, trainerId)) {

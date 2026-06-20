@@ -8,4 +8,6 @@ export interface JwtUserPayload {
   role: string;
   name: string;
   email: string;
+  /** Incremented server-side to revoke outstanding cookies. */
+  token_version?: number;
 }
