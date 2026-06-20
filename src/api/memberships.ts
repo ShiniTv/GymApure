@@ -12,6 +12,7 @@ import {
   getLastDoorAlert,
 } from '../lib/expiringSubscriptions.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = Router();
 
@@ -37,7 +38,7 @@ router.get('/expiring', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/', authorize(['admin', 'trainer', 'member']), async (_req, res) => {
+router.get('/', authorize(['admin', 'trainer', 'member', 'receptionist']), async (_req, res) => {
   try {
     const { rows } = await query('SELECT * FROM memberships ORDER BY price_usd ASC');
     res.json(rows);
@@ -167,7 +168,7 @@ const assignSchema = z.object({
   start_date: z.string().optional(),
 });
 
-router.post('/assign', authorize(['admin']), async (req: AuthRequest, res) => {
+router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
   const userId = parseInt(String(req.body.user_id), 10);
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'user_id inválido' });

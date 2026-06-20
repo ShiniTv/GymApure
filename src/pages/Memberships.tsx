@@ -127,7 +127,7 @@ export default function Memberships() {
             <Card key={plan.id} padding="lg" rounded="3xl" className="flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-6">
                 <div>
-                  <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight italic">
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
                     {plan.name}
                   </h3>
                   <Badge variant="default" className="mt-2">
@@ -139,7 +139,7 @@ export default function Memberships() {
                 </div>
               </div>
 
-              <p className="text-4xl font-black text-orange-600 dark:text-orange-500 tracking-tighter mb-1">
+              <p className="text-4xl font-bold text-orange-600 dark:text-orange-500 tracking-tight mb-1">
                 ${plan.price_usd}
                 <span className="text-sm font-bold text-zinc-400 ml-1">USD</span>
               </p>
@@ -149,7 +149,7 @@ export default function Memberships() {
               </p>
 
               <div className="mb-6">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                <div className="flex justify-between stat-label mb-2">
                   <span>Costo diario</span>
                   <span>${(plan.price_usd / plan.duration_days).toFixed(2)}/día</span>
                 </div>

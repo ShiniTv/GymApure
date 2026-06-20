@@ -12,6 +12,7 @@ const DEMO_PASSWORD = resolveDemoPassword();
 
 const DEMO_USERS = [
   { email: 'admin@gym.com', role: 'admin', full_name: 'Admin User', cedula: 'V-12345678' },
+  { email: 'receptionist@gym.com', role: 'receptionist', full_name: 'Maria Reception', cedula: 'V-99887766' },
   { email: 'trainer@gym.com', role: 'trainer', full_name: 'John Trainer', cedula: 'V-87654321' },
   {
     email: 'member@gym.com',

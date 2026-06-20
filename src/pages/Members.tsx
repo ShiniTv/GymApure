@@ -4,7 +4,7 @@ import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, Credit
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner, DataCard, Avatar } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Spinner, DataCard, Avatar, FilterChips, EmptyState } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { clientLogger } from '../lib/clientLogger';
 import {
@@ -85,7 +85,9 @@ export default function Members() {
   }, [searchInput]);
 
   const isTrainer = user?.role === 'trainer';
-  const colCount = isTrainer ? 5 : 6;
+  const isReceptionist = user?.role === 'receptionist';
+  const isStaffMember = isTrainer || isReceptionist;
+  const colCount = isStaffMember ? 5 : 6;
 
   const apiFetchMembers = useCallback(async () => {
     setLoading(true);
@@ -131,7 +133,9 @@ export default function Members() {
       newErrors.email = 'Email inválido';
     }
 
-    if (newMember.cedula.trim()) {
+    if (!newMember.cedula.trim()) {
+      newErrors.cedula = 'La cédula es obligatoria para el check-in';
+    } else {
       const cedulaRegex = /^([VEve]-)?\d{5,10}$/;
       if (!cedulaRegex.test(newMember.cedula.trim())) {
         newErrors.cedula = 'Formato de cédula inválido (ej: V-12345678)';
@@ -269,6 +273,8 @@ export default function Members() {
         title={
           isTrainer ? (
             <>Mis <span className="text-orange-500">miembros</span></>
+          ) : isReceptionist ? (
+            <>Registro de <span className="text-orange-500">miembros</span></>
           ) : (
             <>Gestión de <span className="text-orange-500">usuarios</span></>
           )
@@ -276,13 +282,15 @@ export default function Members() {
         subtitle={
           isTrainer
             ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
-            : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
+            : isReceptionist
+              ? 'Registra personas nuevas en mostrador. La cédula es obligatoria para el check-in.'
+              : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
         }
         action={
-          (user?.role === 'trainer' || user?.role === 'admin') ? (
+          (user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist') ? (
             <Button onClick={() => setIsAdding(true)}>
               <Plus className="h-5 w-5" />
-              {isTrainer ? 'Nuevo miembro' : 'Nuevo usuario'}
+              {isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario'}
             </Button>
           ) : undefined
         }
@@ -291,7 +299,7 @@ export default function Members() {
       <Modal
         open={isAdding}
         onClose={() => setIsAdding(false)}
-        title={<>NUEVO <span className="text-orange-500">USUARIO</span></>}
+        title={<>Nuevo <span className="text-orange-500">usuario</span></>}
       >
         <div className="space-y-4">
               <div>
@@ -361,7 +369,7 @@ export default function Members() {
                   placeholder="Repite la contraseña"
                 />
               </div>
-              {!isTrainer && (
+              {!isStaffMember && (
               <div>
                 <Label>Rol de Usuario</Label>
                 <select
@@ -371,11 +379,12 @@ export default function Members() {
                 >
                   <option value="member">Miembro / Atleta</option>
                   <option value="trainer">Entrenador / Staff</option>
+                  <option value="receptionist">Recepcionista</option>
                   {user?.role === 'admin' && <option value="admin">Administrador</option>}
                 </select>
               </div>
               )}
-              {errors.submit && <p className="text-xs font-black text-red-500 text-center uppercase tracking-widest">{errors.submit}</p>}
+              {errors.submit && <p className="text-xs font-medium text-red-500 text-center">{errors.submit}</p>}
               <Button onClick={handleAddMember} className="w-full mt-4" size="lg">
                 Crear Usuario
               </Button>
@@ -394,21 +403,17 @@ export default function Members() {
           />
         </div>
         {user?.role === 'admin' && (
-          <button
-            type="button"
-            onClick={() => {
-              setExpiringFilter((v) => !v);
+          <FilterChips
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+            ]}
+            value={expiringFilter ? 'expiring' : ''}
+            onChange={(v) => {
+              setExpiringFilter(v === 'expiring');
               setPage(1);
             }}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-              expiringFilter
-                ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-500'
-                : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500'
-            }`}
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Por vencer ({alertDays}d)
-          </button>
+          />
         )}
       </div>
 
@@ -416,7 +421,18 @@ export default function Members() {
         {loading ? (
           <div className="py-12 flex justify-center"><Spinner /></div>
         ) : filteredMembers.length === 0 ? (
-          <p className="text-center text-zinc-400 text-sm py-12">No se encontraron miembros</p>
+          <EmptyState
+            icon={Search}
+            title="Sin resultados"
+            description={expiringFilter ? 'No hay miembros por vencer en este periodo.' : 'Prueba con otro nombre o cédula.'}
+            action={
+              isTrainer ? (
+                <Button size="sm" onClick={() => setIsAdding(true)}>
+                  <Plus className="h-4 w-4" /> Nuevo miembro
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
           filteredMembers.map((member) => (
             <DataCard key={member.id}>
@@ -424,7 +440,7 @@ export default function Members() {
                 <Avatar name={member.full_name} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-black text-zinc-900 dark:text-white uppercase tracking-tight truncate">
+                    <p className="font-semibold text-zinc-900 dark:text-white truncate">
                       {member.full_name}
                     </p>
                     <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
@@ -432,13 +448,13 @@ export default function Members() {
                     </Badge>
                   </div>
                   <p className="text-xs text-zinc-500 mt-1">{member.cedula || 'Sin cédula'}</p>
-                  {!isTrainer && (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-1">
+                  {!isStaffMember && (
+                    <p className="text-xs text-zinc-400 mt-1 capitalize">
                       {member.role}
                     </p>
                   )}
                   {member.membership_name && (
-                    <p className="text-[10px] font-black uppercase text-emerald-600 mt-2">
+                    <p className="text-xs font-medium text-emerald-600 mt-2">
                       {member.membership_name} · {member.days_remaining ?? 0}d
                     </p>
                   )}
@@ -447,15 +463,15 @@ export default function Members() {
               <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                 {isTrainer && member.role === 'member' && (
                   <>
-                    <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${member.id}/routines`)}>
-                      <Dumbbell className="h-4 w-4" /> Rutinas
+                    <Button size="sm" onClick={() => navigate(`/members/${member.id}/routines`)}>
+                      <Dumbbell className="h-4 w-4" /> Asignar rutina
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${member.id}/history`)}>
                       <History className="h-4 w-4" /> Historial
                     </Button>
                   </>
                 )}
-                {user?.role === 'admin' && member.role === 'member' && (
+                {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
                   <Button size="sm" variant="ghost" onClick={() => openAssignSubscription(member)}>
                     <CreditCard className="h-4 w-4" /> Membresía
                   </Button>
@@ -467,13 +483,13 @@ export default function Members() {
         <PaginationBar page={page} pageSize={pageSize} total={total} onPageChange={setPage} label="usuarios" />
       </div>
 
-      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm">
+      <div className="hidden md:block bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500">
-            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
+            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 text-xs font-semibold">
               <tr>
                 <th className="px-4 md:px-8 py-5">Nombre</th>
-                {!isTrainer && <th className="px-4 md:px-8 py-5">Rol</th>}
+                {!isStaffMember && <th className="px-4 md:px-8 py-5">Rol</th>}
                 <th className="px-4 md:px-8 py-5">Identificación</th>
                 <th className="px-4 md:px-8 py-5">Membresía</th>
                 <th className="px-4 md:px-8 py-5">Estado</th>
@@ -495,16 +511,16 @@ export default function Members() {
                 filteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
                     <td className="px-4 md:px-8 py-5 font-bold text-zinc-700 dark:text-zinc-200">{member.full_name}</td>
-                    {!isTrainer && (
+                    {!isStaffMember && (
                     <td className="px-4 md:px-8 py-5">
-                       <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${
+                       <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold capitalize ${
                         member.role === 'admin' 
                           ? 'bg-purple-500/10 text-purple-600 dark:text-purple-500' 
                           : member.role === 'trainer'
                           ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500'
                           : 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400'
                       }`}>
-                        {member.role.toUpperCase()}
+                        {member.role}
                       </span>
                     </td>
                     )}
@@ -517,7 +533,7 @@ export default function Members() {
                             return (
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
+                              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
                               {badge && (
                                 <Badge className={badge.className}>{badge.label}</Badge>
                               )}
@@ -527,7 +543,7 @@ export default function Members() {
                             );
                           })()
                         ) : (
-                          <span className="text-[10px] font-black uppercase text-zinc-400">Sin plan</span>
+                          <span className="text-xs text-zinc-400">Sin plan</span>
                         )
                       ) : (
                         <span className="text-zinc-400">—</span>
@@ -558,7 +574,7 @@ export default function Members() {
                             </button>
                           </>
                         )}
-                        {user?.role === 'admin' && member.role === 'member' && (
+                        {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
                           <button
                             onClick={() => openAssignSubscription(member)}
                             className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"

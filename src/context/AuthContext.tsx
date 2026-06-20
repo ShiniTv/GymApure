@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { apiFetch } from '../lib/api';
+import type { UserRole } from '../lib/roles';
 
 interface User {
   id: number;
   email: string;
-  role: 'admin' | 'trainer' | 'member';
+  role: UserRole;
   name: string;
 }
 

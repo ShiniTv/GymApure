@@ -103,7 +103,7 @@ export function RoutinesLibraryView({
                 <Play className="h-6 w-6 text-zinc-400 group-hover:text-orange-500" />
               </div>
               <div className="flex items-center gap-1">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                   routine.difficulty === 'Advanced' ? 'bg-red-500/10 text-red-600 dark:text-red-500' :
                   routine.difficulty === 'Intermediate' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500' :
                   'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500'
@@ -137,18 +137,18 @@ export function RoutinesLibraryView({
               </div>
             </div>
 
-            <h3 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight leading-none">{routine.name}</h3>
-            <p className="text-xs text-zinc-500 mt-2 mb-6">{routine.exercise_count} ejercicios</p>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{routine.name}</h3>
+            <p className="text-sm text-zinc-500 mt-1 mb-4">{routine.exercise_count} ejercicios</p>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               {userRole === 'member' ? (
-                <div className="flex items-center text-xs font-bold text-orange-600 dark:text-orange-500 group-hover:translate-x-1 transition-transform">
-                  Empezar <ChevronRight className="h-4 w-4 ml-1" />
-                </div>
+                <span className="flex items-center text-sm font-semibold text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform">
+                  Empezar <ChevronRight className="h-4 w-4 ml-0.5" />
+                </span>
               ) : (
-                <div className="flex items-center text-xs font-bold text-zinc-500">
+                <span className="text-xs text-zinc-500">
                   Toca para gestionar ejercicios
-                </div>
+                </span>
               )}
               {(userRole === 'trainer' || userRole === 'admin') && (
                 <button
@@ -171,14 +171,11 @@ export function RoutinesLibraryView({
           {expandedRoutineId === routine.id && (
             <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Ejercicios de la Plantilla</h4>
-                <button
-                  onClick={onAddExercise}
-                  className="flex items-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-all"
-                >
+                <h4 className="section-title">Ejercicios de la plantilla</h4>
+                <Button type="button" size="sm" onClick={onAddExercise}>
                   <Plus className="h-3.5 w-3.5" />
                   Añadir
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

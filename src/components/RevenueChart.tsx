@@ -50,7 +50,7 @@ export default function RevenueChart({ data }: RevenueChartProps) {
                 return (
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl shadow-xl">
                     <p className="text-zinc-500 text-xs mb-1">Mes {point.month}</p>
-                    <p className="text-lg font-black text-orange-500">${payload[0].value}</p>
+                    <p className="text-lg font-semibold text-orange-500">${payload[0].value}</p>
                   </div>
                 );
               }

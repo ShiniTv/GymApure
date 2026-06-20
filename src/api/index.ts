@@ -15,6 +15,7 @@ import auditLogsRoutes from './auditLogs.ts';
 import settingsRoutes from './settings.ts';
 import fileRoutes from './files.ts';
 import reportsRoutes from './reports.ts';
+import receptionRoutes from './reception.ts';
 import { authenticate } from './middleware/auth.ts';
 import { authRateLimiter, checkInRateLimiter } from './middleware/rateLimit.ts';
 import { kioskAuth } from './middleware/kiosk.ts';
@@ -45,6 +46,7 @@ router.use('/stats', statsRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/audit-logs', auditLogsRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/reception', receptionRoutes);
 router.use('/files', fileRoutes);
 
 router.use((_req, res) => {

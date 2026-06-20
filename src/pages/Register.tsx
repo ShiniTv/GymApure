@@ -88,48 +88,56 @@ export default function Register() {
       footer={
         <p className="text-center text-xs text-zinc-500">
           ¿Vienes al gym?{' '}
-          <Link to="/check-in" className="font-bold text-orange-600 hover:text-orange-500">
+          <Link to="/check-in" className="font-semibold text-orange-600 hover:text-orange-500">
             Registro de entrada
           </Link>
         </p>
       }
     >
-      <Card className="w-full space-y-6 shadow-xl mt-10" padding="lg">
+      <Card className="w-full space-y-6 shadow-xl mt-10 rounded-2xl" padding="lg">
         <AuthBrandHeader subtitle="Crea tu cuenta de miembro" />
 
-        <div
-          className="flex items-center justify-center gap-2"
-          role="list"
-          aria-label="Pasos del registro"
-        >
+      <ol className="flex items-center gap-1 text-xs font-semibold mb-6" role="list" aria-label="Pasos del registro">
           {STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-2" role="listitem">
+            <li key={label} className="flex items-center gap-2 flex-1 last:flex-none" role="listitem">
               <div
                 className={cn(
-                  'h-2.5 w-2.5 rounded-full transition-colors',
-                  i <= step ? 'bg-orange-500' : 'bg-zinc-200 dark:bg-zinc-700'
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
+                  i < step
+                    ? 'bg-emerald-500 text-white'
+                    : i === step
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
                 )}
                 aria-hidden
-              />
+              >
+                {i < step ? '✓' : i + 1}
+              </div>
               <span
                 className={cn(
-                  'text-[10px] font-black uppercase tracking-widest hidden sm:inline',
-                  i === step ? 'text-orange-600 dark:text-orange-500' : 'text-zinc-400'
+                  'hidden sm:inline truncate',
+                  i === step ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-500'
                 )}
                 aria-current={i === step ? 'step' : undefined}
               >
                 {label}
               </span>
+              {i < STEPS.length - 1 && (
+                <div
+                  className={cn(
+                    'hidden sm:block flex-1 h-px mx-1',
+                    i < step ? 'bg-emerald-500/50' : 'bg-zinc-200 dark:bg-zinc-700'
+                  )}
+                  aria-hidden
+                />
+              )}
               <span className="sr-only">
                 Paso {i + 1} de {STEPS.length}: {label}
                 {i === step ? ' (actual)' : ''}
               </span>
-              {i < STEPS.length - 1 && (
-                <div className="w-6 h-px bg-zinc-200 dark:bg-zinc-700 hidden sm:block" aria-hidden />
-              )}
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
 
         <form
           className="space-y-4"
@@ -261,7 +269,7 @@ export default function Register() {
                         />
                       ))}
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    <p className="text-xs font-medium text-zinc-500">
                       Fortaleza: {strength.label}
                     </p>
                   </div>
@@ -306,7 +314,7 @@ export default function Register() {
 
           <p className="text-center text-xs text-zinc-500">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-bold text-orange-600 hover:text-orange-500">
+            <Link to="/login" className="font-semibold text-orange-600 hover:text-orange-500">
               Inicia sesión
             </Link>
           </p>

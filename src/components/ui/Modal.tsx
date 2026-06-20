@@ -27,21 +27,22 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
         className={cn(
-          'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full shadow-2xl',
+          'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full shadow-2xl',
           scrollable ? 'max-h-[90vh] overflow-y-auto' : 'p-6',
           !scrollable && 'p-6',
           maxWidthMap[maxWidth],
           className
         )}
       >
-        <div className={cn('flex justify-between items-center', scrollable ? 'sticky top-0 bg-white dark:bg-zinc-900 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 z-10' : 'mb-6')}>
-          <h2 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">
+        <div className={cn('flex justify-between items-center gap-4', scrollable ? 'sticky top-0 bg-white dark:bg-zinc-900 px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 z-10' : 'mb-6')}>
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white p-1"
+            className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+            aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>

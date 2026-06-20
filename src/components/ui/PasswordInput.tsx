@@ -44,7 +44,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
         {error && (
-          <p className="text-[10px] font-bold text-red-500 mt-1 uppercase ml-1">{error}</p>
+          <p className="text-xs font-medium text-red-500 mt-1 ml-1">{error}</p>
         )}
       </div>
     );

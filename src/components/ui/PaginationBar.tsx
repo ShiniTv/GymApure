@@ -15,7 +15,7 @@ export function PaginationBar({ page, pageSize, total, onPageChange, label = 're
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-8 py-5 border-t border-zinc-100 dark:border-zinc-800">
-      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+      <p className="text-xs font-medium text-zinc-400">
         {total} {label} · Página {page} de {totalPages}
       </p>
       <div className="flex items-center gap-2">

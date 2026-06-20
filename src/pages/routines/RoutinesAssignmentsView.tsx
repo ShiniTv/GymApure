@@ -51,23 +51,23 @@ export function RoutinesAssignmentsView({
       {assignments.map((member) => (member.routines && member.routines.length > 0) && (
         <div
           key={member.id}
-          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all"
         >
           <div className="flex items-center gap-4 mb-6">
             {member.profile_image ? (
               <img src={member.profile_image} alt={member.full_name} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-orange-500/20" />
             ) : (
-              <div className="h-14 w-14 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 font-black text-xl italic shadow-sm">
+              <div className="h-14 w-14 rounded-2xl bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 font-bold text-xl shadow-sm">
                 {member.full_name.charAt(0)}
               </div>
             )}
             <div>
-              <h3 className="font-black text-zinc-900 dark:text-white tracking-tight text-lg leading-tight">{member.full_name}</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-white text-lg leading-tight">{member.full_name}</h3>
               <button
                 onClick={() => onNavigateToMemberRoutines(member.id)}
-                className="text-[10px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-widest hover:underline mt-0.5"
+                className="text-xs font-semibold text-orange-600 dark:text-orange-500 hover:underline mt-0.5"
               >
-                Ver Perfil Completo
+                Ver perfil completo
               </button>
             </div>
           </div>
@@ -80,8 +80,8 @@ export function RoutinesAssignmentsView({
                 onClick={() => onNavigateToMemberRoutines(member.id)}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-zinc-900 dark:text-white uppercase tracking-tight text-sm group-hover:text-orange-500 transition-colors">{routine.routine_name}</h4>
-                  <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  <h4 className="font-semibold text-zinc-900 dark:text-white text-sm group-hover:text-orange-500 transition-colors">{routine.routine_name}</h4>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                     routine.difficulty === 'Advanced' ? 'bg-red-500/10 text-red-600' :
                     routine.difficulty === 'Intermediate' ? 'bg-yellow-500/10 text-yellow-600' :
                     'bg-emerald-500/10 text-emerald-600'
@@ -90,10 +90,10 @@ export function RoutinesAssignmentsView({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-y-1 gap-x-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                <div className="flex flex-wrap gap-y-1 gap-x-4 text-xs font-medium text-zinc-500">
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-3 w-3 text-orange-500" />
-                    {routine.exercise_count} Ejer.
+                    {routine.exercise_count} ejercicios
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3 text-blue-500" />

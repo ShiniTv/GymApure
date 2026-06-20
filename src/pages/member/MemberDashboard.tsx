@@ -19,7 +19,8 @@ import {
   getExpirySeverity,
   shouldShowExpiryAlert,
 } from '../../lib/expiryUtils';
-import { formatDifficulty } from '../../lib/utils';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { formatDifficulty, cn } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { Button, Card, EmptyState, PageHeader, StatCard } from '../../components/ui';
 
@@ -29,6 +30,7 @@ export default function MemberDashboard() {
   const memberStatsCtx = useMemberStatsOptional();
   const memberStats = memberStatsCtx?.stats ?? null;
   const statsError = memberStatsCtx?.error;
+  const isMobile = useIsMobile();
 
   const sub = memberStats?.subscription;
   const routine = memberStats?.primaryRoutine;
@@ -54,7 +56,7 @@ export default function MemberDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn('space-y-6', isMobile && routine && 'pb-24')}>
       <PageHeader
         title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
         subtitle="Tu espacio de entrenamiento en Caribean Gym"
@@ -115,10 +117,10 @@ export default function MemberDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card padding="lg" rounded="2xl">
-          <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6">Membresía</h3>
+          <h3 className="section-title mb-6">Membresía</h3>
           {sub ? (
             <>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-500">{sub.membership_name}</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{sub.membership_name}</p>
               <p className="text-sm text-zinc-500 mt-2">
                 Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
@@ -144,7 +146,7 @@ export default function MemberDashboard() {
         </Card>
 
         <Card padding="lg" rounded="2xl">
-          <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6">Tu rutina</h3>
+          <h3 className="section-title mb-6">Tu rutina</h3>
           {routine ? (
             <>
               <div className="flex items-center gap-4">
@@ -152,7 +154,7 @@ export default function MemberDashboard() {
                   <Dumbbell className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-black text-zinc-900 dark:text-white">{routine.name}</p>
+                  <p className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                   </p>
@@ -179,7 +181,7 @@ export default function MemberDashboard() {
 
       {memberStats?.lastWorkout && (
         <Card padding="lg" rounded="2xl">
-          <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-3">Último entrenamiento</h3>
+          <h3 className="section-title mb-3">Último entrenamiento</h3>
           <p className="font-bold text-zinc-800 dark:text-zinc-200">{memberStats.lastWorkout.routine_name}</p>
           <p className="text-xs text-zinc-500 mt-1">
             {format(new Date(memberStats.lastWorkout.start_time), "dd MMM yyyy · HH:mm", { locale: es })}
@@ -194,7 +196,7 @@ export default function MemberDashboard() {
         <Card padding="lg" rounded="2xl" className="hover:border-orange-500/40 transition-colors group">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-1">Mi progreso</h3>
+              <h3 className="section-title mb-1">Mi progreso</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-300">Perfil, mediciones y evolución de peso</p>
             </div>
             <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600 group-hover:bg-orange-500/20 transition-colors">
@@ -203,6 +205,18 @@ export default function MemberDashboard() {
           </div>
         </Card>
       </Link>
+
+      {isMobile && routine && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 z-40">
+          <Button
+            className="w-full min-h-[52px] text-base font-semibold"
+            onClick={() => navigate(`/workout/${routine.id}`)}
+          >
+            <Dumbbell className="h-5 w-5 mr-2" />
+            Empezar entrenamiento
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

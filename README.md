@@ -167,3 +167,11 @@ Ver auditoría en el historial del proyecto. Fases implementadas:
 1. En `.env`, define la misma clave en `KIOSK_API_KEY` y `VITE_KIOSK_KEY` (mín. 16 caracteres).
 2. Abre `http://localhost:3000/check-in` sin iniciar sesión.
 3. Prueba con la cédula del miembro demo: `V-11223344` (requiere membresía activa).
+
+### Panel de recepción (staff autenticado)
+
+1. Tras `npm run db:restore-demo`, inicia sesión como `receptionist@gym.com` (contraseña = `DEMO_PASSWORD`).
+2. Abre **Recepción** en el menú o `/reception`.
+3. Pestaña **Registro**: wizard walk-in (datos + plan + pago + entrada en un solo paso).
+4. Pestaña **Entrada / Salida**: busca por cédula y autoriza acceso.
+5. Tests: `npm run test:reception-checklist` (servidor en marcha).

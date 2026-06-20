@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
 
 interface AuthShellProps {
-  variant?: 'auth' | 'kiosk';
+  variant?: 'auth' | 'kiosk' | 'kiosk-fullscreen';
   children: ReactNode;
   backLink?: { to: string; label: string };
   footer?: ReactNode;
@@ -20,49 +20,63 @@ export default function AuthShell({
   className,
 }: AuthShellProps) {
   const { theme, toggleTheme } = useTheme();
-  const isKiosk = variant === 'kiosk';
+  const isKiosk = variant === 'kiosk' || variant === 'kiosk-fullscreen';
+  const isFullscreen = variant === 'kiosk-fullscreen';
 
   return (
     <div
       className={cn(
-        'min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden transition-colors duration-300',
+        'min-h-screen flex flex-col relative overflow-hidden transition-colors duration-300',
         'bg-zinc-50 dark:bg-zinc-950',
-        isKiosk ? 'py-8' : '',
+        isFullscreen
+          ? 'items-stretch justify-start p-0'
+          : 'items-center justify-center p-4',
+        isKiosk && !isFullscreen ? 'py-8' : '',
         className
       )}
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full" />
-      </div>
-
-      <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between gap-4">
-        {backLink ? (
-          <Link
-            to={backLink.to}
-            className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors font-medium"
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">{backLink.label}</span>
-          </Link>
-        ) : (
-          <span />
+        {isFullscreen && (
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 dark:from-zinc-950 dark:via-zinc-900 dark:to-black opacity-90" />
         )}
-
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="p-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ml-auto"
-          title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
-          aria-label={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
-        >
-          {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-        </button>
       </div>
 
-      <div className={cn('w-full relative z-10', isKiosk ? 'max-w-lg' : 'max-w-md')}>
+      {!isFullscreen && (
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between gap-4">
+          {backLink ? (
+            <Link
+              to={backLink.to}
+              className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors font-medium"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">{backLink.label}</span>
+            </Link>
+          ) : (
+            <span />
+          )}
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2.5 rounded-xl text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ml-auto"
+            title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+            aria-label={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+          >
+            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </button>
+        </div>
+      )}
+
+      <div
+        className={cn(
+          'w-full relative z-10',
+          isFullscreen ? 'flex-1 flex flex-col min-h-screen' : isKiosk ? 'max-w-lg' : 'max-w-md'
+        )}
+      >
         {children}
-        {footer && <div className="mt-6">{footer}</div>}
+        {footer && !isFullscreen && <div className="mt-6">{footer}</div>}
       </div>
     </div>
   );

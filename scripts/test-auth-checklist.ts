@@ -133,6 +133,22 @@ async function main() {
   });
   ok('Login inválido → 401', badLogin.res.status === 401);
 
+  cookie = '';
+  const receptionLogin = await api('POST', '/api/auth/login', {
+    email: process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com',
+    password: process.env.SMOKE_RECEPTION_PASSWORD ?? process.env.DEMO_PASSWORD ?? 'ChecklistAdmin123!',
+  });
+  if (receptionLogin.res.status === 200) {
+    saveCookie(receptionLogin.res);
+    ok('Login recepcionista demo', receptionLogin.data.user?.role === 'receptionist');
+    const blocked = await api('GET', '/api/settings/expiry');
+    ok('Recepcionista sin acceso a settings', blocked.res.status === 403);
+    const receptionLookup = await api('GET', '/api/reception/lookup?cedula=V-11223344');
+    ok('Recepcionista lookup cédula', receptionLookup.res.status === 200);
+  } else {
+    console.log('  SKIP recepcionista (ejecuta db:restore-demo para usuario receptionist@gym.com)');
+  }
+
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);
 }

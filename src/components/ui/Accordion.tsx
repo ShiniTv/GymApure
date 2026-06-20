@@ -27,7 +27,7 @@ export function AccordionItem({
         className="w-full flex items-center justify-between gap-3 px-5 py-4 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-left"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-200">
+        <span className="flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
           {icon}
           {title}
         </span>

@@ -13,6 +13,7 @@
     "test:smoke": "tsx scripts/smoke-api.ts",
     "test:integration": "npm run test:smoke && npm run test:sprint4 && npm run test:sprint5 && npm run test:sprint6",
     "test:auth-checklist": "tsx scripts/test-auth-checklist.ts",
+    "test:reception-checklist": "tsx scripts/test-reception-checklist.ts",
     "test:memberships-checkin": "tsx scripts/test-memberships-checkin.ts",
     "test:payments-checklist": "tsx scripts/test-payments-checklist.ts",
     "test:notifications-checklist": "tsx scripts/test-notifications-checklist.ts",

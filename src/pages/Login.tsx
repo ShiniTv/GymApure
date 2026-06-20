@@ -50,13 +50,13 @@ export default function Login() {
       footer={
         <p className="text-center text-xs text-zinc-500">
           ¿Vienes al gym?{' '}
-          <Link to="/check-in" className="font-bold text-orange-600 hover:text-orange-500">
+          <Link to="/check-in" className="font-semibold text-orange-600 hover:text-orange-500">
             Registro de entrada
           </Link>
         </p>
       }
     >
-      <Card className="w-full space-y-8 shadow-xl mt-10" padding="lg">
+      <Card className="w-full space-y-8 shadow-xl mt-10 rounded-2xl" padding="lg">
         <AuthBrandHeader subtitle="Inicia sesión en tu cuenta" />
 
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
@@ -117,7 +117,7 @@ export default function Login() {
           {registerAllowed && (
             <p className="text-center text-xs text-zinc-500">
               ¿No tienes una cuenta?{' '}
-              <Link to="/register" className="font-bold text-orange-600 hover:text-orange-500">
+              <Link to="/register" className="font-semibold text-orange-600 hover:text-orange-500">
                 Regístrate aquí
               </Link>
             </p>

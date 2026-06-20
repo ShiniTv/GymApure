@@ -20,11 +20,13 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { QuickAction } from '../components/admin/QuickAction';
+import { DashboardSection } from '../components/admin/DashboardSection';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { StatCard, Card, PageHeader, Badge, EmptyState, Button, DashboardSkeleton, Skeleton } from '../components/ui';
 
 import MemberDashboardView from './member/MemberDashboard';
+import ReceptionDashboardView from './reception/ReceptionDashboard';
 
 const RevenueChart = lazy(() => import('../components/RevenueChart'));
 
@@ -62,18 +64,21 @@ export default function Dashboard() {
 
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
+  const isReceptionist = user?.role === 'receptionist';
   const stats = isAdmin ? adminStats.stats : trainerStats;
   const memberStats = memberStatsCtx?.stats ?? null;
   const pageLoading = isAdmin
     ? adminStats.loading && !adminStats.stats
     : isMember
       ? memberStatsCtx?.loading && !memberStats
-      : loading;
+      : isReceptionist
+        ? false
+        : loading;
 
   useEffect(() => {
     if (!user) return;
 
-    if (user.role === 'member') {
+    if (user.role === 'member' || user.role === 'receptionist') {
       return;
     }
 
@@ -110,38 +115,38 @@ export default function Dashboard() {
     return <MemberDashboardView />;
   }
 
+  if (user?.role === 'receptionist') {
+    return <ReceptionDashboardView />;
+  }
+
   if (user?.role === 'admin') {
     const alertDays = stats?.expiryAlertDays ?? 7;
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <PageHeader
-          title={<>ADMINISTRACIÓN <span className="text-orange-500">GENERAL</span></>}
-          badge="RESUMEN CONTABLE"
+          title={<>Administración <span className="text-orange-500">general</span></>}
+          subtitle="Resumen financiero, operaciones y alertas del gym"
+          badge={`${stats?.todayCheckIns || 0} check-ins hoy`}
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-12 gap-4">
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title="Ingresos" value={`$${stats?.totalRevenue || 0}`} icon={DollarSign} color="emerald" />
+        <DashboardSection title="Finanzas" icon={DollarSign}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard title="Ingresos totales" value={`$${stats?.totalRevenue || 0}`} icon={DollarSign} color="emerald" />
+            <StatCard title="Pagos pendientes" value={stats?.pendingPayments || 0} icon={AlertTriangle} color="red" />
+            <StatCard title="Suscripciones activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" />
           </div>
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title="Pendientes" value={stats?.pendingPayments || 0} icon={AlertTriangle} color="red" />
-          </div>
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title={`Por Vencer (${alertDays}d)`} value={stats?.expiringSoon || 0} icon={CalendarClock} color="orange" />
-          </div>
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title="Vencidas Semana" value={stats?.expiredThisWeek || 0} icon={AlertTriangle} color="red" />
-          </div>
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title="Suscripciones Activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" />
-          </div>
-          <div className="col-span-1 md:col-span-2 xl:col-span-2">
-            <StatCard title="Check-ins Hoy" value={stats?.todayCheckIns || 0} icon={Clock} color="emerald" />
-          </div>
-        </div>
+        </DashboardSection>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <DashboardSection title="Operaciones" icon={Fingerprint}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard title="Check-ins hoy" value={stats?.todayCheckIns || 0} icon={Clock} color="emerald" />
+            <StatCard title={`Por vencer (${alertDays}d)`} value={stats?.expiringSoon || 0} icon={CalendarClock} color="orange" />
+            <StatCard title="Vencidas esta semana" value={stats?.expiredThisWeek || 0} icon={AlertTriangle} color="red" />
+          </div>
+        </DashboardSection>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickAction
             to="/payments?status=pending"
             icon={AlertTriangle}
@@ -174,16 +179,16 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <Card padding="lg" rounded="3xl" className="xl:col-span-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card padding="lg" rounded="2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="section-title flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-orange-500" />
-                Alertas de Vencimiento
+                Alertas de vencimiento
               </h3>
               <Link
                 to="/members?expiring=true"
-                className="text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-500"
+                className="text-xs font-semibold text-orange-600 hover:text-orange-500"
               >
                 Ver miembros
               </Link>
@@ -201,13 +206,13 @@ export default function Dashboard() {
                 return (
                 <div
                   key={item.user_id}
-                  className={`flex items-center justify-between p-4 rounded-2xl border ${classes.itemBorder}`}
+                  className={`flex items-center justify-between p-4 rounded-xl border ${classes.itemBorder}`}
                 >
                   <div>
-                    <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {item.full_name}
                     </p>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
+                    <p className="text-xs text-zinc-500 mt-1">
                       {item.membership_name} · vence {format(new Date(item.end_date), 'dd MMM', { locale: es })}
                     </p>
                   </div>
@@ -218,16 +223,16 @@ export default function Dashboard() {
               );
               })}
               {(!stats?.expiringList || stats.expiringList.length === 0) && (
-                <p className="text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px] py-8">
+                <p className="text-center text-zinc-400 text-sm py-8">
                   Sin vencimientos en los próximos {alertDays} días
                 </p>
               )}
             </div>
           </Card>
 
-          <Card padding="lg" rounded="3xl" className="xl:col-span-7">
-            <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-8">Flujo de Ingresos</h3>
-            <Suspense fallback={<Skeleton className="h-72 w-full rounded-2xl" />}>
+          <Card padding="lg" rounded="2xl">
+            <h3 className="section-title mb-6">Flujo de ingresos</h3>
+            <Suspense fallback={<Skeleton className="h-72 w-full rounded-xl" />}>
               <RevenueChart data={stats?.revenueHistory || []} />
             </Suspense>
           </Card>
@@ -238,19 +243,31 @@ export default function Dashboard() {
 
   // Trainer view
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         title={<>Control de <span className="text-orange-500">entrenamiento</span></>}
         subtitle="Resumen de tu actividad con los miembros asignados"
         badge={stats?.activeNow ? `${stats.activeNow} en el gym ahora` : undefined}
+        action={
+          (trainerStats?.membersWithoutRoutines ?? 0) > 0 ? (
+            <Link to="/members">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-700 dark:text-orange-400 text-sm font-semibold">
+                <Users className="h-4 w-4" />
+                {trainerStats!.membersWithoutRoutines} sin rutina
+              </span>
+            </Link>
+          ) : undefined
+        }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Mis Miembros" value={stats?.assignedMembers || 0} icon={Users} color="blue" />
-        <StatCard title="Activos Ahora" value={stats?.activeNow || 0} icon={Activity} color="orange" />
-        <StatCard title="Sesiones Hoy" value={stats?.todayWorkouts || 0} icon={Clock} color="emerald" />
-        <StatCard title="Rutinas Creadas" value={stats?.routinesCreated || 0} icon={TrendingUp} color="blue" />
-      </div>
+      <DashboardSection title="Tu actividad" icon={Activity}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Mis miembros" value={stats?.assignedMembers || 0} icon={Users} color="blue" />
+          <StatCard title="Activos ahora" value={stats?.activeNow || 0} icon={Activity} color="orange" />
+          <StatCard title="Sesiones hoy" value={stats?.todayWorkouts || 0} icon={Clock} color="emerald" />
+          <StatCard title="Rutinas creadas" value={stats?.routinesCreated || 0} icon={TrendingUp} color="blue" />
+        </div>
+      </DashboardSection>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickAction
@@ -286,30 +303,29 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card padding="lg" rounded="3xl">
-        <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-6">
-          Actividad reciente
-        </h3>
-        <div className="space-y-4">
+      <Card padding="lg" rounded="2xl">
+        <h3 className="section-title mb-6">Actividad reciente</h3>
+        <div className="space-y-1">
           {stats?.recentActivities?.map((activity: TrainerActivity, i: number) => (
             <Link
               key={i}
               to={`/members/${activity.user_id}/history`}
-              className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 -mx-2 px-2 rounded-xl transition-colors"
+              className="flex items-center gap-4 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 -mx-2 px-2 rounded-xl transition-colors"
             >
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400">
-                  <Users className="h-6 w-6" />
+              <div className="relative shrink-0">
+                <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600">
+                  <Dumbbell className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="text-sm font-black text-zinc-900 dark:text-white tracking-tight">{activity.full_name}</p>
-                  <p className="text-xs text-zinc-500 mt-1">
-                    Entrenando: <span className="font-bold text-zinc-700 dark:text-zinc-300">{activity.routine_name}</span>
-                  </p>
-                </div>
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-orange-500/30 rounded-full hidden sm:block" />
               </div>
-              <div className="flex items-center text-xs font-bold text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-lg">
-                <Clock className="h-3.5 w-3.5 mr-1.5 text-orange-500" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{activity.full_name}</p>
+                <p className="text-xs text-zinc-500 truncate">
+                  {activity.routine_name}
+                </p>
+              </div>
+              <div className="flex items-center text-xs font-medium text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg shrink-0">
+                <Clock className="h-3.5 w-3.5 mr-1 text-orange-500" />
                 {new Date(activity.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </Link>
@@ -329,10 +345,8 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      <Card padding="lg" rounded="3xl">
-        <h3 className="text-sm font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-6">
-          Atención requerida
-        </h3>
+      <Card padding="lg" rounded="2xl">
+        <h3 className="section-title mb-6">Atención requerida</h3>
         <div className="space-y-4">
           {(trainerStats?.membersWithoutRoutines ?? 0) > 0 && (
             <Link

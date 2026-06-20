@@ -176,7 +176,7 @@ export default function Exercises() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={<>BIBLIOTECA <span className="text-orange-500">EJERCICIOS</span></>}
+        title={<>Biblioteca de <span className="text-orange-500">ejercicios</span></>}
         subtitle="Gestiona la base de datos de ejercicios del gimnasio"
         action={
           <Button onClick={() => handleOpenModal()}>
@@ -191,7 +191,7 @@ export default function Exercises() {
         <Input
           type="text"
           placeholder="Buscar ejercicio por nombre o grupo muscular..."
-          className="pl-12 py-4 bg-white dark:bg-zinc-900 shadow-sm"
+          className="pl-12 py-4 min-h-[48px] text-base bg-white dark:bg-zinc-900 shadow-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -258,8 +258,8 @@ export default function Exercises() {
                           {/* Video Section */}
                           {exercise.video_url && (
                             <div className="space-y-3">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 flex items-center gap-2">
-                                <Video className="h-3 w-3" /> VIDEO DEMOSTRATIVO
+                              <h4 className="label-caps flex items-center gap-2">
+                                <Video className="h-3 w-3" /> Video demostrativo
                               </h4>
                               {getYouTubeEmbedUrl(exercise.video_url) ? (
                                 <div className="aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black">
@@ -284,15 +284,15 @@ export default function Exercises() {
                                   href={exercise.video_url!} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="flex items-center justify-between p-6 bg-orange-50 dark:bg-orange-950/20 rounded-3xl border border-orange-100 dark:border-orange-900/30 group/video h-full min-h-[160px]"
+                                  className="flex items-center justify-between p-6 bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-orange-100 dark:border-orange-900/30 group/video h-full min-h-[160px]"
                                 >
                                   <div className="flex items-center gap-4">
                                     <div className="p-4 bg-orange-500 rounded-2xl text-white shadow-lg shadow-orange-500/20">
                                       <Video className="h-8 w-8" />
                                     </div>
                                     <div>
-                                      <p className="text-lg font-black text-zinc-900 dark:text-white uppercase tracking-tighter">VER VIDEO TUTORIAL</p>
-                                      <p className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-widest">Enlace Externo Segurizado</p>
+                                      <p className="text-lg font-semibold text-zinc-900 dark:text-white">Ver video tutorial</p>
+                                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Enlace externo seguro</p>
                                     </div>
                                   </div>
                                   <ChevronRight className="h-6 w-6 text-orange-500 group-hover:translate-x-1 transition-transform" />
@@ -304,14 +304,14 @@ export default function Exercises() {
                           {/* Execution Section */}
                           {exercise.execution && (
                             <div className="space-y-3">
-                              <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 flex items-center gap-2">
-                                <BookOpen className="h-3 w-3" /> GUÍA DE EJECUCIÓN
+                              <h4 className="label-caps flex items-center gap-2">
+                                <BookOpen className="h-3 w-3" /> Guía de ejecución
                               </h4>
                               <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                                 <div className="space-y-4">
                                   {exercise.execution.split('\n').filter(line => line.trim()).map((step, idx) => (
                                     <div key={idx} className="flex gap-4">
-                                      <span className="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-black rounded-lg">
+                                      <span className="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold rounded-lg">
                                         {idx + 1}
                                       </span>
                                       <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed pt-0.5 font-medium">
@@ -330,7 +330,7 @@ export default function Exercises() {
                     <div className="flex items-center justify-end pt-2">
                       <button 
                         onClick={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
-                        className={`text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl transition-all ${
+                        className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all ${
                           expandedId === exercise.id 
                             ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' 
                             : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800'
@@ -445,7 +445,7 @@ export default function Exercises() {
                   className="flex items-center justify-center gap-3 w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 cursor-pointer hover:border-orange-500/50 transition-all"
                 >
                   <Plus className="h-5 w-5" />
-                  <span className="text-xs font-black uppercase">
+                  <span className="text-xs font-medium">
                     {videoFile ? videoFile.name : 'Seleccionar video MP4/MOV'}
                   </span>
                 </label>
@@ -456,7 +456,7 @@ export default function Exercises() {
                 <Button type="button" variant="ghost" className="flex-1" size="lg" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" className="flex-1" size="lg" disabled={saving}>
+                <Button type="submit" className="flex-1 min-h-[48px]" size="lg" disabled={saving}>
                   {saving ? 'Guardando...' : editingExercise ? 'Guardar cambios' : 'Crear ejercicio'}
                 </Button>
               </div>

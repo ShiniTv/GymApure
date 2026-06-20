@@ -441,12 +441,13 @@ export default function MemberRoutine() {
         }
         subtitle="Gestionar planes de entrenamiento personalizados"
         action={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => navigate(`/members/${id}/history`)}>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+            <Button variant="ghost" className="min-h-[48px]" onClick={() => navigate(`/members/${id}/history`)}>
               <History className="h-5 w-5" />
               Historial
             </Button>
             <Button
+              className="min-h-[48px]"
               onClick={() => {
                 setIsCreating(true);
                 setRoutineForm({ name: '', difficulty: 'Beginner' });
@@ -457,6 +458,7 @@ export default function MemberRoutine() {
             </Button>
             <Button
               variant="secondary"
+              className="min-h-[48px]"
               onClick={() => {
                 setIsAssigning(true);
                 apiFetchAvailableRoutines();
@@ -477,7 +479,7 @@ export default function MemberRoutine() {
         <div className="flex items-center gap-3">
           <Avatar name={member.full_name} size="md" />
           <div>
-            <p className="text-sm font-black text-zinc-900 dark:text-white">{member.full_name}</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white">{member.full_name}</p>
             <p className="text-xs text-zinc-500 mt-0.5">
               {subscription
                 ? `${subscription.membership_name} · ${subscription.days_remaining} días restantes`
@@ -507,7 +509,7 @@ export default function MemberRoutine() {
       {coachingTab === 'perfil' && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Perfil</h3>
+          <h3 className="section-title mb-4">Perfil</h3>
           <div className="space-y-2 text-sm">
             {member.height != null && (
               <p><span className="text-zinc-500">Altura:</span> <span className="font-bold">{member.height} cm</span></p>
@@ -525,12 +527,12 @@ export default function MemberRoutine() {
         </Card>
 
         <Card>
-          <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Membresía</h3>
+          <h3 className="section-title mb-4">Membresía</h3>
           {subscription ? (
             <div>
-              <p className="text-xl font-black text-emerald-600 dark:text-emerald-500 uppercase italic">{subscription.membership_name}</p>
-              <p className="text-sm font-bold text-zinc-500 mt-2">{subscription.days_remaining} días restantes</p>
-              <p className="text-[10px] text-zinc-400 mt-1">
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-500">{subscription.membership_name}</p>
+              <p className="text-sm text-zinc-500 mt-2">{subscription.days_remaining} días restantes</p>
+              <p className="text-xs text-zinc-400 mt-1">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
             </div>
@@ -544,15 +546,15 @@ export default function MemberRoutine() {
       {coachingTab === 'mediciones' && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Scale className="h-4 w-4" />
+            <h3 className="section-title flex items-center gap-2">
+              <Scale className="h-4 w-4 text-orange-500" />
               Mediciones
             </h3>
             {(user?.role === 'admin' || user?.role === 'trainer') && (
               <button
                 type="button"
                 onClick={() => setIsAddingMeasurement(true)}
-                className="text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-500"
+                className="text-xs font-semibold text-orange-600 hover:text-orange-500"
               >
                 + Registrar
               </button>
@@ -910,8 +912,8 @@ export default function MemberRoutine() {
                     <Dumbbell className="h-6 w-6 text-orange-600 dark:text-orange-500" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight">{routine.name}</h3>
-                    <div className="flex items-center gap-3 text-[10px] text-zinc-500 mt-1 font-black uppercase tracking-widest">
+                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</h3>
+                    <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1 font-medium flex-wrap">
                       <Badge variant="default">{formatDifficulty(routine.difficulty)}</Badge>
                       <span className="flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
@@ -948,7 +950,7 @@ export default function MemberRoutine() {
               {expandedRoutineId === routine.id && (
                 <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Ejercicios</h4>
+                    <h4 className="section-title">Ejercicios</h4>
                     <button 
                       onClick={() => {
                         setIsAddingExercise(true);
@@ -965,8 +967,8 @@ export default function MemberRoutine() {
                     {routine.exercises?.map((exercise) => (
                       <div key={exercise.routine_exercise_id} className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 flex justify-between items-start shadow-sm transition-all hover:shadow-md">
                         <div>
-                          <h5 className="font-bold text-zinc-900 dark:text-white uppercase tracking-tight italic">{exercise.name}</h5>
-                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{exercise.muscle_group}</p>
+                          <h5 className="font-semibold text-zinc-900 dark:text-white">{exercise.name}</h5>
+                          <p className="text-xs text-zinc-500 capitalize">{exercise.muscle_group}</p>
                           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                             <div className="flex items-center gap-1.5 text-zinc-500 font-medium tracking-tight">
                               Series: 
