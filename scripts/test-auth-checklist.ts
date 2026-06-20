@@ -136,7 +136,9 @@ async function main() {
   cookie = '';
   const receptionLogin = await api('POST', '/api/auth/login', {
     email: process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com',
-    password: process.env.SMOKE_RECEPTION_PASSWORD ?? process.env.DEMO_PASSWORD ?? 'ChecklistAdmin123!',
+    password:
+      process.env.SMOKE_RECEPTION_PASSWORD ??
+      (process.env.DEMO_PASSWORD?.trim() || 'ChecklistAdmin123!'),
   });
   if (receptionLogin.res.status === 200) {
     saveCookie(receptionLogin.res);

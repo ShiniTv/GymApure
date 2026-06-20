@@ -53,6 +53,13 @@ jobs:
       - name: Seed demo users
         run: npm run db:restore-demo
 
+      - name: Seed checklist admin (auth tests)
+        env:
+          ADMIN_EMAIL: checklist-admin@test.local
+          ADMIN_PASSWORD: ChecklistAdmin123!
+          ADMIN_FULL_NAME: Checklist Admin
+        run: npm run db:create-admin
+
       - name: Integration tests
         run: |
           npm start &
