@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, 'feat/**']
   pull_request:
 
 jobs:
@@ -67,3 +67,5 @@ jobs:
             sleep 1
           done
           npm run test:integration
+          npm run test:auth-checklist
+          npm run test:reception-checklist

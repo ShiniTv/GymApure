@@ -74,8 +74,8 @@ export function RoutinesCalendarView({
           </Button>
         </div>
 
-        {/* Desktop: 7-column grid */}
-        <div className="hidden lg:block overflow-x-auto -mx-1 px-1">
+        {/* Desktop month grid — xl+ only; tablets use week agenda below */}
+        <div className="hidden xl:block overflow-x-auto -mx-1 px-1">
           <div className="grid grid-cols-7 gap-px min-w-[640px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-inner">
             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
               <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-3 text-center text-xs font-semibold text-zinc-400">
@@ -139,8 +139,8 @@ export function RoutinesCalendarView({
           </div>
         </div>
 
-        {/* Mobile: current week agenda */}
-        <div className="lg:hidden space-y-2">
+        {/* Tablet & mobile: current week agenda */}
+        <div className="xl:hidden space-y-2">
           <p className="text-xs font-medium text-zinc-500 mb-2">Semana actual</p>
           {mobileWeekDays.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');

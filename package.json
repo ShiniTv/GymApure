@@ -19,6 +19,8 @@
     "test:notifications-checklist": "tsx scripts/test-notifications-checklist.ts",
     "test:alerts": "tsx scripts/verify-alerts-panel.ts",
     "verify:local-e2e": "tsx scripts/verify-local-e2e.ts",
+    "pr:open": "powershell -ExecutionPolicy Bypass -File scripts/open-github-pr.ps1",
+    "kiosk:rotate-key": "powershell -ExecutionPolicy Bypass -File scripts/rotate-kiosk-key.ps1",
     "test:sprint1": "tsx scripts/test-sprint1.ts",
     "test:sprint2": "tsx scripts/test-sprint2.ts",
     "test:sprint3": "tsx scripts/test-sprint3.ts",

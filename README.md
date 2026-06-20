@@ -175,3 +175,19 @@ Ver auditoría en el historial del proyecto. Fases implementadas:
 3. Pestaña **Registro**: wizard walk-in (datos + plan + pago + entrada en un solo paso).
 4. Pestaña **Entrada / Salida**: busca por cédula y autoriza acceso.
 5. Tests: `npm run test:reception-checklist` (servidor en marcha).
+
+### Crear pull request (sin GitHub CLI)
+
+```bash
+npm run pr:open
+```
+
+Abre el navegador en la página de compare de GitHub. Si ya estás logueado en github.com, solo hacé clic en **Create pull request** y pegá la descripción desde [`docs/pr-body.md`](docs/pr-body.md).
+
+### Rotar clave del kiosk
+
+```bash
+npm run kiosk:rotate-key
+```
+
+Copiá las dos líneas generadas a `.env` (`KIOSK_API_KEY` y `VITE_KIOSK_KEY` deben ser iguales) y reiniciá con `npm run dev:clean`.
