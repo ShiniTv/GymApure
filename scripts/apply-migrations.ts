@@ -40,7 +40,31 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 WHERE NOT EXISTS (
       SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'idx_subscriptions_user_id'
     )`,
+  '20260619000000_add_receptionist_role.sql': `
+    SELECT 1 FROM pg_enum e
+    JOIN pg_type t ON e.enumtypid = t.oid
+    WHERE t.typname = 'user_role' AND e.enumlabel = 'receptionist'
+    LIMIT 1`,
 };
+
+/** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */
+function requiresNonTransactionalApply(sql: string): boolean {
+  return /\bALTER\s+TYPE\b[\s\S]*\bADD\s+VALUE\b/i.test(sql);
+}
+
+/** Supabase creates these roles; plain Postgres (CI/local) needs stubs for RLS migrations. */
+async function ensureSupabaseApiRoles(pool: pg.Pool): Promise<void> {
+  await pool.query(`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'anon') THEN
+        CREATE ROLE anon NOLOGIN;
+      END IF;
+      IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authenticated') THEN
+        CREATE ROLE authenticated NOLOGIN;
+      END IF;
+    END $$;
+  `);
+}
 
 /** Migraciones que solo aplican en Supabase (p. ej. storage.buckets). */
 const SUPABASE_ONLY_MIGRATIONS = new Set(['20260616000000_payment_proofs_storage.sql']);
@@ -87,6 +111,8 @@ async function main() {
         applied_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+
+    await ensureSupabaseApiRoles(pool);
 
     const files = fs
       .readdirSync(MIGRATIONS_DIR)
@@ -139,14 +165,23 @@ async function main() {
 
       const client = await pool.connect();
       try {
-        await client.query('BEGIN');
-        await client.query(sql);
-        await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [file]);
-        await client.query('COMMIT');
+        if (requiresNonTransactionalApply(sql)) {
+          await client.query(sql);
+          await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [file]);
+        } else {
+          await client.query('BEGIN');
+          await client.query(sql);
+          await client.query('INSERT INTO schema_migrations (filename) VALUES ($1)', [file]);
+          await client.query('COMMIT');
+        }
         console.log(`  ✓ ${file}`);
         ran += 1;
       } catch (err) {
-        await client.query('ROLLBACK');
+        try {
+          await client.query('ROLLBACK');
+        } catch {
+          /* no active transaction */
+        }
         throw err;
       } finally {
         client.release();
