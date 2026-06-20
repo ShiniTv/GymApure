@@ -99,7 +99,7 @@ function ToggleGrid({
       {toggles.map(({ key, label, icon: Icon }) => (
         <label
           key={key}
-          className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 cursor-pointer"
+          className="flex items-center gap-3 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 cursor-pointer hover:border-orange-500/30 transition-colors min-h-[var(--touch-min)]"
         >
           <input
             type="checkbox"
@@ -108,7 +108,7 @@ function ToggleGrid({
             className="h-4 w-4 rounded accent-orange-500"
           />
           <Icon className="h-4 w-4 text-zinc-400 shrink-0" />
-          <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300">{label}</span>
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">{label}</span>
         </label>
       ))}
     </div>
@@ -313,7 +313,7 @@ export default function Settings() {
         action={
           <Link
             to="/"
-            className="text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-orange-500"
+            className="text-xs font-semibold text-zinc-500 hover:text-orange-500"
           >
             ← Volver al dashboard
           </Link>
@@ -321,9 +321,9 @@ export default function Settings() {
       />
 
       {expirySettings && (
-        <Card padding="lg" rounded="3xl">
+        <Card padding="lg" rounded="2xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+            <h2 className="section-title flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-orange-500" />
               Notificaciones
             </h2>
@@ -401,9 +401,7 @@ export default function Settings() {
           )}
 
           <div className="mt-6 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">
-              Enviar prueba
-            </p>
+            <p className="label-caps mb-3">Enviar prueba</p>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 type="text"
@@ -443,9 +441,9 @@ export default function Settings() {
         </Card>
       )}
 
-      <Card padding="lg" rounded="3xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+      <Card padding="lg" rounded="2xl">
+        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+          <h2 className="section-title flex items-center gap-2">
             <Activity className="h-4 w-4 text-orange-500" />
             Salud operativa
           </h2>
@@ -471,22 +469,22 @@ export default function Settings() {
         ) : opsMetrics ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">DB ms</p>
-                <p className="text-lg font-black text-zinc-900 dark:text-white">
+              <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+                <p className="stat-label">DB ms</p>
+                <p className="text-lg font-bold text-zinc-900 dark:text-white mt-1">
                   {opsMetrics.db.latency_ms ?? '—'}
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Avg req ms</p>
-                <p className="text-lg font-black text-zinc-900 dark:text-white">
+              <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+                <p className="stat-label">Avg req ms</p>
+                <p className="text-lg font-bold text-zinc-900 dark:text-white mt-1">
                   {opsMetrics.request_metrics.avgResponseMs}
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Error rate</p>
+              <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+                <p className="stat-label">Error rate</p>
                 <p
-                  className={`text-lg font-black ${
+                  className={`text-lg font-bold mt-1 ${
                     opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
                       ? 'text-red-500'
                       : 'text-emerald-500'
@@ -495,10 +493,10 @@ export default function Settings() {
                   {opsMetrics.request_metrics.errorRatePercent}%
                 </p>
               </div>
-              <div className="rounded-2xl border border-zinc-100 dark:border-zinc-800 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Slow rate</p>
+              <div className="rounded-xl border border-zinc-100 dark:border-zinc-800 p-4">
+                <p className="stat-label">Slow rate</p>
                 <p
-                  className={`text-lg font-black ${
+                  className={`text-lg font-bold mt-1 ${
                     opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
                       ? 'text-orange-500'
                       : 'text-emerald-500'
@@ -511,19 +509,17 @@ export default function Settings() {
 
             {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
               <div className="mt-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
-                  Top rutas lentas
-                </p>
+                <p className="label-caps mb-2">Top rutas lentas</p>
                 <div className="space-y-2">
                   {opsMetrics.request_metrics.topSlowRoutes.map((route) => (
                     <div
                       key={`${route.method}-${route.path}`}
                       className="rounded-xl border border-zinc-100 dark:border-zinc-800 px-3 py-2"
                     >
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <p className="text-xs font-medium text-zinc-500">
                         {route.method} {route.path}
                       </p>
-                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">
+                      <p className="text-sm text-zinc-700 dark:text-zinc-200 mt-0.5">
                         avg {route.avgDurationMs}ms · max {route.maxDurationMs}ms · {route.count} req
                       </p>
                     </div>
@@ -533,9 +529,7 @@ export default function Settings() {
             )}
 
             <div className="mt-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
-                Alertas activas
-              </p>
+              <p className="label-caps mb-2">Alertas activas</p>
               {opsAlerts.length === 0 ? (
                 <p className="text-xs font-bold text-emerald-600">Sin alertas. Operación normal.</p>
               ) : (

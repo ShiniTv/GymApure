@@ -13,13 +13,11 @@ export function PageHeader({ title, subtitle, action, badge, className }: PageHe
   return (
     <div className={cn('flex flex-col sm:flex-row sm:items-center justify-between gap-4', className)}>
       <div>
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase whitespace-pre-line leading-tight">
-          {title}
-        </h1>
-        {subtitle && <p className="text-zinc-500 font-medium mt-1">{subtitle}</p>}
+        <h1 className="page-title">{title}</h1>
+        {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>
       {badge && (
-        <div className="text-xs font-black uppercase tracking-widest text-zinc-500 bg-white dark:bg-zinc-900 px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="text-xs font-semibold text-zinc-500 bg-white dark:bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
           {badge}
         </div>
       )}

@@ -17,6 +17,8 @@ import {
   type PaginatedResult,
 } from '../lib/pagination.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
+import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = Router();
 
@@ -76,7 +78,8 @@ const USER_LIST_FROM = `
 
 function buildUserListFilters(
   query: Record<string, unknown>,
-  alertDays: number
+  alertDays: number,
+  options?: { trainerId?: number; membersOnly?: boolean }
 ): { whereSql: string; params: unknown[] } {
   const search = parseSearchQuery(query);
   const role = typeof query.role === 'string' ? query.role.trim() : '';
@@ -92,9 +95,22 @@ function buildUserListFilters(
     );
   }
 
-  if (role && ['admin', 'trainer', 'member'].includes(role)) {
+  if (role && ['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
     params.push(role);
     conditions.push(`u.role = $${params.length}`);
+  }
+
+  if (options?.membersOnly) {
+    conditions.push(`u.role = 'member'`);
+  }
+
+  if (options?.trainerId) {
+    params.push(options.trainerId);
+    conditions.push(`u.id IN (
+      SELECT DISTINCT ur.user_id FROM user_routines ur
+      JOIN routines r ON r.id = ur.routine_id
+      WHERE r.trainer_id = $${params.length}
+    )`);
   }
 
   if (expiringOnly) {
@@ -108,14 +124,14 @@ function buildUserListFilters(
   return { whereSql, params };
 }
 
-router.get('/options', authorize(['admin', 'trainer']), async (req, res) => {
+router.get('/options', authorize(['admin', 'trainer', 'receptionist']), async (req, res) => {
   try {
     const search = parseSearchQuery(req.query);
     const role = typeof req.query.role === 'string' ? req.query.role.trim() : 'member';
     const params: unknown[] = [];
     const conditions: string[] = [];
 
-    if (['admin', 'trainer', 'member'].includes(role)) {
+    if (['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
       params.push(role);
       conditions.push(`role = $${params.length}`);
     }
@@ -146,11 +162,17 @@ router.get('/options', authorize(['admin', 'trainer']), async (req, res) => {
   }
 });
 
-router.get('/', authorize(['admin', 'trainer']), async (req, res) => {
+router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: AuthRequest, res) => {
   try {
     const { page, pageSize, offset } = parsePaginationQuery(req.query);
     const alertDays = await getExpiryAlertDays();
-    const { whereSql, params } = buildUserListFilters(req.query, alertDays);
+    const listOptions =
+      req.user!.role === 'trainer'
+        ? { trainerId: req.user!.id }
+        : req.user!.role === 'receptionist'
+          ? { membersOnly: true }
+          : undefined;
+    const { whereSql, params } = buildUserListFilters(req.query, alertDays, listOptions);
 
     const countParams = [...params];
     const listParams = [...params, pageSize, offset];
@@ -188,7 +210,7 @@ router.get('/', authorize(['admin', 'trainer']), async (req, res) => {
   }
 });
 
-router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer'), async (req, res) => {
+router.get('/:id', requireSelfOrRoles('id', 'admin', 'trainer', 'receptionist'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
@@ -502,7 +524,7 @@ router.delete('/:id/routines/:routineId', authorize(['admin', 'trainer']), async
   }
 });
 
-router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: AuthRequest, res) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -516,12 +538,17 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
       ? requestedRole ?? 'member'
       : 'member';
 
-  if (!['admin', 'trainer', 'member'].includes(assignedRole)) {
-    return res.status(403).json({ error: 'Los entrenadores solo pueden crear miembros' });
+  if (!['admin', 'trainer', 'member', 'receptionist'].includes(assignedRole)) {
+    return res.status(403).json({ error: 'Rol no permitido' });
   }
 
-  if (req.user!.role === 'trainer' && assignedRole !== 'member') {
-    return res.status(403).json({ error: 'Los entrenadores solo pueden crear miembros' });
+  if (req.user!.role !== 'admin' && assignedRole !== 'member') {
+    return res.status(403).json({ error: 'Solo el administrador puede crear otros roles de staff' });
+  }
+
+  const normalizedCedula = cedula?.trim() ? canonicalCedula(cedula.trim()) : null;
+  if (!normalizedCedula) {
+    return res.status(400).json({ error: 'La cédula es obligatoria para el check-in en el gym' });
   }
 
   try {
@@ -530,11 +557,12 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
       return res.status(400).json({ error: 'Este correo ya está registrado' });
     }
 
-    if (cedula?.trim()) {
-      const cedulaTaken = await query('SELECT id FROM users WHERE cedula = $1', [cedula.trim()]);
-      if (cedulaTaken.rows.length > 0) {
-        return res.status(400).json({ error: 'Esta cédula ya está registrada' });
-      }
+    const cedulaTaken = await query(
+      `SELECT id FROM users WHERE ${cedulaWhereClause('cedula', 1)}`,
+      [normalizedCedula]
+    );
+    if (cedulaTaken.rows.length > 0) {
+      return res.status(400).json({ error: 'Esta cédula ya está registrada' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -542,7 +570,7 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
       `INSERT INTO users (full_name, email, cedula, role, password, status)
        VALUES ($1, $2, $3, $4, $5, 'active')
        RETURNING id`,
-      [full_name, normalizedEmail, cedula?.trim() || null, assignedRole, hashedPassword]
+      [full_name, normalizedEmail, normalizedCedula, assignedRole, hashedPassword]
     );
 
     await logAudit(req.user!.id, 'user.create', {
@@ -555,6 +583,52 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.patch(
+  '/:id/cedula',
+  authorize(RECEPTION_STAFF),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const raw = typeof req.body?.cedula === 'string' ? req.body.cedula : '';
+    const normalizedCedula = canonicalCedula(raw);
+    if (!normalizedCedula) {
+      res.status(400).json({ error: 'Cédula inválida' });
+      return;
+    }
+
+    const cedulaTaken = await query(
+      `SELECT id FROM users WHERE ${cedulaWhereClause('cedula', 1)} AND id <> $2`,
+      [normalizedCedula, targetId]
+    );
+    if (cedulaTaken.rows[0]) {
+      res.status(400).json({ error: 'Esta cédula ya está registrada' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE users SET cedula = $1 WHERE id = $2
+       RETURNING id, full_name, cedula`,
+      [normalizedCedula, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'user.cedula_update', {
+      target_id: targetId,
+      cedula: normalizedCedula,
+    });
+
+    res.json(rows[0]);
+  })
+);
 
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;

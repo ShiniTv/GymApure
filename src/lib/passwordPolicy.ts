@@ -28,8 +28,8 @@ export const createUserSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
   email: z.string().trim().email('Email inválido'),
   password: passwordSchema,
-  cedula: z.string().trim().max(50).optional().nullable(),
-  role: z.enum(['admin', 'trainer', 'member']).optional(),
+  cedula: z.string().trim().min(1, 'La cédula es obligatoria').max(50),
+  role: z.enum(['admin', 'trainer', 'member', 'receptionist']).optional(),
 });
 
 export const changePasswordSchema = z

@@ -1,0 +1,102 @@
+import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { LogIn, LogOut } from 'lucide-react';
+import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { Badge, Spinner } from '../ui';
+import { cn } from '../../lib/utils';
+
+export interface TodayAttendanceRow {
+  id: number;
+  full_name: string;
+  cedula: string | null;
+  check_in_time: string;
+  check_out_time: string | null;
+  duration_minutes: number | null;
+  is_inside: boolean;
+}
+
+interface ReceptionActivityFeedProps {
+  limit?: number;
+  compact?: boolean;
+  className?: string;
+  refreshKey?: number;
+}
+
+export default function ReceptionActivityFeed({
+  limit = 8,
+  compact = false,
+  className,
+  refreshKey = 0,
+}: ReceptionActivityFeedProps) {
+  const [rows, setRows] = useState<TodayAttendanceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    apiFetch('/api/attendance/today')
+      .then((res) => parseJsonResponse<TodayAttendanceRow[]>(res))
+      .then((data) => setRows(Array.isArray(data) ? data.slice(0, limit) : []))
+      .catch(() => setRows([]))
+      .finally(() => setLoading(false));
+  }, [limit, refreshKey]);
+
+  if (loading) {
+    return (
+      <div className={cn('flex justify-center py-8', className)}>
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <p className={cn('text-center text-sm text-zinc-400 py-6', className)}>
+        Sin movimientos registrados hoy
+      </p>
+    );
+  }
+
+  return (
+    <div className={cn('space-y-2', className)}>
+      {rows.map((row) => (
+        <div
+          key={row.id}
+          className={cn(
+            'flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800',
+            compact ? 'p-2.5' : 'p-3'
+          )}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={cn(
+                'shrink-0 rounded-lg p-1.5',
+                row.is_inside ? 'bg-emerald-500/10 text-emerald-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+              )}
+            >
+              {row.is_inside ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
+            </div>
+            <div className="min-w-0">
+              <p className={cn('font-semibold text-zinc-900 dark:text-white truncate', compact ? 'text-sm' : 'text-base')}>
+                {row.full_name}
+              </p>
+              {!compact && row.cedula && (
+                <p className="text-xs text-zinc-500 truncate">{row.cedula}</p>
+              )}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-xs font-medium text-zinc-500">
+              {format(new Date(row.check_in_time), 'HH:mm', { locale: es })}
+            </p>
+            {row.is_inside ? (
+              <Badge variant="success" className="mt-1 text-[10px]">Dentro</Badge>
+            ) : row.duration_minutes ? (
+              <p className="text-[10px] text-zinc-400 mt-0.5">{row.duration_minutes} min</p>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

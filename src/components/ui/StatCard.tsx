@@ -25,12 +25,8 @@ export function StatCard({ title, value, icon: Icon, trend, color = 'emerald', c
     <Card padding="md" rounded="xl" className={className}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 leading-none mb-1">
-            {title}
-          </p>
-          <p className="text-3xl font-black text-zinc-900 dark:text-white tracking-tighter italic">
-            {value}
-          </p>
+          <p className="stat-label leading-none mb-1">{title}</p>
+          <p className="stat-value">{value}</p>
         </div>
         <div className={cn('p-3 rounded-lg', colorMap[color])}>
           <Icon className="h-6 w-6" />

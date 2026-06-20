@@ -18,7 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState } from '../components/ui';
 import { cn } from '../lib/utils';
 import {
   expiryBannerClasses,
@@ -76,9 +76,9 @@ function StatMini({
 }) {
   return (
     <Card padding="sm" className="p-5">
-      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
-      <p className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter italic">{value}</p>
-      {sub && <p className="text-[10px] font-bold text-zinc-400 mt-1 uppercase tracking-widest">{sub}</p>}
+      <p className="stat-label mb-1">{label}</p>
+      <p className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">{value}</p>
+      {sub && <p className="text-xs text-zinc-400 mt-1">{sub}</p>}
     </Card>
   );
 }
@@ -324,7 +324,7 @@ export default function Profile() {
 
   if (!profile || !user) {
     return (
-      <div className="text-center py-16 text-zinc-500 font-bold uppercase tracking-widest text-sm">
+      <div className="text-center py-16 text-zinc-500 text-sm">
         No se pudo cargar el perfil
       </div>
     );
@@ -335,12 +335,13 @@ export default function Profile() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={<>Mi <span className="text-orange-500">Perfil</span></>}
+        title={<>Mi <span className="text-orange-500">perfil</span></>}
+        subtitle={user.role === 'member' ? 'Datos personales, progreso y seguridad' : 'Información de tu cuenta'}
         action={
           saveMsg ? (
-            <p className="text-sm font-black uppercase tracking-widest text-emerald-600">{saveMsg}</p>
+            <p className="text-sm font-medium text-emerald-600">{saveMsg}</p>
           ) : saveError ? (
-            <p className="text-sm font-black uppercase tracking-widest text-red-500">{saveError}</p>
+            <p className="text-sm font-medium text-red-500">{saveError}</p>
           ) : undefined
         }
       />
@@ -356,14 +357,14 @@ export default function Profile() {
               <p className={`text-sm font-bold ${classes.text}`}>
                 {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
               </p>
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+              <p className="text-xs text-zinc-500 mt-1">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
             </div>
           </div>
           <Link
             to="/payments"
-            className={`inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest shrink-0 ${classes.link}`}
+            className={`inline-flex items-center gap-2 text-xs font-semibold shrink-0 ${classes.link}`}
           >
             <CreditCard className="h-4 w-4" />
             Renovar
@@ -379,7 +380,7 @@ export default function Profile() {
           </p>
           <Link
             to="/payments"
-            className="text-xs font-black uppercase tracking-widest text-yellow-800 dark:text-yellow-300 hover:underline shrink-0"
+            className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 hover:underline shrink-0"
           >
             Reportar pago
           </Link>
@@ -401,8 +402,8 @@ export default function Profile() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Formulario de perfil */}
         <Card className="lg:col-span-2 max-w-2xl">
-          <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <User className="h-4 w-4" />
+          <h2 className="section-title mb-6 flex items-center gap-2">
+            <User className="h-4 w-4 text-orange-500" />
             Datos personales
           </h2>
 
@@ -436,19 +437,15 @@ export default function Profile() {
               />
             </div>
             <div>
-              <p className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic">
+              <p className="text-xl font-bold text-zinc-900 dark:text-white">
                 {profile.full_name}
               </p>
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                {profile.email}
-              </p>
+              <p className="text-sm text-zinc-500 mt-1">{profile.email}</p>
               {profile.cedula && (
-                <p className="text-[10px] font-bold text-zinc-500 mt-0.5">{profile.cedula}</p>
+                <p className="text-xs text-zinc-400 mt-0.5">{profile.cedula}</p>
               )}
               {avatarUploading && (
-                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2">
-                  Subiendo...
-                </p>
+                <p className="text-xs font-medium text-orange-500 mt-2">Subiendo foto…</p>
               )}
             </div>
           </div>
@@ -532,13 +529,13 @@ export default function Profile() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Scale className="h-4 w-4" />
+            <h2 className="section-title flex items-center gap-2">
+              <Scale className="h-4 w-4 text-orange-500" />
               Evolución de peso
             </h2>
             {weightDelta != null && (
               <span
-                className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${
+                className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg ${
                   weightDelta < 0
                     ? 'text-emerald-600 bg-emerald-500/10'
                     : weightDelta > 0
@@ -565,25 +562,31 @@ export default function Profile() {
             </Suspense>
           ) : chartData.length === 1 ? (
             <div className="h-64 flex flex-col items-center justify-center text-center">
-              <p className="text-4xl font-black text-orange-500 italic">{chartData[0].weight} kg</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2">
+              <p className="text-4xl font-bold text-orange-500">{chartData[0].weight} kg</p>
+              <p className="text-sm text-zinc-400 mt-2">
                 {chartData[0].date} · Registra otra medición para ver la gráfica
               </p>
             </div>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-center px-4">
-              <Scale className="h-10 w-10 text-zinc-300 dark:text-zinc-700 mb-3" />
-              <p className="text-sm font-bold text-zinc-500">Sin mediciones de peso aún</p>
-              <p className="text-xs text-zinc-400 mt-1">Registra tu primera medición abajo</p>
-            </div>
+            <EmptyState
+              icon={Scale}
+              title="Sin mediciones de peso"
+              description="Registra tu primera medición para ver tu evolución."
+              action={
+                <Button size="sm" onClick={() => setIsAddingMeasurement(true)}>
+                  <Plus className="h-4 w-4" />
+                  Nueva medición
+                </Button>
+              }
+            />
           )}
         </Card>
       </div>
 
       <Card>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-            <Scale className="h-4 w-4" />
+          <h2 className="section-title flex items-center gap-2">
+            <Scale className="h-4 w-4 text-orange-500" />
             Historial de mediciones
           </h2>
           <Button type="button" size="sm" onClick={() => setIsAddingMeasurement(true)}>
@@ -596,7 +599,7 @@ export default function Profile() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] font-black uppercase tracking-widest text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
+                <tr className="text-xs font-semibold text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
                   <th className="pb-3 pr-4">Fecha</th>
                   <th className="pb-3 pr-4">Peso</th>
                   <th className="pb-3 pr-4">Grasa</th>
@@ -611,10 +614,10 @@ export default function Profile() {
                     key={m.id}
                     className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0 text-sm"
                   >
-                    <td className="py-3 pr-4 font-bold text-zinc-700 dark:text-zinc-300">
+                    <td className="py-3 pr-4 font-medium text-zinc-700 dark:text-zinc-300">
                       {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                     </td>
-                    <td className="py-3 pr-4 font-black text-zinc-900 dark:text-white">
+                    <td className="py-3 pr-4 font-semibold text-zinc-900 dark:text-white">
                       {m.weight != null ? `${m.weight} kg` : '—'}
                     </td>
                     <td className="py-3 pr-4 text-zinc-500">
@@ -635,29 +638,37 @@ export default function Profile() {
             </table>
           </div>
         ) : (
-          <p className="text-sm text-zinc-400 text-center py-8 font-bold uppercase tracking-widest text-[10px]">
-            Sin mediciones registradas
-          </p>
+          <EmptyState
+            icon={Scale}
+            title="Sin mediciones registradas"
+            description="Añade tu primera medición para hacer seguimiento de tu progreso."
+            action={
+              <Button size="sm" onClick={() => setIsAddingMeasurement(true)}>
+                <Plus className="h-4 w-4" />
+                Nueva medición
+              </Button>
+            }
+          />
         )}
       </Card>
 
       {/* Últimos entrenamientos */}
       {workouts.length > 0 && (
         <Card>
-          <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Dumbbell className="h-4 w-4" />
+          <h2 className="section-title mb-4 flex items-center gap-2">
+            <Dumbbell className="h-4 w-4 text-orange-500" />
             Actividad reciente
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-1">
             {workouts.slice(0, 5).map((w) => (
               <div
                 key={w.id}
                 className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
               >
-                <p className="font-black text-zinc-800 dark:text-zinc-200 uppercase text-sm tracking-tight">
+                <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">
                   {w.routine_name}
                 </p>
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                <p className="text-xs text-zinc-400">
                   {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
                 </p>
               </div>
@@ -671,15 +682,15 @@ export default function Profile() {
 
       {profileTab === 'seguridad' && (
       <Card>
-        <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <Lock className="h-4 w-4" />
+        <h2 className="section-title mb-6 flex items-center gap-2">
+          <Lock className="h-4 w-4 text-orange-500" />
           Seguridad
         </h2>
         {passwordMsg && (
-          <p className="text-sm font-black uppercase tracking-widest text-emerald-600 mb-4">{passwordMsg}</p>
+          <p className="text-sm font-medium text-emerald-600 mb-4">{passwordMsg}</p>
         )}
         {passwordError && (
-          <p className="text-sm font-black uppercase tracking-widest text-red-500 mb-4">{passwordError}</p>
+          <p className="text-sm font-medium text-red-500 mb-4">{passwordError}</p>
         )}
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
           <div>
@@ -723,7 +734,7 @@ export default function Profile() {
                       />
                     ))}
                   </div>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  <p className="text-xs font-medium text-zinc-400">
                     Fortaleza: {strength.label}
                   </p>
                 </div>

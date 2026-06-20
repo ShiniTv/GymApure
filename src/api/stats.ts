@@ -14,6 +14,7 @@ import {
 } from '../lib/adminStatsCache.ts';
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = Router();
 
@@ -316,6 +317,32 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       expiryAlertDays,
       workoutsThisMonth: parseInt(workoutsThisMonth.rows[0]?.count || '0', 10),
       workoutStreak: computeWorkoutStreak(workoutDays.rows.map((r) => r.d)),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/reception', authorize(RECEPTION_STAFF), async (_req, res) => {
+  try {
+    const [todayCheckIns, insideNow, pendingPayments] = await Promise.all([
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM attendance WHERE ${sqlTodayRange('check_in_time')}`
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM attendance
+         WHERE ${sqlTodayRange('check_in_time')} AND check_out_time IS NULL`
+      ),
+      query<{ count: string }>(
+        "SELECT COUNT(*)::text AS count FROM payments WHERE status = 'pending'"
+      ),
+    ]);
+
+    res.json({
+      todayCheckIns: parseInt(todayCheckIns.rows[0]?.count || '0', 10),
+      insideNow: parseInt(insideNow.rows[0]?.count || '0', 10),
+      pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

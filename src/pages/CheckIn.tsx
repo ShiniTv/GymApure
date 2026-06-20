@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { CheckCircle, XCircle, LogIn, LogOut } from 'lucide-react';
+import { CheckCircle, XCircle, LogIn, LogOut, Clock } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { getKioskClientKey } from '../lib/kiosk.ts';
 import { APP_VERSION } from '../lib/appVersion';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
+import Logo from '../components/Logo';
 import { Button, Card, Input, SegmentedControl, Spinner } from '../components/ui';
 import { cn } from '../lib/utils';
 
@@ -22,9 +25,16 @@ export default function CheckIn() {
   const [expiryWarning, setExpiryWarning] = useState('');
   const [durationLabel, setDurationLabel] = useState('');
   const [userName, setUserName] = useState('');
+  const [now, setNow] = useState(new Date());
   const cedulaRef = useRef<HTMLInputElement>(null);
 
   const isCheckIn = mode === 'check-in';
+
+  useEffect(() => {
+    if (!isKioskMode) return;
+    const tick = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(tick);
+  }, [isKioskMode]);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -97,13 +107,17 @@ export default function CheckIn() {
             setStatus('idle');
             setExpiryWarning('');
             setDurationLabel('');
-          }, 4500);
+            cedulaRef.current?.focus();
+          }, isKioskMode ? 3500 : 4500);
         } else {
           setStatus('error');
           setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
           setExpiryWarning('');
           if (data.user_name) setUserName(data.user_name);
-          setTimeout(() => setStatus('idle'), 4000);
+          setTimeout(() => {
+            setStatus('idle');
+            cedulaRef.current?.focus();
+          }, isKioskMode ? 3500 : 4000);
         }
       } catch {
         setStatus('error');
@@ -118,10 +132,237 @@ export default function CheckIn() {
     setTimeout(finishScan, wait);
   };
 
+  const formContent = (
+    <>
+      {status === 'idle' || status === 'scanning' ? (
+        <form onSubmit={handleSubmit} className={cn('space-y-8', isKioskMode && 'space-y-10')}>
+          <div className="text-center space-y-4">
+            <div
+              className={cn(
+                'mx-auto rounded-3xl border-2 flex items-center justify-center transition-all relative overflow-hidden',
+                isKioskMode ? 'h-40 w-40' : 'h-32 w-32',
+                status === 'scanning'
+                  ? isCheckIn
+                    ? 'border-orange-500 ring-4 ring-orange-500/20'
+                    : 'border-blue-500 ring-4 ring-blue-500/20'
+                  : 'border-zinc-200 dark:border-zinc-800'
+              )}
+            >
+              {status === 'scanning' && (
+                <div
+                  className={cn(
+                    'absolute inset-0 animate-scan-line',
+                    isCheckIn
+                      ? 'bg-gradient-to-t from-orange-500/20 to-transparent'
+                      : 'bg-gradient-to-t from-blue-500/20 to-transparent'
+                  )}
+                />
+              )}
+              {status === 'scanning' ? (
+                <Spinner className={cn('relative z-10', isKioskMode ? 'h-14 w-14' : 'h-10 w-10')} />
+              ) : isCheckIn ? (
+                <LogIn className={cn('text-orange-500/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
+              ) : (
+                <LogOut className={cn('text-blue-500/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
+              )}
+            </div>
+            <div>
+              <h2 className={cn('text-zinc-900 dark:text-white font-bold', isKioskMode ? 'text-2xl' : 'text-lg')}>
+                {status === 'scanning'
+                  ? 'Verificando…'
+                  : isCheckIn
+                    ? 'Registro de entrada'
+                    : 'Registro de salida'}
+              </h2>
+              <p className={cn('text-zinc-500 dark:text-zinc-400 mt-1', isKioskMode ? 'text-base' : 'text-sm')}>
+                {isCheckIn
+                  ? 'Ingrese su cédula para registrar la entrada'
+                  : 'Ingrese su cédula para registrar la salida'}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              ref={cedulaRef}
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              aria-label="Cédula de identidad"
+              className={cn(
+                'text-center font-mono tracking-widest',
+                isKioskMode
+                  ? 'text-3xl md:text-4xl py-6 min-h-[80px] bg-zinc-900/50 border-zinc-700 text-white'
+                  : 'text-xl md:text-2xl py-4'
+              )}
+              placeholder="V-00000000"
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value.toUpperCase())}
+              disabled={status === 'scanning'}
+            />
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={status === 'scanning' || !cedula.trim()}
+              className={cn(
+                'w-full',
+                isKioskMode && 'min-h-[64px] text-lg',
+                !isCheckIn && 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20'
+              )}
+            >
+              {status === 'scanning' ? (
+                <>
+                  <Spinner className="h-4 w-4" />
+                  Verificando…
+                </>
+              ) : isCheckIn ? (
+                'Registrar entrada'
+              ) : (
+                'Registrar salida'
+              )}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div
+          className={cn(
+            'py-8 text-center',
+            status === 'success' ? (isCheckIn ? 'text-emerald-500' : 'text-blue-500') : 'text-red-500',
+            isKioskMode && 'py-12'
+          )}
+        >
+          <div
+            className={cn(
+              'mx-auto rounded-full flex items-center justify-center mb-6',
+              isKioskMode ? 'h-32 w-32' : 'h-24 w-24',
+              status === 'success'
+                ? isCheckIn ? 'bg-emerald-500/10' : 'bg-blue-500/10'
+                : 'bg-red-500/10'
+            )}
+          >
+            {status === 'success' ? (
+              <CheckCircle className={isKioskMode ? 'h-16 w-16' : 'h-12 w-12'} />
+            ) : (
+              <XCircle className={isKioskMode ? 'h-16 w-16' : 'h-12 w-12'} />
+            )}
+          </div>
+          <h2 className={cn('font-bold mb-2 text-zinc-900 dark:text-white', isKioskMode ? 'text-4xl' : 'text-3xl')}>
+            {status === 'success'
+              ? isCheckIn ? 'Acceso concedido' : 'Salida registrada'
+              : 'Acceso denegado'}
+          </h2>
+          <div className="space-y-1">
+            <p className={cn('font-semibold text-zinc-900 dark:text-white', isKioskMode ? 'text-2xl' : 'text-xl')}>
+              {status === 'success' ? userName : userName || 'Error de validación'}
+            </p>
+            <p className={cn('text-zinc-500 dark:text-zinc-400', isKioskMode ? 'text-lg' : '')}>{message}</p>
+            {durationLabel && (
+              <p className="text-sm font-semibold text-blue-500 mt-2">
+                Tiempo en gym: {durationLabel}
+              </p>
+            )}
+            {expiryWarning && (
+              <p className="text-sm font-semibold text-orange-500 mt-2">{expiryWarning}</p>
+            )}
+          </div>
+
+          {!isKioskMode && (
+            <Button type="button" variant="ghost" className="mt-8" onClick={() => setStatus('idle')}>
+              Volver a escanear
+            </Button>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  if (isKioskMode) {
+    return (
+      <AuthShell variant="kiosk-fullscreen">
+        <div className="flex flex-col min-h-screen text-white">
+          <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
+            <div className="flex items-center gap-4">
+              <Logo className="h-12 w-12" />
+              <div>
+                <p className="text-xl font-bold tracking-tight">Caribean Gym</p>
+                <p className="text-sm text-zinc-400">Control de acceso</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl md:text-4xl font-bold font-mono tabular-nums">
+                {format(now, 'HH:mm:ss')}
+              </p>
+              <p className="text-sm text-zinc-400 capitalize">
+                {format(now, "EEEE d MMM", { locale: es })}
+              </p>
+            </div>
+          </header>
+
+          <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-0">
+            <section className="flex flex-col justify-center px-6 md:px-12 py-10 border-b lg:border-b-0 lg:border-r border-zinc-800/80">
+              <SegmentedControl
+                variant="kiosk"
+                fullWidth
+                value={mode}
+                onChange={(next) => {
+                  setMode(next);
+                  setStatus('idle');
+                }}
+                options={[
+                  { value: 'check-in', label: 'Entrada', icon: LogIn, accent: 'brand' },
+                  { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
+                ]}
+                className="mb-8 max-w-md"
+              />
+              <div className="max-w-md w-full mx-auto lg:mx-0">{formContent}</div>
+            </section>
+
+            <section className="hidden lg:flex flex-col justify-center items-center px-12 py-10 bg-zinc-900/40">
+              <div className="text-center max-w-sm">
+                <div
+                  className={cn(
+                    'mx-auto mb-8 rounded-full p-8',
+                    isCheckIn ? 'bg-orange-500/10' : 'bg-blue-500/10'
+                  )}
+                >
+                  {isCheckIn ? (
+                    <LogIn className="h-24 w-24 text-orange-500 mx-auto" />
+                  ) : (
+                    <LogOut className="h-24 w-24 text-blue-500 mx-auto" />
+                  )}
+                </div>
+                <h2 className="text-3xl font-bold mb-3">
+                  {isCheckIn ? '¡Bienvenido!' : '¡Hasta pronto!'}
+                </h2>
+                <p className="text-zinc-400 text-lg leading-relaxed">
+                  {isCheckIn
+                    ? 'Dicta tu cédula al personal o ingrésala en el teclado para registrar tu entrada.'
+                    : 'Registra tu salida al terminar tu entrenamiento.'}
+                </p>
+                <div className="mt-10 flex items-center justify-center gap-6 text-sm text-zinc-500">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Sistema activo
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    v{APP_VERSION}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
     <AuthShell
       variant="kiosk"
-      backLink={isKioskMode ? undefined : { to: '/login', label: 'Volver al login' }}
+      backLink={{ to: '/login', label: 'Volver al login' }}
     >
       <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-8" />
 
@@ -140,146 +381,8 @@ export default function CheckIn() {
         className="mb-6"
       />
 
-      <Card padding="lg" rounded="3xl" className="shadow-2xl transition-all">
-        {status === 'idle' || status === 'scanning' ? (
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="text-center space-y-4">
-              <div
-                className={cn(
-                  'mx-auto h-32 w-32 rounded-3xl border-2 flex items-center justify-center transition-all relative overflow-hidden',
-                  status === 'scanning'
-                    ? isCheckIn
-                      ? 'border-orange-500 ring-4 ring-orange-500/20'
-                      : 'border-blue-500 ring-4 ring-blue-500/20'
-                    : 'border-zinc-200 dark:border-zinc-800'
-                )}
-              >
-                {status === 'scanning' && (
-                  <div
-                    className={cn(
-                      'absolute inset-0 animate-scan-line',
-                      isCheckIn
-                        ? 'bg-gradient-to-t from-orange-500/20 to-transparent'
-                        : 'bg-gradient-to-t from-blue-500/20 to-transparent'
-                    )}
-                  />
-                )}
-                {status === 'scanning' ? (
-                  <Spinner className="h-10 w-10 relative z-10" />
-                ) : (
-                  isCheckIn ? (
-                    <LogIn className="h-16 w-16 text-orange-500/40" />
-                  ) : (
-                    <LogOut className="h-16 w-16 text-blue-500/40" />
-                  )
-                )}
-              </div>
-              <div>
-                <h2 className="text-zinc-900 dark:text-white font-bold text-lg">
-                  {status === 'scanning'
-                    ? 'Verificando…'
-                    : isCheckIn
-                      ? 'Registro de entrada'
-                      : 'Registro de salida'}
-                </h2>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {isCheckIn
-                    ? 'Ingrese su cédula para registrar la entrada'
-                    : 'Ingrese su cédula para registrar la salida'}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Input
-                ref={cedulaRef}
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                autoCapitalize="characters"
-                aria-label="Cédula de identidad"
-                className="text-center text-xl md:text-2xl font-mono tracking-widest py-4 placeholder-zinc-300 dark:placeholder-zinc-700"
-                placeholder="V-00000000"
-                value={cedula}
-                onChange={(e) => setCedula(e.target.value)}
-                disabled={status === 'scanning'}
-              />
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={status === 'scanning' || !cedula.trim()}
-                className={cn(
-                  'w-full',
-                  !isCheckIn && 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20'
-                )}
-              >
-                {status === 'scanning' ? (
-                  <>
-                    <Spinner className="h-4 w-4" />
-                    Verificando…
-                  </>
-                ) : isCheckIn ? (
-                  'Registrar entrada'
-                ) : (
-                  'Registrar salida'
-                )}
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div
-            className={cn(
-              'py-8 text-center',
-              status === 'success' ? (isCheckIn ? 'text-emerald-500' : 'text-blue-500') : 'text-red-500'
-            )}
-          >
-            <div
-              className={cn(
-                'mx-auto h-24 w-24 rounded-full flex items-center justify-center mb-6',
-                status === 'success'
-                  ? isCheckIn ? 'bg-emerald-500/10' : 'bg-blue-500/10'
-                  : 'bg-red-500/10'
-              )}
-            >
-              {status === 'success' ? (
-                <CheckCircle className="h-12 w-12" />
-              ) : (
-                <XCircle className="h-12 w-12" />
-              )}
-            </div>
-            <h2 className="text-3xl font-black mb-2 uppercase italic tracking-tight text-zinc-900 dark:text-white">
-              {status === 'success'
-                ? isCheckIn ? 'Acceso concedido' : 'Salida registrada'
-                : 'Acceso denegado'}
-            </h2>
-            <div className="space-y-1">
-              <p className="text-xl font-bold text-zinc-900 dark:text-white">
-                {status === 'success' ? userName : userName || 'Error de validación'}
-              </p>
-              <p className="text-zinc-500 dark:text-zinc-400">{message}</p>
-              {durationLabel && (
-                <p className="text-sm font-black uppercase tracking-widest text-blue-500 mt-2">
-                  Tiempo en gym: {durationLabel}
-                </p>
-              )}
-              {expiryWarning && (
-                <p className="text-sm font-black uppercase tracking-widest text-orange-500 mt-2">
-                  {expiryWarning}
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="mt-8"
-              onClick={() => setStatus('idle')}
-            >
-              Volver a escanear
-            </Button>
-          </div>
-        )}
+      <Card padding="lg" rounded="2xl" className="shadow-2xl transition-all">
+        {formContent}
       </Card>
 
       <div className="mt-8 flex flex-col items-center gap-3">
@@ -293,11 +396,12 @@ export default function CheckIn() {
             v{APP_VERSION}
           </div>
         </div>
-        {!isKioskMode && (
-          <Link to="/login" className="text-xs text-zinc-500 hover:text-orange-500 transition-colors">
-            ¿Eres miembro? Inicia sesión
-          </Link>
-        )}
+        <Link to="/login" className="text-xs text-zinc-500 hover:text-orange-500 transition-colors">
+          ¿Eres miembro? Inicia sesión
+        </Link>
+        <Link to="/check-in?kiosk=1" className="text-xs text-orange-600 hover:text-orange-500 font-semibold">
+          Abrir modo tablet (kiosk)
+        </Link>
       </div>
     </AuthShell>
   );

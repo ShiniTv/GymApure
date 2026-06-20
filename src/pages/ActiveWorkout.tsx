@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, Modal, Label, Input, Select, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { cn } from '../lib/utils';
 
 interface Exercise {
@@ -66,6 +66,8 @@ export default function ActiveWorkout() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showExecution, setShowExecution] = useState<Record<number, boolean>>({});
   const [timer, setTimer] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   
   // Rest Timer State
   const [restTimer, setRestTimer] = useState(0);
@@ -73,7 +75,7 @@ export default function ActiveWorkout() {
   const [restDuration, setRestDuration] = useState(0);
   const [showVideo, setShowVideo] = useState<Record<number, boolean>>({});
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const isMobileFocus = useMediaQuery('(max-width: 767px)');
+  const isMobileFocus = useIsMobile();
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
@@ -104,17 +106,18 @@ export default function ActiveWorkout() {
   }, [id]);
 
   useEffect(() => {
+    if (isPaused) return;
     const interval = setInterval(() => {
       setTimer(t => t + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]);
 
   useEffect(() => {
-    if (user && routine && !sessionId && !loading) {
+    if (user && routine && !sessionId && !loading && !isResetting) {
       startSession(routine.id);
     }
-  }, [user, routine, sessionId, loading]);
+  }, [user, routine, sessionId, loading, isResetting]);
 
   // Rest timer — single interval while resting (avoids re-creating interval every second)
   useEffect(() => {
@@ -169,6 +172,12 @@ export default function ActiveWorkout() {
           }
           return newLogs;
         });
+      }
+      if (isMobileFocus && routine) {
+        const idx = routine.exercises.findIndex((e) => e.id === exerciseId);
+        if (idx >= 0 && idx < routine.exercises.length - 1) {
+          window.setTimeout(() => setFocusedIndex(idx + 1), 300);
+        }
       }
     }
   };
@@ -408,6 +417,12 @@ export default function ActiveWorkout() {
         });
         if (allSetsDone) {
           setCompletedExercises(prev => ({ ...prev, [exerciseId]: true }));
+          if (isMobileFocus && routine) {
+            const idx = routine.exercises.findIndex((e) => e.id === exerciseId);
+            if (idx >= 0 && idx < routine.exercises.length - 1) {
+              window.setTimeout(() => setFocusedIndex(idx + 1), 400);
+            }
+          }
         }
       }
 
@@ -461,18 +476,35 @@ export default function ActiveWorkout() {
     setShowResetConfirm(true);
   };
 
-  const confirmResetProgress = () => {
-    if (sessionId) {
-      localStorage.removeItem(`active_workout_logs_${sessionId}`);
-      localStorage.removeItem(`active_workout_sets_${sessionId}`);
-      localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+  const confirmResetProgress = async () => {
+    setIsResetting(true);
+    setSessionError(null);
+    try {
+      if (sessionId) {
+        const res = await apiFetch('/api/workouts/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        await parseJsonResponse(res);
+        localStorage.removeItem(`active_workout_logs_${sessionId}`);
+        localStorage.removeItem(`active_workout_sets_${sessionId}`);
+        localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+      }
+      setShowResetConfirm(false);
+      setSessionId(null);
+      setTimer(0);
+      setIsPaused(false);
+      setLogs({});
+      setCompletedExercises({});
+      setFinishError(null);
+    } catch (err) {
+      clientLogger.error('Failed to cancel workout session', err);
+      setSessionError(err instanceof Error ? err.message : 'No se pudo reiniciar la sesión.');
+      setShowResetConfirm(false);
+    } finally {
+      setIsResetting(false);
     }
-    setShowResetConfirm(false);
-    setSessionId(null);
-    setTimer(0);
-    setLogs({});
-    setCompletedExercises({});
-    window.location.reload();
   };
 
   const formatTime = (seconds: number) => {
@@ -512,31 +544,44 @@ export default function ActiveWorkout() {
     : 0;
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className={cn('space-y-6', isMobileFocus ? 'pb-36' : 'pb-20')}>
       <Breadcrumbs
+        className="hidden md:flex"
         items={[
           { label: 'Rutinas', href: '/routines' },
           { label: routine.name },
         ]}
       />
 
-      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-4 z-10 border-b border-zinc-200 dark:border-zinc-800 -mx-1 px-1">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/routines')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400">
-            <ArrowLeft className="h-6 w-6" />
+      <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md py-3 md:py-4 z-10 border-b border-zinc-200 dark:border-zinc-800 -mx-1 px-1">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <button onClick={() => navigate('/routines')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-zinc-500 dark:text-zinc-400 shrink-0">
+            <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
           </button>
-          <div>
-            <h1 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tighter italic leading-none">{routine.name}</h1>
-            <div className="flex items-center text-orange-600 dark:text-orange-500 text-sm font-black font-mono tracking-tighter mt-1">
-              <Clock className="h-4 w-4 mr-1" />
+          <div className="min-w-0">
+            <h1 className="text-base md:text-xl font-bold text-zinc-900 dark:text-white truncate">{routine.name}</h1>
+            <div className="flex items-center text-orange-600 dark:text-orange-500 text-sm font-semibold font-mono mt-0.5">
+              <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
               {formatTime(timer)}
+              {isPaused && (
+                <span className="ml-2 text-xs text-zinc-400">Pausado</span>
+              )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsPaused((p) => !p)}
+            disabled={!sessionId}
+            className="hidden sm:inline-flex px-3 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-all disabled:opacity-40"
+          >
+            {isPaused ? 'Reanudar' : 'Pausar'}
+          </button>
           <button 
             onClick={resetProgress}
-            className="px-3 py-2 text-sm font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-all active:scale-95 uppercase tracking-wider"
+            disabled={!sessionId || isResetting}
+            className="hidden sm:inline-flex px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-all disabled:opacity-40"
           >
             Reiniciar
           </button>
@@ -547,7 +592,7 @@ export default function ActiveWorkout() {
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500">
+        <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
           <span>Progreso de sesión</span>
           <span className="text-orange-600 dark:text-orange-500">{completedCount}/{routine.exercises.length} ejercicios · {progressPct}%</span>
         </div>
@@ -572,21 +617,6 @@ export default function ActiveWorkout() {
       {setValidationError && (
         <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm font-bold text-orange-700 dark:text-orange-400">
           {setValidationError}
-        </div>
-      )}
-
-      {user?.role === 'trainer' && (
-        <div className="flex justify-end px-2">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setIsAddingExercise(true);
-              apiFetchAvailableExercises();
-            }}
-          >
-            <Plus className="h-5 w-5" />
-            Añadir Ejercicio
-          </Button>
         </div>
       )}
 
@@ -654,46 +684,52 @@ export default function ActiveWorkout() {
       </Modal>
 
       {isMobileFocus && routine.exercises.length > 1 && (
-        <div className="md:hidden flex items-center justify-between gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={focusedIndex === 0}
-            onClick={() => setFocusedIndex((i) => Math.max(0, i - 1))}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="text-center flex-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Ejercicio</p>
-            <p className="text-sm font-black text-orange-600">
-              {focusedIndex + 1} / {routine.exercises.length}
-            </p>
-            <div className="flex justify-center gap-1.5 mt-2">
-              {routine.exercises.map((ex, i) => (
-                <button
-                  key={ex.id}
-                  type="button"
-                  onClick={() => setFocusedIndex(i)}
-                  className={cn(
-                    'h-2 rounded-full transition-all',
-                    i === focusedIndex ? 'w-6 bg-orange-500' : 'w-2 bg-zinc-300 dark:bg-zinc-700',
-                    completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
-                  )}
-                  aria-label={`Ir al ejercicio ${i + 1}`}
-                />
-              ))}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3 max-w-lg mx-auto">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              disabled={focusedIndex === 0}
+              onClick={() => setFocusedIndex((i) => Math.max(0, i - 1))}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 text-center min-w-0">
+              <p className="text-xs text-zinc-500 truncate">
+                {routine.exercises[focusedIndex]?.name}
+              </p>
+              <p className="text-sm font-semibold text-orange-600">
+                {focusedIndex + 1} / {routine.exercises.length}
+              </p>
+              <div className="flex justify-center gap-1 mt-1.5">
+                {routine.exercises.map((ex, i) => (
+                  <button
+                    key={ex.id}
+                    type="button"
+                    onClick={() => setFocusedIndex(i)}
+                    className={cn(
+                      'h-1.5 rounded-full transition-all',
+                      i === focusedIndex ? 'w-5 bg-orange-500' : 'w-1.5 bg-zinc-300 dark:bg-zinc-700',
+                      completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
+                    )}
+                    aria-label={`Ejercicio ${i + 1}`}
+                  />
+                ))}
+              </div>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+              disabled={focusedIndex >= routine.exercises.length - 1}
+              onClick={() => setFocusedIndex((i) => Math.min(routine.exercises.length - 1, i + 1))}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={focusedIndex >= routine.exercises.length - 1}
-            onClick={() => setFocusedIndex((i) => Math.min(routine.exercises.length - 1, i + 1))}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
         </div>
       )}
 
@@ -702,20 +738,20 @@ export default function ActiveWorkout() {
           <div
             key={exercise.id}
             className={cn(
-              'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm transition-all',
+              'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-6 shadow-sm transition-all',
               completedExercises[exercise.id] ? 'opacity-50 ring-2 ring-emerald-500/50 scale-[0.98]' : 'hover:shadow-md',
               isMobileFocus && index !== focusedIndex && 'hidden'
             )}
           >
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-3 uppercase italic tracking-tighter">
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500 text-white text-xs font-bold not-italic">
                     {index + 1}
                   </span>
                   {exercise.name}
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium">{exercise.muscle_group.toUpperCase()} • Descanso: {exercise.rest_seconds}s</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium capitalize">{exercise.muscle_group} · Descanso: {exercise.rest_seconds}s</p>
                 {exercise.weight_suggestion && (
                   <p className="text-xs text-orange-600 dark:text-orange-400 font-bold mt-1">
                     Consejo: {exercise.weight_suggestion}
@@ -736,7 +772,7 @@ export default function ActiveWorkout() {
                       {exercise.video_url && (
                         <button 
                           onClick={() => toggleVideo(exercise.id)}
-                          className="text-[10px] flex items-center gap-1.5 font-black text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors uppercase tracking-widest bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
+                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
                         >
                           <Video className="h-3.5 w-3.5" />
                           {showVideo[exercise.id] ? 'Cerrar Video' : 'Video Guía'}
@@ -746,7 +782,7 @@ export default function ActiveWorkout() {
                       {exercise.execution && (
                         <button 
                           type="button"
-                          className="text-[10px] flex items-center gap-1.5 font-black text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors uppercase tracking-widest bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
+                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
                           onClick={() => setShowExecution((prev) => ({ ...prev, [exercise.id]: !prev[exercise.id] }))}
                         >
                           <BookOpen className="h-3.5 w-3.5" />
@@ -757,7 +793,7 @@ export default function ActiveWorkout() {
                     
                     {exercise.execution && showExecution[exercise.id] && (
                       <div className="w-full mt-3 p-4 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 rounded-2xl animate-in slide-in-from-top-2">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-2">Pasos a seguir</h4>
+                        <h4 className="label-caps text-orange-600 dark:text-orange-400 mb-2">Pasos a seguir</h4>
                         <p className="text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-line leading-relaxed">
                           {exercise.execution}
                         </p>
@@ -781,7 +817,7 @@ export default function ActiveWorkout() {
 
               <button
                 onClick={() => toggleExerciseComplete(exercise.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   completedExercises[exercise.id]
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
                     : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -793,7 +829,7 @@ export default function ActiveWorkout() {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-10 gap-3 text-[10px] text-zinc-400 dark:text-zinc-500 uppercase font-black tracking-widest text-center px-2">
+              <div className="grid grid-cols-10 gap-3 text-xs text-zinc-400 dark:text-zinc-500 font-medium text-center px-2">
                 <div className="col-span-2">Serie</div>
                 <div className="col-span-3">kg</div>
                 <div className="col-span-3">Reps</div>
@@ -808,7 +844,7 @@ export default function ActiveWorkout() {
                 return (
                   <div key={setNum} className={`grid grid-cols-10 gap-3 items-center p-2 rounded-2xl transition-all ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-zinc-50 dark:bg-zinc-800/30'}`}>
                     <div className="col-span-2 flex justify-center">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-black text-sm shadow-sm border border-zinc-100 dark:border-zinc-700">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-semibold text-sm shadow-sm border border-zinc-100 dark:border-zinc-700">
                         {setNum}
                       </span>
                     </div>
@@ -856,7 +892,7 @@ export default function ActiveWorkout() {
 
               <button
                 onClick={() => handleAddSet(exercise.id)}
-                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-orange-500 hover:bg-orange-500/5 hover:border-orange-500/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
+                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 hover:text-orange-500 hover:bg-orange-500/5 hover:border-orange-500/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
               >
                 <Plus className="h-4 w-4" />
                 Añadir Serie
@@ -876,7 +912,7 @@ export default function ActiveWorkout() {
             <CheckCircle className="h-8 w-8" />
           </div>
           <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
-          <p className="text-xs font-black uppercase tracking-widest text-orange-600 mt-3">
+          <p className="text-xs font-medium text-orange-600 mt-3">
             {formatTime(timer)} · {completedCount}/{routine.exercises.length} ejercicios
           </p>
         </div>
@@ -892,8 +928,8 @@ export default function ActiveWorkout() {
             className="w-full flex items-center justify-between p-6 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-2xl group hover:border-emerald-500 transition-all"
           >
             <div className="text-left">
-              <p className="font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tight">Sí, la logré</p>
-              <p className="text-[10px] text-emerald-600/60 dark:text-emerald-500/60 font-black uppercase tracking-widest">Todos los sets completados</p>
+              <p className="font-semibold text-emerald-600 dark:text-emerald-500">Sí, la logré</p>
+              <p className="text-xs text-emerald-600/60 dark:text-emerald-500/60 font-medium">Todos los sets completados</p>
             </div>
             <div className="h-6 w-6 rounded-full border-2 border-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
               <CheckCircle className="h-4 w-4" />
@@ -906,8 +942,8 @@ export default function ActiveWorkout() {
             className="w-full flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl group hover:border-zinc-400 transition-all"
           >
             <div className="text-left">
-              <p className="font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-tight">No completamente</p>
-              <p className="text-[10px] text-zinc-500/60 font-black uppercase tracking-widest">Faltaron algunos ejercicios</p>
+              <p className="font-semibold text-zinc-600 dark:text-zinc-400">No completamente</p>
+              <p className="text-xs text-zinc-500/60 font-medium">Faltaron algunos ejercicios</p>
             </div>
           </button>
 
@@ -923,25 +959,25 @@ export default function ActiveWorkout() {
         title="Reiniciar progreso"
       >
         <p className="text-sm text-zinc-500 mb-6">
-          ¿Vaciar todos los campos y reiniciar el progreso no guardado de esta sesión?
+          Se cerrará la sesión actual y comenzará una nueva desde cero. El tiempo y el progreso se reiniciarán.
         </p>
         <div className="flex gap-4">
-          <Button variant="ghost" className="flex-1" onClick={() => setShowResetConfirm(false)}>
+          <Button variant="ghost" className="flex-1" onClick={() => setShowResetConfirm(false)} disabled={isResetting}>
             Cancelar
           </Button>
-          <Button variant="danger" className="flex-1" onClick={confirmResetProgress}>
-            Reiniciar
+          <Button variant="danger" className="flex-1" onClick={() => void confirmResetProgress()} disabled={isResetting}>
+            {isResetting ? 'Reiniciando…' : 'Reiniciar'}
           </Button>
         </div>
       </Modal>
 
       {/* Rest Timer Overlay */}
       {isResting && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 z-50 rounded-3xl shadow-2xl animate-in slide-in-from-bottom-8">
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 z-50 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8">
           <div className="max-w-md mx-auto">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Descanso</span>
-              <span className="text-3xl font-black text-zinc-900 dark:text-white font-mono italic tracking-tighter">{formatTime(restTimer)}</span>
+              <span className="text-xs font-medium text-zinc-400">Descanso</span>
+              <span className="text-3xl font-bold text-zinc-900 dark:text-white font-mono tabular-nums">{formatTime(restTimer)}</span>
             </div>
             
             <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-3 mb-6 overflow-hidden">
@@ -954,7 +990,7 @@ export default function ActiveWorkout() {
             <div className="flex gap-3">
               <button 
                 onClick={() => addRestTime(30)}
-                className="flex-1 py-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                className="flex-1 py-3 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-2xl text-xs font-semibold transition-all"
               >
                 +30s
               </button>

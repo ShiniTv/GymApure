@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge, Spinner, Skeleton } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, PaginationBar, Badge, Spinner, Skeleton, FilterChips } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { clientLogger } from '../lib/clientLogger';
 
@@ -35,6 +35,7 @@ export default function Payments() {
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
+  const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
   const isAdmin = user?.role === 'admin';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -200,7 +201,7 @@ export default function Payments() {
           isMember ? (
             <>Mis <span className="text-orange-500">pagos</span></>
           ) : (
-            <>GESTIÓN DE <span className="text-orange-500">PAGOS</span></>
+            <>Gestión de <span className="text-orange-500">pagos</span></>
           )
         }
         subtitle={
@@ -218,22 +219,20 @@ export default function Payments() {
         }
       />
 
-      {isAdmin && (
-        <div className="flex gap-3">
-          <Select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="max-w-xs"
-          >
-            <option value="">Todos los estados</option>
-            <option value="pending">Pendientes</option>
-            <option value="approved">Aprobados</option>
-            <option value="rejected">Rechazados</option>
-          </Select>
-        </div>
+      {isStaffPayment && (
+        <FilterChips
+          options={[
+            { value: '', label: 'Todos' },
+            { value: 'pending', label: 'Pendientes', count: adminStats?.stats?.pendingPayments },
+            { value: 'approved', label: 'Aprobados' },
+            { value: 'rejected', label: 'Rechazados' },
+          ]}
+          value={statusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        />
       )}
 
       <Card padding="none" rounded="3xl" className="overflow-hidden">
@@ -248,7 +247,7 @@ export default function Payments() {
                 payments.map((payment) => (
                   <div key={payment.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-black text-zinc-900 dark:text-white">${payment.amount_usd}</p>
+                      <p className="font-semibold text-zinc-900 dark:text-white">${payment.amount_usd}</p>
                       <Badge
                         variant={
                           payment.status === 'approved'
@@ -265,7 +264,7 @@ export default function Payments() {
                             : 'Pendiente'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider">
+                    <p className="text-xs text-zinc-500">
                       {payment.method.replace('_', ' ')} · {new Date(payment.created_at).toLocaleDateString()}
                     </p>
                     <p className="text-xs font-mono text-zinc-400">Ref: {payment.reference}</p>
@@ -274,7 +273,7 @@ export default function Payments() {
                         href={paymentProofUrl(payment.id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-500"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-500"
                       >
                         <FileImage className="h-4 w-4" />
                         Ver comprobante
@@ -287,7 +286,7 @@ export default function Payments() {
 
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-xs font-semibold text-zinc-500">
                   <tr>
                     <th className="px-8 py-5">Monto (USD)</th>
                     <th className="px-8 py-5">Método</th>
@@ -303,12 +302,12 @@ export default function Payments() {
                     <tr><td colSpan={5} className="px-8 py-12 text-center text-zinc-400">No hay pagos registrados</td></tr>
                   ) : payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-8 py-5 font-black text-zinc-900 dark:text-white">${payment.amount_usd}</td>
-                      <td className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">{payment.method.replace('_', ' ')}</td>
+                      <td className="px-8 py-5 font-semibold text-zinc-900 dark:text-white">${payment.amount_usd}</td>
+                      <td className="px-8 py-5 text-sm text-zinc-500 capitalize">{payment.method.replace('_', ' ')}</td>
                       <td className="px-8 py-5 font-mono text-[10px] opacity-50">{payment.reference}</td>
                       <td className="px-8 py-5">
                         {payment.proof_url ? (
-                          <a href={paymentProofUrl(payment.id)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-orange-600 hover:text-orange-500">
+                          <a href={paymentProofUrl(payment.id)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-500">
                             <FileImage className="h-4 w-4" /> Ver
                           </a>
                         ) : '—'}
@@ -335,18 +334,18 @@ export default function Payments() {
             payments.map((payment) => (
               <div key={payment.id} className="p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-black text-zinc-900 dark:text-white uppercase text-sm">{payment.user_name}</p>
+                  <p className="font-semibold text-zinc-900 dark:text-white text-sm">{payment.user_name}</p>
                   <Badge variant={payment.status === 'approved' ? 'success' : payment.status === 'rejected' ? 'danger' : 'warning'}>
                     {payment.status === 'approved' ? 'Aprobado' : payment.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
                   </Badge>
                 </div>
-                <p className="text-2xl font-black text-orange-600">${payment.amount_usd}</p>
+                <p className="text-xl font-semibold text-orange-600">${payment.amount_usd}</p>
                 {payment.proof_url && (
                   <a href={paymentProofUrl(payment.id)} target="_blank" rel="noopener noreferrer" className="block rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
                     <img src={paymentProofUrl(payment.id)} alt="Comprobante" loading="lazy" decoding="async" className="w-full max-h-40 object-cover" />
                   </a>
                 )}
-                {user?.role === 'admin' && payment.status === 'pending' && (
+                {isStaffPayment && payment.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500" onClick={() => openApproveModal(payment)}>
                       <Check className="h-4 w-4" /> Aprobar
@@ -362,7 +361,7 @@ export default function Payments() {
         </div>
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
+            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-xs font-semibold text-zinc-500">
               <tr>
                 <th className="px-8 py-5">Usuario</th>
                 <th className="px-8 py-5">Monto (USD)</th>
@@ -375,28 +374,28 @@ export default function Payments() {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {loading ? (
-                 <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Cargando pagos...</td></tr>
+                 <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 text-sm">Cargando pagos...</td></tr>
               ) : payments.length === 0 ? (
-                <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">No hay pagos registrados</td></tr>
+                <tr><td colSpan={7} className="px-8 py-12 text-center text-zinc-400 text-sm">No hay pagos registrados</td></tr>
               ) : payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
-                  <td className="px-8 py-5 font-black text-zinc-700 dark:text-zinc-200 uppercase tracking-tight">{payment.user_name}</td>
-                  <td className="px-8 py-5 font-black text-zinc-900 dark:text-white italic tracking-tighter">${payment.amount_usd}</td>
-                  <td className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-500">{payment.method.replace('_', ' ')}</td>
-                  <td className="px-8 py-5 font-mono text-[10px] font-black tracking-tighter opacity-50">{payment.reference}</td>
+                  <td className="px-8 py-5 font-medium text-zinc-700 dark:text-zinc-200">{payment.user_name}</td>
+                  <td className="px-8 py-5 font-semibold text-zinc-900 dark:text-white">${payment.amount_usd}</td>
+                  <td className="px-8 py-5 text-sm text-zinc-500 capitalize">{payment.method.replace('_', ' ')}</td>
+                  <td className="px-8 py-5 font-mono text-xs text-zinc-400">{payment.reference}</td>
                   <td className="px-8 py-5">
                     {payment.proof_url ? (
                       <a
                         href={paymentProofUrl(payment.id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-500"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-500"
                       >
                         <FileImage className="h-4 w-4" />
                         Ver
                       </a>
                     ) : (
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">—</span>
+                      <span className="text-xs text-zinc-400">—</span>
                     )}
                   </td>
                   <td className="px-8 py-5">
@@ -417,7 +416,7 @@ export default function Payments() {
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {user?.role === 'admin' && payment.status === 'pending' && (
+                    {isStaffPayment && payment.status === 'pending' && (
                       <div className="flex justify-end gap-2">
                         <button onClick={() => openApproveModal(payment)} className="p-1 hover:bg-emerald-500/20 rounded text-emerald-500" title="Aprobar">
                           <Check className="h-5 w-5" />
@@ -480,7 +479,7 @@ export default function Payments() {
             <Input
               type="number"
               required
-              className="text-2xl font-black italic tracking-tighter"
+              className="text-xl font-semibold"
               value={amountUsd}
               onChange={(e) => setAmountUsd(e.target.value)}
               placeholder="0.00"
@@ -511,15 +510,15 @@ export default function Payments() {
           <div>
             <Label>Comprobante (Captura)</Label>
             <div className="flex items-center justify-center w-full">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 dark:border-zinc-700 border-dashed rounded-3xl cursor-pointer bg-zinc-50 dark:bg-zinc-800/10 hover:bg-orange-500/5 hover:border-orange-500/50 transition-all group">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 dark:border-zinc-700 border-dashed rounded-xl cursor-pointer bg-zinc-50 dark:bg-zinc-800/10 hover:bg-orange-500/5 hover:border-orange-500/50 transition-all group">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <Upload className="w-8 h-8 mb-3 text-zinc-400 group-hover:text-orange-500 transition-colors" />
-                  <p className="text-xs font-black uppercase tracking-widest text-zinc-500 group-hover:text-orange-600 transition-colors">ADJUNTAR COMPROBANTE</p>
+                  <p className="text-xs font-medium text-zinc-500 group-hover:text-orange-600 transition-colors">Adjuntar comprobante</p>
                 </div>
                 <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </label>
             </div>
-            {file && <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500 mt-2 text-center">Seleccionado: {file.name}</p>}
+            {file && <p className="text-xs font-medium text-emerald-600 dark:text-emerald-500 mt-2 text-center">Seleccionado: {file.name}</p>}
           </div>
 
           <div className="flex gap-4 pt-4">
@@ -534,7 +533,7 @@ export default function Payments() {
       </Modal>
 
       <Modal
-        open={!!approveTarget && user?.role === 'admin'}
+        open={!!approveTarget && isStaffPayment}
         onClose={() => setApproveTarget(null)}
         title={<>Aprobar <span className="text-emerald-500">pago</span></>}
       >

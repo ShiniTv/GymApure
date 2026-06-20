@@ -60,7 +60,7 @@ export function SegmentedControl<T extends string>({
               fullWidth && 'flex-1',
               isKiosk
                 ? cn(
-                    'py-3 rounded-xl text-xs font-black uppercase tracking-widest',
+                    'py-3 rounded-xl text-xs font-semibold',
                     active
                       ? accentActive[accent]
                       : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'

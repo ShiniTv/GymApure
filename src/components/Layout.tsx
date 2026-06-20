@@ -28,14 +28,12 @@ import {
   FileSpreadsheet,
   CalendarClock,
   Settings2,
+  Fingerprint,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { ROLE_LABELS } from '../lib/roles';
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador',
-  trainer: 'Entrenador',
-  member: 'Miembro',
-};
+const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -48,19 +46,20 @@ export default function Layout() {
   const memberExpiryDays = memberStats?.stats?.subscription?.days_remaining ?? null;
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member'] },
-    { name: 'Miembros', href: '/members', icon: Users, roles: ['admin', 'trainer'] },
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member', 'receptionist'] },
+    { name: 'Recepción', href: '/reception', icon: Fingerprint, roles: ['admin', 'receptionist'] },
+    { name: 'Miembros', href: '/members', icon: Users, roles: ['admin', 'trainer', 'receptionist'] },
     { name: 'Membresías', href: '/memberships', icon: CreditCard, roles: ['admin'] },
     { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, roles: ['admin'] },
     { name: 'Asistencias', href: '/attendance', icon: BarChart2, roles: ['admin'] },
     { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, roles: ['admin'] },
     { name: 'Configuración', href: '/settings', icon: Settings2, roles: ['admin'] },
-    { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member'] },
+    { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member', 'receptionist'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
     { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock, roles: ['trainer'] },
     { name: 'Ejercicios', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
     { name: 'Historial', href: '/history', icon: History, roles: ['member'] },
-    { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member'] },
+    { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member', 'receptionist'] },
   ];
 
   const filteredNav = navigation.filter(item => item.roles.includes(user?.role || ''));
@@ -90,9 +89,9 @@ export default function Layout() {
         <div className="flex items-center gap-2 min-w-0">
           <Logo className="h-8 w-8 shrink-0" />
           <div className="min-w-0">
-            <span className="font-bold text-lg tracking-tight uppercase block truncate">Caribean Gym</span>
+            <span className="font-bold text-lg tracking-tight block truncate">Caribean Gym</span>
             {currentPage && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 truncate block">
+              <span className="text-xs font-semibold text-orange-500 truncate block">
                 {currentPage}
               </span>
             )}
@@ -119,9 +118,9 @@ export default function Layout() {
         )}>
           <div className="flex h-16 items-center gap-2 px-6 border-b border-zinc-200 dark:border-zinc-800">
             <Logo className="h-10 w-10" />
-            <span className="text-xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic leading-[0.8]">
+            <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white leading-tight">
               Caribean<br/>
-              <span className="text-orange-500 text-xs tracking-[0.2em] font-black not-italic">GYM</span>
+              <span className="text-orange-500 text-xs tracking-wide font-semibold">Gym</span>
             </span>
           </div>
 
@@ -144,12 +143,12 @@ export default function Layout() {
                     <item.icon className="h-5 w-5" />
                     <span className="flex-1">{item.name}</span>
                     {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
-                      <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-black">
+                      <span className="min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full bg-orange-500 text-white text-[10px] font-semibold">
                         {expiringCount > 99 ? '99+' : expiringCount}
                       </span>
                     )}
                     {user?.role === 'member' && item.href === '/' && memberExpiryDays != null && shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
-                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-black ${expiryNavDotClass(memberExpiryDays)}`}>
+                      <span className={`min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-white text-[10px] font-semibold ${expiryNavDotClass(memberExpiryDays)}`}>
                         !
                       </span>
                     )}
@@ -178,9 +177,9 @@ export default function Layout() {
               </button>
 
               <div className="px-3 py-2">
-                <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight italic">{user?.name}</p>
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none mt-1">
-                  {ROLE_LABELS[user?.role ?? ''] ?? user?.role}
+                <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-xs font-medium text-zinc-500 leading-none mt-1">
+                  {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                 </p>
               </div>
               <button

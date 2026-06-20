@@ -210,14 +210,10 @@ export default function Reports() {
 
 
 
-      <Card>
-
-        <h2 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-
-          <Calendar className="h-4 w-4" />
-
+      <Card padding="lg" rounded="2xl">
+        <h2 className="section-title mb-4 flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-orange-500" />
           Rango de fechas (pagos y asistencias)
-
         </h2>
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -256,44 +252,25 @@ export default function Reports() {
 
           return (
 
-            <Card key={report.type} className="flex flex-col">
-
+            <Card key={report.type} padding="lg" rounded="2xl" className="flex flex-col">
               <div className="flex items-start gap-4 mb-4">
-
-                <div className="p-3 bg-orange-500/10 rounded-xl">
-
+                <div className="p-3 bg-orange-500/10 rounded-xl shrink-0">
                   <Icon className="h-6 w-6 text-orange-600 dark:text-orange-500" />
-
                 </div>
-
                 <div>
-
-                  <h3 className="font-black text-zinc-900 dark:text-white uppercase tracking-tight">
-
+                  <h3 className="font-semibold text-zinc-900 dark:text-white">
                     {report.title}
-
                   </h3>
-
                   <p className="text-sm text-zinc-500 mt-1">{report.description}</p>
-
                 </div>
-
               </div>
-
               <div className="mb-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 border border-zinc-100 dark:border-zinc-800">
-
-                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Registros estimados</p>
-
+                <p className="stat-label">Registros estimados</p>
                 {previewLoading ? (
-
                   <Skeleton className="h-8 w-16 mt-2" />
-
                 ) : (
-
-                  <p className="text-2xl font-black text-orange-500 mt-1">{count ?? '—'}</p>
-
+                  <p className="stat-value text-orange-500 mt-1">{count ?? '—'}</p>
                 )}
-
               </div>
 
               <Button
@@ -340,7 +317,7 @@ export default function Reports() {
 
 
 
-      <Card className="flex items-center gap-3 text-zinc-500">
+      <Card padding="lg" rounded="2xl" className="flex items-center gap-3 text-zinc-500">
 
         <FileSpreadsheet className="h-5 w-5 text-orange-500 shrink-0" />
 

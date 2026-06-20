@@ -24,11 +24,11 @@ export default function AuthBrandHeader({ subtitle, size = 'md', className }: Au
       </div>
       <h1
         className={cn(
-          'mt-6 font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic',
+          'mt-6 font-bold tracking-tight text-zinc-900 dark:text-white',
           titleSize
         )}
       >
-        CARIBEAN <span className="text-orange-500">GYM</span>
+        Caribean <span className="text-orange-500">Gym</span>
       </h1>
       {subtitle && (
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>

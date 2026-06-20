@@ -18,3 +18,5 @@ export { Avatar } from './Avatar';
 export { Breadcrumbs } from './Breadcrumbs';
 export type { BreadcrumbItem } from './Breadcrumbs';
 export { Accordion, AccordionItem } from './Accordion';
+export { FilterChips } from './FilterChips';
+export type { FilterChipOption } from './FilterChips';

@@ -1,6 +1,7 @@
 import { query } from '../../db/index.ts';
 import { buildExpiryWarning } from '../../lib/expiringSubscriptions.ts';
 import { getExpiryAlertDays } from '../../lib/gymSettings.ts';
+import { cedulaWhereClause } from '../../lib/cedulaUtils.ts';
 
 export interface KioskUserContext {
   id: number;
@@ -20,7 +21,7 @@ type KioskSuccess = { ok: true; user: KioskUserContext };
 
 export async function resolveKioskUser(cedula: string): Promise<KioskSuccess | KioskError> {
   const userResult = await query<{ id: number; full_name: string; status: string }>(
-    'SELECT id, full_name, status FROM users WHERE cedula = $1',
+    `SELECT id, full_name, status FROM users WHERE ${cedulaWhereClause('cedula', 1)}`,
     [cedula]
   );
   const user = userResult.rows[0];

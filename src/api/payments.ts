@@ -24,6 +24,7 @@ import {
   parseSearchQuery,
   type PaginatedResult,
 } from '../lib/pagination.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = Router();
 
@@ -36,7 +37,7 @@ const paymentReportSchema = z.object({
   user_id: z.coerce.number().int().positive().optional(),
 });
 
-router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) => {
+router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: AuthRequest, res) => {
   const user = req.user!;
   const { page, pageSize, offset } = parsePaginationQuery(req.query, {
     pageSize: user.role === 'member' ? 10 : 20,
@@ -60,7 +61,7 @@ router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) =>
     conditions.push(`p.status = $${params.length}`);
   }
 
-  if (search && user.role === 'admin') {
+  if (search && (user.role === 'admin' || user.role === 'receptionist')) {
     params.push(`%${search.toLowerCase()}%`);
     const idx = params.length;
     conditions.push(
@@ -107,7 +108,7 @@ router.get('/', authorize(['admin', 'member']), async (req: AuthRequest, res) =>
   }
 });
 
-router.get('/:id/proof', authorize(['admin', 'member']), async (req: AuthRequest, res) => {
+router.get('/:id/proof', authorize(['admin', 'member', 'receptionist']), async (req: AuthRequest, res) => {
   const paymentId = parseInt(req.params.id, 10);
   if (Number.isNaN(paymentId)) {
     return res.status(400).json({ error: 'ID inválido' });
@@ -124,7 +125,7 @@ router.get('/:id/proof', authorize(['admin', 'member']), async (req: AuthRequest
     }
 
     const user = req.user!;
-    if (user.role !== 'admin' && user.id !== Number(payment.user_id)) {
+    if (user.role !== 'admin' && user.role !== 'receptionist' && user.id !== Number(payment.user_id)) {
       return res.status(403).json({ error: 'Permisos insuficientes' });
     }
 
@@ -135,7 +136,7 @@ router.get('/:id/proof', authorize(['admin', 'member']), async (req: AuthRequest
   }
 });
 
-router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), async (req: AuthRequest, res) => {
+router.post('/', authorize(['admin', 'member', 'receptionist']), proofUpload.single('proof'), async (req: AuthRequest, res) => {
   const parsed = paymentReportSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -144,9 +145,11 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
   const { amount_usd, amount_bs, exchange_rate, method, reference } = parsed.data;
   const user = req.user!;
   const user_id =
-    user.role === 'member' ? user.id : parsed.data.user_id ?? parseInt(String(req.body.user_id), 10);
+    user.role === 'member'
+      ? user.id
+      : parsed.data.user_id ?? parseInt(String(req.body.user_id), 10);
 
-  if (user.role === 'admin' && Number.isNaN(user_id)) {
+  if ((user.role === 'admin' || user.role === 'receptionist') && Number.isNaN(user_id)) {
     return res.status(400).json({ error: 'user_id requerido' });
   }
 
@@ -186,7 +189,7 @@ router.post('/', authorize(['admin', 'member']), proofUpload.single('proof'), as
   }
 });
 
-router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) => {
+router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
   const { id } = req.params;
   const membershipId = req.body.membership_id
     ? parseInt(String(req.body.membership_id), 10)
@@ -251,7 +254,7 @@ router.post('/:id/approve', authorize(['admin']), async (req: AuthRequest, res) 
   }
 });
 
-router.post('/:id/reject', authorize(['admin']), async (req: AuthRequest, res) => {
+router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
   const { id } = req.params;
 
   try {

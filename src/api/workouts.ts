@@ -107,6 +107,28 @@ router.post('/finish', requireWorkoutSessionAccess, async (req, res) => {
   }
 });
 
+/** Abandon an in-progress session so the member can start fresh. */
+router.post('/cancel', requireWorkoutSessionAccess, async (req, res) => {
+  const { session_id } = req.body;
+
+  try {
+    const { rowCount } = await query(
+      `UPDATE workout_sessions
+       SET end_time = NOW(), success = 0
+       WHERE id = $1 AND end_time IS NULL`,
+      [session_id]
+    );
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
+    }
+    await query('DELETE FROM workout_logs WHERE session_id = $1', [session_id]);
+    res.json({ success: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
 router.patch('/sessions/:sessionId/success', requireWorkoutSessionAccess, async (req, res) => {
   const { sessionId } = req.params;
   const { success } = req.body;

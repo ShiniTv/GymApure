@@ -62,7 +62,8 @@ export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) =
     return;
   }
 
-  if (rows[0].user_id !== user.id) {
+  // BIGINT columns come back as strings from node-pg — normalize before compare
+  if (Number(rows[0].user_id) !== Number(user.id)) {
     res.status(403).json({ error: 'Permisos insuficientes' });
     return;
   }

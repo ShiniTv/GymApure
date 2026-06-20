@@ -15,11 +15,11 @@ export function EmptyState({ icon: Icon, title, description, action, className }
   return (
     <Card
       padding="lg"
-      rounded="3xl"
+      rounded="2xl"
       className={cn('text-center border-dashed', className)}
     >
       <Icon className="h-12 w-12 text-zinc-200 dark:text-zinc-700 mx-auto mb-4" />
-      <p className="text-sm font-black text-zinc-700 dark:text-zinc-200 tracking-tight">{title}</p>
+      <p className="text-base font-semibold text-zinc-700 dark:text-zinc-200">{title}</p>
       {description && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 max-w-sm mx-auto">{description}</p>
       )}

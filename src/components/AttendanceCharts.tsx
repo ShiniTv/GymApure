@@ -8,7 +8,7 @@ interface DailyVolumePoint {
 export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-zinc-400 font-bold uppercase tracking-widest text-xs">
+      <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
         Sin datos
       </div>
     );
@@ -50,11 +50,11 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
             if (active && payload && payload.length) {
               return (
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-2xl">
-                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">
+                  <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mb-1">
                     {payload[0].payload.date}
                   </p>
-                  <p className="text-lg font-black text-orange-500 italic tracking-tighter uppercase">
-                    {payload[0].value} Ingresos
+                  <p className="text-lg font-semibold text-orange-500">
+                    {payload[0].value} ingresos
                   </p>
                 </div>
               );
@@ -83,7 +83,7 @@ interface HourlyVolumePoint {
 export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-zinc-400 font-bold uppercase tracking-widest text-xs">
+      <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
         Sin datos
       </div>
     );
@@ -122,11 +122,11 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
             if (active && payload && payload.length) {
               return (
                 <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-2xl">
-                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">
-                    {payload[0].payload.hour}:00 HS
+                  <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mb-1">
+                    {payload[0].payload.hour}:00
                   </p>
-                  <p className="text-lg font-black text-blue-500 italic tracking-tighter uppercase">
-                    {payload[0].value} Ingresos
+                  <p className="text-lg font-semibold text-blue-500">
+                    {payload[0].value} ingresos
                   </p>
                 </div>
               );

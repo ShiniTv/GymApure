@@ -166,17 +166,17 @@ export default function WorkoutHistory() {
       {!id && history.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <Card padding="sm" rounded="xl">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Esta semana</p>
-            <p className="text-2xl font-black text-orange-500 mt-1">{workoutsThisWeek}</p>
+            <p className="stat-label">Esta semana</p>
+            <p className="stat-value text-orange-500 mt-1">{workoutsThisWeek}</p>
           </Card>
           <Card padding="sm" rounded="xl">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Total sesiones</p>
-            <p className="text-2xl font-black text-zinc-900 dark:text-white mt-1">{total}</p>
+            <p className="stat-label">Total sesiones</p>
+            <p className="stat-value mt-1">{total}</p>
           </Card>
         </div>
       )}
 
-      <Card padding="none" rounded="3xl" className="overflow-hidden">
+      <Card padding="none" rounded="2xl" className="overflow-hidden">
         {history.length === 0 && !loading ? (
           <EmptyState
             icon={Dumbbell}
@@ -202,17 +202,17 @@ export default function WorkoutHistory() {
                 <div className="p-12 flex justify-center"><Spinner /></div>
               ) : (
                 history.map((session) => (
-                  <div key={session.id} className="p-4 space-y-2">
+                  <div key={session.id} className="p-4 space-y-3 bg-white dark:bg-zinc-900">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="font-bold text-zinc-900 dark:text-white text-sm">
+                      <p className="font-semibold text-zinc-900 dark:text-white text-sm">
                         {new Date(session.start_time).toLocaleDateString()}
                       </p>
                       <Badge variant={session.end_time ? 'default' : 'warning'}>
                         {session.end_time ? 'Finalizado' : 'En curso'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-orange-600 dark:text-orange-500 font-bold">{session.routine_name}</p>
-                    <div className="flex flex-wrap gap-3 text-xs text-zinc-500">
+                    <p className="text-sm text-orange-600 dark:text-orange-500 font-semibold">{session.routine_name}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
                         {formatDuration(session.start_time, session.end_time)}
@@ -240,14 +240,14 @@ export default function WorkoutHistory() {
 
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 uppercase font-black text-[10px] tracking-widest">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-xs font-semibold text-zinc-500">
                   <tr>
-                    <th className="px-4 lg:px-8 py-5">Fecha</th>
-                    <th className="px-4 lg:px-8 py-5">Rutina</th>
-                    <th className="px-4 lg:px-8 py-5">Duración</th>
-                    <th className="px-4 lg:px-8 py-5">Series</th>
-                    <th className="px-4 lg:px-8 py-5">Éxito</th>
-                    <th className="px-4 lg:px-8 py-5">Estado</th>
+                    <th className="px-4 lg:px-8 py-4">Fecha</th>
+                    <th className="px-4 lg:px-8 py-4">Rutina</th>
+                    <th className="px-4 lg:px-8 py-4">Duración</th>
+                    <th className="px-4 lg:px-8 py-4">Series</th>
+                    <th className="px-4 lg:px-8 py-4">Éxito</th>
+                    <th className="px-4 lg:px-8 py-4">Estado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -263,11 +263,11 @@ export default function WorkoutHistory() {
                         key={session.id}
                         className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group"
                       >
-                        <td className="px-4 lg:px-8 py-5 font-bold text-zinc-700 dark:text-zinc-200">
+                        <td className="px-4 lg:px-8 py-4 font-medium text-zinc-700 dark:text-zinc-200">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-orange-500" />
+                            <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
                             {new Date(session.start_time).toLocaleDateString()}
-                            <span className="text-[10px] text-zinc-400">
+                            <span className="text-xs text-zinc-400">
                               {new Date(session.start_time).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -275,19 +275,19 @@ export default function WorkoutHistory() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 lg:px-8 py-5 font-bold text-orange-600 dark:text-orange-500">
+                        <td className="px-4 lg:px-8 py-4 font-semibold text-orange-600 dark:text-orange-500">
                           {session.routine_name}
                         </td>
-                        <td className="px-4 lg:px-8 py-5 text-zinc-500">
+                        <td className="px-4 lg:px-8 py-4 text-zinc-500">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
                             {formatDuration(session.start_time, session.end_time)}
                           </div>
                         </td>
-                        <td className="px-4 lg:px-8 py-5 text-zinc-500">
+                        <td className="px-4 lg:px-8 py-4 text-zinc-500">
                           {session.sets_completed} series
                         </td>
-                        <td className="px-4 lg:px-8 py-5">
+                        <td className="px-4 lg:px-8 py-4">
                           {id ? (
                             <Badge variant={session.success === 1 ? 'success' : 'danger'}>
                               {session.success === 1 ? 'Exitoso' : 'Fallido'}
@@ -300,7 +300,7 @@ export default function WorkoutHistory() {
                             </button>
                           )}
                         </td>
-                        <td className="px-4 lg:px-8 py-5">
+                        <td className="px-4 lg:px-8 py-4">
                           <Badge variant={session.end_time ? 'default' : 'warning'}>
                             {session.end_time ? 'Finalizado' : 'En curso'}
                           </Badge>

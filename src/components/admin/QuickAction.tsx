@@ -30,16 +30,16 @@ export function QuickAction({ to, icon: Icon, title, description, count, tone = 
     <Link
       to={to}
       aria-label={`${title}: ${description}`}
-      className="group flex items-start gap-4 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-orange-500/40 transition-all active:scale-[0.98]"
+      className="group flex items-start gap-4 p-5 min-h-[72px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-orange-500/40 transition-all active:scale-[0.98] touch-manipulation"
     >
       <div className={cn('p-3 rounded-xl transition-colors shrink-0', toneMap[tone])}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">{title}</p>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-white">{title}</p>
           {count != null && count > 0 && (
-            <span className={cn('min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-black', toneBadgeMap[tone])}>
+            <span className={cn('min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-semibold', toneBadgeMap[tone])}>
               {count > 99 ? '99+' : count}
             </span>
           )}
