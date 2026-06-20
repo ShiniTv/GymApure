@@ -28,7 +28,6 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gym_test
       JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-long
       DEMO_PASSWORD: ci-demo-pass-12
-      NODE_ENV: production
       ALLOW_PUBLIC_REGISTER: 'true'
 
     steps:
@@ -66,6 +65,7 @@ jobs:
 
       - name: Integration & E2E tests
         env:
+          NODE_ENV: production
           CHECKLIST_ADMIN_EMAIL: checklist-admin@test.local
           CHECKLIST_ADMIN_PASSWORD: ChecklistAdmin123!
         run: |
