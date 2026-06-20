@@ -1,13 +1,11 @@
 ## Summary
-- Add receptionist role with dashboard, counter mode, walk-in wizard, and access-control panel backed by new API routes and migration.
-- Introduce a shared design system (typography tokens, FilterChips, softer Modal/Table/EmptyState) and apply visual polish across admin, trainer, member, login/register, and kiosk check-in.
-- Improve mobile workout flow, reception shortcuts, and admin/trainer dashboards with grouped KPIs, filter chips, and consistent section titles.
+- Remove public kiosk check-in API and require authenticated staff for reception/check-in flows.
+- Revalidate JWT sessions against the database with `token_version` invalidation on password and status changes.
+- Enforce trainer IDOR guards, routine filtering by role, upload validation, global `asyncRouter`, API/upload rate limits, and React Query on key pages.
+- Add `test:security-checklist` and `test:e2e`, unify CI on the full E2E suite, enable TypeScript `strict`, and document testing in `docs/TESTING.md`.
 
 ## Test plan
 - [x] `npm run lint`
-- [x] `npm run test:reception-checklist` (14/14)
-- [x] `npm run test:auth-checklist` (12/12)
-- [x] `npm run verify:local-e2e`
-- [x] Visual pass in browser by role
-- [x] Migration `20260619000000_add_receptionist_role.sql` applied locally
-- [ ] Manual smoke: counter mode shortcuts (Enter/F1/F2) on `/reception?mode=counter`
+- [x] `npm run build`
+- [x] `npm run db:restore-demo`
+- [x] `npm run verify:local-e2e` (integration + security + auth + reception)

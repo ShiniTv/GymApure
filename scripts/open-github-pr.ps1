@@ -12,7 +12,7 @@ if ($branch -eq 'main' -or $branch -eq 'master') {
   exit 1
 }
 
-$title = 'Reception workflows and unified UI polish'
+$title = 'Security hardening, E2E tests, and TypeScript strict'
 $encodedTitle = [uri]::EscapeDataString($title)
 $url = "https://github.com/ShiniTv/caribean-gym/compare/main...${branch}?expand=1&title=$encodedTitle"
 
