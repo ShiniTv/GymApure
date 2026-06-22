@@ -5,7 +5,7 @@ import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
-import { notifyRoutineAssigned } from '../lib/notifications/eventNotifier.ts';
+import { notifyRoutineAssigned } from '../lib/chat/eventMessages.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
 import {
   uploadMediaFile,

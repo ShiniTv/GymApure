@@ -2,11 +2,12 @@ import type { Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import {
-  getSupabaseAdmin,
   isSupabaseStorageConfigured,
   AVATARS_BUCKET,
   VIDEOS_BUCKET,
   STORAGE_MEDIA_PREFIX,
+  supabaseStorageDownload,
+  supabaseStorageUpload,
 } from './supabaseAdmin.ts';
 import { avatarApiPath, videoApiPath, resolveFilePath } from './uploadStorage.ts';
 
@@ -60,20 +61,12 @@ export async function uploadMediaFile(
   const ext = path.extname(file.originalname) || extensionFromMime(file.mimetype, kind);
   const objectKey = `${objectPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
-  const supabase = getSupabaseAdmin();
   const body = file.buffer ?? (file.path ? fs.readFileSync(file.path) : null);
   if (!body) {
     throw new Error('No se pudo leer el archivo subido');
   }
 
-  const { error } = await supabase.storage.from(bucketForKind(kind)).upload(objectKey, body, {
-    contentType: file.mimetype,
-    upsert: false,
-  });
-
-  if (error) {
-    throw new Error(`Error al subir archivo: ${error.message}`);
-  }
+  await supabaseStorageUpload(bucketForKind(kind), objectKey, body, file.mimetype);
 
   if (file.path) {
     try {
@@ -93,34 +86,28 @@ export function isMediaStorageRemote(): boolean {
 export async function streamMediaFile(storedUrl: string, res: Response): Promise<void> {
   const parsed = parseStorageMediaRef(storedUrl);
   if (parsed) {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase.storage
-      .from(bucketForKind(parsed.kind))
-      .download(parsed.objectKey);
+    try {
+      const buffer = await supabaseStorageDownload(bucketForKind(parsed.kind), parsed.objectKey);
+      const ext = path.extname(parsed.objectKey).toLowerCase();
+      const contentType =
+        ext === '.png'
+          ? 'image/png'
+          : ext === '.webp'
+            ? 'image/webp'
+            : ext === '.webm'
+              ? 'video/webm'
+              : ext === '.mp4'
+                ? 'video/mp4'
+                : parsed.kind === 'avatars'
+                  ? 'image/jpeg'
+                  : 'video/mp4';
 
-    if (error || !data) {
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.send(buffer);
+    } catch {
       res.status(404).json({ error: 'Archivo no encontrado en Storage' });
-      return;
     }
-
-    const buffer = Buffer.from(await data.arrayBuffer());
-    const ext = path.extname(parsed.objectKey).toLowerCase();
-    const contentType =
-      ext === '.png'
-        ? 'image/png'
-        : ext === '.webp'
-          ? 'image/webp'
-          : ext === '.webm'
-            ? 'video/webm'
-            : ext === '.mp4'
-              ? 'video/mp4'
-              : parsed.kind === 'avatars'
-                ? 'image/jpeg'
-                : 'video/mp4';
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
-    res.send(buffer);
     return;
   }
 

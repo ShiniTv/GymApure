@@ -29,7 +29,9 @@ import {
   CalendarClock,
   Settings2,
   Fingerprint,
+  MessageSquare,
 } from 'lucide-react';
+import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
 import { ROLE_LABELS } from '../lib/roles';
 
@@ -47,6 +49,12 @@ export default function Layout() {
   const memberStats = useMemberStatsOptional();
   const expiringCount = adminStats?.expiringSoon ?? 0;
   const memberExpiryDays = memberStats?.stats?.subscription?.days_remaining ?? null;
+  const showChatNav =
+    user?.role === 'admin' ||
+    user?.role === 'trainer' ||
+    user?.role === 'receptionist' ||
+    user?.role === 'member';
+  const { data: chatUnread = 0 } = useChatUnreadQuery(showChatNav);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member', 'receptionist'] },
@@ -56,6 +64,7 @@ export default function Layout() {
     { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, roles: ['admin'] },
     { name: 'Asistencias', href: '/attendance', icon: BarChart2, roles: ['admin'] },
     { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, roles: ['admin'] },
+    { name: 'Mensajes', href: '/messages', icon: MessageSquare, roles: ['admin', 'trainer', 'receptionist', 'member'] },
     { name: 'Configuración', href: '/settings', icon: Settings2, roles: ['admin'] },
     { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member', 'receptionist'] },
     { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
@@ -95,17 +104,27 @@ export default function Layout() {
     </span>
   );
 
+  const mobileHeaderTitle = currentPage ?? 'Caribean Gym';
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300">
       {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between gap-2 px-3 h-12 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-2 min-w-0">
-          <Logo className="h-7 w-7 shrink-0" />
+      <div className="lg:hidden flex items-center justify-between gap-2 px-3 h-14 border-b border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Logo className="h-8 w-8 shrink-0" />
           <div className="min-w-0">
-            {brandMark}
-            {currentPage && (
-              <p className="text-[10px] font-medium text-zinc-400 truncate mt-0.5 leading-tight">
-                {currentPage}
+            {currentPage ? (
+              <>
+                <p className="text-sm font-bold text-zinc-900 dark:text-white truncate leading-tight">
+                  {mobileHeaderTitle}
+                </p>
+                <p className="text-[10px] font-medium text-zinc-400 truncate leading-tight">
+                  Caribean Gym
+                </p>
+              </>
+            ) : (
+              <p className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white truncate leading-tight">
+                Caribean <span className="text-orange-500">Gym</span>
               </p>
             )}
           </div>
@@ -129,7 +148,7 @@ export default function Layout() {
         {/* Sidebar */}
         <aside
           className={clsx(
-            'fixed top-12 bottom-0 left-0 z-40 w-60 transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ease-in-out lg:top-0 lg:inset-y-0 lg:static lg:translate-x-0',
+            'fixed top-14 bottom-0 left-0 z-40 w-60 transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ease-in-out lg:top-0 lg:inset-y-0 lg:static lg:translate-x-0',
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -151,6 +170,11 @@ export default function Layout() {
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
                     <span className="flex-1 truncate">{item.name}</span>
+                    {showChatNav && item.href === '/messages' && chatUnread > 0 && (
+                      <span className="nav-badge bg-orange-500 text-white">
+                        {chatUnread > 99 ? '99+' : chatUnread}
+                      </span>
+                    )}
                     {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
                       <span className="nav-badge bg-orange-500 text-white">
                         {expiringCount > 99 ? '99+' : expiringCount}

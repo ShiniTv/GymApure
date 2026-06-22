@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 
 interface PaginationBarProps {
@@ -14,26 +15,30 @@ export function PaginationBar({ page, pageSize, total, onPageChange, label = 're
   if (total === 0) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 sm:px-6 py-3 border-t border-zinc-100 dark:border-zinc-800">
-      <p className="text-xs font-medium text-zinc-400">
+    <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-zinc-100 dark:border-zinc-800">
+      <p className="text-xs font-medium text-zinc-400 min-w-0 truncate">
         {total} {label} · Página {page} de {totalPages}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 shrink-0">
         <Button
-          variant="secondary"
+          variant="ghost"
           size="sm"
+          className="h-10 w-10 p-0 rounded-xl"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
+          aria-label="Página anterior"
         >
-          Anterior
+          <ChevronLeft className="h-5 w-5" />
         </Button>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="sm"
+          className="h-10 w-10 p-0 rounded-xl"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
+          aria-label="Página siguiente"
         >
-          Siguiente
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
     </div>

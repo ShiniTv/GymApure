@@ -1,4 +1,4 @@
-import { runExpiryJob } from '../lib/notifications/expiryNotifier.ts';
+import { runExpiryJob } from '../lib/chat/expiryChatJob.ts';
 import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { logger } from '../lib/logger.ts';
 

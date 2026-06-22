@@ -48,6 +48,7 @@ export interface ExerciseOption {
 }
 
 export interface CalendarAssignment {
+  member_id: number;
   member_name: string;
   routine_name: string;
   difficulty: string;

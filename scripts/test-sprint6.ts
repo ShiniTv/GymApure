@@ -1,5 +1,5 @@
 /**
- * Prueba Sprint 6: notificaciones email/WhatsApp (mock o real).
+ * Prueba Sprint 6: chat in-app y settings de vencimiento.
  * Requiere servidor en marcha y DEMO_PASSWORD en .env.
  */
 import 'dotenv/config';
@@ -47,41 +47,25 @@ function saveCookie(res: Response) {
 }
 
 async function main() {
-  console.log('=== Sprint 6 — Notificaciones ===\n');
+  console.log('=== Sprint 6 — Chat in-app ===\n');
 
   const login = await api('POST', '/api/auth/login', { email: 'admin@gym.com', password: DEMO_PASSWORD });
   ok('Login admin', login.res.status === 200);
   saveCookie(login.res);
 
   const settings = await api('GET', '/api/settings/expiry');
-  const s = settings.data as {
-    notify_payment_events?: boolean;
-    notify_routine_assigned?: boolean;
-    whatsapp_notifications_enabled?: boolean;
-    providers?: {
-      email: boolean;
-      whatsapp: boolean;
-      whatsappProvider?: string | null;
-      whatsappProviderLabel?: string | null;
-    };
-  };
+  const s = settings.data as { expiry_alert_days?: number; providers?: unknown };
   ok('GET settings', settings.res.status === 200);
-  ok('Settings incluye notify_payment_events', typeof s.notify_payment_events === 'boolean');
-  ok('Settings incluye providers', typeof s.providers === 'object');
-  ok('Settings incluye whatsappProvider', 'whatsappProvider' in (s.providers ?? {}));
+  ok('Settings incluye expiry_alert_days', typeof s.expiry_alert_days === 'number');
+  ok('Settings sin providers outbound', s.providers === undefined);
 
-  const testEmail = await api('POST', '/api/settings/notifications/test', {
-    channel: 'email',
-    target: 'admin@gym.com',
-  });
-  ok('POST test email', testEmail.res.status === 200);
+  const unread = await api('GET', '/api/chat/unread-count');
+  ok('GET chat unread', unread.res.status === 200);
 
   const update = await api('PUT', '/api/settings/expiry', {
-    notify_payment_events: true,
-    notify_routine_assigned: true,
-    whatsapp_notifications_enabled: false,
+    expiry_alert_days: 10,
   });
-  ok('PUT settings notificaciones', update.res.status === 200);
+  ok('PUT settings expiry_alert_days', update.res.status === 200);
 
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);

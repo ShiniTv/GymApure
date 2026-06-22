@@ -23,11 +23,15 @@ export interface AdminStatsPayload {
   pendingPayments: number;
   activeSubscriptions: number;
   todayCheckIns: number;
+  yesterdayCheckIns: number;
+  revenueThisMonth: number;
+  revenueLastMonth: number;
   expiringSoon: number;
   expiredThisWeek: number;
   expiringList: Awaited<ReturnType<typeof getExpiringSubscriptions>>;
   expiryAlertDays: number;
   revenueHistory: { month: string; income: string }[];
+  revenueDaily: { date: string; income: string }[];
   lastDoorAlert: LastDoorAlert | null;
 }
 
@@ -39,7 +43,11 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     pendingPayments,
     activeSubscriptions,
     todayCheckIns,
+    yesterdayCheckIns,
+    revenueThisMonth,
+    revenueLastMonth,
     revenueHistory,
+    revenueDaily,
     expiringList,
     expiredThisWeek,
     lastDoorAlert,
@@ -57,6 +65,22 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM attendance WHERE ${sqlTodayRange('check_in_time')}`
     ),
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM attendance
+       WHERE check_in_time >= CURRENT_DATE - INTERVAL '1 day'
+         AND check_in_time < CURRENT_DATE`
+    ),
+    query<{ total: string | null }>(
+      `SELECT SUM(amount_usd)::text AS total FROM payments
+       WHERE status = 'approved'
+         AND created_at >= DATE_TRUNC('month', CURRENT_DATE)`
+    ),
+    query<{ total: string | null }>(
+      `SELECT SUM(amount_usd)::text AS total FROM payments
+       WHERE status = 'approved'
+         AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
+         AND created_at < DATE_TRUNC('month', CURRENT_DATE)`
+    ),
     query<{ month: string; income: string }>(
       `SELECT
         TO_CHAR(created_at, 'YYYY-MM') AS month,
@@ -66,6 +90,16 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
         AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
       GROUP BY TO_CHAR(created_at, 'YYYY-MM')
       ORDER BY month ASC`
+    ),
+    query<{ date: string; income: string }>(
+      `SELECT
+        TO_CHAR(created_at::date, 'YYYY-MM-DD') AS date,
+        SUM(amount_usd)::text AS income
+      FROM payments
+      WHERE status = 'approved'
+        AND created_at >= CURRENT_DATE - INTERVAL '29 days'
+      GROUP BY created_at::date
+      ORDER BY date ASC`
     ),
     getExpiringSubscriptions(alertDays),
     getExpiredThisWeekCount(),
@@ -77,11 +111,15 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
     activeSubscriptions: parseInt(activeSubscriptions.rows[0]?.count || '0', 10),
     todayCheckIns: parseInt(todayCheckIns.rows[0]?.count || '0', 10),
+    yesterdayCheckIns: parseInt(yesterdayCheckIns.rows[0]?.count || '0', 10),
+    revenueThisMonth: parseFloat(revenueThisMonth.rows[0]?.total || '0'),
+    revenueLastMonth: parseFloat(revenueLastMonth.rows[0]?.total || '0'),
     expiringSoon: expiringList.length,
     expiredThisWeek,
     expiringList,
     expiryAlertDays: alertDays,
     revenueHistory: revenueHistory.rows,
+    revenueDaily: revenueDaily.rows,
     lastDoorAlert,
   };
 }

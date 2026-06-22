@@ -43,7 +43,7 @@ export default function ReceptionActivityFeed({
 
   if (loading) {
     return (
-      <div className={cn('flex justify-center py-8', className)}>
+      <div className={cn('flex justify-center', compact ? 'py-6' : 'py-8', className)}>
         <Spinner className="h-6 w-6" />
       </div>
     );
@@ -51,7 +51,13 @@ export default function ReceptionActivityFeed({
 
   if (rows.length === 0) {
     return (
-      <p className={cn('text-center text-sm text-zinc-400 py-6', className)}>
+      <p
+        className={cn(
+          'text-center text-zinc-400',
+          compact ? 'text-xs py-6 flex flex-1 items-center justify-center min-h-[120px]' : 'text-sm py-6',
+          className
+        )}
+      >
         Sin movimientos registrados hoy
       </p>
     );

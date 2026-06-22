@@ -5,7 +5,7 @@ import { useDebouncedValue } from '../lib/useDebouncedValue';
 
 import { FileSpreadsheet, Download, Calendar, DollarSign, Users, Fingerprint } from 'lucide-react';
 
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfMonth } from 'date-fns';
 
 import { Button, Card, Input, Label, PageHeader, Spinner, Skeleton } from '../components/ui';
 
@@ -49,7 +49,7 @@ const REPORTS: {
 
     title: 'Pagos',
 
-    description: 'Ingresos reportados y aprobados con montos, método y estado.',
+    description: 'Montos, método y estado aprobado.',
 
     icon: DollarSign,
 
@@ -65,7 +65,7 @@ const REPORTS: {
 
     title: 'Asistencias',
 
-    description: 'Entradas, salidas y duración de cada visita al gym.',
+    description: 'Entradas, salidas y duración.',
 
     icon: Fingerprint,
 
@@ -81,7 +81,7 @@ const REPORTS: {
 
     title: 'Miembros',
 
-    description: 'Listado de miembros con membresía activa y días restantes.',
+    description: 'Activos con días restantes.',
 
     icon: Users,
 
@@ -160,6 +160,16 @@ export default function Reports() {
 
 
 
+  const setLastDays = (days: number) => {
+    setFrom(format(subDays(new Date(), days), 'yyyy-MM-dd'));
+    setTo(today);
+  };
+
+  const setCurrentMonth = () => {
+    setFrom(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+    setTo(today);
+  };
+
   const handleDownload = async (type: ReportType, hasDateRange: boolean) => {
 
     setDownloading(type);
@@ -185,153 +195,117 @@ export default function Reports() {
 
 
   return (
-
-    <div className="page-stack-loose">
-
+    <div className="page-stack-tight">
       <PageHeader
-
+        compact
         title={<>Reportes <span className="text-orange-500">exportables</span></>}
-
-        subtitle="Descarga archivos CSV para contabilidad, cierre mensual y análisis operativo."
-
+        subtitle="CSV para contabilidad, cierre mensual y análisis."
       />
 
-
-
       {error && (
-
-        <Card className="border-red-500/30 bg-red-500/10">
-
+        <Card padding="sm" className="border-red-500/30 bg-red-500/10">
           <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
-
         </Card>
-
       )}
 
-
-
-      <Card padding="lg" rounded="2xl">
-        <h2 className="section-title mb-4 flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-orange-500" />
-          Rango de fechas (pagos y asistencias)
-        </h2>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-
-          <div className="flex-1">
-
-            <Label>Desde</Label>
-
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-
+      <Card padding="sm" rounded="xl">
+        <div className="flex items-center gap-2 mb-2.5">
+          <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight">
+              Rango de fechas
+            </h2>
+            <p className="text-[10px] text-zinc-500 leading-tight">Pagos y asistencias</p>
           </div>
-
-          <div className="flex-1">
-
-            <Label>Hasta</Label>
-
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-
-          </div>
-
         </div>
-
+        <div className="grid grid-cols-2 gap-2">
+          <div className="min-w-0">
+            <Label className="text-[11px]">Desde</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="min-w-0">
+            <Label className="text-[11px]">Hasta</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-2.5">
+          <Button type="button" variant="ghost" size="sm" className="h-8 px-2.5 text-[11px]" onClick={() => setLastDays(7)}>
+            7 días
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-8 px-2.5 text-[11px]" onClick={() => setLastDays(30)}>
+            30 días
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-8 px-2.5 text-[11px]" onClick={setCurrentMonth}>
+            Este mes
+          </Button>
+        </div>
       </Card>
 
-
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
         {REPORTS.map((report) => {
-
           const Icon = report.icon;
-
           const isLoading = downloading === report.type;
-
           const count = preview?.[report.previewKey];
 
           return (
-
-            <Card key={report.type} padding="lg" rounded="2xl" className="flex flex-col">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="p-3 bg-orange-500/10 rounded-xl shrink-0">
-                  <Icon className="h-6 w-6 text-orange-600 dark:text-orange-500" />
+            <Card key={report.type} padding="sm" rounded="xl" className="flex flex-col">
+              <div className="flex items-start justify-between gap-2 mb-2.5">
+                <div className="flex items-start gap-2 min-w-0">
+                  <div className="p-1.5 bg-orange-500/10 rounded-lg shrink-0">
+                    <Icon className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm text-zinc-900 dark:text-white leading-tight">
+                      {report.title}
+                    </h3>
+                    <p className="hidden sm:block text-[11px] text-zinc-500 mt-0.5 leading-snug line-clamp-1">
+                      {report.description}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-zinc-900 dark:text-white">
-                    {report.title}
-                  </h3>
-                  <p className="text-sm text-zinc-500 mt-1">{report.description}</p>
+                <div className="shrink-0 text-right pl-1">
+                  {previewLoading ? (
+                    <Skeleton className="h-7 w-8 ml-auto" />
+                  ) : (
+                    <>
+                      <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums leading-none">
+                        {count ?? '—'}
+                      </p>
+                      <p className="text-[9px] uppercase tracking-wide text-zinc-400 mt-0.5">reg.</p>
+                    </>
+                  )}
                 </div>
-              </div>
-              <div className="mb-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 border border-zinc-100 dark:border-zinc-800">
-                <p className="stat-label">Registros estimados</p>
-                {previewLoading ? (
-                  <Skeleton className="h-8 w-16 mt-2" />
-                ) : (
-                  <p className="stat-value text-orange-500 mt-1">{count ?? '—'}</p>
-                )}
               </div>
 
               <Button
-
-                className="mt-auto w-full"
-
+                size="sm"
+                className="mt-auto w-full h-10 sm:h-11"
                 disabled={isLoading}
-
+                aria-label={`Descargar CSV de ${report.title}`}
                 onClick={() => handleDownload(report.type, report.hasDateRange)}
-
               >
-
                 {isLoading ? (
-
                   <>
-
                     <Spinner className="h-4 w-4" />
-
-                    Descargando...
-
+                    <span className="hidden sm:inline">Descargando…</span>
                   </>
-
                 ) : (
-
                   <>
-
                     <Download className="h-4 w-4" />
-
-                    Descargar CSV
-
+                    <span className="hidden sm:inline">Descargar CSV</span>
                   </>
-
                 )}
-
               </Button>
-
             </Card>
-
           );
-
         })}
-
       </div>
 
-
-
-      <Card padding="lg" rounded="2xl" className="flex items-center gap-3 text-zinc-500">
-
-        <FileSpreadsheet className="h-5 w-5 text-orange-500 shrink-0" />
-
-        <p className="text-sm font-medium">
-
-          Los archivos se generan en el servidor y se descargan con codificación UTF-8 compatible con Excel.
-
-        </p>
-
-      </Card>
-
+      <p className="flex items-start gap-2 text-[11px] sm:text-xs text-zinc-500 px-0.5">
+        <FileSpreadsheet className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+        UTF-8 compatible con Excel. Se generan en el servidor al descargar.
+      </p>
     </div>
-
   );
-
 }
 

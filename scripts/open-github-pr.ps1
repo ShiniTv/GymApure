@@ -24,7 +24,6 @@ Write-Host ""
 Write-Host "En GitHub:"
 Write-Host "  1. Revisá los cambios"
 Write-Host "  2. Clic en 'Create pull request'"
-Write-Host "  3. Pegá la descripción desde docs/pr-body.md"
 Write-Host ""
 
 Start-Process $url

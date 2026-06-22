@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Search,
   Monitor,
+  RefreshCw,
   X,
   LayoutDashboard,
 } from 'lucide-react';
@@ -366,8 +367,14 @@ export default function Reception() {
     <Card padding="md" rounded="xl">
       <div className="flex items-center justify-between mb-4">
         <h3 className="section-title">Dentro del gym ({insideCount})</h3>
-        <Button variant="ghost" size="sm" onClick={() => void loadStats()}>
-          Actualizar
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 px-0"
+          onClick={() => void loadStats()}
+          aria-label="Actualizar"
+        >
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
       <div className={cn('scroll-area space-y-2', isCounterMode ? 'max-h-56' : 'max-h-72')}>
@@ -479,9 +486,14 @@ export default function Reception() {
         title={<>Control de <span className="text-orange-500">acceso</span></>}
         subtitle="Busque por cédula para autorizar entrada y salida"
         action={
-          <Button size="sm" className="w-full sm:w-auto" onClick={() => setCounterMode(true)}>
-            <Monitor className="h-4 w-4" />
-            Modo mostrador
+          <Button
+            size="sm"
+            className="h-11 w-11 px-0"
+            onClick={() => setCounterMode(true)}
+            aria-label="Modo mostrador"
+            title="Modo mostrador"
+          >
+            <Monitor className="h-5 w-5" />
           </Button>
         }
       />

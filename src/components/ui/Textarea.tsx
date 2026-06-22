@@ -3,14 +3,15 @@ import { cn } from '../../lib/utils';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string;
+  containerClassName?: string;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { className, error, ...props },
+  { className, containerClassName, error, ...props },
   ref
 ) {
   return (
-    <div>
+    <div className={cn(containerClassName)}>
       <textarea
         ref={ref}
         className={cn(

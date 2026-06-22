@@ -1,7 +1,10 @@
 import pg from 'pg';
 import { env } from '../config/env.ts';
-import { isSupabaseStorageConfigured } from '../lib/supabaseAdmin.ts';
+import { isSupabaseStorageConfigured, getSupabaseServiceKey } from '../lib/supabaseAdmin.ts';
 import { logger } from '../lib/logger.ts';
+
+// BIGINT (OID 20) → number — ids del gym caben en Number.MAX_SAFE_INTEGER
+pg.types.setTypeParser(20, (value) => parseInt(value, 10));
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
@@ -51,10 +54,15 @@ export async function initDb() {
       backend: 'supabase',
       bucket: 'payment-proofs',
     });
+  } else if (getSupabaseServiceKey()) {
+    logger.warn('SUPABASE_SERVICE_ROLE_KEY no parece válida; comprobantes en disco local', {
+      hint: 'Usa service_role (eyJ…) o sb_secret_… sin comillas. Ver Supabase → Project Settings → API Keys.',
+      path: 'uploads/proofs',
+    });
   } else {
     logger.debug('Storage de comprobantes en disco local', {
       path: 'uploads/proofs',
-      recommendation: 'Definir SUPABASE_SERVICE_ROLE_KEY',
+      recommendation: 'Definir SUPABASE_SERVICE_ROLE_KEY para producción',
     });
   }
 }

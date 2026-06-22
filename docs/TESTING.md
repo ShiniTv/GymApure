@@ -47,9 +47,9 @@ Este proyecto usa **pruebas de API por HTTP** (sin Playwright/Cypress). El servi
 | `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones |
 | `test:sprint4` | Alertas de vencimiento |
 | `test:sprint5` | Pagos y membresías |
-| `test:sprint6` | Notificaciones (mock) |
+| `test:sprint6` | Chat in-app y settings de vencimiento |
 
-Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:notifications-checklist`, `test:alerts`.
+Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:alerts`.
 
 ---
 

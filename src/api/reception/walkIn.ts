@@ -9,7 +9,7 @@ import { assignSubscription } from '../../lib/subscriptions.ts';
 import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
-import { notifyPaymentApproved } from '../../lib/notifications/eventNotifier.ts';
+import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
 
 export const walkInSchema = z.object({
@@ -127,7 +127,8 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
     void notifyPaymentApproved(
       result.userId,
       result.amountUsd,
-      result.membershipName
+      result.membershipName,
+      result.paymentId
     ).catch((err) => console.error('[notify] walk-in payment', err));
 
     res.status(201).json({

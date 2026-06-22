@@ -18,7 +18,7 @@
     "test:reception-checklist": "tsx scripts/test-reception-checklist.ts",
     "test:memberships-checkin": "tsx scripts/test-memberships-checkin.ts",
     "test:payments-checklist": "tsx scripts/test-payments-checklist.ts",
-    "test:notifications-checklist": "tsx scripts/test-notifications-checklist.ts",
+    "test:chat-checklist": "tsx scripts/test-chat-checklist.ts",
     "test:alerts": "tsx scripts/verify-alerts-panel.ts",
     "verify:local-e2e": "tsx scripts/verify-local-e2e.ts",
     "pr:open": "powershell -ExecutionPolicy Bypass -File scripts/open-github-pr.ps1",

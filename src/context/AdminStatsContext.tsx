@@ -12,6 +12,9 @@ export interface AdminStats {
   pendingPayments: number;
   activeSubscriptions: number;
   todayCheckIns: number;
+  yesterdayCheckIns: number;
+  revenueThisMonth: number;
+  revenueLastMonth: number;
   expiringSoon: number;
   expiredThisWeek: number;
   expiringList: {
@@ -23,6 +26,7 @@ export interface AdminStats {
   }[];
   expiryAlertDays: number;
   revenueHistory: { month: string; income: string | number }[];
+  revenueDaily: { date: string; income: string | number }[];
   lastDoorAlert: {
     full_name: string;
     membership_name: string;
@@ -50,6 +54,9 @@ async function fetchAdminStats(): Promise<AdminStats> {
     .then((data) => {
       if (data.revenueHistory && !Array.isArray(data.revenueHistory)) {
         data.revenueHistory = [];
+      }
+      if (data.revenueDaily && !Array.isArray(data.revenueDaily)) {
+        data.revenueDaily = [];
       }
       return data;
     })

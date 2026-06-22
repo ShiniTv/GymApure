@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonSafe } from '../lib/api';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getDefaultRouteForRole } from '../lib/roles';
 import { Mail } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
@@ -13,8 +14,12 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registerAllowed, setRegisterAllowed] = useState(true);
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (!isLoading && user) {
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  }
 
   useEffect(() => {
     apiFetch('/api/health')
@@ -37,7 +42,7 @@ export default function Login() {
 
       const data = await parseJsonResponse<{ user: Parameters<typeof login>[0] }>(res);
       login(data.user);
-      navigate('/');
+      navigate(getDefaultRouteForRole(data.user.role));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error de inicio de sesión');
     } finally {
@@ -46,16 +51,7 @@ export default function Login() {
   };
 
   return (
-    <AuthShell
-      footer={
-        <p className="text-center text-xs text-zinc-500">
-          Personal de recepción: inicia sesión y abre{' '}
-          <Link to="/check-in?kiosk=1" className="font-semibold text-orange-600 hover:text-orange-500">
-            control de acceso
-          </Link>
-        </p>
-      }
-    >
+    <AuthShell>
       <Card className="w-full page-stack-loose shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
         <AuthBrandHeader subtitle="Inicia sesión en tu cuenta" />
 

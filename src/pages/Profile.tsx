@@ -18,7 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
 import { cn } from '../lib/utils';
 import {
   expiryBannerClasses,
@@ -119,6 +119,25 @@ export default function Profile() {
     const h = profile.height / 100;
     return Math.round((latestWeight / (h * h)) * 10) / 10;
   }, [latestWeight, profile?.height]);
+
+  const isProfileDirty = useMemo(() => {
+    if (!profile) return false;
+    const saved = {
+      phone: (profile.phone ?? '').trim(),
+      initial_weight: profile.initial_weight?.toString() ?? '',
+      height: profile.height?.toString() ?? '',
+      goal: (profile.goal ?? '').trim(),
+      dob: profile.dob ? profile.dob.split('T')[0] : '',
+    };
+    const current = {
+      phone: form.phone.trim(),
+      initial_weight: form.initial_weight.trim(),
+      height: form.height.trim(),
+      goal: form.goal.trim(),
+      dob: form.dob,
+    };
+    return JSON.stringify(saved) !== JSON.stringify(current);
+  }, [form, profile]);
 
   const subscription = memberStats?.stats?.subscription ?? null;
   const workoutsThisMonth = memberStats?.stats?.workoutsThisMonth ?? 0;
@@ -246,9 +265,10 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="page-state-center">
+      <PageState>
         <Spinner />
-      </div>
+        <p className="mt-3 text-zinc-500 text-xs">Cargando perfil…</p>
+      </PageState>
     );
   }
 
@@ -263,15 +283,30 @@ export default function Profile() {
   const avatarUrl = resolveAvatarUrl(profile.profile_image);
 
   return (
-    <div className="page-stack-loose">
+    <div className="page-stack-tight">
       <PageHeader
+        compact
         title={<>Mi <span className="text-orange-500">perfil</span></>}
-        subtitle={user.role === 'member' ? 'Datos personales, progreso y seguridad' : 'Información de tu cuenta'}
+        subtitle={user.role === 'member' ? 'Datos, progreso y seguridad' : 'Tu cuenta'}
         action={
           saveMsg ? (
-            <p className="text-sm font-medium text-emerald-600">{saveMsg}</p>
+            <p className="text-xs font-medium text-emerald-600">{saveMsg}</p>
           ) : saveError ? (
-            <p className="text-sm font-medium text-red-500">{saveError}</p>
+            <p className="text-xs font-medium text-red-500 max-w-[10rem] sm:max-w-none truncate">{saveError}</p>
+          ) : (isProfileDirty && profileTab === 'datos') || user.role !== 'member' ? (
+            <div className="flex items-center gap-2 shrink-0">
+              {isProfileDirty && profileTab === 'datos' && (
+                <span className="text-[10px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  Sin guardar
+                </span>
+              )}
+              {user.role !== 'member' && <BackToDashboardLink iconOnly className="sm:hidden" />}
+              {user.role !== 'member' && (
+                <span className="hidden sm:inline-flex">
+                  <BackToDashboardLink />
+                </span>
+              )}
+            </div>
           ) : undefined
         }
       />
@@ -280,14 +315,14 @@ export default function Profile() {
         const severity = getExpirySeverity(subscription.days_remaining, MEMBER_UI_ALERT_DAYS);
         const classes = expiryBannerClasses(severity);
         return (
-        <div className={`rounded-2xl border px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${classes.container}`}>
-          <div className="flex items-start gap-3">
-            <AlertTriangle className={`h-5 w-5 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`} />
-            <div>
-              <p className={`text-sm font-bold ${classes.text}`}>
+        <div className={`rounded-xl border px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${classes.container}`}>
+          <div className="flex items-start gap-2 min-w-0">
+            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`} />
+            <div className="min-w-0">
+              <p className={`text-xs sm:text-sm font-semibold leading-snug ${classes.text}`}>
                 {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-[10px] text-zinc-500 mt-0.5">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
             </div>
@@ -304,8 +339,8 @@ export default function Profile() {
       })()}
 
       {user.role === 'member' && !subscription && (
-        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <p className="text-xs sm:text-sm font-semibold text-yellow-700 dark:text-yellow-400 leading-snug">
             No tienes una membresía activa. Reporta tu pago para reactivar el acceso.
           </p>
           <Link
@@ -318,6 +353,9 @@ export default function Profile() {
       )}
 
       <SegmentedControl
+        variant="compact"
+        fullWidth
+        className="w-full sm:w-auto"
         value={profileTab}
         onChange={setProfileTab}
         options={[
@@ -328,30 +366,31 @@ export default function Profile() {
       />
 
       {profileTab === 'datos' && (
-      <div className="panel-content">
-        <Card>
-          <h2 className="section-title mb-6 flex items-center gap-2">
-            <User className="h-4 w-4 text-orange-500" />
+      <div className="panel-form">
+        <Card padding="sm" rounded="xl">
+          <h2 className="section-title mb-3 flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-orange-500" />
             Datos personales
           </h2>
 
-          <div className="flex items-center gap-5 mb-8">
-            <div className="relative">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative shrink-0">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
                   alt={profile.full_name}
-                  className="h-20 w-20 rounded-2xl object-cover ring-2 ring-orange-500/30"
+                  className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-orange-500/30"
                 />
               ) : (
-                <div className="h-20 w-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <User className="h-10 w-10 text-zinc-400" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <User className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400" />
                 </div>
               )}
               <label
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 p-2 bg-orange-600 hover:bg-orange-500 rounded-xl cursor-pointer text-white shadow-lg transition-colors"
+                className="absolute -bottom-1 -right-1 h-7 w-7 inline-flex items-center justify-center bg-orange-600 hover:bg-orange-500 rounded-lg cursor-pointer text-white shadow-md transition-colors"
                 title="Cambiar foto"
+                aria-label="Cambiar foto de perfil"
               >
                 <Camera className="h-3.5 w-3.5" />
               </label>
@@ -364,21 +403,21 @@ export default function Profile() {
                 disabled={avatarUploading}
               />
             </div>
-            <div>
-              <p className="text-xl font-bold text-zinc-900 dark:text-white">
+            <div className="min-w-0">
+              <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
                 {profile.full_name}
               </p>
-              <p className="text-sm text-zinc-500 mt-1">{profile.email}</p>
+              <p className="text-xs text-zinc-500 mt-0.5 truncate">{profile.email}</p>
               {profile.cedula && (
-                <p className="text-xs text-zinc-400 mt-0.5">{profile.cedula}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">{profile.cedula}</p>
               )}
               {avatarUploading && (
-                <p className="text-xs font-medium text-orange-500 mt-2">Subiendo foto…</p>
+                <p className="text-[10px] font-medium text-orange-500 mt-1">Subiendo foto…</p>
               )}
             </div>
           </div>
 
-          <form onSubmit={handleSaveProfile} className="space-y-4">
+          <form onSubmit={handleSaveProfile} className="space-y-3">
             <div>
               <Label>Teléfono</Label>
               <Input
@@ -396,7 +435,7 @@ export default function Profile() {
                 onChange={(e) => setForm({ ...form, dob: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <Label>Peso inicial (kg)</Label>
                 <Input
@@ -424,13 +463,25 @@ export default function Profile() {
               <Textarea
                 value={form.goal}
                 onChange={(e) => setForm({ ...form, goal: e.target.value })}
-                rows={3}
+                rows={2}
+                className="rounded-xl px-3 py-2.5 text-sm min-h-[4.5rem] resize-none"
                 placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
               />
             </div>
-            <Button type="submit" variant="secondary" disabled={saving} className="w-full sm:w-auto" size="md">
+            <Button
+              type="submit"
+              variant={isProfileDirty ? 'primary' : 'secondary'}
+              disabled={saving || !isProfileDirty}
+              size="sm"
+              className={cn(
+                'h-11 min-h-11 w-full sm:w-auto sm:px-4',
+                isProfileDirty && 'ring-2 ring-amber-500/30'
+              )}
+              aria-label="Guardar perfil"
+            >
               <Save className="h-4 w-4" />
-              {saving ? 'Guardando...' : 'Guardar perfil'}
+              <span className="hidden sm:inline">{saving ? 'Guardando…' : 'Guardar perfil'}</span>
+              <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
             </Button>
           </form>
         </Card>
@@ -439,7 +490,7 @@ export default function Profile() {
 
       {profileTab === 'progreso' && (
       <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         <StatMini
           label="Peso actual"
           value={latestWeight != null ? `${latestWeight} kg` : '—'}
@@ -454,16 +505,16 @@ export default function Profile() {
         <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="section-title flex items-center gap-2">
-              <Scale className="h-4 w-4 text-orange-500" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <Card padding="sm" rounded="xl" className="lg:col-span-2">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="section-title flex items-center gap-1.5">
+              <Scale className="h-3.5 w-3.5 text-orange-500" />
               Evolución de peso
             </h2>
             {weightDelta != null && (
               <span
-                className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg ${
+                className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md shrink-0 ${
                   weightDelta < 0
                     ? 'text-emerald-600 bg-emerald-500/10'
                     : weightDelta > 0
@@ -489,9 +540,9 @@ export default function Profile() {
               <ProfileWeightChart data={chartData} />
             </Suspense>
           ) : chartData.length === 1 ? (
-            <div className="h-64 flex flex-col items-center justify-center text-center">
-              <p className="text-4xl font-bold text-orange-500">{chartData[0].weight} kg</p>
-              <p className="text-sm text-zinc-400 mt-2">
+            <div className="h-48 sm:h-56 flex flex-col items-center justify-center text-center">
+              <p className="text-3xl font-bold text-orange-500">{chartData[0].weight} kg</p>
+              <p className="text-xs text-zinc-400 mt-1.5">
                 {chartData[0].date} · Registra otra medición para ver la gráfica
               </p>
             </div>
@@ -511,53 +562,59 @@ export default function Profile() {
         </Card>
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="section-title flex items-center gap-2">
-            <Scale className="h-4 w-4 text-orange-500" />
-            Historial de mediciones
+      <Card padding="sm" rounded="xl">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h2 className="section-title flex items-center gap-1.5 min-w-0">
+            <Scale className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+            <span className="truncate">Historial de mediciones</span>
           </h2>
-          <Button type="button" size="sm" onClick={() => setIsAddingMeasurement(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            Nueva medición
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 w-9 shrink-0 p-0 min-h-9 sm:h-11 sm:min-h-11 sm:w-auto sm:px-3"
+            onClick={() => setIsAddingMeasurement(true)}
+            aria-label="Nueva medición"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nueva medición</span>
           </Button>
         </div>
 
         {measurements.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto -mx-1 px-1">
+            <table className="w-full text-left min-w-[28rem]">
               <thead>
-                <tr className="text-xs font-semibold text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="pb-3 pr-4">Fecha</th>
-                  <th className="pb-3 pr-4">Peso</th>
-                  <th className="pb-3 pr-4">Grasa</th>
-                  <th className="pb-3 pr-4">Cintura</th>
-                  <th className="pb-3 pr-4">Brazo</th>
-                  <th className="pb-3">Pierna</th>
+                <tr className="text-[10px] font-semibold text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
+                  <th className="pb-2 pr-3">Fecha</th>
+                  <th className="pb-2 pr-3">Peso</th>
+                  <th className="pb-2 pr-3">Grasa</th>
+                  <th className="pb-2 pr-3">Cintura</th>
+                  <th className="pb-2 pr-3">Brazo</th>
+                  <th className="pb-2">Pierna</th>
                 </tr>
               </thead>
               <tbody>
                 {measurements.map((m) => (
                   <tr
                     key={m.id}
-                    className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0 text-sm"
+                    className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0 text-xs sm:text-sm"
                   >
-                    <td className="py-3 pr-4 font-medium text-zinc-700 dark:text-zinc-300">
+                    <td className="py-2 pr-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
                       {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                     </td>
-                    <td className="py-3 pr-4 font-semibold text-zinc-900 dark:text-white">
+                    <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
                       {m.weight != null ? `${m.weight} kg` : '—'}
                     </td>
-                    <td className="py-3 pr-4 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500">
                       {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
                     </td>
-                    <td className="py-3 pr-4 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500">
                       {m.waist != null ? `${m.waist} cm` : '—'}
                     </td>
-                    <td className="py-3 pr-4 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500">
                       {m.arm != null ? `${m.arm} cm` : '—'}
                     </td>
-                    <td className="py-3 text-zinc-500">
+                    <td className="py-2 text-zinc-500">
                       {m.leg != null ? `${m.leg} cm` : '—'}
                     </td>
                   </tr>
@@ -582,21 +639,21 @@ export default function Profile() {
 
       {/* Últimos entrenamientos */}
       {workouts.length > 0 && (
-        <Card>
-          <h2 className="section-title mb-4 flex items-center gap-2">
-            <Dumbbell className="h-4 w-4 text-orange-500" />
+        <Card padding="sm" rounded="xl">
+          <h2 className="section-title mb-2.5 flex items-center gap-1.5">
+            <Dumbbell className="h-3.5 w-3.5 text-orange-500" />
             Actividad reciente
           </h2>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {workouts.slice(0, 5).map((w) => (
               <div
                 key={w.id}
-                className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                className="flex items-center justify-between gap-2 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
               >
-                <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">
+                <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm truncate">
                   {w.routine_name}
                 </p>
-                <p className="text-xs text-zinc-400">
+                <p className="text-[10px] sm:text-xs text-zinc-400 shrink-0 tabular-nums">
                   {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
                 </p>
               </div>
@@ -609,18 +666,18 @@ export default function Profile() {
       )}
 
       {profileTab === 'seguridad' && (
-      <Card className="panel-form">
-        <h2 className="section-title mb-6 flex items-center gap-2">
-          <Lock className="h-4 w-4 text-orange-500" />
+      <Card padding="sm" rounded="xl" className="panel-form">
+        <h2 className="section-title mb-3 flex items-center gap-1.5">
+          <Lock className="h-3.5 w-3.5 text-orange-500" />
           Seguridad
         </h2>
         {passwordMsg && (
-          <p className="text-sm font-medium text-emerald-600 mb-4">{passwordMsg}</p>
+          <p className="text-xs font-medium text-emerald-600 mb-3">{passwordMsg}</p>
         )}
         {passwordError && (
-          <p className="text-sm font-medium text-red-500 mb-4">{passwordError}</p>
+          <p className="text-xs font-medium text-red-500 mb-3">{passwordError}</p>
         )}
-        <form onSubmit={handleChangePassword} className="space-y-4">
+        <form onSubmit={handleChangePassword} className="space-y-3">
           <div>
             <Label htmlFor="current_password">Contraseña actual</Label>
             <PasswordInput
@@ -679,9 +736,16 @@ export default function Profile() {
               required
             />
           </div>
-          <Button type="submit" variant="secondary" disabled={passwordSaving}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={passwordSaving}
+            size="sm"
+            className="h-11 min-h-11 w-full sm:w-auto sm:px-4"
+          >
             <Lock className="h-4 w-4" />
-            {passwordSaving ? 'Actualizando...' : 'Cambiar contraseña'}
+            <span className="hidden sm:inline">{passwordSaving ? 'Actualizando…' : 'Cambiar contraseña'}</span>
+            <span className="sm:hidden">{passwordSaving ? '…' : 'Actualizar'}</span>
           </Button>
         </form>
       </Card>

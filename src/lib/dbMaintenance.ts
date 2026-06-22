@@ -43,7 +43,7 @@ export async function runDbMaintenance(): Promise<DbMaintenanceResult> {
     [auditRetentionDays]
   );
   const notifLog = await query(
-    `DELETE FROM expiry_notification_log WHERE sent_at < NOW() - ($1::text || ' days')::interval`,
+    `DELETE FROM chat_system_log WHERE sent_at < NOW() - ($1::text || ' days')::interval`,
     [notifLogRetentionDays]
   );
 

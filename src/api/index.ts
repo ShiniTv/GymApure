@@ -14,6 +14,7 @@ import settingsRoutes from './settings.ts';
 import fileRoutes from './files.ts';
 import reportsRoutes from './reports.ts';
 import receptionRoutes from './reception.ts';
+import chatRoutes from './chat.ts';
 import { authenticate } from './middleware/auth.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
@@ -41,6 +42,7 @@ router.use('/settings', settingsRoutes);
 router.use('/audit-logs', auditLogsRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/reception', receptionRoutes);
+router.use('/chat', chatRoutes);
 router.use('/files', fileRoutes);
 
 router.use((_req, res) => {

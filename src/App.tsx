@@ -8,6 +8,7 @@ import { MemberStatsProvider } from './context/MemberStatsContext';
 import Layout from './components/Layout';
 import { Spinner } from './components/ui';
 import Login from './pages/Login';
+import { getDefaultRouteForRole } from './lib/roles';
 
 const CheckIn = lazy(() => import('./pages/CheckIn'));
 
@@ -25,6 +26,7 @@ const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
+const Messages = lazy(() => import('./pages/Messages'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Reception = lazy(() => import('./pages/Reception'));
 
@@ -47,7 +49,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
   if (!user) return <Navigate to="/login" />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
   }
 
   return children;
@@ -123,6 +125,11 @@ function AppRoutes() {
         <Route path="settings" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="messages" element={
+          <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist', 'member']}>
+            <Messages />
           </ProtectedRoute>
         } />
         <Route path="members/:id/routines" element={

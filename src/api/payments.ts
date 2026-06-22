@@ -18,7 +18,7 @@ import {
   notifyPaymentApproved,
   notifyPaymentRejected,
   notifyPaymentReported,
-} from '../lib/notifications/eventNotifier.ts';
+} from '../lib/chat/eventMessages.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import {
   parsePaginationQuery,
@@ -244,7 +244,7 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
     invalidateAdminStatsCache();
     res.json({ success: true });
 
-    void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName).catch((err) =>
+    void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName, Number(id)).catch((err) =>
       console.error('[notify] payment approved', err)
     );
   } catch (err: unknown) {
@@ -275,7 +275,7 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
     invalidateAdminStatsCache();
     res.json({ success: true });
 
-    void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd)).catch((err) =>
+    void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd), Number(id)).catch((err) =>
       console.error('[notify] payment rejected', err)
     );
   } catch (err: unknown) {

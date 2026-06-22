@@ -41,6 +41,7 @@ export default function MemberDashboard() {
     return (
       <div className="page-stack">
         <PageHeader
+          showTitleOnMobile
           title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
           subtitle="Tu espacio de entrenamiento"
         />
@@ -57,6 +58,7 @@ export default function MemberDashboard() {
   return (
     <div className={cn('page-stack', isMobile && routine && 'pb-24')}>
       <PageHeader
+        showTitleOnMobile
         title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
         subtitle="Tu espacio de entrenamiento en Caribean Gym"
         badge={sub ? `${sub.days_remaining} días de plan` : undefined}

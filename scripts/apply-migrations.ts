@@ -51,6 +51,13 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'token_version'
     LIMIT 1`,
+  '20260622000000_chat_messages.sql': `
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'chat_conversations' LIMIT 1`,
+  '20260623000000_chat_message_edited_at.sql': `
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'chat_messages' AND column_name = 'edited_at'
+    LIMIT 1`,
 };
 
 /** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */

@@ -3,7 +3,8 @@ import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Card, PageHeader, Spinner, StatCard } from '../components/ui';
+import { Badge, Card, PageHeader, Spinner, StatCard, BackToDashboardLink } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
 import { cn } from '../lib/utils';
@@ -27,6 +28,7 @@ interface HourlyVolumePoint {
 }
 
 export default function Attendance() {
+  const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
   const [data, setData] = useState<DailyVolumePoint[]>([]);
   const [hourlyData, setHourlyData] = useState<HourlyVolumePoint[]>([]);
@@ -63,28 +65,31 @@ export default function Attendance() {
   return (
     <div className="page-stack">
       <PageHeader
+        compact
         title={<>Asistencias</>}
         subtitle="Análisis de volumen, horas pico y membresías por vencer"
+        action={user?.role === 'admin' ? <BackToDashboardLink /> : undefined}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Total ingresos (7d)" value={totalEntries} icon={Fingerprint} color="orange" />
-        <StatCard title="Promedio diario" value={`${avgEntries} users`} icon={TrendingUp} color="blue" />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
+        <StatCard compact title="Ingresos 7d" value={totalEntries} icon={Fingerprint} color="orange" />
+        <StatCard compact title="Promedio/día" value={avgEntries} icon={TrendingUp} color="blue" />
         <StatCard
-          title="Pico de ingreso"
-          value={data.length > 0 ? Math.max(...data.map(d => d.count)) : 0}
+          compact
+          title="Pico"
+          value={data.length > 0 ? Math.max(...data.map((d) => d.count)) : 0}
           icon={Users}
           color="emerald"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-6 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-orange-500" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+          <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
             Volumen diario (7d)
           </h3>
-          <div className="h-64">
+          <div className="h-44 sm:h-56 lg:h-64">
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <Spinner />
@@ -99,12 +104,12 @@ export default function Attendance() {
           </div>
         </Card>
 
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-6 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-blue-500" />
+        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+          <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-blue-500 shrink-0" />
             Horas pico (30d)
           </h3>
-          <div className="h-64">
+          <div className="h-44 sm:h-56 lg:h-64">
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <Spinner />
@@ -120,12 +125,12 @@ export default function Attendance() {
         </Card>
       </div>
 
-      <Card padding="lg" rounded="2xl">
-        <h3 className="section-title mb-6 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-500" />
+      <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+        <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
           Próximos vencimientos ({alertDays}d)
         </h3>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {lastDoorAlert && (
             <div className={cn('p-4 border rounded-2xl', expiryBannerClasses(getExpirySeverity(lastDoorAlert.days_remaining, alertDays)).container)}>
               <p className="label-caps mb-2">Última alerta en puerta:</p>

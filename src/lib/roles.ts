@@ -16,3 +16,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export function isStaffRole(role: string): boolean {
   return STAFF_ROLES.includes(role as UserRole);
 }
+
+/** Ruta principal tras login según rol. */
+export function getDefaultRouteForRole(role: UserRole | string): string {
+  if (role === 'receptionist') return '/reception';
+  return '/';
+}

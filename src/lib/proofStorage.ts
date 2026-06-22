@@ -2,10 +2,11 @@ import type { Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import {
-  getSupabaseAdmin,
   isSupabaseStorageConfigured,
   PAYMENT_PROOFS_BUCKET,
   STORAGE_PROOF_PREFIX,
+  supabaseStorageDownload,
+  supabaseStorageUpload,
 } from './supabaseAdmin.ts';
 import { proofApiPath, resolveFilePath } from './uploadStorage.ts';
 
@@ -47,19 +48,21 @@ export async function uploadPaymentProof(
   const ext = path.extname(file.originalname) || extensionFromMime(file.mimetype);
   const objectKey = `${userId}/${paymentId}-${Date.now()}${ext}`;
 
-  const supabase = getSupabaseAdmin();
   const body = file.buffer ?? (file.path ? fs.readFileSync(file.path) : null);
   if (!body) {
     throw new Error('No se pudo leer el comprobante subido');
   }
 
-  const { error } = await supabase.storage.from(PAYMENT_PROOFS_BUCKET).upload(objectKey, body, {
-    contentType: file.mimetype,
-    upsert: false,
-  });
-
-  if (error) {
-    throw new Error(`Error al subir comprobante: ${error.message}`);
+  try {
+    await supabaseStorageUpload(PAYMENT_PROOFS_BUCKET, objectKey, body, file.mimetype);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    if (/invalid compact jws|invalid jwt/i.test(message)) {
+      throw new Error(
+        'Error al subir comprobante: clave de Supabase inválida. En .env usa la service_role (JWT eyJ…) o sb_secret_… del dashboard (API Keys), sin comillas ni espacios. Si estás en local, puedes quitar SUPABASE_SERVICE_ROLE_KEY para guardar en disco.'
+      );
+    }
+    throw new Error(`Error al subir comprobante: ${message}`);
   }
 
   if (file.path) {
@@ -76,28 +79,24 @@ export async function uploadPaymentProof(
 export async function streamPaymentProof(proofUrl: string, res: Response): Promise<void> {
   const storageKey = parseStorageProofRef(proofUrl);
   if (storageKey) {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase.storage.from(PAYMENT_PROOFS_BUCKET).download(storageKey);
+    try {
+      const buffer = await supabaseStorageDownload(PAYMENT_PROOFS_BUCKET, storageKey);
+      const ext = path.extname(storageKey).toLowerCase();
+      const contentType =
+        ext === '.pdf'
+          ? 'application/pdf'
+          : ext === '.png'
+            ? 'image/png'
+            : ext === '.webp'
+              ? 'image/webp'
+              : 'image/jpeg';
 
-    if (error || !data) {
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.send(buffer);
+    } catch {
       res.status(404).json({ error: 'Comprobante no encontrado en Storage' });
-      return;
     }
-
-    const buffer = Buffer.from(await data.arrayBuffer());
-    const ext = path.extname(storageKey).toLowerCase();
-    const contentType =
-      ext === '.pdf'
-        ? 'application/pdf'
-        : ext === '.png'
-          ? 'image/png'
-          : ext === '.webp'
-            ? 'image/webp'
-            : 'image/jpeg';
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
-    res.send(buffer);
     return;
   }
 

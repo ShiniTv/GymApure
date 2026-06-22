@@ -99,15 +99,22 @@ export default function Memberships() {
   return (
     <div className="page-stack">
       <PageHeader
+        compact
         title={<>Planes de <span className="text-orange-500">membresía</span></>}
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
-        action={
-          <Button onClick={openCreate}>
-            <Plus className="h-5 w-5" />
-            Nuevo plan
-          </Button>
-        }
       />
+
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
+          onClick={openCreate}
+          aria-label="Nuevo plan"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="hidden sm:inline">Nuevo plan</span>
+        </Button>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -126,57 +133,58 @@ export default function Memberships() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <Card key={plan.id} padding="lg" rounded="xl" className="flex flex-col">
-              <div className="flex items-start justify-between gap-3 mb-6">
-                <div>
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
-                    {plan.name}
-                  </h3>
-                  <Badge variant="default" className="mt-2">
-                    {plan.duration_days} días
-                  </Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          {plans.map((plan) => {
+            const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
+            return (
+              <Card key={plan.id} padding="md" rounded="xl" className="flex flex-col">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate leading-tight">
+                      {plan.name}
+                    </h3>
+                    <Badge variant="default" className="mt-1.5">
+                      {plan.duration_days} días
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 px-0 rounded-xl"
+                      onClick={() => openEdit(plan)}
+                      aria-label="Editar plan"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      className="h-9 w-9 px-0 rounded-xl"
+                      onClick={() => setDeleteTarget(plan)}
+                      aria-label="Eliminar plan"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-500">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-              </div>
 
-              <p className="text-4xl font-bold text-orange-600 dark:text-orange-500 tracking-tight mb-1">
-                ${plan.price_usd}
-                <span className="text-sm font-bold text-zinc-400 ml-1">USD</span>
-              </p>
-              <p className="text-xs text-zinc-500 flex items-center gap-1.5 mb-4">
-                <Calendar className="h-3.5 w-3.5" />
-                Vigencia de {plan.duration_days} días calendario
-              </p>
+                <p className="mt-3 text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-500 tracking-tight tabular-nums">
+                  ${plan.price_usd}
+                  <span className="text-xs sm:text-sm font-semibold text-zinc-400 ml-1">USD</span>
+                </p>
 
-              <div className="mb-6">
-                <div className="flex justify-between stat-label mb-2">
-                  <span>Costo diario</span>
-                  <span>${(plan.price_usd / plan.duration_days).toFixed(2)}/día</span>
-                </div>
-                <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                  <div
-                    className="h-full bg-orange-500 rounded-full"
-                    style={{ width: `${Math.min(100, (plan.duration_days / 365) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <Button type="button" variant="ghost" size="sm" className="flex-1" onClick={() => openEdit(plan)}>
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Button>
-                <Button type="button" variant="danger" size="sm" className="flex-1" onClick={() => setDeleteTarget(plan)}>
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar
-                </Button>
-              </div>
-            </Card>
-          ))}
+                <p className="mt-1.5 text-[11px] sm:text-xs text-zinc-500 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                  <span>{plan.duration_days} días calendario</span>
+                  <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                  <span className="font-medium">${dailyCost}/día</span>
+                </p>
+              </Card>
+            );
+          })}
         </div>
       )}
 

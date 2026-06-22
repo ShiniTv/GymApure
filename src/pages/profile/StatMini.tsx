@@ -11,10 +11,10 @@ export function StatMini({
   sub?: string;
 }) {
   return (
-    <Card padding="sm">
-      <p className={typography.statLabel + ' mb-1'}>{label}</p>
-      <p className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">{value}</p>
-      {sub && <p className="text-xs text-zinc-500 mt-1">{sub}</p>}
+    <Card padding="sm" rounded="xl">
+      <p className={typography.statLabel + ' mb-0.5 text-[10px]'}>{label}</p>
+      <p className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight">{value}</p>
+      {sub && <p className="text-[10px] text-zinc-500 mt-0.5 line-clamp-1">{sub}</p>}
     </Card>
   );
 }

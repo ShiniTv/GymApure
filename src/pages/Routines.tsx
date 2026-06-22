@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
   useRoutinesLibraryQuery,
@@ -8,10 +8,9 @@ import {
   useInvalidateRoutines,
 } from '../hooks/queries/useRoutinesQuery';
 import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
-import { Plus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Button, PageHeader, SegmentedControl } from '../components/ui';
+import { PageHeader, SegmentedControl, BackToDashboardLink } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import {
   format,
@@ -328,6 +327,7 @@ export default function Routines() {
               const dateStr = format(day, 'yyyy-MM-dd');
               if (!map[dateStr]) map[dateStr] = [];
               map[dateStr].push({
+                member_id: member.id,
                 member_name: member.full_name,
                 routine_name: routine.routine_name,
                 difficulty: routine.difficulty,
@@ -342,9 +342,28 @@ export default function Routines() {
     return map;
   }, [assignments, calendarDays]);
 
+  const calendarAutoSelected = useRef(false);
+
+  useEffect(() => {
+    if (view !== 'calendar') {
+      calendarAutoSelected.current = false;
+    }
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== 'calendar' || loadingAssignments || calendarAutoSelected.current) return;
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    if (assignmentsByDay[todayStr]?.length) {
+      setSelectedDay(today);
+      calendarAutoSelected.current = true;
+    }
+  }, [view, loadingAssignments, assignmentsByDay]);
+
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight">
       <PageHeader
+        compact
         title={
           user?.role === 'member' ? (
             <>Mis <span className="text-orange-500">rutinas</span></>
@@ -354,21 +373,17 @@ export default function Routines() {
         }
         subtitle={
           user?.role === 'member'
-            ? 'Tus rutinas asignadas por el entrenador'
-            : 'Gestiona plantillas y asignaciones de Caribean Gym'
+            ? 'Rutinas asignadas por tu entrenador'
+            : 'Plantillas y calendario'
         }
-        action={
-          view === 'library' && user?.role !== 'member' ? (
-            <Button onClick={() => setIsCreating(true)}>
-              <Plus className="h-5 w-5" />
-              Nueva Rutina
-            </Button>
-          ) : undefined
-        }
+        action={<BackToDashboardLink />}
       />
 
       {user?.role !== 'member' && (
         <SegmentedControl
+          variant="compact"
+          fullWidth
+          className="w-full sm:w-auto"
           value={view}
           onChange={changeView}
           options={[
@@ -452,6 +467,7 @@ export default function Routines() {
             setAssignForm((prev) => ({ ...prev, start_date: dateStr }));
             setIsAssigningFromCalendar(true);
           }}
+          onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
         />
       ) : (
         <RoutinesAssignmentsView

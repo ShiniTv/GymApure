@@ -3,7 +3,7 @@ import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
 import { useExercisesQuery, useInvalidateExercises, type Exercise } from '../hooks/queries/useExercisesQuery';
 import { Plus, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput, BackToDashboardLink } from '../components/ui';
 import { Link } from 'react-router-dom';
 import { clientLogger } from '../lib/clientLogger';
 
@@ -150,26 +150,33 @@ export default function Exercises() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight">
       <PageHeader
+        compact
         title={<>Biblioteca de <span className="text-orange-500">ejercicios</span></>}
-        subtitle="Gestiona la base de datos de ejercicios del gimnasio"
-        action={
-          <Button onClick={() => handleOpenModal()}>
-            <Plus className="h-5 w-5" />
-            Nuevo Ejercicio
-          </Button>
-        }
+        subtitle="Catálogo de movimientos para rutinas"
+        action={<BackToDashboardLink />}
       />
 
-      <SearchInput
-        containerClassName="max-w-md"
-        placeholder="Buscar ejercicio por nombre o grupo muscular..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="flex items-center gap-2">
+        <SearchInput
+          containerClassName="flex-1 min-w-0"
+          placeholder="Buscar por nombre o grupo muscular..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Button
+          size="sm"
+          className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
+          onClick={() => handleOpenModal()}
+          aria-label="Nuevo ejercicio"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="hidden sm:inline">Nuevo</span>
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
         {filteredExercises.length === 0 ? (
           <div className="col-span-full">
             <EmptyState
@@ -189,44 +196,53 @@ export default function Exercises() {
         ) : filteredExercises.map((exercise) => (
           <Card
             key={exercise.id}
-            padding="none"
+            padding="sm"
             rounded="xl"
-            className={`overflow-hidden group hover:border-orange-500/50 transition-all hover:shadow-xl ${expandedId === exercise.id ? 'col-span-full ring-2 ring-orange-500/20' : ''}`}
+            className={`group hover:border-orange-500/40 transition-all ${expandedId === exercise.id ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-orange-500/20' : ''}`}
           >
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-2xl group-hover:bg-orange-500/10 transition-colors">
-                  <Dumbbell className="h-6 w-6 text-zinc-400 group-hover:text-orange-500" />
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                <div className="p-2 bg-orange-500/10 rounded-lg shrink-0">
+                  <Dumbbell className="h-4 w-4 text-orange-600 dark:text-orange-500" />
                 </div>
-                <div className="flex gap-1">
-                  <button onClick={() => handleOpenModal(exercise)} className="p-2 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-xl transition-all">
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => { setDeleteError(null); setDeleteTarget(exercise); }} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white truncate leading-tight">
+                    {exercise.name}
+                  </h3>
+                  <Badge variant="default" className="mt-1 text-[10px]">
+                    {exercise.muscle_group}
+                  </Badge>
                 </div>
               </div>
+              <div className="flex gap-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal(exercise)}
+                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all"
+                  aria-label={`Editar ${exercise.name}`}
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDeleteError(null); setDeleteTarget(exercise); }}
+                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                  aria-label={`Eliminar ${exercise.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">{exercise.name}</h3>
-                    <Badge variant="default" className="mt-2">{exercise.muscle_group}</Badge>
-                  </div>
+            {exercise.description && (
+              <p className={`mt-2 text-xs text-zinc-500 dark:text-zinc-400 leading-snug ${expandedId === exercise.id ? '' : 'line-clamp-2'}`}>
+                {exercise.description}
+              </p>
+            )}
 
-                  <div className="space-y-2">
-                    {exercise.description && (
-                      <div className="flex gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                        <BookOpen className="h-4 w-4 shrink-0 mt-0.5" />
-                        <p className={expandedId === exercise.id ? '' : 'line-clamp-2'}>
-                          {exercise.description}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {expandedId === exercise.id && (
-                      <div className="mt-6 page-stack-loose animate-in slide-in-from-top-4 duration-300">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {expandedId === exercise.id && (
+              <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {/* Video Section */}
                           {exercise.video_url && (
                             <div className="space-y-3">
@@ -299,22 +315,23 @@ export default function Exercises() {
                           )}
                         </div>
                       </div>
-                    )}
+            )}
 
-                    <div className="flex items-center justify-end pt-2">
-                      <button 
-                        onClick={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
-                        className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all ${
-                          expandedId === exercise.id 
-                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900' 
-                            : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800'
-                        }`}
-                      >
-                        {expandedId === exercise.id ? 'Cerrar Detalles' : 'Ver Detalles'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
+                className={`inline-flex items-center justify-center gap-1 rounded-lg text-xs font-semibold transition-all ${
+                  expandedId === exercise.id
+                    ? 'h-9 px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
+                    : 'h-9 w-9 sm:w-auto sm:px-3 text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800'
+                }`}
+                aria-label={expandedId === exercise.id ? 'Cerrar detalles' : 'Ver detalles'}
+                title={expandedId === exercise.id ? 'Cerrar' : 'Ver detalles'}
+              >
+                <ChevronRight className={`h-4 w-4 sm:hidden ${expandedId === exercise.id ? 'rotate-90' : ''}`} />
+                <span className="hidden sm:inline">{expandedId === exercise.id ? 'Cerrar' : 'Ver detalles'}</span>
+              </button>
             </div>
           </Card>
         ))}

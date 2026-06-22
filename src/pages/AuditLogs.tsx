@@ -114,9 +114,14 @@ export default function AuditLogs() {
         title={<>Registro de <span className="text-orange-500">auditoría</span></>}
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
-          <Button variant="ghost" size="sm" onClick={loadLogs}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 px-0"
+            onClick={loadLogs}
+            aria-label="Actualizar"
+          >
             <RefreshCw className="h-4 w-4" />
-            Actualizar
           </Button>
         }
       />

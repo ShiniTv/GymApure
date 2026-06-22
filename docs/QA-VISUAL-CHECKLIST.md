@@ -1,6 +1,6 @@
-# QA visual — checklist producción
+# QA visual — checklist
 
-Repetir tras cambios de UI (viewports del [informe 2026-06-19](qa-audit-2026-06-19.md)).
+Repetir tras cambios de UI.
 
 ## Móvil 390×844 — Cliente (`member@gym.com`)
 
@@ -34,6 +34,6 @@ npm run test:reception-checklist
 npm run lighthouse:ci   # requiere build previo
 ```
 
-## Design system
+## Design system (código)
 
-Tokens y componentes documentados en [FIGMA-DESIGN-SYSTEM.md](FIGMA-DESIGN-SYSTEM.md).
+Tokens y componentes: `src/index.css`, `src/lib/typography.ts`, `src/components/ui/`.

@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle } from 'lucide-react';
+import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle, MessageSquare } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, DataCard, Avatar, FilterChips, EmptyState, TableRowSkeleton, SearchInput, Card } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, DataCard, Avatar, FilterChips, EmptyState, TableRowSkeleton, SearchInput, Card, BackToDashboardLink } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { useMembersQuery, useInvalidateMembers, type Member } from '../hooks/queries/useMembersQuery';
 import { clientLogger } from '../lib/clientLogger';
 import {
   getExpiryBadgeInfo,
 } from '../lib/expiryUtils';
+import { ROLE_LABELS, type UserRole } from '../lib/roles';
+import { cn } from '../lib/utils';
 
 interface MembershipPlan {
   id: number;
@@ -227,6 +229,19 @@ export default function Members() {
   };
 
   const filteredMembers = members;
+  const canAddUser =
+    user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist';
+  const addUserLabel = isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario';
+
+  const roleBadgeClass = (role: string) => {
+    if (role === 'admin') return 'bg-purple-500/10 text-purple-600 dark:text-purple-400';
+    if (role === 'trainer') return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
+    if (role === 'receptionist') return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    return 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400';
+  };
+
+  const mobileIconBtnClass =
+    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-orange-500/10 transition-colors';
 
   return (
     <div className="page-stack">
@@ -248,15 +263,45 @@ export default function Members() {
               ? 'Registra personas nuevas en mostrador. La cédula es obligatoria para el check-in.'
               : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
         }
-        action={
-          (user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist') ? (
-            <Button size="sm" className="w-full sm:w-auto" onClick={() => setIsAdding(true)}>
-              <Plus className="h-4 w-4" />
-              {isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario'}
-            </Button>
-          ) : undefined
-        }
+        action={user?.role === 'admin' || user?.role === 'trainer' ? <BackToDashboardLink /> : undefined}
       />
+
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-2">
+          <SearchInput
+            containerClassName="flex-1 min-w-0"
+            placeholder="Buscar por nombre o identificación..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {canAddUser && (
+            <Button
+              size="sm"
+              className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
+              onClick={() => setIsAdding(true)}
+              aria-label={addUserLabel}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{addUserLabel}</span>
+            </Button>
+          )}
+        </div>
+        {user?.role === 'admin' && (
+          <FilterChips
+            fullWidth
+            className="sm:w-auto sm:shrink-0"
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+            ]}
+            value={expiringFilter ? 'expiring' : ''}
+            onChange={(v) => {
+              setExpiringFilter(v === 'expiring');
+              setPage(1);
+            }}
+          />
+        )}
+      </div>
 
       <Modal
         open={isAdding}
@@ -353,29 +398,6 @@ export default function Members() {
         </div>
       </Modal>
 
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-        <SearchInput
-          containerClassName="w-full sm:max-w-sm"
-          placeholder="Buscar por nombre o identificación..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
-        {user?.role === 'admin' && (
-          <FilterChips
-            className="shrink-0 self-start sm:self-center"
-            options={[
-              { value: '', label: 'Todos' },
-              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-            ]}
-            value={expiringFilter ? 'expiring' : ''}
-            onChange={(v) => {
-              setExpiringFilter(v === 'expiring');
-              setPage(1);
-            }}
-          />
-        )}
-      </div>
-
       <div className="md:hidden space-y-2">
         {loading ? (
           <div className="space-y-2">
@@ -400,51 +422,143 @@ export default function Members() {
             }
           />
         ) : (
-          filteredMembers.map((member) => (
-            <DataCard key={member.id}>
-              <div className="flex items-start gap-3">
-                <Avatar name={member.full_name} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold text-zinc-900 dark:text-white truncate">
-                      {member.full_name}
-                    </p>
-                    <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
-                      {member.status === 'active' ? 'Activo' : 'Inactivo'}
-                    </Badge>
+          filteredMembers.map((member) => {
+            const expiryBadge =
+              member.role === 'member' && member.membership_name
+                ? getExpiryBadgeInfo(member.days_remaining, alertDays)
+                : null;
+            const showMobileActions =
+              (isTrainer && member.role === 'member') ||
+              ((user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member') ||
+              user?.role === 'admin';
+
+            return (
+              <DataCard key={member.id} className="!p-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <Avatar name={member.full_name} size="sm" className="shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate leading-tight">
+                        {member.full_name}
+                      </p>
+                      <Badge
+                        variant={member.status === 'active' ? 'success' : 'danger'}
+                        className="shrink-0"
+                      >
+                        {member.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-zinc-500">
+                      <span className="truncate">{member.cedula || 'Sin cédula'}</span>
+                      {!isStaffMember && (
+                        <>
+                          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                          <span
+                            className={cn(
+                              'inline-flex shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                              roleBadgeClass(member.role)
+                            )}
+                          >
+                            {ROLE_LABELS[member.role as UserRole] ?? member.role}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {member.membership_name && (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-500 truncate">
+                          {member.membership_name} · {member.days_remaining ?? 0}d
+                        </p>
+                        {expiryBadge && (
+                          <Badge className={cn('shrink-0 text-[10px]', expiryBadge.className)}>
+                            {expiryBadge.label}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1">{member.cedula || 'Sin cédula'}</p>
-                  {!isStaffMember && (
-                    <p className="text-xs text-zinc-400 mt-1 capitalize">
-                      {member.role}
-                    </p>
-                  )}
-                  {member.membership_name && (
-                    <p className="text-xs font-medium text-emerald-600 mt-2">
-                      {member.membership_name} · {member.days_remaining ?? 0}d
-                    </p>
-                  )}
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                {isTrainer && member.role === 'member' && (
-                  <>
-                    <Button size="sm" onClick={() => navigate(`/members/${member.id}/routines`)}>
-                      <Dumbbell className="h-4 w-4" /> Asignar rutina
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => navigate(`/members/${member.id}/history`)}>
-                      <History className="h-4 w-4" /> Historial
-                    </Button>
-                  </>
+
+                {showMobileActions && (
+                  <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-1">
+                    {isTrainer && member.role === 'member' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/members/${member.id}/routines`)}
+                          className={mobileIconBtnClass}
+                          aria-label="Asignar rutina"
+                        >
+                          <Dumbbell className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/members/${member.id}/history`)}
+                          className={mobileIconBtnClass}
+                          aria-label="Historial"
+                        >
+                          <History className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/messages?member=${member.id}`)}
+                          className={mobileIconBtnClass}
+                          aria-label="Enviar mensaje"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </button>
+                      </>
+                    )}
+                    {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/messages?member=${member.id}`)}
+                          className={mobileIconBtnClass}
+                          aria-label="Enviar mensaje"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openAssignSubscription(member)}
+                          className={mobileIconBtnClass}
+                          aria-label="Asignar membresía"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                        </button>
+                      </>
+                    )}
+                    {user?.role === 'admin' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(member)}
+                          className={cn(
+                            mobileIconBtnClass,
+                            member.status !== 'active' && 'text-emerald-500'
+                          )}
+                          aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
+                        >
+                          <Power className="h-4 w-4" />
+                        </button>
+                        {member.role === 'member' && member.id !== user?.id && (
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(member)}
+                            className={cn(mobileIconBtnClass, 'hover:text-red-500 hover:bg-red-500/10')}
+                            aria-label="Eliminar miembro"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
-                {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
-                  <Button size="sm" variant="ghost" onClick={() => openAssignSubscription(member)}>
-                    <CreditCard className="h-4 w-4" /> Membresía
-                  </Button>
-                )}
-              </div>
-            </DataCard>
-          ))
+              </DataCard>
+            );
+          })
         )}
         <PaginationBar page={page} pageSize={pageSize} total={total} onPageChange={setPage} label="usuarios" />
       </div>
@@ -540,16 +654,32 @@ export default function Members() {
                             >
                               <History className="h-4 w-4" />
                             </button>
+                            <button
+                              onClick={() => navigate(`/messages?member=${member.id}`)}
+                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              title="Enviar mensaje"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </button>
                           </>
                         )}
                         {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
-                          <button
-                            onClick={() => openAssignSubscription(member)}
-                            className="p-1.5 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                            title="Asignar membresía"
-                          >
-                            <CreditCard className="h-4 w-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => navigate(`/messages?member=${member.id}`)}
+                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              title="Enviar mensaje"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => openAssignSubscription(member)}
+                              className="p-1.5 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                              title="Asignar membresía"
+                            >
+                              <CreditCard className="h-4 w-4" />
+                            </button>
+                          </>
                         )}
                         {user?.role === 'admin' && (
                           <>

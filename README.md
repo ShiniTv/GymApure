@@ -4,6 +4,8 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 
 **Stack:** React 19 + Vite + Tailwind · Express · PostgreSQL (Supabase)
 
+> **Guía de desarrollo (instalación, comandos, estructura, flujo diario):** **[docs/DESARROLLO.md](docs/DESARROLLO.md)**
+
 ## Requisitos
 
 - Node.js 20+
@@ -11,9 +13,9 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entren
 
 ## Configuración local
 
-> **¿Otro PC o instalación nueva?** Guía completa: **[docs/SETUP-OTRO-EQUIPO.md](docs/SETUP-OTRO-EQUIPO.md)** · Plantilla `.env` para copiar: **[docs/COPIAR-ENV.md](docs/COPIAR-ENV.md)** · Archivo texto: **[docs/plantilla.env.txt](docs/plantilla.env.txt)**
+Instalación paso a paso, comandos y estructura del código: **[docs/DESARROLLO.md](docs/DESARROLLO.md)**
 
-1. Instalar dependencias:
+Resumen rápido:
 
    ```bash
    npm install
@@ -105,49 +107,19 @@ Las alertas **ya funcionan solas** al arrancar el servidor (`npm run dev`). No n
    npm run dev
    ```
 
-3. Entra con tu cuenta admin → **Dashboard** → sección **Configuración de Alertas** (ajusta días, guarda).
+3. Entra con tu cuenta admin → **Configuración** (ajusta días de anticipación, guarda).
 
-Eso es todo para uso básico. El cron revisa vencimientos cada hora automáticamente.
+Eso es todo para uso básico. El cron envía avisos de vencimiento al **chat in-app** de cada miembro cada hora.
 
-### Email y SMS (opcional, para producción)
+### Chat in-app
 
-Sin configurar nada extra, los avisos se imprimen en la **consola del servidor** (donde corre `npm run dev`). Para enviar emails reales, añade en `.env`:
+Los avisos de vencimiento, pagos y rutinas llegan al chat (**Mensajes** en el menú). Admin y recepción pueden responder a cada miembro en conversaciones 1 a 1. No se requiere SMTP, WhatsApp ni SMS externos.
 
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=tu-correo@gmail.com
-SMTP_PASS=contraseña-de-aplicacion
-SMTP_FROM=Caribean Gym <noreply@tudominio.com>
-ADMIN_NOTIFY_EMAILS=admin@gym.com
-```
-
-Para SMS con Twilio (opcional):
-
-```env
-TWILIO_ACCOUNT_SID=...
-TWILIO_AUTH_TOKEN=...
-TWILIO_FROM_NUMBER=+1234567890
-```
-
-### WhatsApp con Meta Cloud API (recomendado para miembros)
-
-Guía completa paso a paso: **[docs/GUIA-WHATSAPP-META.md](docs/GUIA-WHATSAPP-META.md)**
-
-Variables mínimas en `.env`:
-
-```env
-WHATSAPP_PROVIDER=meta
-WHATSAPP_ACCESS_TOKEN=...
-WHATSAPP_PHONE_NUMBER_ID=...
-WHATSAPP_API_VERSION=v21.0
-```
-
-Prueba desde **Dashboard → Notificaciones → Probar WhatsApp**. En modo desarrollo debes registrar tu número en el panel de Meta como destinatario de prueba.
+Prueba con `npm run test:chat-checklist` (servidor en marcha).
 
 ## Roadmap de calidad
 
-Ver auditoría en [`docs/qa-audit-2026-06-19.md`](docs/qa-audit-2026-06-19.md). Fases recientes:
+Fases implementadas:
 
 - **Fase 1 (seguridad crítica):** kiosk público eliminado; check-in solo staff autenticado; JWT revalidado contra BD; invalidación de sesiones (`token_version`).
 - **Fase 2 (IDOR y datos):** trainers solo miembros asignados; rutinas filtradas por rol; validación de uploads (magic bytes).
@@ -183,4 +155,4 @@ Fases anteriores: helmet, rate limit auth, RBAC, health check, code-splitting, C
 npm run pr:open
 ```
 
-Abre el navegador en la página de compare de GitHub. Si ya estás logueado en github.com, solo hacé clic en **Create pull request** y pegá la descripción desde [`docs/pr-body.md`](docs/pr-body.md).
+Abre el navegador en la página de compare de GitHub y creá el pull request desde ahí.

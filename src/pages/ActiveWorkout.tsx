@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, Clock, Save, Play, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Save, Play, Pause, RotateCcw, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, Modal, Label, Input, Select, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -557,23 +557,30 @@ export default function ActiveWorkout() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => setIsPaused((p) => !p)}
             disabled={!sessionId}
-            className="hidden sm:inline-flex px-3 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-all disabled:opacity-40"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+            aria-label={isPaused ? 'Reanudar cronómetro' : 'Pausar cronómetro'}
+            title={isPaused ? 'Reanudar' : 'Pausar'}
           >
-            {isPaused ? 'Reanudar' : 'Pausar'}
+            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            <span className="hidden sm:inline ml-0 sm:ml-1">{isPaused ? 'Reanudar' : 'Pausar'}</span>
           </button>
-          <button 
+          <button
+            type="button"
             onClick={resetProgress}
             disabled={!sessionId || isResetting}
-            className="hidden sm:inline-flex px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-600 dark:hover:text-white transition-all disabled:opacity-40"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+            aria-label="Reiniciar sesión"
+            title="Reiniciar"
           >
-            Reiniciar
+            <RotateCcw className="h-4 w-4" />
+            <span className="hidden sm:inline ml-0 sm:ml-1">Reiniciar</span>
           </button>
-          <Button onClick={finishWorkout} disabled={!sessionId} size="sm">
+          <Button onClick={finishWorkout} disabled={!sessionId} size="sm" className="h-9 px-3 sm:h-auto sm:min-h-11">
             Finalizar
           </Button>
         </div>

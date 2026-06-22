@@ -8,15 +8,44 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface RevenueChartProps {
-  data: { month: string; income: string | number }[];
+export type RevenueChartMode = 'day' | 'month';
+
+export interface RevenueChartPoint {
+  period: string;
+  income: string | number;
 }
 
-export default function RevenueChart({ data }: RevenueChartProps) {
+interface RevenueChartProps {
+  data: RevenueChartPoint[];
+  mode?: RevenueChartMode;
+  className?: string;
+}
+
+function formatPeriodLabel(period: string, mode: RevenueChartMode): string {
+  if (mode === 'month') {
+    const [, month] = period.split('-');
+    return month ? `M${month}` : period;
+  }
+  const [, month, day] = period.split('-');
+  return month && day ? `${day}/${month}` : period;
+}
+
+function formatPeriodTitle(period: string, mode: RevenueChartMode): string {
+  if (mode === 'month') return `Mes ${period}`;
+  const [year, month, day] = period.split('-');
+  return year && month && day ? `${day}/${month}/${year}` : period;
+}
+
+export default function RevenueChart({ data, mode = 'month', className }: RevenueChartProps) {
+  const numericData = data.map((row) => ({
+    ...row,
+    income: parseFloat(String(row.income)) || 0,
+  }));
+
   return (
-    <div className="h-72">
+    <div className={className ?? 'h-72'}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart data={numericData}>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="currentColor"
@@ -24,14 +53,15 @@ export default function RevenueChart({ data }: RevenueChartProps) {
             vertical={false}
           />
           <XAxis
-            dataKey="month"
+            dataKey="period"
             stroke="currentColor"
             className="text-zinc-400"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
             axisLine={false}
-            tickFormatter={(val) => `Mes ${val}`}
+            interval="preserveStartEnd"
+            tickFormatter={(val) => formatPeriodLabel(String(val), mode)}
           />
           <YAxis
             stroke="currentColor"
@@ -40,24 +70,25 @@ export default function RevenueChart({ data }: RevenueChartProps) {
             fontWeight="600"
             tickLine={false}
             axisLine={false}
+            width={42}
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip
             cursor={{ fill: 'currentColor', opacity: 0.05 }}
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
-                const point = payload[0].payload as { month: string; income: string | number };
+                const point = payload[0].payload as RevenueChartPoint & { income: number };
                 return (
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl shadow-xl">
-                    <p className="text-zinc-500 text-xs mb-1">Mes {point.month}</p>
-                    <p className="text-lg font-semibold text-orange-500">${payload[0].value}</p>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl shadow-xl">
+                    <p className="text-zinc-500 text-[10px] mb-0.5">{formatPeriodTitle(point.period, mode)}</p>
+                    <p className="text-base font-semibold text-orange-500 tabular-nums">${point.income}</p>
                   </div>
                 );
               }
               return null;
             }}
           />
-          <Bar dataKey="income" fill="#f97316" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="income" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={mode === 'day' ? 18 : 32} />
         </BarChart>
       </ResponsiveContainer>
     </div>

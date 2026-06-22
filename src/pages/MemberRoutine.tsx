@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History } from 'lucide-react';
+import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl } from '../components/ui';
+import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl, PageState, BackToDashboardLink } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 
@@ -367,15 +367,16 @@ export default function MemberRoutine() {
 
   if (loading) {
     return (
-      <div className="page-state-center">
+      <PageState>
         <Spinner />
-      </div>
+        <p className="mt-3 text-zinc-500 text-xs">Cargando miembro…</p>
+      </PageState>
     );
   }
   if (!member) return <div className="text-zinc-500 dark:text-white p-6">Miembro no encontrado</div>;
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight">
       <Breadcrumbs
         items={[
           { label: 'Miembros', href: '/members' },
@@ -385,68 +386,98 @@ export default function MemberRoutine() {
       />
 
       <PageHeader
+        compact
         title={
           <>
             Rutinas de <span className="text-orange-500">{member.full_name}</span>
           </>
         }
-        subtitle="Gestionar planes de entrenamiento personalizados"
+        subtitle="Planes personalizados"
         action={
-          <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
-            <Button variant="ghost" className="min-h-[48px]" onClick={() => navigate(`/members/${id}/history`)}>
-              <History className="h-5 w-5" />
-              Historial
+          <div className="flex items-center gap-1.5 shrink-0">
+            <BackToDashboardLink iconOnly className="sm:hidden" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={() => navigate(`/members/${id}/history`)}
+              aria-label="Ver historial"
+              title="Historial"
+            >
+              <History className="h-4 w-4" />
             </Button>
             <Button
-              className="min-h-[48px]"
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={() => navigate(`/messages?member=${id}`)}
+              aria-label="Enviar mensaje al miembro"
+              title="Mensaje"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
               onClick={() => {
                 setIsCreating(true);
                 setRoutineForm({ name: '', difficulty: 'Beginner' });
               }}
+              aria-label="Crear rutina"
+              title="Nueva rutina"
             >
-              <Plus className="h-5 w-5" />
-              Crear Nueva
+              <Plus className="h-4 w-4" />
             </Button>
             <Button
               variant="secondary"
-              className="min-h-[48px]"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
               onClick={() => {
                 setIsAssigning(true);
                 apiFetchAvailableRoutines();
               }}
+              aria-label="Asignar rutina existente"
+              title="Asignar existente"
             >
-              <Plus className="h-5 w-5" />
-              Asignar Existente
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         }
       />
 
       <Card
-        padding="md"
-        rounded="2xl"
-        className="sticky top-4 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm"
+        padding="sm"
+        rounded="xl"
+        className="sticky top-2 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm"
       >
-        <div className="flex items-center gap-3">
-          <Avatar name={member.full_name} size="md" />
-          <div>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white">{member.full_name}</p>
-            <p className="text-xs text-zinc-500 mt-0.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Avatar name={member.full_name} size="sm" className="shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{member.full_name}</p>
+            <p className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 truncate">
               {subscription
-                ? `${subscription.membership_name} · ${subscription.days_remaining} días restantes`
+                ? `${subscription.membership_name} · ${subscription.days_remaining} días`
                 : 'Sin membresía activa'}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {member.goal && <Badge variant="warning">{member.goal}</Badge>}
+        <div className="flex flex-wrap gap-1.5 shrink-0">
+          {member.goal && (
+            <Badge variant="warning" className="text-[9px] px-1.5 py-0 max-w-[8rem] truncate">
+              {member.goal}
+            </Badge>
+          )}
           {routines.length > 0 && (
-            <Badge variant="default">{routines.length} rutina{routines.length !== 1 ? 's' : ''}</Badge>
+            <Badge variant="default" className="text-[9px] px-1.5 py-0">
+              {routines.length} rutina{routines.length !== 1 ? 's' : ''}
+            </Badge>
           )}
         </div>
       </Card>
 
       <SegmentedControl
+        variant="compact"
+        fullWidth
         value={coachingTab}
         onChange={setCoachingTab}
         options={[
@@ -458,10 +489,10 @@ export default function MemberRoutine() {
       />
 
       {coachingTab === 'perfil' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <h3 className="section-title mb-4">Perfil</h3>
-          <div className="space-y-2 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
+        <Card padding="sm" rounded="xl">
+          <h3 className="section-title mb-2.5">Perfil</h3>
+          <div className="space-y-1.5 text-xs sm:text-sm">
             {member.height != null && (
               <p><span className="text-zinc-500">Altura:</span> <span className="font-bold">{member.height} cm</span></p>
             )}
@@ -477,12 +508,12 @@ export default function MemberRoutine() {
           </div>
         </Card>
 
-        <Card>
-          <h3 className="section-title mb-4">Membresía</h3>
+        <Card padding="sm" rounded="xl">
+          <h3 className="section-title mb-2.5">Membresía</h3>
           {subscription ? (
             <div>
-              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-500">{subscription.membership_name}</p>
-              <p className="text-sm text-zinc-500 mt-2">{subscription.days_remaining} días restantes</p>
+              <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-500">{subscription.membership_name}</p>
+              <p className="text-xs text-zinc-500 mt-1">{subscription.days_remaining} días restantes</p>
               <p className="text-xs text-zinc-400 mt-1">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
@@ -495,26 +526,28 @@ export default function MemberRoutine() {
       )}
 
       {coachingTab === 'mediciones' && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="section-title flex items-center gap-2">
-              <Scale className="h-4 w-4 text-orange-500" />
+        <Card padding="sm" rounded="xl">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <h3 className="section-title flex items-center gap-1.5">
+              <Scale className="h-3.5 w-3.5 text-orange-500" />
               Mediciones
             </h3>
             {(user?.role === 'admin' || user?.role === 'trainer') && (
-              <button
+              <Button
                 type="button"
+                size="sm"
+                className="h-8 px-2.5 text-xs"
                 onClick={() => setIsAddingMeasurement(true)}
-                className="text-xs font-semibold text-orange-600 hover:text-orange-500"
               >
-                + Registrar
-              </button>
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Registrar</span>
+              </Button>
             )}
           </div>
           {measurements.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {measurements.map((m) => (
-                <div key={m.id} className="flex justify-between text-sm border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div key={m.id} className="flex justify-between gap-2 text-xs sm:text-sm border-b border-zinc-100 dark:border-zinc-800 py-2 last:border-0">
                   <span className="font-bold text-zinc-600 dark:text-zinc-300">
                     {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                   </span>
@@ -822,10 +855,9 @@ export default function MemberRoutine() {
       </Modal>
 
       {coachingTab === 'rutinas' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-2.5">
         {routines.length === 0 ? (
           <EmptyState
-            className="col-span-full"
             icon={Dumbbell}
             title="Sin rutinas asignadas"
             description={`${member.full_name} aún no tiene planes de entrenamiento.`}
@@ -854,129 +886,150 @@ export default function MemberRoutine() {
             }
           />
         ) : (
-          routines.map((routine) => (
-            <div key={routine.id} className="col-span-full">
-            <Card className="overflow-hidden" padding="none">
-              <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-orange-500/10 rounded-xl">
-                    <Dumbbell className="h-6 w-6 text-orange-600 dark:text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</h3>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1 font-medium flex-wrap">
-                      <Badge variant="default">{formatDifficulty(routine.difficulty)}</Badge>
-                      <span className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Vigencia: {routine.start_date ? new Date(routine.start_date).toLocaleDateString() : 'N/A'} - {routine.end_date ? new Date(routine.end_date).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+          routines.map((routine) => {
+            const isExpanded = expandedRoutineId === routine.id;
+            const formatDate = (value: string | null | undefined) => {
+              if (!value) return '—';
+              try {
+                return format(new Date(value), 'dd/MM/yy', { locale: es });
+              } catch {
+                return '—';
+              }
+            };
 
-                <div className="flex items-center gap-2">
-                  <button 
+            return (
+            <Card key={routine.id} padding="sm" rounded="xl" className="overflow-hidden">
+              <div className="flex items-start gap-2.5">
+                <div className="h-9 w-9 shrink-0 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                  <Dumbbell className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white leading-tight truncate">
+                      {routine.name}
+                    </h3>
+                    <Badge variant="default" className="shrink-0 text-[9px] px-1.5 py-0">
+                      {formatDifficulty(routine.difficulty)}
+                    </Badge>
+                  </div>
+                  <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1 tabular-nums">
+                    <Calendar className="h-3 w-3 shrink-0" />
+                    {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <button
+                    type="button"
                     onClick={() => toggleExpandRoutine(routine.id)}
-                    className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white rounded-xl text-sm font-bold transition-all shadow-sm"
+                    className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition-colors ${
+                      isExpanded
+                        ? 'text-orange-500 bg-orange-500/10'
+                        : 'text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10'
+                    }`}
+                    aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
+                    title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
                   >
-                    {expandedRoutineId === routine.id ? 'Ocultar Ejercicios' : 'Ver Ejercicios'}
+                    <Dumbbell className="h-3.5 w-3.5" />
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => openEditModal(routine)}
-                    className="p-2.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-xl transition-all"
-                    title="Editar Rutina"
+                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                    aria-label={`Editar ${routine.name}`}
                   >
-                    <Edit className="h-5 w-5" />
+                    <Edit className="h-3.5 w-3.5" />
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setUnassignTarget(routine)}
-                    className="p-2.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all active:scale-90"
-                    title="Desvincular del Usuario"
+                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                    aria-label={`Quitar ${routine.name}`}
                   >
-                    <UserMinus className="h-5 w-5" />
+                    <UserMinus className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
 
-              {expandedRoutineId === routine.id && (
-                <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-6 space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="section-title">Ejercicios</h4>
-                    <button 
+              {isExpanded && (
+                <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Ejercicios</h4>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs"
                       onClick={() => {
                         setIsAddingExercise(true);
                         apiFetchAvailableExercises();
                       }}
-                      className="flex items-center gap-2 text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 text-sm font-bold transition-colors"
                     >
-                      <Plus className="h-4 w-4" />
-                      Añadir Ejercicio
-                    </button>
+                      <Plus className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Añadir</span>
+                    </Button>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {routine.exercises?.map((exercise) => (
-                      <div key={exercise.routine_exercise_id} className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-4 flex justify-between items-start shadow-sm transition-all hover:shadow-md">
-                        <div>
-                          <h5 className="font-semibold text-zinc-900 dark:text-white">{exercise.name}</h5>
-                          <p className="text-xs text-zinc-500 capitalize">{exercise.muscle_group}</p>
-                          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                            <div className="flex items-center gap-1.5 text-zinc-500 font-medium tracking-tight">
-                              Series: 
-                              <input 
+                      <div key={exercise.routine_exercise_id} className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700 rounded-lg px-2.5 py-2 flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <h5 className="font-semibold text-xs text-zinc-900 dark:text-white truncate">{exercise.name}</h5>
+                          <p className="text-[10px] text-zinc-500 capitalize">{exercise.muscle_group}</p>
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500">
+                            <label className="inline-flex items-center gap-1">
+                              Sets
+                              <input
                                 type="number"
-                                className="w-10 bg-zinc-100 dark:bg-zinc-700 border-none rounded-md px-1 py-0.5 text-center font-bold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
                                 defaultValue={exercise.sets}
                                 onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                               />
-                            </div>
-                            <div className="flex items-center gap-1.5 text-zinc-500 font-medium tracking-tight">
-                              Reps: 
-                              <input 
+                            </label>
+                            <label className="inline-flex items-center gap-1">
+                              Reps
+                              <input
                                 type="number"
-                                className="w-10 bg-zinc-100 dark:bg-zinc-700 border-none rounded-md px-1 py-0.5 text-center font-bold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
                                 defaultValue={exercise.reps}
                                 onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                               />
-                            </div>
-                            <span className="text-zinc-500 font-medium tracking-tight">Descanso: <span className="text-zinc-900 dark:text-white font-bold">{exercise.rest_seconds}s</span></span>
-                            {exercise.weight_suggestion && (
-                              <span className="text-zinc-500 font-medium tracking-tight col-span-2 mt-1">Tip: <span className="text-orange-600 dark:text-orange-400 font-bold italic">{exercise.weight_suggestion}</span></span>
-                            )}
+                            </label>
+                            <span>Rst <span className="font-semibold text-zinc-800 dark:text-zinc-200">{exercise.rest_seconds}s</span></span>
                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <button 
+                        <div className="flex gap-0.5 shrink-0">
+                          <button
+                            type="button"
                             onClick={() => {
                               setEditingExercise(exercise);
                               setIsEditingExercise(true);
                             }}
-                            className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
-                            title="Editar Ejercicio"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                            aria-label={`Editar ${exercise.name}`}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3.5 w-3.5" />
                           </button>
-                          <button 
+                          <button
+                            type="button"
                             onClick={() => setDeleteExerciseTarget({ routineId: routine.id, exercise })}
-                            className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Eliminar Ejercicio"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            aria-label={`Eliminar ${exercise.name}`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
                     ))}
                     {(!routine.exercises || routine.exercises.length === 0) && (
-                      <p className="text-zinc-500 text-sm italic col-span-full py-4 text-center">No hay ejercicios en esta rutina.</p>
+                      <p className="text-zinc-400 text-[11px] italic col-span-full py-3 text-center">Sin ejercicios en esta rutina.</p>
                     )}
                   </div>
                 </div>
               )}
             </Card>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       )}
