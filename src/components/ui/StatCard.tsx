@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 import { Card } from './Card';
 import type { TrendTone } from '../../lib/dashboardTrends';
 
-type StatColor = 'emerald' | 'blue' | 'orange' | 'red';
+type StatColor = 'emerald' | 'blue' | 'brand' | 'orange' | 'red';
 
 interface StatCardProps {
   title: string;
@@ -24,7 +24,8 @@ interface StatCardProps {
 const colorMap: Record<StatColor, string> = {
   emerald: 'text-emerald-600 dark:text-emerald-500 bg-emerald-500/10',
   blue: 'text-blue-600 dark:text-blue-500 bg-blue-500/10',
-  orange: 'text-orange-600 dark:text-orange-500 bg-orange-500/10',
+  brand: 'text-brand bg-brand/10',
+  orange: 'text-brand bg-brand/10',
   red: 'text-red-600 dark:text-red-500 bg-red-500/10',
 };
 
@@ -110,7 +111,7 @@ export function StatCard({
     return (
       <Link
         to={to}
-        className={cn('block rounded-xl transition-colors hover:ring-2 hover:ring-orange-500/25 active:scale-[0.98]', className)}
+        className={cn('block rounded-xl transition-colors hover:ring-2 hover:ring-brand/25 active:scale-[0.98]', className)}
         aria-label={`${title}: ${value}`}
         title={title}
       >
@@ -140,7 +141,7 @@ export function Spinner({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent',
+        'animate-spin rounded-full h-8 w-8 border-4 border-brand border-t-transparent',
         className
       )}
     />

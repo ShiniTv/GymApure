@@ -39,7 +39,7 @@ const variantStyles: Record<ToastVariant, { container: string; icon: typeof Chec
     icon: AlertTriangle,
   },
   info: {
-    container: 'border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400',
+    container: 'border-brand/30 bg-brand/10 text-brand dark:text-brand',
     icon: Info,
   },
 };

@@ -138,3 +138,31 @@ export async function supabaseStorageDownload(bucket: string, objectKey: string)
 
   return Buffer.from(await response.arrayBuffer());
 }
+
+export async function supabaseStorageRemove(bucket: string, objectKey: string): Promise<void> {
+  const baseUrl = env.SUPABASE_URL;
+  const key = getSupabaseServiceKey();
+  if (!baseUrl || !key) {
+    throw new Error('Supabase Storage no configurado');
+  }
+
+  const encodedPath = objectKey.split('/').map(encodeURIComponent).join('/');
+  const url = `${baseUrl}/storage/v1/object/${bucket}/${encodedPath}`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: buildSupabaseStorageHeaders(key),
+  });
+
+  if (!response.ok && response.status !== 404) {
+    let message = response.statusText;
+    try {
+      const payload = (await response.json()) as { message?: string; error?: string };
+      message = payload.message ?? payload.error ?? message;
+    } catch {
+      const text = await response.text();
+      if (text) message = text;
+    }
+    throw new Error(message);
+  }
+}

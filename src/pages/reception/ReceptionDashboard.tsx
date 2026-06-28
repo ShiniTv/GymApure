@@ -5,7 +5,8 @@ import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { PageHeader, Card, DashboardSkeleton } from '../../components/ui';
 import ReceptionActivityFeed from '../../components/reception/ReceptionActivityFeed';
-import { cn } from '../../lib/utils';
+import { BRAND } from '../../config/brand';
+import BrandName from '../../components/BrandName';
 
 interface ReceptionStats {
   todayCheckIns: number;
@@ -24,7 +25,7 @@ interface KpiItem {
 }
 
 const kpiToneMap: Record<KpiTone, string> = {
-  orange: 'text-orange-600 dark:text-orange-500',
+  orange: 'text-brand dark:text-brand',
   emerald: 'text-emerald-600 dark:text-emerald-500',
   blue: 'text-blue-600 dark:text-blue-500',
 };
@@ -79,15 +80,15 @@ function PendingPaymentsBanner({ count }: { count: number }) {
   return (
     <Link
       to="/payments?status=pending"
-      className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/30 bg-orange-500/5 px-3 py-2.5 transition-colors hover:bg-orange-500/10"
+      className="flex items-center justify-between gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2.5 transition-colors hover:bg-brand/10"
     >
       <div className="flex items-center gap-2 min-w-0">
-        <CreditCard className="h-4 w-4 text-orange-600 shrink-0" />
-        <span className="text-xs font-semibold text-orange-800 dark:text-orange-300 truncate">
+        <CreditCard className="h-4 w-4 text-brand shrink-0" />
+        <span className="text-xs font-semibold text-brand dark:text-brand truncate">
           {count} pago{count !== 1 ? 's' : ''} pendiente{count !== 1 ? 's' : ''} de aprobar
         </span>
       </div>
-      <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 shrink-0">Revisar</span>
+      <span className="text-[10px] font-bold text-brand dark:text-brand shrink-0">Revisar</span>
     </Link>
   );
 }
@@ -176,14 +177,14 @@ export default function ReceptionDashboard() {
           aria-hidden
         >
           <RefreshCw
-            className={cn('h-4 w-4', (refreshing || pullDistance >= PULL_THRESHOLD_PX) && 'animate-spin text-orange-500')}
+            className={cn('h-4 w-4', (refreshing || pullDistance >= PULL_THRESHOLD_PX) && 'animate-spin text-brand')}
           />
         </div>
       )}
 
       <PageHeader
         compact
-        title={<>Recepción <span className="text-orange-500">Caribean Gym</span></>}
+        title={<>Recepción <BrandName variant="plain" className="text-brand" /></>}
         subtitle="Resumen del día"
         action={
           <div className="flex items-center gap-1.5 shrink-0">
@@ -191,7 +192,7 @@ export default function ReceptionDashboard() {
               type="button"
               onClick={() => void refresh()}
               disabled={refreshing}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-orange-500 hover:border-orange-500/30 transition-colors disabled:opacity-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-brand hover:border-brand/30 transition-colors disabled:opacity-50"
               aria-label="Actualizar resumen"
               title="Actualizar"
             >
@@ -200,7 +201,7 @@ export default function ReceptionDashboard() {
             <span className="relative inline-flex">
               <Link
                 to="/reception?mode=counter"
-                className="inline-flex h-9 w-9 lg:h-auto lg:min-h-10 lg:w-auto shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-600 px-0 py-0 lg:px-4 lg:py-2.5 text-white text-sm font-semibold shadow-md shadow-orange-900/15 hover:bg-orange-500 transition-colors"
+                className="inline-flex h-9 w-9 lg:h-auto lg:min-h-10 lg:w-auto shrink-0 items-center justify-center gap-2 rounded-xl brand-solid brand-solid-hover px-0 py-0 lg:px-4 lg:py-2.5 text-sm font-semibold shadow-md shadow-zinc-900/10 transition-colors"
                 aria-label={
                   pendingPayments > 0
                     ? `Modo mostrador (${pendingPayments} pagos pendientes)`
@@ -212,7 +213,7 @@ export default function ReceptionDashboard() {
                 <span className="hidden lg:inline whitespace-nowrap">Modo mostrador</span>
               </Link>
               {pendingPayments > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center rounded-full bg-white text-orange-600 text-[9px] font-bold shadow-sm border border-orange-200 dark:border-orange-800 pointer-events-none">
+                <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-brand text-[9px] font-bold shadow-sm border border-brand/20 dark:border-brand/30 pointer-events-none">
                   {pendingPayments > 99 ? '99+' : pendingPayments}
                 </span>
               )}
@@ -293,12 +294,12 @@ export default function ReceptionDashboard() {
         <Card padding="sm" rounded="xl" className="md:col-span-3 flex flex-col min-h-[200px] md:min-h-[260px]">
           <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-orange-500" />
+              <Clock className="h-3.5 w-3.5 text-brand" />
               Actividad de hoy
             </h3>
             <Link
               to="/reception?mode=counter&tab=inside"
-              className="text-[10px] sm:text-xs font-semibold text-orange-600 hover:text-orange-500 shrink-0"
+              className="text-[10px] sm:text-xs font-semibold text-brand hover:text-brand shrink-0"
             >
               Dentro ahora
             </Link>

@@ -135,7 +135,7 @@ export default function Exercises() {
         <PageHeader title="Acceso denegado" subtitle="No tienes permiso para ver esta sección." />
         <Card padding="lg" className="text-center">
           <p className="text-sm text-zinc-500 mb-4">Contacta al administrador si crees que es un error.</p>
-          <Link to="/" className="text-orange-600 font-bold text-sm hover:underline">Volver al inicio</Link>
+          <Link to="/" className="text-brand font-bold text-sm hover:underline">Volver al inicio</Link>
         </Card>
       </div>
     );
@@ -153,7 +153,7 @@ export default function Exercises() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Biblioteca de <span className="text-orange-500">ejercicios</span></>}
+        title={<>Biblioteca de <span className="text-brand">ejercicios</span></>}
         subtitle="Catálogo de movimientos para rutinas"
         action={<BackToDashboardLink />}
       />
@@ -198,12 +198,12 @@ export default function Exercises() {
             key={exercise.id}
             padding="sm"
             rounded="xl"
-            className={`group hover:border-orange-500/40 transition-all ${expandedId === exercise.id ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-orange-500/20' : ''}`}
+            className={`group hover:border-brand/40 transition-all ${expandedId === exercise.id ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-brand/20' : ''}`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                <div className="p-2 bg-orange-500/10 rounded-lg shrink-0">
-                  <Dumbbell className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                <div className="p-2 bg-brand/10 rounded-lg shrink-0">
+                  <Dumbbell className="h-4 w-4 text-brand dark:text-brand" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white truncate leading-tight">
@@ -218,7 +218,7 @@ export default function Exercises() {
                 <button
                   type="button"
                   onClick={() => handleOpenModal(exercise)}
-                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-all"
+                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
                   aria-label={`Editar ${exercise.name}`}
                 >
                   <Edit className="h-4 w-4" />
@@ -274,18 +274,18 @@ export default function Exercises() {
                                   href={exercise.video_url!} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="flex items-center justify-between p-6 bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-orange-100 dark:border-orange-900/30 group/video h-full min-h-[160px]"
+                                  className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 group/video h-full min-h-[160px]"
                                 >
                                   <div className="flex items-center gap-4">
-                                    <div className="p-4 bg-orange-500 rounded-2xl text-white shadow-lg shadow-orange-500/20">
+                                    <div className="p-4 brand-solid rounded-2xl shadow-lg shadow-zinc-900/20">
                                       <Video className="h-8 w-8" />
                                     </div>
                                     <div>
                                       <p className="text-lg font-semibold text-zinc-900 dark:text-white">Ver video tutorial</p>
-                                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Enlace externo seguro</p>
+                                      <p className="text-xs text-brand dark:text-brand font-medium">Enlace externo seguro</p>
                                     </div>
                                   </div>
-                                  <ChevronRight className="h-6 w-6 text-orange-500 group-hover:translate-x-1 transition-transform" />
+                                  <ChevronRight className="h-6 w-6 text-brand group-hover:translate-x-1 transition-transform" />
                                 </a>
                               )}
                             </div>
@@ -366,7 +366,7 @@ export default function Exercises() {
         onClose={() => setIsModalOpen(false)}
         maxWidth="xl"
         scrollable
-        title={<>{editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-orange-500">EJERCICIO</span></>}
+        title={<>{editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-brand">EJERCICIO</span></>}
       >
             <form onSubmit={handleSubmit} className="page-stack">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -433,7 +433,7 @@ export default function Exercises() {
                 />
                 <label
                   htmlFor="video-upload"
-                  className="flex items-center justify-center gap-3 w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 cursor-pointer hover:border-orange-500/50 transition-all"
+                  className="flex items-center justify-center gap-3 w-full bg-zinc-50 dark:bg-zinc-800 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 cursor-pointer hover:border-brand/50 transition-all"
                 >
                   <Plus className="h-5 w-5" />
                   <span className="text-xs font-medium">

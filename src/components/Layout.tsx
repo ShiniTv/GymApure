@@ -10,6 +10,8 @@ import {
   shouldShowExpiryAlert,
 } from '../lib/expiryUtils';
 import Logo from './Logo';
+import BrandName from './BrandName';
+import { BRAND } from '../config/brand';
 import {
   LayoutDashboard,
   Users,
@@ -30,6 +32,7 @@ import {
   Settings2,
   Fingerprint,
   MessageSquare,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
@@ -71,6 +74,7 @@ export default function Layout() {
     { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock, roles: ['trainer'] },
     { name: 'Ejercicios', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
     { name: 'Historial', href: '/history', icon: History, roles: ['member'] },
+    { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed, roles: ['member'] },
     { name: 'Mi Perfil', href: '/profile', icon: UserCircle, roles: ['admin', 'trainer', 'member', 'receptionist'] },
   ];
 
@@ -93,18 +97,9 @@ export default function Layout() {
 
   const currentPage = filteredNav.find((item) => isNavActive(item.href))?.name;
 
-  const brandMark = (
-    <span className="flex flex-col leading-none min-w-0">
-      <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white truncate">
-        Caribean
-      </span>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-500 -mt-px truncate">
-        Gym
-      </span>
-    </span>
-  );
+  const brandMark = <BrandName variant="split" />;
 
-  const mobileHeaderTitle = currentPage ?? 'Caribean Gym';
+  const mobileHeaderTitle = currentPage ?? BRAND.name;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300">
@@ -119,13 +114,11 @@ export default function Layout() {
                   {mobileHeaderTitle}
                 </p>
                 <p className="text-[10px] font-medium text-zinc-400 truncate leading-tight">
-                  Caribean Gym
+                  {BRAND.name}
                 </p>
               </>
             ) : (
-              <p className="text-sm font-bold tracking-tight text-zinc-900 dark:text-white truncate leading-tight">
-                Caribean <span className="text-orange-500">Gym</span>
-              </p>
+              <BrandName variant="inline" size="sm" className="truncate leading-tight" />
             )}
           </div>
         </div>
@@ -171,12 +164,12 @@ export default function Layout() {
                     <item.icon className="h-4 w-4 shrink-0" />
                     <span className="flex-1 truncate">{item.name}</span>
                     {showChatNav && item.href === '/messages' && chatUnread > 0 && (
-                      <span className="nav-badge bg-orange-500 text-white">
+                      <span className="nav-badge brand-solid">
                         {chatUnread > 99 ? '99+' : chatUnread}
                       </span>
                     )}
                     {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
-                      <span className="nav-badge bg-orange-500 text-white">
+                      <span className="nav-badge brand-solid">
                         {expiringCount > 99 ? '99+' : expiringCount}
                       </span>
                     )}

@@ -1,0 +1,20 @@
+{
+  "name": "GymApure",
+  "short_name": "GymApure",
+  "description": "GymApure — gestión de membresías, rutinas y control de acceso.",
+  "icons": [
+    {
+      "src": "/logo-mark-light.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#18181b",
+  "background_color": "#fafafa",
+  "display": "standalone"
+}

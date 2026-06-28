@@ -86,7 +86,7 @@ export default function Attendance() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
         <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
           <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
+            <Calendar className="h-4 w-4 text-brand shrink-0" />
             Volumen diario (7d)
           </h3>
           <div className="h-44 sm:h-56 lg:h-64">
@@ -127,7 +127,7 @@ export default function Attendance() {
 
       <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
         <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
+          <AlertTriangle className="h-4 w-4 text-brand shrink-0" />
           Próximos vencimientos ({alertDays}d)
         </h3>
         <div className="space-y-3 sm:space-y-4">

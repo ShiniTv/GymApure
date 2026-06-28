@@ -26,7 +26,7 @@ export function RestTimerOverlay({
 
         <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-3 mb-6 overflow-hidden">
           <div
-            className="bg-orange-500 h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_12px_rgba(249,115,22,0.5)]"
+            className="bg-brand h-full rounded-full transition-all duration-1000 ease-linear shadow-[0_0_12px_rgba(24,24,27,0.35)]"
             style={{ width: `${restDuration > 0 ? (restTimer / restDuration) * 100 : 0}%` }}
           />
         </div>

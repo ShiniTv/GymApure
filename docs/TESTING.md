@@ -1,4 +1,4 @@
-# Guía de pruebas — Caribean Gym
+# Guía de pruebas — GymApure
 
 Este proyecto usa **pruebas de API por HTTP** (sin Playwright/Cypress). El servidor debe estar en marcha salvo que indiques lo contrario.
 

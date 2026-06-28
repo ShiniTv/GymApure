@@ -74,7 +74,7 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     if (env.NODE_ENV !== 'production') {
-      console.log(`\n  Caribean Gym — http://localhost:${PORT}\n`);
+      console.log(`\n  GymApure — http://localhost:${PORT}\n`);
     } else {
       logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     }

@@ -7,7 +7,9 @@ import { dateLocale as es } from '../lib/dateLocale';
 import { APP_VERSION } from '../lib/appVersion';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
+import BrandName from '../components/BrandName';
 import Logo from '../components/Logo';
+import { BRAND } from '../config/brand';
 import { Button, Card, Input, SegmentedControl, Spinner } from '../components/ui';
 import { cn } from '../lib/utils';
 type KioskMode = 'check-in' | 'check-out';
@@ -131,7 +133,7 @@ export default function CheckIn() {
                 isKioskMode ? 'h-40 w-40' : 'h-32 w-32',
                 status === 'scanning'
                   ? isCheckIn
-                    ? 'border-orange-500 ring-4 ring-orange-500/20'
+                    ? 'border-brand ring-4 ring-brand/20'
                     : 'border-blue-500 ring-4 ring-blue-500/20'
                   : 'border-zinc-200 dark:border-zinc-800'
               )}
@@ -141,7 +143,7 @@ export default function CheckIn() {
                   className={cn(
                     'absolute inset-0 animate-scan-line',
                     isCheckIn
-                      ? 'bg-gradient-to-t from-orange-500/20 to-transparent'
+                      ? 'bg-gradient-to-t from-brand/20 to-transparent'
                       : 'bg-gradient-to-t from-blue-500/20 to-transparent'
                   )}
                 />
@@ -149,7 +151,7 @@ export default function CheckIn() {
               {status === 'scanning' ? (
                 <Spinner className={cn('relative z-10', isKioskMode ? 'h-14 w-14' : 'h-10 w-10')} />
               ) : isCheckIn ? (
-                <LogIn className={cn('text-orange-500/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
+                <LogIn className={cn('text-brand/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
               ) : (
                 <LogOut className={cn('text-blue-500/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
               )}
@@ -252,7 +254,7 @@ export default function CheckIn() {
               </p>
             )}
             {expiryWarning && (
-              <p className="text-sm font-semibold text-orange-500 mt-2">{expiryWarning}</p>
+              <p className="text-sm font-semibold text-warning mt-2">{expiryWarning}</p>
             )}
           </div>
 
@@ -272,9 +274,9 @@ export default function CheckIn() {
         <div className="flex flex-col min-h-screen text-white">
           <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
             <div className="flex items-center gap-4">
-              <Logo className="h-12 w-12" />
+              <Logo className="h-12 w-12" mode="dark" />
               <div>
-                <p className="text-xl font-bold tracking-tight">Caribean Gym</p>
+                <BrandName variant="inline" size="md" onDark className="text-xl" />
                 <p className="text-sm text-zinc-400">Control de acceso</p>
               </div>
             </div>
@@ -312,11 +314,11 @@ export default function CheckIn() {
                 <div
                   className={cn(
                     'mx-auto mb-8 rounded-full p-8',
-                    isCheckIn ? 'bg-orange-500/10' : 'bg-blue-500/10'
+                    isCheckIn ? 'bg-brand/10' : 'bg-blue-500/10'
                   )}
                 >
                   {isCheckIn ? (
-                    <LogIn className="h-24 w-24 text-orange-500 mx-auto" />
+                    <LogIn className="h-24 w-24 text-brand mx-auto" />
                   ) : (
                     <LogOut className="h-24 w-24 text-blue-500 mx-auto" />
                   )}
@@ -383,10 +385,10 @@ export default function CheckIn() {
             v{APP_VERSION}
           </div>
         </div>
-        <Link to="/reception" className="text-xs text-zinc-500 hover:text-orange-500 transition-colors">
+        <Link to="/reception" className="text-xs text-zinc-500 hover:text-brand transition-colors">
           Panel de recepción
         </Link>
-        <Link to="/check-in?kiosk=1" className="text-xs text-orange-600 hover:text-orange-500 font-semibold">
+        <Link to="/check-in?kiosk=1" className="text-xs text-brand hover:text-brand font-semibold">
           Abrir modo tablet
         </Link>      </div>
     </AuthShell>

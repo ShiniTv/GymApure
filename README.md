@@ -1,4 +1,4 @@
-# Caribbean Gym
+# GymApure
 
 Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entrenamientos.
 

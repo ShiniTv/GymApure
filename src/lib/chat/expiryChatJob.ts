@@ -6,6 +6,7 @@ import {
   type ExpiringSubscription,
 } from '../expiringSubscriptions.ts';
 import { postSystemMessage } from './systemMessages.ts';
+import { BRAND } from '../../config/brand.ts';
 
 export interface ExpiryJobResult {
   markedExpired: number;
@@ -19,12 +20,12 @@ interface NotifyTarget extends ExpiringSubscription {
 
 function expiryMessage(fullName: string, membershipName: string, daysRemaining: number): string {
   if (daysRemaining <= 0) {
-    return `Hola ${fullName}, tu membresía "${membershipName}" en Caribean Gym vence hoy. Renueva para seguir entrenando.`;
+    return `Hola ${fullName}, tu membresía "${membershipName}" en ${BRAND.name} vence hoy. Renueva para seguir entrenando.`;
   }
   if (daysRemaining === 1) {
-    return `Hola ${fullName}, tu membresía "${membershipName}" en Caribean Gym vence mañana.`;
+    return `Hola ${fullName}, tu membresía "${membershipName}" en ${BRAND.name} vence mañana.`;
   }
-  return `Hola ${fullName}, tu membresía "${membershipName}" en Caribean Gym vence en ${daysRemaining} días.`;
+  return `Hola ${fullName}, tu membresía "${membershipName}" en ${BRAND.name} vence en ${daysRemaining} días.`;
 }
 
 async function getNotifyTargets(days: number): Promise<NotifyTarget[]> {
@@ -105,7 +106,7 @@ export async function runExpiryJob(): Promise<ExpiryJobResult> {
   }
 
   for (const target of expiredTargets) {
-    const body = `Hola ${target.full_name}, tu membresía "${target.membership_name}" en Caribean Gym ha vencido. Renueva para recuperar el acceso.`;
+    const body = `Hola ${target.full_name}, tu membresía "${target.membership_name}" en ${BRAND.name} ha vencido. Renueva para recuperar el acceso.`;
     const sent = await postSystemMessage({
       memberId: target.user_id,
       eventType: 'expired',

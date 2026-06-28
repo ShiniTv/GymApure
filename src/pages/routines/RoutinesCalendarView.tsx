@@ -141,13 +141,13 @@ export function RoutinesCalendarView({
                   onClick={() => setSelectedDay(day)}
                   className={`min-h-[100px] p-1.5 bg-white dark:bg-zinc-900 transition-all cursor-pointer border-t border-l border-zinc-100 dark:border-zinc-800 relative group
                     ${isOtherMonth ? 'opacity-30' : 'opacity-100'}
-                    ${isSelected ? 'bg-orange-500/5 dark:bg-orange-500/10' : ''}`}
+                    ${isSelected ? 'bg-brand/5 dark:bg-brand/10' : ''}`}
                 >
                   <div className="flex justify-between items-start">
                     <span
                       className={`text-[10px] font-semibold ${
                         isToday
-                          ? 'bg-orange-500 text-white h-5 w-5 rounded-full flex items-center justify-center'
+                          ? 'brand-solid h-5 w-5 rounded-full flex items-center justify-center'
                           : 'text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white'
                       }`}
                     >
@@ -158,12 +158,12 @@ export function RoutinesCalendarView({
                         {dayAssignments.slice(0, 4).map((_, dotIdx) => (
                           <span
                             key={dotIdx}
-                            className="h-1.5 w-1.5 rounded-full bg-orange-500"
+                            className="h-1.5 w-1.5 rounded-full bg-brand"
                             title={`${dayAssignments.length} asignación(es)`}
                           />
                         ))}
                         {dayAssignments.length > 4 && (
-                          <span className="text-[9px] font-semibold text-orange-600">+{dayAssignments.length - 4}</span>
+                          <span className="text-[9px] font-semibold text-brand">+{dayAssignments.length - 4}</span>
                         )}
                       </div>
                     )}
@@ -178,7 +178,7 @@ export function RoutinesCalendarView({
                           e.stopPropagation();
                           onNavigateToMemberRoutines(a.member_id);
                         }}
-                        className="w-full text-left text-[8px] font-bold truncate bg-zinc-100 dark:bg-zinc-800/50 px-1 py-0.5 rounded text-zinc-600 dark:text-zinc-400 border-l-2 border-orange-500 hover:bg-orange-500/10 transition-colors"
+                        className="w-full text-left text-[8px] font-bold truncate bg-zinc-100 dark:bg-zinc-800/50 px-1 py-0.5 rounded text-zinc-600 dark:text-zinc-400 border-l-2 border-brand hover:bg-brand/10 transition-colors"
                         title={`${a.member_name}: ${a.routine_name}`}
                       >
                         {a.member_name}: {a.routine_name}
@@ -195,7 +195,7 @@ export function RoutinesCalendarView({
                   </div>
 
                   {isSelected && (
-                    <div className="absolute inset-0 border-2 border-orange-500 pointer-events-none rounded-sm" />
+                    <div className="absolute inset-0 border-2 border-brand pointer-events-none rounded-sm" />
                   )}
                 </div>
               );
@@ -249,15 +249,15 @@ export function RoutinesCalendarView({
                   type="button"
                   onClick={() => setSelectedDay(day)}
                   className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border transition-colors text-left min-h-[44px]
-                    ${isSelected ? 'border-orange-500 bg-orange-500/5 dark:bg-orange-500/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50'}
-                    ${isToday && !isSelected ? 'ring-1 ring-orange-500/30' : ''}
+                    ${isSelected ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50'}
+                    ${isToday && !isSelected ? 'ring-1 ring-brand/30' : ''}
                     ${isOtherMonth ? 'opacity-50' : ''}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span
                       className={`text-xs font-semibold shrink-0 ${
                         isToday
-                          ? 'bg-orange-500 text-white h-7 w-7 rounded-full flex items-center justify-center'
+                          ? 'brand-solid h-7 w-7 rounded-full flex items-center justify-center'
                           : 'text-zinc-900 dark:text-white w-7 text-center tabular-nums'
                       }`}
                     >
@@ -309,9 +309,9 @@ export function RoutinesCalendarView({
                 key={`${a.member_id}-${a.routine_name}-${i}`}
                 type="button"
                 onClick={() => onNavigateToMemberRoutines(a.member_id)}
-                className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 text-left hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors w-full"
+                className="flex items-center gap-2.5 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-2 rounded-lg border border-zinc-100 dark:border-zinc-800 text-left hover:border-brand/40 hover:bg-brand/5 transition-colors w-full"
               >
-                <div className="h-8 w-8 shrink-0 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
+                <div className="h-8 w-8 shrink-0 rounded-lg bg-brand/10 flex items-center justify-center text-brand">
                   <Play className="h-3.5 w-3.5" />
                 </div>
                 <div className="min-w-0 flex-1">

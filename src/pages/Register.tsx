@@ -83,14 +83,7 @@ export default function Register() {
   };
 
   return (
-    <AuthShell
-      backLink={{ to: '/login', label: 'Volver al login' }}
-      footer={
-        <p className="text-center text-xs text-zinc-500">
-          El check-in en el gym lo realiza el personal en recepción con tu cédula.
-        </p>
-      }
-    >
+    <AuthShell backLink={{ to: '/login', label: 'Volver al login' }}>
       <Card className="w-full page-stack shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
         <AuthBrandHeader subtitle="Crea tu cuenta de miembro" />
 
@@ -103,7 +96,7 @@ export default function Register() {
                   i < step
                     ? 'bg-emerald-500 text-white'
                     : i === step
-                      ? 'bg-orange-500 text-white'
+                      ? 'brand-solid'
                       : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
                 )}
                 aria-hidden
@@ -113,7 +106,7 @@ export default function Register() {
               <span
                 className={cn(
                   'hidden sm:inline truncate',
-                  i === step ? 'text-orange-600 dark:text-orange-400' : 'text-zinc-500'
+                  i === step ? 'text-brand dark:text-brand' : 'text-zinc-500'
                 )}
                 aria-current={i === step ? 'step' : undefined}
               >
@@ -192,7 +185,9 @@ export default function Register() {
                     value={formData.cedula}
                     onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
                   />
-                  <p className="text-[10px] text-zinc-400 mt-1">Formato: V-12345678</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">
+                    Formato: V-12345678 · Para identificarte en recepción
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="phone">
@@ -291,7 +286,7 @@ export default function Register() {
 
           <p className="text-center text-xs text-zinc-500">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-semibold text-orange-600 hover:text-orange-500">
+            <Link to="/login" className="font-semibold text-brand hover:text-brand">
               Inicia sesión
             </Link>
           </p>

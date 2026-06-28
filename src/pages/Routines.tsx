@@ -366,7 +366,7 @@ export default function Routines() {
         compact
         title={
           user?.role === 'member' ? (
-            <>Mis <span className="text-orange-500">rutinas</span></>
+            <>Mis <span className="text-brand">rutinas</span></>
           ) : (
             <>Gestión de <span className="text-brand">rutinas</span></>
           )

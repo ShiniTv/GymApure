@@ -81,14 +81,14 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
                 return (
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl shadow-xl">
                     <p className="text-zinc-500 text-[10px] mb-0.5">{formatPeriodTitle(point.period, mode)}</p>
-                    <p className="text-base font-semibold text-orange-500 tabular-nums">${point.income}</p>
+                    <p className="text-base font-semibold text-brand tabular-nums">${point.income}</p>
                   </div>
                 );
               }
               return null;
             }}
           />
-          <Bar dataKey="income" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={mode === 'day' ? 18 : 32} />
+          <Bar dataKey="income" fill="var(--chart-accent)" radius={[4, 4, 0, 0]} maxBarSize={mode === 'day' ? 18 : 32} />
         </BarChart>
       </ResponsiveContainer>
     </div>

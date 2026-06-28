@@ -31,6 +31,7 @@
     "db:migrate": "tsx scripts/apply-migrations.ts",
     "db:health": "tsx scripts/db-health.ts",
     "db:create-admin": "tsx scripts/create-admin.ts",
+    "db:reset-data": "tsx scripts/reset-database-data.ts",
     "db:migrate-from-sqlite": "tsx scripts/migrate-sqlite-to-pg.ts",
     "db:restore-demo": "tsx scripts/restore-demo-users.ts",
     "lighthouse:ci": "tsx scripts/lighthouse-ci.ts"

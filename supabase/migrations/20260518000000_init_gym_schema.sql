@@ -1,4 +1,4 @@
--- Caribbean Gym schema (PostgreSQL / Supabase)
+-- GymApure schema (PostgreSQL / Supabase)
 
 CREATE TYPE user_role AS ENUM ('admin', 'trainer', 'member');
 CREATE TYPE user_status AS ENUM ('active', 'inactive');

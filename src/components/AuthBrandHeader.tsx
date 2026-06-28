@@ -1,4 +1,5 @@
 import Logo from './Logo';
+import BrandName from './BrandName';
 import { cn } from '../lib/utils';
 
 interface AuthBrandHeaderProps {
@@ -8,27 +9,21 @@ interface AuthBrandHeaderProps {
 }
 
 export default function AuthBrandHeader({ subtitle, size = 'md', className }: AuthBrandHeaderProps) {
-  const logoSize = size === 'lg' ? 'h-14 w-14' : 'h-12 w-12';
-  const badgeSize = size === 'lg' ? 'h-24 w-24' : 'h-20 w-20';
-  const titleSize = size === 'lg' ? 'text-4xl' : 'text-3xl';
+  const logoSize = size === 'lg' ? 'h-16 w-16' : 'h-14 w-14';
+  const titleSize = size === 'lg' ? 'lg' : 'md';
 
   return (
     <div className={cn('text-center', className)}>
-      <div
-        className={cn(
-          'mx-auto flex items-center justify-center rounded-full bg-orange-500/10 ring-1 ring-orange-500/50',
-          badgeSize
-        )}
-      >
-        <Logo className={logoSize} />
+      <div className="mx-auto flex items-center justify-center">
+        <Logo
+          className={cn(
+            logoSize,
+            'ring-2 ring-brand/20 shadow-lg shadow-brand/10 dark:ring-brand/25 dark:shadow-brand/15'
+          )}
+        />
       </div>
-      <h1
-        className={cn(
-          'mt-6 font-bold tracking-tight text-zinc-900 dark:text-white',
-          titleSize
-        )}
-      >
-        Caribean <span className="text-orange-500">Gym</span>
+      <h1 className="mt-6">
+        <BrandName variant="inline" size={titleSize === 'lg' ? 'lg' : 'md'} />
       </h1>
       {subtitle && (
         <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>

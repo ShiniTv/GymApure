@@ -21,7 +21,7 @@ export function DashboardSection({ title, icon: Icon, action, children, classNam
             compact ? 'text-sm' : 'section-title'
           )}
         >
-          {Icon && <Icon className="h-4 w-4 text-orange-500 shrink-0" />}
+          {Icon && <Icon className="h-4 w-4 text-brand shrink-0" />}
           {title}
         </h2>
         {action}

@@ -111,7 +111,7 @@ export default function AuditLogs() {
   return (
     <div className="page-stack">
       <PageHeader
-        title={<>Registro de <span className="text-orange-500">auditoría</span></>}
+        title={<>Registro de <span className="text-brand">auditoría</span></>}
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
           <Button
@@ -163,7 +163,7 @@ export default function AuditLogs() {
                       'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-white dark:ring-zinc-900',
                       variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
                       variant === 'danger' && 'bg-red-500/10 text-red-600',
-                      variant === 'accent' && 'bg-orange-500/10 text-orange-600',
+                      variant === 'accent' && 'bg-brand/10 text-brand',
                       variant === 'default' && 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
                     )}
                   >

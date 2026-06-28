@@ -83,7 +83,7 @@ export function DataCard({
       onClick={onClick}
       className={cn(
         'w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 sm:p-4 space-y-1.5 transition-colors',
-        onClick && 'hover:border-orange-500/30 active:scale-[0.99]',
+        onClick && 'hover:border-brand/30 active:scale-[0.99]',
         className
       )}
     >

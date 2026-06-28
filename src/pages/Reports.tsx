@@ -198,7 +198,7 @@ export default function Reports() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Reportes <span className="text-orange-500">exportables</span></>}
+        title={<>Reportes <span className="text-brand">exportables</span></>}
         subtitle="CSV para contabilidad, cierre mensual y análisis."
       />
 
@@ -210,7 +210,7 @@ export default function Reports() {
 
       <Card padding="sm" rounded="xl">
         <div className="flex items-center gap-2 mb-2.5">
-          <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
+          <Calendar className="h-4 w-4 text-brand shrink-0" />
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight">
               Rango de fechas
@@ -251,8 +251,8 @@ export default function Reports() {
             <Card key={report.type} padding="sm" rounded="xl" className="flex flex-col">
               <div className="flex items-start justify-between gap-2 mb-2.5">
                 <div className="flex items-start gap-2 min-w-0">
-                  <div className="p-1.5 bg-orange-500/10 rounded-lg shrink-0">
-                    <Icon className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                  <div className="p-1.5 bg-brand/10 rounded-lg shrink-0">
+                    <Icon className="h-4 w-4 text-brand dark:text-brand" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-semibold text-sm text-zinc-900 dark:text-white leading-tight">
@@ -268,7 +268,7 @@ export default function Reports() {
                     <Skeleton className="h-7 w-8 ml-auto" />
                   ) : (
                     <>
-                      <p className="text-lg sm:text-xl font-bold text-orange-500 tabular-nums leading-none">
+                      <p className="text-lg sm:text-xl font-bold text-brand tabular-nums leading-none">
                         {count ?? '—'}
                       </p>
                       <p className="text-[9px] uppercase tracking-wide text-zinc-400 mt-0.5">reg.</p>
@@ -302,7 +302,7 @@ export default function Reports() {
       </div>
 
       <p className="flex items-start gap-2 text-[11px] sm:text-xs text-zinc-500 px-0.5">
-        <FileSpreadsheet className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+        <FileSpreadsheet className="h-3.5 w-3.5 text-brand shrink-0 mt-0.5" />
         UTF-8 compatible con Excel. Se generan en el servidor al descargar.
       </p>
     </div>

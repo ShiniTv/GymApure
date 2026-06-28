@@ -20,7 +20,7 @@ interface SegmentedControlProps<T extends string> {
 }
 
 const accentActive: Record<'brand' | 'check-out', string> = {
-  brand: 'bg-orange-600 text-white shadow-lg shadow-orange-900/20',
+  brand: 'brand-solid shadow-lg shadow-zinc-900/10',
   'check-out': 'bg-blue-600 text-white shadow-lg shadow-blue-900/20',
 };
 
@@ -75,7 +75,7 @@ export function SegmentedControl<T extends string>({
                       ? 'px-2.5 py-1.5 rounded-md text-[11px] font-semibold min-h-9'
                       : 'px-3 py-1.5 rounded-md text-xs font-bold min-h-[var(--touch-min)]',
                     active
-                      ? 'bg-white dark:bg-zinc-700 text-orange-600 dark:text-orange-500 shadow-sm'
+                      ? 'bg-white dark:bg-zinc-700 text-brand dark:text-brand shadow-sm'
                       : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   )
             )}
@@ -87,7 +87,7 @@ export function SegmentedControl<T extends string>({
                 className={cn(
                   'min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums leading-none',
                   active
-                    ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300'
+                    ? 'bg-brand/15 text-brand dark:text-brand'
                     : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                 )}
               >

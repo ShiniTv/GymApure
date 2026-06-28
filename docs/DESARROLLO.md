@@ -1,4 +1,4 @@
-# Guía de desarrollo — Caribean Gym
+# Guía de desarrollo — GymApure
 
 Referencia rápida para instalar, correr, probar y seguir mejorando el sistema.
 
@@ -129,6 +129,7 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 | `npm run db:migrate` | Aplica migraciones SQL pendientes |
 | `npm run db:health` | Comprueba conexión a Postgres |
 | `npm run db:create-admin` | Crea/actualiza cuenta admin |
+| `npm run db:reset-data` | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
 | `npm run db:restore-demo` | **Solo tests/CI** — usuarios demo ficticios |
 | `npm run db:migrate-from-sqlite` | Migración única desde `gym.db` legacy |
 

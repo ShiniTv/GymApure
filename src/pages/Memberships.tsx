@@ -100,7 +100,7 @@ export default function Memberships() {
     <div className="page-stack">
       <PageHeader
         compact
-        title={<>Planes de <span className="text-orange-500">membresía</span></>}
+        title={<>Planes de <span className="text-brand">membresía</span></>}
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
       />
 
@@ -171,7 +171,7 @@ export default function Memberships() {
                   </div>
                 </div>
 
-                <p className="mt-3 text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-500 tracking-tight tabular-nums">
+                <p className="mt-3 text-2xl sm:text-3xl font-bold text-brand dark:text-brand tracking-tight tabular-nums">
                   ${plan.price_usd}
                   <span className="text-xs sm:text-sm font-semibold text-zinc-400 ml-1">USD</span>
                 </p>
@@ -191,7 +191,7 @@ export default function Memberships() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={<>{editingId ? 'Editar' : 'Nuevo'} <span className="text-orange-500">plan</span></>}
+        title={<>{editingId ? 'Editar' : 'Nuevo'} <span className="text-brand">plan</span></>}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -7,6 +7,7 @@ import {
   VIDEOS_BUCKET,
   STORAGE_MEDIA_PREFIX,
   supabaseStorageDownload,
+  supabaseStorageRemove,
   supabaseStorageUpload,
 } from './supabaseAdmin.ts';
 import { avatarApiPath, videoApiPath, resolveFilePath } from './uploadStorage.ts';
@@ -139,4 +140,32 @@ export function localAvatarPathFromUpload(file: Express.Multer.File): string {
 
 export function localVideoPathFromUpload(file: Express.Multer.File): string {
   return videoApiPath(file.filename);
+}
+
+/** Best-effort delete of a stored media reference (remote or local). */
+export async function deleteMediaFile(storedUrl: string): Promise<void> {
+  try {
+    const parsed = parseStorageMediaRef(storedUrl);
+    if (parsed) {
+      await supabaseStorageRemove(bucketForKind(parsed.kind), parsed.objectKey);
+      return;
+    }
+
+    const localSegment =
+      storedUrl.startsWith('/api/files/avatars/')
+        ? storedUrl.replace('/api/files/avatars/', '')
+        : storedUrl.startsWith('/api/files/videos/')
+          ? storedUrl.replace('/api/files/videos/', '')
+          : null;
+
+    if (!localSegment) return;
+
+    const kind: MediaKind = storedUrl.includes('/avatars/') ? 'avatars' : 'videos';
+    const filePath = resolveFilePath(kind, localSegment);
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch {
+    /* ignore — DB reference may already be cleared */
+  }
 }

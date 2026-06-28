@@ -68,7 +68,7 @@ export function RoutinesAssignmentsView({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
         {activeMembers.map((member) => (
-          <Card key={member.id} padding="sm" rounded="xl" className="hover:border-orange-500/30 transition-colors">
+          <Card key={member.id} padding="sm" rounded="xl" className="hover:border-brand/30 transition-colors">
             <div className="flex items-center gap-2.5 mb-2.5">
               <Avatar src={member.profile_image} name={member.full_name} size="sm" className="rounded-lg shrink-0" />
               <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ export function RoutinesAssignmentsView({
               <button
                 type="button"
                 onClick={() => onNavigateToMemberRoutines(member.id)}
-                className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-lg text-orange-600 hover:bg-orange-500/10 transition-colors"
+                className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-lg text-brand hover:bg-brand/10 transition-colors"
                 aria-label={`Ver rutinas de ${member.full_name}`}
                 title="Ver perfil"
               >
@@ -95,7 +95,7 @@ export function RoutinesAssignmentsView({
                 <button
                   key={routine.routine_id}
                   type="button"
-                  className="w-full text-left rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-800/30 px-2.5 py-2 hover:border-orange-500/30 hover:bg-white dark:hover:bg-zinc-800 transition-colors"
+                  className="w-full text-left rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-800/30 px-2.5 py-2 hover:border-brand/30 hover:bg-white dark:hover:bg-zinc-800 transition-colors"
                   onClick={() => onNavigateToMemberRoutines(member.id)}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
@@ -108,7 +108,7 @@ export function RoutinesAssignmentsView({
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-medium text-zinc-500">
                     <span className="inline-flex items-center gap-1">
-                      <Dumbbell className="h-3 w-3 text-orange-500" />
+                      <Dumbbell className="h-3 w-3 text-brand" />
                       {routine.exercise_count} ej.
                     </span>
                     <span className="inline-flex items-center gap-1 tabular-nums">

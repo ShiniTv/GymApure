@@ -11,6 +11,7 @@ import {
   uploadMediaFile,
   localAvatarPathFromUpload,
   isMediaStorageRemote,
+  deleteMediaFile,
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
 import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
@@ -300,6 +301,13 @@ router.post(
     }
 
     const targetId = parseInt(req.params.id, 10);
+
+    const { rows: existing } = await query<{ profile_image: string | null }>(
+      `SELECT profile_image FROM users WHERE id = $1`,
+      [targetId]
+    );
+    const previousImage = existing[0]?.profile_image ?? null;
+
     const profileImage = isMediaStorageRemote()
       ? await uploadMediaFile('avatars', req.file, String(targetId))
       : localAvatarPathFromUpload(req.file);
@@ -315,7 +323,51 @@ router.post(
       return;
     }
 
+    if (previousImage && previousImage !== profileImage) {
+      void deleteMediaFile(previousImage);
+    }
+
     res.json({ profile_image: rows[0].profile_image });
+  })
+);
+
+router.delete(
+  '/:id/avatar',
+  requireSelfOrRoles('id', 'admin'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+
+    const { rows: existing } = await query<{ profile_image: string | null }>(
+      `SELECT profile_image FROM users WHERE id = $1`,
+      [targetId]
+    );
+
+    if (!existing[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    if (!existing[0].profile_image) {
+      res.status(404).json({ error: 'No hay foto de perfil' });
+      return;
+    }
+
+    const previousImage = existing[0].profile_image;
+
+    const { rows } = await query(
+      `UPDATE users SET profile_image = NULL WHERE id = $1
+       RETURNING id, profile_image`,
+      [targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    void deleteMediaFile(previousImage);
+
+    res.json({ profile_image: null });
   })
 );
 

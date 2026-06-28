@@ -106,7 +106,7 @@ export default function Login() {
           {registerAllowed && (
             <p className="text-center text-xs text-zinc-500">
               ¿No tienes una cuenta?{' '}
-              <Link to="/register" className="font-semibold text-orange-600 hover:text-orange-500">
+              <Link to="/register" className="font-semibold text-brand hover:text-brand">
                 Regístrate aquí
               </Link>
             </p>

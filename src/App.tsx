@@ -24,6 +24,8 @@ const MemberRoutine = lazy(() => import('./pages/MemberRoutine'));
 const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
 const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
+const Nutrition = lazy(() => import('./pages/Nutrition'));
+const MemberNutrition = lazy(() => import('./pages/member/MemberNutrition'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
@@ -162,7 +164,17 @@ function AppRoutes() {
               <WorkoutHistory />
             </ProtectedRoute>
           } />
+          <Route path="nutrition" element={
+            <ProtectedRoute allowedRoles={['member']}>
+              <Nutrition />
+            </ProtectedRoute>
+          } />
           <Route path="profile" element={<Profile />} />
+          <Route path="members/:id/nutrition" element={
+            <ProtectedRoute allowedRoles={['trainer', 'admin']}>
+              <MemberNutrition />
+            </ProtectedRoute>
+          } />
           <Route path="members/:id/history" element={
             <ProtectedRoute allowedRoles={['trainer']}>
               <WorkoutHistory />

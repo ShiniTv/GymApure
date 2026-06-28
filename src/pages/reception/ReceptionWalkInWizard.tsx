@@ -190,8 +190,8 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           )}
         </div>
 
-        <div className="rounded-2xl bg-orange-500/10 border border-orange-500/20 p-4">
-          <p className="label-caps text-orange-600 mb-2">Contraseña temporal</p>
+        <div className="rounded-2xl bg-brand/10 border border-brand/20 p-4">
+          <p className="label-caps text-brand mb-2">Contraseña temporal</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-lg font-mono font-bold text-zinc-900 dark:text-white break-all">
               {success.temporary_password}
@@ -215,7 +215,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     <Card padding="md" rounded="2xl" className="max-w-2xl page-stack">
       <div>
         <h3 className="section-title flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-orange-500" />
+          <UserPlus className="h-4 w-4 text-brand" />
           Registro walk-in
         </h3>
         <p className="text-sm text-zinc-500 mt-1">
@@ -230,7 +230,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             className={cn(
               'flex-1 text-center py-2 rounded-xl text-xs font-semibold border transition-colors',
               i === step
-                ? 'bg-orange-500/10 border-orange-500/30 text-orange-600'
+                ? 'bg-brand/10 border-brand/30 text-brand'
                 : i < step
                   ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600'
                   : 'border-zinc-200 dark:border-zinc-800 text-zinc-400'
@@ -307,13 +307,13 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
                   className={cn(
                     'text-left p-4 rounded-2xl border transition-all min-h-[88px] touch-manipulation',
                     form.membership_id === String(plan.id)
-                      ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20'
-                      : 'border-zinc-200 dark:border-zinc-800 hover:border-orange-500/40'
+                      ? 'border-brand bg-brand/10 ring-2 ring-brand/20'
+                      : 'border-zinc-200 dark:border-zinc-800 hover:border-brand/40'
                   )}
                 >
                   <p className="font-semibold text-zinc-900 dark:text-white">{plan.name}</p>
                   <p className="text-sm text-zinc-500 mt-1">{plan.duration_days} días</p>
-                  <p className="text-lg font-bold text-orange-600 mt-2">${plan.price_usd}</p>
+                  <p className="text-lg font-bold text-brand mt-2">${plan.price_usd}</p>
                 </button>
               ))}
             </div>
@@ -355,7 +355,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               type="checkbox"
               checked={form.check_in}
               onChange={(e) => setForm({ ...form, check_in: e.target.checked })}
-              className="h-5 w-5 rounded accent-orange-500"
+              className="h-5 w-5 rounded accent-brand"
             />
             <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
               Autorizar entrada al gym al finalizar

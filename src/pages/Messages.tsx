@@ -155,7 +155,7 @@ function ChatBubble({
           className={clsx(
             'w-full rounded-2xl border bg-white dark:bg-zinc-900 shadow-sm p-3',
             isOutgoing
-              ? 'max-w-md border-orange-200 dark:border-orange-900/40'
+              ? 'max-w-md border-brand/20 dark:border-brand/40'
               : 'max-w-md border-zinc-200 dark:border-zinc-700'
           )}
         >
@@ -192,7 +192,7 @@ function ChatBubble({
               type="button"
               disabled={!canSave}
               onClick={() => void saveEdit()}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-white hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg brand-solid brand-solid-hover disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Guardar cambios"
             >
               <Check className="h-4 w-4" />
@@ -235,7 +235,7 @@ function ChatBubble({
             className={clsx(
               'rounded-xl px-3 py-2 w-fit max-w-full',
               isOutgoing
-                ? 'bg-orange-500 text-white rounded-br-sm'
+                ? 'brand-solid rounded-br-sm'
                 : 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700 text-zinc-800 dark:text-zinc-100 rounded-bl-sm'
             )}
           >
@@ -246,7 +246,7 @@ function ChatBubble({
             <p
               className={clsx(
                 'text-[10px] mt-1 text-right',
-                isOutgoing ? 'text-orange-100' : 'text-zinc-400'
+                isOutgoing ? 'opacity-70' : 'text-zinc-400'
               )}
             >
               {formatMessageTime(message.created_at)}
@@ -364,7 +364,7 @@ function ConversationListItem({
       className={clsx(
         'w-full text-left px-2.5 py-2 rounded-lg border transition-colors',
         selected
-          ? 'border-orange-500/40 bg-orange-500/5'
+          ? 'border-brand/40 bg-brand/5'
           : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
       )}
     >
@@ -374,7 +374,7 @@ function ConversationListItem({
           <p className="text-[10px] text-zinc-400 truncate">{item.member_cedula}</p>
         </div>
         {item.unread_count > 0 && (
-          <span className="nav-badge bg-orange-500 text-white shrink-0">
+          <span className="nav-badge brand-solid shrink-0">
             {item.unread_count > 99 ? '99+' : item.unread_count}
           </span>
         )}
@@ -447,7 +447,7 @@ function StaffChatView() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mensajes <span className="text-orange-500">del gym</span></>}
+        title={<>Mensajes <span className="text-brand">del gym</span></>}
         subtitle={
           isTrainer
             ? 'Solo clientes con rutina asignada por ti'
@@ -470,7 +470,7 @@ function StaffChatView() {
               className={clsx(
                 'text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors',
                 expiringOnly
-                  ? 'border-orange-500/40 bg-orange-500/10 text-orange-600'
+                  ? 'border-brand/40 bg-brand/10 text-brand'
                   : 'border-zinc-200 dark:border-zinc-700 text-zinc-500'
               )}
             >
@@ -573,7 +573,7 @@ function MemberChatView() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mensajes <span className="text-orange-500">con el gym</span></>}
+        title={<>Mensajes <span className="text-brand">con el gym</span></>}
         subtitle="Avisos de membresía, pagos y rutinas"
         action={<BackToDashboardLink />}
       />

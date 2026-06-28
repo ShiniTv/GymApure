@@ -53,7 +53,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
                   <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 mb-1">
                     {payload[0].payload.date}
                   </p>
-                  <p className="text-lg font-semibold text-orange-500">
+                  <p className="text-lg font-semibold text-brand">
                     {payload[0].value} ingresos
                   </p>
                 </div>
@@ -66,7 +66,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
           {data.map((_, index) => (
             <Cell
               key={`cell-${index}`}
-              className="fill-orange-500 opacity-80 hover:opacity-100 transition-opacity"
+              className="fill-brand opacity-80 hover:opacity-100 transition-opacity"
             />
           ))}
         </Bar>

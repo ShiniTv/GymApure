@@ -58,6 +58,9 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'chat_messages' AND column_name = 'edited_at'
     LIMIT 1`,
+  '20260624000000_nutrition.sql': `
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'nutrition_plans' LIMIT 1`,
 };
 
 /** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */

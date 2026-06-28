@@ -117,7 +117,7 @@ export function RoutineModals({
       <Modal
         open={isAssigningFromCalendar}
         onClose={() => setIsAssigningFromCalendar(false)}
-        title={<>ASIGNAR <span className="text-orange-500">RUTINA</span></>}
+        title={<>ASIGNAR <span className="text-brand">RUTINA</span></>}
       >
         <div className="space-y-4">
           <div>
@@ -179,7 +179,7 @@ export function RoutineModals({
       <Modal
         open={isCreating}
         onClose={() => setIsCreating(false)}
-        title={<>NUEVA <span className="text-orange-500">RUTINA</span></>}
+        title={<>NUEVA <span className="text-brand">RUTINA</span></>}
       >
         <div className="space-y-4">
           <div>

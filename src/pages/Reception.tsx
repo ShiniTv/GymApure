@@ -406,7 +406,7 @@ export default function Reception() {
       <div className="page-stack">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-600 shrink-0">
+            <div className="p-1.5 rounded-lg bg-brand/10 text-brand shrink-0">
               <Monitor className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -483,7 +483,7 @@ export default function Reception() {
     <div className="page-stack">
       <PageHeader
         compact
-        title={<>Control de <span className="text-orange-500">acceso</span></>}
+        title={<>Control de <span className="text-brand">acceso</span></>}
         subtitle="Busque por cédula para autorizar entrada y salida"
         action={
           <Button

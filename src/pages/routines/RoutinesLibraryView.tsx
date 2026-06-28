@@ -109,8 +109,8 @@ export function RoutinesLibraryView({
               key={routine.id}
               padding="sm"
               rounded="xl"
-              className={`overflow-hidden hover:border-orange-500/30 transition-colors ${
-                isExpanded ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-orange-500/20' : ''
+              className={`overflow-hidden hover:border-brand/30 transition-colors ${
+                isExpanded ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-brand/20' : ''
               }`}
             >
               <div
@@ -129,8 +129,8 @@ export function RoutinesLibraryView({
                 }
                 className={`group flex items-center gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
               >
-                <div className="h-9 w-9 shrink-0 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                  <Dumbbell className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                <div className="h-9 w-9 shrink-0 bg-brand/10 rounded-lg flex items-center justify-center">
+                  <Dumbbell className="h-4 w-4 text-brand dark:text-brand" />
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export function RoutinesLibraryView({
                     {routine.exercise_count} ejercicio{routine.exercise_count !== 1 ? 's' : ''}
                   </p>
                   {isMember && (
-                    <span className="mt-1 inline-flex items-center text-xs font-semibold text-orange-600 dark:text-orange-500 group-hover:translate-x-0.5 transition-transform sm:hidden">
+                    <span className="mt-1 inline-flex items-center text-xs font-semibold text-brand dark:text-brand group-hover:translate-x-0.5 transition-transform sm:hidden">
                       Empezar <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
                     </span>
                   )}
@@ -161,7 +161,7 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           onEditRoutine(routine);
                         }}
-                        className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                        className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                         aria-label={`Configurar ${routine.name}`}
                         title="Configurar"
                       >
@@ -188,7 +188,7 @@ export function RoutinesLibraryView({
                         className={`h-8 w-8 inline-flex items-center justify-center rounded-lg border transition-colors ${
                           isExpanded
                             ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900'
-                            : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-orange-500 hover:text-orange-600'
+                            : 'border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:border-brand hover:text-brand'
                         }`}
                         aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
                         aria-expanded={isExpanded}
@@ -198,7 +198,7 @@ export function RoutinesLibraryView({
                       </button>
                     </>
                   )}
-                  {isMember && <ChevronRight className="h-4 w-4 text-orange-500 shrink-0" />}
+                  {isMember && <ChevronRight className="h-4 w-4 text-brand shrink-0" />}
                 </div>
               </div>
 
@@ -234,7 +234,7 @@ export function RoutinesLibraryView({
                               Sets
                               <input
                                 type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
                                 defaultValue={exercise.sets}
                                 onBlur={(e) => onInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
@@ -244,7 +244,7 @@ export function RoutinesLibraryView({
                               Reps
                               <input
                                 type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
                                 defaultValue={exercise.reps}
                                 onBlur={(e) => onInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
@@ -259,7 +259,7 @@ export function RoutinesLibraryView({
                           <button
                             type="button"
                             onClick={() => onEditExercise(exercise)}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             aria-label={`Editar ${exercise.name}`}
                           >
                             <Edit className="h-3.5 w-3.5" />

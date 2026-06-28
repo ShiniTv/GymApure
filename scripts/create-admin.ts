@@ -45,7 +45,7 @@ async function resolveCredentials(): Promise<{
     };
   }
 
-  console.log('\nCrear cuenta administrador — Caribean Gym\n');
+  console.log('\nCrear cuenta administrador — GymApure\n');
 
   const full_name = fromEnv.full_name || (await ask('Nombre completo: '));
   const email = fromEnv.email || (await ask('Email: '));

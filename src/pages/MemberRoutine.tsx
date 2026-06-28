@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History, MessageSquare } from 'lucide-react';
+import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History, MessageSquare, UtensilsCrossed } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
@@ -389,13 +389,23 @@ export default function MemberRoutine() {
         compact
         title={
           <>
-            Rutinas de <span className="text-orange-500">{member.full_name}</span>
+            Rutinas de <span className="text-brand">{member.full_name}</span>
           </>
         }
         subtitle="Planes personalizados"
         action={
           <div className="flex items-center gap-1.5 shrink-0">
             <BackToDashboardLink iconOnly className="sm:hidden" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={() => navigate(`/members/${id}/nutrition`)}
+              aria-label="Nutrición"
+              title="Nutrición"
+            >
+              <UtensilsCrossed className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -529,7 +539,7 @@ export default function MemberRoutine() {
         <Card padding="sm" rounded="xl">
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <h3 className="section-title flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-orange-500" />
+              <Scale className="h-3.5 w-3.5 text-brand" />
               Mediciones
             </h3>
             {(user?.role === 'admin' || user?.role === 'trainer') && (
@@ -900,8 +910,8 @@ export default function MemberRoutine() {
             return (
             <Card key={routine.id} padding="sm" rounded="xl" className="overflow-hidden">
               <div className="flex items-start gap-2.5">
-                <div className="h-9 w-9 shrink-0 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                  <Dumbbell className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+                <div className="h-9 w-9 shrink-0 bg-brand/10 rounded-lg flex items-center justify-center">
+                  <Dumbbell className="h-4 w-4 text-brand dark:text-brand" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
@@ -923,8 +933,8 @@ export default function MemberRoutine() {
                     onClick={() => toggleExpandRoutine(routine.id)}
                     className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition-colors ${
                       isExpanded
-                        ? 'text-orange-500 bg-orange-500/10'
-                        : 'text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10'
+                        ? 'text-brand bg-brand/10'
+                        : 'text-zinc-400 hover:text-brand hover:bg-brand/10'
                     }`}
                     aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
                     title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
@@ -934,7 +944,7 @@ export default function MemberRoutine() {
                   <button
                     type="button"
                     onClick={() => openEditModal(routine)}
-                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                     aria-label={`Editar ${routine.name}`}
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -979,7 +989,7 @@ export default function MemberRoutine() {
                               Sets
                               <input
                                 type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
                                 defaultValue={exercise.sets}
                                 onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
@@ -989,7 +999,7 @@ export default function MemberRoutine() {
                               Reps
                               <input
                                 type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-orange-500"
+                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
                                 defaultValue={exercise.reps}
                                 onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))}
                                 onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
@@ -1005,7 +1015,7 @@ export default function MemberRoutine() {
                               setEditingExercise(exercise);
                               setIsEditingExercise(true);
                             }}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             aria-label={`Editar ${exercise.name}`}
                           >
                             <Edit className="h-3.5 w-3.5" />

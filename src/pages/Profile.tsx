@@ -7,6 +7,7 @@ import {
   Scale,
   Target,
   Camera,
+  Trash2,
   Save,
   Plus,
   TrendingDown,
@@ -16,6 +17,9 @@ import {
   Lock,
   CreditCard,
   AlertTriangle,
+  Palette,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
@@ -40,6 +44,7 @@ import {
   type Measurement,
 } from '../hooks/queries/useProfileQuery';
 import { StatMini } from './profile/StatMini';
+import ThemePalettePicker from '../components/ThemePalettePicker';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -50,11 +55,13 @@ export default function Profile() {
   const { data: measurements = [], isPending: measLoading } = useProfileMeasurementsQuery(user?.id);
   const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(user?.id, isMember);
   const loading = profileLoading || measLoading || (isMember && histLoading);
-  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad'>('datos');
+  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad' | 'apariencia'>('datos');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [saveError, setSaveError] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
+  const [showRemoveAvatarModal, setShowRemoveAvatarModal] = useState(false);
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
   const [measurementError, setMeasurementError] = useState('');
 
@@ -205,6 +212,22 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarRemove = async () => {
+    if (!user) return;
+    setAvatarRemoving(true);
+    setSaveError('');
+    try {
+      const res = await apiFetch(`/api/users/${user.id}/avatar`, { method: 'DELETE' });
+      await parseJsonResponse<{ profile_image: null }>(res);
+      invalidateProfile(user.id);
+      setShowRemoveAvatarModal(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Error al quitar foto');
+    } finally {
+      setAvatarRemoving(false);
+    }
+  };
+
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setPasswordSaving(true);
@@ -286,8 +309,8 @@ export default function Profile() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mi <span className="text-orange-500">perfil</span></>}
-        subtitle={user.role === 'member' ? 'Datos, progreso y seguridad' : 'Tu cuenta'}
+        title={<>Mi <span className="text-brand">perfil</span></>}
+        subtitle={user.role === 'member' ? 'Datos, progreso y apariencia' : 'Tu cuenta y apariencia'}
         action={
           saveMsg ? (
             <p className="text-xs font-medium text-emerald-600">{saveMsg}</p>
@@ -317,7 +340,7 @@ export default function Profile() {
         return (
         <div className={`rounded-xl border px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${classes.container}`}>
           <div className="flex items-start gap-2 min-w-0">
-            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`} />
+            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-warning'}`} />
             <div className="min-w-0">
               <p className={`text-xs sm:text-sm font-semibold leading-snug ${classes.text}`}>
                 {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
@@ -361,6 +384,7 @@ export default function Profile() {
         options={[
           { value: 'datos', label: 'Datos' },
           { value: 'progreso', label: 'Progreso' },
+          { value: 'apariencia', label: 'Apariencia' },
           { value: 'seguridad', label: 'Seguridad' },
         ]}
       />
@@ -369,7 +393,7 @@ export default function Profile() {
       <div className="panel-form">
         <Card padding="sm" rounded="xl">
           <h2 className="section-title mb-3 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-orange-500" />
+            <User className="h-3.5 w-3.5 text-brand" />
             Datos personales
           </h2>
 
@@ -379,7 +403,7 @@ export default function Profile() {
                 <img
                   src={avatarUrl}
                   alt={profile.full_name}
-                  className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-orange-500/30"
+                  className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-brand/30"
                 />
               ) : (
                 <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
@@ -388,7 +412,7 @@ export default function Profile() {
               )}
               <label
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 h-7 w-7 inline-flex items-center justify-center bg-orange-600 hover:bg-orange-500 rounded-lg cursor-pointer text-white shadow-md transition-colors"
+                className="absolute -bottom-1 -right-1 h-7 w-7 inline-flex items-center justify-center brand-solid brand-solid-hover rounded-lg cursor-pointer shadow-md transition-colors"
                 title="Cambiar foto"
                 aria-label="Cambiar foto de perfil"
               >
@@ -400,7 +424,7 @@ export default function Profile() {
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={handleAvatarChange}
-                disabled={avatarUploading}
+                disabled={avatarUploading || avatarRemoving}
               />
             </div>
             <div className="min-w-0">
@@ -412,7 +436,17 @@ export default function Profile() {
                 <p className="text-[10px] text-zinc-400 mt-0.5">{profile.cedula}</p>
               )}
               {avatarUploading && (
-                <p className="text-[10px] font-medium text-orange-500 mt-1">Subiendo foto…</p>
+                <p className="text-[10px] font-medium text-brand mt-1">Subiendo foto…</p>
+              )}
+              {avatarUrl && !avatarUploading && (
+                <button
+                  type="button"
+                  onClick={() => setShowRemoveAvatarModal(true)}
+                  disabled={avatarRemoving}
+                  className="text-[10px] sm:text-xs font-semibold text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1 disabled:opacity-50"
+                >
+                  Quitar foto
+                </button>
               )}
             </div>
           </div>
@@ -509,7 +543,7 @@ export default function Profile() {
         <Card padding="sm" rounded="xl" className="lg:col-span-2">
           <div className="flex items-center justify-between gap-2 mb-3">
             <h2 className="section-title flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-orange-500" />
+              <Scale className="h-3.5 w-3.5 text-brand" />
               Evolución de peso
             </h2>
             {weightDelta != null && (
@@ -518,7 +552,7 @@ export default function Profile() {
                   weightDelta < 0
                     ? 'text-emerald-600 bg-emerald-500/10'
                     : weightDelta > 0
-                      ? 'text-orange-600 bg-orange-500/10'
+                      ? 'text-brand bg-brand/10'
                       : 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
                 }`}
               >
@@ -541,7 +575,7 @@ export default function Profile() {
             </Suspense>
           ) : chartData.length === 1 ? (
             <div className="h-48 sm:h-56 flex flex-col items-center justify-center text-center">
-              <p className="text-3xl font-bold text-orange-500">{chartData[0].weight} kg</p>
+              <p className="text-3xl font-bold text-brand">{chartData[0].weight} kg</p>
               <p className="text-xs text-zinc-400 mt-1.5">
                 {chartData[0].date} · Registra otra medición para ver la gráfica
               </p>
@@ -565,7 +599,7 @@ export default function Profile() {
       <Card padding="sm" rounded="xl">
         <div className="flex items-center justify-between gap-2 mb-3">
           <h2 className="section-title flex items-center gap-1.5 min-w-0">
-            <Scale className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+            <Scale className="h-3.5 w-3.5 text-brand shrink-0" />
             <span className="truncate">Historial de mediciones</span>
           </h2>
           <Button
@@ -641,7 +675,7 @@ export default function Profile() {
       {workouts.length > 0 && (
         <Card padding="sm" rounded="xl">
           <h2 className="section-title mb-2.5 flex items-center gap-1.5">
-            <Dumbbell className="h-3.5 w-3.5 text-orange-500" />
+            <Dumbbell className="h-3.5 w-3.5 text-brand" />
             Actividad reciente
           </h2>
           <div className="space-y-0.5">
@@ -665,10 +699,38 @@ export default function Profile() {
       </>
       )}
 
+      {profileTab === 'apariencia' && (
+        <div className="panel-content space-y-3">
+          <Card padding="sm" rounded="xl">
+            <h2 className="section-title mb-1 flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5 text-brand" />
+              Paleta de colores
+            </h2>
+            <p className="text-xs text-zinc-500 mb-4">
+              Elige el color de acento de la interfaz. Los fondos y textos neutros se mantienen para no distraer del contenido.
+            </p>
+            <ThemePalettePicker />
+          </Card>
+
+          <Card padding="sm" rounded="xl">
+            <h3 className="text-xs font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-1.5">
+              <Sun className="h-3.5 w-3.5 text-brand shrink-0" />
+              Modo claro u oscuro
+            </h3>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Usa <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo claro</span>{' '}
+              <Sun className="inline h-3 w-3 -mt-0.5" aria-hidden /> o{' '}
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo oscuro</span>{' '}
+              <Moon className="inline h-3 w-3 -mt-0.5" aria-hidden /> en el menú lateral para cambiar el fondo de la interfaz.
+            </p>
+          </Card>
+        </div>
+      )}
+
       {profileTab === 'seguridad' && (
       <Card padding="sm" rounded="xl" className="panel-form">
         <h2 className="section-title mb-3 flex items-center gap-1.5">
-          <Lock className="h-3.5 w-3.5 text-orange-500" />
+          <Lock className="h-3.5 w-3.5 text-brand" />
           Seguridad
         </h2>
         {passwordMsg && (
@@ -750,6 +812,45 @@ export default function Profile() {
         </form>
       </Card>
       )}
+
+      <Modal
+        open={showRemoveAvatarModal}
+        onClose={() => !avatarRemoving && setShowRemoveAvatarModal(false)}
+        title="Quitar foto de perfil"
+        maxWidth="sm"
+      >
+        <p className="text-sm text-zinc-500 mb-5">
+          ¿Quitar tu foto de perfil? Volverás al avatar por defecto.
+        </p>
+        <div className="flex gap-2 justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowRemoveAvatarModal(false)}
+            disabled={avatarRemoving}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => void handleAvatarRemove()}
+            disabled={avatarRemoving}
+          >
+            {avatarRemoving ? (
+              <>
+                <Spinner className="h-4 w-4" />
+                Quitando…
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Quitar foto
+              </>
+            )}
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         open={isAddingMeasurement}

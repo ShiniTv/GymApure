@@ -59,9 +59,9 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           <Line
             type="monotone"
             dataKey="weight"
-            stroke="#f97316"
+            stroke="var(--chart-accent)"
             strokeWidth={3}
-            dot={{ fill: '#f97316', r: 4 }}
+            dot={{ fill: 'var(--chart-accent)', r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>

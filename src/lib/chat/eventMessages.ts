@@ -1,5 +1,6 @@
 import { query } from '../../db/index.ts';
 import { postSystemMessage } from './systemMessages.ts';
+import { BRAND } from '../../config/brand.ts';
 
 async function fetchMemberName(userId: number): Promise<string | null> {
   const { rows } = await query<{ full_name: string }>(
@@ -36,7 +37,7 @@ export async function notifyPaymentApproved(
   if (!fullName) return;
 
   const planLine = membershipName ? ` Plan activado: ${membershipName}.` : '';
-  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD fue aprobado en Caribean Gym.${planLine} ¡Nos vemos en el gym!`;
+  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD fue aprobado en ${BRAND.name}.${planLine} ¡Nos vemos en el gym!`;
 
   await postSystemMessage({
     memberId: userId,
@@ -55,7 +56,7 @@ export async function notifyPaymentRejected(
   const fullName = await fetchMemberName(userId);
   if (!fullName) return;
 
-  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD no pudo ser verificado en Caribean Gym. Revisa el comprobante y vuelve a reportarlo, o escríbenos por este chat.`;
+  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD no pudo ser verificado en ${BRAND.name}. Revisa el comprobante y vuelve a reportarlo, o escríbenos por este chat.`;
 
   await postSystemMessage({
     memberId: userId,
@@ -73,7 +74,7 @@ export async function notifyRoutineAssigned(userId: number, routineId: number): 
   const { rows } = await query<{ name: string }>('SELECT name FROM routines WHERE id = $1', [routineId]);
   const routineName = rows[0]?.name ?? 'tu nueva rutina';
 
-  const message = `Hola ${fullName}, tu entrenador te asignó la rutina "${routineName}" en Caribean Gym. Entra a la app para ver los ejercicios y empezar a entrenar.`;
+  const message = `Hola ${fullName}, tu entrenador te asignó la rutina "${routineName}" en ${BRAND.name}. Entra a la app para ver los ejercicios y empezar a entrenar.`;
 
   await postSystemMessage({
     memberId: userId,

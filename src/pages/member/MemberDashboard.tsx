@@ -20,6 +20,7 @@ import {
 } from '../../lib/expiryUtils';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { formatDifficulty, cn } from '../../lib/utils';
+import { BRAND } from '../../config/brand';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { Button, Card, EmptyState, PageHeader, StatCard } from '../../components/ui';
 
@@ -42,7 +43,7 @@ export default function MemberDashboard() {
       <div className="page-stack">
         <PageHeader
           showTitleOnMobile
-          title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
+          title={<>Hola, <span className="text-brand">{user?.name}</span></>}
           subtitle="Tu espacio de entrenamiento"
         />
         <EmptyState
@@ -59,8 +60,8 @@ export default function MemberDashboard() {
     <div className={cn('page-stack', isMobile && routine && 'pb-24')}>
       <PageHeader
         showTitleOnMobile
-        title={<>Hola, <span className="text-orange-500">{user?.name}</span></>}
-        subtitle="Tu espacio de entrenamiento en Caribean Gym"
+        title={<>Hola, <span className="text-brand">{user?.name}</span></>}
+        subtitle={`Tu espacio de entrenamiento en ${BRAND.name}`}
         badge={sub ? `${sub.days_remaining} días de plan` : undefined}
       />
 
@@ -151,8 +152,8 @@ export default function MemberDashboard() {
           {routine ? (
             <>
               <div className="flex items-center gap-4">
-                <div className="p-4 bg-orange-500/10 rounded-2xl">
-                  <Dumbbell className="h-6 w-6 text-orange-600" />
+                <div className="p-4 bg-brand/10 rounded-2xl">
+                  <Dumbbell className="h-6 w-6 text-brand" />
                 </div>
                 <div>
                   <p className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</p>
@@ -165,7 +166,7 @@ export default function MemberDashboard() {
                 Empezar entrenamiento
               </Button>
               {(memberStats?.assignedRoutinesCount ?? 0) > 1 && (
-                <Link to="/routines" className="mt-3 block text-center text-xs font-bold text-orange-600 hover:underline">
+                <Link to="/routines" className="mt-3 block text-center text-xs font-bold text-brand hover:underline">
                   Ver todos ({memberStats?.assignedRoutinesCount})
                 </Link>
               )}
@@ -187,20 +188,20 @@ export default function MemberDashboard() {
           <p className="text-xs text-zinc-500 mt-1">
             {format(new Date(memberStats.lastWorkout.start_time), "dd MMM yyyy · HH:mm", { locale: es })}
           </p>
-          <Link to="/history" className="inline-block mt-4 text-xs font-bold text-orange-600 hover:underline">
+          <Link to="/history" className="inline-block mt-4 text-xs font-bold text-brand hover:underline">
             Ver historial completo
           </Link>
         </Card>
       )}
 
       <Link to="/profile" className="block">
-        <Card padding="lg" rounded="2xl" className="hover:border-orange-500/40 transition-colors group">
+        <Card padding="lg" rounded="2xl" className="hover:border-brand/40 transition-colors group">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="section-title mb-1">Mi progreso</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-300">Perfil, mediciones y evolución de peso</p>
             </div>
-            <div className="p-3 rounded-xl bg-orange-500/10 text-orange-600 group-hover:bg-orange-500/20 transition-colors">
+            <div className="p-3 rounded-xl bg-brand/10 text-brand group-hover:bg-brand/20 transition-colors">
               <UserCircle className="h-6 w-6" />
             </div>
           </div>

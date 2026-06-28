@@ -22,12 +22,14 @@ export default function AuthShell({
   const { theme, toggleTheme } = useTheme();
   const isKiosk = variant === 'kiosk' || variant === 'kiosk-fullscreen';
   const isFullscreen = variant === 'kiosk-fullscreen';
+  const isLight = theme === 'light';
 
   return (
     <div
       className={cn(
         'min-h-screen flex flex-col relative overflow-hidden transition-colors duration-300',
-        'bg-zinc-50 dark:bg-zinc-950',
+        'bg-gradient-to-br from-zinc-50 via-zinc-50 to-brand/[0.05]',
+        'dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
         isFullscreen
           ? 'items-stretch justify-start p-0'
           : 'items-center justify-center p-4',
@@ -36,8 +38,25 @@ export default function AuthShell({
       )}
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 blur-[120px] rounded-full" />
+        <div
+          className={cn(
+            'absolute top-[-10%] left-[-10%] rounded-full',
+            isLight
+              ? 'w-[45%] h-[45%] bg-brand/20 blur-[140px]'
+              : 'w-[40%] h-[40%] bg-brand/10 blur-[120px]'
+          )}
+        />
+        <div
+          className={cn(
+            'absolute bottom-[-10%] right-[-10%] rounded-full',
+            isLight
+              ? 'w-[45%] h-[45%] bg-brand/20 blur-[140px]'
+              : 'w-[40%] h-[40%] bg-brand/10 blur-[120px]'
+          )}
+        />
+        {isLight && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[50%] bg-brand/[0.08] blur-[160px] rounded-full" />
+        )}
         {isFullscreen && (
           <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 dark:from-zinc-950 dark:via-zinc-900 dark:to-black opacity-90" />
         )}

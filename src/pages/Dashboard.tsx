@@ -175,7 +175,7 @@ export default function Dashboard() {
       <div className="space-y-2.5 sm:space-y-3">
         <PageHeader
           compact
-          title={<>Administración <span className="text-orange-500">general</span></>}
+          title={<>Administración <span className="text-brand">general</span></>}
           subtitle="Vista general del gym"
         />
 
@@ -220,7 +220,7 @@ export default function Dashboard() {
             value={expiringSoon}
             icon={CalendarClock}
             color="orange"
-            className={expiringSoon > 0 ? 'border-orange-500/40 bg-orange-500/[0.03]' : undefined}
+            className={expiringSoon > 0 ? 'border-brand/40 bg-brand/[0.03]' : undefined}
           />
         </div>
 
@@ -280,7 +280,7 @@ export default function Dashboard() {
               onClick={() => setShowExpiringList((v) => !v)}
               aria-expanded={showExpiringList}
             >
-              <CalendarClock className="h-4 w-4 text-orange-500 shrink-0" />
+              <CalendarClock className="h-4 w-4 text-brand shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-zinc-900 dark:text-white">Próximos vencimientos</p>
                 <p className="text-[11px] text-zinc-500 truncate">
@@ -311,7 +311,7 @@ export default function Dashboard() {
                 {criticalItems.length > 1 && (
                   <button
                     type="button"
-                    className="w-full text-[11px] font-semibold text-orange-600 hover:text-orange-500 py-0.5"
+                    className="w-full text-[11px] font-semibold text-brand hover:text-brand py-0.5"
                     onClick={() => setShowExpiringList(true)}
                   >
                     Ver {criticalItems.length} crítico{criticalItems.length !== 1 ? 's' : ''}
@@ -351,7 +351,7 @@ export default function Dashboard() {
                 {expiringList.length > previewExpiring.length && (
                   <Link
                     to="/members?expiring=true"
-                    className="block text-center text-[11px] font-semibold text-orange-600 hover:text-orange-500 py-0.5"
+                    className="block text-center text-[11px] font-semibold text-brand hover:text-brand py-0.5"
                   >
                     +{expiringList.length - previewExpiring.length} más en Miembros
                   </Link>
@@ -413,22 +413,22 @@ export default function Dashboard() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Control de <span className="text-orange-500">entrenamiento</span></>}
+        title={<>Control de <span className="text-brand">entrenamiento</span></>}
         subtitle="Actividad con tus miembros asignados"
         badge={stats?.activeNow ? `${stats.activeNow} en el gym` : undefined}
       />
 
       {trainerHasAlerts && (
-        <Card padding="sm" rounded="xl" className="border-orange-500/30 bg-orange-500/5">
+        <Card padding="sm" rounded="xl" className="border-brand/30 bg-brand/5">
           <div className="flex items-start gap-2.5">
-            <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
+            <AlertTriangle className="h-4 w-4 text-brand shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-zinc-900 dark:text-white">Atención requerida</p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {withoutRoutines > 0 && (
                   <Link
                     to="/members"
-                    className="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold bg-orange-500/10 text-orange-700 dark:text-orange-400 hover:bg-orange-500/15"
+                    className="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold bg-brand/10 text-brand dark:text-brand hover:bg-brand/15"
                   >
                     {withoutRoutines} sin rutina
                   </Link>
@@ -474,7 +474,7 @@ export default function Dashboard() {
               className="flex items-center gap-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 rounded-lg px-1 transition-colors"
             >
               <div className="relative shrink-0">
-                <div className="h-9 w-9 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-600">
+                <div className="h-9 w-9 rounded-lg bg-brand/10 flex items-center justify-center text-brand">
                   <Dumbbell className="h-4 w-4" />
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex items-center text-xs font-medium text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg shrink-0">
-                <Clock className="h-3.5 w-3.5 mr-1 text-orange-500" />
+                <Clock className="h-3.5 w-3.5 mr-1 text-brand" />
                 {new Date(activity.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </Link>
@@ -511,11 +511,11 @@ export default function Dashboard() {
           {(trainerStats?.membersWithoutRoutines ?? 0) > 0 && (
             <Link
               to="/members"
-              className="flex items-center justify-between p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/10 transition-colors"
+              className="flex items-center justify-between p-3 rounded-xl bg-brand/5 border border-brand/20 hover:bg-brand/10 transition-colors"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-1.5 rounded-lg bg-orange-500/10 shrink-0">
-                  <Users className="h-4 w-4 text-orange-600" />
+                <div className="p-1.5 rounded-lg bg-brand/10 shrink-0">
+                  <Users className="h-4 w-4 text-brand" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white">Sin rutina asignada</p>
@@ -524,7 +524,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-orange-500 shrink-0" />
+              <ChevronRight className="h-4 w-4 text-brand shrink-0" />
             </Link>
           )}
 

@@ -13,7 +13,7 @@ export function BackToDashboardLink({ iconOnly, className }: BackToDashboardLink
       <Link
         to="/"
         className={cn(
-          'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors',
+          'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-brand hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors',
           className
         )}
         aria-label="Volver al dashboard"
@@ -28,7 +28,7 @@ export function BackToDashboardLink({ iconOnly, className }: BackToDashboardLink
     <Link
       to="/"
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 text-[11px] sm:text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-orange-500 hover:border-orange-500/30 transition-colors',
+        'inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 px-2.5 text-[11px] sm:text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-brand hover:border-brand/30 transition-colors',
         className
       )}
       title="Volver al dashboard"

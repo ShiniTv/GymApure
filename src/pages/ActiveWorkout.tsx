@@ -548,7 +548,7 @@ export default function ActiveWorkout() {
           </button>
           <div className="min-w-0">
             <h1 className="text-base md:text-xl font-bold text-zinc-900 dark:text-white truncate">{routine.name}</h1>
-            <div className="flex items-center text-orange-600 dark:text-orange-500 text-sm font-semibold font-mono mt-0.5">
+            <div className="flex items-center text-brand dark:text-brand text-sm font-semibold font-mono mt-0.5">
               <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
               {formatTime(timer)}
               {isPaused && (
@@ -589,11 +589,11 @@ export default function ActiveWorkout() {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
           <span>Progreso de sesión</span>
-          <span className="text-orange-600 dark:text-orange-500">{completedCount}/{routine.exercises.length} ejercicios · {progressPct}%</span>
+          <span className="text-brand dark:text-brand">{completedCount}/{routine.exercises.length} ejercicios · {progressPct}%</span>
         </div>
         <div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
           <div
-            className="h-full bg-orange-500 rounded-full transition-all duration-500"
+            className="h-full bg-brand rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
             role="progressbar"
             aria-valuenow={progressPct}
@@ -610,7 +610,7 @@ export default function ActiveWorkout() {
       )}
 
       {setValidationError && (
-        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm font-bold text-orange-700 dark:text-orange-400">
+        <div className="rounded-2xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm font-bold text-brand dark:text-brand">
           {setValidationError}
         </div>
       )}
@@ -695,7 +695,7 @@ export default function ActiveWorkout() {
               <p className="text-xs text-zinc-500 truncate">
                 {routine.exercises[focusedIndex]?.name}
               </p>
-              <p className="text-sm font-semibold text-orange-600">
+              <p className="text-sm font-semibold text-brand">
                 {focusedIndex + 1} / {routine.exercises.length}
               </p>
               <div className="flex justify-center gap-1 mt-1.5">
@@ -706,7 +706,7 @@ export default function ActiveWorkout() {
                     onClick={() => setFocusedIndex(i)}
                     className={cn(
                       'h-1.5 rounded-full transition-all',
-                      i === focusedIndex ? 'w-5 bg-orange-500' : 'w-1.5 bg-zinc-300 dark:bg-zinc-700',
+                      i === focusedIndex ? 'w-5 bg-brand' : 'w-1.5 bg-zinc-300 dark:bg-zinc-700',
                       completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
                     )}
                     aria-label={`Ejercicio ${i + 1}`}
@@ -741,14 +741,14 @@ export default function ActiveWorkout() {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500 text-white text-xs font-bold not-italic">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl brand-solid text-xs font-bold not-italic">
                     {index + 1}
                   </span>
                   {exercise.name}
                 </h3>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 font-medium capitalize">{exercise.muscle_group} · Descanso: {exercise.rest_seconds}s</p>
                 {exercise.weight_suggestion && (
-                  <p className="text-xs text-orange-600 dark:text-orange-400 font-bold mt-1">
+                  <p className="text-xs text-brand dark:text-brand font-bold mt-1">
                     Consejo: {exercise.weight_suggestion}
                   </p>
                 )}
@@ -787,8 +787,8 @@ export default function ActiveWorkout() {
                     </div>
                     
                     {exercise.execution && showExecution[exercise.id] && (
-                      <div className="w-full mt-3 p-4 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/20 rounded-2xl animate-in slide-in-from-top-2">
-                        <h4 className="label-caps text-orange-600 dark:text-orange-400 mb-2">Pasos a seguir</h4>
+                      <div className="w-full mt-3 p-4 bg-brand/5 dark:bg-brand/10 border border-brand/20 rounded-2xl animate-in slide-in-from-top-2">
+                        <h4 className="label-caps text-brand dark:text-brand mb-2">Pasos a seguir</h4>
                         <p className="text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-line leading-relaxed">
                           {exercise.execution}
                         </p>
@@ -868,7 +868,7 @@ export default function ActiveWorkout() {
                       {isCompleted ? (
                         <button
                           onClick={() => editSet(exercise.id, setNum)}
-                          className="p-2.5 rounded-xl bg-orange-500/10 text-orange-600 hover:bg-orange-500/20 transition-all shadow-sm"
+                          className="p-2.5 rounded-xl bg-brand/10 text-brand hover:bg-brand/20 transition-all shadow-sm"
                           title="Editar serie"
                         >
                           <Edit2 className="h-5 w-5" />
@@ -876,7 +876,7 @@ export default function ActiveWorkout() {
                       ) : (
                         <button
                           onClick={() => toggleSetComplete(exercise.id, setNum)}
-                          className="p-2.5 rounded-xl bg-white dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:text-orange-500 hover:border-orange-500 border border-zinc-100 dark:border-zinc-700 transition-all shadow-sm"
+                          className="p-2.5 rounded-xl bg-white dark:bg-zinc-800 text-zinc-300 dark:text-zinc-600 hover:text-brand hover:border-brand border border-zinc-100 dark:border-zinc-700 transition-all shadow-sm"
                         >
                           <CheckCircle className="h-6 w-6" />
                         </button>
@@ -888,7 +888,7 @@ export default function ActiveWorkout() {
 
               <button
                 onClick={() => handleAddSet(exercise.id)}
-                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 hover:text-orange-500 hover:bg-orange-500/5 hover:border-orange-500/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
+                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 hover:text-brand hover:bg-brand/5 hover:border-brand/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
               >
                 <Plus className="h-4 w-4" />
                 Añadir Serie
@@ -904,11 +904,11 @@ export default function ActiveWorkout() {
         title={<>¡Felicidades!</>}
       >
         <div className="text-center mb-8">
-          <div className="h-16 w-16 bg-orange-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-orange-500/20">
+          <div className="h-16 w-16 brand-solid rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-zinc-900/20">
             <CheckCircle className="h-8 w-8" />
           </div>
           <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
-          <p className="text-xs font-medium text-orange-600 mt-3">
+          <p className="text-xs font-medium text-brand mt-3">
             {formatTime(timer)} · {completedCount}/{routine.exercises.length} ejercicios
           </p>
         </div>

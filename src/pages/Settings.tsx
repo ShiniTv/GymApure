@@ -190,7 +190,7 @@ export default function Settings() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Configuración <span className="text-orange-500">del sistema</span></>}
+        title={<>Configuración <span className="text-brand">del sistema</span></>}
         subtitle="Avisos de chat y salud operativa."
         action={<BackToDashboardLink />}
       />
@@ -199,7 +199,7 @@ export default function Settings() {
         <Card padding="sm" rounded="xl" className="panel-wide">
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 min-w-0">
-              <Settings2 className="h-4 w-4 text-orange-500 shrink-0" />
+              <Settings2 className="h-4 w-4 text-brand shrink-0" />
               <span className="truncate">Avisos de membresía</span>
             </h2>
             <div className="flex gap-1.5 shrink-0">
@@ -271,7 +271,7 @@ export default function Settings() {
       <Card padding="sm" rounded="xl" className="panel-wide">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-            <Activity className="h-4 w-4 text-orange-500 shrink-0" />
+            <Activity className="h-4 w-4 text-brand shrink-0" />
             Salud operativa
           </h2>
           {opsMetrics && (
@@ -341,7 +341,7 @@ export default function Settings() {
                 <p
                   className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 ${
                     opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
-                      ? 'text-orange-500'
+                      ? 'text-brand'
                       : 'text-emerald-500'
                   }`}
                 >

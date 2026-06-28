@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 export interface MemberStats {
@@ -69,9 +69,9 @@ export function MemberStatsProvider({ children }: { children: ReactNode }) {
     try {
       const data = await fetchMemberStats();
       setStats(data);
-    } catch {
+    } catch (err) {
       setStats(null);
-      setError('No se pudieron cargar tus datos. Intenta de nuevo.');
+      setError(toDisplayErrorMessage(err, 'No se pudieron cargar tus datos. Intenta de nuevo.'));
     } finally {
       setLoading(false);
     }

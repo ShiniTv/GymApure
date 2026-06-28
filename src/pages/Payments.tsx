@@ -69,7 +69,7 @@ function ProofPreviewButton({ onClick, className }: { onClick: () => void; class
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-orange-600 hover:bg-orange-500/10 transition-colors',
+        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-brand hover:bg-brand/10 transition-colors',
         className
       )}
       aria-label="Ver comprobante"
@@ -213,9 +213,9 @@ export default function Payments() {
         compact
         title={
           isMember ? (
-            <>Mis <span className="text-orange-500">pagos</span></>
+            <>Mis <span className="text-brand">pagos</span></>
           ) : (
-            <>Gestión de <span className="text-orange-500">pagos</span></>
+            <>Gestión de <span className="text-brand">pagos</span></>
           )
         }
         subtitle={
@@ -312,7 +312,7 @@ export default function Payments() {
                   <div key={payment.id} className="px-3 py-2.5">
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <div className="min-w-0 flex-1">
-                        <p className="text-base sm:text-lg font-bold text-orange-600 tabular-nums leading-none">
+                        <p className="text-base sm:text-lg font-bold text-brand tabular-nums leading-none">
                           ${payment.amount_usd}
                         </p>
                         <p className="mt-1 text-[10px] leading-snug text-zinc-500 truncate">
@@ -409,7 +409,7 @@ export default function Payments() {
                     <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate">
                       {payment.user_name}
                     </p>
-                    <p className="mt-0.5 text-base font-bold text-orange-600 tabular-nums leading-none">
+                    <p className="mt-0.5 text-base font-bold text-brand tabular-nums leading-none">
                       ${payment.amount_usd}
                     </p>
                     <p className="mt-1 text-[10px] leading-snug text-zinc-500 truncate">
@@ -535,7 +535,7 @@ export default function Payments() {
       <Modal
         open={showModal}
         onClose={() => { setShowModal(false); setSubmitError(''); }}
-        title={<>REPORTAR <span className="text-orange-500">PAGO</span></>}
+        title={<>REPORTAR <span className="text-brand">PAGO</span></>}
         maxWidth="xl"
         scrollable
       >
@@ -599,10 +599,10 @@ export default function Payments() {
           <div>
             <Label>Comprobante (Captura)</Label>
             <div className="flex items-center justify-center w-full">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 dark:border-zinc-700 border-dashed rounded-xl cursor-pointer bg-zinc-50 dark:bg-zinc-800/10 hover:bg-orange-500/5 hover:border-orange-500/50 transition-all group">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 dark:border-zinc-700 border-dashed rounded-xl cursor-pointer bg-zinc-50 dark:bg-zinc-800/10 hover:bg-brand/5 hover:border-brand/50 transition-all group">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-3 text-zinc-400 group-hover:text-orange-500 transition-colors" />
-                  <p className="text-xs font-medium text-zinc-500 group-hover:text-orange-600 transition-colors">Adjuntar comprobante</p>
+                  <Upload className="w-8 h-8 mb-3 text-zinc-400 group-hover:text-brand transition-colors" />
+                  <p className="text-xs font-medium text-zinc-500 group-hover:text-brand transition-colors">Adjuntar comprobante</p>
                 </div>
                 <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </label>
@@ -711,7 +711,7 @@ export default function Payments() {
                 href={paymentProofUrl(proofPreview.id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-semibold text-orange-600 hover:text-orange-500"
+                className="text-xs font-semibold text-brand hover:text-brand"
               >
                 Abrir en pestaña nueva
               </a>

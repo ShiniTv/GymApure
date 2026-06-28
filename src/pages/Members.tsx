@@ -241,7 +241,7 @@ export default function Members() {
   };
 
   const mobileIconBtnClass =
-    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-orange-500/10 transition-colors';
+    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-brand hover:bg-brand/10 transition-colors';
 
   return (
     <div className="page-stack">
@@ -249,11 +249,11 @@ export default function Members() {
         compact
         title={
           isTrainer ? (
-            <>Mis <span className="text-orange-500">miembros</span></>
+            <>Mis <span className="text-brand">miembros</span></>
           ) : isReceptionist ? (
-            <>Registro de <span className="text-orange-500">miembros</span></>
+            <>Registro de <span className="text-brand">miembros</span></>
           ) : (
-            <>Gestión de <span className="text-orange-500">usuarios</span></>
+            <>Gestión de <span className="text-brand">usuarios</span></>
           )
         }
         subtitle={
@@ -306,7 +306,7 @@ export default function Members() {
       <Modal
         open={isAdding}
         onClose={() => setIsAdding(false)}
-        title={<>Nuevo <span className="text-orange-500">usuario</span></>}
+        title={<>Nuevo <span className="text-brand">usuario</span></>}
       >
         <div className="form-stack">
               <div>
@@ -380,7 +380,7 @@ export default function Members() {
               <div>
                 <Label>Rol de Usuario</Label>
                 <select
-                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-brand transition-all appearance-none"
                   value={newMember.role}
                   onChange={(e) => setNewMember({...newMember, role: e.target.value})}
                 >
@@ -642,7 +642,7 @@ export default function Members() {
                           <>
                             <button 
                               onClick={() => navigate(`/members/${member.id}/routines`)}
-                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                               title="Ver Rutinas"
                             >
                               <Dumbbell className="h-4 w-4" />
@@ -656,7 +656,7 @@ export default function Members() {
                             </button>
                             <button
                               onClick={() => navigate(`/messages?member=${member.id}`)}
-                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                               title="Enviar mensaje"
                             >
                               <MessageSquare className="h-4 w-4" />
@@ -667,7 +667,7 @@ export default function Members() {
                           <>
                             <button
                               onClick={() => navigate(`/messages?member=${member.id}`)}
-                              className="p-1.5 text-zinc-400 hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                               title="Enviar mensaje"
                             >
                               <MessageSquare className="h-4 w-4" />
@@ -721,7 +721,7 @@ export default function Members() {
       <Modal
         open={!!assignTarget}
         onClose={() => setAssignTarget(null)}
-        title={assignTarget ? <>Membresía — <span className="text-orange-500">{assignTarget.full_name}</span></> : ''}
+        title={assignTarget ? <>Membresía — <span className="text-brand">{assignTarget.full_name}</span></> : ''}
       >
         {assignTarget && (
           <>

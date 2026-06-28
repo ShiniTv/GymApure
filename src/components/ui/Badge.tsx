@@ -14,7 +14,7 @@ const variants: Record<BadgeVariant, string> = {
   success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   warning: 'bg-orange-500/10 text-orange-600 dark:text-orange-500',
   danger: 'bg-red-500/10 text-red-600 dark:text-red-500',
-  accent: 'bg-orange-500 text-white',
+  accent: 'brand-solid',
 };
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
