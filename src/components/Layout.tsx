@@ -200,8 +200,8 @@ export default function Layout() {
   return (
     <div
       className="min-h-dvh bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300"
-      onTouchStart={isMemberMobileShell ? undefined : handleTouchStart}
-      onTouchEnd={isMemberMobileShell ? undefined : handleTouchEnd}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <a
         href="#main-content"
@@ -236,7 +236,6 @@ export default function Layout() {
           <button type="button" onClick={toggleTheme} className={iconBtnClass} aria-label="Cambiar tema">
             {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
-          {!isMemberMobileShell && (
           <button
             type="button"
             onClick={() => { setIsSidebarOpen(!isSidebarOpen); }}
@@ -245,7 +244,6 @@ export default function Layout() {
           >
             {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
-          )}
         </div>
       </div>
 
@@ -255,8 +253,8 @@ export default function Layout() {
           className={clsx(
             'fixed top-14 bottom-0 left-0 z-40 transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-200 ease-in-out lg:top-0 lg:inset-y-0 lg:static lg:translate-x-0',
             SIDEBAR_WIDTH,
-            isMemberMobileShell && 'hidden',
-            !isMemberMobileShell && (isSidebarOpen ? 'translate-x-0' : '-translate-x-full')
+            isMemberMobileShell && isSidebarOpen && 'z-[60]',
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >
           {/* Sidebar Header */}
@@ -446,9 +444,12 @@ export default function Layout() {
         />
       )}
 
-      {isSidebarOpen && !isMemberMobileShell && (
+      {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className={clsx(
+            'fixed inset-0 bg-black/50 lg:hidden',
+            isMemberMobileShell ? 'z-[55]' : 'z-30'
+          )}
           onClick={() => { setIsSidebarOpen(false); }}
           aria-hidden
         />
