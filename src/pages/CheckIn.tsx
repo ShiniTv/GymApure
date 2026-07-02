@@ -10,7 +10,7 @@ import AuthBrandHeader from '../components/AuthBrandHeader';
 import BrandName from '../components/BrandName';
 import Logo from '../components/Logo';
 import { BRAND } from '../config/brand';
-import { Button, Card, Input, SegmentedControl, Spinner } from '../components/ui';
+import { Button, Card, Input, SegmentedControl, Spinner, CedulaInput } from '../components/ui';
 import { cn } from '../lib/utils';
 type KioskMode = 'check-in' | 'check-out';
 
@@ -134,7 +134,7 @@ export default function CheckIn() {
                 status === 'scanning'
                   ? isCheckIn
                     ? 'border-brand ring-4 ring-brand/20'
-                    : 'border-blue-500 ring-4 ring-blue-500/20'
+                    : 'border-[var(--color-check-out)] ring-4 ring-[var(--color-check-out)]/20'
                   : 'border-zinc-200 dark:border-zinc-800'
               )}
             >
@@ -144,12 +144,12 @@ export default function CheckIn() {
                     'absolute inset-0 animate-scan-line',
                     isCheckIn
                       ? 'bg-gradient-to-t from-brand/20 to-transparent'
-                      : 'bg-gradient-to-t from-blue-500/20 to-transparent'
+                      : 'bg-gradient-to-t from-[var(--color-check-out)]/20 to-transparent'
                   )}
                 />
               )}
               {status === 'scanning' ? (
-                <Spinner className={cn('relative z-10', isKioskMode ? 'h-14 w-14' : 'h-10 w-10')} />
+                <Spinner size={isKioskMode ? '2xl' : 'xl'} className="relative z-10" />
               ) : isCheckIn ? (
                 <LogIn className={cn('text-brand/40', isKioskMode ? 'h-20 w-20' : 'h-16 w-16')} />
               ) : (
@@ -173,45 +173,27 @@ export default function CheckIn() {
           </div>
 
           <div className="space-y-4">
-            <Input
+            <CedulaInput
               ref={cedulaRef}
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              autoCapitalize="characters"
-              aria-label="Cédula de identidad"
-              className={cn(
-                'text-center font-mono tracking-widest',
-                isKioskMode
-                  ? 'text-3xl md:text-4xl py-6 min-h-[80px] bg-zinc-900/50 border-zinc-700 text-white'
-                  : 'text-xl md:text-2xl py-4'
-              )}
-              placeholder="V-00000000"
+              variant={isKioskMode ? 'kiosk' : 'default'}
               value={cedula}
-              onChange={(e) => setCedula(e.target.value.toUpperCase())}
+              onChange={setCedula}
               disabled={status === 'scanning'}
+              className={!isKioskMode ? 'text-xl md:text-2xl py-4' : undefined}
             />
 
             <Button
               type="submit"
               size="lg"
-              disabled={status === 'scanning' || !cedula.trim()}
+              loading={status === 'scanning'}
+              disabled={!cedula.trim()}
               className={cn(
                 'w-full',
                 isKioskMode && 'min-h-[64px] text-lg',
-                !isCheckIn && 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20'
+                !isCheckIn && 'bg-[var(--color-check-out)] hover:bg-[var(--color-check-out-hover)] shadow-[var(--color-check-out)]/20'
               )}
             >
-              {status === 'scanning' ? (
-                <>
-                  <Spinner className="h-4 w-4" />
-                  Verificando…
-                </>
-              ) : isCheckIn ? (
-                'Registrar entrada'
-              ) : (
-                'Registrar salida'
-              )}
+              {isCheckIn ? 'Registrar entrada' : 'Registrar salida'}
             </Button>
           </div>
         </form>
@@ -271,20 +253,20 @@ export default function CheckIn() {
   if (isKioskMode) {
     return (
       <AuthShell variant="kiosk-fullscreen">
-        <div className="flex flex-col min-h-screen text-white">
+        <div className="flex flex-col min-h-dvh text-white">
           <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
             <div className="flex items-center gap-4">
               <Logo className="h-12 w-12" mode="dark" />
               <div>
                 <BrandName variant="inline" size="md" onDark className="text-xl" />
-                <p className="text-sm text-zinc-400">Control de acceso</p>
+                <p className="text-sm text-zinc-400 dark:text-zinc-300">Control de acceso</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-3xl md:text-4xl font-bold font-mono tabular-nums">
                 {format(now, 'HH:mm:ss')}
               </p>
-              <p className="text-sm text-zinc-400 capitalize">
+              <p className="text-sm text-zinc-400 dark:text-zinc-300 capitalize">
                 {format(now, "EEEE d MMM", { locale: es })}
               </p>
             </div>
@@ -314,24 +296,24 @@ export default function CheckIn() {
                 <div
                   className={cn(
                     'mx-auto mb-8 rounded-full p-8',
-                    isCheckIn ? 'bg-brand/10' : 'bg-blue-500/10'
+                    isCheckIn ? 'bg-brand/10' : 'bg-[var(--color-check-out)]/10'
                   )}
                 >
                   {isCheckIn ? (
                     <LogIn className="h-24 w-24 text-brand mx-auto" />
                   ) : (
-                    <LogOut className="h-24 w-24 text-blue-500 mx-auto" />
+                    <LogOut className="h-24 w-24 text-[var(--color-check-out)] mx-auto" />
                   )}
                 </div>
                 <h2 className="text-3xl font-bold mb-3">
                   {isCheckIn ? '¡Bienvenido!' : '¡Hasta pronto!'}
                 </h2>
-                <p className="text-zinc-400 text-lg leading-relaxed">
+                <p className="text-zinc-400 dark:text-zinc-300 text-lg leading-relaxed">
                   {isCheckIn
                     ? 'Dicta tu cédula al personal o ingrésala en el teclado para registrar tu entrada.'
                     : 'Registra tu salida al terminar tu entrenamiento.'}
                 </p>
-                <div className="mt-10 flex items-center justify-center gap-6 text-sm text-zinc-500">
+                <div className="mt-10 flex items-center justify-center gap-6 text-sm text-zinc-500 dark:text-zinc-400">
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     Sistema activo
@@ -385,7 +367,7 @@ export default function CheckIn() {
             v{APP_VERSION}
           </div>
         </div>
-        <Link to="/reception" className="text-xs text-zinc-500 hover:text-brand transition-colors">
+        <Link to="/reception" className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-brand transition-colors">
           Panel de recepción
         </Link>
         <Link to="/check-in?kiosk=1" className="text-xs text-brand hover:text-brand font-semibold">

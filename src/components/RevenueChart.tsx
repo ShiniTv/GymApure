@@ -55,7 +55,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           <XAxis
             dataKey="period"
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -65,7 +65,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           />
           <YAxis
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -80,7 +80,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
                 const point = payload[0].payload as RevenueChartPoint & { income: number };
                 return (
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl shadow-xl">
-                    <p className="text-zinc-500 text-[10px] mb-0.5">{formatPeriodTitle(point.period, mode)}</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-[10px] mb-0.5">{formatPeriodTitle(point.period, mode)}</p>
                     <p className="text-base font-semibold text-brand tabular-nums">${point.income}</p>
                   </div>
                 );

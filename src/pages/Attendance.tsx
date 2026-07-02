@@ -95,7 +95,7 @@ export default function Attendance() {
                 <Spinner />
               </div>
             ) : data.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-zinc-400 text-sm">Sin datos</div>
+              <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">Sin datos</div>
             ) : (
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
                 <DailyVolumeChart data={data} />
@@ -115,7 +115,7 @@ export default function Attendance() {
                 <Spinner />
               </div>
             ) : hourlyData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-zinc-400 text-sm">Sin datos</div>
+              <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">Sin datos</div>
             ) : (
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
                 <HourlyVolumeChart data={hourlyData} />
@@ -142,7 +142,7 @@ export default function Attendance() {
                   ? 'vence mañana'
                   : `vence en ${lastDoorAlert.days_remaining} días`}
               </p>
-              <p className="text-[10px] text-zinc-400 mt-1">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1">
                 {format(new Date(lastDoorAlert.check_in_time), 'dd MMM yyyy · HH:mm', { locale: es })}
               </p>
             </div>
@@ -163,7 +163,7 @@ export default function Attendance() {
                   >
                     <div>
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{member.full_name}</p>
-                      <p className="text-[10px] text-zinc-400">{member.membership_name}</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-300">{member.membership_name}</p>
                     </div>
                     <Badge className={classes.badge}>{formatExpiryLabel(member.days_remaining)}</Badge>
                   </div>

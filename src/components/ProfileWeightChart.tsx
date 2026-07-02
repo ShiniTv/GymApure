@@ -31,7 +31,7 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           <XAxis
             dataKey="date"
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="900"
             tickLine={false}
@@ -39,7 +39,7 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           />
           <YAxis
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="900"
             tickLine={false}

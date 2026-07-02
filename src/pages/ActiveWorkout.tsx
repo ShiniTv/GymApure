@@ -8,7 +8,11 @@ import { clientLogger } from '../lib/clientLogger';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { cn } from '../lib/utils';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
-import { formatWorkoutTime, getExerciseEmbedUrl } from './activeWorkout/utils';
+import { formatWorkoutTime } from './activeWorkout/utils';
+import { ExerciseVideoPlayer } from '../components/exercise/ExerciseVideoPlayer';
+import { hapticLight, hapticSuccess } from '../lib/haptics';
+import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
+import { useWorkoutPageTitle } from '../hooks/usePageTitle';
 
 interface Exercise {
   id: number;
@@ -17,6 +21,7 @@ interface Exercise {
   description?: string;
   execution?: string;
   video_url: string;
+  video_poster_url?: string | null;
   sets: number;
   reps: number;
   rest_seconds: number;
@@ -77,7 +82,10 @@ export default function ActiveWorkout() {
   const [restDuration, setRestDuration] = useState(0);
   const [showVideo, setShowVideo] = useState<Record<number, boolean>>({});
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [showCelebration, setShowCelebration] = useState(false);
   const isMobileFocus = useIsMobile();
+
+  useWorkoutPageTitle(routine?.name);
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
@@ -203,8 +211,6 @@ export default function ActiveWorkout() {
   const toggleVideo = (id: number) => {
     setShowVideo(prev => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const getEmbedUrl = getExerciseEmbedUrl;
 
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
@@ -394,6 +400,8 @@ export default function ActiveWorkout() {
         }),
       });
 
+      hapticLight();
+
       // Start Rest Timer
       const exercise = routine?.exercises.find(e => e.id === exerciseId);
       if (exercise && exercise.rest_seconds > 0) {
@@ -448,7 +456,13 @@ export default function ActiveWorkout() {
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
       setIsFinishing(false);
-      navigate('/routines');
+      if (success) {
+        hapticSuccess();
+        setShowCelebration(true);
+        window.setTimeout(() => navigate('/history'), 2200);
+      } else {
+        navigate('/routines');
+      }
     } catch (err) {
       clientLogger.error('Failed to finish workout', err);
       setFinishError(err instanceof Error ? err.message : 'Error al finalizar el entrenamiento.');
@@ -533,6 +547,7 @@ export default function ActiveWorkout() {
 
   return (
     <div className={cn('page-stack', isMobileFocus ? 'pb-36' : 'pb-20')}>
+      <WorkoutCelebration active={showCelebration} />
       <Breadcrumbs
         className="hidden md:flex"
         items={[
@@ -552,7 +567,7 @@ export default function ActiveWorkout() {
               <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
               {formatTime(timer)}
               {isPaused && (
-                <span className="ml-2 text-xs text-zinc-400">Pausado</span>
+                <span className="ml-2 text-xs text-zinc-400 dark:text-zinc-300">Pausado</span>
               )}
             </div>
           </div>
@@ -562,7 +577,7 @@ export default function ActiveWorkout() {
             type="button"
             onClick={() => setIsPaused((p) => !p)}
             disabled={!sessionId}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
             aria-label={isPaused ? 'Reanudar cronómetro' : 'Pausar cronómetro'}
             title={isPaused ? 'Reanudar' : 'Pausar'}
           >
@@ -573,7 +588,7 @@ export default function ActiveWorkout() {
             type="button"
             onClick={resetProgress}
             disabled={!sessionId || isResetting}
-            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-400 dark:text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
             aria-label="Reiniciar sesión"
             title="Reiniciar"
           >
@@ -587,7 +602,7 @@ export default function ActiveWorkout() {
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-medium text-zinc-500">
+        <div className="flex items-center justify-between text-xs font-medium text-zinc-500 dark:text-zinc-400">
           <span>Progreso de sesión</span>
           <span className="text-brand dark:text-brand">{completedCount}/{routine.exercises.length} ejercicios · {progressPct}%</span>
         </div>
@@ -692,7 +707,7 @@ export default function ActiveWorkout() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1 text-center min-w-0">
-              <p className="text-xs text-zinc-500 truncate">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                 {routine.exercises[focusedIndex]?.name}
               </p>
               <p className="text-sm font-semibold text-brand">
@@ -734,7 +749,7 @@ export default function ActiveWorkout() {
             key={exercise.id}
             className={cn(
               'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-6 shadow-sm transition-all',
-              completedExercises[exercise.id] ? 'opacity-50 ring-2 ring-emerald-500/50 scale-[0.98]' : 'hover:shadow-md',
+              completedExercises[exercise.id] ? 'opacity-50 ring-2 ring-emerald-500/50 scale-[0.98]' : '',
               isMobileFocus && index !== focusedIndex && 'hidden'
             )}
           >
@@ -767,7 +782,7 @@ export default function ActiveWorkout() {
                       {exercise.video_url && (
                         <button 
                           onClick={() => toggleVideo(exercise.id)}
-                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
+                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
                         >
                           <Video className="h-3.5 w-3.5" />
                           {showVideo[exercise.id] ? 'Cerrar Video' : 'Video Guía'}
@@ -777,7 +792,7 @@ export default function ActiveWorkout() {
                       {exercise.execution && (
                         <button 
                           type="button"
-                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
+                          className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
                           onClick={() => setShowExecution((prev) => ({ ...prev, [exercise.id]: !prev[exercise.id] }))}
                         >
                           <BookOpen className="h-3.5 w-3.5" />
@@ -796,14 +811,11 @@ export default function ActiveWorkout() {
                     )}
 
                     {showVideo[exercise.id] && exercise.video_url && (
-                      <div className="mt-4 aspect-video w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-black/50 border border-zinc-200 dark:border-zinc-800 shadow-inner">
-                        <iframe 
-                          src={getEmbedUrl(exercise.video_url)} 
-                          className="w-full h-full" 
-                          loading="lazy"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                          allowFullScreen
-                          title={exercise.name}
+                      <div className="mt-4">
+                        <ExerciseVideoPlayer
+                          url={exercise.video_url}
+                          posterUrl={exercise.video_poster_url}
+                          title={`${exercise.name} — video tutorial`}
                         />
                       </div>
                     )}
@@ -888,7 +900,7 @@ export default function ActiveWorkout() {
 
               <button
                 onClick={() => handleAddSet(exercise.id)}
-                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 hover:text-brand hover:bg-brand/5 hover:border-brand/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
+                className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/5 hover:border-brand/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
               >
                 <Plus className="h-4 w-4" />
                 Añadir Serie
@@ -907,7 +919,7 @@ export default function ActiveWorkout() {
           <div className="h-16 w-16 brand-solid rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-zinc-900/20">
             <CheckCircle className="h-8 w-8" />
           </div>
-          <p className="text-zinc-500 font-medium">¿Completaste tu rutina exitosamente?</p>
+          <p className="text-zinc-500 dark:text-zinc-400 font-medium">¿Completaste tu rutina exitosamente?</p>
           <p className="text-xs font-medium text-brand mt-3">
             {formatTime(timer)} · {completedCount}/{routine.exercises.length} ejercicios
           </p>
@@ -939,7 +951,7 @@ export default function ActiveWorkout() {
           >
             <div className="text-left">
               <p className="font-semibold text-zinc-600 dark:text-zinc-400">No completamente</p>
-              <p className="text-xs text-zinc-500/60 font-medium">Faltaron algunos ejercicios</p>
+              <p className="text-xs text-zinc-500/60 dark:text-zinc-400/60 font-medium">Faltaron algunos ejercicios</p>
             </div>
           </button>
 
@@ -954,7 +966,7 @@ export default function ActiveWorkout() {
         onClose={() => setShowResetConfirm(false)}
         title="Reiniciar progreso"
       >
-        <p className="text-sm text-zinc-500 mb-6">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
           Se cerrará la sesión actual y comenzará una nueva desde cero. El tiempo y el progreso se reiniciarán.
         </p>
         <div className="flex gap-4">

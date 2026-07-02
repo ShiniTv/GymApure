@@ -164,7 +164,7 @@ export default function AuditLogs() {
                       variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
                       variant === 'danger' && 'bg-red-500/10 text-red-600',
                       variant === 'accent' && 'bg-brand/10 text-brand',
-                      variant === 'default' && 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                      variant === 'default' && 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
                     )}
                   >
                     <Icon className="h-5 w-5" />
@@ -173,7 +173,7 @@ export default function AuditLogs() {
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <Badge variant={variant}>{actionLabel(log.action)}</Badge>
                       <time
-                        className="text-xs text-zinc-400"
+                        className="text-xs text-zinc-400 dark:text-zinc-300"
                         dateTime={log.created_at}
                       >
                         {format(new Date(log.created_at), "dd MMM yyyy · HH:mm", { locale: es })}
@@ -182,7 +182,7 @@ export default function AuditLogs() {
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {log.user_name ?? 'Sistema'}
                       {log.user_email && (
-                        <span className="text-zinc-500 font-normal ml-2 text-xs">
+                        <span className="text-zinc-500 dark:text-zinc-400 font-normal ml-2 text-xs">
                           {log.user_email}
                         </span>
                       )}

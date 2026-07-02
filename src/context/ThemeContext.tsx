@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   applyThemeToDocument,
-  DEFAULT_APPEARANCE,
   DEFAULT_PALETTE,
+  getSystemAppearance,
   isAppearance,
   isPaletteId,
   PALETTE_STORAGE_KEY,
@@ -23,7 +23,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Appearance>(() => {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    return isAppearance(saved) ? saved : DEFAULT_APPEARANCE;
+    return isAppearance(saved) ? saved : getSystemAppearance();
   });
 
   const [palette, setPaletteState] = useState<PaletteId>(() => {

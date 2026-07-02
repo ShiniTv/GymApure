@@ -34,9 +34,16 @@
     },
   };
 
-  var theme = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+  var savedTheme = localStorage.getItem('theme');
+  var theme =
+    savedTheme === 'light' || savedTheme === 'dark'
+      ? savedTheme
+      : window.matchMedia('(prefers-color-scheme: light)').matches
+        ? 'light'
+        : 'dark';
+
   var palette = localStorage.getItem('gymapure-palette');
-  if (!PALETTES[palette]) palette = 'monochrome';
+  if (!PALETTES[palette]) palette = 'ember';
 
   var root = document.documentElement;
   root.classList.add(theme);

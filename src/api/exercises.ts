@@ -5,9 +5,11 @@ import { authorize } from './middleware/auth.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { videoUpload } from '../lib/uploadStorage.ts';
 import {
-  uploadMediaFile,
-  localVideoPathFromUpload,
+  uploadExerciseVideo,
+  localExerciseVideoFromUpload,
   isMediaStorageRemote,
+  deleteExerciseMedia,
+  type ExerciseVideoUploadResult,
 } from '../lib/mediaStorage.ts';
 import { assertVideoUpload } from '../lib/uploadValidation.ts';
 
@@ -25,16 +27,34 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
 }
 
-async function resolveVideoPath(
+function isExternalVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return url.includes('youtube.com') || url.includes('youtu.be') || url.startsWith('http');
+}
+
+type ResolvedExerciseVideo = {
+  videoUrl: string | null | undefined;
+  posterUrl: string | null | undefined;
+};
+
+async function resolveExerciseVideo(
   file: Express.Multer.File | undefined,
-  video_url: string | null | undefined
-): Promise<string | null | undefined> {
-  if (!file) return video_url;
-  assertVideoUpload(file);
-  if (isMediaStorageRemote()) {
-    return uploadMediaFile('videos', file, 'exercises');
+  video_url: string | null | undefined,
+  existingPoster?: string | null
+): Promise<ResolvedExerciseVideo> {
+  if (file) {
+    assertVideoUpload(file);
+    const uploaded: ExerciseVideoUploadResult = isMediaStorageRemote()
+      ? await uploadExerciseVideo(file)
+      : await localExerciseVideoFromUpload(file);
+    return { videoUrl: uploaded.videoUrl, posterUrl: uploaded.posterUrl };
   }
-  return localVideoPathFromUpload(file);
+
+  if (isExternalVideoUrl(video_url)) {
+    return { videoUrl: video_url, posterUrl: null };
+  }
+
+  return { videoUrl: video_url, posterUrl: existingPoster ?? null };
 }
 
 router.get('/', async (req, res) => {
@@ -52,19 +72,19 @@ router.post('/', authorize(['admin', 'trainer']), uploadRateLimiter, videoUpload
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
   const { name, muscle_group, description, execution, video_url } = parsed.data;
-  let videoPath: string | null | undefined;
+  let resolved: ResolvedExerciseVideo;
   try {
-    videoPath = await resolveVideoPath(req.file, video_url);
+    resolved = await resolveExerciseVideo(req.file, video_url);
   } catch (err: unknown) {
     return res.status(400).json({ error: getErrorMessage(err) });
   }
 
   try {
     const { rows } = await query<{ id: number }>(
-      `INSERT INTO exercises (name, muscle_group, description, execution, video_url)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO exercises (name, muscle_group, description, execution, video_url, video_poster_url)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
-      [name, muscle_group, description, execution, videoPath]
+      [name, muscle_group, description, execution, resolved.videoUrl, resolved.posterUrl]
     );
     res.status(201).json({ id: rows[0].id });
   } catch (err: unknown) {
@@ -79,20 +99,43 @@ router.put('/:id', authorize(['admin', 'trainer']), uploadRateLimiter, videoUplo
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
   const { name, muscle_group, description, execution, video_url } = parsed.data;
-  let videoPath: string | null | undefined;
+
+  let existing: { video_url: string | null; video_poster_url: string | null } | undefined;
   try {
-    videoPath = await resolveVideoPath(req.file, video_url);
+    const { rows } = await query<{ video_url: string | null; video_poster_url: string | null }>(
+      'SELECT video_url, video_poster_url FROM exercises WHERE id = $1',
+      [id]
+    );
+    existing = rows[0];
+    if (!existing) return res.status(404).json({ error: 'Ejercicio no encontrado' });
+  } catch (err: unknown) {
+    return res.status(500).json({ error: getErrorMessage(err) });
+  }
+
+  let resolved: ResolvedExerciseVideo;
+  try {
+    resolved = await resolveExerciseVideo(req.file, video_url, existing.video_poster_url);
   } catch (err: unknown) {
     return res.status(400).json({ error: getErrorMessage(err) });
   }
 
+  const mediaChanged =
+    Boolean(req.file) ||
+    resolved.videoUrl !== existing.video_url ||
+    resolved.posterUrl !== existing.video_poster_url;
+
   try {
     await query(
       `UPDATE exercises
-       SET name = $1, muscle_group = $2, description = $3, execution = $4, video_url = $5
-       WHERE id = $6`,
-      [name, muscle_group, description, execution, videoPath, id]
+       SET name = $1, muscle_group = $2, description = $3, execution = $4, video_url = $5, video_poster_url = $6
+       WHERE id = $7`,
+      [name, muscle_group, description, execution, resolved.videoUrl, resolved.posterUrl, id]
     );
+
+    if (mediaChanged) {
+      await deleteExerciseMedia(existing.video_url, existing.video_poster_url);
+    }
+
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -114,7 +157,13 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req, res) => {
       });
     }
 
+    const { rows: exerciseRows } = await query<{
+      video_url: string | null;
+      video_poster_url: string | null;
+    }>('SELECT video_url, video_poster_url FROM exercises WHERE id = $1', [id]);
+
     await query('DELETE FROM exercises WHERE id = $1', [id]);
+    await deleteExerciseMedia(exerciseRows[0]?.video_url, exerciseRows[0]?.video_poster_url);
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });

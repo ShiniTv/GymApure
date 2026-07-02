@@ -94,7 +94,7 @@ export function RoutinesCalendarView({
               <button
                 type="button"
                 onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-                className="h-8 w-8 inline-flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md text-zinc-500 transition-colors"
+                className="h-8 w-8 inline-flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md text-zinc-500 dark:text-zinc-400 transition-colors"
                 aria-label="Mes anterior"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function RoutinesCalendarView({
               <button
                 type="button"
                 onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                className="h-8 w-8 inline-flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md text-zinc-500 transition-colors"
+                className="h-8 w-8 inline-flex items-center justify-center hover:bg-white dark:hover:bg-zinc-700 rounded-md text-zinc-500 dark:text-zinc-400 transition-colors"
                 aria-label="Mes siguiente"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function RoutinesCalendarView({
         <div className="hidden xl:block scroll-x-bleed">
           <div className="grid grid-cols-7 gap-px min-w-[640px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden">
             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
-              <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-2 text-center text-[10px] font-semibold text-zinc-400">
+              <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-2 text-center text-[10px] font-semibold text-zinc-400 dark:text-zinc-300">
                 {day}
               </div>
             ))}
@@ -148,7 +148,7 @@ export function RoutinesCalendarView({
                       className={`text-[10px] font-semibold ${
                         isToday
                           ? 'brand-solid h-5 w-5 rounded-full flex items-center justify-center'
-                          : 'text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white'
+                          : 'text-zinc-400 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white'
                       }`}
                     >
                       {format(day, 'd')}
@@ -186,7 +186,7 @@ export function RoutinesCalendarView({
                     ))}
                     {dayAssignments.length > 3 && (
                       <div
-                        className="text-[9px] font-medium text-zinc-400 text-center cursor-help"
+                        className="text-[9px] font-medium text-zinc-400 dark:text-zinc-300 text-center cursor-help"
                         title={dayAssignments.slice(3).map((a) => a.member_name).join(', ')}
                       >
                         + {dayAssignments.length - 3} más
@@ -210,7 +210,7 @@ export function RoutinesCalendarView({
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex items-center justify-between gap-2 mb-1.5 px-0.5">
-            <p className="text-[11px] text-zinc-500 min-w-0 truncate">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 min-w-0 truncate">
               {isCurrentWeek ? 'Semana actual' : `Semana del ${format(weekStart, 'd MMM', { locale: es })}`}
               {' · '}
               {weekAssignmentCount} asignación{weekAssignmentCount !== 1 ? 'es' : ''}
@@ -219,7 +219,7 @@ export function RoutinesCalendarView({
               <button
                 type="button"
                 onClick={() => shiftWeek('prev')}
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 aria-label="Semana anterior"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -227,14 +227,14 @@ export function RoutinesCalendarView({
               <button
                 type="button"
                 onClick={() => shiftWeek('next')}
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="h-7 w-7 inline-flex items-center justify-center rounded-md text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 aria-label="Semana siguiente"
               >
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <p className="text-[10px] text-zinc-400 px-0.5 mb-1.5">Desliza horizontalmente para cambiar semana</p>
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-300 px-0.5 mb-1.5">Desliza horizontalmente para cambiar semana</p>
           <div className="space-y-1">
             {mobileWeekDays.map((day) => {
               const dateStr = format(day, 'yyyy-MM-dd');
@@ -263,7 +263,7 @@ export function RoutinesCalendarView({
                     >
                       {format(day, 'd')}
                     </span>
-                    <span className="text-[10px] font-medium text-zinc-500 capitalize truncate">
+                    <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 capitalize truncate">
                       {format(day, 'EEE', { locale: es })}
                     </span>
                   </div>
@@ -272,7 +272,7 @@ export function RoutinesCalendarView({
                       {dayAssignments.length}
                     </Badge>
                   ) : (
-                    <span className="text-[10px] text-zinc-400 shrink-0">—</span>
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-300 shrink-0">—</span>
                   )}
                 </button>
               );
@@ -288,7 +288,7 @@ export function RoutinesCalendarView({
               <h3 className="text-sm font-bold text-zinc-900 dark:text-white capitalize truncate">
                 {format(selectedDay, 'EEE d MMM', { locale: es })}
               </h3>
-              <p className="text-[10px] text-zinc-500 mt-0.5">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {selectedDayAssignments.length} asignación{selectedDayAssignments.length !== 1 ? 'es' : ''}
               </p>
             </div>
@@ -316,7 +316,7 @@ export function RoutinesCalendarView({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-xs text-zinc-900 dark:text-white truncate">{a.member_name}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 truncate">{a.routine_name}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{a.routine_name}</p>
                 </div>
                 <Badge variant={difficultyVariant(a.difficulty)} className="shrink-0 text-[9px] px-1.5 py-0">
                   {formatDifficulty(a.difficulty)}
@@ -324,7 +324,7 @@ export function RoutinesCalendarView({
               </button>
             ))}
             {selectedDayAssignments.length === 0 && (
-              <div className="col-span-full py-6 text-center text-zinc-400 text-xs border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg">
+              <div className="col-span-full py-6 text-center text-zinc-400 dark:text-zinc-300 text-xs border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg">
                 Sin asignaciones este día
               </div>
             )}

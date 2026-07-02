@@ -25,6 +25,7 @@ import {
   BackToDashboardLink,
 } from '../components/ui';
 import { MacroProgressBar, AdherenceBar } from '../components/nutrition/MacroProgressBar';
+import { MacroRing } from '../components/nutrition/MacroRing';
 import {
   MEAL_TYPE_LABELS,
   MEAL_TYPE_ORDER,
@@ -43,6 +44,7 @@ import {
 } from '../hooks/queries/useNutritionQuery';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { cn } from '../lib/utils';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const emptyMealForm = {
   meal_type: 'lunch' as MealType,
@@ -70,6 +72,8 @@ export default function Nutrition() {
   const totals = sumLogEntries(logs);
   const canEditLogs = selectedDate <= formatLocalDate(new Date());
   const loading = planLoading || logsLoading;
+
+  usePageTitle('Nutrición');
 
   const openAddMeal = () => {
     setEditingLog(null);
@@ -147,7 +151,7 @@ export default function Nutrition() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando nutrición…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando nutrición…</p>
       </PageState>
     );
   }
@@ -161,6 +165,7 @@ export default function Nutrition() {
           action={<BackToDashboardLink />}
         />
         <EmptyState
+          variant="motivational"
           icon={UtensilsCrossed}
           title="Sin plan nutricional"
           description="Tu entrenador aún no ha definido tu plan. Cuando lo haga, podrás registrar comidas y ver tu progreso."
@@ -240,6 +245,36 @@ export default function Nutrition() {
             {adherence}% adherencia
           </span>
         </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <MacroRing
+            label="Calorías"
+            consumed={totals.calories}
+            target={plan.calories_target}
+            colorClass="text-orange-500"
+            unit=" kcal"
+          />
+          <MacroRing
+            label="Proteína"
+            consumed={totals.protein}
+            target={plan.protein_target_g}
+            colorClass="text-emerald-500"
+            unit="g"
+          />
+          <MacroRing
+            label="Carbs"
+            consumed={totals.carbs}
+            target={plan.carbs_target_g}
+            colorClass="text-blue-500"
+            unit="g"
+          />
+          <MacroRing
+            label="Grasas"
+            consumed={totals.fat}
+            target={plan.fat_target_g}
+            colorClass="text-amber-500"
+            unit="g"
+          />
+        </div>
         <div className="space-y-3">
           <MacroProgressBar
             label="Calorías"
@@ -273,14 +308,14 @@ export default function Nutrition() {
         {hints.length > 0 && (
           <ul className="mt-3 space-y-0.5">
             {hints.map((h) => (
-              <li key={h} className="text-[10px] sm:text-xs text-zinc-500">
+              <li key={h} className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                 {h}
               </li>
             ))}
           </ul>
         )}
         {plan.notes && (
-          <p className="mt-3 text-xs text-zinc-500 border-t border-zinc-100 dark:border-zinc-800 pt-3">
+          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 border-t border-zinc-100 dark:border-zinc-800 pt-3">
             <span className="font-semibold text-zinc-600 dark:text-zinc-400">Notas del entrenador: </span>
             {plan.notes}
           </p>
@@ -290,12 +325,12 @@ export default function Nutrition() {
       <Card padding="sm" rounded="xl">
         <h2 className="section-title mb-3">Comidas del día</h2>
         {logs.length === 0 ? (
-          <p className="text-sm text-zinc-500 py-4 text-center">Sin registros para esta fecha.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">Sin registros para esta fecha.</p>
         ) : (
           <div className="space-y-4">
             {logsByMeal.map(({ type, items }) => (
               <div key={type}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 mb-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1.5">
                   {MEAL_TYPE_LABELS[type]}
                 </p>
                 <ul className="space-y-1.5">
@@ -308,7 +343,7 @@ export default function Nutrition() {
                         <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
                           {log.description}
                         </p>
-                        <p className="text-[10px] text-zinc-500 tabular-nums mt-0.5">
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tabular-nums mt-0.5">
                           {log.calories} kcal · P {log.protein_g}g · C {log.carbs_g}g · G {log.fat_g}g
                         </p>
                       </div>
@@ -317,7 +352,7 @@ export default function Nutrition() {
                           <button
                             type="button"
                             onClick={() => openEditMeal(log)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-brand hover:bg-brand/10"
+                            className="p-1.5 rounded-lg text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10"
                             aria-label="Editar"
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -325,7 +360,7 @@ export default function Nutrition() {
                           <button
                             type="button"
                             onClick={() => void handleDeleteMeal(log)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-500/10"
+                            className="p-1.5 rounded-lg text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10"
                             aria-label="Eliminar"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -357,7 +392,7 @@ export default function Nutrition() {
                     : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
                 )}
               >
-                <p className="text-[10px] font-semibold text-zinc-500">
+                <p className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">
                   {format(new Date(day.date + 'T12:00:00'), 'EEE d MMM', { locale: es })}
                 </p>
                 <AdherenceBar
@@ -447,8 +482,8 @@ export default function Nutrition() {
             <Button type="button" variant="ghost" onClick={() => setShowMealModal(false)} disabled={saving}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? <Spinner className="h-4 w-4" /> : 'Guardar'}
+            <Button type="submit" loading={saving}>
+              Guardar
             </Button>
           </div>
         </form>

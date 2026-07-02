@@ -35,6 +35,7 @@ import { RoutineModals } from './routines/RoutineModals';
 import { RoutinesLibraryView } from './routines/RoutinesLibraryView';
 import { RoutinesAssignmentsView } from './routines/RoutinesAssignmentsView';
 import { RoutinesCalendarView } from './routines/RoutinesCalendarView';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function Routines() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -89,6 +90,8 @@ export default function Routines() {
     useRoutineAssignmentsQuery(isStaffRoutines);
   const loadingRoutines = isMember ? memberLoading : libraryLoading;
   const availableExercises = exercisesCatalog as ExerciseOption[];
+
+  usePageTitle(isMember ? 'Rutinas' : 'Gestión de rutinas');
 
   useEffect(() => {
     const next = isMember ? (memberRoutines ?? []) : (libraryRoutines ?? []);

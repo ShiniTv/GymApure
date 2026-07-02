@@ -78,8 +78,10 @@ Resumen rápido:
 | `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy |
 | `npm run db:create-admin` | Crea o actualiza la cuenta administrador inicial |
 | `npm run db:restore-demo` | Solo CI/tests automáticos — cuentas demo ficticias |
+| `npm run deploy:preflight` | Valida `.env` antes de migrar/desplegar a producción |
 
-> Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**
+> Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**  
+> **Despliegue a producción (Render + Supabase):** **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
 ## Cuentas y acceso
 

@@ -1,10 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import {
-  getCachedAdminStats,
-  invalidateAdminStatsCache,
-  setCachedAdminStats,
-} from '../lib/adminStatsCache';
 import { useAuth } from './AuthContext';
 
 export interface AdminStats {
@@ -44,103 +40,48 @@ interface AdminStatsContextValue {
 
 const AdminStatsContext = createContext<AdminStatsContextValue | null>(null);
 
-let inflightRequest: Promise<AdminStats> | null = null;
-
 async function fetchAdminStats(): Promise<AdminStats> {
-  if (inflightRequest) return inflightRequest;
-
-  inflightRequest = apiFetch('/api/stats/admin')
-    .then((res) => parseJsonResponse<AdminStats>(res))
-    .then((data) => {
-      if (data.revenueHistory && !Array.isArray(data.revenueHistory)) {
-        data.revenueHistory = [];
-      }
-      if (data.revenueDaily && !Array.isArray(data.revenueDaily)) {
-        data.revenueDaily = [];
-      }
-      return data;
-    })
-    .finally(() => {
-      inflightRequest = null;
-    });
-
-  return inflightRequest;
+  const data = await apiFetch('/api/stats/admin').then((res) =>
+    parseJsonResponse<AdminStats>(res)
+  );
+  if (data.revenueHistory && !Array.isArray(data.revenueHistory)) {
+    data.revenueHistory = [];
+  }
+  if (data.revenueDaily && !Array.isArray(data.revenueDaily)) {
+    data.revenueDaily = [];
+  }
+  return data;
 }
 
 export function AdminStatsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  const {
+    data: stats,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: fetchAdminStats,
+    enabled: user?.role === 'admin',
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    staleTime: 10_000,
+    placeholderData: keepPreviousData,
+  });
 
   const refresh = useCallback(async () => {
-    if (user?.role !== 'admin') return;
-    invalidateAdminStatsCache();
-    setLoading(true);
-    try {
-      const data = await fetchAdminStats();
-      setCachedAdminStats(data);
-      setStats(data);
-    } catch {
-      setStats(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.role]);
-
-  useEffect(() => {
-    if (user?.role !== 'admin') {
-      setStats(null);
-      setLoading(false);
-      return;
-    }
-
-    const cached = getCachedAdminStats<AdminStats>();
-    if (cached) {
-      setStats(cached);
-      setLoading(false);
-      void (async () => {
-        try {
-          const data = await fetchAdminStats();
-          setCachedAdminStats(data);
-          setStats(data);
-        } catch {
-          /* keep stale cache visible */
-        }
-      })();
-    } else {
-      void refresh();
-    }
-
-    const silentRefresh = () => {
-      void fetchAdminStats()
-        .then((data) => {
-          setCachedAdminStats(data);
-          setStats(data);
-        })
-        .catch(() => {});
-    };
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') silentRefresh();
-    };
-
-    document.addEventListener('visibilitychange', onVisible);
-    const interval = window.setInterval(silentRefresh, 30_000);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      window.clearInterval(interval);
-    };
-  }, [user?.role, refresh]);
+    await refetch();
+  }, [refetch]);
 
   const value = useMemo(
     () => ({
-      stats,
-      loading,
+      stats: stats ?? null,
+      loading: isLoading,
       expiringSoon: stats?.expiringSoon ?? 0,
       refresh,
     }),
-    [stats, loading, refresh]
+    [stats, isLoading, refresh]
   );
 
   return (

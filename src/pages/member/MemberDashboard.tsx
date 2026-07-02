@@ -2,13 +2,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import {
-  Activity,
   AlertTriangle,
-  CalendarClock,
   Clock,
   CreditCard,
   Dumbbell,
   UserCircle,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
@@ -20,12 +19,14 @@ import {
 } from '../../lib/expiryUtils';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { formatDifficulty, cn } from '../../lib/utils';
-import { BRAND } from '../../config/brand';
 import { QuickAction } from '../../components/admin/QuickAction';
-import { Button, Card, EmptyState, PageHeader, StatCard } from '../../components/ui';
+import { MemberHero } from '../../components/member/MemberHero';
+import { Button, Card, EmptyState, PageHeader } from '../../components/ui';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 export default function MemberDashboard() {
   const { user } = useAuth();
+  usePageTitle('Inicio');
   const navigate = useNavigate();
   const memberStatsCtx = useMemberStatsOptional();
   const memberStats = memberStatsCtx?.stats ?? null;
@@ -36,7 +37,6 @@ export default function MemberDashboard() {
   const routine = memberStats?.primaryRoutine;
   const pending = memberStats?.pendingPayments ?? 0;
   const alertDays = memberStats?.expiryAlertDays ?? 7;
-  const workoutsMonth = memberStats?.workoutsThisMonth ?? 0;
 
   if (statsError && !memberStats) {
     return (
@@ -57,12 +57,13 @@ export default function MemberDashboard() {
   }
 
   return (
-    <div className={cn('page-stack', isMobile && routine && 'pb-24')}>
-      <PageHeader
-        showTitleOnMobile
-        title={<>Hola, <span className="text-brand">{user?.name}</span></>}
-        subtitle={`Tu espacio de entrenamiento en ${BRAND.name}`}
-        badge={sub ? `${sub.days_remaining} días de plan` : undefined}
+    <div className={cn('page-stack', isMobile && routine && 'pb-28')}>
+      <MemberHero
+        name={user?.name ?? 'Atleta'}
+        workoutsThisWeek={memberStats?.workoutsThisWeek ?? 0}
+        workoutStreak={memberStats?.workoutStreak ?? 0}
+        routineId={routine?.id}
+        routineName={routine?.name}
       />
 
       {pending > 0 && (
@@ -97,24 +98,11 @@ export default function MemberDashboard() {
         );
       })()}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Entrenos del mes" value={workoutsMonth} icon={Activity} color="orange" />
-        <StatCard title="Racha activa" value={memberStats?.workoutStreak ?? 0} icon={CalendarClock} color="emerald" />
-        <StatCard title="Días de plan" value={sub?.days_remaining ?? '—'} icon={CalendarClock} color="blue" />
-        <StatCard title="Ejercicios hoy" value={routine?.exercise_count ?? 0} icon={Dumbbell} color="orange" />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <QuickAction
-          to={routine ? `/workout/${routine.id}` : '/routines'}
-          icon={Dumbbell}
-          title="Entrenar"
-          description={routine ? routine.name : 'Ver rutinas asignadas'}
-          tone="orange"
-        />
-        <QuickAction to="/payments" icon={CreditCard} title="Pagos" description="Reportar o renovar membresía" tone="emerald" />
-        <QuickAction to="/history" icon={Clock} title="Historial" description="Tus sesiones anteriores" tone="blue" />
-        <QuickAction to="/profile" icon={UserCircle} title="Mi perfil" description="Datos personales y medidas" tone="orange" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <QuickAction to="/payments" icon={CreditCard} title="Pagos" description="Reportar o renovar" tone="emerald" />
+        <QuickAction to="/history" icon={Clock} title="Historial" description="Sesiones anteriores" tone="blue" />
+        <QuickAction to="/nutrition" icon={UtensilsCrossed} title="Nutrición" description="Macros y comidas" tone="orange" />
+        <QuickAction to="/profile" icon={UserCircle} title="Mi perfil" description="Datos y medidas" tone="blue" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,7 +111,7 @@ export default function MemberDashboard() {
           {sub ? (
             <>
               <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{sub.membership_name}</p>
-              <p className="text-sm text-zinc-500 mt-2">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
                 Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
               <div className="mt-6 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-3">
@@ -135,6 +123,7 @@ export default function MemberDashboard() {
             </>
           ) : (
             <EmptyState
+              variant="motivational"
               icon={CreditCard}
               title="Sin membresía activa"
               description="Reporta tu pago para activar el acceso al gym."
@@ -157,7 +146,7 @@ export default function MemberDashboard() {
                 </div>
                 <div>
                   <p className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</p>
-                  <p className="text-xs text-zinc-500 mt-1">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                     {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                   </p>
                 </div>
@@ -173,9 +162,10 @@ export default function MemberDashboard() {
             </>
           ) : (
             <EmptyState
+              variant="motivational"
               icon={Dumbbell}
               title="Sin rutina asignada"
-              description="Tu entrenador te asignará un plan pronto."
+              description="Tu entrenador te asignará un plan pronto. Mientras tanto, explora tu perfil."
             />
           )}
         </Card>
@@ -185,7 +175,7 @@ export default function MemberDashboard() {
         <Card padding="lg" rounded="2xl">
           <h3 className="section-title mb-3">Último entrenamiento</h3>
           <p className="font-bold text-zinc-800 dark:text-zinc-200">{memberStats.lastWorkout.routine_name}</p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
             {format(new Date(memberStats.lastWorkout.start_time), "dd MMM yyyy · HH:mm", { locale: es })}
           </p>
           <Link to="/history" className="inline-block mt-4 text-xs font-bold text-brand hover:underline">
@@ -194,24 +184,10 @@ export default function MemberDashboard() {
         </Card>
       )}
 
-      <Link to="/profile" className="block">
-        <Card padding="lg" rounded="2xl" className="hover:border-brand/40 transition-colors group">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="section-title mb-1">Mi progreso</h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-300">Perfil, mediciones y evolución de peso</p>
-            </div>
-            <div className="p-3 rounded-xl bg-brand/10 text-brand group-hover:bg-brand/20 transition-colors">
-              <UserCircle className="h-6 w-6" />
-            </div>
-          </div>
-        </Card>
-      </Link>
-
       {isMobile && routine && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-zinc-50/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 z-40">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 px-4 z-40 lg:hidden">
           <Button
-            className="w-full min-h-[52px] text-base font-semibold"
+            className="w-full min-h-[52px] text-base font-semibold shadow-lg"
             onClick={() => navigate(`/workout/${routine.id}`)}
           >
             <Dumbbell className="h-5 w-5 mr-2" />

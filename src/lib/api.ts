@@ -1,6 +1,79 @@
-/** Same-origin fetch that always sends session cookies. */
+const DEFAULT_TIMEOUT = 15_000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1_000;
+
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   return fetch(input, { credentials: 'include', ...init });
+}
+
+export async function apiFetchWithRetry(
+  input: RequestInfo | URL,
+  init: RequestInit & { timeout?: number; retries?: number } = {}
+): Promise<Response> {
+  const timeout = init.timeout ?? DEFAULT_TIMEOUT;
+  const retries = init.retries ?? MAX_RETRIES;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  const signal = init.signal;
+  const combinedSignal = signal
+    ? combineAbortSignals(signal, controller.signal)
+    : controller.signal;
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(input, {
+        ...init,
+        signal: combinedSignal,
+        credentials: 'include',
+      });
+      clearTimeout(timeoutId);
+      return res;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      if (attempt < retries && isRetryableError(lastError)) {
+        await sleep(RETRY_DELAY * Math.pow(2, attempt));
+        continue;
+      }
+      break;
+    }
+  }
+
+  throw lastError ?? new Error('Network request failed');
+}
+
+function isRetryableError(err: Error): boolean {
+  if (err.name === 'AbortError') return false;
+  const msg = err.message.toLowerCase();
+  return (
+    msg.includes('network') ||
+    msg.includes('timeout') ||
+    msg.includes('econnrefused') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('fetch failed')
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function combineAbortSignals(...signals: AbortSignal[]): AbortSignal {
+  const controller = new AbortController();
+  for (const signal of signals) {
+    if (signal.aborted) {
+      controller.abort(signal.reason);
+      return controller.signal;
+    }
+    signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true });
+  }
+  return controller.signal;
 }
 
 export class ApiError extends Error {
@@ -33,12 +106,10 @@ export async function parseJsonResponse<T = unknown>(res: Response): Promise<T> 
   return data;
 }
 
-/** Parse JSON without throwing on HTTP errors (kiosk, simulators, health checks). */
 export async function parseJsonSafe<T = unknown>(res: Response): Promise<T & { error?: string }> {
   return (await res.json().catch(() => ({}))) as T & { error?: string };
 }
 
-/** Parse JSON when the response is OK; otherwise null. */
 export async function parseJsonOptional<T>(res: Response): Promise<T | null> {
   if (!res.ok) return null;
   return parseJsonResponse<T>(res);
@@ -52,7 +123,6 @@ export function toDisplayErrorMessage(err: unknown, fallback = 'Error inesperado
   return fallback;
 }
 
-/** Normalize legacy /uploads/ paths and Supabase storage refs to authenticated API routes. */
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (url.startsWith('sbmedia:videos:')) {
@@ -86,7 +156,6 @@ export function paymentProofUrl(paymentId: number): string {
   return `/api/payments/${paymentId}/proof`;
 }
 
-/** Download a CSV report (admin). Sends session cookies. */
 export async function downloadReport(
   type: 'payments' | 'attendance' | 'members',
   options?: { from?: string; to?: string }

@@ -8,6 +8,7 @@ export interface Exercise {
   description: string | null;
   execution: string | null;
   video_url: string | null;
+  video_poster_url: string | null;
 }
 
 async function fetchExercises(): Promise<Exercise[]> {

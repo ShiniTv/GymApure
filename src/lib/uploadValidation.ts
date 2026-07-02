@@ -1,5 +1,6 @@
 import fs from 'fs';
 import type { Express } from 'express';
+import { VIDEO_MAX_UPLOAD_BYTES } from './videoConfig.ts';
 
 const VIDEO_MIMES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -65,6 +66,14 @@ export function assertAllowedUpload(
 
 export function assertVideoUpload(file: Express.Multer.File): void {
   assertAllowedUpload(file, VIDEO_MIMES, 'video');
+  assertVideoUploadSize(file);
+}
+
+export function assertVideoUploadSize(file: Express.Multer.File): void {
+  if (file.size > VIDEO_MAX_UPLOAD_BYTES) {
+    const maxMb = (VIDEO_MAX_UPLOAD_BYTES / (1024 * 1024)).toFixed(0);
+    throw new Error(`El video supera el límite de ${maxMb} MB.`);
+  }
 }
 
 export function assertImageUpload(file: Express.Multer.File): void {

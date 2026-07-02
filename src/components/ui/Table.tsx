@@ -47,7 +47,7 @@ export function TableHeader({ className, children, ...props }: ThHTMLAttributes<
   return (
     <th
       className={cn(
-        'px-4 py-2.5 text-xs font-semibold text-zinc-500',
+        'px-4 py-2.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400',
         className
       )}
       {...props}
@@ -83,7 +83,7 @@ export function DataCard({
       onClick={onClick}
       className={cn(
         'w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 sm:p-4 space-y-1.5 transition-colors',
-        onClick && 'hover:border-brand/30 active:scale-[0.99]',
+        onClick && 'cursor-pointer',
         className
       )}
     >

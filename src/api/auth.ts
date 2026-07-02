@@ -14,8 +14,53 @@ import { authorize } from './middleware/authorize.ts';
 import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { signSessionToken, sessionFailureStatus, verifySessionToken } from '../lib/sessionAuth.ts';
+import { sendEmail, welcomeEmail } from '../lib/email.ts';
 
 const router = asyncRouter();
+
+const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_BLOCK_MINUTES = 15;
+const LOGIN_WINDOW_MINUTES = 15;
+
+function checkLoginBlock(email: string): boolean {
+  const entry = loginAttempts.get(email);
+  if (!entry) return false;
+  if (Date.now() >= entry.blockedUntil) {
+    loginAttempts.delete(email);
+    return false;
+  }
+  return true;
+}
+
+function recordLoginAttempt(email: string, success: boolean) {
+  const normalizedEmail = email.toLowerCase();
+  if (success) {
+    loginAttempts.delete(normalizedEmail);
+    return;
+  }
+
+  const now = Date.now();
+  const entry = loginAttempts.get(normalizedEmail);
+
+  if (!entry || now >= entry.blockedUntil) {
+    loginAttempts.set(normalizedEmail, {
+      count: 1,
+      blockedUntil: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
+    });
+  } else {
+    const newCount = entry.count + 1;
+    if (newCount >= MAX_LOGIN_ATTEMPTS) {
+      loginAttempts.set(normalizedEmail, {
+        count: newCount,
+        blockedUntil: now + LOGIN_BLOCK_MINUTES * 60 * 1000,
+      });
+    } else {
+      entry.count = newCount;
+    }
+  }
+}
 
 router.post(
   '/login',
@@ -28,6 +73,14 @@ router.post(
 
     const { email, password } = parsed.data;
     const normalizedEmail = email.toLowerCase();
+    const clientIp = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+
+    if (checkLoginBlock(normalizedEmail)) {
+      res.status(429).json({
+        error: `Demasiados intentos. Cuenta bloqueada por ${LOGIN_BLOCK_MINUTES} minutos.`,
+      });
+      return;
+    }
 
     const { rows } = await query<{
       id: number | string;
@@ -43,14 +96,28 @@ router.post(
     const user = rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
+      recordLoginAttempt(normalizedEmail, false);
+      await logAudit(null, 'auth.login_failed', {
+        email: normalizedEmail,
+        ip: clientIp,
+        reason: 'invalid_credentials',
+      });
       res.status(401).json({ error: 'Credenciales incorrectas' });
       return;
     }
 
     if (user.status !== 'active') {
+      recordLoginAttempt(normalizedEmail, false);
+      await logAudit(Number(user.id), 'auth.login_failed', {
+        email: normalizedEmail,
+        ip: clientIp,
+        reason: 'inactive_account',
+      });
       res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
       return;
     }
+
+    recordLoginAttempt(normalizedEmail, true);
 
     const userId = Number(user.id);
     const token = signSessionToken({
@@ -62,7 +129,7 @@ router.post(
     });
 
     res.cookie('token', token, authCookieOptions);
-    await logAudit(userId, 'auth.login', {});
+    await logAudit(userId, 'auth.login', { ip: clientIp });
 
     res.json({
       user: { id: userId, email: user.email, role: user.role, name: user.full_name },
@@ -119,6 +186,7 @@ router.post(
 
     res.cookie('token', token, authCookieOptions);
     await logAudit(id, 'auth.register', { email: normalizedEmail });
+    void sendEmail({ to: normalizedEmail, subject: 'Bienvenido a Caribean Gym', html: welcomeEmail(full_name) });
 
     res.status(201).json({
       user: { id, email: normalizedEmail, role: 'member', name: full_name },
@@ -161,6 +229,47 @@ router.get(
     const status = sessionFailureStatus(result);
     res.status(status!).json({
       error: status === 403 ? 'Cuenta inactiva. Contacta al administrador.' : 'Sesión expirada',
+    });
+  })
+);
+
+router.post(
+  '/refresh',
+  asyncHandler(async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+      res.status(401).json({ error: 'No autenticado' });
+      return;
+    }
+
+    const result = await verifySessionToken(token);
+    if (result.type !== 'success') {
+      const status = sessionFailureStatus(result);
+      res.status(status!).json({
+        error:
+          status === 403
+            ? 'Cuenta inactiva. Contacta al administrador.'
+            : 'Sesión expirada. Inicia sesión de nuevo.',
+      });
+      return;
+    }
+
+    const newToken = signSessionToken({
+      id: result.user.id,
+      role: result.user.role,
+      full_name: result.user.name,
+      email: result.user.email,
+      token_version: result.user.token_version ?? 0,
+    });
+
+    res.cookie('token', newToken, authCookieOptions);
+    res.json({
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        name: result.user.name,
+      },
     });
   })
 );

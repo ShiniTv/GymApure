@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, toDisplayErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
-import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet } from 'lucide-react';
+import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet, Bell, BellOff } from 'lucide-react';
 import { Button, Card, Input, Label, PageHeader, Badge, Spinner, BackToDashboardLink } from '../components/ui';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 interface ExpirySettingsForm {
   expiry_alert_days: number;
@@ -195,7 +196,20 @@ export default function Settings() {
         action={<BackToDashboardLink />}
       />
 
-      {expirySettings && (
+          <Card padding="sm" rounded="xl" className="panel-wide">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 min-w-0">
+                <Settings2 className="h-4 w-4 text-brand shrink-0" />
+                <span className="truncate">Notificaciones push</span>
+              </h2>
+            </div>
+            <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
+              Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes, check-ins).
+            </p>
+            <PushToggle />
+          </Card>
+
+          {expirySettings && (
         <Card padding="sm" rounded="xl" className="panel-wide">
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 min-w-0">
@@ -306,26 +320,26 @@ export default function Settings() {
         </div>
 
         {opsMetricsLoading && !opsMetrics && !opsMetricsError ? (
-          <p className="text-xs text-zinc-500">Cargando métricas…</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Cargando métricas…</p>
         ) : !opsMetrics && opsMetricsError ? (
           <p className="text-xs font-bold text-red-600 dark:text-red-400">{opsMetricsError}</p>
         ) : opsMetrics ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">DB ms</p>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">DB ms</p>
                 <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5">
                   {opsMetrics.db.latency_ms ?? '—'}
                 </p>
               </div>
               <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Avg req ms</p>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Avg req ms</p>
                 <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5">
                   {opsMetrics.request_metrics.avgResponseMs}
                 </p>
               </div>
               <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Error rate</p>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Error rate</p>
                 <p
                   className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 ${
                     opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
@@ -337,7 +351,7 @@ export default function Settings() {
                 </p>
               </div>
               <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Slow rate</p>
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Slow rate</p>
                 <p
                   className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 ${
                     opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
@@ -352,7 +366,7 @@ export default function Settings() {
 
             {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
               <div className="mt-4">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 mb-1.5">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1.5">
                   Top rutas lentas
                 </p>
                 <div className="space-y-1.5">
@@ -361,7 +375,7 @@ export default function Settings() {
                       key={`${route.method}-${route.path}`}
                       className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2"
                     >
-                      <p className="text-[11px] font-medium text-zinc-500 truncate">
+                      <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
                         {route.method} {route.path}
                       </p>
                       <p className="text-xs text-zinc-700 dark:text-zinc-200 mt-0.5 tabular-nums">
@@ -374,7 +388,7 @@ export default function Settings() {
             )}
 
             <div className="mt-4">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 mb-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1.5">
                 Alertas activas
               </p>
               {opsAlerts.length === 0 ? (
@@ -392,6 +406,38 @@ export default function Settings() {
           </>
         ) : null}
       </Card>
+    </div>
+  );
+}
+
+function PushToggle() {
+  const { supported, permission, isSubscribed, subscribe, unsubscribe } = usePushNotifications();
+
+  if (!supported) return <p className="text-[11px] text-zinc-400">Este navegador no soporta notificaciones push.</p>;
+
+  if (permission === 'denied') {
+    return (
+      <p className="text-[11px] text-red-500 leading-snug">
+        Notificaciones bloqueadas. Actívalas desde la configuración del navegador.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <Button
+        type="button"
+        variant={isSubscribed ? 'secondary' : 'primary'}
+        size="sm"
+        onClick={isSubscribed ? unsubscribe : subscribe}
+        className="h-9 min-h-9"
+      >
+        {isSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+        <span>{isSubscribed ? 'Desactivar' : 'Activar'}</span>
+      </Button>
+      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        {isSubscribed ? 'Notificaciones activas' : 'Notificaciones inactivas'}
+      </span>
     </div>
   );
 }

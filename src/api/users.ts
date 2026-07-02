@@ -14,6 +14,7 @@ import {
   deleteMediaFile,
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
+import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
 import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logger } from '../lib/logger.ts';
@@ -73,15 +74,7 @@ const USER_LIST_FROM = `
     FROM workout_sessions
     GROUP BY user_id
   ) lw ON lw.user_id = u.id
-  LEFT JOIN LATERAL (
-    SELECT m.name AS membership_name, s.end_date,
-           GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-    FROM subscriptions s
-    JOIN memberships m ON m.id = s.membership_id
-    WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-    ORDER BY s.end_date DESC
-    LIMIT 1
-  ) sub ON true
+  ${activeSubscriptionLateralSql()}
 `;
 
 function buildUserListFilters(
@@ -310,7 +303,7 @@ router.post(
 
     const profileImage = isMediaStorageRemote()
       ? await uploadMediaFile('avatars', req.file, String(targetId))
-      : localAvatarPathFromUpload(req.file);
+      : await localAvatarPathFromUpload(req.file);
 
     const { rows } = await query(
       `UPDATE users SET profile_image = $1 WHERE id = $2

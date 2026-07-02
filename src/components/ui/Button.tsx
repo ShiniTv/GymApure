@@ -1,11 +1,13 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '../../lib/utils';
+import { Spinner } from './Spinner';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
 }
 
 const variants: Record<ButtonVariant, string> = {
@@ -26,10 +28,10 @@ const sizes = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', disabled, children, ...props }, ref) => (
+  ({ className, variant = 'primary', size = 'md', disabled, loading, children, ...props }, ref) => (
     <button
       ref={ref}
-      disabled={disabled}
+      disabled={disabled || loading}
       className={cn(
         'inline-flex items-center justify-center gap-2 transition-all active:scale-95 touch-manipulation',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50',
@@ -40,7 +42,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       )}
       {...props}
     >
-      {children}
+      {loading ? <Spinner size="sm" /> : children}
     </button>
   )
 );

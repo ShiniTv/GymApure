@@ -2,6 +2,8 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { parseDateParam, toCsv } from '../lib/csv.ts';
+import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
+import { sqlDateRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
 
 const router = asyncRouter();
 
@@ -192,15 +194,7 @@ router.get('/members', authorize(['admin']), async (_req, res) => {
              sub.end_date::text AS subscription_end,
              sub.days_remaining
       FROM users u
-      LEFT JOIN LATERAL (
-        SELECT m.name AS membership_name, s.end_date,
-               GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-        FROM subscriptions s
-        JOIN memberships m ON m.id = s.membership_id
-        WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-        ORDER BY s.end_date DESC
-        LIMIT 1
-      ) sub ON true
+      ${activeSubscriptionLateralSql()}
       WHERE u.role = 'member'
       ORDER BY u.full_name ASC
     `);

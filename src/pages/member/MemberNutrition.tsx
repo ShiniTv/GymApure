@@ -131,13 +131,13 @@ export default function MemberNutrition() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando…</p>
       </PageState>
     );
   }
 
   if (!member || Number.isNaN(memberId)) {
-    return <div className="text-zinc-500 p-6">Miembro no encontrado</div>;
+    return <div className="text-zinc-500 dark:text-zinc-400 p-6">Miembro no encontrado</div>;
   }
 
   const avgAdherence =
@@ -204,7 +204,7 @@ export default function MemberNutrition() {
         <Avatar src={member.profile_image} name={member.full_name} size="md" className="rounded-xl" />
         {member.goal && (
           <div className="min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50 px-3 py-2 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
               <Target className="h-3 w-3" />
               Objetivo del miembro
             </p>
@@ -318,8 +318,8 @@ export default function MemberNutrition() {
               rows={3}
             />
           </div>
-          <Button type="submit" disabled={saving} size="sm">
-            {saving ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+          <Button type="submit" loading={saving} size="sm">
+            <Save className="h-4 w-4" />
             {plan ? 'Actualizar plan' : 'Crear plan'}
           </Button>
         </form>
@@ -344,11 +344,11 @@ export default function MemberNutrition() {
             <Spinner />
           </div>
         ) : !plan ? (
-          <p className="text-sm text-zinc-500 py-4 text-center">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
             Guarda un plan nutricional arriba para ver la adherencia del cliente.
           </p>
         ) : !summary || summary.days.every((d) => d.totals.calories === 0) ? (
-          <p className="text-sm text-zinc-500 py-4 text-center">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
             El cliente aún no ha registrado comidas esta semana.
           </p>
         ) : (
@@ -362,7 +362,7 @@ export default function MemberNutrition() {
                   <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                     {format(new Date(day.date + 'T12:00:00'), 'EEE d MMM', { locale: es })}
                   </p>
-                  <p className="text-[10px] text-zinc-500 tabular-nums">
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tabular-nums">
                     {day.totals.calories} kcal · P {Math.round(day.totals.protein)}g · C {Math.round(day.totals.carbs)}g · G{' '}
                     {Math.round(day.totals.fat)}g
                   </p>
@@ -373,7 +373,7 @@ export default function MemberNutrition() {
           </div>
         )}
         {!plan && (
-          <p className="text-xs text-zinc-500 mt-2">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
             Guarda un plan arriba para que el cliente pueda ver sus metas en{' '}
             <Link to="/nutrition" className="text-brand font-semibold hover:underline">
               Mi nutrición

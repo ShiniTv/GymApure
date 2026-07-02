@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Search, Plus, MoreVertical, Dumbbell, History, X, Trash2, Power, CreditCard, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Search, Plus, AlertTriangle, Dumbbell } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
-import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, DataCard, Avatar, FilterChips, EmptyState, TableRowSkeleton, SearchInput, Card, BackToDashboardLink } from '../components/ui';
+import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, Card, FilterChips, EmptyState, TableRowSkeleton, SearchInput, BackToDashboardLink, CedulaInput } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { useMembersQuery, useInvalidateMembers, type Member } from '../hooks/queries/useMembersQuery';
 import { clientLogger } from '../lib/clientLogger';
-import {
-  getExpiryBadgeInfo,
-} from '../lib/expiryUtils';
-import { ROLE_LABELS, type UserRole } from '../lib/roles';
-import { cn } from '../lib/utils';
+import { getExpiryBadgeInfo } from '../lib/expiryUtils';
+import { cn, roleBadgeClass } from '../lib/utils';
+import { validateCedula } from '../lib/cedulaUtils';
+import { MemberCardMobile } from './members/MemberCardMobile';
+import { MemberTableRow } from './members/MemberTableRow';
+import { StaggerContainer, StaggerItem } from '../components/animations';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshContainer } from '../components/PullToRefresh';
 
 interface MembershipPlan {
   id: number;
@@ -25,6 +28,13 @@ export default function Members() {
   const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
   const invalidateMembers = useInvalidateMembers();
+
+  const onRefreshMembers = useCallback(async () => { invalidateMembers(); }, [invalidateMembers]);
+  const { pullDistance: pullMembers, isRefreshing: refreshingMembers, handlers: membersHandlers } = usePullToRefresh({
+    onRefresh: onRefreshMembers,
+    threshold: 80,
+  });
+
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -45,6 +55,8 @@ export default function Members() {
   const [assignError, setAssignError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<Member | null>(null);
+  const [toggling, setToggling] = useState(false);
   const [expiringFilter, setExpiringFilter] = useState(false);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
@@ -96,14 +108,8 @@ export default function Members() {
       newErrors.email = 'Email inválido';
     }
 
-    if (!newMember.cedula.trim()) {
-      newErrors.cedula = 'La cédula es obligatoria para el check-in';
-    } else {
-      const cedulaRegex = /^([VEve]-)?\d{5,10}$/;
-      if (!cedulaRegex.test(newMember.cedula.trim())) {
-        newErrors.cedula = 'Formato de cédula inválido (ej: V-12345678)';
-      }
-    }
+    const cedulaErr = validateCedula(newMember.cedula);
+    if (cedulaErr) newErrors.cedula = cedulaErr;
 
     if (!newMember.password || newMember.password.length < 8) {
       newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
@@ -172,23 +178,34 @@ export default function Members() {
     }
   };
 
-  const handleToggleStatus = async (member: Member) => {
-    const newStatus = member.status === 'active' ? 'inactive' : 'active';
+  const confirmToggleStatus = useCallback(async () => {
+    if (!toggleTarget) return;
+    setToggling(true);
+    const newStatus = toggleTarget.status === 'active' ? 'inactive' : 'active';
     try {
-      const res = await apiFetch(`/api/users/${member.id}/status`, {
+      const res = await apiFetch(`/api/users/${toggleTarget.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
         invalidateMembers();
+        toast?.success(`Usuario ${newStatus === 'active' ? 'activado' : 'desactivado'}`);
       }
     } catch (err) {
       clientLogger.error('Failed to toggle member status', err);
+      toast?.error('No se pudo cambiar el estado');
+    } finally {
+      setToggling(false);
+      setToggleTarget(null);
     }
-  };
+  }, [toggleTarget, invalidateMembers, toast]);
 
-  const openAssignSubscription = async (member: Member) => {
+  const handleToggleClick = useCallback((member: Member) => {
+    setToggleTarget(member);
+  }, []);
+
+  const openAssignSubscription = useCallback(async (member: Member) => {
     setAssignTarget(member);
     setAssignError('');
     setSelectedPlanId('');
@@ -199,7 +216,11 @@ export default function Members() {
     } catch {
       setMembershipPlans([]);
     }
-  };
+  }, []);
+
+  const handleDeleteClick = useCallback((member: Member) => {
+    setDeleteTarget(member);
+  }, []);
 
   const handleAssignSubscription = async () => {
     if (!assignTarget || !selectedPlanId) {
@@ -233,18 +254,46 @@ export default function Members() {
     user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist';
   const addUserLabel = isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario';
 
-  const roleBadgeClass = (role: string) => {
-    if (role === 'admin') return 'bg-purple-500/10 text-purple-600 dark:text-purple-400';
-    if (role === 'trainer') return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
-    if (role === 'receptionist') return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
-    return 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400';
-  };
+  const membersEmptyState = (() => {
+    if (expiringFilter) {
+      return {
+        title: 'Sin resultados',
+        description: 'No hay miembros por vencer en este periodo.',
+      };
+    }
+    if (isTrainer) {
+      if (search) {
+        return {
+          title: 'Sin resultados',
+          description: 'Ningún miembro asignado coincide con tu búsqueda.',
+        };
+      }
+      return {
+        title: 'Aún no tienes miembros asignados',
+        description:
+          'Solo aparecen miembros a los que les hayas asignado una rutina. Ve a Rutinas → Asignaciones para vincularlos contigo.',
+      };
+    }
+    if (search) {
+      return {
+        title: 'Sin resultados',
+        description: 'Prueba con otro nombre o cédula.',
+      };
+    }
+    return {
+      title: 'Sin miembros',
+      description: 'Aún no hay miembros registrados en el sistema.',
+    };
+  })();
+
+  const showTrainerAssignCta = isTrainer && !search && !expiringFilter;
 
   const mobileIconBtnClass =
-    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:text-brand hover:bg-brand/10 transition-colors';
+    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-brand hover:bg-brand/10 transition-colors';
 
   return (
-    <div className="page-stack">
+    <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
+    <div className="page-stack" {...membersHandlers}>
       <PageHeader
         compact
         title={
@@ -307,6 +356,7 @@ export default function Members() {
         open={isAdding}
         onClose={() => setIsAdding(false)}
         title={<>Nuevo <span className="text-brand">usuario</span></>}
+        scrollable
       >
         <div className="form-stack">
               <div>
@@ -337,15 +387,13 @@ export default function Members() {
               </div>
               <div>
                 <Label>Cédula / ID</Label>
-                <Input
-                  type="text"
+                <CedulaInput
                   error={errors.cedula}
                   value={newMember.cedula}
-                  onChange={(e) => {
-                    setNewMember({...newMember, cedula: e.target.value});
+                  onChange={(value) => {
+                    setNewMember({...newMember, cedula: value});
                     if (errors.cedula) setErrors({...errors, cedula: ''});
                   }}
-                  placeholder="V-00000000"
                 />
               </div>
               <div>
@@ -410,11 +458,20 @@ export default function Members() {
           </div>
         ) : filteredMembers.length === 0 ? (
           <EmptyState
-            icon={Search}
-            title="Sin resultados"
-            description={expiringFilter ? 'No hay miembros por vencer en este periodo.' : 'Prueba con otro nombre o cédula.'}
+            icon={showTrainerAssignCta ? Dumbbell : Search}
+            title={membersEmptyState.title}
+            description={membersEmptyState.description}
             action={
-              isTrainer ? (
+              showTrainerAssignCta ? (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
+                    <Dumbbell className="h-4 w-4" /> Ir a asignaciones
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsAdding(true)}>
+                    <Plus className="h-4 w-4" /> Nuevo miembro
+                  </Button>
+                </div>
+              ) : isTrainer ? (
                 <Button size="sm" onClick={() => setIsAdding(true)}>
                   <Plus className="h-4 w-4" /> Nuevo miembro
                 </Button>
@@ -422,151 +479,32 @@ export default function Members() {
             }
           />
         ) : (
-          filteredMembers.map((member) => {
-            const expiryBadge =
-              member.role === 'member' && member.membership_name
-                ? getExpiryBadgeInfo(member.days_remaining, alertDays)
-                : null;
-            const showMobileActions =
-              (isTrainer && member.role === 'member') ||
-              ((user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member') ||
-              user?.role === 'admin';
-
-            return (
-              <DataCard key={member.id} className="!p-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <Avatar name={member.full_name} size="sm" className="shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate leading-tight">
-                        {member.full_name}
-                      </p>
-                      <Badge
-                        variant={member.status === 'active' ? 'success' : 'danger'}
-                        className="shrink-0"
-                      >
-                        {member.status === 'active' ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-zinc-500">
-                      <span className="truncate">{member.cedula || 'Sin cédula'}</span>
-                      {!isStaffMember && (
-                        <>
-                          <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                          <span
-                            className={cn(
-                              'inline-flex shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold',
-                              roleBadgeClass(member.role)
-                            )}
-                          >
-                            {ROLE_LABELS[member.role as UserRole] ?? member.role}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    {member.membership_name && (
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-500 truncate">
-                          {member.membership_name} · {member.days_remaining ?? 0}d
-                        </p>
-                        {expiryBadge && (
-                          <Badge className={cn('shrink-0 text-[10px]', expiryBadge.className)}>
-                            {expiryBadge.label}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {showMobileActions && (
-                  <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-1">
-                    {isTrainer && member.role === 'member' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/members/${member.id}/routines`)}
-                          className={mobileIconBtnClass}
-                          aria-label="Asignar rutina"
-                        >
-                          <Dumbbell className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/members/${member.id}/history`)}
-                          className={mobileIconBtnClass}
-                          aria-label="Historial"
-                        >
-                          <History className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/messages?member=${member.id}`)}
-                          className={mobileIconBtnClass}
-                          aria-label="Enviar mensaje"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                    {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/messages?member=${member.id}`)}
-                          className={mobileIconBtnClass}
-                          aria-label="Enviar mensaje"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openAssignSubscription(member)}
-                          className={mobileIconBtnClass}
-                          aria-label="Asignar membresía"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                    {user?.role === 'admin' && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleStatus(member)}
-                          className={cn(
-                            mobileIconBtnClass,
-                            member.status !== 'active' && 'text-emerald-500'
-                          )}
-                          aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
-                        >
-                          <Power className="h-4 w-4" />
-                        </button>
-                        {member.role === 'member' && member.id !== user?.id && (
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTarget(member)}
-                            className={cn(mobileIconBtnClass, 'hover:text-red-500 hover:bg-red-500/10')}
-                            aria-label="Eliminar miembro"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-              </DataCard>
-            );
-          })
+          <StaggerContainer>
+            {filteredMembers.map((member) => (
+              <StaggerItem key={member.id}>
+                <MemberCardMobile
+                  member={member}
+                  userRole={user?.role ?? 'member'}
+                  currentUserId={user?.id}
+                  isStaffMember={isStaffMember}
+                  alertDays={alertDays}
+                  roleBadgeClass={roleBadgeClass}
+                  mobileIconBtnClass={mobileIconBtnClass}
+                  onAssignSubscription={openAssignSubscription}
+                  onToggleStatus={handleToggleClick}
+                  onDelete={handleDeleteClick}
+                />
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         )}
         <PaginationBar page={page} pageSize={pageSize} total={total} onPageChange={setPage} label="usuarios" />
       </div>
 
       <Card padding="none" rounded="xl" className="hidden md:block table-shell overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-zinc-500">
-            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 text-xs font-semibold">
+          <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 text-xs font-semibold">
               <tr>
                 <th className="px-4 lg:px-5 py-2.5">Nombre</th>
                 {!isStaffMember && <th className="px-4 lg:px-5 py-2.5">Rol</th>}
@@ -587,123 +525,39 @@ export default function Members() {
                 </>
               ) : filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={colCount} className="px-8 py-12 text-center text-zinc-400 text-sm">No se encontraron miembros</td>
+                  <td colSpan={colCount} className="px-8 py-12 text-center">
+                    <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
+                      {membersEmptyState.title}
+                    </p>
+                    <p className="text-sm text-zinc-400 dark:text-zinc-300 mt-1 max-w-md mx-auto">
+                      {membersEmptyState.description}
+                    </p>
+                    {showTrainerAssignCta && (
+                      <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                        <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
+                          <Dumbbell className="h-4 w-4" /> Ir a asignaciones
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setIsAdding(true)}>
+                          <Plus className="h-4 w-4" /> Nuevo miembro
+                        </Button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ) : (
                 filteredMembers.map((member) => (
-                  <tr key={member.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
-                    <td className="px-4 lg:px-5 py-2.5 font-semibold text-zinc-800 dark:text-zinc-100">{member.full_name}</td>
-                    {!isStaffMember && (
-                    <td className="px-4 lg:px-5 py-2.5">
-                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize ${
-                        member.role === 'admin' 
-                          ? 'bg-purple-500/10 text-purple-600 dark:text-purple-500' 
-                          : member.role === 'trainer'
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500'
-                          : 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400'
-                      }`}>
-                        {member.role}
-                      </span>
-                    </td>
-                    )}
-                    <td className="px-4 lg:px-5 py-2.5 text-zinc-500">{member.cedula || '-'}</td>
-                    <td className="px-4 lg:px-5 py-2.5">
-                      {member.role === 'member' ? (
-                        member.membership_name ? (
-                          (() => {
-                            const badge = getExpiryBadgeInfo(member.days_remaining, alertDays);
-                            return (
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-500">{member.membership_name}</p>
-                              {badge && (
-                                <Badge className={badge.className}>{badge.label}</Badge>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-zinc-400">{member.days_remaining ?? 0} días restantes</p>
-                          </div>
-                            );
-                          })()
-                        ) : (
-                          <span className="text-xs text-zinc-400">Sin plan</span>
-                        )
-                      ) : (
-                        <span className="text-zinc-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 lg:px-5 py-2.5">
-                      <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
-                        {member.status === 'active' ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 lg:px-5 py-2.5 text-right">
-                      <div className="flex justify-end gap-1 opacity-100 transition-all">
-                        {user?.role === 'trainer' && member.role === 'member' && (
-                          <>
-                            <button 
-                              onClick={() => navigate(`/members/${member.id}/routines`)}
-                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                              title="Ver Rutinas"
-                            >
-                              <Dumbbell className="h-4 w-4" />
-                            </button>
-                            <button 
-                              onClick={() => navigate(`/members/${member.id}/history`)}
-                              className="p-1.5 text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-                              title="Historial de Entrenamiento"
-                            >
-                              <History className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => navigate(`/messages?member=${member.id}`)}
-                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                              title="Enviar mensaje"
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                        {(user?.role === 'admin' || user?.role === 'receptionist') && member.role === 'member' && (
-                          <>
-                            <button
-                              onClick={() => navigate(`/messages?member=${member.id}`)}
-                              className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                              title="Enviar mensaje"
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => openAssignSubscription(member)}
-                              className="p-1.5 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                              title="Asignar membresía"
-                            >
-                              <CreditCard className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                        {user?.role === 'admin' && (
-                          <>
-                            <button 
-                              onClick={() => handleToggleStatus(member)}
-                              className={`p-1.5 rounded-lg transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
-                              title={member.status === 'active' ? 'Desactivar' : 'Activar'}
-                            >
-                              <Power className="h-4 w-4" />
-                            </button>
-                            {member.role === 'member' && member.id !== user?.id && (
-                              <button 
-                                onClick={() => setDeleteTarget(member)}
-                                className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                                title="Eliminar miembro"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                  <MemberTableRow
+                    key={member.id}
+                    member={member}
+                    userRole={user?.role ?? 'member'}
+                    currentUserId={user?.id}
+                    isStaffMember={isStaffMember}
+                    alertDays={alertDays}
+                    roleBadgeClass={roleBadgeClass}
+                    onAssignSubscription={openAssignSubscription}
+                    onToggleStatus={handleToggleClick}
+                    onDelete={handleDeleteClick}
+                  />
                 ))
               )}
             </tbody>
@@ -726,7 +580,7 @@ export default function Members() {
         {assignTarget && (
           <>
             {assignTarget.membership_name && (
-              <p className="text-xs text-zinc-500 mb-4">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
                 Plan actual: <strong>{assignTarget.membership_name}</strong> ({assignTarget.days_remaining} días).
                 La nueva suscripción se encadena al vencimiento.
               </p>
@@ -744,9 +598,42 @@ export default function Members() {
               ))}
             </select>
             {assignError && <p className="text-xs text-red-500 mb-3">{assignError}</p>}
-            <Button onClick={handleAssignSubscription} className="w-full bg-emerald-600 hover:bg-emerald-500">
+            <Button onClick={handleAssignSubscription} className="w-full">
               Asignar / Renovar
             </Button>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!toggleTarget}
+        onClose={() => !toggling && setToggleTarget(null)}
+        title="Cambiar estado"
+      >
+        {toggleTarget && (
+          <>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+              {toggleTarget.status === 'active'
+                ? `¿Desactivar a ${toggleTarget.full_name}? No podrá hacer check-in ni acceder al sistema.`
+                : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
+            </p>
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setToggleTarget(null)} disabled={toggling}>
+                Cancelar
+              </Button>
+              <Button
+                variant={toggleTarget.status === 'active' ? 'danger' : 'primary'}
+                className="flex-1"
+                onClick={confirmToggleStatus}
+                disabled={toggling}
+              >
+                {toggling
+                  ? 'Cambiando...'
+                  : toggleTarget.status === 'active'
+                    ? 'Desactivar'
+                    : 'Activar'}
+              </Button>
+            </div>
           </>
         )}
       </Modal>
@@ -769,5 +656,6 @@ export default function Members() {
         </div>
       </Modal>
     </div>
+    </PullToRefreshContainer>
   );
 }

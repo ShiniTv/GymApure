@@ -1,6 +1,5 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
@@ -27,57 +26,47 @@ import { DashboardSection } from '../components/admin/DashboardSection';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { StatCard, Card, PageHeader, Badge, EmptyState, Button, DashboardSkeleton, Skeleton, SegmentedControl } from '../components/ui';
-import { cn } from '../lib/utils';
+import { cn, formatMoney } from '../lib/utils';
+import { StaggerContainer, StaggerItem } from '../components/animations';
 
+import { useTrainerStatsQuery, type TrainerStatsResponse } from '../hooks/queries/useDashboardQuery';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshContainer } from '../components/PullToRefresh';
 import MemberDashboardView from './member/MemberDashboard';
 import ReceptionDashboardView from './reception/ReceptionDashboard';
 
 const RevenueChart = lazy(() => import('../components/RevenueChart'));
 
-interface TrainerActivity {
-  user_id: number;
-  full_name: string;
-  routine_name: string;
-  start_time: string;
-}
-
-interface TrainerExpiringMember {
-  id: number;
-  full_name: string;
-  days_remaining: number;
-}
-
-interface TrainerDashboardStats {
-  assignedMembers: number;
-  activeNow: number;
-  todayWorkouts: number;
-  routinesCreated: number;
-  recentActivities: TrainerActivity[];
-  membersWithoutRoutines?: number;
-  expiringMembers?: TrainerExpiringMember[];
-  expiryAlertDays?: number;
-}
+type TrainerDashboardStats = TrainerStatsResponse;
 
 type RevenueRange = '7d' | '30d' | '6m';
-
-function formatMoney(value: number): string {
-  return `$${value.toFixed(value % 1 === 0 ? 0 : 2)}`;
-}
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const adminStats = useAdminStats();
   const memberStatsCtx = useMemberStatsOptional();
-  const [trainerStats, setTrainerStats] = useState<TrainerDashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: trainerStats, isLoading: trainerLoading, refetch: refetchTrainer } = useTrainerStatsQuery();
+  const isAdmin = user?.role === 'admin';
+  const isMember = user?.role === 'member';
+  const isReceptionist = user?.role === 'receptionist';
+
+  const onRefresh = useCallback(async () => {
+    if (isAdmin) {
+      await adminStats.refresh();
+    } else if (!isMember && !isReceptionist) {
+      await refetchTrainer();
+    }
+  }, [isAdmin, isMember, isReceptionist, adminStats, refetchTrainer]);
+
+  const { pullDistance, isRefreshing, handlers } = usePullToRefresh({
+    onRefresh,
+    threshold: 80,
+  });
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
 
-  const isAdmin = user?.role === 'admin';
-  const isMember = user?.role === 'member';
-  const isReceptionist = user?.role === 'receptionist';
   const memberStats = memberStatsCtx?.stats ?? null;
   const pageLoading = isAdmin
     ? adminStats.loading && !adminStats.stats
@@ -85,37 +74,7 @@ export default function Dashboard() {
       ? memberStatsCtx?.loading && !memberStats
       : isReceptionist
         ? false
-        : loading;
-
-  useEffect(() => {
-    if (!user) return;
-
-    if (user.role === 'member' || user.role === 'receptionist') {
-      return;
-    }
-
-    if (user.role === 'admin') {
-      setLoading(false);
-      return;
-    }
-
-    apiFetch('/api/stats/trainer')
-      .then((res) => parseJsonResponse<TrainerDashboardStats>(res))
-      .then((data) => {
-        if (data?.recentActivities && !Array.isArray(data.recentActivities)) {
-          data.recentActivities = [];
-        }
-        if (data && !Array.isArray(data.expiringMembers)) {
-          data.expiringMembers = [];
-        }
-        setTrainerStats(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setTrainerStats(null);
-        setLoading(false);
-      });
-  }, [user]);
+        : trainerLoading;
 
   useEffect(() => {
     if (user?.role !== 'admin' || !adminStats.stats) return;
@@ -172,7 +131,8 @@ export default function Dashboard() {
     const revenueChartMode = revenueRange === '6m' ? ('month' as const) : ('day' as const);
 
     return (
-      <div className="space-y-2.5 sm:space-y-3">
+      <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
+      <div className="space-y-2.5 sm:space-y-3" {...handlers}>
         <PageHeader
           compact
           title={<>Administración <span className="text-brand">general</span></>}
@@ -194,8 +154,8 @@ export default function Dashboard() {
           </Link>
         )}
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          <StatCard
+        <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 [&>*]:h-full">
+          <StaggerItem><StatCard
             compact
             title="Ingresos (mes)"
             value={formatMoney(revenueThisMonth)}
@@ -203,9 +163,9 @@ export default function Dashboard() {
             color="emerald"
             trend={monthTrend.label}
             trendTone={monthTrend.tone}
-          />
-          <StatCard compact title="Activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" />
-          <StatCard
+          /></StaggerItem>
+          <StaggerItem><StatCard compact title="Activas" value={stats?.activeSubscriptions || 0} icon={Activity} color="blue" /></StaggerItem>
+          <StaggerItem><StatCard
             compact
             title="Check-ins hoy"
             value={stats?.todayCheckIns || 0}
@@ -213,19 +173,19 @@ export default function Dashboard() {
             color="emerald"
             trend={checkInTrend.label}
             trendTone={checkInTrend.tone}
-          />
-          <StatCard
+          /></StaggerItem>
+          <StaggerItem><StatCard
             compact
             title={`Por vencer (${alertDays}d)`}
             value={expiringSoon}
             icon={CalendarClock}
             color="orange"
             className={expiringSoon > 0 ? 'border-brand/40 bg-brand/[0.03]' : undefined}
-          />
-        </div>
+          /></StaggerItem>
+        </StaggerContainer>
 
         {totalRevenue > 0 && (
-          <p className="text-[10px] text-zinc-500 px-0.5">
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 px-0.5">
             Ingresos acumulados{' '}
             <span className="font-semibold text-zinc-700 dark:text-zinc-300 tabular-nums">{formatMoney(totalRevenue)}</span>
           </p>
@@ -283,15 +243,15 @@ export default function Dashboard() {
               <CalendarClock className="h-4 w-4 text-brand shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-zinc-900 dark:text-white">Próximos vencimientos</p>
-                <p className="text-[11px] text-zinc-500 truncate">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
                   {expiringList.length} en {alertDays} días
                   {criticalExpiring > 0 ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}` : ''}
                 </p>
               </div>
               {showExpiringList ? (
-                <ChevronUp className="h-4 w-4 text-zinc-400 shrink-0" />
+                <ChevronUp className="h-4 w-4 text-zinc-400 dark:text-zinc-300 shrink-0" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
+                <ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-300 shrink-0" />
               )}
             </button>
 
@@ -338,7 +298,7 @@ export default function Dashboard() {
                     >
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">{item.full_name}</p>
-                        <p className="text-[10px] text-zinc-500 truncate">
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
                           {format(new Date(item.end_date), 'dd MMM', { locale: es })}
                         </p>
                       </div>
@@ -400,6 +360,7 @@ export default function Dashboard() {
           </div>
         </Card>
       </div>
+    </PullToRefreshContainer>
     );
   }
 
@@ -410,7 +371,8 @@ export default function Dashboard() {
   const trainerHasAlerts = withoutRoutines > 0 || expiringMembers.length > 0;
 
   return (
-    <div className="page-stack-tight">
+    <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
+    <div className="page-stack-tight" {...handlers}>
       <PageHeader
         compact
         title={<>Control de <span className="text-brand">entrenamiento</span></>}
@@ -467,7 +429,7 @@ export default function Dashboard() {
       <Card padding="sm" rounded="xl">
         <h3 className="text-sm font-bold text-zinc-900 dark:text-white mb-3">Actividad reciente</h3>
         <div className="scroll-area max-h-72 space-y-0">
-          {stats?.recentActivities?.map((activity: TrainerActivity, i: number) => (
+          {stats?.recentActivities?.map((activity, i) => (
             <Link
               key={i}
               to={`/members/${activity.user_id}/history`}
@@ -480,11 +442,11 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{activity.full_name}</p>
-                <p className="text-xs text-zinc-500 truncate">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                   {activity.routine_name}
                 </p>
               </div>
-              <div className="flex items-center text-xs font-medium text-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg shrink-0">
+              <div className="flex items-center text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1 rounded-lg shrink-0">
                 <Clock className="h-3.5 w-3.5 mr-1 text-brand" />
                 {new Date(activity.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
@@ -519,7 +481,7 @@ export default function Dashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white">Sin rutina asignada</p>
-                  <p className="text-[11px] text-zinc-500">
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     {trainerStats!.membersWithoutRoutines} miembro{trainerStats!.membersWithoutRoutines !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -540,7 +502,7 @@ export default function Dashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white truncate">{m.full_name}</p>
-                  <p className="text-[11px] text-zinc-500">Membresía por vencer</p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Membresía por vencer</p>
                 </div>
               </div>
               <Badge variant="danger">{m.days_remaining}d</Badge>
@@ -559,5 +521,6 @@ export default function Dashboard() {
       </Card>
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 }

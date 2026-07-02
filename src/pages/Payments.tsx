@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { dateLocale } from '../lib/dateLocale';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse, paymentProofUrl } from '../lib/api';
 import { Plus, Upload, Check, X, FileImage, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -13,44 +11,16 @@ import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
 import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePaymentsQuery';
 import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
-
-interface Payment {
-  id: number;
-  user_name: string;
-  amount_usd: number;
-  amount_bs: number;
-  method: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  reference: string;
-  proof_url?: string | null;
-}
-
-const EXCHANGE_RATE = Number(import.meta.env.VITE_EXCHANGE_RATE ?? 40.5);
-
-function formatPaymentDate(iso: string): string {
-  try {
-    return format(new Date(iso), "d MMM yyyy · HH:mm", { locale: dateLocale });
-  } catch {
-    return iso;
-  }
-}
-
-function formatPaymentMethod(method: string): string {
-  return method.replace(/_/g, ' ');
-}
-
-function paymentStatusLabel(status: Payment['status']): string {
-  if (status === 'approved') return 'Aprobado';
-  if (status === 'rejected') return 'Rechazado';
-  return 'Pendiente';
-}
-
-function paymentStatusVariant(status: Payment['status']): 'success' | 'danger' | 'warning' {
-  if (status === 'approved') return 'success';
-  if (status === 'rejected') return 'danger';
-  return 'warning';
-}
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshContainer } from '../components/PullToRefresh';
+import {
+  EXCHANGE_RATE,
+  formatPaymentDate,
+  formatPaymentMethod,
+  paymentStatusLabel,
+  paymentStatusVariant,
+  type Payment,
+} from './payments/helpers';
 
 function PaymentRejectionNote() {
   return (
@@ -86,6 +56,17 @@ export default function Payments() {
   const isMember = user?.role === 'member';
   const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
   const invalidatePayments = useInvalidatePayments();
+
+  const onRefreshPayments = useCallback(async () => {
+    invalidatePayments();
+    await adminStats?.refresh();
+    await memberStats?.refresh();
+  }, [invalidatePayments, adminStats, memberStats]);
+  const { pullDistance: pullPayments, isRefreshing: refreshingPayments, handlers: paymentsHandlers } = usePullToRefresh({
+    onRefresh: onRefreshPayments,
+    threshold: 80,
+  });
+
   const [showModal, setShowModal] = useState(false);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
@@ -208,7 +189,8 @@ export default function Payments() {
   };
 
   return (
-    <div className="page-stack-tight">
+    <PullToRefreshContainer pullDistance={pullPayments} isRefreshing={refreshingPayments}>
+    <div className="page-stack-tight" {...paymentsHandlers}>
       <PageHeader
         compact
         title={
@@ -247,7 +229,7 @@ export default function Payments() {
       />
 
       {isMember && !loading && (
-        <p className="text-[11px] text-zinc-500 px-0.5">
+        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 px-0.5">
           {total} pago{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
           {statusFilter ? ` · ${paymentStatusLabel(statusFilter as Payment['status'])}` : ''}
         </p>
@@ -315,7 +297,7 @@ export default function Payments() {
                         <p className="text-base sm:text-lg font-bold text-brand tabular-nums leading-none">
                           ${payment.amount_usd}
                         </p>
-                        <p className="mt-1 text-[10px] leading-snug text-zinc-500 truncate">
+                        <p className="mt-1 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400 truncate">
                           <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
                           <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
                           <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
@@ -346,7 +328,7 @@ export default function Payments() {
 
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="px-3 lg:px-5 py-2.5">Monto (USD)</th>
                     <th className="px-3 lg:px-5 py-2.5">Fecha</th>
@@ -360,18 +342,18 @@ export default function Payments() {
                   {loading ? (
                     <tr><td colSpan={6} className="px-5 py-8 text-center"><Spinner /></td></tr>
                   ) : payments.length === 0 ? (
-                    <tr><td colSpan={6} className="px-5 py-8 text-center text-zinc-400 text-sm">No hay pagos registrados</td></tr>
+                    <tr><td colSpan={6} className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-300 text-sm">No hay pagos registrados</td></tr>
                   ) : payments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
                       <td className="px-3 lg:px-5 py-2.5 font-semibold text-zinc-900 dark:text-white tabular-nums">${payment.amount_usd}</td>
-                      <td className="px-3 lg:px-5 py-2.5 text-zinc-500 whitespace-nowrap">{formatPaymentDate(payment.created_at)}</td>
-                      <td className="px-3 lg:px-5 py-2.5 text-zinc-500 capitalize">{formatPaymentMethod(payment.method)}</td>
-                      <td className="px-3 lg:px-5 py-2.5 font-mono text-[10px] text-zinc-400 max-w-[10rem] truncate" title={payment.reference}>{payment.reference}</td>
+                      <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{formatPaymentDate(payment.created_at)}</td>
+                      <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400 capitalize">{formatPaymentMethod(payment.method)}</td>
+                      <td className="px-3 lg:px-5 py-2.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-300 max-w-[10rem] truncate" title={payment.reference}>{payment.reference}</td>
                       <td className="px-3 lg:px-5 py-2.5">
                         {payment.proof_url ? (
                           <ProofPreviewButton onClick={() => setProofPreview(payment)} />
                         ) : (
-                          <span className="text-xs text-zinc-400">—</span>
+                          <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
                         )}
                       </td>
                       <td className="px-3 lg:px-5 py-2.5">
@@ -412,7 +394,7 @@ export default function Payments() {
                     <p className="mt-0.5 text-base font-bold text-brand tabular-nums leading-none">
                       ${payment.amount_usd}
                     </p>
-                    <p className="mt-1 text-[10px] leading-snug text-zinc-500 truncate">
+                    <p className="mt-1 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400 truncate">
                       <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
                       <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
                       <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
@@ -459,7 +441,7 @@ export default function Payments() {
         </div>
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500">
+            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400">
               <tr>
                 <th className="px-3 lg:px-5 py-2.5">Usuario</th>
                 <th className="px-3 lg:px-5 py-2.5">Fecha</th>
@@ -474,19 +456,19 @@ export default function Payments() {
               {loading ? (
                  <tr><td colSpan={7} className="px-5 py-8 text-center"><Spinner /></td></tr>
               ) : payments.length === 0 ? (
-                <tr><td colSpan={7} className="px-5 py-8 text-center text-zinc-400 text-sm">No hay pagos registrados</td></tr>
+                <tr><td colSpan={7} className="px-5 py-8 text-center text-zinc-400 dark:text-zinc-300 text-sm">No hay pagos registrados</td></tr>
               ) : payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
                   <td className="px-3 lg:px-5 py-2.5 font-medium text-zinc-700 dark:text-zinc-200">{payment.user_name}</td>
-                  <td className="px-3 lg:px-5 py-2.5 text-zinc-500 whitespace-nowrap">{formatPaymentDate(payment.created_at)}</td>
+                  <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{formatPaymentDate(payment.created_at)}</td>
                   <td className="px-3 lg:px-5 py-2.5 font-semibold text-zinc-900 dark:text-white tabular-nums">${payment.amount_usd}</td>
-                  <td className="px-3 lg:px-5 py-2.5 text-zinc-500 capitalize">{formatPaymentMethod(payment.method)}</td>
-                  <td className="px-3 lg:px-5 py-2.5 font-mono text-[10px] text-zinc-400 max-w-[10rem] truncate" title={payment.reference}>{payment.reference}</td>
+                  <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400 capitalize">{formatPaymentMethod(payment.method)}</td>
+                  <td className="px-3 lg:px-5 py-2.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-300 max-w-[10rem] truncate" title={payment.reference}>{payment.reference}</td>
                   <td className="px-3 lg:px-5 py-2.5">
                     {payment.proof_url ? (
                       <ProofPreviewButton onClick={() => setProofPreview(payment)} />
                     ) : (
-                      <span className="text-xs text-zinc-400">—</span>
+                      <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
                     )}
                   </td>
                   <td className="px-3 lg:px-5 py-2.5">
@@ -601,8 +583,8 @@ export default function Payments() {
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-200 dark:border-zinc-700 border-dashed rounded-xl cursor-pointer bg-zinc-50 dark:bg-zinc-800/10 hover:bg-brand/5 hover:border-brand/50 transition-all group">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-3 text-zinc-400 group-hover:text-brand transition-colors" />
-                  <p className="text-xs font-medium text-zinc-500 group-hover:text-brand transition-colors">Adjuntar comprobante</p>
+                  <Upload className="w-8 h-8 mb-3 text-zinc-400 dark:text-zinc-300 group-hover:text-brand transition-colors" />
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 group-hover:text-brand transition-colors">Adjuntar comprobante</p>
                 </div>
                 <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </label>
@@ -628,7 +610,7 @@ export default function Payments() {
       >
         {approveTarget && (
           <>
-            <p className="text-sm text-zinc-500 mb-6">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
               {approveTarget.user_name} — ${approveTarget.amount_usd}
             </p>
             <Label>Plan a asignar (opcional)</Label>
@@ -667,7 +649,7 @@ export default function Payments() {
       >
         {rejectTarget && (
           <>
-            <p className="text-sm text-zinc-500 mb-4">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
               ¿Rechazar el pago de <strong>{rejectTarget.user_name}</strong> por ${rejectTarget.amount_usd}?
             </p>
             {actionError && (
@@ -703,7 +685,8 @@ export default function Payments() {
               <img
                 src={paymentProofUrl(proofPreview.id)}
                 alt="Comprobante de pago"
-                className="w-full max-h-[min(70vh,640px)] object-contain mx-auto"
+                loading="lazy"
+                className="w-full max-h-[min(70dvh,640px)] object-contain mx-auto"
               />
             </div>
             <div className="mt-4 flex justify-end">
@@ -720,5 +703,6 @@ export default function Payments() {
         )}
       </Modal>
     </div>
+    </PullToRefreshContainer>
   );
 }

@@ -25,7 +25,7 @@ const colorMap: Record<StatColor, string> = {
   emerald: 'text-emerald-600 dark:text-emerald-500 bg-emerald-500/10',
   blue: 'text-blue-600 dark:text-blue-500 bg-blue-500/10',
   brand: 'text-brand bg-brand/10',
-  orange: 'text-brand bg-brand/10',
+  orange: 'text-orange-600 dark:text-orange-500 bg-orange-500/10',
   red: 'text-red-600 dark:text-red-500 bg-red-500/10',
 };
 
@@ -42,7 +42,7 @@ function StatCardContent({
   if (minimal) {
     return (
       <>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 leading-tight">{title}</p>
+        <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 leading-tight">{title}</p>
         <p className="text-lg sm:text-xl font-bold tabular-nums mt-0.5 text-zinc-900 dark:text-white">{value}</p>
       </>
     );
@@ -50,8 +50,8 @@ function StatCardContent({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex items-start justify-between gap-2 flex-1">
+        <div className="min-w-0 flex-1">
           <p className={cn('stat-label leading-snug mb-1', compact && 'text-[10px] leading-tight')}>{title}</p>
           <p className={cn('stat-value tabular-nums', compact && 'text-lg sm:text-2xl')}>{value}</p>
         </div>
@@ -59,15 +59,21 @@ function StatCardContent({
           <Icon className={cn(compact ? 'h-4 w-4' : 'h-5 w-5')} />
         </div>
       </div>
-      {trend && (
-        <div className={cn('flex items-center', compact ? 'mt-1.5' : 'mt-3')}>
+      <div
+        className={cn(
+          'flex items-center min-h-[1.125rem]',
+          compact ? 'mt-1.5' : 'mt-3'
+        )}
+        aria-hidden={!trend}
+      >
+        {trend ? (
           <span
             className={cn(
               'font-medium flex items-center gap-0.5',
               compact ? 'text-[10px] leading-tight' : 'text-xs sm:text-sm',
               trendTone === 'up' && 'text-emerald-600 dark:text-emerald-500',
               trendTone === 'down' && 'text-red-600 dark:text-red-400',
-              trendTone === 'neutral' && 'text-zinc-500'
+              trendTone === 'neutral' && 'text-zinc-500 dark:text-zinc-400'
             )}
           >
             {trendTone === 'up' && <TrendingUp className={cn(compact ? 'h-3 w-3' : 'h-4 w-4')} />}
@@ -75,8 +81,8 @@ function StatCardContent({
             {trendTone === 'neutral' && <Minus className={cn(compact ? 'h-3 w-3' : 'h-4 w-4')} />}
             {trend}
           </span>
-        </div>
-      )}
+        ) : null}
+      </div>
     </>
   );
 }
@@ -111,11 +117,11 @@ export function StatCard({
     return (
       <Link
         to={to}
-        className={cn('block rounded-xl transition-colors hover:ring-2 hover:ring-brand/25 active:scale-[0.98]', className)}
+        className={cn('block rounded-xl', className)}
         aria-label={`${title}: ${value}`}
         title={title}
       >
-        <Card padding={padding} rounded="xl" className="h-full">
+        <Card padding={padding} rounded="xl" className={cn('h-full flex flex-col', className)}>
           {inner}
         </Card>
       </Link>
@@ -131,19 +137,10 @@ export function StatCard({
   }
 
   return (
-    <Card padding={padding} rounded="xl" className={className}>
+    <Card padding={padding} rounded="xl" className={cn('h-full flex flex-col', className)}>
       {inner}
     </Card>
   );
 }
 
-export function Spinner({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        'animate-spin rounded-full h-8 w-8 border-4 border-brand border-t-transparent',
-        className
-      )}
-    />
-  );
-}
+

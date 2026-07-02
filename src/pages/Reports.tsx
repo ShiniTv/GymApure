@@ -215,7 +215,7 @@ export default function Reports() {
             <h2 className="text-sm font-bold text-zinc-900 dark:text-white leading-tight">
               Rango de fechas
             </h2>
-            <p className="text-[10px] text-zinc-500 leading-tight">Pagos y asistencias</p>
+            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-tight">Pagos y asistencias</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -258,7 +258,7 @@ export default function Reports() {
                     <h3 className="font-semibold text-sm text-zinc-900 dark:text-white leading-tight">
                       {report.title}
                     </h3>
-                    <p className="hidden sm:block text-[11px] text-zinc-500 mt-0.5 leading-snug line-clamp-1">
+                    <p className="hidden sm:block text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug line-clamp-1">
                       {report.description}
                     </p>
                   </div>
@@ -271,37 +271,28 @@ export default function Reports() {
                       <p className="text-lg sm:text-xl font-bold text-brand tabular-nums leading-none">
                         {count ?? '—'}
                       </p>
-                      <p className="text-[9px] uppercase tracking-wide text-zinc-400 mt-0.5">reg.</p>
+                      <p className="text-[9px] uppercase tracking-wide text-zinc-400 dark:text-zinc-300 mt-0.5">reg.</p>
                     </>
                   )}
                 </div>
               </div>
 
               <Button
+                variant="ghost"
                 size="sm"
-                className="mt-auto w-full h-10 sm:h-11"
-                disabled={isLoading}
+                loading={isLoading}
                 aria-label={`Descargar CSV de ${report.title}`}
                 onClick={() => handleDownload(report.type, report.hasDateRange)}
               >
-                {isLoading ? (
-                  <>
-                    <Spinner className="h-4 w-4" />
-                    <span className="hidden sm:inline">Descargando…</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Descargar CSV</span>
-                  </>
-                )}
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Descargar CSV</span>
               </Button>
             </Card>
           );
         })}
       </div>
 
-      <p className="flex items-start gap-2 text-[11px] sm:text-xs text-zinc-500 px-0.5">
+      <p className="flex items-start gap-2 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 px-0.5">
         <FileSpreadsheet className="h-3.5 w-3.5 text-brand shrink-0 mt-0.5" />
         UTF-8 compatible con Excel. Se generan en el servidor al descargar.
       </p>

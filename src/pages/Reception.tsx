@@ -18,7 +18,7 @@ import {
   LayoutDashboard,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Button, Card, Input, PageHeader, Badge, Spinner, SegmentedControl } from '../components/ui';
+import { Button, Card, Input, PageHeader, Badge, Spinner, SegmentedControl, CedulaInput } from '../components/ui';
 import { cn } from '../lib/utils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
@@ -227,30 +227,28 @@ export default function Reception() {
         <label className="label-caps">Cédula del visitante</label>
         <div className="flex gap-2 items-stretch">
           <div className="flex-1 min-w-0">
-            <Input
+            <CedulaInput
               ref={cedulaRef}
               value={cedula}
-              onChange={(e) => setCedula(e.target.value.toUpperCase())}
+              onChange={setCedula}
               onKeyDown={(e) => e.key === 'Enter' && void doLookup()}
-              placeholder="V-12345678"
               className={cn(isCounterMode && COUNTER_FIELD)}
-              autoComplete="off"
-              autoCapitalize="characters"
             />
           </div>
           <Button
             onClick={() => void doLookup()}
-            disabled={lookupLoading || !cedula.trim()}
+            loading={lookupLoading}
+            disabled={!cedula.trim()}
             size="md"
             className={cn(
               isCounterMode ? cn(COUNTER_SEARCH_BTN, 'min-h-0') : 'self-stretch aspect-square px-0 shrink-0'
             )}
           >
-            {lookupLoading ? <Spinner className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            <Search className="h-4 w-4" />
           </Button>
         </div>
         {isCounterMode && (
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-400 dark:text-zinc-300">
             Atajos: <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">Enter</kbd> buscar ·{' '}
             <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F1</kbd> entrada ·{' '}
             <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F2</kbd> salida
@@ -309,8 +307,8 @@ export default function Reception() {
               <h3 className={cn('font-bold text-zinc-900 dark:text-white', isCounterMode ? 'text-base' : 'text-lg')}>
                 {lookup.user.full_name}
               </h3>
-              <p className="text-sm text-zinc-500 mt-1">{lookup.user.cedula}</p>
-              <p className="text-xs text-zinc-400 mt-1">{lookup.user.email}</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{lookup.user.cedula}</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1">{lookup.user.email}</p>
             </div>
             {accessBadge()}
           </div>
@@ -320,7 +318,7 @@ export default function Reception() {
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {lookup.subscription.membership_name}
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 Vence {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
                 {' · '}{lookup.subscription.days_remaining} días restantes
               </p>
@@ -335,7 +333,7 @@ export default function Reception() {
           )}
 
           {lookup.attendance?.today_session && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Ingreso hoy:{' '}
               {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', { locale: es })}
               {lookup.attendance.today_session.check_out_time &&
@@ -355,7 +353,7 @@ export default function Reception() {
           </Link>
         </div>
       ) : (
-        <div className="text-center py-5 text-zinc-400">
+        <div className="text-center py-5 text-zinc-400 dark:text-zinc-300">
           <Fingerprint className="h-7 w-7 mx-auto mb-1.5 opacity-30" />
           <p className="font-medium text-[11px] label-caps">Ingrese una cédula para consultar</p>
         </div>
@@ -385,7 +383,7 @@ export default function Reception() {
           >
             <div className="min-w-0">
               <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate">{m.full_name}</p>
-              <p className="text-xs text-zinc-500">{m.cedula || 'Sin cédula'}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{m.cedula || 'Sin cédula'}</p>
             </div>
             <p className="text-xs font-medium text-emerald-600 shrink-0 ml-2">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
@@ -393,7 +391,7 @@ export default function Reception() {
           </div>
         ))}
         {inside.length === 0 && (
-          <p className="text-center text-zinc-400 py-6 text-sm">Nadie dentro en este momento</p>
+          <p className="text-center text-zinc-400 dark:text-zinc-300 py-6 text-sm">Nadie dentro en este momento</p>
         )}
       </div>
     </Card>
@@ -413,7 +411,7 @@ export default function Reception() {
               <h1 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
                 Modo mostrador
               </h1>
-              <p className="text-[11px] text-zinc-500 truncate">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
                 {insideCount} dentro · F1 entrada · F2 salida
               </p>
             </div>
@@ -454,7 +452,7 @@ export default function Reception() {
               <div className="lg:col-span-3 space-y-4">
                 {lookupPanel}
                 {showMemberPanel ? memberPanel : (
-                  <p className="text-center text-[11px] text-zinc-400 label-caps py-1">
+                  <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-300 label-caps py-1">
                     Ingrese una cédula para ver el visitante
                   </p>
                 )}

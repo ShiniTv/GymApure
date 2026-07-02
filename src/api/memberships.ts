@@ -1,9 +1,10 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
+import { asyncHandler } from './middleware/asyncHandler.ts';
 import { z } from 'zod';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
-import { assignSubscription } from '../lib/subscriptions.ts';
+import { assignSubscription, getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
@@ -143,25 +144,15 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/user/:userId', requireMemberAccess('userId', 'admin'), async (req, res) => {
-  try {
-    const { rows } = await query(
-      `SELECT s.id, s.start_date, s.end_date, s.status,
-              m.name AS membership_name, m.duration_days, m.price_usd,
-              GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-       FROM subscriptions s
-       JOIN memberships m ON m.id = s.membership_id
-       WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-       ORDER BY s.end_date DESC
-       LIMIT 1`,
-      [req.params.userId]
-    );
-    res.json(rows[0] ?? null);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
+router.get('/user/:userId', requireMemberAccess('userId', 'admin'), asyncHandler(async (req, res) => {
+  const userId = Number(req.params.userId);
+  if (Number.isNaN(userId)) {
+    res.status(400).json({ error: 'userId inválido' });
+    return;
   }
-});
+  const sub = await getActiveSubscriptionByUserId({ query }, userId);
+  res.json(sub ?? null);
+}));
 
 const assignSchema = z.object({
   membership_id: z.coerce.number().int().positive(),

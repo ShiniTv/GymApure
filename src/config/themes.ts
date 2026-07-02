@@ -1,5 +1,6 @@
 export const THEME_STORAGE_KEY = 'theme';
 export const PALETTE_STORAGE_KEY = 'gymapure-palette';
+export const THEME_ONBOARDING_KEY = 'gymapure-theme-onboarding-done';
 
 export const PALETTES = {
   monochrome: {
@@ -73,8 +74,13 @@ export type Appearance = 'light' | 'dark';
 
 export const PALETTE_IDS = Object.keys(PALETTES) as PaletteId[];
 export const PALETTE_LIST = Object.values(PALETTES);
-export const DEFAULT_PALETTE: PaletteId = 'monochrome';
+export const DEFAULT_PALETTE: PaletteId = 'ember';
 export const DEFAULT_APPEARANCE: Appearance = 'dark';
+
+export function getSystemAppearance(): Appearance {
+  if (typeof window === 'undefined') return DEFAULT_APPEARANCE;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
 
 export function isPaletteId(value: string | null): value is PaletteId {
   return value !== null && value in PALETTES;

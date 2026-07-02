@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Fingerprint, Users, CreditCard, UserPlus, Monitor, Clock, RefreshCw, type LucideIcon } from 'lucide-react';
+import { cn } from '../../lib/utils';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { PageHeader, Card, DashboardSkeleton } from '../../components/ui';
@@ -39,7 +40,7 @@ function ReceptionKpiStrip({ items }: { items: KpiItem[] }) {
             <div className="px-2.5 py-3 sm:px-3.5 sm:py-3.5 text-center">
               <div className="flex items-center justify-center gap-1 mb-1 min-w-0">
                 <item.icon className={cn('h-3.5 w-3.5 shrink-0', kpiToneMap[item.tone])} aria-hidden />
-                <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-zinc-500 leading-tight truncate">
+                <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 leading-tight truncate">
                   {item.title}
                 </p>
               </div>
@@ -172,7 +173,7 @@ export default function ReceptionDashboard() {
     >
       {(pullDistance > 0 || refreshing) && (
         <div
-          className="flex justify-center items-center text-zinc-400 transition-all overflow-hidden"
+          className="flex justify-center items-center text-zinc-400 dark:text-zinc-300 transition-all overflow-hidden"
           style={{ height: refreshing ? 28 : Math.max(0, pullDistance * 0.35) }}
           aria-hidden
         >
@@ -192,7 +193,7 @@ export default function ReceptionDashboard() {
               type="button"
               onClick={() => void refresh()}
               disabled={refreshing}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-brand hover:border-brand/30 transition-colors disabled:opacity-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-brand hover:border-brand/30 transition-colors disabled:opacity-50"
               aria-label="Actualizar resumen"
               title="Actualizar"
             >
@@ -222,7 +223,7 @@ export default function ReceptionDashboard() {
         }
       />
 
-      <p className="text-[11px] text-zinc-500 px-0.5 -mt-1 lg:hidden">
+      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 px-0.5 -mt-1 lg:hidden">
         Icono de pantalla = mostrador · Desliza hacia abajo para actualizar
       </p>
 

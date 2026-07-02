@@ -8,7 +8,7 @@ interface DailyVolumePoint {
 export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
+      <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">
         Sin datos
       </div>
     );
@@ -26,7 +26,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
         <XAxis
           dataKey="date"
           stroke="currentColor"
-          className="text-zinc-400"
+          className="text-zinc-400 dark:text-zinc-300"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -38,7 +38,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
         />
         <YAxis
           stroke="currentColor"
-          className="text-zinc-400"
+          className="text-zinc-400 dark:text-zinc-300"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -83,7 +83,7 @@ interface HourlyVolumePoint {
 export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center text-zinc-400 text-sm">
+      <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">
         Sin datos
       </div>
     );
@@ -101,7 +101,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
         <XAxis
           dataKey="hour"
           stroke="currentColor"
-          className="text-zinc-400"
+          className="text-zinc-400 dark:text-zinc-300"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -110,7 +110,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
         />
         <YAxis
           stroke="currentColor"
-          className="text-zinc-400"
+          className="text-zinc-400 dark:text-zinc-300"
           fontSize={10}
           fontWeight="900"
           tickLine={false}

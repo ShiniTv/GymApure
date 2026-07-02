@@ -139,6 +139,45 @@ export async function supabaseStorageDownload(bucket: string, objectKey: string)
   return Buffer.from(await response.arrayBuffer());
 }
 
+/** Stream a storage object with optional HTTP Range support (required for efficient video playback). */
+export async function supabaseStorageStream(
+  bucket: string,
+  objectKey: string,
+  rangeHeader?: string
+): Promise<{
+  status: number;
+  body: Buffer;
+  contentType: string | null;
+  contentRange: string | null;
+  contentLength: string | null;
+}> {
+  const baseUrl = env.SUPABASE_URL;
+  const key = getSupabaseServiceKey();
+  if (!baseUrl || !key) {
+    throw new Error('Supabase Storage no configurado');
+  }
+
+  const encodedPath = objectKey.split('/').map(encodeURIComponent).join('/');
+  const url = `${baseUrl}/storage/v1/object/${bucket}/${encodedPath}`;
+
+  const headers = buildSupabaseStorageHeaders(key);
+  if (rangeHeader) headers.Range = rangeHeader;
+
+  const response = await fetch(url, { method: 'GET', headers });
+
+  if (!response.ok) {
+    throw new Error('Archivo no encontrado en Storage');
+  }
+
+  return {
+    status: response.status,
+    body: Buffer.from(await response.arrayBuffer()),
+    contentType: response.headers.get('content-type'),
+    contentRange: response.headers.get('content-range'),
+    contentLength: response.headers.get('content-length'),
+  };
+}
+
 export async function supabaseStorageRemove(bucket: string, objectKey: string): Promise<void> {
   const baseUrl = env.SUPABASE_URL;
   const key = getSupabaseServiceKey();

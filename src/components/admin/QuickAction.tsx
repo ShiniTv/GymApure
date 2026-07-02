@@ -18,7 +18,7 @@ interface QuickActionProps {
 
 const toneMap = {
   brand: 'bg-brand/10 text-brand group-hover:bg-brand/20',
-  orange: 'bg-brand/10 text-brand group-hover:bg-brand/20',
+  orange: 'bg-orange-500/10 text-orange-600 dark:text-orange-500 group-hover:bg-orange-500/20',
   red: 'bg-red-500/10 text-red-600 dark:text-red-500 group-hover:bg-red-500/20',
   blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-500 group-hover:bg-blue-500/20',
   emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 group-hover:bg-emerald-500/20',
@@ -26,7 +26,7 @@ const toneMap = {
 
 const toneBadgeMap = {
   brand: 'brand-solid',
-  orange: 'brand-solid',
+  orange: 'bg-orange-500 text-white',
   red: 'bg-red-500 text-white',
   blue: 'bg-blue-500 text-white',
   emerald: 'bg-emerald-500 text-white',
@@ -57,7 +57,7 @@ export function QuickAction({
       aria-label={`${title}: ${description}`}
       title={title}
       className={cn(
-        'group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-brand/40 transition-all active:scale-[0.98] touch-manipulation',
+        'group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 touch-manipulation',
         iconOnlyMobile
           ? 'flex max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:min-h-[56px] max-sm:py-2 max-sm:px-1 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 sm:min-h-[56px]'
           : cn(

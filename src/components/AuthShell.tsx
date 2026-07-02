@@ -27,7 +27,7 @@ export default function AuthShell({
   return (
     <div
       className={cn(
-        'min-h-screen flex flex-col relative overflow-hidden transition-colors duration-300',
+        'min-h-dvh flex flex-col relative overflow-hidden transition-colors duration-300',
         'bg-gradient-to-br from-zinc-50 via-zinc-50 to-brand/[0.05]',
         'dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
         isFullscreen
@@ -67,7 +67,7 @@ export default function AuthShell({
           {backLink ? (
             <Link
               to={backLink.to}
-              className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors font-medium"
+              className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors font-medium"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">{backLink.label}</span>
@@ -91,7 +91,7 @@ export default function AuthShell({
       <div
         className={cn(
           'w-full relative z-10',
-          isFullscreen ? 'flex-1 flex flex-col min-h-screen' : isKiosk ? 'max-w-lg' : 'max-w-md'
+          isFullscreen ? 'flex-1 flex flex-col min-h-dvh' : isKiosk ? 'max-w-lg' : 'max-w-md'
         )}
       >
         {children}

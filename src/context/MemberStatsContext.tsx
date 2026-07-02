@@ -30,6 +30,7 @@ export interface MemberStats {
   lastWorkout: { routine_name: string; start_time: string } | null;
   expiryAlertDays?: number;
   workoutsThisMonth: number;
+  workoutsThisWeek?: number;
   workoutStreak?: number;
 }
 

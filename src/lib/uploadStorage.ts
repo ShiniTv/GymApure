@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { isSupabaseStorageConfigured } from './supabaseAdmin.ts';
 import { safeExtensionForMime } from './uploadValidation.ts';
+import { VIDEO_MAX_UPLOAD_BYTES } from './videoConfig.ts';
 
 const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
 const PROOFS_DIR = path.join(UPLOADS_ROOT, 'proofs');
@@ -89,7 +90,7 @@ export const videoUpload = multer({
         destination: (_req, _file, cb) => cb(null, VIDEOS_DIR),
         filename: (_req, file, cb) => cb(null, safeDiskFilename(file, 'video')),
       }),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: VIDEO_MAX_UPLOAD_BYTES },
   fileFilter: videoFilter,
 });
 
@@ -106,12 +107,7 @@ export function avatarApiPath(filename: string): string {
 }
 
 export const avatarUpload = multer({
-  storage: isSupabaseStorageConfigured()
-    ? multer.memoryStorage()
-    : multer.diskStorage({
-        destination: (_req, _file, cb) => cb(null, AVATARS_DIR),
-        filename: (_req, file, cb) => cb(null, safeDiskFilename(file, 'avatar')),
-      }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: avatarFilter,
 });

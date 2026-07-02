@@ -42,11 +42,11 @@ export function FilterChips({
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all touch-manipulation min-h-9 sm:min-h-[var(--touch-min)]',
+              'inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all touch-manipulation min-h-9 sm:min-h-[var(--touch-min)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50',
               fullWidth && 'flex-1',
               active
                 ? 'bg-white dark:bg-zinc-700 text-brand dark:text-brand shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
             )}
           >
             {opt.label}
@@ -56,7 +56,7 @@ export function FilterChips({
                   'min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums leading-none',
                   active
                     ? 'bg-brand/15 text-brand dark:text-brand'
-                    : 'bg-zinc-200/80 dark:bg-zinc-900/80 text-zinc-500'
+                    : 'bg-zinc-200/80 dark:bg-zinc-900/80 text-zinc-500 dark:text-zinc-400'
                 )}
               >
                 {opt.count > 99 ? '99+' : opt.count}

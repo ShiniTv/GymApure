@@ -1,9 +1,22 @@
+# GymApure — Render Blueprint
+# Docs: docs/DEPLOY.md
+#
+# Antes del primer deploy:
+#   1. Crear proyecto Supabase de producción (separado de dev)
+#   2. npm run db:migrate  (con DATABASE_URL de prod en .env local)
+#   3. npm run db:create-admin
+#   4. Configurar secretos en Render Dashboard (sync: false)
+#
+# En cada deploy con cambios de schema:
+#   npm run db:migrate  (contra prod, antes o justo después del deploy)
+
 services:
   - type: web
     name: caribean-gym
     runtime: node
     plan: starter
-    buildCommand: npm ci && npm run build
+    nodeVersion: 20
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -16,4 +29,12 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: CRON_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: VITE_EXCHANGE_RATE
+        sync: false
+      - key: VITE_SENTRY_DSN
+        sync: false
+      - key: SENTRY_DSN
         sync: false

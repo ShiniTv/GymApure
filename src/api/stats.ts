@@ -12,7 +12,8 @@ import {
   getCachedAdminStats,
   setCachedAdminStats,
 } from '../lib/adminStatsCache.ts';
-import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
+import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
+import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 
@@ -276,18 +277,8 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   const expiryAlertDays = await getExpiryAlertDays();
 
   try {
-    const [subscription, routines, pendingPayments, lastWorkout, workoutsThisMonth, workoutDays] = await Promise.all([
-      query(
-        `SELECT s.start_date, s.end_date, s.status,
-                m.name AS membership_name, m.duration_days, m.price_usd,
-                GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-         FROM subscriptions s
-         JOIN memberships m ON m.id = s.membership_id
-         WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-         ORDER BY s.end_date DESC
-         LIMIT 1`,
-        [userId]
-      ),
+    const [subscription, routines, pendingPayments, lastWorkout, workoutsThisMonth, workoutsThisWeek, workoutDays] = await Promise.all([
+      getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
         `SELECT r.id, r.name, r.difficulty, ur.assigned_at, ur.start_date, ur.end_date,
                 COALESCE(ec.exercise_count, 0)::int AS exercise_count
@@ -318,6 +309,11 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM workout_sessions
          WHERE user_id = $1 AND start_time >= DATE_TRUNC('month', CURRENT_DATE)`,
+        [userId]
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM workout_sessions
+         WHERE user_id = $1 AND start_time >= DATE_TRUNC('week', CURRENT_DATE)`,
         [userId]
       ),
       query<{ d: string }>(
@@ -354,6 +350,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       lastWorkout: lastWorkout.rows[0] ?? null,
       expiryAlertDays,
       workoutsThisMonth: parseInt(workoutsThisMonth.rows[0]?.count || '0', 10),
+      workoutsThisWeek: parseInt(workoutsThisWeek.rows[0]?.count || '0', 10),
       workoutStreak: computeWorkoutStreak(workoutDays.rows.map((r) => r.d)),
     });
   } catch (err: unknown) {

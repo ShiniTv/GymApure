@@ -44,7 +44,7 @@ export default function ReceptionActivityFeed({
   if (loading) {
     return (
       <div className={cn('flex justify-center', compact ? 'py-6' : 'py-8', className)}>
-        <Spinner className="h-6 w-6" />
+        <Spinner size="xs" />
       </div>
     );
   }
@@ -53,7 +53,7 @@ export default function ReceptionActivityFeed({
     return (
       <p
         className={cn(
-          'text-center text-zinc-400',
+          'text-center text-zinc-400 dark:text-zinc-300',
           compact ? 'text-xs py-6 flex flex-1 items-center justify-center min-h-[120px]' : 'text-sm py-6',
           className
         )}
@@ -77,7 +77,7 @@ export default function ReceptionActivityFeed({
             <div
               className={cn(
                 'shrink-0 rounded-lg p-1.5',
-                row.is_inside ? 'bg-emerald-500/10 text-emerald-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                row.is_inside ? 'bg-emerald-500/10 text-emerald-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
               )}
             >
               {row.is_inside ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
@@ -87,18 +87,18 @@ export default function ReceptionActivityFeed({
                 {row.full_name}
               </p>
               {!compact && row.cedula && (
-                <p className="text-xs text-zinc-500 truncate">{row.cedula}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{row.cedula}</p>
               )}
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-xs font-medium text-zinc-500">
+            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               {format(new Date(row.check_in_time), 'HH:mm', { locale: es })}
             </p>
             {row.is_inside ? (
               <Badge variant="success" className="mt-1 text-[10px]">Dentro</Badge>
             ) : row.duration_minutes ? (
-              <p className="text-[10px] text-zinc-400 mt-0.5">{row.duration_minutes} min</p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-0.5">{row.duration_minutes} min</p>
             ) : null}
           </div>
         </div>

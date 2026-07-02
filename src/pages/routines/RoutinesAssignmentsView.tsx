@@ -39,7 +39,7 @@ export function RoutinesAssignmentsView({
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando asignaciones…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando asignaciones…</p>
       </PageState>
     );
   }
@@ -61,7 +61,7 @@ export function RoutinesAssignmentsView({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-zinc-500 px-0.5">
+      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 px-0.5">
         {activeMembers.length} miembro{activeMembers.length !== 1 ? 's' : ''} · {totalRoutines} rutina
         {totalRoutines !== 1 ? 's' : ''} activa{totalRoutines !== 1 ? 's' : ''}
       </p>
@@ -75,7 +75,7 @@ export function RoutinesAssignmentsView({
                 <h3 className="font-semibold text-sm text-zinc-900 dark:text-white truncate leading-tight">
                   {member.full_name}
                 </h3>
-                <p className="text-[10px] text-zinc-500">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
                   {member.routines?.length ?? 0} rutina{(member.routines?.length ?? 0) !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -106,7 +106,7 @@ export function RoutinesAssignmentsView({
                       {formatDifficulty(routine.difficulty)}
                     </Badge>
                   </div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-medium text-zinc-500">
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
                     <span className="inline-flex items-center gap-1">
                       <Dumbbell className="h-3 w-3 text-brand" />
                       {routine.exercise_count} ej.

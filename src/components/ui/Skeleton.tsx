@@ -8,7 +8,8 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800',
+        'animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800 relative overflow-hidden',
+        'after:absolute after:inset-0 after:animate-shimmer after:rounded-xl',
         className
       )}
     />

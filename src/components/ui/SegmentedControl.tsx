@@ -1,4 +1,5 @@
-import { type LucideIcon } from 'lucide-react';
+import { useCallback } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface SegmentedOption<T extends string> {
@@ -21,7 +22,7 @@ interface SegmentedControlProps<T extends string> {
 
 const accentActive: Record<'brand' | 'check-out', string> = {
   brand: 'brand-solid shadow-lg shadow-zinc-900/10',
-  'check-out': 'bg-blue-600 text-white shadow-lg shadow-blue-900/20',
+  'check-out': 'bg-[var(--color-check-out)] text-white shadow-lg shadow-[var(--color-check-out)]/20',
 };
 
 export function SegmentedControl<T extends string>({
@@ -34,6 +35,24 @@ export function SegmentedControl<T extends string>({
 }: SegmentedControlProps<T>) {
   const isKiosk = variant === 'kiosk';
   const isCompact = variant === 'compact';
+
+  const onKeyDown = useCallback((e: React.KeyboardEvent, currentIndex: number) => {
+    let nextIndex: number | null = null;
+
+    if (e.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % options.length;
+    } else if (e.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + options.length) % options.length;
+    }
+
+    if (nextIndex !== null) {
+      e.preventDefault();
+      const nextOption = options[nextIndex];
+      if (nextOption) {
+        onChange(nextOption.value);
+      }
+    }
+  }, [options, onChange]);
 
   return (
     <div
@@ -48,7 +67,7 @@ export function SegmentedControl<T extends string>({
       )}
       role="tablist"
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const active = value === option.value;
         const accent = option.accent ?? 'brand';
         const Icon = option.icon;
@@ -60,15 +79,16 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}
+            onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'flex items-center justify-center gap-2 transition-all',
+              'flex items-center justify-center gap-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50',
               fullWidth && 'flex-1',
               isKiosk
                 ? cn(
                     'py-3 rounded-xl text-xs font-semibold',
                     active
                       ? accentActive[accent]
-                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                   )
                 : cn(
                     isCompact
@@ -76,7 +96,7 @@ export function SegmentedControl<T extends string>({
                       : 'px-3 py-1.5 rounded-md text-xs font-bold min-h-[var(--touch-min)]',
                     active
                       ? 'bg-white dark:bg-zinc-700 text-brand dark:text-brand shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
                   )
             )}
           >

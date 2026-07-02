@@ -92,19 +92,12 @@ export default function Login() {
               />
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner className="h-4 w-4" />
-                Ingresando…
-              </>
-            ) : (
-              'Entrar'
-            )}
+          <Button type="submit" className="w-full" size="lg" loading={loading}>
+            Entrar
           </Button>
 
           {registerAllowed && (
-            <p className="text-center text-xs text-zinc-500">
+            <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
               ¿No tienes una cuenta?{' '}
               <Link to="/register" className="font-semibold text-brand hover:text-brand">
                 Regístrate aquí

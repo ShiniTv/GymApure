@@ -19,6 +19,7 @@ import {
   notifyPaymentRejected,
   notifyPaymentReported,
 } from '../lib/chat/eventMessages.ts';
+import { sendEmail, paymentApprovedEmail, paymentRejectedEmail } from '../lib/email.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import {
   parsePaginationQuery,
@@ -247,6 +248,19 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
     void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName, Number(id)).catch((err) =>
       console.error('[notify] payment approved', err)
     );
+    void (async () => {
+      try {
+        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [approvedUserId]);
+        const user = userRes.rows[0];
+        if (user?.email) {
+          await sendEmail({
+            to: user.email,
+            subject: 'Pago aprobado — Caribean Gym',
+            html: paymentApprovedEmail(user.full_name, approvedAmount, membershipName),
+          });
+        }
+      } catch { /* email failure is non-critical */ }
+    })();
   } catch (err: unknown) {
     if (err instanceof AppError) {
       res.status(err.statusCode).json({ error: err.clientMessage ?? err.message });
@@ -278,6 +292,19 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
     void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd), Number(id)).catch((err) =>
       console.error('[notify] payment rejected', err)
     );
+    void (async () => {
+      try {
+        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [rows[0].user_id]);
+        const user = userRes.rows[0];
+        if (user?.email) {
+          await sendEmail({
+            to: user.email,
+            subject: 'Pago rechazado — Caribean Gym',
+            html: paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd)),
+          });
+        }
+      } catch { /* email failure is non-critical */ }
+    })();
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

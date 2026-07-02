@@ -369,7 +369,7 @@ export default function MemberRoutine() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando miembro…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando miembro…</p>
       </PageState>
     );
   }
@@ -464,7 +464,7 @@ export default function MemberRoutine() {
           <Avatar name={member.full_name} size="sm" className="shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{member.full_name}</p>
-            <p className="text-[10px] sm:text-xs text-zinc-500 mt-0.5 truncate">
+            <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
               {subscription
                 ? `${subscription.membership_name} · ${subscription.days_remaining} días`
                 : 'Sin membresía activa'}
@@ -504,16 +504,16 @@ export default function MemberRoutine() {
           <h3 className="section-title mb-2.5">Perfil</h3>
           <div className="space-y-1.5 text-xs sm:text-sm">
             {member.height != null && (
-              <p><span className="text-zinc-500">Altura:</span> <span className="font-bold">{member.height} cm</span></p>
+              <p><span className="text-zinc-500 dark:text-zinc-400">Altura:</span> <span className="font-bold">{member.height} cm</span></p>
             )}
             {member.initial_weight != null && (
-              <p><span className="text-zinc-500">Peso inicial:</span> <span className="font-bold">{member.initial_weight} kg</span></p>
+              <p><span className="text-zinc-500 dark:text-zinc-400">Peso inicial:</span> <span className="font-bold">{member.initial_weight} kg</span></p>
             )}
             {member.goal && (
-              <p><span className="text-zinc-500">Objetivo:</span> <span className="font-bold">{member.goal}</span></p>
+              <p><span className="text-zinc-500 dark:text-zinc-400">Objetivo:</span> <span className="font-bold">{member.goal}</span></p>
             )}
             {!member.height && !member.initial_weight && !member.goal && (
-              <p className="text-zinc-400 text-xs">Sin datos de perfil registrados.</p>
+              <p className="text-zinc-400 dark:text-zinc-300 text-xs">Sin datos de perfil registrados.</p>
             )}
           </div>
         </Card>
@@ -523,13 +523,13 @@ export default function MemberRoutine() {
           {subscription ? (
             <div>
               <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-500">{subscription.membership_name}</p>
-              <p className="text-xs text-zinc-500 mt-1">{subscription.days_remaining} días restantes</p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{subscription.days_remaining} días restantes</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-zinc-400">Sin membresía activa</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-300">Sin membresía activa</p>
           )}
         </Card>
       </div>
@@ -561,7 +561,7 @@ export default function MemberRoutine() {
                   <span className="font-bold text-zinc-600 dark:text-zinc-300">
                     {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                   </span>
-                  <span className="text-zinc-500">
+                  <span className="text-zinc-500 dark:text-zinc-400">
                     {m.weight != null ? `${m.weight} kg` : '—'}
                     {m.body_fat_percentage != null ? ` · ${m.body_fat_percentage}% grasa` : ''}
                   </span>
@@ -922,7 +922,7 @@ export default function MemberRoutine() {
                       {formatDifficulty(routine.difficulty)}
                     </Badge>
                   </div>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1 tabular-nums">
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1 tabular-nums">
                     <Calendar className="h-3 w-3 shrink-0" />
                     {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
                   </p>
@@ -934,7 +934,7 @@ export default function MemberRoutine() {
                     className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition-colors ${
                       isExpanded
                         ? 'text-brand bg-brand/10'
-                        : 'text-zinc-400 hover:text-brand hover:bg-brand/10'
+                        : 'text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10'
                     }`}
                     aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
                     title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
@@ -944,7 +944,7 @@ export default function MemberRoutine() {
                   <button
                     type="button"
                     onClick={() => openEditModal(routine)}
-                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                     aria-label={`Editar ${routine.name}`}
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -952,7 +952,7 @@ export default function MemberRoutine() {
                   <button
                     type="button"
                     onClick={() => setUnassignTarget(routine)}
-                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                     aria-label={`Quitar ${routine.name}`}
                   >
                     <UserMinus className="h-3.5 w-3.5" />
@@ -983,8 +983,8 @@ export default function MemberRoutine() {
                       <div key={exercise.routine_exercise_id} className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700 rounded-lg px-2.5 py-2 flex justify-between items-start gap-2">
                         <div className="min-w-0">
                           <h5 className="font-semibold text-xs text-zinc-900 dark:text-white truncate">{exercise.name}</h5>
-                          <p className="text-[10px] text-zinc-500 capitalize">{exercise.muscle_group}</p>
-                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500">
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 capitalize">{exercise.muscle_group}</p>
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
                             <label className="inline-flex items-center gap-1">
                               Sets
                               <input
@@ -1015,7 +1015,7 @@ export default function MemberRoutine() {
                               setEditingExercise(exercise);
                               setIsEditingExercise(true);
                             }}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             aria-label={`Editar ${exercise.name}`}
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -1023,7 +1023,7 @@ export default function MemberRoutine() {
                           <button
                             type="button"
                             onClick={() => setDeleteExerciseTarget({ routineId: routine.id, exercise })}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                             aria-label={`Eliminar ${exercise.name}`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1032,7 +1032,7 @@ export default function MemberRoutine() {
                       </div>
                     ))}
                     {(!routine.exercises || routine.exercises.length === 0) && (
-                      <p className="text-zinc-400 text-[11px] italic col-span-full py-3 text-center">Sin ejercicios en esta rutina.</p>
+                      <p className="text-zinc-400 dark:text-zinc-300 text-[11px] italic col-span-full py-3 text-center">Sin ejercicios en esta rutina.</p>
                     )}
                   </div>
                 </div>

@@ -19,6 +19,8 @@ import {
   PageState,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 
 interface WorkoutSession {
   id: number;
@@ -147,11 +149,13 @@ export default function WorkoutHistory() {
 
   const displayName = id ? targetUser?.full_name : user?.name;
 
+  usePageTitle(id ? 'Historial del miembro' : 'Historial');
+
   if (loading && history.length === 0 && !displayName) {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando historial…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando historial…</p>
       </PageState>
     );
   }
@@ -187,7 +191,7 @@ export default function WorkoutHistory() {
             <button
               type="button"
               onClick={() => navigate(`/members/${id}/routines`)}
-              className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:text-brand hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-brand hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Volver al miembro"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -199,15 +203,24 @@ export default function WorkoutHistory() {
       />
 
       {!id && (
-        <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-          <StatCard compact title="Esta semana" value={workoutsThisWeek} icon={Calendar} color="orange" />
-          <StatCard compact title="Total sesiones" value={total} icon={Dumbbell} color="blue" />
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+            <StatCard compact title="Esta semana" value={workoutsThisWeek} icon={Calendar} color="orange" />
+            <StatCard compact title="Total sesiones" value={total} icon={Dumbbell} color="blue" />
+          </div>
+          {history.length > 0 && (
+            <Card padding="sm" rounded="xl">
+              <h3 className="section-title mb-2">Volumen semanal</h3>
+              <WorkoutWeeklyChart history={history} />
+            </Card>
+          )}
+        </>
       )}
 
       <Card padding="none" rounded="xl" className="overflow-hidden">
         {history.length === 0 && !loading ? (
           <EmptyState
+            variant="motivational"
             icon={Dumbbell}
             title={id ? 'Sin historial' : 'Aún no tienes entrenamientos'}
             description={
@@ -231,13 +244,15 @@ export default function WorkoutHistory() {
                 <div className="p-8 flex justify-center"><Spinner /></div>
               ) : (
                 history.map((session) => (
-                  <div key={session.id} className="px-3 py-2.5 bg-white dark:bg-zinc-900">
+                  <div key={session.id} className="content-visibility-auto px-3 py-2.5 bg-white dark:bg-zinc-900 relative pl-8">
+                    <span className="absolute left-3 top-4 h-2.5 w-2.5 rounded-full bg-brand ring-4 ring-brand/15" aria-hidden />
+                    <span className="absolute left-[1.125rem] top-6 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800 last:hidden" aria-hidden />
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="min-w-0">
                         <p className="font-semibold text-sm text-brand dark:text-brand truncate">
                           {session.routine_name}
                         </p>
-                        <p className="text-[10px] text-zinc-500 mt-0.5 tabular-nums">
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 tabular-nums">
                           {formatSessionDate(session.start_time)} · {formatSessionTime(session.start_time)}
                         </p>
                       </div>
@@ -245,7 +260,7 @@ export default function WorkoutHistory() {
                         {session.end_time ? 'Finalizado' : 'En curso'}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-zinc-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3 w-3 text-brand" />
                         {formatDuration(session.start_time, session.end_time)}
@@ -270,7 +285,7 @@ export default function WorkoutHistory() {
 
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500">
+                <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="px-3 lg:px-5 py-2.5">Fecha</th>
                     <th className="px-3 lg:px-5 py-2.5">Rutina</th>
@@ -297,7 +312,7 @@ export default function WorkoutHistory() {
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-brand shrink-0" />
                             {formatSessionDate(session.start_time)}
-                            <span className="text-[10px] text-zinc-400 tabular-nums">
+                            <span className="text-[10px] text-zinc-400 dark:text-zinc-300 tabular-nums">
                               {formatSessionTime(session.start_time)}
                             </span>
                           </div>
@@ -305,13 +320,13 @@ export default function WorkoutHistory() {
                         <td className="px-3 lg:px-5 py-2.5 font-semibold text-brand dark:text-brand">
                           {session.routine_name}
                         </td>
-                        <td className="px-3 lg:px-5 py-2.5 text-zinc-500">
+                        <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400">
                           <div className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" />
                             {formatDuration(session.start_time, session.end_time)}
                           </div>
                         </td>
-                        <td className="px-3 lg:px-5 py-2.5 text-zinc-500">
+                        <td className="px-3 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400">
                           {session.sets_completed} series
                         </td>
                         <td className="px-3 lg:px-5 py-2.5">

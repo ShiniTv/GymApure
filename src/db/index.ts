@@ -10,7 +10,8 @@ const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
   max: 10,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
+  // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
+  connectionTimeoutMillis: env.NODE_ENV === 'development' ? 30_000 : 10_000,
   ssl: env.DATABASE_URL.includes('supabase')
     ? { rejectUnauthorized: false }
     : undefined,
@@ -49,7 +50,12 @@ export async function initDb() {
     });
   }
 
-  if (isSupabaseStorageConfigured()) {
+  if (env.NODE_ENV === 'production' && !isSupabaseStorageConfigured()) {
+    logger.error('SUPABASE_SERVICE_ROLE_KEY es obligatorio en producción', {
+      hint: 'Los archivos deben ir a Supabase Storage; el disco de Render es efímero.',
+    });
+    process.exit(1);
+  } else if (isSupabaseStorageConfigured()) {
     logger.debug('Storage de comprobantes configurado', {
       backend: 'supabase',
       bucket: 'payment-proofs',
@@ -67,4 +73,5 @@ export async function initDb() {
   }
 }
 
+export { pool };
 export default { query, withTransaction };

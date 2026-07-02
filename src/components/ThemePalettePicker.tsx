@@ -8,7 +8,7 @@ export default function ThemePalettePicker() {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-zinc-400">
+      <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
         8 paletas disponibles · combínalas con modo claro u oscuro
       </p>
 
@@ -50,7 +50,7 @@ export default function ThemePalettePicker() {
                 <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
                   {item.label}
                 </p>
-                <p className="text-[10px] text-zinc-500 leading-snug mt-0.5 line-clamp-2">
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5 line-clamp-2">
                   {item.description}
                 </p>
               </div>
@@ -85,9 +85,9 @@ export default function ThemePalettePicker() {
         <button
           type="button"
           onClick={() => setPalette(DEFAULT_PALETTE)}
-          className="text-xs font-semibold text-zinc-500 hover:text-brand transition-colors"
+          className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-brand transition-colors"
         >
-          Restablecer monocromo
+          Restablecer paleta predeterminada
         </button>
       )}
     </div>

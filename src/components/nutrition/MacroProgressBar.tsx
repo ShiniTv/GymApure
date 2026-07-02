@@ -35,7 +35,7 @@ export function MacroProgressBar({
     <div className={cn('space-y-1', className)}>
       <div className="flex items-center justify-between gap-2 text-xs">
         <span className="font-semibold text-zinc-700 dark:text-zinc-300">{label}</span>
-        <span className="text-zinc-500 tabular-nums">
+        <span className="text-zinc-500 dark:text-zinc-400 tabular-nums">
           {Math.round(consumed)}
           {unit ? ` ${unit}` : ''} / {target}
           {unit ? ` ${unit}` : ''}
@@ -52,7 +52,7 @@ export function MacroProgressBar({
           style={{ width: `${fillPct}%` }}
         />
       </div>
-      <p className="text-[10px] text-zinc-500">{macroStatusLabel(status)}</p>
+      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{macroStatusLabel(status)}</p>
     </div>
   );
 }
@@ -70,7 +70,7 @@ export function AdherenceBar({
     percent >= 75 ? 'bg-emerald-500' : percent >= 50 ? 'bg-amber-500' : 'bg-red-500';
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-[10px] text-zinc-500">
+      <div className="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
         <span>{label}</span>
         <span className="tabular-nums">{percent}%</span>
       </div>
@@ -78,7 +78,7 @@ export function AdherenceBar({
         <div className={cn('h-full rounded-full', color)} style={{ width: `${percent}%` }} />
       </div>
       {status && status !== 'on_track' && (
-        <p className="text-[9px] text-zinc-400">{macroStatusLabel(status)}</p>
+        <p className="text-[9px] text-zinc-400 dark:text-zinc-300">{macroStatusLabel(status)}</p>
       )}
     </div>
   );

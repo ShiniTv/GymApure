@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { User, Mail, CreditCard, Phone } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, PasswordInput, passwordStrength, Spinner } from '../components/ui';
+import { Button, Card, Input, Label, PasswordInput, passwordStrength, Spinner, CedulaInput } from '../components/ui';
 import { cn } from '../lib/utils';
 
 const STEPS = ['Datos personales', 'Credenciales'] as const;
@@ -97,7 +97,7 @@ export default function Register() {
                     ? 'bg-emerald-500 text-white'
                     : i === step
                       ? 'brand-solid'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-300'
                 )}
                 aria-hidden
               >
@@ -175,17 +175,14 @@ export default function Register() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="cedula">Cédula</Label>
-                  <Input
+                  <CedulaInput
                     id="cedula"
-                    type="text"
                     required
-                    autoComplete="off"
                     leadingIcon={<CreditCard />}
-                    placeholder="V-12345678"
                     value={formData.cedula}
-                    onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, cedula: value })}
                   />
-                  <p className="text-[10px] text-zinc-400 mt-1">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1">
                     Formato: V-12345678 · Para identificarte en recepción
                   </p>
                 </div>
@@ -196,6 +193,7 @@ export default function Register() {
                   <Input
                     id="phone"
                     type="tel"
+                    inputMode="tel"
                     autoComplete="tel"
                     leadingIcon={<Phone />}
                     placeholder="+58 412…"
@@ -270,15 +268,8 @@ export default function Register() {
                 >
                   Atrás
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1" size="lg">
-                  {loading ? (
-                    <>
-                      <Spinner className="h-4 w-4" />
-                      Registrando…
-                    </>
-                  ) : (
-                    'Crear cuenta'
-                  )}
+                <Button type="submit" loading={loading} className="flex-1" size="lg">
+                  Crear cuenta
                 </Button>
               </div>
             </div>

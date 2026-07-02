@@ -24,6 +24,7 @@ import {
 import { Link } from 'react-router-dom';
 import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
 import { cn } from '../lib/utils';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
   expiryBannerClasses,
   formatExpiryCountdown,
@@ -48,6 +49,7 @@ import ThemePalettePicker from '../components/ThemePalettePicker';
 
 export default function Profile() {
   const { user } = useAuth();
+  usePageTitle('Perfil');
   const memberStats = useMemberStatsOptional();
   const invalidateProfile = useInvalidateProfile();
   const isMember = user?.role === 'member';
@@ -290,14 +292,14 @@ export default function Profile() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 text-xs">Cargando perfil…</p>
+        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando perfil…</p>
       </PageState>
     );
   }
 
   if (!profile || !user) {
     return (
-      <div className="text-center py-16 text-zinc-500 text-sm">
+      <div className="text-center py-16 text-zinc-500 dark:text-zinc-400 text-sm">
         No se pudo cargar el perfil
       </div>
     );
@@ -345,7 +347,7 @@ export default function Profile() {
               <p className={`text-xs sm:text-sm font-semibold leading-snug ${classes.text}`}>
                 {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
             </div>
@@ -407,7 +409,7 @@ export default function Profile() {
                 />
               ) : (
                 <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <User className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400" />
+                  <User className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 dark:text-zinc-300" />
                 </div>
               )}
               <label
@@ -431,9 +433,9 @@ export default function Profile() {
               <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
                 {profile.full_name}
               </p>
-              <p className="text-xs text-zinc-500 mt-0.5 truncate">{profile.email}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{profile.email}</p>
               {profile.cedula && (
-                <p className="text-[10px] text-zinc-400 mt-0.5">{profile.cedula}</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-0.5">{profile.cedula}</p>
               )}
               {avatarUploading && (
                 <p className="text-[10px] font-medium text-brand mt-1">Subiendo foto…</p>
@@ -443,7 +445,7 @@ export default function Profile() {
                   type="button"
                   onClick={() => setShowRemoveAvatarModal(true)}
                   disabled={avatarRemoving}
-                  className="text-[10px] sm:text-xs font-semibold text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1 disabled:opacity-50"
+                  className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1 disabled:opacity-50"
                 >
                   Quitar foto
                 </button>
@@ -456,6 +458,7 @@ export default function Profile() {
               <Label>Teléfono</Label>
               <Input
                 type="tel"
+                inputMode="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="+58 412 0000000"
@@ -553,7 +556,7 @@ export default function Profile() {
                     ? 'text-emerald-600 bg-emerald-500/10'
                     : weightDelta > 0
                       ? 'text-brand bg-brand/10'
-                      : 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800'
+                      : 'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800'
                 }`}
               >
                 {weightDelta < 0 ? (
@@ -576,7 +579,7 @@ export default function Profile() {
           ) : chartData.length === 1 ? (
             <div className="h-48 sm:h-56 flex flex-col items-center justify-center text-center">
               <p className="text-3xl font-bold text-brand">{chartData[0].weight} kg</p>
-              <p className="text-xs text-zinc-400 mt-1.5">
+              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1.5">
                 {chartData[0].date} · Registra otra medición para ver la gráfica
               </p>
             </div>
@@ -618,7 +621,7 @@ export default function Profile() {
           <div className="overflow-x-auto -mx-1 px-1">
             <table className="w-full text-left min-w-[28rem]">
               <thead>
-                <tr className="text-[10px] font-semibold text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
+                <tr className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
                   <th className="pb-2 pr-3">Fecha</th>
                   <th className="pb-2 pr-3">Peso</th>
                   <th className="pb-2 pr-3">Grasa</th>
@@ -639,16 +642,16 @@ export default function Profile() {
                     <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
                       {m.weight != null ? `${m.weight} kg` : '—'}
                     </td>
-                    <td className="py-2 pr-3 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
                       {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
                     </td>
-                    <td className="py-2 pr-3 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
                       {m.waist != null ? `${m.waist} cm` : '—'}
                     </td>
-                    <td className="py-2 pr-3 text-zinc-500">
+                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
                       {m.arm != null ? `${m.arm} cm` : '—'}
                     </td>
-                    <td className="py-2 text-zinc-500">
+                    <td className="py-2 text-zinc-500 dark:text-zinc-400">
                       {m.leg != null ? `${m.leg} cm` : '—'}
                     </td>
                   </tr>
@@ -687,7 +690,7 @@ export default function Profile() {
                 <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm truncate">
                   {w.routine_name}
                 </p>
-                <p className="text-[10px] sm:text-xs text-zinc-400 shrink-0 tabular-nums">
+                <p className="text-[10px] sm:text-xs text-zinc-400 dark:text-zinc-300 shrink-0 tabular-nums">
                   {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
                 </p>
               </div>
@@ -706,7 +709,7 @@ export default function Profile() {
               <Palette className="h-3.5 w-3.5 text-brand" />
               Paleta de colores
             </h2>
-            <p className="text-xs text-zinc-500 mb-4">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
               Elige el color de acento de la interfaz. Los fondos y textos neutros se mantienen para no distraer del contenido.
             </p>
             <ThemePalettePicker />
@@ -717,7 +720,7 @@ export default function Profile() {
               <Sun className="h-3.5 w-3.5 text-brand shrink-0" />
               Modo claro u oscuro
             </h3>
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
               Usa <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo claro</span>{' '}
               <Sun className="inline h-3 w-3 -mt-0.5" aria-hidden /> o{' '}
               <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo oscuro</span>{' '}
@@ -781,7 +784,7 @@ export default function Profile() {
                       />
                     ))}
                   </div>
-                  <p className="text-xs font-medium text-zinc-400">
+                  <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
                     Fortaleza: {strength.label}
                   </p>
                 </div>
@@ -819,7 +822,7 @@ export default function Profile() {
         title="Quitar foto de perfil"
         maxWidth="sm"
       >
-        <p className="text-sm text-zinc-500 mb-5">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
           ¿Quitar tu foto de perfil? Volverás al avatar por defecto.
         </p>
         <div className="flex gap-2 justify-end">
@@ -831,24 +834,15 @@ export default function Profile() {
           >
             Cancelar
           </Button>
-          <Button
-            type="button"
-            variant="danger"
-            onClick={() => void handleAvatarRemove()}
-            disabled={avatarRemoving}
-          >
-            {avatarRemoving ? (
-              <>
-                <Spinner className="h-4 w-4" />
-                Quitando…
-              </>
-            ) : (
-              <>
-                <Trash2 className="h-4 w-4" />
-                Quitar foto
-              </>
-            )}
-          </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => void handleAvatarRemove()}
+              loading={avatarRemoving}
+            >
+              <Trash2 className="h-4 w-4" />
+              Quitar foto
+            </Button>
         </div>
       </Modal>
 

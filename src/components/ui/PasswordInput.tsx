@@ -1,4 +1,4 @@
-import { forwardRef, useState, type InputHTMLAttributes } from 'react';
+import { forwardRef, useState, useId, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { fieldClassName } from './Input';
@@ -11,18 +11,21 @@ interface PasswordInputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, error, showIcon = true, ...props }, ref) => {
     const [visible, setVisible] = useState(false);
+    const errorId = useId();
 
     return (
       <div className="w-full">
         <div className="relative">
           {showIcon && (
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 z-10">
-              <Lock className="h-4 w-4 text-zinc-400" />
+              <Lock className="h-4 w-4 text-zinc-400 dark:text-zinc-300" />
             </div>
           )}
           <input
             ref={ref}
             type={visible ? 'text' : 'password'}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className={cn(
               fieldClassName,
               error && 'border-red-500',
@@ -35,7 +38,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 z-10 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 z-10 text-zinc-400 dark:text-zinc-300 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
             tabIndex={-1}
             aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >
@@ -43,7 +46,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
         {error && (
-          <p className="text-xs font-medium text-red-500 mt-1 ml-1">{error}</p>
+          <p id={errorId} className="text-xs font-medium text-red-500 mt-1 ml-1" role="alert">{error}</p>
         )}
       </div>
     );

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { apiFetch, parseJsonResponse, resolveMediaUrl } from '../lib/api';
+import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useExercisesQuery, useInvalidateExercises, type Exercise } from '../hooks/queries/useExercisesQuery';
 import { Plus, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput, BackToDashboardLink } from '../components/ui';
+import { ExerciseVideoPlayer } from '../components/exercise/ExerciseVideoPlayer';
+import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { Link } from 'react-router-dom';
 import { clientLogger } from '../lib/clientLogger';
 
@@ -108,25 +110,9 @@ export default function Exercises() {
     ex.muscle_group.toLowerCase().includes(search.toLowerCase())
   );
 
-  const formatVideoUrl = (url: string) => {
-    if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}`;
-    }
-    return url;
-  };
-
   const handleVideoUrlChange = (url: string) => {
-    setFormData({ ...formData, video_url: formatVideoUrl(url) });
-  };
-
-  const getYouTubeEmbedUrl = (url: string | null) => {
-    if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+    const embed = getYouTubeEmbedUrl(url);
+    setFormData({ ...formData, video_url: embed ?? url });
   };
 
   if (user?.role !== 'trainer' && user?.role !== 'admin') {
@@ -134,7 +120,7 @@ export default function Exercises() {
       <div className="page-stack">
         <PageHeader title="Acceso denegado" subtitle="No tienes permiso para ver esta sección." />
         <Card padding="lg" className="text-center">
-          <p className="text-sm text-zinc-500 mb-4">Contacta al administrador si crees que es un error.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Contacta al administrador si crees que es un error.</p>
           <Link to="/" className="text-brand font-bold text-sm hover:underline">Volver al inicio</Link>
         </Card>
       </div>
@@ -198,7 +184,7 @@ export default function Exercises() {
             key={exercise.id}
             padding="sm"
             rounded="xl"
-            className={`group hover:border-brand/40 transition-all ${expandedId === exercise.id ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-brand/20' : ''}`}
+            className={`group transition-colors ${expandedId === exercise.id ? 'sm:col-span-2 xl:col-span-3 ring-2 ring-brand/20' : ''}`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5 min-w-0 flex-1">
@@ -218,7 +204,7 @@ export default function Exercises() {
                 <button
                   type="button"
                   onClick={() => handleOpenModal(exercise)}
-                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
+                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
                   aria-label={`Editar ${exercise.name}`}
                 >
                   <Edit className="h-4 w-4" />
@@ -226,7 +212,7 @@ export default function Exercises() {
                 <button
                   type="button"
                   onClick={() => { setDeleteError(null); setDeleteTarget(exercise); }}
-                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                  className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                   aria-label={`Eliminar ${exercise.name}`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -249,45 +235,11 @@ export default function Exercises() {
                               <h4 className="label-caps flex items-center gap-2">
                                 <Video className="h-3 w-3" /> Video demostrativo
                               </h4>
-                              {getYouTubeEmbedUrl(exercise.video_url) ? (
-                                <div className="aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black">
-                                  <iframe 
-                                    src={getYouTubeEmbedUrl(exercise.video_url)!}
-                                    className="w-full h-full"
-                                    loading="lazy"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                  ></iframe>
-                                </div>
-                              ) : exercise.video_url?.startsWith('/uploads/') || exercise.video_url?.startsWith('/api/files/videos/') ? (
-                                <div className="aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black">
-                                  <video 
-                                    src={resolveMediaUrl(exercise.video_url)}
-                                    className="w-full h-full object-cover"
-                                    controls
-                                    playsInline
-                                    preload="none"
-                                  ></video>
-                                </div>
-                              ) : (
-                                <a 
-                                  href={exercise.video_url!} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="flex items-center justify-between p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 group/video h-full min-h-[160px]"
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <div className="p-4 brand-solid rounded-2xl shadow-lg shadow-zinc-900/20">
-                                      <Video className="h-8 w-8" />
-                                    </div>
-                                    <div>
-                                      <p className="text-lg font-semibold text-zinc-900 dark:text-white">Ver video tutorial</p>
-                                      <p className="text-xs text-brand dark:text-brand font-medium">Enlace externo seguro</p>
-                                    </div>
-                                  </div>
-                                  <ChevronRight className="h-6 w-6 text-brand group-hover:translate-x-1 transition-transform" />
-                                </a>
-                              )}
+                              <ExerciseVideoPlayer
+                                url={exercise.video_url}
+                                posterUrl={exercise.video_poster_url}
+                                title={`${exercise.name} — video tutorial`}
+                              />
                             </div>
                           )}
 
@@ -324,7 +276,7 @@ export default function Exercises() {
                 className={`inline-flex items-center justify-center gap-1 rounded-lg text-xs font-semibold transition-all ${
                   expandedId === exercise.id
                     ? 'h-9 px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
-                    : 'h-9 w-9 sm:w-auto sm:px-3 text-zinc-500 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800'
+                    : 'h-9 w-9 sm:w-auto sm:px-3 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800'
                 }`}
                 aria-label={expandedId === exercise.id ? 'Cerrar detalles' : 'Ver detalles'}
                 title={expandedId === exercise.id ? 'Cerrar' : 'Ver detalles'}
@@ -345,7 +297,7 @@ export default function Exercises() {
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
           ¿Eliminar <strong>{deleteTarget?.name}</strong>?
         </p>
-        <p className="text-xs text-zinc-500 mb-6">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6">
           No se podrá eliminar si está en alguna rutina.
         </p>
         {deleteError && (
@@ -415,7 +367,7 @@ export default function Exercises() {
               <div className="space-y-4">
                 <Label>Video del ejercicio</Label>
                 <div className="relative">
-                  <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                  <Video className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 dark:text-zinc-300" />
                   <Input
                     type="url"
                     className="pl-12 font-mono text-sm"
@@ -440,6 +392,10 @@ export default function Exercises() {
                     {videoFile ? videoFile.name : 'Seleccionar video MP4/MOV'}
                   </span>
                 </label>
+                <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+                  Máx. 60 s · 50 MB al subir · se comprime automáticamente a 720p (requiere FFmpeg en el
+                  servidor).
+                </p>
               </div>
 
               {saveError && <p className="text-sm text-red-500">{saveError}</p>}

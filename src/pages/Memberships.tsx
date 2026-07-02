@@ -173,10 +173,10 @@ export default function Memberships() {
 
                 <p className="mt-3 text-2xl sm:text-3xl font-bold text-brand dark:text-brand tracking-tight tabular-nums">
                   ${plan.price_usd}
-                  <span className="text-xs sm:text-sm font-semibold text-zinc-400 ml-1">USD</span>
+                  <span className="text-xs sm:text-sm font-semibold text-zinc-400 dark:text-zinc-300 ml-1">USD</span>
                 </p>
 
-                <p className="mt-1.5 text-[11px] sm:text-xs text-zinc-500 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <p className="mt-1.5 text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
                   <span>{plan.duration_days} días calendario</span>
                   <span className="text-zinc-300 dark:text-zinc-600">·</span>
@@ -238,7 +238,7 @@ export default function Memberships() {
       >
         {deleteTarget && (
           <>
-            <p className="text-sm text-zinc-500 mb-4">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
               ¿Eliminar el plan <strong>{deleteTarget.name}</strong>? Solo es posible si no tiene suscripciones activas.
             </p>
             {deleteError && <p className="text-sm font-bold text-red-500 mb-4">{deleteError}</p>}

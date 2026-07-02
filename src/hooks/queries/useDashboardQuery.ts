@@ -1,0 +1,44 @@
+import { useQuery } from '@tanstack/react-query';
+import { apiFetch, parseJsonResponse } from '../../lib/api';
+
+export interface TrainerStatsResponse {
+  assignedMembers: number;
+  activeNow: number;
+  todayWorkouts: number;
+  routinesCreated: number;
+  recentActivities: Array<{
+    user_id: number;
+    full_name: string;
+    routine_name: string;
+    start_time: string;
+  }>;
+  membersWithoutRoutines?: number;
+  expiringMembers?: Array<{
+    id: number;
+    full_name: string;
+    days_remaining: number;
+    membership_name: string;
+  }>;
+  expiryAlertDays?: number;
+}
+
+async function fetchTrainerStats(): Promise<TrainerStatsResponse> {
+  const res = await apiFetch('/api/stats/trainer');
+  const data = await parseJsonResponse<TrainerStatsResponse>(res);
+  if (data?.recentActivities && !Array.isArray(data.recentActivities)) {
+    data.recentActivities = [];
+  }
+  if (data && !Array.isArray(data.expiringMembers)) {
+    data.expiringMembers = [];
+  }
+  return data;
+}
+
+export function useTrainerStatsQuery() {
+  return useQuery({
+    queryKey: ['trainer-stats'],
+    queryFn: fetchTrainerStats,
+    staleTime: 30_000,
+    retry: 1,
+  });
+}

@@ -306,13 +306,15 @@ npm run lint
 
 ## 10. Despliegue (cuando mergees a main)
 
-1. Merge del PR a `main`
-2. En Supabase producción: `npm run db:migrate`
-3. Deploy (Render: ver `render.yaml`)
-4. Variables de entorno en el host: `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, etc.
-5. Smoke: `GET /api/health` · Chat: `npm run test:chat-checklist`
+Guía completa: **[DEPLOY.md](./DEPLOY.md)** (Supabase prod + Render + checklist).
 
-Los avisos de vencimiento y eventos van al **chat in-app** (`/messages`); no hace falta configurar SMTP ni WhatsApp.
+Resumen:
+
+1. Merge del PR a `main`
+2. Crear proyecto Supabase de producción y `npm run db:migrate` + `npm run db:create-admin`
+3. Deploy en Render (ver [`render.yaml`](../render.yaml))
+4. Variables de entorno: `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `VITE_EXCHANGE_RATE`
+5. Smoke: `GET /api/health` · Manual: login admin, pago con comprobante
 
 ---
 
@@ -320,6 +322,7 @@ Los avisos de vencimiento y eventos van al **chat in-app** (`/messages`); no hac
 
 | Documento | Contenido |
 |-----------|-----------|
+| [DEPLOY.md](./DEPLOY.md) | Producción: Supabase + Render + checklist |
 | [TESTING.md](./TESTING.md) | Pruebas, CI, datos demo |
 | [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md) | Revisión manual de UI |
 

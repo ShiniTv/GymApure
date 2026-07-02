@@ -1,3 +1,63 @@
+export interface ActiveSubscription {
+  id: number;
+  membership_name: string;
+  end_date: string;
+  days_remaining: number;
+  start_date?: string;
+  status?: string;
+  duration_days?: number;
+  price_usd?: number;
+}
+
+type Queryable = {
+  query: <T extends import('pg').QueryResultRow = import('pg').QueryResultRow>(
+    text: string,
+    params?: unknown[]
+  ) => Promise<import('pg').QueryResult<T>>;
+};
+
+/** Fetch the active subscription + membership details for a given user. */
+export async function getActiveSubscriptionByUserId(
+  db: Queryable,
+  userId: number
+): Promise<ActiveSubscription | null> {
+  const { rows } = await db.query<{
+    id: number;
+    membership_name: string;
+    end_date: string;
+    days_remaining: number;
+    start_date?: string;
+    status?: string;
+    duration_days?: number;
+    price_usd?: number;
+  }>(
+    `SELECT s.id, m.name AS membership_name, s.end_date,
+            GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining,
+            s.start_date, s.status, m.duration_days, m.price_usd
+     FROM subscriptions s
+     JOIN memberships m ON m.id = s.membership_id
+     WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date >= CURRENT_DATE
+     ORDER BY s.end_date DESC
+     LIMIT 1`,
+    [userId]
+  );
+  return rows[0] ?? null;
+}
+
+/** SQL fragment for a LATERAL JOIN that fetches a user's active subscription. */
+export function activeSubscriptionLateralSql(): string {
+  return `LEFT JOIN LATERAL (
+    SELECT m.name AS membership_name, s.end_date,
+           GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining,
+           s.start_date, m.duration_days, m.price_usd
+    FROM subscriptions s
+    JOIN memberships m ON m.id = s.membership_id
+    WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
+    ORDER BY s.end_date DESC
+    LIMIT 1
+  ) sub ON true`;
+}
+
 export function computeSubscriptionDates(
   durationDays: number,
   activeEndDate?: string | Date | null,
@@ -26,13 +86,6 @@ export function computeSubscriptionDates(
     endDate: end.toISOString().split('T')[0],
   };
 }
-
-type Queryable = {
-  query: <T extends import('pg').QueryResultRow = import('pg').QueryResultRow>(
-    text: string,
-    params?: unknown[]
-  ) => Promise<import('pg').QueryResult<T>>;
-};
 
 export async function assignSubscription(
   client: Queryable,
