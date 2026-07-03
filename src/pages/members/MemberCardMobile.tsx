@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2 } from 'lucide-react';
+import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2, IdCard, UtensilsCrossed } from 'lucide-react';
 import { Badge, Avatar, DataCard } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ROLE_LABELS, type UserRole } from '../../lib/roles';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
+import { SHIFT_SHORT_LABELS, SHIFT_BADGE_CLASSES } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 
 interface MemberCardMobileProps {
@@ -18,6 +19,8 @@ interface MemberCardMobileProps {
   onAssignSubscription: (member: Member) => void;
   onToggleStatus: (member: Member) => void;
   onDelete: (member: Member) => void;
+  onShowBadge: (member: Member) => void;
+  onEditShift: (member: Member) => void;
 }
 
 export const MemberCardMobile = memo(function MemberCardMobile({
@@ -31,6 +34,8 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   onAssignSubscription,
   onToggleStatus,
   onDelete,
+  onShowBadge,
+  onEditShift,
 }: MemberCardMobileProps) {
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
@@ -88,6 +93,18 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               )}
             </div>
           )}
+          {member.role === 'member' && member.training_shift && (
+            <button
+              type="button"
+              onClick={() => (isAdmin || userRole === 'receptionist') && onEditShift(member)}
+              className={cn(
+                'mt-1.5 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold',
+                SHIFT_BADGE_CLASSES[member.training_shift]
+              )}
+            >
+              {SHIFT_SHORT_LABELS[member.training_shift]}
+            </button>
+          )}
         </div>
       </div>
 
@@ -125,6 +142,14 @@ export const MemberCardMobile = memo(function MemberCardMobile({
             <>
               <button
                 type="button"
+                onClick={() => { onShowBadge(member); }}
+                className={mobileIconBtnClass}
+                aria-label="Ver carné"
+              >
+                <IdCard className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate(`/messages?member=${member.id}`)}
                 className={mobileIconBtnClass}
                 aria-label="Enviar mensaje"
@@ -133,7 +158,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               </button>
               <button
                 type="button"
-                onClick={() => onAssignSubscription(member)}
+                onClick={() => { onAssignSubscription(member); }}
                 className={mobileIconBtnClass}
                 aria-label="Asignar membresía"
               >
@@ -141,11 +166,27 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               </button>
             </>
           )}
-          {isAdmin && (
+          {isAdmin && member.role === 'member' && (
             <>
               <button
                 type="button"
-                onClick={() => onToggleStatus(member)}
+                onClick={() => navigate(`/members/${member.id}/routines`)}
+                className={mobileIconBtnClass}
+                aria-label="Rutinas"
+              >
+                <Dumbbell className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${member.id}/nutrition`)}
+                className={mobileIconBtnClass}
+                aria-label="Nutrición"
+              >
+                <UtensilsCrossed className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => { onToggleStatus(member); }}
                 className={cn(
                   mobileIconBtnClass,
                   member.status !== 'active' && 'text-emerald-500'
@@ -157,7 +198,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               {member.role === 'member' && member.id !== currentUserId && (
                 <button
                   type="button"
-                  onClick={() => onDelete(member)}
+                  onClick={() => { onDelete(member); }}
                   className={cn(mobileIconBtnClass, 'hover:text-red-500 hover:bg-red-500/10')}
                   aria-label="Eliminar miembro"
                 >

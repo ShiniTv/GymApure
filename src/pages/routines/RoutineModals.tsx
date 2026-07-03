@@ -1,13 +1,16 @@
 import React from 'react';
 import { UserPlus } from 'lucide-react';
 import { Button, Modal, Label, Input, Select, DifficultySelect } from '../../components/ui';
+import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import { formatDifficulty } from '../../lib/utils';
+import { SHIFT_LABELS } from '../../lib/trainingShift';
 import type {
   Routine,
   RoutineExercise,
   Member,
   ExerciseOption,
 } from './types';
+import type { TrainingShift } from '../../lib/trainingShift';
 
 export interface RoutineModalsProps {
   isAssigningFromCalendar: boolean;
@@ -73,6 +76,9 @@ export interface RoutineModalsProps {
   ) => void;
   deletingExercise: boolean;
   confirmDeleteExercise: () => void;
+  filteredRoutines: Routine[];
+  selectedMemberShift: TrainingShift | null;
+  availableTrainers: { id: number; full_name: string }[];
 }
 
 export function RoutineModals({
@@ -111,12 +117,15 @@ export function RoutineModals({
   setDeleteExerciseTarget,
   deletingExercise,
   confirmDeleteExercise,
+  filteredRoutines,
+  selectedMemberShift,
+  availableTrainers,
 }: RoutineModalsProps) {
   return (
     <>
       <Modal
         open={isAssigningFromCalendar}
-        onClose={() => setIsAssigningFromCalendar(false)}
+        onClose={() => { setIsAssigningFromCalendar(false); }}
         title={<>ASIGNAR <span className="text-brand">RUTINA</span></>}
       >
         <div className="space-y-4">
@@ -124,26 +133,54 @@ export function RoutineModals({
             <Label>Seleccionar Miembro</Label>
             <Select
               value={assignForm.user_id}
-              onChange={(e) => setAssignForm({ ...assignForm, user_id: e.target.value })}
+              onChange={(e) => { setAssignForm({ ...assignForm, user_id: e.target.value, routine_id: '' }); }}
             >
               <option value="">Selección...</option>
               {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.full_name}</option>
+                <option key={m.id} value={m.id}>
+                  {m.full_name}
+                  {m.training_shift ? ` (${SHIFT_LABELS[m.training_shift].split(' / ')[0]})` : ''}
+                </option>
               ))}
             </Select>
+            {selectedMemberShift && (
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                Turno del miembro: <span className="font-semibold text-brand">{SHIFT_LABELS[selectedMemberShift]}</span>
+              </p>
+            )}
           </div>
           <div>
             <Label>Seleccionar Rutina</Label>
             <Select
               className="font-mono text-sm"
               value={assignForm.routine_id}
-              onChange={(e) => setAssignForm({ ...assignForm, routine_id: e.target.value })}
+              onChange={(e) => { setAssignForm({ ...assignForm, routine_id: e.target.value }); }}
             >
               <option value="">Selección...</option>
-              {routines.map((r) => (
-                <option key={r.id} value={r.id}>{r.name} ({formatDifficulty(r.difficulty)})</option>
+              {filteredRoutines.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name} ({formatDifficulty(r.difficulty)})
+                  {r.trainer_name ? ` — ${r.trainer_name}` : ''}
+                </option>
               ))}
             </Select>
+            {selectedMemberShift && (
+              <div className="mt-2 rounded-lg border border-brand/20 bg-brand/5 px-3 py-2">
+                <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                  Disponibles en {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}:
+                </p>
+                <p className="text-xs text-brand font-bold mt-0.5">
+                  {availableTrainers.length > 0
+                    ? availableTrainers.map((t) => t.full_name).join(', ')
+                    : 'Ningún entrenador asignado a este turno'}
+                </p>
+              </div>
+            )}
+            {selectedMemberShift && filteredRoutines.length === 0 && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                No hay rutinas de entrenadores en el turno {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -151,7 +188,7 @@ export function RoutineModals({
               <Input
                 type="date"
                 value={assignForm.start_date}
-                onChange={(e) => setAssignForm({ ...assignForm, start_date: e.target.value })}
+                onChange={(e) => { setAssignForm({ ...assignForm, start_date: e.target.value }); }}
               />
             </div>
             <div>
@@ -159,7 +196,7 @@ export function RoutineModals({
               <Input
                 type="date"
                 value={assignForm.end_date}
-                onChange={(e) => setAssignForm({ ...assignForm, end_date: e.target.value })}
+                onChange={(e) => { setAssignForm({ ...assignForm, end_date: e.target.value }); }}
               />
             </div>
           </div>
@@ -178,7 +215,7 @@ export function RoutineModals({
 
       <Modal
         open={isCreating}
-        onClose={() => setIsCreating(false)}
+        onClose={() => { setIsCreating(false); }}
         title={<>NUEVA <span className="text-brand">RUTINA</span></>}
       >
         <div className="space-y-4">
@@ -187,7 +224,7 @@ export function RoutineModals({
             <Input
               type="text"
               value={newRoutine.name}
-              onChange={(e) => setNewRoutine({ ...newRoutine, name: e.target.value })}
+              onChange={(e) => { setNewRoutine({ ...newRoutine, name: e.target.value }); }}
               placeholder="Ej: Full Body"
             />
           </div>
@@ -196,7 +233,7 @@ export function RoutineModals({
             <DifficultySelect
               className="uppercase tracking-tighter"
               value={newRoutine.difficulty}
-              onChange={(value) => setNewRoutine({ ...newRoutine, difficulty: value })}
+              onChange={(value) => { setNewRoutine({ ...newRoutine, difficulty: value }); }}
             />
           </div>
           <Button className="w-full" size="lg" onClick={handleCreateRoutine} disabled={!newRoutine.name}>
@@ -207,7 +244,7 @@ export function RoutineModals({
 
       <Modal
         open={!!editingRoutine}
-        onClose={() => setEditingRoutine(null)}
+        onClose={() => { setEditingRoutine(null); }}
         title="Editar Rutina"
       >
         {editingRoutine && (
@@ -217,18 +254,18 @@ export function RoutineModals({
               <Input
                 type="text"
                 value={editingRoutine.name}
-                onChange={(e) => setEditingRoutine({ ...editingRoutine, name: e.target.value })}
+                onChange={(e) => { setEditingRoutine({ ...editingRoutine, name: e.target.value }); }}
               />
             </div>
             <div>
               <Label>Dificultad</Label>
               <DifficultySelect
                 value={editingRoutine.difficulty}
-                onChange={(value) => setEditingRoutine({ ...editingRoutine, difficulty: value })}
+                onChange={(value) => { setEditingRoutine({ ...editingRoutine, difficulty: value }); }}
               />
             </div>
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setEditingRoutine(null)}>
+              <Button variant="ghost" className="flex-1" onClick={() => { setEditingRoutine(null); }}>
                 Cancelar
               </Button>
               <Button className="flex-1" onClick={handleUpdateRoutine} disabled={!editingRoutine.name}>
@@ -241,31 +278,24 @@ export function RoutineModals({
 
       <Modal
         open={isAddingExercise}
-        onClose={() => setIsAddingExercise(false)}
+        onClose={() => { setIsAddingExercise(false); }}
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
       >
         <div className="space-y-4">
-          <div>
-            <Label>Seleccionar Ejercicio</Label>
-            <Select
-              value={newExercise.exercise_id}
-              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
-            >
-              <option value="">Selecciona un ejercicio...</option>
-              {availableExercises.map((e) => (
-                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-              ))}
-            </Select>
-          </div>
+          <ExercisePicker
+            exercises={availableExercises}
+            value={newExercise.exercise_id}
+            onChange={(exerciseId) => { setNewExercise({ ...newExercise, exercise_id: exerciseId }); }}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Series</Label>
               <Input
                 type="number"
                 value={newExercise.sets}
-                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, sets: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -273,7 +303,7 @@ export function RoutineModals({
               <Input
                 type="number"
                 value={newExercise.reps}
-                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, reps: parseInt(e.target.value) }); }}
               />
             </div>
           </div>
@@ -283,7 +313,7 @@ export function RoutineModals({
               <Input
                 type="number"
                 value={newExercise.rest_seconds}
-                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -292,7 +322,7 @@ export function RoutineModals({
                 type="text"
                 placeholder="Ej: Pesado"
                 value={newExercise.weight_suggestion}
-                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+                onChange={(e) => { setNewExercise({ ...newExercise, weight_suggestion: e.target.value }); }}
               />
             </div>
           </div>
@@ -304,7 +334,7 @@ export function RoutineModals({
 
       <Modal
         open={isEditingExercise && !!editingExercise}
-        onClose={() => setIsEditingExercise(false)}
+        onClose={() => { setIsEditingExercise(false); }}
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
         maxWidth="xl"
         scrollable
@@ -317,7 +347,7 @@ export function RoutineModals({
                 <Input
                   type="number"
                   value={editingExercise.sets}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) }); }}
                 />
               </div>
               <div>
@@ -325,7 +355,7 @@ export function RoutineModals({
                 <Input
                   type="number"
                   value={editingExercise.reps}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) }); }}
                 />
               </div>
             </div>
@@ -335,7 +365,7 @@ export function RoutineModals({
                 <Input
                   type="number"
                   value={editingExercise.rest_seconds}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) }); }}
                 />
               </div>
               <div>
@@ -343,7 +373,7 @@ export function RoutineModals({
                 <Input
                   type="text"
                   value={editingExercise.weight_suggestion}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value }); }}
                 />
               </div>
             </div>
@@ -367,7 +397,7 @@ export function RoutineModals({
         </p>
         {deleteRoutineError && <p className="text-sm text-red-500 mb-4">{deleteRoutineError}</p>}
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteRoutineTarget(null)} disabled={deletingRoutine}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteRoutineTarget(null); }} disabled={deletingRoutine}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={confirmDeleteRoutine} disabled={deletingRoutine}>
@@ -385,7 +415,7 @@ export function RoutineModals({
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta plantilla?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteExerciseTarget(null)} disabled={deletingExercise}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteExerciseTarget(null); }} disabled={deletingExercise}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={confirmDeleteExercise} disabled={deletingExercise}>

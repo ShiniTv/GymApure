@@ -32,12 +32,14 @@ const Attendance = lazy(() => import('./pages/Attendance'));
 const Memberships = lazy(() => import('./pages/Memberships'));
 const Routines = lazy(() => import('./pages/Routines'));
 const Exercises = lazy(() => import('./pages/Exercises'));
+const Trainers = lazy(() => import('./pages/Trainers'));
 const MemberRoutine = lazy(() => import('./pages/MemberRoutine'));
 const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
 const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Nutrition = lazy(() => import('./pages/Nutrition'));
 const MemberNutrition = lazy(() => import('./pages/member/MemberNutrition'));
+const NutritionOverview = lazy(() => import('./pages/NutritionOverview'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
@@ -77,8 +79,8 @@ function RegisterRoute() {
   React.useEffect(() => {
     fetch('/api/health')
       .then((res) => res.json())
-      .then((data) => setAllowed(data.allowPublicRegister !== false))
-      .catch(() => setAllowed(false));
+      .then((data) => { setAllowed(data.allowPublicRegister !== false); })
+      .catch(() => { setAllowed(false); });
   }, []);
 
   if (allowed === null) return <PageLoader />;
@@ -88,7 +90,7 @@ function RegisterRoute() {
 
 function AppRoutes() {
   return (
-    <ErrorBoundary onError={(error) => reportBoundaryError(error)}>
+    <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}>
       <ProgressBar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -96,7 +98,7 @@ function AppRoutes() {
           <Route path="/register" element={<RegisterRoute />} />
           <Route path="/check-in" element={
             <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><CheckIn /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><CheckIn /></ErrorBoundary>
             </ProtectedRoute>
           } />
           
@@ -104,98 +106,108 @@ function AppRoutes() {
             <ProtectedRoute>
               <AdminStatsProvider>
                 <MemberStatsProvider>
-                  <ErrorBoundary onError={(error) => reportBoundaryError(error)}>
+                  <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}>
                     <Layout />
                   </ErrorBoundary>
                 </MemberStatsProvider>
               </AdminStatsProvider>
             </ProtectedRoute>
           }>
-            <Route index element={<ErrorBoundary onError={(error) => reportBoundaryError(error)}><Dashboard /></ErrorBoundary>} />
+            <Route index element={<ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Dashboard /></ErrorBoundary>} />
             <Route path="members" element={
               <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Members /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Members /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="reception" element={
               <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Reception /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Reception /></ErrorBoundary>
               </ProtectedRoute>
             } />
           <Route path="attendance" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Attendance /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Attendance /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="memberships" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Memberships /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Memberships /></ErrorBoundary>
+            </ProtectedRoute>
+          } />
+          <Route path="trainers" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Trainers /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="audit-logs" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><AuditLogs /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><AuditLogs /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="reports" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Reports /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Reports /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="settings" element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Settings /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Settings /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="messages" element={
             <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist', 'member']}>
-              <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Messages /></ErrorBoundary>
+              <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Messages /></ErrorBoundary>
             </ProtectedRoute>
           } />
           <Route path="members/:id/routines" element={
-              <ProtectedRoute allowedRoles={['trainer']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><MemberRoutine /></ErrorBoundary>
+              <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><MemberRoutine /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="payments" element={
               <ProtectedRoute allowedRoles={['admin', 'member', 'receptionist']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Payments /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Payments /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="routines" element={
-              <ProtectedRoute allowedRoles={['trainer', 'member']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Routines /></ErrorBoundary>
+              <ProtectedRoute allowedRoles={['admin', 'trainer', 'member']}>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Routines /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="exercises" element={
-              <ProtectedRoute allowedRoles={['trainer']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Exercises /></ErrorBoundary>
+              <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Exercises /></ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="nutrition-overview" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><NutritionOverview /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="workout/:id" element={
               <ProtectedRoute allowedRoles={['member']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><ActiveWorkout /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><ActiveWorkout /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="history" element={
               <ProtectedRoute allowedRoles={['member']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><WorkoutHistory /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><WorkoutHistory /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="nutrition" element={
               <ProtectedRoute allowedRoles={['member']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><Nutrition /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Nutrition /></ErrorBoundary>
               </ProtectedRoute>
             } />
-            <Route path="profile" element={<ErrorBoundary onError={(error) => reportBoundaryError(error)}><Profile /></ErrorBoundary>} />
+            <Route path="profile" element={<ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Profile /></ErrorBoundary>} />
             <Route path="members/:id/nutrition" element={
               <ProtectedRoute allowedRoles={['trainer', 'admin']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><MemberNutrition /></ErrorBoundary>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><MemberNutrition /></ErrorBoundary>
               </ProtectedRoute>
             } />
             <Route path="members/:id/history" element={
-              <ProtectedRoute allowedRoles={['trainer']}>
-                <ErrorBoundary onError={(error) => reportBoundaryError(error)}><WorkoutHistory /></ErrorBoundary>
+              <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><WorkoutHistory /></ErrorBoundary>
               </ProtectedRoute>
             } />
           </Route>

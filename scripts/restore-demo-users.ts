@@ -96,6 +96,8 @@ async function main() {
       .toISOString()
       .split('T')[0];
 
+    await query(`UPDATE users SET training_shift = 'vespertino' WHERE id = $1`, [memberId]);
+
     await query(
       `INSERT INTO subscriptions (user_id, membership_id, start_date, end_date, status)
        SELECT $1, $2, $3, $4, 'active'
@@ -111,6 +113,41 @@ async function main() {
   const trainerRow = await query<{ id: number }>(
     `SELECT id FROM users WHERE email = 'trainer@gym.com'`
   );
+  if (trainerRow.rows[0]) {
+    await query(
+      `INSERT INTO trainer_profiles (user_id, level, specialty, shift)
+       VALUES ($1, 'avanzado', 'Fuerza e hipertrofia', 'vespertino')
+       ON CONFLICT (user_id) DO UPDATE SET
+         level = EXCLUDED.level,
+         specialty = EXCLUDED.specialty,
+         shift = EXCLUDED.shift`,
+      [trainerRow.rows[0].id]
+    );
+    console.log('✓ Perfil entrenador demo (vespertino)');
+  }
+
+  const extraTrainers = [
+    { email: 'alexis.trainer@gym.com', full_name: 'Alexis Trainer', cedula: 'V-55443322', shift: 'vespertino' },
+    { email: 'vicente.trainer@gym.com', full_name: 'Vicente Trainer', cedula: 'V-66554433', shift: 'diurno' },
+  ] as const;
+
+  for (const t of extraTrainers) {
+    const inserted = await query<{ id: number }>(
+      `INSERT INTO users (email, password, role, full_name, cedula, status)
+       VALUES ($1, $2, 'trainer', $3, $4, 'active')
+       ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name, cedula = EXCLUDED.cedula
+       RETURNING id`,
+      [t.email, hashedPassword, t.full_name, t.cedula]
+    );
+    await query(
+      `INSERT INTO trainer_profiles (user_id, level, specialty, shift)
+       VALUES ($1, 'basico', 'Acondicionamiento general', $2)
+       ON CONFLICT (user_id) DO UPDATE SET shift = EXCLUDED.shift, specialty = EXCLUDED.specialty`,
+      [inserted.rows[0].id, t.shift]
+    );
+    console.log(`✓ ${t.full_name} (${t.shift})`);
+  }
+
   if (memberRow.rows[0] && trainerRow.rows[0]) {
     const memberId = memberRow.rows[0].id;
     const trainerId = trainerRow.rows[0].id;

@@ -28,6 +28,7 @@
     "test:sprint4": "tsx scripts/test-sprint4.ts",
     "test:sprint5": "tsx scripts/test-sprint5.ts",
     "test:sprint6": "tsx scripts/test-sprint6.ts",
+    "test:trainer-shifts": "tsx scripts/test-trainer-shifts.ts",
     "db:migrate": "tsx scripts/apply-migrations.ts",
     "db:health": "tsx scripts/db-health.ts",
     "db:create-admin": "tsx scripts/create-admin.ts",

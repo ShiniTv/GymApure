@@ -7,7 +7,9 @@ import {
   useRoutineAssignmentsQuery,
   useInvalidateRoutines,
 } from '../hooks/queries/useRoutinesQuery';
+import { useTrainersQuery } from '../hooks/queries/useTrainersQuery';
 import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
+import type { TrainingShift } from '../lib/trainingShift';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, SegmentedControl, BackToDashboardLink } from '../components/ui';
@@ -88,8 +90,27 @@ export default function Routines() {
   const { data: exercisesCatalog = [] } = useExercisesQuery(isStaffRoutines);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
+  const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);
   const loadingRoutines = isMember ? memberLoading : libraryLoading;
   const availableExercises = exercisesCatalog as ExerciseOption[];
+
+  const selectedMember = useMemo(
+    () => members.find((m) => String(m.id) === assignForm.user_id),
+    [members, assignForm.user_id]
+  );
+
+  const selectedMemberShift = (selectedMember?.training_shift ?? null);
+
+  const availableTrainersForShift = useMemo(() => {
+    if (!selectedMemberShift) return allTrainers;
+    return allTrainers.filter((t) => t.shift === selectedMemberShift);
+  }, [allTrainers, selectedMemberShift]);
+
+  const filteredRoutinesForAssign = useMemo(() => {
+    if (!selectedMemberShift) return routines;
+    const trainerIds = new Set(availableTrainersForShift.map((t) => t.id));
+    return routines.filter((r) => r.trainer_id != null && trainerIds.has(r.trainer_id));
+  }, [routines, selectedMemberShift, availableTrainersForShift]);
 
   usePageTitle(isMember ? 'Rutinas' : 'Gestión de rutinas');
 
@@ -433,6 +454,9 @@ export default function Routines() {
         setDeleteExerciseTarget={setDeleteExerciseTarget}
         deletingExercise={deletingExercise}
         confirmDeleteExercise={confirmDeleteExercise}
+        filteredRoutines={filteredRoutinesForAssign}
+        selectedMemberShift={selectedMemberShift}
+        availableTrainers={availableTrainersForShift.map((t) => ({ id: t.id, full_name: t.full_name }))}
       />
 
       {view === 'library' ? (
@@ -448,14 +472,14 @@ export default function Routines() {
             setDeleteRoutineError(null);
             setDeleteRoutineTarget(routine);
           }}
-          onCreateRoutine={() => setIsCreating(true)}
-          onAddExercise={() => setIsAddingExercise(true)}
+          onCreateRoutine={() => { setIsCreating(true); }}
+          onAddExercise={() => { setIsAddingExercise(true); }}
           onInlineUpdate={handleInlineUpdate}
           onEditExercise={(exercise) => {
             setEditingExercise(exercise);
             setIsEditingExercise(true);
           }}
-          onDeleteExercise={(routineId, exercise) => setDeleteExerciseTarget({ routineId, exercise })}
+          onDeleteExercise={(routineId, exercise) => { setDeleteExerciseTarget({ routineId, exercise }); }}
         />
       ) : view === 'calendar' ? (
         <RoutinesCalendarView
@@ -465,7 +489,7 @@ export default function Routines() {
           setSelectedDay={setSelectedDay}
           calendarDays={calendarDays}
           assignmentsByDay={assignmentsByDay}
-          onAssignDirect={() => setIsAssigningFromCalendar(true)}
+          onAssignDirect={() => { setIsAssigningFromCalendar(true); }}
           onAssignOnDay={(dateStr) => {
             setAssignForm((prev) => ({ ...prev, start_date: dateStr }));
             setIsAssigningFromCalendar(true);

@@ -85,10 +85,11 @@ router.get('/', async (req: AuthRequest, res) => {
     }
 
     const { rows } = await query(
-      `SELECT r.*, u.full_name as trainer_name,
+      `SELECT r.*, u.full_name as trainer_name, tp.shift as trainer_shift,
       (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
       FROM routines r
       JOIN users u ON r.trainer_id = u.id
+      LEFT JOIN trainer_profiles tp ON tp.user_id = r.trainer_id
       ${where}
       ORDER BY r.name ASC`,
       params

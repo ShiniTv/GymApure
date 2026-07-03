@@ -10,6 +10,7 @@ import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
+import { isTrainingShift } from '../../lib/trainingShift.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
 
 export const walkInSchema = z.object({
@@ -22,6 +23,7 @@ export const walkInSchema = z.object({
   method: z.string().trim().min(1, 'Método requerido').max(50).default('efectivo'),
   reference: z.string().trim().max(200).optional().nullable(),
   check_in: z.boolean().optional().default(true),
+  training_shift: z.enum(['diurno', 'vespertino', 'nocturno']).optional().nullable(),
 });
 
 function generateTempPassword(): string {
@@ -69,12 +71,21 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
 
       const amountUsd = data.amount_usd ?? Number(membership.price_usd);
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      const memberShift =
+        data.training_shift && isTrainingShift(data.training_shift) ? data.training_shift : null;
 
       const userResult = await client.query<{ id: number }>(
-        `INSERT INTO users (full_name, email, cedula, phone, role, password, status)
-         VALUES ($1, $2, $3, $4, 'member', $5, 'active')
+        `INSERT INTO users (full_name, email, cedula, phone, role, password, status, training_shift)
+         VALUES ($1, $2, $3, $4, 'member', $5, 'active', $6)
          RETURNING id`,
-        [data.full_name, normalizedEmail, normalizedCedula, data.phone?.trim() || null, hashedPassword]
+        [
+          data.full_name,
+          normalizedEmail,
+          normalizedCedula,
+          data.phone?.trim() || null,
+          hashedPassword,
+          memberShift,
+        ]
       );
       const userId = userResult.rows[0].id;
 
@@ -129,7 +140,7 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       result.amountUsd,
       result.membershipName,
       result.paymentId
-    ).catch((err) => console.error('[notify] walk-in payment', err));
+    ).catch((err) => { console.error('[notify] walk-in payment', err); });
 
     res.status(201).json({
       success: true,

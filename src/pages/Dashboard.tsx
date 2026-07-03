@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { QuickAction } from '../components/admin/QuickAction';
 import { DashboardSection } from '../components/admin/DashboardSection';
@@ -232,12 +233,42 @@ export default function Dashboard() {
           />
         </div>
 
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/routines"
+            icon={Dumbbell}
+            title="Rutinas"
+            description="Plantillas y asignaciones"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/exercises"
+            icon={BookOpen}
+            title="Ejercicios"
+            description="Catálogo del gym"
+            tone="orange"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/nutrition-overview"
+            icon={UtensilsCrossed}
+            title="Nutrición"
+            description="Adherencia general"
+            tone="emerald"
+          />
+        </div>
+
         {expiringList.length > 0 ? (
           <Card padding="sm" rounded="xl">
             <button
               type="button"
               className="flex w-full items-center gap-2 min-w-0 text-left"
-              onClick={() => setShowExpiringList((v) => !v)}
+              onClick={() => { setShowExpiringList((v) => !v); }}
               aria-expanded={showExpiringList}
             >
               <CalendarClock className="h-4 w-4 text-brand shrink-0" />
@@ -272,7 +303,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     className="w-full text-[11px] font-semibold text-brand hover:text-brand py-0.5"
-                    onClick={() => setShowExpiringList(true)}
+                    onClick={() => { setShowExpiringList(true); }}
                   >
                     Ver {criticalItems.length} crítico{criticalItems.length !== 1 ? 's' : ''}
                   </button>
@@ -329,7 +360,7 @@ export default function Dashboard() {
               variant="ghost"
               size="sm"
               className="h-9 w-9 px-0 sm:hidden"
-              onClick={() => setShowRevenueChart((v) => !v)}
+              onClick={() => { setShowRevenueChart((v) => !v); }}
               aria-expanded={showRevenueChart}
               aria-label={showRevenueChart ? 'Ocultar gráfico de ingresos' : 'Ver gráfico de ingresos'}
               title={showRevenueChart ? 'Ocultar' : 'Ver ingresos'}

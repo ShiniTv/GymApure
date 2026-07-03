@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { query } from '../db/index.ts';
-import { AuthRequest } from './middleware/auth.ts';
+import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import {
@@ -135,7 +135,7 @@ router.get(
       return;
     }
 
-    res.json(rowToPlan(rows[0] as Record<string, unknown>));
+    res.json(rowToPlan(rows[0]));
   })
 );
 
@@ -207,7 +207,7 @@ router.put(
       ]
     );
 
-    res.json(rowToPlan(rows[0] as Record<string, unknown>));
+    res.json(rowToPlan(rows[0]));
   })
 );
 
@@ -280,7 +280,7 @@ router.post(
       ]
     );
 
-    res.status(201).json(rowToLog(rows[0] as Record<string, unknown>));
+    res.status(201).json(rowToLog(rows[0]));
   })
 );
 
@@ -306,7 +306,7 @@ router.get(
       return;
     }
 
-    const plan = rowToPlan(planRows[0] as Record<string, unknown>);
+    const plan = rowToPlan(planRows[0]);
     const endDate = formatLocalDate(new Date());
     const start = new Date();
     start.setDate(start.getDate() - (days - 1));
@@ -331,7 +331,7 @@ router.get(
     const byDate = new Map<string, MacroTotals>();
     for (const row of aggRows) {
       const d = String((row as Record<string, unknown>).day).slice(0, 10);
-      byDate.set(d, totalsFromRow(row as Record<string, unknown>));
+      byDate.set(d, totalsFromRow(row));
     }
 
     const summaries: DailyNutritionSummary[] = [];
@@ -407,7 +407,7 @@ router.patch(
       ]
     );
 
-    res.json(rowToLog(rows[0] as Record<string, unknown>));
+    res.json(rowToLog(rows[0]));
   })
 );
 
@@ -437,6 +437,117 @@ router.delete(
 
     await query(`DELETE FROM nutrition_log_entries WHERE id = $1`, [logId]);
     res.json({ ok: true });
+  })
+);
+
+router.get(
+  '/admin/overview',
+  authorize(['admin']),
+  asyncHandler(async (_req, res) => {
+    const days = 7;
+    const endDate = formatLocalDate(new Date());
+    const start = new Date();
+    start.setDate(start.getDate() - (days - 1));
+    const startDate = formatLocalDate(start);
+
+    const { rows: members } = await query<{
+      user_id: number;
+      full_name: string;
+      plan_title: string;
+      calories_target: number;
+      calories_margin: number;
+      protein_target_g: number;
+      protein_margin_g: number;
+      carbs_target_g: number;
+      carbs_margin_g: number;
+      fat_target_g: number;
+      fat_margin_g: number;
+    }>(
+      `SELECT u.id AS user_id, u.full_name, np.title AS plan_title,
+              np.calories_target, np.calories_margin,
+              np.protein_target_g, np.protein_margin_g,
+              np.carbs_target_g, np.carbs_margin_g,
+              np.fat_target_g, np.fat_margin_g
+       FROM users u
+       INNER JOIN nutrition_plans np ON np.user_id = u.id AND np.is_active = true
+       WHERE u.role = 'member' AND u.status = 'active'
+       ORDER BY u.full_name ASC`
+    );
+
+    const overview = await Promise.all(
+      members.map(async (member) => {
+        const { rows: aggRows } = await query(
+          `SELECT
+            COALESCE(SUM(calories), 0)::int AS calories,
+            COALESCE(SUM(protein_g), 0)::float AS protein,
+            COALESCE(SUM(carbs_g), 0)::float AS carbs,
+            COALESCE(SUM(fat_g), 0)::float AS fat,
+            COUNT(DISTINCT (logged_at AT TIME ZONE 'UTC')::date)::int AS logged_days
+           FROM nutrition_log_entries
+           WHERE user_id = $1
+             AND (logged_at AT TIME ZONE 'UTC')::date >= $2::date
+             AND (logged_at AT TIME ZONE 'UTC')::date <= $3::date`,
+          [member.user_id, startDate, endDate]
+        );
+
+        const totals = totalsFromRow(aggRows[0]);
+        const loggedDays = Number((aggRows[0] as Record<string, unknown>)?.logged_days ?? 0);
+        const plan: NutritionPlan = {
+          id: 0,
+          user_id: member.user_id,
+          trainer_id: 0,
+          title: member.plan_title,
+          calories_target: member.calories_target,
+          protein_target_g: member.protein_target_g,
+          carbs_target_g: member.carbs_target_g,
+          fat_target_g: member.fat_target_g,
+          calories_margin: member.calories_margin,
+          protein_margin_g: member.protein_margin_g,
+          carbs_margin_g: member.carbs_margin_g,
+          fat_margin_g: member.fat_margin_g,
+          notes: null,
+          start_date: null,
+          end_date: null,
+          is_active: true,
+          created_at: '',
+          updated_at: '',
+        };
+
+        const dailyAdherence =
+          loggedDays > 0
+            ? Math.round(
+                adherencePercent(plan, {
+                  calories: Math.round(totals.calories / loggedDays),
+                  protein: totals.protein / loggedDays,
+                  carbs: totals.carbs / loggedDays,
+                  fat: totals.fat / loggedDays,
+                })
+              )
+            : 0;
+
+        return {
+          user_id: member.user_id,
+          full_name: member.full_name,
+          plan_title: member.plan_title,
+          logged_days: loggedDays,
+          adherence_percent: dailyAdherence,
+          calories_status: getMacroStatus(
+            totals.calories,
+            plan.calories_target * Math.max(loggedDays, 1),
+            plan.calories_margin * Math.max(loggedDays, 1)
+          ),
+        };
+      })
+    );
+
+    res.json({
+      period_days: days,
+      start_date: startDate,
+      end_date: endDate,
+      members: overview,
+      with_plan: overview.length,
+      logging_active: overview.filter((m) => m.logged_days > 0).length,
+    });
   })
 );
 

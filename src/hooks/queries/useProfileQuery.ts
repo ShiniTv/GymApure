@@ -12,6 +12,7 @@ export interface UserProfile {
   goal: string | null;
   profile_image: string | null;
   dob: string | null;
+  training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
 }
 
 export interface Measurement {

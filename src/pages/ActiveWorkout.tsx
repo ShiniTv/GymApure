@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, Clock, Save, Play, Pause, RotateCcw, Video, Plus, BookOpen, Edit2, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, Modal, Label, Input, Select, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
+import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { cn } from '../lib/utils';
@@ -120,7 +121,7 @@ export default function ActiveWorkout() {
     const interval = setInterval(() => {
       setTimer(t => t + 1);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [isPaused]);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function ActiveWorkout() {
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [isResting]);
 
   // Persist progress — debounced to avoid blocking the main thread on every keystroke
@@ -151,7 +152,7 @@ export default function ActiveWorkout() {
       localStorage.setItem(`active_workout_logs_${sessionId}`, JSON.stringify(logs));
       localStorage.setItem(`active_workout_completed_exercises_${sessionId}`, JSON.stringify(completedExercises));
     }, 500);
-    return () => window.clearTimeout(timer);
+    return () => { window.clearTimeout(timer); };
   }, [logs, completedExercises, sessionId]);
 
   const toggleExerciseComplete = (exerciseId: number) => {
@@ -186,7 +187,7 @@ export default function ActiveWorkout() {
       if (isMobileFocus && routine) {
         const idx = routine.exercises.findIndex((e) => e.id === exerciseId);
         if (idx >= 0 && idx < routine.exercises.length - 1) {
-          window.setTimeout(() => setFocusedIndex(idx + 1), 300);
+          window.setTimeout(() => { setFocusedIndex(idx + 1); }, 300);
         }
       }
     }
@@ -215,16 +216,16 @@ export default function ActiveWorkout() {
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
       .then((res) => parseJsonResponse<ExerciseOption[]>(res))
-      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
-      .catch((err) => clientLogger.error('Failed to fetch exercises catalog', err));
+      .then((data) => { setAvailableExercises(Array.isArray(data) ? data : []); })
+      .catch((err) => { clientLogger.error('Failed to fetch exercises catalog', err); });
   };
 
   const reloadRoutine = () => {
     if (!id) return;
     apiFetch(`/api/routines/${id}`)
       .then((res) => parseJsonResponse<Routine>(res))
-      .then((data) => setRoutine(data))
-      .catch((err) => clientLogger.error('Failed to reload routine', err));
+      .then((data) => { setRoutine(data); })
+      .catch((err) => { clientLogger.error('Failed to reload routine', err); });
   };
 
   const handleAddExercise = async () => {
@@ -374,7 +375,7 @@ export default function ActiveWorkout() {
     const key = `${exerciseId}-${setNum}`;
     const entry = logs[key];
     
-    if (!entry || !entry.weight || !entry.reps) {
+    if (!entry?.weight || !entry.reps) {
       setSetValidationError('Ingresa peso y repeticiones antes de marcar la serie.');
       return;
     }
@@ -420,7 +421,7 @@ export default function ActiveWorkout() {
           if (isMobileFocus && routine) {
             const idx = routine.exercises.findIndex((e) => e.id === exerciseId);
             if (idx >= 0 && idx < routine.exercises.length - 1) {
-              window.setTimeout(() => setFocusedIndex(idx + 1), 400);
+              window.setTimeout(() => { setFocusedIndex(idx + 1); }, 400);
             }
           }
         }
@@ -575,7 +576,7 @@ export default function ActiveWorkout() {
         <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
-            onClick={() => setIsPaused((p) => !p)}
+            onClick={() => { setIsPaused((p) => !p); }}
             disabled={!sessionId}
             className="h-9 w-9 inline-flex items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold"
             aria-label={isPaused ? 'Reanudar cronómetro' : 'Pausar cronómetro'}
@@ -632,31 +633,24 @@ export default function ActiveWorkout() {
 
       <Modal
         open={isAddingExercise}
-        onClose={() => setIsAddingExercise(false)}
+        onClose={() => { setIsAddingExercise(false); }}
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
       >
         <div className="space-y-4">
-          <div>
-            <Label>Seleccionar Ejercicio</Label>
-            <Select
-              value={newExercise.exercise_id}
-              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
-            >
-              <option value="">Selecciona un ejercicio...</option>
-              {availableExercises.map((e) => (
-                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-              ))}
-            </Select>
-          </div>
+          <ExercisePicker
+            exercises={availableExercises}
+            value={newExercise.exercise_id}
+            onChange={(exerciseId) => { setNewExercise({ ...newExercise, exercise_id: exerciseId }); }}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Series</Label>
               <Input
                 type="number"
                 value={newExercise.sets}
-                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, sets: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -664,7 +658,7 @@ export default function ActiveWorkout() {
               <Input
                 type="number"
                 value={newExercise.reps}
-                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, reps: parseInt(e.target.value) }); }}
               />
             </div>
           </div>
@@ -674,7 +668,7 @@ export default function ActiveWorkout() {
               <Input
                 type="number"
                 value={newExercise.rest_seconds}
-                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -683,7 +677,7 @@ export default function ActiveWorkout() {
                 type="text"
                 placeholder="Ej: Peso pesado"
                 value={newExercise.weight_suggestion}
-                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+                onChange={(e) => { setNewExercise({ ...newExercise, weight_suggestion: e.target.value }); }}
               />
             </div>
           </div>
@@ -702,7 +696,7 @@ export default function ActiveWorkout() {
               size="sm"
               className="shrink-0"
               disabled={focusedIndex === 0}
-              onClick={() => setFocusedIndex((i) => Math.max(0, i - 1))}
+              onClick={() => { setFocusedIndex((i) => Math.max(0, i - 1)); }}
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -718,7 +712,7 @@ export default function ActiveWorkout() {
                   <button
                     key={ex.id}
                     type="button"
-                    onClick={() => setFocusedIndex(i)}
+                    onClick={() => { setFocusedIndex(i); }}
                     className={cn(
                       'h-1.5 rounded-full transition-all',
                       i === focusedIndex ? 'w-5 bg-brand' : 'w-1.5 bg-zinc-300 dark:bg-zinc-700',
@@ -735,7 +729,7 @@ export default function ActiveWorkout() {
               size="sm"
               className="shrink-0"
               disabled={focusedIndex >= routine.exercises.length - 1}
-              onClick={() => setFocusedIndex((i) => Math.min(routine.exercises.length - 1, i + 1))}
+              onClick={() => { setFocusedIndex((i) => Math.min(routine.exercises.length - 1, i + 1)); }}
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -781,7 +775,7 @@ export default function ActiveWorkout() {
                     <div className="flex gap-3">
                       {exercise.video_url && (
                         <button 
-                          onClick={() => toggleVideo(exercise.id)}
+                          onClick={() => { toggleVideo(exercise.id); }}
                           className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
                         >
                           <Video className="h-3.5 w-3.5" />
@@ -793,7 +787,7 @@ export default function ActiveWorkout() {
                         <button 
                           type="button"
                           className="text-xs flex items-center gap-1.5 font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 rounded-lg border border-zinc-100 dark:border-zinc-800"
-                          onClick={() => setShowExecution((prev) => ({ ...prev, [exercise.id]: !prev[exercise.id] }))}
+                          onClick={() => { setShowExecution((prev) => ({ ...prev, [exercise.id]: !prev[exercise.id] })); }}
                         >
                           <BookOpen className="h-3.5 w-3.5" />
                           {showExecution[exercise.id] ? 'Ocultar' : 'Ejecución'}
@@ -824,7 +818,7 @@ export default function ActiveWorkout() {
               </div>
 
               <button
-                onClick={() => toggleExerciseComplete(exercise.id)}
+                onClick={() => { toggleExerciseComplete(exercise.id); }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                   completedExercises[exercise.id]
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
@@ -862,7 +856,7 @@ export default function ActiveWorkout() {
                         placeholder="0"
                         className="text-center font-bold text-lg md:text-sm py-4 md:py-3 min-h-[48px]"
                         value={logs[key]?.weight || ''}
-                        onChange={(e) => handleLogChange(exercise.id, setNum, 'weight', e.target.value)}
+                        onChange={(e) => { handleLogChange(exercise.id, setNum, 'weight', e.target.value); }}
                         disabled={isCompleted}
                       />
                     </div>
@@ -872,14 +866,14 @@ export default function ActiveWorkout() {
                         placeholder={exercise.reps.toString()}
                         className="text-center font-bold text-lg md:text-sm py-4 md:py-3 min-h-[48px]"
                         value={logs[key]?.reps || ''}
-                        onChange={(e) => handleLogChange(exercise.id, setNum, 'reps', e.target.value)}
+                        onChange={(e) => { handleLogChange(exercise.id, setNum, 'reps', e.target.value); }}
                         disabled={isCompleted}
                       />
                     </div>
                     <div className="col-span-2 flex justify-center">
                       {isCompleted ? (
                         <button
-                          onClick={() => editSet(exercise.id, setNum)}
+                          onClick={() => { editSet(exercise.id, setNum); }}
                           className="p-2.5 rounded-xl bg-brand/10 text-brand hover:bg-brand/20 transition-all shadow-sm"
                           title="Editar serie"
                         >
@@ -899,7 +893,7 @@ export default function ActiveWorkout() {
               })}
 
               <button
-                onClick={() => handleAddSet(exercise.id)}
+                onClick={() => { handleAddSet(exercise.id); }}
                 className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/5 hover:border-brand/50 rounded-2xl transition-all border-2 border-dashed border-zinc-100 dark:border-zinc-800 mt-2"
               >
                 <Plus className="h-4 w-4" />
@@ -955,7 +949,7 @@ export default function ActiveWorkout() {
             </div>
           </button>
 
-          <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => setIsFinishing(false)}>
+          <Button variant="ghost" className="w-full mt-4" size="sm" onClick={() => { setIsFinishing(false); }}>
             Volver al entrenamiento
           </Button>
         </div>
@@ -963,14 +957,14 @@ export default function ActiveWorkout() {
 
       <Modal
         open={showResetConfirm}
-        onClose={() => setShowResetConfirm(false)}
+        onClose={() => { setShowResetConfirm(false); }}
         title="Reiniciar progreso"
       >
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
           Se cerrará la sesión actual y comenzará una nueva desde cero. El tiempo y el progreso se reiniciarán.
         </p>
         <div className="flex gap-4">
-          <Button variant="ghost" className="flex-1" onClick={() => setShowResetConfirm(false)} disabled={isResetting}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setShowResetConfirm(false); }} disabled={isResetting}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={() => void confirmResetProgress()} disabled={isResetting}>

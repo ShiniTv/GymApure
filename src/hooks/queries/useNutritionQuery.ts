@@ -65,3 +65,32 @@ export async function fetchMemberGoal(userId: number): Promise<string | null> {
   const data = await parseJsonOptional<{ goal?: string | null }>(res);
   return data?.goal ?? null;
 }
+
+export interface NutritionOverviewMember {
+  user_id: number;
+  full_name: string;
+  plan_title: string;
+  logged_days: number;
+  adherence_percent: number;
+  calories_status: string;
+}
+
+export interface NutritionOverview {
+  period_days: number;
+  start_date: string;
+  end_date: string;
+  members: NutritionOverviewMember[];
+  with_plan: number;
+  logging_active: number;
+}
+
+export function useNutritionOverviewQuery(enabled = true) {
+  return useQuery({
+    queryKey: ['nutrition', 'admin', 'overview'],
+    queryFn: async () => {
+      const res = await apiFetch('/api/admin/overview');
+      return parseJsonResponse<NutritionOverview>(res);
+    },
+    enabled,
+  });
+}

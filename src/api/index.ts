@@ -16,6 +16,7 @@ import reportsRoutes from './reports.ts';
 import receptionRoutes from './reception.ts';
 import chatRoutes from './chat.ts';
 import nutritionRoutes from './nutrition.ts';
+import trainerRoutes from './trainers.ts';
 import pushSubscriptionRoutes from './pushSubscriptions.ts';
 import { authenticate } from './middleware/auth.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
@@ -33,6 +34,7 @@ router.use(apiRateLimiter);
 router.use(authenticate);
 
 router.use('/users', userRoutes);
+router.use('/trainers', trainerRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);

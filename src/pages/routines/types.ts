@@ -14,6 +14,9 @@ export interface Routine {
   name: string;
   difficulty: string;
   exercise_count: number;
+  trainer_id?: number;
+  trainer_name?: string;
+  trainer_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
   exercises?: RoutineExercise[];
 }
 
@@ -22,6 +25,7 @@ export interface Member {
   role: string;
   full_name: string;
   profile_image?: string | null;
+  training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
 }
 
 export interface AssignedRoutine {

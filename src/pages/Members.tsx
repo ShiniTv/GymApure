@@ -16,6 +16,13 @@ import { MemberTableRow } from './members/MemberTableRow';
 import { StaggerContainer, StaggerItem } from '../components/animations';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
+import { ShiftFilter } from '../components/trainers/ShiftFilter';
+import { MemberBadgeModal, type MemberBadgeData } from '../components/member/MemberBadgeModal';
+import {
+  SHIFT_SHORT_LABELS,
+  SHIFT_BADGE_CLASSES,
+  type TrainingShift,
+} from '../lib/trainingShift';
 
 interface MembershipPlan {
   id: number;
@@ -48,6 +55,7 @@ export default function Members() {
     password: '',
     confirm_password: '',
     role: 'member',
+    training_shift: '' as TrainingShift | '',
   });
   const [assignTarget, setAssignTarget] = useState<Member | null>(null);
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
@@ -58,6 +66,11 @@ export default function Members() {
   const [toggleTarget, setToggleTarget] = useState<Member | null>(null);
   const [toggling, setToggling] = useState(false);
   const [expiringFilter, setExpiringFilter] = useState(false);
+  const [shiftFilter, setShiftFilter] = useState<TrainingShift | ''>('');
+  const [badgeTarget, setBadgeTarget] = useState<MemberBadgeData | null>(null);
+  const [editShiftTarget, setEditShiftTarget] = useState<Member | null>(null);
+  const [editShiftValue, setEditShiftValue] = useState<TrainingShift | ''>('');
+  const [savingShift, setSavingShift] = useState(false);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -67,6 +80,10 @@ export default function Members() {
     if (searchParams.get('expiring') === 'true') {
       setExpiringFilter(true);
     }
+    const shiftParam = searchParams.get('shift');
+    if (shiftParam === 'diurno' || shiftParam === 'vespertino' || shiftParam === 'nocturno') {
+      setShiftFilter(shiftParam);
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -74,7 +91,7 @@ export default function Members() {
       setSearch(searchInput.trim());
       setPage(1);
     }, 300);
-    return () => window.clearTimeout(timer);
+    return () => { window.clearTimeout(timer); };
   }, [searchInput]);
 
   const isTrainer = user?.role === 'trainer';
@@ -87,6 +104,7 @@ export default function Members() {
     pageSize,
     search,
     expiringFilter,
+    shiftFilter: shiftFilter || undefined,
     isTrainer,
   });
   const members = membersData?.items ?? [];
@@ -136,6 +154,9 @@ export default function Members() {
           cedula: newMember.cedula || undefined,
           password: newMember.password,
           role: newMember.role,
+          training_shift: newMember.role === 'member' && newMember.training_shift ? newMember.training_shift : undefined,
+          shift: newMember.role === 'trainer' ? newMember.training_shift || 'diurno' : undefined,
+          level: newMember.role === 'trainer' ? 'basico' : undefined,
         }),
       });
 
@@ -149,6 +170,7 @@ export default function Members() {
           password: '',
           confirm_password: '',
           role: 'member',
+          training_shift: '',
         });
         invalidateMembers();
       } else {
@@ -221,6 +243,48 @@ export default function Members() {
   const handleDeleteClick = useCallback((member: Member) => {
     setDeleteTarget(member);
   }, []);
+
+  const openMemberBadge = useCallback((member: Member) => {
+    setBadgeTarget({
+      id: member.id,
+      full_name: member.full_name,
+      email: member.email,
+      cedula: member.cedula,
+      profile_image: member.profile_image,
+      membership_name: member.membership_name,
+      training_shift: member.training_shift,
+      role: member.role,
+    });
+  }, []);
+
+  const openEditShift = useCallback((member: Member) => {
+    setEditShiftTarget(member);
+    setEditShiftValue(member.training_shift || '');
+  }, []);
+
+  const saveMemberShift = async () => {
+    if (!editShiftTarget || !editShiftValue) {
+      toast?.error('Selecciona un turno');
+      return;
+    }
+    setSavingShift(true);
+    try {
+      await parseJsonResponse(
+        await apiFetch(`/api/users/${editShiftTarget.id}/training-shift`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ training_shift: editShiftValue }),
+        })
+      );
+      setEditShiftTarget(null);
+      invalidateMembers();
+      toast?.success('Turno actualizado');
+    } catch (err) {
+      toast?.error(err instanceof Error ? err.message : 'Error al guardar turno');
+    } finally {
+      setSavingShift(false);
+    }
+  };
 
   const handleAssignSubscription = async () => {
     if (!assignTarget || !selectedPlanId) {
@@ -321,13 +385,13 @@ export default function Members() {
             containerClassName="flex-1 min-w-0"
             placeholder="Buscar por nombre o identificación..."
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => { setSearchInput(e.target.value); }}
           />
           {canAddUser && (
             <Button
               size="sm"
               className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
-              onClick={() => setIsAdding(true)}
+              onClick={() => { setIsAdding(true); }}
               aria-label={addUserLabel}
             >
               <Plus className="h-4 w-4" />
@@ -336,25 +400,34 @@ export default function Members() {
           )}
         </div>
         {user?.role === 'admin' && (
-          <FilterChips
-            fullWidth
-            className="sm:w-auto sm:shrink-0"
-            options={[
-              { value: '', label: 'Todos' },
-              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-            ]}
-            value={expiringFilter ? 'expiring' : ''}
-            onChange={(v) => {
-              setExpiringFilter(v === 'expiring');
-              setPage(1);
-            }}
-          />
+          <div className="space-y-2">
+            <FilterChips
+              fullWidth
+              className="sm:w-auto sm:shrink-0"
+              options={[
+                { value: '', label: 'Todos' },
+                { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+              ]}
+              value={expiringFilter ? 'expiring' : ''}
+              onChange={(v) => {
+                setExpiringFilter(v === 'expiring');
+                setPage(1);
+              }}
+            />
+            <ShiftFilter
+              value={shiftFilter}
+              onChange={(shift) => {
+                setShiftFilter(shift);
+                setPage(1);
+              }}
+            />
+          </div>
         )}
       </div>
 
       <Modal
         open={isAdding}
-        onClose={() => setIsAdding(false)}
+        onClose={() => { setIsAdding(false); }}
         title={<>Nuevo <span className="text-brand">usuario</span></>}
         scrollable
       >
@@ -430,7 +503,7 @@ export default function Members() {
                 <select
                   className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-brand transition-all appearance-none"
                   value={newMember.role}
-                  onChange={(e) => setNewMember({...newMember, role: e.target.value})}
+                  onChange={(e) => { setNewMember({...newMember, role: e.target.value, training_shift: ''}); }}
                 >
                   <option value="member">Miembro / Atleta</option>
                   <option value="trainer">Entrenador / Staff</option>
@@ -438,6 +511,21 @@ export default function Members() {
                   {user?.role === 'admin' && <option value="admin">Administrador</option>}
                 </select>
               </div>
+              )}
+              {(newMember.role === 'member' || newMember.role === 'trainer') && (
+                <div>
+                  <Label>{newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}</Label>
+                  <select
+                    className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 text-zinc-900 dark:text-white font-bold outline-none focus:ring-2 focus:ring-brand transition-all appearance-none"
+                    value={newMember.training_shift}
+                    onChange={(e) => { setNewMember({ ...newMember, training_shift: e.target.value as TrainingShift }); }}
+                  >
+                    <option value="">Seleccionar turno...</option>
+                    <option value="diurno">Diurno / Mañana</option>
+                    <option value="vespertino">Vespertino / Tarde</option>
+                    <option value="nocturno">Nocturno / Noche</option>
+                  </select>
+                </div>
               )}
               {errors.submit && <p className="text-xs font-medium text-red-500 text-center">{errors.submit}</p>}
               <Button onClick={handleAddMember} className="w-full mt-4" size="lg">
@@ -467,12 +555,12 @@ export default function Members() {
                   <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
                     <Dumbbell className="h-4 w-4" /> Ir a asignaciones
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setIsAdding(true)}>
+                  <Button size="sm" variant="ghost" onClick={() => { setIsAdding(true); }}>
                     <Plus className="h-4 w-4" /> Nuevo miembro
                   </Button>
                 </div>
               ) : isTrainer ? (
-                <Button size="sm" onClick={() => setIsAdding(true)}>
+                <Button size="sm" onClick={() => { setIsAdding(true); }}>
                   <Plus className="h-4 w-4" /> Nuevo miembro
                 </Button>
               ) : undefined
@@ -493,6 +581,8 @@ export default function Members() {
                   onAssignSubscription={openAssignSubscription}
                   onToggleStatus={handleToggleClick}
                   onDelete={handleDeleteClick}
+                  onShowBadge={openMemberBadge}
+                  onEditShift={openEditShift}
                 />
               </StaggerItem>
             ))}
@@ -537,7 +627,7 @@ export default function Members() {
                         <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
                           <Dumbbell className="h-4 w-4" /> Ir a asignaciones
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setIsAdding(true)}>
+                        <Button size="sm" variant="ghost" onClick={() => { setIsAdding(true); }}>
                           <Plus className="h-4 w-4" /> Nuevo miembro
                         </Button>
                       </div>
@@ -557,6 +647,8 @@ export default function Members() {
                     onAssignSubscription={openAssignSubscription}
                     onToggleStatus={handleToggleClick}
                     onDelete={handleDeleteClick}
+                    onShowBadge={openMemberBadge}
+                    onEditShift={openEditShift}
                   />
                 ))
               )}
@@ -574,7 +666,7 @@ export default function Members() {
 
       <Modal
         open={!!assignTarget}
-        onClose={() => setAssignTarget(null)}
+        onClose={() => { setAssignTarget(null); }}
         title={assignTarget ? <>Membresía — <span className="text-brand">{assignTarget.full_name}</span></> : ''}
       >
         {assignTarget && (
@@ -588,7 +680,7 @@ export default function Members() {
             <select
               className="w-full bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-3 font-bold mb-4"
               value={selectedPlanId}
-              onChange={(e) => setSelectedPlanId(e.target.value)}
+              onChange={(e) => { setSelectedPlanId(e.target.value); }}
             >
               <option value="">Seleccionar plan...</option>
               {membershipPlans.map((plan) => (
@@ -618,7 +710,7 @@ export default function Members() {
                 : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
             </p>
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={() => setToggleTarget(null)} disabled={toggling}>
+              <Button variant="ghost" className="flex-1" onClick={() => { setToggleTarget(null); }} disabled={toggling}>
                 Cancelar
               </Button>
               <Button
@@ -647,13 +739,43 @@ export default function Members() {
           ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede deshacer.
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteTarget(null); }} disabled={deleting}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={confirmDeleteUser} disabled={deleting}>
             {deleting ? 'Eliminando...' : 'Eliminar'}
           </Button>
         </div>
+      </Modal>
+
+      <MemberBadgeModal
+        open={!!badgeTarget}
+        onClose={() => { setBadgeTarget(null); }}
+        member={badgeTarget}
+      />
+
+      <Modal
+        open={!!editShiftTarget}
+        onClose={() => !savingShift && setEditShiftTarget(null)}
+        title={editShiftTarget ? <>Turno — <span className="text-brand">{editShiftTarget.full_name}</span></> : ''}
+      >
+        {editShiftTarget && (
+          <div className="space-y-4">
+            <ShiftFilter
+              includeAll={false}
+              value={editShiftValue}
+              onChange={setEditShiftValue}
+            />
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => { setEditShiftTarget(null); }} disabled={savingShift}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" onClick={saveMemberShift} disabled={savingShift || !editShiftValue}>
+                {savingShift ? 'Guardando...' : 'Guardar turno'}
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
     </PullToRefreshContainer>

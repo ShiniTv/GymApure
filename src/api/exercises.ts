@@ -32,10 +32,10 @@ function isExternalVideoUrl(url: string | null | undefined): boolean {
   return url.includes('youtube.com') || url.includes('youtu.be') || url.startsWith('http');
 }
 
-type ResolvedExerciseVideo = {
+interface ResolvedExerciseVideo {
   videoUrl: string | null | undefined;
   posterUrl: string | null | undefined;
-};
+}
 
 async function resolveExerciseVideo(
   file: Express.Multer.File | undefined,
@@ -59,7 +59,20 @@ async function resolveExerciseVideo(
 
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM exercises ORDER BY name');
+    const muscleGroup =
+      typeof req.query.muscle_group === 'string' ? req.query.muscle_group.trim() : '';
+    const params: unknown[] = [];
+    let where = '';
+
+    if (muscleGroup) {
+      params.push(muscleGroup);
+      where = ` WHERE muscle_group = $${params.length}`;
+    }
+
+    const { rows } = await query(
+      `SELECT * FROM exercises${where} ORDER BY name`,
+      params
+    );
     res.json(rows);
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });

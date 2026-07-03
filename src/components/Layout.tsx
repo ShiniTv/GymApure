@@ -40,6 +40,7 @@ import {
   MessageSquare,
   UtensilsCrossed,
   PanelLeftClose,
+  UserCog,
 } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
@@ -75,6 +76,7 @@ const NAV_SECTIONS: NavSection[] = [
       { name: 'Recepción', href: '/reception', icon: Fingerprint, roles: ['admin', 'receptionist'] },
       { name: 'Miembros', href: '/members', icon: Users, roles: ['admin', 'trainer', 'receptionist'] },
       { name: 'Membresías', href: '/memberships', icon: CreditCard, roles: ['admin'] },
+      { name: 'Entrenadores', href: '/trainers', icon: UserCog, roles: ['admin'] },
       { name: 'Pagos', href: '/payments', icon: CreditCard, roles: ['admin', 'member', 'receptionist'] },
     ],
   },
@@ -90,9 +92,10 @@ const NAV_SECTIONS: NavSection[] = [
   {
     name: 'Fitness',
     items: [
-      { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['trainer', 'member'] },
-      { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock, roles: ['trainer'] },
-      { name: 'Ejercicios', href: '/exercises', icon: BookOpen, roles: ['trainer'] },
+      { name: 'Rutinas', href: '/routines', icon: Dumbbell, roles: ['admin', 'trainer', 'member'] },
+      { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock, roles: ['admin', 'trainer'] },
+      { name: 'Ejercicios', href: '/exercises', icon: BookOpen, roles: ['admin', 'trainer'] },
+      { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, roles: ['admin'] },
       { name: 'Historial', href: '/history', icon: History, roles: ['member'] },
       { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed, roles: ['member'] },
     ],
@@ -440,7 +443,7 @@ export default function Layout() {
       {isMember && (
         <ThemeOnboarding
           open={showThemeOnboarding}
-          onComplete={() => setShowThemeOnboarding(false)}
+          onComplete={() => { setShowThemeOnboarding(false); }}
         />
       )}
 

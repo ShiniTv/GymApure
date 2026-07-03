@@ -388,3 +388,23 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-badge,
+  #printable-badge * {
+    visibility: visible;
+  }
+
+  #printable-badge {
+    position: absolute;
+    left: 50%;
+    top: 24px;
+    transform: translateX(-50%);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

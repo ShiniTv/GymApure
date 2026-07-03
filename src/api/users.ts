@@ -28,6 +28,7 @@ import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
+import { isTrainingShift } from '../lib/trainingShift.ts';
 
 const router = asyncRouter();
 
@@ -121,6 +122,12 @@ function buildUserListFilters(
     );
   }
 
+  const shiftFilter = typeof query.shift === 'string' ? query.shift.trim() : '';
+  if (shiftFilter && isTrainingShift(shiftFilter)) {
+    params.push(shiftFilter);
+    conditions.push(`u.training_shift = $${params.length}`);
+  }
+
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { whereSql, params };
 }
@@ -145,11 +152,23 @@ router.get('/options', authorize(['admin', 'trainer', 'receptionist']), async (r
       );
     }
 
+    const shiftFilter = typeof req.query.shift === 'string' ? req.query.shift.trim() : '';
+    if (shiftFilter && isTrainingShift(shiftFilter)) {
+      params.push(shiftFilter);
+      conditions.push(`training_shift = $${params.length}`);
+    }
+
     const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     params.push(200);
 
-    const { rows } = await query<{ id: number; full_name: string; cedula: string | null; role: string }>(
-      `SELECT id, full_name, cedula, role
+    const { rows } = await query<{
+      id: number;
+      full_name: string;
+      cedula: string | null;
+      role: string;
+      training_shift: string | null;
+    }>(
+      `SELECT id, full_name, cedula, role, training_shift
        FROM users
        ${whereSql}
        ORDER BY full_name ASC
@@ -185,6 +204,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
       ),
       query(
         `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
+                u.training_shift,
                 lw.last_workout,
                 sub.membership_name,
                 sub.end_date AS subscription_end,
@@ -215,7 +235,7 @@ router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (re
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
-              initial_weight, height, goal, profile_image, dob
+              initial_weight, height, goal, profile_image, dob, training_shift
        FROM users WHERE id = $1`,
       [req.params.id]
     );
@@ -565,9 +585,9 @@ router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRe
     res.json({ id: rows[0].id, success: true });
 
     void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) =>
-      logger.error('Error enviando notificacion de rutina asignada', {
+      { logger.error('Error enviando notificacion de rutina asignada', {
         error: getErrorMessage(err),
-      })
+      }); }
     );
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -594,6 +614,8 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
   const { full_name, email, password, cedula, role: requestedRole } = parsed.data;
   const normalizedEmail = email.toLowerCase();
+  const rawShift = typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
+  const trainingShift = isTrainingShift(rawShift) ? rawShift : null;
 
   const assignedRole =
     req.user!.role === 'admin'
@@ -629,22 +651,87 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const { rows } = await query(
-      `INSERT INTO users (full_name, email, cedula, role, password, status)
-       VALUES ($1, $2, $3, $4, $5, 'active')
+      `INSERT INTO users (full_name, email, cedula, role, password, status, training_shift)
+       VALUES ($1, $2, $3, $4, $5, 'active', $6)
        RETURNING id`,
-      [full_name, normalizedEmail, normalizedCedula, assignedRole, hashedPassword]
+      [
+        full_name,
+        normalizedEmail,
+        normalizedCedula,
+        assignedRole,
+        hashedPassword,
+        assignedRole === 'member' ? trainingShift : null,
+      ]
     );
 
+    const newUserId = rows[0].id;
+
+    if (assignedRole === 'trainer') {
+      const level =
+        typeof req.body?.level === 'string' && ['basico', 'avanzado', 'especialista'].includes(req.body.level)
+          ? req.body.level
+          : 'basico';
+      const shift =
+        typeof req.body?.shift === 'string' && isTrainingShift(req.body.shift)
+          ? req.body.shift
+          : 'diurno';
+      const specialty =
+        typeof req.body?.specialty === 'string' ? req.body.specialty.trim() || null : null;
+      await query(
+        `INSERT INTO trainer_profiles (user_id, level, specialty, shift)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [newUserId, level, specialty, shift]
+      );
+    }
+
     await logAudit(req.user!.id, 'user.create', {
-      target_id: rows[0].id,
+      target_id: newUserId,
       role: assignedRole,
     });
 
-    res.status(201).json({ id: rows[0].id, success: true });
+    res.status(201).json({ id: newUserId, success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.patch(
+  '/:id/training-shift',
+  authorize(['admin', 'receptionist']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const raw = typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
+    if (!isTrainingShift(raw)) {
+      res.status(400).json({ error: 'Turno inválido. Use diurno, vespertino o nocturno.' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE users SET training_shift = $1
+       WHERE id = $2 AND role = 'member'
+       RETURNING id, full_name, training_shift`,
+      [raw, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Miembro no encontrado' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'user.training_shift_update', {
+      target_id: targetId,
+      training_shift: raw,
+    });
+
+    res.json(rows[0]);
+  })
+);
 
 router.patch(
   '/:id/cedula',

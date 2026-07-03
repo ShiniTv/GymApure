@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl, PageState, BackToDashboardLink } from '../components/ui';
+import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 
@@ -73,7 +74,7 @@ export default function MemberRoutine() {
   const refreshUserRoutines = () =>
     apiFetch(`/api/users/${id}/routines`)
       .then((res) => parseJsonResponse<Routine[]>(res))
-      .then((data) => setRoutines(Array.isArray(data) ? data : []));
+      .then((data) => { setRoutines(Array.isArray(data) ? data : []); });
 
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
@@ -96,8 +97,8 @@ export default function MemberRoutine() {
         setSubscription(subData?.membership_name ? subData : null);
         setMeasurements(Array.isArray(measurementsData) ? measurementsData : []);
       })
-      .catch((err) => clientLogger.error('Failed to load member routine context', err))
-      .finally(() => setLoading(false));
+      .catch((err) => { clientLogger.error('Failed to load member routine context', err); })
+      .finally(() => { setLoading(false); });
   }, [id]);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
@@ -136,8 +137,8 @@ export default function MemberRoutine() {
   const apiFetchAvailableRoutines = () => {
     apiFetch('/api/routines')
       .then((res) => parseJsonResponse<RoutineOption[]>(res))
-      .then((data) => setAvailableRoutines(Array.isArray(data) ? data : []))
-      .catch((err) => clientLogger.error('Failed to fetch routines catalog', err));
+      .then((data) => { setAvailableRoutines(Array.isArray(data) ? data : []); })
+      .catch((err) => { clientLogger.error('Failed to fetch routines catalog', err); });
   };
 
   const handleInlineUpdate = async (routineId: number, exercise: Exercise, field: 'sets' | 'reps', value: number) => {
@@ -280,8 +281,8 @@ export default function MemberRoutine() {
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
       .then((res) => parseJsonResponse<ExerciseOption[]>(res))
-      .then((data) => setAvailableExercises(Array.isArray(data) ? data : []))
-      .catch((err) => clientLogger.error('Failed to fetch exercise catalog', err));
+      .then((data) => { setAvailableExercises(Array.isArray(data) ? data : []); })
+      .catch((err) => { clientLogger.error('Failed to fetch exercise catalog', err); });
   };
 
   const toggleExpandRoutine = async (routineId: number) => {
@@ -547,7 +548,7 @@ export default function MemberRoutine() {
                 type="button"
                 size="sm"
                 className="h-8 px-2.5 text-xs"
-                onClick={() => setIsAddingMeasurement(true)}
+                onClick={() => { setIsAddingMeasurement(true); }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Registrar</span>
@@ -576,7 +577,7 @@ export default function MemberRoutine() {
 
       <Modal
         open={isAddingMeasurement}
-        onClose={() => setIsAddingMeasurement(false)}
+        onClose={() => { setIsAddingMeasurement(false); }}
         title="Nueva medición"
         maxWidth="xl"
         scrollable
@@ -587,7 +588,7 @@ export default function MemberRoutine() {
             <Input
               type="date"
               value={measurementForm.date}
-              onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
+              onChange={(e) => { setMeasurementForm({ ...measurementForm, date: e.target.value }); }}
               required
             />
           </div>
@@ -598,7 +599,7 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.weight}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, weight: e.target.value }); }}
               />
             </div>
             <div>
@@ -607,7 +608,7 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.body_fat_percentage}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value }); }}
               />
             </div>
             <div>
@@ -616,7 +617,7 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.waist}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, waist: e.target.value }); }}
               />
             </div>
             <div>
@@ -625,7 +626,7 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.arm}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, arm: e.target.value }); }}
               />
             </div>
           </div>
@@ -649,7 +650,7 @@ export default function MemberRoutine() {
             <Input
               type="text"
               value={routineForm.name}
-              onChange={(e) => setRoutineForm({ ...routineForm, name: e.target.value })}
+              onChange={(e) => { setRoutineForm({ ...routineForm, name: e.target.value }); }}
               placeholder="Ej: Piernas A"
             />
           </div>
@@ -657,7 +658,7 @@ export default function MemberRoutine() {
             <Label>Dificultad</Label>
             <DifficultySelect
               value={routineForm.difficulty}
-              onChange={(difficulty) => setRoutineForm({ ...routineForm, difficulty })}
+              onChange={(difficulty) => { setRoutineForm({ ...routineForm, difficulty }); }}
             />
           </div>
           <Button
@@ -672,31 +673,24 @@ export default function MemberRoutine() {
 
       <Modal
         open={isAddingExercise}
-        onClose={() => setIsAddingExercise(false)}
+        onClose={() => { setIsAddingExercise(false); }}
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
       >
         <div className="space-y-4">
-          <div>
-            <Label>Seleccionar Ejercicio</Label>
-            <Select
-              value={newExercise.exercise_id}
-              onChange={(e) => setNewExercise({ ...newExercise, exercise_id: e.target.value })}
-            >
-              <option value="">Selecciona un ejercicio...</option>
-              {availableExercises.map((e) => (
-                <option key={e.id} value={e.id}>{e.name} ({e.muscle_group})</option>
-              ))}
-            </Select>
-          </div>
+          <ExercisePicker
+            exercises={availableExercises}
+            value={newExercise.exercise_id}
+            onChange={(exerciseId) => { setNewExercise({ ...newExercise, exercise_id: exerciseId }); }}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Series</Label>
               <Input
                 type="number"
                 value={newExercise.sets}
-                onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, sets: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -704,7 +698,7 @@ export default function MemberRoutine() {
               <Input
                 type="number"
                 value={newExercise.reps}
-                onChange={(e) => setNewExercise({ ...newExercise, reps: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, reps: parseInt(e.target.value) }); }}
               />
             </div>
           </div>
@@ -714,7 +708,7 @@ export default function MemberRoutine() {
               <Input
                 type="number"
                 value={newExercise.rest_seconds}
-                onChange={(e) => setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) })}
+                onChange={(e) => { setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) }); }}
               />
             </div>
             <div>
@@ -723,7 +717,7 @@ export default function MemberRoutine() {
                 type="text"
                 placeholder="Ej: Pesado"
                 value={newExercise.weight_suggestion}
-                onChange={(e) => setNewExercise({ ...newExercise, weight_suggestion: e.target.value })}
+                onChange={(e) => { setNewExercise({ ...newExercise, weight_suggestion: e.target.value }); }}
               />
             </div>
           </div>
@@ -735,7 +729,7 @@ export default function MemberRoutine() {
 
       <Modal
         open={isEditingExercise && !!editingExercise}
-        onClose={() => setIsEditingExercise(false)}
+        onClose={() => { setIsEditingExercise(false); }}
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
         maxWidth="xl"
         scrollable
@@ -748,7 +742,7 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.sets}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) }); }}
                 />
               </div>
               <div>
@@ -756,7 +750,7 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.reps}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) }); }}
                 />
               </div>
             </div>
@@ -766,7 +760,7 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.rest_seconds}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) }); }}
                 />
               </div>
               <div>
@@ -774,7 +768,7 @@ export default function MemberRoutine() {
                 <Input
                   type="text"
                   value={editingExercise.weight_suggestion}
-                  onChange={(e) => setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value })}
+                  onChange={(e) => { setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value }); }}
                 />
               </div>
             </div>
@@ -787,13 +781,13 @@ export default function MemberRoutine() {
 
       <Modal
         open={isAssigning}
-        onClose={() => setIsAssigning(false)}
+        onClose={() => { setIsAssigning(false); }}
         title="Asignar Rutina"
       >
         <div className="space-y-4">
           <div>
             <Label>Seleccionar Rutina</Label>
-            <Select value={selectedRoutineId} onChange={(e) => setSelectedRoutineId(e.target.value)}>
+            <Select value={selectedRoutineId} onChange={(e) => { setSelectedRoutineId(e.target.value); }}>
               <option value="">Selecciona una rutina...</option>
               {availableRoutines.filter((ar) => !routines.some((r) => r.id === ar.id)).map((r) => (
                 <option key={r.id} value={r.id}>{r.name} ({formatDifficulty(r.difficulty)})</option>
@@ -806,7 +800,7 @@ export default function MemberRoutine() {
               <Input
                 type="date"
                 value={assignDates.start_date}
-                onChange={(e) => setAssignDates({ ...assignDates, start_date: e.target.value })}
+                onChange={(e) => { setAssignDates({ ...assignDates, start_date: e.target.value }); }}
               />
             </div>
             <div>
@@ -814,7 +808,7 @@ export default function MemberRoutine() {
               <Input
                 type="date"
                 value={assignDates.end_date}
-                onChange={(e) => setAssignDates({ ...assignDates, end_date: e.target.value })}
+                onChange={(e) => { setAssignDates({ ...assignDates, end_date: e.target.value }); }}
               />
             </div>
           </div>
@@ -826,14 +820,14 @@ export default function MemberRoutine() {
 
       <Modal
         open={!!unassignTarget}
-        onClose={() => setUnassignTarget(null)}
+        onClose={() => { setUnassignTarget(null); }}
         title="Quitar rutina"
       >
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
           ¿Quitar <strong>{unassignTarget?.name}</strong> de {member.full_name}?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setUnassignTarget(null)}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setUnassignTarget(null); }}>
             Cancelar
           </Button>
           <Button
@@ -848,14 +842,14 @@ export default function MemberRoutine() {
 
       <Modal
         open={!!deleteExerciseTarget}
-        onClose={() => setDeleteExerciseTarget(null)}
+        onClose={() => { setDeleteExerciseTarget(null); }}
         title="Quitar ejercicio"
       >
         <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta rutina?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteExerciseTarget(null)}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteExerciseTarget(null); }}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={confirmDeleteExercise}>
@@ -943,7 +937,7 @@ export default function MemberRoutine() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => openEditModal(routine)}
+                    onClick={() => { openEditModal(routine); }}
                     className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                     aria-label={`Editar ${routine.name}`}
                   >
@@ -951,7 +945,7 @@ export default function MemberRoutine() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUnassignTarget(routine)}
+                    onClick={() => { setUnassignTarget(routine); }}
                     className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                     aria-label={`Quitar ${routine.name}`}
                   >
@@ -1022,7 +1016,7 @@ export default function MemberRoutine() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteExerciseTarget({ routineId: routine.id, exercise })}
+                            onClick={() => { setDeleteExerciseTarget({ routineId: routine.id, exercise }); }}
                             className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                             aria-label={`Eliminar ${exercise.name}`}
                           >

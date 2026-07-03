@@ -20,6 +20,7 @@ import {
   Palette,
   Sun,
   Moon,
+  IdCard,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
@@ -46,6 +47,9 @@ import {
 } from '../hooks/queries/useProfileQuery';
 import { StatMini } from './profile/StatMini';
 import ThemePalettePicker from '../components/ThemePalettePicker';
+import { MemberBadgeModal } from '../components/member/MemberBadgeModal';
+import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
+import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -53,6 +57,8 @@ export default function Profile() {
   const memberStats = useMemberStatsOptional();
   const invalidateProfile = useInvalidateProfile();
   const isMember = user?.role === 'member';
+  const isTrainer = user?.role === 'trainer';
+  const { data: trainerProfile } = useTrainerMeQuery(isTrainer && !!user);
   const { data: profile, isPending: profileLoading } = useProfileQuery(user?.id);
   const { data: measurements = [], isPending: measLoading } = useProfileMeasurementsQuery(user?.id);
   const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(user?.id, isMember);
@@ -64,6 +70,7 @@ export default function Profile() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarRemoving, setAvatarRemoving] = useState(false);
   const [showRemoveAvatarModal, setShowRemoveAvatarModal] = useState(false);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
   const [measurementError, setMeasurementError] = useState('');
 
@@ -183,7 +190,7 @@ export default function Profile() {
       if (user) invalidateProfile(user.id);
       void updated;
       setSaveMsg('Perfil actualizado');
-      setTimeout(() => setSaveMsg(''), 3000);
+      setTimeout(() => { setSaveMsg(''); }, 3000);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
@@ -244,7 +251,7 @@ export default function Profile() {
       await parseJsonResponse(res);
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
       setPasswordMsg('Contraseña actualizada correctamente');
-      setTimeout(() => setPasswordMsg(''), 4000);
+      setTimeout(() => { setPasswordMsg(''); }, 4000);
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
     } finally {
@@ -441,17 +448,46 @@ export default function Profile() {
                 <p className="text-[10px] font-medium text-brand mt-1">Subiendo foto…</p>
               )}
               {avatarUrl && !avatarUploading && (
-                <button
-                  type="button"
-                  onClick={() => setShowRemoveAvatarModal(true)}
-                  disabled={avatarRemoving}
-                  className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors mt-1 disabled:opacity-50"
-                >
-                  Quitar foto
-                </button>
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowRemoveAvatarModal(true); }}
+                    disabled={avatarRemoving}
+                    className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                  >
+                    Quitar foto
+                  </button>
+                  {profile.cedula && (
+                    <button
+                      type="button"
+                      onClick={() => { setShowBadgeModal(true); }}
+                      className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-brand hover:underline"
+                    >
+                      <IdCard className="h-3.5 w-3.5" />
+                      Ver carné
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
+
+          {isTrainer && trainerProfile && (
+            <div className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 space-y-1">
+              <p className="text-xs font-bold text-zinc-900 dark:text-white">Perfil profesional</p>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
+              </p>
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
+              </p>
+              {trainerProfile.specialty && (
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Especialidad: <strong>{trainerProfile.specialty}</strong>
+                </p>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSaveProfile} className="space-y-3">
             <div>
@@ -460,7 +496,7 @@ export default function Profile() {
                 type="tel"
                 inputMode="tel"
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                onChange={(e) => { setForm({ ...form, phone: e.target.value }); }}
                 placeholder="+58 412 0000000"
               />
             </div>
@@ -469,7 +505,7 @@ export default function Profile() {
               <Input
                 type="date"
                 value={form.dob}
-                onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                onChange={(e) => { setForm({ ...form, dob: e.target.value }); }}
               />
             </div>
             <div className="grid grid-cols-2 gap-2.5">
@@ -479,7 +515,7 @@ export default function Profile() {
                   type="number"
                   step="0.1"
                   value={form.initial_weight}
-                  onChange={(e) => setForm({ ...form, initial_weight: e.target.value })}
+                  onChange={(e) => { setForm({ ...form, initial_weight: e.target.value }); }}
                 />
               </div>
               <div>
@@ -488,7 +524,7 @@ export default function Profile() {
                   type="number"
                   step="0.1"
                   value={form.height}
-                  onChange={(e) => setForm({ ...form, height: e.target.value })}
+                  onChange={(e) => { setForm({ ...form, height: e.target.value }); }}
                 />
               </div>
             </div>
@@ -499,7 +535,7 @@ export default function Profile() {
               </Label>
               <Textarea
                 value={form.goal}
-                onChange={(e) => setForm({ ...form, goal: e.target.value })}
+                onChange={(e) => { setForm({ ...form, goal: e.target.value }); }}
                 rows={2}
                 className="rounded-xl px-3 py-2.5 text-sm min-h-[4.5rem] resize-none"
                 placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
@@ -589,7 +625,7 @@ export default function Profile() {
               title="Sin mediciones de peso"
               description="Registra tu primera medición para ver tu evolución."
               action={
-                <Button size="sm" onClick={() => setIsAddingMeasurement(true)}>
+                <Button size="sm" onClick={() => { setIsAddingMeasurement(true); }}>
                   <Plus className="h-4 w-4" />
                   Nueva medición
                 </Button>
@@ -609,7 +645,7 @@ export default function Profile() {
             type="button"
             size="sm"
             className="h-9 w-9 shrink-0 p-0 min-h-9 sm:h-11 sm:min-h-11 sm:w-auto sm:px-3"
-            onClick={() => setIsAddingMeasurement(true)}
+            onClick={() => { setIsAddingMeasurement(true); }}
             aria-label="Nueva medición"
           >
             <Plus className="h-4 w-4" />
@@ -665,7 +701,7 @@ export default function Profile() {
             title="Sin mediciones registradas"
             description="Añade tu primera medición para hacer seguimiento de tu progreso."
             action={
-              <Button size="sm" onClick={() => setIsAddingMeasurement(true)}>
+              <Button size="sm" onClick={() => { setIsAddingMeasurement(true); }}>
                 <Plus className="h-4 w-4" />
                 Nueva medición
               </Button>
@@ -749,7 +785,7 @@ export default function Profile() {
               id="current_password"
               autoComplete="current-password"
               value={passwordForm.current_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              onChange={(e) => { setPasswordForm({ ...passwordForm, current_password: e.target.value }); }}
               required
             />
           </div>
@@ -759,7 +795,7 @@ export default function Profile() {
               id="new_password"
               autoComplete="new-password"
               value={passwordForm.new_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+              onChange={(e) => { setPasswordForm({ ...passwordForm, new_password: e.target.value }); }}
               minLength={8}
               required
             />
@@ -797,7 +833,7 @@ export default function Profile() {
               id="confirm_password"
               autoComplete="new-password"
               value={passwordForm.confirm_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+              onChange={(e) => { setPasswordForm({ ...passwordForm, confirm_password: e.target.value }); }}
               required
             />
           </div>
@@ -829,7 +865,7 @@ export default function Profile() {
           <Button
             type="button"
             variant="ghost"
-            onClick={() => setShowRemoveAvatarModal(false)}
+            onClick={() => { setShowRemoveAvatarModal(false); }}
             disabled={avatarRemoving}
           >
             Cancelar
@@ -846,9 +882,28 @@ export default function Profile() {
         </div>
       </Modal>
 
+      <MemberBadgeModal
+        open={showBadgeModal}
+        onClose={() => { setShowBadgeModal(false); }}
+        member={
+          profile && profile.cedula
+            ? {
+                id: profile.id,
+                full_name: profile.full_name,
+                email: profile.email,
+                cedula: profile.cedula,
+                profile_image: profile.profile_image,
+                membership_name: subscription?.membership_name ?? null,
+                training_shift: profile.training_shift ?? null,
+                role: user.role,
+              }
+            : null
+        }
+      />
+
       <Modal
         open={isAddingMeasurement}
-        onClose={() => setIsAddingMeasurement(false)}
+        onClose={() => { setIsAddingMeasurement(false); }}
         title="Nueva medición"
         maxWidth="xl"
         scrollable
@@ -862,7 +917,7 @@ export default function Profile() {
             <Input
               type="date"
               value={measurementForm.date}
-              onChange={(e) => setMeasurementForm({ ...measurementForm, date: e.target.value })}
+              onChange={(e) => { setMeasurementForm({ ...measurementForm, date: e.target.value }); }}
               required
             />
           </div>
@@ -873,7 +928,7 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.weight}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, weight: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, weight: e.target.value }); }}
               />
             </div>
             <div>
@@ -883,7 +938,7 @@ export default function Profile() {
                 step="0.1"
                 value={measurementForm.body_fat_percentage}
                 onChange={(e) =>
-                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value })
+                  { setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value }); }
                 }
               />
             </div>
@@ -893,7 +948,7 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.waist}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, waist: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, waist: e.target.value }); }}
               />
             </div>
             <div>
@@ -902,7 +957,7 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.arm}
-                onChange={(e) => setMeasurementForm({ ...measurementForm, arm: e.target.value })}
+                onChange={(e) => { setMeasurementForm({ ...measurementForm, arm: e.target.value }); }}
               />
             </div>
           </div>

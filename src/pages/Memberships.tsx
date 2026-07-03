@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge, EmptyState } from '../components/ui';
 
 interface Membership {
@@ -104,7 +105,25 @@ export default function Memberships() {
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
       />
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap gap-2 justify-end">
+        <Link
+          to="/members?shift=diurno"
+          className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-brand px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800"
+        >
+          Miembros diurno
+        </Link>
+        <Link
+          to="/members?shift=vespertino"
+          className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-brand px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800"
+        >
+          Miembros vespertino
+        </Link>
+        <Link
+          to="/members?shift=nocturno"
+          className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-brand px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800"
+        >
+          Miembros nocturno
+        </Link>
         <Button
           size="sm"
           className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
@@ -153,7 +172,7 @@ export default function Memberships() {
                       variant="ghost"
                       size="sm"
                       className="h-9 w-9 px-0 rounded-xl"
-                      onClick={() => openEdit(plan)}
+                      onClick={() => { openEdit(plan); }}
                       aria-label="Editar plan"
                     >
                       <Pencil className="h-4 w-4" />
@@ -163,7 +182,7 @@ export default function Memberships() {
                       variant="danger"
                       size="sm"
                       className="h-9 w-9 px-0 rounded-xl"
-                      onClick={() => setDeleteTarget(plan)}
+                      onClick={() => { setDeleteTarget(plan); }}
                       aria-label="Eliminar plan"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -190,7 +209,7 @@ export default function Memberships() {
 
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); }}
         title={<>{editingId ? 'Editar' : 'Nuevo'} <span className="text-brand">plan</span></>}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -199,7 +218,7 @@ export default function Memberships() {
             <Input
               required
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => { setForm({ ...form, name: e.target.value }); }}
               placeholder="Ej: Mensual"
             />
           </div>
@@ -210,7 +229,7 @@ export default function Memberships() {
               required
               min={1}
               value={form.duration_days}
-              onChange={(e) => setForm({ ...form, duration_days: e.target.value })}
+              onChange={(e) => { setForm({ ...form, duration_days: e.target.value }); }}
             />
           </div>
           <div>
@@ -221,7 +240,7 @@ export default function Memberships() {
               min={0.01}
               step={0.01}
               value={form.price_usd}
-              onChange={(e) => setForm({ ...form, price_usd: e.target.value })}
+              onChange={(e) => { setForm({ ...form, price_usd: e.target.value }); }}
             />
           </div>
           {error && <p className="text-xs font-bold text-red-500 text-center">{error}</p>}
@@ -243,7 +262,7 @@ export default function Memberships() {
             </p>
             {deleteError && <p className="text-sm font-bold text-red-500 mb-4">{deleteError}</p>}
             <div className="flex gap-4">
-              <Button type="button" variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)}>
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => { setDeleteTarget(null); }}>
                 Cancelar
               </Button>
               <Button type="button" variant="danger" className="flex-1" onClick={handleDelete}>

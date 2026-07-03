@@ -3,7 +3,8 @@ import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useExercisesQuery, useInvalidateExercises, type Exercise } from '../hooks/queries/useExercisesQuery';
 import { Plus, Trash2, Edit, Video, BookOpen, Dumbbell, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput, BackToDashboardLink } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Badge, Spinner, EmptyState, Select, Textarea, SearchInput, BackToDashboardLink, FilterChips } from '../components/ui';
+import { MUSCLE_GROUPS, filterExercises } from '../lib/exerciseMuscleGroups';
 import { ExerciseVideoPlayer } from '../components/exercise/ExerciseVideoPlayer';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { Link } from 'react-router-dom';
@@ -14,6 +15,7 @@ export default function Exercises() {
   const invalidateExercises = useInvalidateExercises();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
+  const [muscleFilter, setMuscleFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -105,10 +107,7 @@ export default function Exercises() {
     }
   };
 
-  const filteredExercises = exercises.filter(ex => 
-    ex.name.toLowerCase().includes(search.toLowerCase()) || 
-    ex.muscle_group.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredExercises = filterExercises(exercises, { search, muscleGroup: muscleFilter });
 
   const handleVideoUrlChange = (url: string) => {
     const embed = getYouTubeEmbedUrl(url);
@@ -149,18 +148,27 @@ export default function Exercises() {
           containerClassName="flex-1 min-w-0"
           placeholder="Buscar por nombre o grupo muscular..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); }}
         />
         <Button
           size="sm"
           className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
-          onClick={() => handleOpenModal()}
+          onClick={() => { handleOpenModal(); }}
           aria-label="Nuevo ejercicio"
         >
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Nuevo</span>
         </Button>
       </div>
+
+      <FilterChips
+        options={[
+          { value: '', label: 'Todos' },
+          ...MUSCLE_GROUPS.map((group) => ({ value: group, label: group })),
+        ]}
+        value={muscleFilter}
+        onChange={setMuscleFilter}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
         {filteredExercises.length === 0 ? (
@@ -171,7 +179,7 @@ export default function Exercises() {
               description={search ? `No hay ejercicios que coincidan con «${search}».` : 'Agrega movimientos al catálogo para usarlos en tus rutinas.'}
               action={
                 !search ? (
-                  <Button onClick={() => handleOpenModal()}>
+                  <Button onClick={() => { handleOpenModal(); }}>
                     <Plus className="h-4 w-4" />
                     Nuevo ejercicio
                   </Button>
@@ -203,7 +211,7 @@ export default function Exercises() {
               <div className="flex gap-0.5 shrink-0">
                 <button
                   type="button"
-                  onClick={() => handleOpenModal(exercise)}
+                  onClick={() => { handleOpenModal(exercise); }}
                   className="h-9 w-9 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-all"
                   aria-label={`Editar ${exercise.name}`}
                 >
@@ -272,7 +280,7 @@ export default function Exercises() {
             <div className="flex justify-end mt-2">
               <button
                 type="button"
-                onClick={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
+                onClick={() => { setExpandedId(expandedId === exercise.id ? null : exercise.id); }}
                 className={`inline-flex items-center justify-center gap-1 rounded-lg text-xs font-semibold transition-all ${
                   expandedId === exercise.id
                     ? 'h-9 px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900'
@@ -304,7 +312,7 @@ export default function Exercises() {
           <p className="text-sm text-red-500 mb-4">{deleteError}</p>
         )}
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteTarget(null); }} disabled={deleting}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={handleDelete} disabled={deleting}>
@@ -315,7 +323,7 @@ export default function Exercises() {
 
       <Modal
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => { setIsModalOpen(false); }}
         maxWidth="xl"
         scrollable
         title={<>{editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-brand">EJERCICIO</span></>}
@@ -329,16 +337,16 @@ export default function Exercises() {
                     type="text"
                     placeholder="Ej: Press de Banca"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => { setFormData({...formData, name: e.target.value}); }}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Grupo Muscular</Label>
                   <Select
                     value={formData.muscle_group}
-                    onChange={(e) => setFormData({...formData, muscle_group: e.target.value})}
+                    onChange={(e) => { setFormData({...formData, muscle_group: e.target.value}); }}
                   >
-                    {['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Cardio', 'Full Body'].map(g => (
+                    {MUSCLE_GROUPS.map(g => (
                       <option key={g} value={g}>{g}</option>
                     ))}
                   </Select>
@@ -351,7 +359,7 @@ export default function Exercises() {
                   placeholder="Describe brevemente el objetivo del ejercicio..."
                   rows={2}
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => { setFormData({...formData, description: e.target.value}); }}
                 />
               </div>
 
@@ -360,7 +368,7 @@ export default function Exercises() {
                 <Textarea
                   rows={4}
                   value={formData.execution}
-                  onChange={(e) => setFormData({...formData, execution: e.target.value})}
+                  onChange={(e) => { setFormData({...formData, execution: e.target.value}); }}
                 />
               </div>
 
@@ -373,7 +381,7 @@ export default function Exercises() {
                     className="pl-12 font-mono text-sm"
                     placeholder="Enlace de YouTube (opcional)..."
                     value={formData.video_url}
-                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    onChange={(e) => { handleVideoUrlChange(e.target.value); }}
                   />
                 </div>
                 <input
@@ -381,7 +389,7 @@ export default function Exercises() {
                   accept="video/*"
                   className="hidden"
                   id="video-upload"
-                  onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                  onChange={(e) => { setVideoFile(e.target.files?.[0] || null); }}
                 />
                 <label
                   htmlFor="video-upload"
@@ -400,7 +408,7 @@ export default function Exercises() {
 
               {saveError && <p className="text-sm text-red-500">{saveError}</p>}
               <div className="pt-4 flex gap-4">
-                <Button type="button" variant="ghost" className="flex-1" size="lg" onClick={() => setIsModalOpen(false)}>
+                <Button type="button" variant="ghost" className="flex-1" size="lg" onClick={() => { setIsModalOpen(false); }}>
                   Cancelar
                 </Button>
                 <Button type="submit" className="flex-1 min-h-[48px]" size="lg" disabled={saving}>

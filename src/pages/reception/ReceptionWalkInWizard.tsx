@@ -3,6 +3,7 @@ import { UserPlus, ChevronRight, ChevronLeft, CheckCircle, Copy, Fingerprint } f
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { ShiftFilter } from '../../components/trainers/ShiftFilter';
 
 interface MembershipPlan {
   id: number;
@@ -51,14 +52,15 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     method: 'efectivo',
     reference: '',
     check_in: true,
+    training_shift: '' as '' | 'diurno' | 'vespertino' | 'nocturno',
   });
 
   useEffect(() => {
     apiFetch('/api/memberships')
       .then((res) => parseJsonResponse<MembershipPlan[]>(res))
-      .then((data) => setPlans(Array.isArray(data) ? data : []))
-      .catch(() => setPlans([]))
-      .finally(() => setLoadingPlans(false));
+      .then((data) => { setPlans(Array.isArray(data) ? data : []); })
+      .catch(() => { setPlans([]); })
+      .finally(() => { setLoadingPlans(false); });
   }, []);
 
   const selectedPlan = useMemo(
@@ -107,6 +109,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       method: 'efectivo',
       reference: '',
       check_in: true,
+      training_shift: '',
     });
   };
 
@@ -136,6 +139,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           method: form.method,
           reference: form.reference.trim() || null,
           check_in: form.check_in,
+          training_shift: form.training_shift || null,
         }),
       });
       const data = await parseJsonResponse<WalkInSuccess & { error?: string }>(res);
@@ -157,7 +161,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     try {
       await navigator.clipboard.writeText(success.temporary_password);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => { setCopied(false); }, 2000);
     } catch {
       // ignore
     }
@@ -253,7 +257,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Nombre completo</Label>
             <Input
               value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              onChange={(e) => { setForm({ ...form, full_name: e.target.value }); }}
               placeholder="Ej: Juan Pérez"
               className="min-h-[48px] text-base"
             />
@@ -262,7 +266,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Cédula (obligatoria)</Label>
             <CedulaInput
               value={form.cedula}
-              onChange={(value) => setForm({ ...form, cedula: value })}
+              onChange={(value) => { setForm({ ...form, cedula: value }); }}
               className="min-h-[48px] text-base font-bold tracking-wider"
             />
           </div>
@@ -271,7 +275,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Input
               type="email"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => { setForm({ ...form, email: e.target.value }); }}
               placeholder="juan@ejemplo.com"
               className="min-h-[48px] text-base"
             />
@@ -282,9 +286,17 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               type="tel"
               inputMode="tel"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => { setForm({ ...form, phone: e.target.value }); }}
               placeholder="0414-0000000"
               className="min-h-[48px] text-base"
+            />
+          </div>
+          <div>
+            <Label>Turno de entrenamiento</Label>
+            <ShiftFilter
+              includeAll={false}
+              value={form.training_shift}
+              onChange={(shift) => { setForm({ ...form, training_shift: shift }); }}
             />
           </div>
         </div>
@@ -302,7 +314,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
                 <button
                   key={plan.id}
                   type="button"
-                  onClick={() => setForm({ ...form, membership_id: String(plan.id) })}
+                  onClick={() => { setForm({ ...form, membership_id: String(plan.id) }); }}
                   className={cn(
                     'text-left p-4 rounded-2xl border transition-all min-h-[88px] touch-manipulation',
                     form.membership_id === String(plan.id)
@@ -326,7 +338,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Método de pago</Label>
             <Select
               value={form.method}
-              onChange={(e) => setForm({ ...form, method: e.target.value })}
+              onChange={(e) => { setForm({ ...form, method: e.target.value }); }}
               className="min-h-[48px] text-base w-full"
             >
               {PAYMENT_METHODS.map((m) => (
@@ -338,7 +350,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Referencia (opcional)</Label>
             <Input
               value={form.reference}
-              onChange={(e) => setForm({ ...form, reference: e.target.value })}
+              onChange={(e) => { setForm({ ...form, reference: e.target.value }); }}
               placeholder="Nº de referencia o nota"
               className="min-h-[48px] text-base"
             />
@@ -353,7 +365,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <input
               type="checkbox"
               checked={form.check_in}
-              onChange={(e) => setForm({ ...form, check_in: e.target.checked })}
+              onChange={(e) => { setForm({ ...form, check_in: e.target.checked }); }}
               className="h-5 w-5 rounded accent-brand"
             />
             <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
