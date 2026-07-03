@@ -18,7 +18,17 @@ import {
 } from '../hooks/queries/useChatQuery';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { getExpiryBadgeInfo } from '../lib/expiryUtils';
-import { Badge, Button, EmptyState, Modal, PageHeader, SearchInput, Spinner, BackToDashboardLink, PageState } from '../components/ui';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Modal,
+  PageHeader,
+  SearchInput,
+  Spinner,
+  BackToDashboardLink,
+  PageState,
+} from '../components/ui';
 import { fieldClassName } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import { toDisplayErrorMessage } from '../lib/api';
@@ -42,8 +52,7 @@ function resolveBubbleSide(
   if (message.kind === 'system') return 'center';
 
   const viewerIsStaff = viewerRole != null && isStaffRole(viewerRole);
-  const senderIsStaff =
-    message.sender_role != null && isStaffRole(message.sender_role);
+  const senderIsStaff = message.sender_role != null && isStaffRole(message.sender_role);
 
   if (viewerIsStaff) {
     return senderIsStaff ? 'end' : 'start';
@@ -64,8 +73,7 @@ function canManageOwnMessage(
   if (!userId || message.kind !== 'text' || message.event_type !== 'manual') {
     return false;
   }
-  const isSender =
-    message.sender_id != null && Number(message.sender_id) === Number(userId);
+  const isSender = message.sender_id != null && Number(message.sender_id) === Number(userId);
   if (!isSender && !message.is_mine) return false;
   return resolveBubbleSide(message, viewerRole) === 'end';
 }
@@ -90,9 +98,7 @@ const ChatBubble = memo(function ChatBubble({
   const manageable = canManageOwnMessage(message, user?.id, user?.role);
   const trimmedDraft = draft.trim();
   const canSave =
-    trimmedDraft.length > 0 &&
-    trimmedDraft !== message.body.trim() &&
-    !editMessage.isPending;
+    trimmedDraft.length > 0 && trimmedDraft !== message.body.trim() && !editMessage.isPending;
   const previewBody =
     message.body.length > 120 ? `${message.body.slice(0, 120).trim()}…` : message.body;
 
@@ -135,10 +141,14 @@ const ChatBubble = memo(function ChatBubble({
 
   if (isSystem) {
     return (
-      <div className="w-full flex justify-center my-1.5 px-1">
+      <div className="my-1.5 flex w-full justify-center px-1">
         <div className="w-full max-w-md rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2 text-center">
-          <p className="text-[11px] font-medium text-sky-700 dark:text-sky-300 leading-snug">{message.body}</p>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-0.5">{formatMessageTime(message.created_at)}</p>
+          <p className="text-[11px] leading-snug font-medium text-sky-700 dark:text-sky-300">
+            {message.body}
+          </p>
+          <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
+            {formatMessageTime(message.created_at)}
+          </p>
         </div>
       </div>
     );
@@ -147,22 +157,24 @@ const ChatBubble = memo(function ChatBubble({
   return (
     <div
       className={clsx(
-        'w-full flex mb-1.5 px-0.5 group',
+        'group mb-1.5 flex w-full px-0.5',
         isOutgoing ? 'justify-end' : 'justify-start'
       )}
     >
       {isEditing ? (
         <div
           className={clsx(
-            'w-full rounded-2xl border bg-white dark:bg-zinc-900 shadow-sm p-3',
+            'w-full rounded-2xl border bg-white p-3 shadow-sm dark:bg-zinc-900',
             isOutgoing
-              ? 'max-w-md border-brand/20 dark:border-brand/40'
+              ? 'border-brand/20 dark:border-brand/40 max-w-md'
               : 'max-w-md border-zinc-200 dark:border-zinc-700'
           )}
         >
           <textarea
             value={draft}
-            onChange={(e) => { setDraft(e.target.value); }}
+            onChange={(e) => {
+              setDraft(e.target.value);
+            }}
             rows={3}
             className={cn(
               fieldClassName,
@@ -180,7 +192,7 @@ const ChatBubble = memo(function ChatBubble({
               }
             }}
           />
-          <div className="flex items-center justify-end gap-1.5 mt-2">
+          <div className="mt-2 flex items-center justify-end gap-1.5">
             <button
               type="button"
               onClick={cancelEdit}
@@ -193,7 +205,7 @@ const ChatBubble = memo(function ChatBubble({
               type="button"
               disabled={!canSave}
               onClick={() => void saveEdit()}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg brand-solid brand-solid-hover disabled:opacity-40 disabled:cursor-not-allowed"
+              className="brand-solid brand-solid-hover inline-flex h-8 w-8 items-center justify-center rounded-lg disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Guardar cambios"
             >
               <Check className="h-4 w-4" />
@@ -203,7 +215,7 @@ const ChatBubble = memo(function ChatBubble({
       ) : (
         <div
           className={clsx(
-            'flex flex-col gap-1 max-w-[88%] sm:max-w-[72%]',
+            'flex max-w-[88%] flex-col gap-1 sm:max-w-[72%]',
             isOutgoing ? 'items-end' : 'items-start'
           )}
         >
@@ -211,12 +223,14 @@ const ChatBubble = memo(function ChatBubble({
             <div
               className={clsx(
                 'flex items-center gap-1',
-                'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'
+                'opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100'
               )}
             >
               <button
                 type="button"
-                onClick={() => { setIsEditing(true); }}
+                onClick={() => {
+                  setIsEditing(true);
+                }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 aria-label="Editar mensaje"
               >
@@ -224,7 +238,9 @@ const ChatBubble = memo(function ChatBubble({
               </button>
               <button
                 type="button"
-                onClick={() => { setShowDeleteConfirm(true); }}
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                }}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
                 aria-label="Eliminar mensaje"
               >
@@ -234,19 +250,21 @@ const ChatBubble = memo(function ChatBubble({
           )}
           <div
             className={clsx(
-              'rounded-xl px-3 py-2 w-fit max-w-full',
+              'w-fit max-w-full rounded-xl px-3 py-2',
               isOutgoing
                 ? 'brand-solid rounded-br-sm'
-                : 'bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700 text-zinc-800 dark:text-zinc-100 rounded-bl-sm'
+                : 'rounded-bl-sm border border-zinc-200/80 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
             )}
           >
             {!isOutgoing && message.sender_name && (
-              <p className="text-[10px] font-bold opacity-70 mb-0.5">{message.sender_name}</p>
+              <p className="mb-0.5 text-[10px] font-bold opacity-70">{message.sender_name}</p>
             )}
-            <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-snug">{message.body}</p>
+            <p className="text-xs leading-snug break-words whitespace-pre-wrap sm:text-sm">
+              {message.body}
+            </p>
             <p
               className={clsx(
-                'text-[10px] mt-1 text-right',
+                'mt-1 text-right text-[10px]',
                 isOutgoing ? 'opacity-70' : 'text-zinc-400 dark:text-zinc-300'
               )}
             >
@@ -263,18 +281,20 @@ const ChatBubble = memo(function ChatBubble({
         title="Eliminar mensaje"
         maxWidth="sm"
       >
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-          ¿Eliminar este mensaje?
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2 line-clamp-3">
+        <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">¿Eliminar este mensaje?</p>
+        <p className="mb-2 line-clamp-3 text-xs text-zinc-500 dark:text-zinc-400">
           «{previewBody}»
         </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6">Esta acción no se puede deshacer.</p>
+        <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">
+          Esta acción no se puede deshacer.
+        </p>
         <div className="flex gap-3">
           <Button
             variant="ghost"
             className="flex-1"
-            onClick={() => { setShowDeleteConfirm(false); }}
+            onClick={() => {
+              setShowDeleteConfirm(false);
+            }}
             disabled={deleteMessage.isPending}
           >
             Cancelar
@@ -302,20 +322,27 @@ function ChatComposer({
 }) {
   const [body, setBody] = useState('');
   const sendMessage = useSendChatMessage();
+  const toast = useToastOptional();
 
   const handleSend = async () => {
     const trimmed = body.trim();
     if (!trimmed || sendMessage.isPending) return;
-    await sendMessage.mutateAsync({ conversationId, body: trimmed });
-    setBody('');
+    try {
+      await sendMessage.mutateAsync({ conversationId, body: trimmed });
+      setBody('');
+    } catch (err) {
+      toast?.error(toDisplayErrorMessage(err, 'No se pudo enviar el mensaje'));
+    }
   };
 
   return (
-    <div className="border-t border-zinc-100 dark:border-zinc-800 p-2.5 sm:p-3 bg-white dark:bg-zinc-900 shrink-0">
-      <div className="flex h-11 gap-2 items-center w-full min-w-0">
+    <div className="shrink-0 border-t border-zinc-100 bg-white p-2.5 sm:p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex h-11 w-full min-w-0 items-center gap-2">
         <textarea
           value={body}
-          onChange={(e) => { setBody(e.target.value); }}
+          onChange={(e) => {
+            setBody(e.target.value);
+          }}
           placeholder="Escribe un mensaje…"
           rows={1}
           disabled={disabled || sendMessage.isPending}
@@ -327,7 +354,7 @@ function ChatComposer({
           }}
           className={cn(
             fieldClassName,
-            'flex-1 min-w-0 !h-11 !min-h-11 !max-h-11 resize-none rounded-xl py-2 px-3 text-sm leading-5'
+            '!h-11 !max-h-11 !min-h-11 min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm leading-5'
           )}
         />
         <Button
@@ -335,7 +362,7 @@ function ChatComposer({
           size="sm"
           disabled={disabled || !body.trim() || sendMessage.isPending}
           onClick={() => void handleSend()}
-          className="shrink-0 h-11 w-11 min-h-11 min-w-11 rounded-xl p-0"
+          className="h-11 min-h-11 w-11 min-w-11 shrink-0 rounded-xl p-0"
           aria-label="Enviar mensaje"
         >
           <Send className="h-4 w-4" />
@@ -363,7 +390,7 @@ const ConversationListItem = memo(function ConversationListItem({
       type="button"
       onClick={onSelect}
       className={clsx(
-        'w-full text-left px-2.5 py-2 rounded-lg border transition-colors',
+        'w-full rounded-lg border px-2.5 py-2 text-left transition-colors',
         selected
           ? 'border-brand/40 bg-brand/5'
           : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
@@ -371,8 +398,12 @@ const ConversationListItem = memo(function ConversationListItem({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{item.member_name}</p>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-300 truncate">{item.member_cedula}</p>
+          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+            {item.member_name}
+          </p>
+          <p className="truncate text-[10px] text-zinc-400 dark:text-zinc-300">
+            {item.member_cedula}
+          </p>
         </div>
         {item.unread_count > 0 && (
           <span className="nav-badge brand-solid shrink-0">
@@ -381,7 +412,9 @@ const ConversationListItem = memo(function ConversationListItem({
         )}
       </div>
       {item.last_message_preview && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate">{item.last_message_preview}</p>
+        <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+          {item.last_message_preview}
+        </p>
       )}
       {expiryBadge && (
         <Badge className={clsx('mt-2', expiryBadge.className)}>{expiryBadge.label}</Badge>
@@ -411,20 +444,26 @@ function StaffChatView() {
     expiringOnly,
     true
   );
-  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(selectedId, selectedId != null);
+  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
+    selectedId,
+    selectedId != null
+  );
 
   useEffect(() => {
     if (!memberParam || openWithMember.isPending) return;
     const memberId = parseInt(memberParam, 10);
     if (!Number.isFinite(memberId)) return;
 
-    void openWithMember.mutateAsync(memberId).then((conversation) => {
-      setSelectedId(conversation.id);
-      setSearchParams({}, { replace: true });
-    }).catch((err) => {
-      toast?.error(toDisplayErrorMessage(err, 'No puedes abrir este chat'));
-      setSearchParams({}, { replace: true });
-    });
+    void openWithMember
+      .mutateAsync(memberId)
+      .then((conversation) => {
+        setSelectedId(conversation.id);
+        setSearchParams({}, { replace: true });
+      })
+      .catch((err) => {
+        toast?.error(toDisplayErrorMessage(err, 'No puedes abrir este chat'));
+        setSearchParams({}, { replace: true });
+      });
   }, [memberParam, openWithMember, setSearchParams, toast]);
 
   useEffect(() => {
@@ -451,29 +490,35 @@ function StaffChatView() {
   };
 
   const conversationListPanel = (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden min-h-[240px] lg:min-h-0">
-      <div className="p-2.5 border-b border-zinc-100 dark:border-zinc-800 space-y-2">
+    <div className="flex min-h-[240px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:min-h-0 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="space-y-2 border-b border-zinc-100 p-2.5 dark:border-zinc-800">
         <SearchInput
           value={search}
-          onChange={(e) => { setSearch(e.target.value); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+          }}
           placeholder={isTrainer ? 'Buscar cliente…' : 'Buscar miembro…'}
         />
         <button
           type="button"
-          onClick={() => { setExpiringOnly((v) => !v); }}
+          onClick={() => {
+            setExpiringOnly((v) => !v);
+          }}
           className={clsx(
-            'text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors',
+            'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
             expiringOnly
               ? 'border-brand/40 bg-brand/10 text-brand'
-              : 'border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
+              : 'border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'
           )}
         >
           Por vencer ({alertDays}d)
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 space-y-1 overflow-y-auto p-2">
         {loadingList ? (
-          <div className="flex justify-center py-8"><Spinner /></div>
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
         ) : conversations.length === 0 ? (
           <EmptyState
             icon={MessageSquare}
@@ -491,7 +536,9 @@ function StaffChatView() {
               item={item}
               selected={item.id === selectedId}
               alertDays={alertDays}
-              onSelect={() => { handleSelectConversation(item.id); }}
+              onSelect={() => {
+                handleSelectConversation(item.id);
+              }}
             />
           ))
         )}
@@ -500,24 +547,36 @@ function StaffChatView() {
   );
 
   const chatPanel = selected ? (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden min-h-[280px] lg:min-h-0 lg:h-full">
-      <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+    <div className="flex min-h-[280px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-full lg:min-h-0 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
         <button
           type="button"
           onClick={handleBackToList}
-          className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 lg:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
           aria-label="Volver a conversaciones"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate">{selected.member_name}</p>
+          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+            {selected.member_name}
+          </p>
           <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{selected.member_cedula}</p>
         </div>
       </div>
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         {loadingMessages && !messagesData ? (
-          <div className="flex justify-center py-8"><Spinner /></div>
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
         ) : (
           <Virtuoso
             ref={virtuosoRef}
@@ -541,7 +600,11 @@ function StaffChatView() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mensajes <span className="text-brand">del gym</span></>}
+        title={
+          <>
+            Mensajes <span className="text-brand">del gym</span>
+          </>
+        }
         subtitle={
           isTrainer
             ? 'Solo clientes con rutina asignada por ti'
@@ -550,18 +613,20 @@ function StaffChatView() {
         action={<BackToDashboardLink />}
       />
 
-      <div className="lg:grid lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-2.5 sm:gap-3 h-[calc(100dvh-10.5rem)] sm:h-[calc(100dvh-11.5rem)] max-h-[720px]">
+      <div className="h-[calc(100dvh-10.5rem)] max-h-[720px] gap-2.5 sm:h-[calc(100dvh-11.5rem)] sm:gap-3 lg:grid lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
         <div className={clsx(showChatOnMobile && selected ? 'hidden lg:block' : 'block', 'h-full')}>
           {conversationListPanel}
         </div>
-        <div className={clsx(!showChatOnMobile || !selected ? 'hidden lg:block' : 'block', 'h-full')}>
+        <div
+          className={clsx(!showChatOnMobile || !selected ? 'hidden lg:block' : 'block', 'h-full')}
+        >
           {chatPanel ?? (
-            <div className="hidden lg:flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-col overflow-hidden h-full items-center justify-center p-4">
+            <div className="hidden h-full flex-col items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 lg:flex dark:border-zinc-800 dark:bg-zinc-900">
               <EmptyState
                 icon={MessageSquare}
                 title="Selecciona una conversación"
                 description="Elige un miembro de la lista."
-                className="border-0 shadow-none bg-transparent p-0"
+                className="border-0 bg-transparent p-0 shadow-none"
               />
             </div>
           )}
@@ -590,7 +655,7 @@ function MemberChatView() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando mensajes…</p>
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando mensajes…</p>
       </PageState>
     );
   }
@@ -601,26 +666,34 @@ function MemberChatView() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mensajes <span className="text-brand">con el gym</span></>}
+        title={
+          <>
+            Mensajes <span className="text-brand">con el gym</span>
+          </>
+        }
         subtitle="Avisos de membresía, pagos y rutinas"
         action={<BackToDashboardLink />}
       />
 
       {!loadingMessages && messageCount > 0 && (
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 px-0.5">
+        <p className="px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           {messageCount} mensaje{messageCount !== 1 ? 's' : ''}
         </p>
       )}
 
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col overflow-hidden h-[calc(100dvh-10.5rem)] sm:h-[calc(100dvh-11rem)] max-h-[640px]">
-        <div className="flex-1 min-h-0">
+      <div className="member-chat-panel flex max-h-[640px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-[calc(100dvh-11rem)] dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="min-h-0 flex-1">
           {loadingMessages && !messagesData ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
           ) : messagesData && messagesData.messages.length === 0 ? (
-            <div className="h-full min-h-[10rem] flex flex-col items-center justify-center text-center px-4 py-6">
-              <MessageSquare className="h-8 w-8 text-zinc-300 dark:text-zinc-600 mb-2" />
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Sin mensajes aún</p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 max-w-xs leading-snug">
+            <div className="flex h-full min-h-[10rem] flex-col items-center justify-center px-4 py-6 text-center">
+              <MessageSquare className="mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
+              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                Sin mensajes aún
+              </p>
+              <p className="mt-1 max-w-xs text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
                 Cuando haya avisos o respuestas del staff, aparecerán aquí.
               </p>
             </div>
@@ -630,7 +703,7 @@ function MemberChatView() {
               style={{ height: '100%' }}
               data={messagesData?.messages ?? []}
               itemContent={(_index, message) => (
-                <div className="px-2.5 sm:px-3 pt-2.5">
+                <div className="px-2.5 pt-2.5 sm:px-3">
                   <ChatBubble message={message} conversationId={conversation.id} />
                 </div>
               )}

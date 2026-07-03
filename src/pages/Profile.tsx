@@ -24,10 +24,26 @@ import {
   Bell,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
+import {
+  Button,
+  Card,
+  Modal,
+  PageHeader,
+  Label,
+  Input,
+  Spinner,
+  Textarea,
+  PasswordInput,
+  passwordStrength,
+  SegmentedControl,
+  EmptyState,
+  PageState,
+  BackToDashboardLink,
+} from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
 import { cn } from '../lib/utils';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useToastOptional } from '../context/ToastContext';
 import {
   expiryBannerClasses,
   formatExpiryCountdown,
@@ -63,12 +79,16 @@ export default function Profile() {
   const { data: trainerProfile } = useTrainerMeQuery(isTrainer && !!user);
   const { data: profile, isPending: profileLoading } = useProfileQuery(user?.id);
   const { data: measurements = [], isPending: measLoading } = useProfileMeasurementsQuery(user?.id);
-  const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(user?.id, isMember);
+  const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(
+    user?.id,
+    isMember
+  );
   const loading = profileLoading || measLoading || (isMember && histLoading);
-  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad' | 'apariencia'>('datos');
+  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad' | 'apariencia'>(
+    'datos'
+  );
   const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState('');
-  const [saveError, setSaveError] = useState('');
+  const toast = useToastOptional();
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarRemoving, setAvatarRemoving] = useState(false);
   const [showRemoveAvatarModal, setShowRemoveAvatarModal] = useState(false);
@@ -164,8 +184,6 @@ export default function Profile() {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
-    setSaveMsg('');
-    setSaveError('');
     try {
       const body: Record<string, unknown> = {
         phone: form.phone.trim() || null,
@@ -191,10 +209,9 @@ export default function Profile() {
       const updated = await parseJsonResponse<UserProfile>(res);
       if (user) invalidateProfile(user.id);
       void updated;
-      setSaveMsg('Perfil actualizado');
-      setTimeout(() => { setSaveMsg(''); }, 3000);
+      toast?.success('Perfil actualizado');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Error al guardar');
+      toast?.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -204,7 +221,6 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     setAvatarUploading(true);
-    setSaveError('');
     try {
       const fd = new FormData();
       fd.append('avatar', file);
@@ -215,8 +231,9 @@ export default function Profile() {
       const data = await parseJsonResponse<{ profile_image: string }>(res);
       if (user) invalidateProfile(user.id);
       void data;
+      toast?.success('Foto actualizada');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Error al subir foto');
+      toast?.error(err instanceof Error ? err.message : 'Error al subir foto');
     } finally {
       setAvatarUploading(false);
       e.target.value = '';
@@ -226,14 +243,14 @@ export default function Profile() {
   const handleAvatarRemove = async () => {
     if (!user) return;
     setAvatarRemoving(true);
-    setSaveError('');
     try {
       const res = await apiFetch(`/api/users/${user.id}/avatar`, { method: 'DELETE' });
       await parseJsonResponse<{ profile_image: null }>(res);
       invalidateProfile(user.id);
       setShowRemoveAvatarModal(false);
+      toast?.success('Foto eliminada');
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Error al quitar foto');
+      toast?.error(err instanceof Error ? err.message : 'Error al quitar foto');
     } finally {
       setAvatarRemoving(false);
     }
@@ -253,7 +270,9 @@ export default function Profile() {
       await parseJsonResponse(res);
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
       setPasswordMsg('Contraseña actualizada correctamente');
-      setTimeout(() => { setPasswordMsg(''); }, 4000);
+      setTimeout(() => {
+        setPasswordMsg('');
+      }, 4000);
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
     } finally {
@@ -301,14 +320,14 @@ export default function Profile() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando perfil…</p>
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando perfil…</p>
       </PageState>
     );
   }
 
   if (!profile || !user) {
     return (
-      <div className="text-center py-16 text-zinc-500 dark:text-zinc-400 text-sm">
+      <div className="py-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
         No se pudo cargar el perfil
       </div>
     );
@@ -320,17 +339,19 @@ export default function Profile() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Mi <span className="text-brand">perfil</span></>}
-        subtitle={user.role === 'member' ? 'Datos, progreso y apariencia' : 'Tu cuenta y apariencia'}
+        title={
+          <>
+            Mi <span className="text-brand">perfil</span>
+          </>
+        }
+        subtitle={
+          user.role === 'member' ? 'Datos, progreso y apariencia' : 'Tu cuenta y apariencia'
+        }
         action={
-          saveMsg ? (
-            <p className="text-xs font-medium text-emerald-600">{saveMsg}</p>
-          ) : saveError ? (
-            <p className="text-xs font-medium text-red-500 max-w-[10rem] sm:max-w-none truncate">{saveError}</p>
-          ) : (isProfileDirty && profileTab === 'datos') || user.role !== 'member' ? (
-            <div className="flex items-center gap-2 shrink-0">
+          (isProfileDirty && profileTab === 'datos') || user.role !== 'member' ? (
+            <div className="flex shrink-0 items-center gap-2">
               {isProfileDirty && profileTab === 'datos' && (
-                <span className="text-[10px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400">
+                <span className="text-[10px] font-semibold text-amber-600 sm:text-xs dark:text-amber-400">
                   Sin guardar
                 </span>
               )}
@@ -345,41 +366,51 @@ export default function Profile() {
         }
       />
 
-      {user.role === 'member' && subscription && shouldShowExpiryAlert(subscription.days_remaining, MEMBER_UI_ALERT_DAYS) && (() => {
-        const severity = getExpirySeverity(subscription.days_remaining, MEMBER_UI_ALERT_DAYS);
-        const classes = expiryBannerClasses(severity);
-        return (
-        <div className={`rounded-xl border px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${classes.container}`}>
-          <div className="flex items-start gap-2 min-w-0">
-            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${severity === 'critical' ? 'text-red-500' : 'text-warning'}`} />
-            <div className="min-w-0">
-              <p className={`text-xs sm:text-sm font-semibold leading-snug ${classes.text}`}>
-                {formatExpiryCountdown(subscription.days_remaining, `plan ${subscription.membership_name}`)}
-              </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
-              </p>
+      {user.role === 'member' &&
+        subscription &&
+        shouldShowExpiryAlert(subscription.days_remaining, MEMBER_UI_ALERT_DAYS) &&
+        (() => {
+          const severity = getExpirySeverity(subscription.days_remaining, MEMBER_UI_ALERT_DAYS);
+          const classes = expiryBannerClasses(severity);
+          return (
+            <div
+              className={`flex flex-col justify-between gap-2 rounded-xl border px-3 py-2.5 sm:flex-row sm:items-center ${classes.container}`}
+            >
+              <div className="flex min-w-0 items-start gap-2">
+                <AlertTriangle
+                  className={`mt-0.5 h-4 w-4 shrink-0 ${severity === 'critical' ? 'text-red-500' : 'text-warning'}`}
+                />
+                <div className="min-w-0">
+                  <p className={`text-xs leading-snug font-semibold sm:text-sm ${classes.text}`}>
+                    {formatExpiryCountdown(
+                      subscription.days_remaining,
+                      `plan ${subscription.membership_name}`
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                    Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/payments"
+                className={`inline-flex shrink-0 items-center gap-2 text-xs font-semibold ${classes.link}`}
+              >
+                <CreditCard className="h-4 w-4" />
+                Renovar
+              </Link>
             </div>
-          </div>
-          <Link
-            to="/payments"
-            className={`inline-flex items-center gap-2 text-xs font-semibold shrink-0 ${classes.link}`}
-          >
-            <CreditCard className="h-4 w-4" />
-            Renovar
-          </Link>
-        </div>
-        );
-      })()}
+          );
+        })()}
 
       {user.role === 'member' && !subscription && (
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <p className="text-xs sm:text-sm font-semibold text-yellow-700 dark:text-yellow-400 leading-snug">
+        <div className="flex flex-col justify-between gap-2 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2.5 sm:flex-row sm:items-center">
+          <p className="text-xs leading-snug font-semibold text-yellow-700 sm:text-sm dark:text-yellow-400">
             No tienes una membresía activa. Reporta tu pago para reactivar el acceso.
           </p>
           <Link
             to="/payments"
-            className="text-xs font-semibold text-yellow-800 dark:text-yellow-300 hover:underline shrink-0"
+            className="shrink-0 text-xs font-semibold text-yellow-800 hover:underline dark:text-yellow-300"
           >
             Reportar pago
           </Link>
@@ -401,473 +432,526 @@ export default function Profile() {
       />
 
       {profileTab === 'datos' && (
-      <div className="panel-form">
-        <Card padding="sm" rounded="xl">
-          <h2 className="section-title mb-3 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-brand" />
-            Datos personales
-          </h2>
+        <div className="panel-form">
+          <Card padding="sm" rounded="xl">
+            <h2 className="section-title mb-3 flex items-center gap-1.5">
+              <User className="text-brand h-3.5 w-3.5" />
+              Datos personales
+            </h2>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative shrink-0">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={profile.full_name}
-                  className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl object-cover ring-2 ring-brand/30"
+            <div className="mb-4 flex items-center gap-3">
+              <div className="relative shrink-0">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={profile.full_name}
+                    className="ring-brand/30 h-14 w-14 rounded-xl object-cover ring-2 sm:h-16 sm:w-16"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-zinc-100 sm:h-16 sm:w-16 dark:bg-zinc-800">
+                    <User className="h-7 w-7 text-zinc-400 sm:h-8 sm:w-8 dark:text-zinc-300" />
+                  </div>
+                )}
+                <label
+                  htmlFor="avatar-upload"
+                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors"
+                  title="Cambiar foto"
+                  aria-label="Cambiar foto de perfil"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  disabled={avatarUploading || avatarRemoving}
                 />
-              ) : (
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <User className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 dark:text-zinc-300" />
-                </div>
-              )}
-              <label
-                htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 h-7 w-7 inline-flex items-center justify-center brand-solid brand-solid-hover rounded-lg cursor-pointer shadow-md transition-colors"
-                title="Cambiar foto"
-                aria-label="Cambiar foto de perfil"
-              >
-                <Camera className="h-3.5 w-3.5" />
-              </label>
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleAvatarChange}
-                disabled={avatarUploading || avatarRemoving}
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
-                {profile.full_name}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{profile.email}</p>
-              {profile.cedula && (
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-0.5">{profile.cedula}</p>
-              )}
-              {avatarUploading && (
-                <p className="text-[10px] font-medium text-brand mt-1">Subiendo foto…</p>
-              )}
-              {avatarUrl && !avatarUploading && (
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => { setShowRemoveAvatarModal(true); }}
-                    disabled={avatarRemoving}
-                    className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-                  >
-                    Quitar foto
-                  </button>
-                  {profile.cedula && (
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
+                  {profile.full_name}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  {profile.email}
+                </p>
+                {profile.cedula && (
+                  <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
+                    {profile.cedula}
+                  </p>
+                )}
+                {avatarUploading && (
+                  <p className="text-brand mt-1 text-[10px] font-medium">Subiendo foto…</p>
+                )}
+                {avatarUrl && !avatarUploading && (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => { setShowBadgeModal(true); }}
-                      className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-brand hover:underline"
+                      onClick={() => {
+                        setShowRemoveAvatarModal(true);
+                      }}
+                      disabled={avatarRemoving}
+                      className="text-[10px] font-semibold text-zinc-500 transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:text-zinc-400 dark:hover:text-red-400"
                     >
-                      <IdCard className="h-3.5 w-3.5" />
-                      Ver carné
+                      Quitar foto
                     </button>
-                  )}
-                </div>
-              )}
+                    {profile.cedula && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowBadgeModal(true);
+                        }}
+                        className="text-brand inline-flex items-center gap-1 text-[10px] font-semibold hover:underline sm:text-xs"
+                      >
+                        <IdCard className="h-3.5 w-3.5" />
+                        Ver carné
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {isTrainer && trainerProfile && (
-            <div className="mb-4 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 space-y-1">
-              <p className="text-xs font-bold text-zinc-900 dark:text-white">Perfil profesional</p>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
-              </p>
-              <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
-              </p>
-              {trainerProfile.specialty && (
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                  Especialidad: <strong>{trainerProfile.specialty}</strong>
+            {isTrainer && trainerProfile && (
+              <div className="mb-4 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3">
+                <p className="text-xs font-bold text-zinc-900 dark:text-white">
+                  Perfil profesional
                 </p>
-              )}
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 pt-1">
-                Para cambiar nivel, turno o especialidad, contacta al administrador (sección Entrenadores).
-              </p>
-            </div>
-          )}
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
+                </p>
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
+                </p>
+                {trainerProfile.specialty && (
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                    Especialidad: <strong>{trainerProfile.specialty}</strong>
+                  </p>
+                )}
+                <p className="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                  Para cambiar nivel, turno o especialidad, contacta al administrador (sección
+                  Entrenadores).
+                </p>
+              </div>
+            )}
 
-          <form onSubmit={handleSaveProfile} className="space-y-3">
-            <div>
-              <Label>Teléfono</Label>
-              <Input
-                type="tel"
-                inputMode="tel"
-                value={form.phone}
-                onChange={(e) => { setForm({ ...form, phone: e.target.value }); }}
-                placeholder="+58 412 0000000"
-              />
-            </div>
-            <div>
-              <Label>Fecha de nacimiento</Label>
-              <Input
-                type="date"
-                value={form.dob}
-                onChange={(e) => { setForm({ ...form, dob: e.target.value }); }}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
+            <form onSubmit={handleSaveProfile} className="space-y-3">
               <div>
-                <Label>Peso inicial (kg)</Label>
+                <Label>Teléfono</Label>
                 <Input
-                  type="number"
-                  step="0.1"
-                  value={form.initial_weight}
-                  onChange={(e) => { setForm({ ...form, initial_weight: e.target.value }); }}
+                  type="tel"
+                  inputMode="tel"
+                  value={form.phone}
+                  onChange={(e) => {
+                    setForm({ ...form, phone: e.target.value });
+                  }}
+                  placeholder="+58 412 0000000"
                 />
               </div>
               <div>
-                <Label>Altura (cm)</Label>
+                <Label>Fecha de nacimiento</Label>
                 <Input
-                  type="number"
-                  step="0.1"
-                  value={form.height}
-                  onChange={(e) => { setForm({ ...form, height: e.target.value }); }}
+                  type="date"
+                  value={form.dob}
+                  onChange={(e) => {
+                    setForm({ ...form, dob: e.target.value });
+                  }}
                 />
               </div>
-            </div>
-            <div>
-              <Label className="flex items-center gap-1">
-                <Target className="h-3 w-3" />
-                Objetivo
-              </Label>
-              <Textarea
-                value={form.goal}
-                onChange={(e) => { setForm({ ...form, goal: e.target.value }); }}
-                rows={2}
-                className="rounded-xl px-3 py-2.5 text-sm min-h-[4.5rem] resize-none"
-                placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
-              />
-            </div>
-            <Button
-              type="submit"
-              variant={isProfileDirty ? 'primary' : 'secondary'}
-              disabled={saving || !isProfileDirty}
-              size="sm"
-              className={cn(
-                'h-11 min-h-11 w-full sm:w-auto sm:px-4',
-                isProfileDirty && 'ring-2 ring-amber-500/30'
-              )}
-              aria-label="Guardar perfil"
-            >
-              <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">{saving ? 'Guardando…' : 'Guardar perfil'}</span>
-              <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
-            </Button>
-          </form>
-        </Card>
-      </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <Label>Peso inicial (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={form.initial_weight}
+                    onChange={(e) => {
+                      setForm({ ...form, initial_weight: e.target.value });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Altura (cm)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={form.height}
+                    onChange={(e) => {
+                      setForm({ ...form, height: e.target.value });
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Objetivo
+                </Label>
+                <Textarea
+                  value={form.goal}
+                  onChange={(e) => {
+                    setForm({ ...form, goal: e.target.value });
+                  }}
+                  rows={2}
+                  className="min-h-[4.5rem] resize-none rounded-xl px-3 py-2.5 text-sm"
+                  placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
+                />
+              </div>
+              <Button
+                type="submit"
+                variant={isProfileDirty ? 'primary' : 'secondary'}
+                disabled={saving || !isProfileDirty}
+                size="sm"
+                className={cn(
+                  'h-11 min-h-11 w-full sm:w-auto sm:px-4',
+                  isProfileDirty && 'ring-2 ring-amber-500/30'
+                )}
+                aria-label="Guardar perfil"
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">{saving ? 'Guardando…' : 'Guardar perfil'}</span>
+                <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
+              </Button>
+            </form>
+          </Card>
+        </div>
       )}
 
       {profileTab === 'progreso' && (
-      <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
-        <StatMini
-          label="Peso actual"
-          value={latestWeight != null ? `${latestWeight} kg` : '—'}
-          sub={
-            weightDelta != null
-              ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
-              : undefined
-          }
-        />
-        <StatMini label="IMC" value={bmi != null ? bmi.toString() : '—'} sub={profile.height ? `${profile.height} cm` : undefined} />
-        <StatMini label="Mediciones" value={String(measurements.length)} />
-        <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        <Card padding="sm" rounded="xl" className="lg:col-span-2">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="section-title flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-brand" />
-              Evolución de peso
-            </h2>
-            {weightDelta != null && (
-              <span
-                className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md shrink-0 ${
-                  weightDelta < 0
-                    ? 'text-emerald-600 bg-emerald-500/10'
-                    : weightDelta > 0
-                      ? 'text-brand bg-brand/10'
-                      : 'text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800'
-                }`}
-              >
-                {weightDelta < 0 ? (
-                  <TrendingDown className="h-3.5 w-3.5" />
-                ) : weightDelta > 0 ? (
-                  <TrendingUp className="h-3.5 w-3.5" />
-                ) : (
-                  <Minus className="h-3.5 w-3.5" />
-                )}
-                {weightDelta > 0 ? '+' : ''}
-                {weightDelta} kg
-              </span>
-            )}
-          </div>
-
-          {chartData.length >= 2 ? (
-            <Suspense fallback={<div className="h-64 flex items-center justify-center"><Spinner /></div>}>
-              <ProfileWeightChart data={chartData} />
-            </Suspense>
-          ) : chartData.length === 1 ? (
-            <div className="h-48 sm:h-56 flex flex-col items-center justify-center text-center">
-              <p className="text-3xl font-bold text-brand">{chartData[0].weight} kg</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1.5">
-                {chartData[0].date} · Registra otra medición para ver la gráfica
-              </p>
-            </div>
-          ) : (
-            <EmptyState
-              icon={Scale}
-              title="Sin mediciones de peso"
-              description="Registra tu primera medición para ver tu evolución."
-              action={
-                <Button size="sm" onClick={() => { setIsAddingMeasurement(true); }}>
-                  <Plus className="h-4 w-4" />
-                  Nueva medición
-                </Button>
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4">
+            <StatMini
+              label="Peso actual"
+              value={latestWeight != null ? `${latestWeight} kg` : '—'}
+              sub={
+                weightDelta != null
+                  ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
+                  : undefined
               }
             />
-          )}
-        </Card>
-      </div>
+            <StatMini
+              label="IMC"
+              value={bmi != null ? bmi.toString() : '—'}
+              sub={profile.height ? `${profile.height} cm` : undefined}
+            />
+            <StatMini label="Mediciones" value={String(measurements.length)} />
+            <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
+          </div>
 
-      <Card padding="sm" rounded="xl">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <h2 className="section-title flex items-center gap-1.5 min-w-0">
-            <Scale className="h-3.5 w-3.5 text-brand shrink-0" />
-            <span className="truncate">Historial de mediciones</span>
-          </h2>
-          <Button
-            type="button"
-            size="sm"
-            className="h-9 w-9 shrink-0 p-0 min-h-9 sm:h-11 sm:min-h-11 sm:w-auto sm:px-3"
-            onClick={() => { setIsAddingMeasurement(true); }}
-            aria-label="Nueva medición"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nueva medición</span>
-          </Button>
-        </div>
-
-        {measurements.length > 0 ? (
-          <div className="overflow-x-auto -mx-1 px-1">
-            <table className="w-full text-left min-w-[28rem]">
-              <thead>
-                <tr className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="pb-2 pr-3">Fecha</th>
-                  <th className="pb-2 pr-3">Peso</th>
-                  <th className="pb-2 pr-3">Grasa</th>
-                  <th className="pb-2 pr-3">Cintura</th>
-                  <th className="pb-2 pr-3">Brazo</th>
-                  <th className="pb-2">Pierna</th>
-                </tr>
-              </thead>
-              <tbody>
-                {measurements.map((m) => (
-                  <tr
-                    key={m.id}
-                    className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0 text-xs sm:text-sm"
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+            <Card padding="sm" rounded="xl" className="lg:col-span-2">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="section-title flex items-center gap-1.5">
+                  <Scale className="text-brand h-3.5 w-3.5" />
+                  Evolución de peso
+                </h2>
+                {weightDelta != null && (
+                  <span
+                    className={`flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${
+                      weightDelta < 0
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : weightDelta > 0
+                          ? 'text-brand bg-brand/10'
+                          : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                    }`}
                   >
-                    <td className="py-2 pr-3 font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
-                      {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                    </td>
-                    <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
-                      {m.weight != null ? `${m.weight} kg` : '—'}
-                    </td>
-                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                      {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                    </td>
-                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                      {m.waist != null ? `${m.waist} cm` : '—'}
-                    </td>
-                    <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                      {m.arm != null ? `${m.arm} cm` : '—'}
-                    </td>
-                    <td className="py-2 text-zinc-500 dark:text-zinc-400">
-                      {m.leg != null ? `${m.leg} cm` : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            icon={Scale}
-            title="Sin mediciones registradas"
-            description="Añade tu primera medición para hacer seguimiento de tu progreso."
-            action={
-              <Button size="sm" onClick={() => { setIsAddingMeasurement(true); }}>
-                <Plus className="h-4 w-4" />
-                Nueva medición
-              </Button>
-            }
-          />
-        )}
-      </Card>
-
-      {/* Últimos entrenamientos */}
-      {workouts.length > 0 && (
-        <Card padding="sm" rounded="xl">
-          <h2 className="section-title mb-2.5 flex items-center gap-1.5">
-            <Dumbbell className="h-3.5 w-3.5 text-brand" />
-            Actividad reciente
-          </h2>
-          <div className="space-y-0.5">
-            {workouts.slice(0, 5).map((w) => (
-              <div
-                key={w.id}
-                className="flex items-center justify-between gap-2 py-2 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
-              >
-                <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-xs sm:text-sm truncate">
-                  {w.routine_name}
-                </p>
-                <p className="text-[10px] sm:text-xs text-zinc-400 dark:text-zinc-300 shrink-0 tabular-nums">
-                  {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
-                </p>
+                    {weightDelta < 0 ? (
+                      <TrendingDown className="h-3.5 w-3.5" />
+                    ) : weightDelta > 0 ? (
+                      <TrendingUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <Minus className="h-3.5 w-3.5" />
+                    )}
+                    {weightDelta > 0 ? '+' : ''}
+                    {weightDelta} kg
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
-      </>
+              {chartData.length >= 2 ? (
+                <Suspense
+                  fallback={
+                    <div className="flex h-64 items-center justify-center">
+                      <Spinner />
+                    </div>
+                  }
+                >
+                  <ProfileWeightChart data={chartData} />
+                </Suspense>
+              ) : chartData.length === 1 ? (
+                <div className="flex h-48 flex-col items-center justify-center text-center sm:h-56">
+                  <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
+                  <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-300">
+                    {chartData[0].date} · Registra otra medición para ver la gráfica
+                  </p>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Scale}
+                  title="Sin mediciones de peso"
+                  description="Registra tu primera medición para ver tu evolución."
+                  action={
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setIsAddingMeasurement(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Nueva medición
+                    </Button>
+                  }
+                />
+              )}
+            </Card>
+          </div>
+
+          <Card padding="sm" rounded="xl">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="section-title flex min-w-0 items-center gap-1.5">
+                <Scale className="text-brand h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Historial de mediciones</span>
+              </h2>
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 min-h-9 w-9 shrink-0 p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:px-3"
+                onClick={() => {
+                  setIsAddingMeasurement(true);
+                }}
+                aria-label="Nueva medición"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nueva medición</span>
+              </Button>
+            </div>
+
+            {measurements.length > 0 ? (
+              <div className="-mx-1 overflow-x-auto px-1">
+                <table className="w-full min-w-[28rem] text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                      <th className="pr-3 pb-2">Fecha</th>
+                      <th className="pr-3 pb-2">Peso</th>
+                      <th className="pr-3 pb-2">Grasa</th>
+                      <th className="pr-3 pb-2">Cintura</th>
+                      <th className="pr-3 pb-2">Brazo</th>
+                      <th className="pb-2">Pierna</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {measurements.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
+                      >
+                        <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
+                          {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                        </td>
+                        <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
+                          {m.weight != null ? `${m.weight} kg` : '—'}
+                        </td>
+                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                          {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
+                        </td>
+                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                          {m.waist != null ? `${m.waist} cm` : '—'}
+                        </td>
+                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                          {m.arm != null ? `${m.arm} cm` : '—'}
+                        </td>
+                        <td className="py-2 text-zinc-500 dark:text-zinc-400">
+                          {m.leg != null ? `${m.leg} cm` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={Scale}
+                title="Sin mediciones registradas"
+                description="Añade tu primera medición para hacer seguimiento de tu progreso."
+                action={
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setIsAddingMeasurement(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nueva medición
+                  </Button>
+                }
+              />
+            )}
+          </Card>
+
+          {/* Últimos entrenamientos */}
+          {workouts.length > 0 && (
+            <Card padding="sm" rounded="xl">
+              <h2 className="section-title mb-2.5 flex items-center gap-1.5">
+                <Dumbbell className="text-brand h-3.5 w-3.5" />
+                Actividad reciente
+              </h2>
+              <div className="space-y-0.5">
+                {workouts.slice(0, 5).map((w) => (
+                  <div
+                    key={w.id}
+                    className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 last:border-0 dark:border-zinc-800"
+                  >
+                    <p className="truncate text-xs font-semibold text-zinc-800 sm:text-sm dark:text-zinc-200">
+                      {w.routine_name}
+                    </p>
+                    <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-300">
+                      {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </>
       )}
 
       {profileTab === 'apariencia' && (
         <div className="panel-content space-y-3">
           <Card padding="sm" rounded="xl">
             <h2 className="section-title mb-1 flex items-center gap-1.5">
-              <Palette className="h-3.5 w-3.5 text-brand" />
+              <Palette className="text-brand h-3.5 w-3.5" />
               Paleta de colores
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
-              Elige el color de acento de la interfaz. Los fondos y textos neutros se mantienen para no distraer del contenido.
+            <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+              Elige el color de acento de la interfaz. Los fondos y textos neutros se mantienen para
+              no distraer del contenido.
             </p>
             <ThemePalettePicker />
           </Card>
 
           <Card padding="sm" rounded="xl">
-            <h3 className="text-xs font-semibold text-zinc-900 dark:text-white mb-2 flex items-center gap-1.5">
-              <Sun className="h-3.5 w-3.5 text-brand shrink-0" />
+            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-zinc-900 dark:text-white">
+              <Sun className="text-brand h-3.5 w-3.5 shrink-0" />
               Modo claro u oscuro
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
               Usa <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo claro</span>{' '}
-              <Sun className="inline h-3 w-3 -mt-0.5" aria-hidden /> o{' '}
+              <Sun className="-mt-0.5 inline h-3 w-3" aria-hidden /> o{' '}
               <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo oscuro</span>{' '}
-              <Moon className="inline h-3 w-3 -mt-0.5" aria-hidden /> en el menú lateral para cambiar el fondo de la interfaz.
+              <Moon className="-mt-0.5 inline h-3 w-3" aria-hidden /> en el menú lateral para
+              cambiar el fondo de la interfaz.
             </p>
           </Card>
         </div>
       )}
 
       {profileTab === 'seguridad' && (
-      <>
-      <Card padding="sm" rounded="xl" className="panel-form mb-3">
-        <h2 className="section-title mb-3 flex items-center gap-1.5">
-          <Bell className="h-3.5 w-3.5 text-brand" />
-          Notificaciones push
-        </h2>
-        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
-          Recibe avisos de pagos, mensajes y novedades del gym en este dispositivo.
-        </p>
-        <PushNotificationsToggle />
-      </Card>
+        <>
+          <Card padding="sm" rounded="xl" className="panel-form mb-3">
+            <h2 className="section-title mb-3 flex items-center gap-1.5">
+              <Bell className="text-brand h-3.5 w-3.5" />
+              Notificaciones push
+            </h2>
+            <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+              Recibe avisos de pagos, mensajes y novedades del gym en este dispositivo.
+            </p>
+            <PushNotificationsToggle />
+          </Card>
 
-      <Card padding="sm" rounded="xl" className="panel-form">
-        <h2 className="section-title mb-3 flex items-center gap-1.5">
-          <Lock className="h-3.5 w-3.5 text-brand" />
-          Seguridad
-        </h2>
-        {passwordMsg && (
-          <p className="text-xs font-medium text-emerald-600 mb-3">{passwordMsg}</p>
-        )}
-        {passwordError && (
-          <p className="text-xs font-medium text-red-500 mb-3">{passwordError}</p>
-        )}
-        <form onSubmit={handleChangePassword} className="space-y-3">
-          <div>
-            <Label htmlFor="current_password">Contraseña actual</Label>
-            <PasswordInput
-              id="current_password"
-              autoComplete="current-password"
-              value={passwordForm.current_password}
-              onChange={(e) => { setPasswordForm({ ...passwordForm, current_password: e.target.value }); }}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="new_password">Nueva contraseña</Label>
-            <PasswordInput
-              id="new_password"
-              autoComplete="new-password"
-              value={passwordForm.new_password}
-              onChange={(e) => { setPasswordForm({ ...passwordForm, new_password: e.target.value }); }}
-              minLength={8}
-              required
-            />
-            {passwordForm.new_password && (() => {
-              const strength = passwordStrength(passwordForm.new_password);
-              return (
-                <div className="mt-2 space-y-1">
-                  <div className="flex gap-1">
-                    {[1, 2, 3].map((level) => (
-                      <div
-                        key={level}
-                        className={cn(
-                          'h-1 flex-1 rounded-full transition-colors',
-                          strength.score >= level
-                            ? level === 1
-                              ? 'bg-red-500'
-                              : level === 2
-                                ? 'bg-yellow-500'
-                                : 'bg-emerald-500'
-                            : 'bg-zinc-200 dark:bg-zinc-700'
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
-                    Fortaleza: {strength.label}
-                  </p>
-                </div>
-              );
-            })()}
-          </div>
-          <div>
-            <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
-            <PasswordInput
-              id="confirm_password"
-              autoComplete="new-password"
-              value={passwordForm.confirm_password}
-              onChange={(e) => { setPasswordForm({ ...passwordForm, confirm_password: e.target.value }); }}
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={passwordSaving}
-            size="sm"
-            className="h-11 min-h-11 w-full sm:w-auto sm:px-4"
-          >
-            <Lock className="h-4 w-4" />
-            <span className="hidden sm:inline">{passwordSaving ? 'Actualizando…' : 'Cambiar contraseña'}</span>
-            <span className="sm:hidden">{passwordSaving ? '…' : 'Actualizar'}</span>
-          </Button>
-        </form>
-      </Card>
-      </>
+          <Card padding="sm" rounded="xl" className="panel-form">
+            <h2 className="section-title mb-3 flex items-center gap-1.5">
+              <Lock className="text-brand h-3.5 w-3.5" />
+              Seguridad
+            </h2>
+            {passwordMsg && (
+              <p className="mb-3 text-xs font-medium text-emerald-600">{passwordMsg}</p>
+            )}
+            {passwordError && (
+              <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>
+            )}
+            <form onSubmit={handleChangePassword} className="space-y-3">
+              <div>
+                <Label htmlFor="current_password">Contraseña actual</Label>
+                <PasswordInput
+                  id="current_password"
+                  autoComplete="current-password"
+                  value={passwordForm.current_password}
+                  onChange={(e) => {
+                    setPasswordForm({ ...passwordForm, current_password: e.target.value });
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="new_password">Nueva contraseña</Label>
+                <PasswordInput
+                  id="new_password"
+                  autoComplete="new-password"
+                  value={passwordForm.new_password}
+                  onChange={(e) => {
+                    setPasswordForm({ ...passwordForm, new_password: e.target.value });
+                  }}
+                  minLength={8}
+                  required
+                />
+                {passwordForm.new_password &&
+                  (() => {
+                    const strength = passwordStrength(passwordForm.new_password);
+                    return (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex gap-1">
+                          {[1, 2, 3].map((level) => (
+                            <div
+                              key={level}
+                              className={cn(
+                                'h-1 flex-1 rounded-full transition-colors',
+                                strength.score >= level
+                                  ? level === 1
+                                    ? 'bg-red-500'
+                                    : level === 2
+                                      ? 'bg-yellow-500'
+                                      : 'bg-emerald-500'
+                                  : 'bg-zinc-200 dark:bg-zinc-700'
+                              )}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
+                          Fortaleza: {strength.label}
+                        </p>
+                      </div>
+                    );
+                  })()}
+              </div>
+              <div>
+                <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
+                <PasswordInput
+                  id="confirm_password"
+                  autoComplete="new-password"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) => {
+                    setPasswordForm({ ...passwordForm, confirm_password: e.target.value });
+                  }}
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                variant="secondary"
+                disabled={passwordSaving}
+                size="sm"
+                className="h-11 min-h-11 w-full sm:w-auto sm:px-4"
+              >
+                <Lock className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {passwordSaving ? 'Actualizando…' : 'Cambiar contraseña'}
+                </span>
+                <span className="sm:hidden">{passwordSaving ? '…' : 'Actualizar'}</span>
+              </Button>
+            </form>
+          </Card>
+        </>
       )}
 
       <Modal
@@ -876,35 +960,39 @@ export default function Profile() {
         title="Quitar foto de perfil"
         maxWidth="sm"
       >
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
+        <p className="mb-5 text-sm text-zinc-500 dark:text-zinc-400">
           ¿Quitar tu foto de perfil? Volverás al avatar por defecto.
         </p>
-        <div className="flex gap-2 justify-end">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="ghost"
-            onClick={() => { setShowRemoveAvatarModal(false); }}
+            onClick={() => {
+              setShowRemoveAvatarModal(false);
+            }}
             disabled={avatarRemoving}
           >
             Cancelar
           </Button>
-            <Button
-              type="button"
-              variant="danger"
-              onClick={() => void handleAvatarRemove()}
-              loading={avatarRemoving}
-            >
-              <Trash2 className="h-4 w-4" />
-              Quitar foto
-            </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => void handleAvatarRemove()}
+            loading={avatarRemoving}
+          >
+            <Trash2 className="h-4 w-4" />
+            Quitar foto
+          </Button>
         </div>
       </Modal>
 
       <MemberBadgeModal
         open={showBadgeModal}
-        onClose={() => { setShowBadgeModal(false); }}
+        onClose={() => {
+          setShowBadgeModal(false);
+        }}
         member={
-          profile && profile.cedula
+          profile?.cedula
             ? {
                 id: profile.id,
                 full_name: profile.full_name,
@@ -921,13 +1009,15 @@ export default function Profile() {
 
       <Modal
         open={isAddingMeasurement}
-        onClose={() => { setIsAddingMeasurement(false); }}
+        onClose={() => {
+          setIsAddingMeasurement(false);
+        }}
         title="Nueva medición"
         maxWidth="xl"
         scrollable
       >
         {measurementError && (
-          <p className="text-sm text-red-500 font-bold mb-4">{measurementError}</p>
+          <p className="mb-4 text-sm font-bold text-red-500">{measurementError}</p>
         )}
         <form onSubmit={handleAddMeasurement} className="form-stack">
           <div>
@@ -935,7 +1025,9 @@ export default function Profile() {
             <Input
               type="date"
               value={measurementForm.date}
-              onChange={(e) => { setMeasurementForm({ ...measurementForm, date: e.target.value }); }}
+              onChange={(e) => {
+                setMeasurementForm({ ...measurementForm, date: e.target.value });
+              }}
               required
             />
           </div>
@@ -946,7 +1038,9 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.weight}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, weight: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, weight: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -955,9 +1049,9 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.body_fat_percentage}
-                onChange={(e) =>
-                  { setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value }); }
-                }
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -966,7 +1060,9 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.waist}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, waist: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, waist: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -975,7 +1071,9 @@ export default function Profile() {
                 type="number"
                 step="0.1"
                 value={measurementForm.arm}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, arm: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, arm: e.target.value });
+                }}
               />
             </div>
           </div>

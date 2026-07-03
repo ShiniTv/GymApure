@@ -384,7 +384,7 @@ router.delete(
   })
 );
 
-router.get('/:id/routines', requireMemberAccess('id', 'admin'), async (req, res) => {
+router.get('/:id/routines', requireMemberAccess('id'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
@@ -527,7 +527,7 @@ router.delete(
   })
 );
 
-router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) => {
+router.get('/:id/history', requireMemberAccess('id'), async (req, res) => {
   const userId = parseInt(req.params.id, 10);
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'ID inválido' });
@@ -536,9 +536,14 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
   const { page, pageSize, offset } = parsePaginationQuery(req.query, { pageSize: 20 });
 
   try {
-    const [countResult, listResult] = await Promise.all([
+    const [countResult, weekResult, listResult] = await Promise.all([
       query<{ count: string }>(
         'SELECT COUNT(*)::text AS count FROM workout_sessions WHERE user_id = $1',
+        [userId]
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM workout_sessions
+         WHERE user_id = $1 AND start_time >= NOW() - INTERVAL '7 days'`,
         [userId]
       ),
       query(
@@ -559,11 +564,13 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
     ]);
 
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
-    const payload: PaginatedResult<unknown> = {
+    const workoutsThisWeek = parseInt(weekResult.rows[0]?.count || '0', 10);
+    const payload: PaginatedResult<unknown> & { workoutsThisWeek: number } = {
       items: listResult.rows,
       total,
       page,
       pageSize,
+      workoutsThisWeek,
     };
 
     res.json(payload);
@@ -572,7 +579,7 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
   }
 });
 
-router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/:id/routines', authorize(['trainer']), async (req: AuthRequest, res) => {
   const { routine_id, start_date, end_date } = req.body;
   const assigned_by = req.user!.id;
   try {
@@ -584,17 +591,17 @@ router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRe
     );
     res.json({ id: rows[0].id, success: true });
 
-    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) =>
-      { logger.error('Error enviando notificacion de rutina asignada', {
+    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) => {
+      logger.error('Error enviando notificacion de rutina asignada', {
         error: getErrorMessage(err),
-      }); }
-    );
+      });
+    });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
-router.delete('/:id/routines/:routineId', authorize(['admin', 'trainer']), async (req, res) => {
+router.delete('/:id/routines/:routineId', authorize(['trainer']), async (req, res) => {
   try {
     await query('DELETE FROM user_routines WHERE user_id = $1 AND routine_id = $2', [
       req.params.id,
@@ -614,20 +621,20 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
   const { full_name, email, password, cedula, role: requestedRole } = parsed.data;
   const normalizedEmail = email.toLowerCase();
-  const rawShift = typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
+  const rawShift =
+    typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
   const trainingShift = isTrainingShift(rawShift) ? rawShift : null;
 
-  const assignedRole =
-    req.user!.role === 'admin'
-      ? requestedRole ?? 'member'
-      : 'member';
+  const assignedRole = req.user!.role === 'admin' ? (requestedRole ?? 'member') : 'member';
 
   if (!['admin', 'trainer', 'member', 'receptionist'].includes(assignedRole)) {
     return res.status(403).json({ error: 'Rol no permitido' });
   }
 
   if (req.user!.role !== 'admin' && assignedRole !== 'member') {
-    return res.status(403).json({ error: 'Solo el administrador puede crear otros roles de staff' });
+    return res
+      .status(403)
+      .json({ error: 'Solo el administrador puede crear otros roles de staff' });
   }
 
   const normalizedCedula = cedula?.trim() ? canonicalCedula(cedula.trim()) : null;
@@ -668,7 +675,8 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
     if (assignedRole === 'trainer') {
       const level =
-        typeof req.body?.level === 'string' && ['basico', 'avanzado', 'especialista'].includes(req.body.level)
+        typeof req.body?.level === 'string' &&
+        ['basico', 'avanzado', 'especialista'].includes(req.body.level)
           ? req.body.level
           : 'basico';
       const shift =
@@ -782,10 +790,10 @@ router.patch(
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;
   try {
-    await query(
-      'UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2',
-      [status, req.params.id]
-    );
+    await query('UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2', [
+      status,
+      req.params.id,
+    ]);
     await logAudit(req.user!.id, 'user.status_change', {
       target_id: req.params.id,
       status,

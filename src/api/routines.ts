@@ -101,7 +101,7 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.get('/assignments/all', authorize(['trainer']), async (req: AuthRequest, res) => {
   const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
 
   try {
@@ -185,15 +185,14 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
   const { name, difficulty } = parsed.data;
-  const trainerId =
-    req.user!.role === 'trainer' ? req.user!.id : parsed.data.trainer_id;
+  const trainerId = req.user!.role === 'trainer' ? req.user!.id : parsed.data.trainer_id;
 
   if (!trainerId) {
     return res.status(400).json({ error: 'trainer_id es obligatorio' });
@@ -218,7 +217,7 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
   }
 });
 
-router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.put('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -242,7 +241,7 @@ router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res
   }
 });
 
-router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.delete('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   const routineId = parseInt(req.params.id, 10);
   if (isNaN(routineId)) return res.status(400).json({ error: 'ID de rutina inválido' });
 
@@ -276,7 +275,7 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, 
   }
 });
 
-router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineExerciseSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -305,48 +304,54 @@ router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthR
   }
 });
 
-router.put('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const parsed = routineExerciseSchema
-    .omit({ exercise_id: true })
-    .safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
-  }
+router.put(
+  '/:id/exercises/:routineExerciseId',
+  authorize(['trainer']),
+  async (req: AuthRequest, res) => {
+    const parsed = routineExerciseSchema.omit({ exercise_id: true }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: formatZodError(parsed.error) });
+    }
 
-  const { sets, reps, rest_seconds, weight_suggestion } = parsed.data;
-  const trainerId = await getRoutineTrainerId(req.params.id);
-  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
-  if (!assertTrainerOwnsRoutine(req, trainerId)) {
-    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
-  }
-  try {
-    await query(
-      `UPDATE routine_exercises
+    const { sets, reps, rest_seconds, weight_suggestion } = parsed.data;
+    const trainerId = await getRoutineTrainerId(req.params.id);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+    try {
+      await query(
+        `UPDATE routine_exercises
        SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4
        WHERE id = $5 AND routine_id = $6`,
-      [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
-    );
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
+        [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
+      );
+      res.json({ success: true });
+    } catch (err: unknown) {
+      res.status(500).json({ error: getErrorMessage(err) });
+    }
   }
-});
+);
 
-router.delete('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const trainerId = await getRoutineTrainerId(req.params.id);
-  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
-  if (!assertTrainerOwnsRoutine(req, trainerId)) {
-    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+router.delete(
+  '/:id/exercises/:routineExerciseId',
+  authorize(['trainer']),
+  async (req: AuthRequest, res) => {
+    const trainerId = await getRoutineTrainerId(req.params.id);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+    try {
+      await query('DELETE FROM routine_exercises WHERE id = $1 AND routine_id = $2', [
+        req.params.routineExerciseId,
+        req.params.id,
+      ]);
+      res.json({ success: true });
+    } catch (err: unknown) {
+      res.status(500).json({ error: getErrorMessage(err) });
+    }
   }
-  try {
-    await query('DELETE FROM routine_exercises WHERE id = $1 AND routine_id = $2', [
-      req.params.routineExerciseId,
-      req.params.id,
-    ]);
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
+);
 
 export default router;

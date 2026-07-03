@@ -1,0 +1,113 @@
+import { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { apiFetch, parseJsonResponse } from '../lib/api';
+import AuthShell from '../components/AuthShell';
+import AuthBrandHeader from '../components/AuthBrandHeader';
+import { Button, Card, Label, PasswordInput, Spinner } from '../components/ui';
+
+export default function ResetPassword() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const token = searchParams.get('token') ?? '';
+
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      setError('El enlace de recuperación no es válido.');
+      return;
+    }
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const res = await apiFetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          new_password: password,
+          confirm_password: confirmPassword,
+        }),
+      });
+      const data = await parseJsonResponse<{ message: string }>(res);
+      setSuccess(data.message);
+      window.setTimeout(() => {
+        void navigate('/login');
+      }, 2000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'No se pudo restablecer la contraseña');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthShell>
+      <Card className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
+        <AuthBrandHeader subtitle="Nueva contraseña" />
+
+        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+          {error && (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
+            >
+              {error}
+            </div>
+          )}
+          {success && (
+            <div
+              role="status"
+              className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400"
+            >
+              {success}
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="password">Nueva contraseña</Label>
+            <PasswordInput
+              id="password"
+              name="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="confirm_password">Confirmar contraseña</Label>
+            <PasswordInput
+              id="confirm_password"
+              name="confirm_password"
+              autoComplete="new-password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading || !!success || !token}>
+            {loading ? <Spinner className="h-4 w-4" /> : 'Guardar contraseña'}
+          </Button>
+        </form>
+
+        <Link
+          to="/login"
+          className="hover:text-brand mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver al inicio de sesión
+        </Link>
+      </Card>
+    </AuthShell>
+  );
+}

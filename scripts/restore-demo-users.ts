@@ -179,6 +179,49 @@ async function main() {
       [memberId, routineId, trainerId]
     );
     console.log('✓ Rutina demo asignada a member@gym.com (tests IDOR / rutinas)');
+
+    const demoExercises = [
+      { name: 'Demo Press Banca', muscle: 'chest' },
+      { name: 'Demo Remo', muscle: 'back' },
+    ] as const;
+
+    for (const ex of demoExercises) {
+      let exerciseId: number;
+      const existingEx = await query<{ id: number }>(
+        `SELECT id FROM exercises WHERE name = $1 LIMIT 1`,
+        [ex.name]
+      );
+      if (existingEx.rows[0]) {
+        exerciseId = existingEx.rows[0].id;
+      } else {
+        const insertedEx = await query<{ id: number }>(
+          `INSERT INTO exercises (name, muscle_group) VALUES ($1, $2) RETURNING id`,
+          [ex.name, ex.muscle]
+        );
+        exerciseId = insertedEx.rows[0].id;
+      }
+
+      await query(
+        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds)
+         SELECT $1, $2, 3, 10, 60
+         WHERE NOT EXISTS (
+           SELECT 1 FROM routine_exercises WHERE routine_id = $1 AND exercise_id = $2
+         )`,
+        [routineId, exerciseId]
+      );
+    }
+    console.log('✓ 2 ejercicios demo en Demo CI Routine (tests workout pager)');
+
+    await query(
+      `INSERT INTO workout_sessions (user_id, routine_id, start_time)
+       SELECT $1, $2, NOW()
+       WHERE NOT EXISTS (
+         SELECT 1 FROM workout_sessions
+         WHERE user_id = $1 AND routine_id = $2 AND start_time >= CURRENT_DATE
+       )`,
+      [memberId, routineId]
+    );
+    console.log('✓ Sesión demo para actividad reciente del entrenador');
   }
 
   console.log(`\nListo. Contraseña demo actualizada (valor en DEMO_PASSWORD de .env).`);

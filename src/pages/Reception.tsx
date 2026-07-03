@@ -19,12 +19,22 @@ import {
   Tablet,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Button, Card, Input, PageHeader, Badge, Spinner, SegmentedControl, CedulaInput } from '../components/ui';
+import {
+  Button,
+  Card,
+  PageHeader,
+  Badge,
+  Spinner,
+  SegmentedControl,
+  CedulaInput,
+  Label,
+} from '../components/ui';
 import { cn } from '../lib/utils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 interface LookupResult {
   found: boolean;
@@ -67,11 +77,11 @@ const COUNTER_ACTION = 'min-h-[52px]';
 const COUNTER_SEARCH_BTN = 'h-[52px] w-[52px] shrink-0 p-0';
 
 export default function Reception() {
+  usePageTitle('Recepción');
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
-  const initialTab: Tab =
-    tabParam === 'inside' || tabParam === 'register' ? tabParam : 'access';
+  const initialTab: Tab = tabParam === 'inside' || tabParam === 'register' ? tabParam : 'access';
 
   const [tab, setTab] = useState<Tab>(initialTab);
   const [cedula, setCedula] = useState('');
@@ -129,76 +139,82 @@ export default function Reception() {
     }
   }, [tab]);
 
-  const doLookup = useCallback(async (value?: string) => {
-    const q = (value ?? cedula).trim();
-    if (!q) return;
+  const doLookup = useCallback(
+    async (value?: string) => {
+      const q = (value ?? cedula).trim();
+      if (!q) return;
 
-    setLookupLoading(true);
-    setMessage('');
-    setMessageType('');
-    try {
-      const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
-      const data = await parseJsonResponse<LookupResult>(res);
-      if (res.ok && data?.found) {
-        setLookup(data);
-      } else {
-        setLookup({ found: false, error: data?.error || 'Usuario no encontrado' });
+      setLookupLoading(true);
+      setMessage('');
+      setMessageType('');
+      try {
+        const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
+        const data = await parseJsonResponse<LookupResult>(res);
+        if (res.ok && data?.found) {
+          setLookup(data);
+        } else {
+          setLookup({ found: false, error: data?.error || 'Usuario no encontrado' });
+        }
+      } catch {
+        setLookup({ found: false, error: 'Error de conexión' });
+      } finally {
+        setLookupLoading(false);
       }
-    } catch {
-      setLookup({ found: false, error: 'Error de conexión' });
-    } finally {
-      setLookupLoading(false);
-    }
-  }, [cedula]);
+    },
+    [cedula]
+  );
 
-  const handleAction = useCallback(async (action: 'check-in' | 'check-out') => {
-    const q = cedula.trim();
-    if (!q) return;
+  const handleAction = useCallback(
+    async (action: 'check-in' | 'check-out') => {
+      const q = cedula.trim();
+      if (!q) return;
 
-    setActionLoading(true);
-    setMessage('');
-    try {
-      const res = await apiFetch(`/api/reception/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cedula: q }),
-      });
-      const data = await parseJsonResponse<{
-        error?: string;
-        user_name?: string;
-        message?: string;
-        already_checked_in?: boolean;
-        already_checked_out?: boolean;
-        duration_label?: string;
-      }>(res);
+      setActionLoading(true);
+      setMessage('');
+      try {
+        const res = await apiFetch(`/api/reception/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cedula: q }),
+        });
+        const data = await parseJsonResponse<{
+          error?: string;
+          user_name?: string;
+          message?: string;
+          already_checked_in?: boolean;
+          already_checked_out?: boolean;
+          duration_label?: string;
+        }>(res);
 
-      if (res.ok) {
-        setMessageType('success');
-        setMessage(
-          data.message ||
-            (action === 'check-in'
-              ? data.already_checked_in
-                ? `${data.user_name}: ya tiene ingreso activo`
-                : `Entrada autorizada: ${data.user_name}`
-              : data.already_checked_out
-                ? `${data.user_name}: ya registró salida`
-                : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`)
-        );
-        setCedula('');
-        setLookup(null);
-        void loadStats();
-        setTimeout(() => cedulaRef.current?.focus(), 100);
-      } else {
+        if (res.ok) {
+          setMessageType('success');
+          setMessage(
+            data.message ||
+              (action === 'check-in'
+                ? data.already_checked_in
+                  ? `${data.user_name}: ya tiene ingreso activo`
+                  : `Entrada autorizada: ${data.user_name}`
+                : data.already_checked_out
+                  ? `${data.user_name}: ya registró salida`
+                  : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`)
+          );
+          setCedula('');
+          setLookup(null);
+          void loadStats();
+          setTimeout(() => cedulaRef.current?.focus(), 100);
+        } else {
+          setMessageType('error');
+          setMessage(data.error || 'Operación fallida');
+        }
+      } catch {
         setMessageType('error');
-        setMessage(data.error || 'Operación fallida');
+        setMessage('Error de red');
+      } finally {
+        setActionLoading(false);
       }
-    } catch {
-      setMessageType('error');
-      setMessage('Error de red');
-    } finally {
-      setActionLoading(false);
-    }
-  }, [cedula, loadStats]);
+    },
+    [cedula, loadStats]
+  );
 
   useReceptionShortcuts({
     enabled: isCounterMode && tab === 'access',
@@ -226,10 +242,13 @@ export default function Reception() {
   const lookupPanel = (
     <Card padding="md" rounded="xl" className="space-y-3">
       <div className="space-y-2">
-        <label className="label-caps">Cédula del visitante</label>
-        <div className="flex gap-2 items-stretch">
-          <div className="flex-1 min-w-0">
+        <Label htmlFor="reception-cedula" className="label-caps">
+          Cédula del visitante
+        </Label>
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
             <CedulaInput
+              id="reception-cedula"
               ref={cedulaRef}
               value={cedula}
               onChange={setCedula}
@@ -243,7 +262,9 @@ export default function Reception() {
             disabled={!cedula.trim()}
             size="md"
             className={cn(
-              isCounterMode ? cn(COUNTER_SEARCH_BTN, 'min-h-0') : 'self-stretch aspect-square px-0 shrink-0'
+              isCounterMode
+                ? cn(COUNTER_SEARCH_BTN, 'min-h-0')
+                : 'aspect-square shrink-0 self-stretch px-0'
             )}
           >
             <Search className="h-4 w-4" />
@@ -251,9 +272,19 @@ export default function Reception() {
         </div>
         {isCounterMode && (
           <p className="text-xs text-zinc-400 dark:text-zinc-300">
-            Atajos: <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">Enter</kbd> buscar ·{' '}
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F1</kbd> entrada ·{' '}
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F2</kbd> salida
+            Atajos:{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              Enter
+            </kbd>{' '}
+            buscar ·{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              F1
+            </kbd>{' '}
+            entrada ·{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              F2
+            </kbd>{' '}
+            salida
           </p>
         )}
       </div>
@@ -261,13 +292,17 @@ export default function Reception() {
       {message && (
         <div
           className={cn(
-            'rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2',
+            'flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium',
             messageType === 'success'
-              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
-              : 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20'
+              ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+              : 'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
           )}
         >
-          {messageType === 'success' ? <CheckCircle className="h-5 w-5 shrink-0" /> : <XCircle className="h-5 w-5 shrink-0" />}
+          {messageType === 'success' ? (
+            <CheckCircle className="h-5 w-5 shrink-0" />
+          ) : (
+            <XCircle className="h-5 w-5 shrink-0" />
+          )}
           {message}
         </div>
       )}
@@ -306,28 +341,35 @@ export default function Reception() {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className={cn('font-bold text-zinc-900 dark:text-white', isCounterMode ? 'text-base' : 'text-lg')}>
+              <h3
+                className={cn(
+                  'font-bold text-zinc-900 dark:text-white',
+                  isCounterMode ? 'text-base' : 'text-lg'
+                )}
+              >
                 {lookup.user.full_name}
               </h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{lookup.user.cedula}</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1">{lookup.user.email}</p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{lookup.user.cedula}</p>
+              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">{lookup.user.email}</p>
             </div>
             {accessBadge()}
           </div>
 
           {lookup.subscription ? (
-            <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-4">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {lookup.subscription.membership_name}
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Vence {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
-                {' · '}{lookup.subscription.days_remaining} días restantes
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Vence{' '}
+                {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                {' · '}
+                {lookup.subscription.days_remaining} días restantes
               </p>
             </div>
           ) : (
-            <div className="rounded-xl bg-yellow-500/5 border border-yellow-500/20 p-4 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+            <div className="flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-600" />
               <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
                 Sin membresía activa — asigne un plan o apruebe un pago
               </p>
@@ -337,27 +379,29 @@ export default function Reception() {
           {lookup.attendance?.today_session && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Ingreso hoy:{' '}
-              {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', { locale: es })}
+              {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', {
+                locale: es,
+              })}
               {lookup.attendance.today_session.check_out_time &&
                 ` · Salida: ${format(new Date(lookup.attendance.today_session.check_out_time), 'HH:mm', { locale: es })}`}
             </p>
           )}
         </div>
       ) : lookup && !lookup.found ? (
-        <div className="text-center py-8 space-y-3">
-          <XCircle className="h-10 w-10 text-red-400 mx-auto" />
-          <p className="font-medium text-sm text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
+        <div className="space-y-3 py-8 text-center">
+          <XCircle className="mx-auto h-10 w-10 text-red-400" />
+          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
           <Link to="/members">
             <Button variant="secondary" size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
+              <UserPlus className="mr-2 h-4 w-4" />
               Registrar nuevo miembro
             </Button>
           </Link>
         </div>
       ) : (
-        <div className="text-center py-5 text-zinc-400 dark:text-zinc-300">
-          <Fingerprint className="h-7 w-7 mx-auto mb-1.5 opacity-30" />
-          <p className="font-medium text-[11px] label-caps">Ingrese una cédula para consultar</p>
+        <div className="py-5 text-center text-zinc-400 dark:text-zinc-300">
+          <Fingerprint className="mx-auto mb-1.5 h-7 w-7 opacity-30" />
+          <p className="label-caps text-[11px] font-medium">Ingrese una cédula para consultar</p>
         </div>
       )}
     </Card>
@@ -365,7 +409,7 @@ export default function Reception() {
 
   const insideList = (
     <Card padding="md" rounded="xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h3 className="section-title">Dentro del gym ({insideCount})</h3>
         <Button
           variant="ghost"
@@ -381,19 +425,23 @@ export default function Reception() {
         {inside.map((m) => (
           <div
             key={m.id}
-            className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800"
+            className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
           >
             <div className="min-w-0">
-              <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate">{m.full_name}</p>
+              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                {m.full_name}
+              </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">{m.cedula || 'Sin cédula'}</p>
             </div>
-            <p className="text-xs font-medium text-emerald-600 shrink-0 ml-2">
+            <p className="ml-2 shrink-0 text-xs font-medium text-emerald-600">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
             </p>
           </div>
         ))}
         {inside.length === 0 && (
-          <p className="text-center text-zinc-400 dark:text-zinc-300 py-6 text-sm">Nadie dentro en este momento</p>
+          <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-300">
+            Nadie dentro en este momento
+          </p>
         )}
       </div>
     </Card>
@@ -405,20 +453,20 @@ export default function Reception() {
     return (
       <div className="page-stack">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-brand/10 text-brand shrink-0">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="bg-brand/10 text-brand shrink-0 rounded-lg p-1.5">
               <Monitor className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
+              <h1 className="truncate text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
                 Modo mostrador
               </h1>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
                 {insideCount} dentro · F1 entrada · F2 salida
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5">
             <Button
               variant="ghost"
               size="sm"
@@ -430,7 +478,13 @@ export default function Reception() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <Link to="/check-in?kiosk=1">
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Kiosk tablet" aria-label="Kiosk tablet">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0"
+                title="Modo tablet"
+                aria-label="Modo tablet"
+              >
                 <Tablet className="h-4 w-4" />
               </Button>
             </Link>
@@ -442,7 +496,7 @@ export default function Reception() {
               title="Salir del modo mostrador"
             >
               <X className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">Salir</span>
+              <span className="hidden text-xs sm:inline">Salir</span>
             </Button>
           </div>
         </div>
@@ -451,7 +505,7 @@ export default function Reception() {
           <SegmentedControl
             variant="compact"
             value={tab}
-            onChange={(v) => changeTab(v as Tab)}
+            onChange={(v) => changeTab(v)}
             options={[
               { value: 'access', label: 'Acceso', icon: Fingerprint },
               { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
@@ -460,16 +514,18 @@ export default function Reception() {
           />
 
           {tab === 'access' && (
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-3 space-y-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+              <div className="space-y-4 lg:col-span-3">
                 {lookupPanel}
-                {showMemberPanel ? memberPanel : (
-                  <p className="text-center text-[11px] text-zinc-400 dark:text-zinc-300 label-caps py-1">
+                {showMemberPanel ? (
+                  memberPanel
+                ) : (
+                  <p className="label-caps py-1 text-center text-[11px] text-zinc-400 dark:text-zinc-300">
                     Ingrese una cédula para ver el visitante
                   </p>
                 )}
               </div>
-              <aside className="lg:col-span-2 space-y-4">
+              <aside className="space-y-4 lg:col-span-2">
                 {insideList}
                 <Card padding="md" rounded="xl">
                   <h3 className="section-title mb-2">Actividad reciente</h3>
@@ -481,9 +537,7 @@ export default function Reception() {
 
           {tab === 'inside' && insideList}
 
-          {tab === 'register' && (
-            <ReceptionWalkInWizard onComplete={() => void loadStats()} />
-          )}
+          {tab === 'register' && <ReceptionWalkInWizard onComplete={() => void loadStats()} />}
         </div>
       </div>
     );
@@ -496,14 +550,18 @@ export default function Reception() {
       <div className="panel-wide space-y-4">
         <PageHeader
           compact
-          title={<>Control de <span className="text-brand">acceso</span></>}
+          title={
+            <>
+              Control de <span className="text-brand">acceso</span>
+            </>
+          }
           subtitle="Busque por cédula para autorizar entrada y salida"
         />
 
         <SegmentedControl
           variant="compact"
           value={tab}
-          onChange={(v) => changeTab(v as Tab)}
+          onChange={(v) => changeTab(v)}
           options={[
             { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
             { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
@@ -512,7 +570,7 @@ export default function Reception() {
         />
 
         {tab === 'access' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {lookupPanel}
             {memberPanel}
           </div>
@@ -520,9 +578,7 @@ export default function Reception() {
 
         {tab === 'inside' && insideList}
 
-        {tab === 'register' && (
-          <ReceptionWalkInWizard onComplete={() => void loadStats()} />
-        )}
+        {tab === 'register' && <ReceptionWalkInWizard onComplete={() => void loadStats()} />}
       </div>
     </div>
   );

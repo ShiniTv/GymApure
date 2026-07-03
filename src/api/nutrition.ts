@@ -20,28 +20,46 @@ const router = asyncRouter();
 
 const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
 
-const planSchema = z.object({
-  title: z.string().min(1).max(120).optional(),
-  calories_target: z.number().int().positive().max(10000),
-  protein_target_g: z.number().int().min(0).max(1000),
-  carbs_target_g: z.number().int().min(0).max(2000),
-  fat_target_g: z.number().int().min(0).max(500),
-  calories_margin: z.number().int().min(0).max(3000).optional(),
-  protein_margin_g: z.number().int().min(0).max(200).optional(),
-  carbs_margin_g: z.number().int().min(0).max(200).optional(),
-  fat_margin_g: z.number().int().min(0).max(200).optional(),
-  notes: z.string().max(2000).nullable().optional(),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-}).superRefine((data, ctx) => {
-  const maxMargin = (target: number) => Math.max(1, Math.floor(target * 0.3));
-  if ((data.calories_margin ?? 150) > maxMargin(data.calories_target)) {
-    ctx.addIssue({ code: 'custom', message: 'Margen de kcal demasiado alto', path: ['calories_margin'] });
-  }
-  if ((data.protein_margin_g ?? 15) > maxMargin(data.protein_target_g)) {
-    ctx.addIssue({ code: 'custom', message: 'Margen de proteína demasiado alto', path: ['protein_margin_g'] });
-  }
-});
+const planSchema = z
+  .object({
+    title: z.string().min(1).max(120).optional(),
+    calories_target: z.number().int().positive().max(10000),
+    protein_target_g: z.number().int().min(0).max(1000),
+    carbs_target_g: z.number().int().min(0).max(2000),
+    fat_target_g: z.number().int().min(0).max(500),
+    calories_margin: z.number().int().min(0).max(3000).optional(),
+    protein_margin_g: z.number().int().min(0).max(200).optional(),
+    carbs_margin_g: z.number().int().min(0).max(200).optional(),
+    fat_margin_g: z.number().int().min(0).max(200).optional(),
+    notes: z.string().max(2000).nullable().optional(),
+    start_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const maxMargin = (target: number) => Math.max(1, Math.floor(target * 0.3));
+    if ((data.calories_margin ?? 150) > maxMargin(data.calories_target)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Margen de kcal demasiado alto',
+        path: ['calories_margin'],
+      });
+    }
+    if ((data.protein_margin_g ?? 15) > maxMargin(data.protein_target_g)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Margen de proteína demasiado alto',
+        path: ['protein_margin_g'],
+      });
+    }
+  });
 
 const logSchema = z.object({
   meal_type: mealTypeSchema,
@@ -117,7 +135,7 @@ function trainerCanEditPlan(user: AuthRequest['user']): boolean {
 
 router.get(
   '/users/:id/nutrition/plan',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -141,7 +159,7 @@ router.get(
 
 router.put(
   '/users/:id/nutrition/plan',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req: AuthRequest, res) => {
     if (!trainerCanEditPlan(req.user)) {
       res.status(403).json({ error: 'Solo el entrenador puede definir el plan' });
@@ -213,7 +231,7 @@ router.put(
 
 router.get(
   '/users/:id/nutrition/logs',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -221,7 +239,8 @@ router.get(
       return;
     }
 
-    const dateParam = typeof req.query.date === 'string' ? req.query.date : formatLocalDate(new Date());
+    const dateParam =
+      typeof req.query.date === 'string' ? req.query.date : formatLocalDate(new Date());
     if (!isValidDateParam(dateParam)) {
       res.status(400).json({ error: 'Fecha inválida' });
       return;
@@ -243,7 +262,7 @@ router.get(
 
 router.post(
   '/users/:id/nutrition/logs',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -286,7 +305,7 @@ router.post(
 
 router.get(
   '/users/:id/nutrition/summary',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -344,7 +363,11 @@ router.get(
         date,
         totals,
         adherence_percent: adherencePercent(plan, totals),
-        calories_status: getMacroStatus(totals.calories, plan.calories_target, plan.calories_margin),
+        calories_status: getMacroStatus(
+          totals.calories,
+          plan.calories_target,
+          plan.calories_margin
+        ),
       });
       cursor.setDate(cursor.getDate() + 1);
     }

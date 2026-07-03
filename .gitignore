@@ -9,3 +9,6 @@ coverage/
 gym.db
 sqlite.db
 uploads/
+test-results/
+playwright-report/
+playwright/.cache/

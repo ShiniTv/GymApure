@@ -1,12 +1,6 @@
 import { z } from 'zod';
 import { logger } from '../lib/logger.ts';
 
-function deriveSupabaseUrlFromDatabaseUrl(databaseUrl: string): string | null {
-  const match = databaseUrl.match(/postgres\.([a-z0-9]+):/i);
-  if (!match) return null;
-  return `https://${match[1]}.supabase.co`;
-}
-
 const WEAK_JWT_SECRETS = new Set([
   'supersecretkey',
   'change-me',
@@ -34,7 +28,7 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
-  SMTP_SECURE: z.coerce.boolean().optional(),
+  SMTP_SECURE: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
@@ -45,6 +39,21 @@ const envSchema = z.object({
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+function deriveSupabaseUrlFromDatabaseUrl(databaseUrl: string): string | null {
+  const match = /postgres\.([a-z0-9]+):/i.exec(databaseUrl);
+  if (!match) return null;
+  return `https://${match[1]}.supabase.co`;
+}
+
+/** .env booleans: z.coerce.boolean() trata "false" como true (string no vacía). */
+function parseEnvBoolean(raw: string | undefined, defaultValue: boolean): boolean {
+  if (raw === undefined || raw.trim() === '') return defaultValue;
+  const v = raw.trim().toLowerCase();
+  if (v === 'true' || v === '1' || v === 'yes') return true;
+  if (v === 'false' || v === '0' || v === 'no') return false;
+  return defaultValue;
+}
 
 function parseEnv(): Env {
   const result = envSchema.safeParse(process.env);
@@ -63,6 +72,7 @@ const parsedEnv = parseEnv();
 
 export const env = {
   ...parsedEnv,
+  SMTP_SECURE: parseEnvBoolean(parsedEnv.SMTP_SECURE, false),
   SUPABASE_URL:
     parsedEnv.SUPABASE_URL?.trim() ||
     deriveSupabaseUrlFromDatabaseUrl(parsedEnv.DATABASE_URL) ||

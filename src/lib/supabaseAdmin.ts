@@ -178,6 +178,49 @@ export async function supabaseStorageStream(
   };
 }
 
+export interface SignedUploadUrlResult {
+  signedUrl: string;
+  token: string;
+  objectKey: string;
+}
+
+/** Signed PUT URL — browser uploads direct to Storage without passing through Render RAM. */
+export async function supabaseCreateSignedUploadUrl(
+  bucket: string,
+  objectKey: string
+): Promise<SignedUploadUrlResult> {
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUploadUrl(objectKey);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? 'No se pudo crear URL de subida firmada');
+  }
+
+  return {
+    signedUrl: data.signedUrl,
+    token: data.token,
+    objectKey: data.path ?? objectKey,
+  };
+}
+
+/** Signed GET URL — short-lived playback without proxying through the app server. */
+export async function supabaseCreateSignedDownloadUrl(
+  bucket: string,
+  objectKey: string,
+  expiresInSeconds: number
+): Promise<string> {
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUrl(objectKey, expiresInSeconds);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? 'No se pudo crear URL de lectura firmada');
+  }
+
+  return data.signedUrl;
+}
+
 export async function supabaseStorageRemove(bucket: string, objectKey: string): Promise<void> {
   const baseUrl = env.SUPABASE_URL;
   const key = getSupabaseServiceKey();

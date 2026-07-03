@@ -3,7 +3,12 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest } from './middleware/auth.ts';
 import { streamPaymentProof } from '../lib/proofStorage.ts';
-import { streamMediaFile, parseStorageMediaRef } from '../lib/mediaStorage.ts';
+import {
+  streamMediaFile,
+  parseStorageMediaRef,
+  isMediaStorageRemote,
+} from '../lib/mediaStorage.ts';
+import { createSignedExerciseMediaUrl } from '../lib/exerciseVideoStorage.ts';
 import {
   resolveFilePath,
   proofStoredPaths,
@@ -39,9 +44,7 @@ router.get('/proofs/:filename', async (req: AuthRequest, res) => {
 
     const ownerId = Number(rows[0].user_id);
     const canView =
-      req.user!.role === 'admin' ||
-      req.user!.role === 'receptionist' ||
-      req.user!.id === ownerId;
+      req.user!.role === 'admin' || req.user!.role === 'receptionist' || req.user!.id === ownerId;
     if (!canView) {
       return res.status(403).json({ error: 'Permisos insuficientes' });
     }
@@ -134,7 +137,45 @@ router.get('/media/videos', async (req: AuthRequest, res) => {
       [ref]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Video no encontrado' });
+
+    if (isMediaStorageRemote()) {
+      const signed = await createSignedExerciseMediaUrl(ref);
+      res.redirect(302, signed.url);
+      return;
+    }
+
     await streamMediaFile(ref, res, req);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+/** Short-lived signed URL for exercise video/poster (avoids proxying through app server). */
+router.get('/videos/signed-url', async (req: AuthRequest, res) => {
+  const ref = req.query.ref;
+  if (!ref || typeof ref !== 'string') {
+    return res.status(400).json({ error: 'Referencia inválida' });
+  }
+
+  try {
+    const { rows } = await query(
+      `SELECT id FROM exercises WHERE video_url = $1 OR video_poster_url = $1`,
+      [ref]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Video no encontrado' });
+
+    if (!isMediaStorageRemote()) {
+      return res.json({
+        url: ref.startsWith('sbmedia:')
+          ? `/api/files/media/videos?key=${encodeURIComponent(ref.slice('sbmedia:videos:'.length))}`
+          : ref,
+        expiresIn: 0,
+      });
+    }
+
+    const signed = await createSignedExerciseMediaUrl(ref);
+    res.json(signed);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -157,6 +198,11 @@ router.get('/videos/:filename', async (req: AuthRequest, res) => {
     if (!storedRef) return res.status(404).json({ error: 'Video no encontrado' });
 
     if (parseStorageMediaRef(storedRef)) {
+      if (isMediaStorageRemote()) {
+        const signed = await createSignedExerciseMediaUrl(storedRef);
+        res.redirect(302, signed.url);
+        return;
+      }
       await streamMediaFile(storedRef, res, req);
       return;
     }

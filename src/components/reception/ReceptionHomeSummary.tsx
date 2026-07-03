@@ -46,14 +46,17 @@ function ReceptionKpiStrip({ items }: { items: KpiItem[] }) {
       <div className="grid grid-cols-3 divide-x divide-zinc-200 dark:divide-zinc-800">
         {items.map((item) => {
           const content = (
-            <div className="px-2.5 py-3 sm:px-3.5 sm:py-3.5 text-center">
-              <div className="flex items-center justify-center gap-1 mb-1 min-w-0">
-                <item.icon className={cn('h-3.5 w-3.5 shrink-0', kpiToneMap[item.tone])} aria-hidden />
-                <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 leading-tight truncate">
+            <div className="px-2.5 py-3 text-center sm:px-3.5 sm:py-3.5">
+              <div className="mb-1 flex min-w-0 items-center justify-center gap-1">
+                <item.icon
+                  className={cn('h-3.5 w-3.5 shrink-0', kpiToneMap[item.tone])}
+                  aria-hidden
+                />
+                <p className="truncate text-[9px] leading-tight font-semibold tracking-wide text-zinc-500 uppercase sm:text-[10px] dark:text-zinc-400">
                   {item.title}
                 </p>
               </div>
-              <p className="text-xl sm:text-2xl font-bold tabular-nums text-zinc-900 dark:text-white leading-none">
+              <p className="text-xl leading-none font-bold text-zinc-900 tabular-nums sm:text-2xl dark:text-white">
                 {item.value}
               </p>
             </div>
@@ -64,7 +67,7 @@ function ReceptionKpiStrip({ items }: { items: KpiItem[] }) {
               <Link
                 key={item.title}
                 to={item.to}
-                className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40 active:bg-zinc-100 dark:active:bg-zinc-800/60"
+                className="transition-colors hover:bg-zinc-50 active:bg-zinc-100 dark:hover:bg-zinc-800/40 dark:active:bg-zinc-800/60"
                 aria-label={`${item.title}: ${item.value}`}
                 title={item.title}
               >
@@ -86,15 +89,15 @@ function PendingPaymentsBanner({ count }: { count: number }) {
   return (
     <Link
       to="/payments?status=pending"
-      className="flex items-center justify-between gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2.5 transition-colors hover:bg-brand/10"
+      className="border-brand/30 bg-brand/5 hover:bg-brand/10 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 transition-colors"
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <CreditCard className="h-4 w-4 text-brand shrink-0" />
-        <span className="text-xs font-semibold text-brand dark:text-brand truncate">
+      <div className="flex min-w-0 items-center gap-2">
+        <CreditCard className="text-brand h-4 w-4 shrink-0" />
+        <span className="text-brand dark:text-brand truncate text-xs font-semibold">
           {count} pago{count !== 1 ? 's' : ''} pendiente{count !== 1 ? 's' : ''} de aprobar
         </span>
       </div>
-      <span className="text-[10px] font-bold text-brand dark:text-brand shrink-0">Revisar</span>
+      <span className="text-brand dark:text-brand shrink-0 text-[10px] font-bold">Revisar</span>
     </Link>
   );
 }
@@ -146,19 +149,19 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
       {!compact && (
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">
+            <h2 className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
               Resumen del día · <BrandName variant="plain" className="text-brand" />
             </h2>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
               Desliza hacia abajo en móvil para actualizar KPIs
             </p>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               onClick={() => void refresh()}
               disabled={refreshing}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-brand hover:border-brand/30 transition-colors disabled:opacity-50"
+              className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400"
               aria-label="Actualizar resumen"
               title="Actualizar"
             >
@@ -168,7 +171,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
               <button
                 type="button"
                 onClick={onOpenCounter}
-                className="inline-flex h-9 w-9 lg:h-auto lg:min-h-10 lg:w-auto shrink-0 items-center justify-center gap-2 rounded-xl brand-solid brand-solid-hover px-0 py-0 lg:px-4 lg:py-2.5 text-sm font-semibold shadow-md shadow-zinc-900/10 transition-colors"
+                className="brand-solid brand-solid-hover inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl px-0 py-0 text-sm font-semibold shadow-md shadow-zinc-900/10 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-4 lg:py-2.5"
                 aria-label={
                   pendingPayments > 0
                     ? `Modo mostrador (${pendingPayments} pagos pendientes)`
@@ -177,22 +180,24 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
                 title="Modo mostrador"
               >
                 <Monitor className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline whitespace-nowrap">Modo mostrador</span>
+                <span className="hidden whitespace-nowrap lg:inline">Modo mostrador</span>
               </button>
               {pendingPayments > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center rounded-full bg-white dark:bg-zinc-900 text-brand text-[9px] font-bold shadow-sm border border-brand/20 dark:border-brand/30 pointer-events-none">
+                <span className="text-brand border-brand/20 dark:border-brand/30 pointer-events-none absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full border bg-white px-1 text-[9px] font-bold shadow-sm dark:bg-zinc-900">
                   {pendingPayments > 99 ? '99+' : pendingPayments}
                 </span>
               )}
             </span>
             <Link
               to="/check-in?kiosk=1"
-              className="inline-flex h-9 w-9 lg:h-auto lg:min-h-10 lg:w-auto shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 px-0 lg:px-3 text-zinc-600 dark:text-zinc-400 hover:text-brand hover:border-brand/30 transition-colors"
-              title="Kiosk tablet (pantalla completa)"
-              aria-label="Abrir kiosk tablet"
+              className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 px-0 text-zinc-600 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-3 dark:border-zinc-700 dark:text-zinc-400"
+              title="Pantalla de acceso (tablet)"
+              aria-label="Modo tablet"
             >
               <Tablet className="h-4 w-4 shrink-0" />
-              <span className="hidden lg:inline text-xs font-semibold whitespace-nowrap">Kiosk</span>
+              <span className="hidden text-xs font-semibold whitespace-nowrap lg:inline">
+                Modo tablet
+              </span>
             </Link>
           </div>
         </div>
@@ -200,8 +205,22 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
 
       <PendingPaymentsBanner count={pendingPayments} />
 
+      <Link
+        to="/reception?mode=counter&tab=access"
+        className="border-brand/25 bg-brand/5 hover:bg-brand/10 active:bg-brand/15 flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl border px-4 py-3 transition-colors lg:hidden"
+        aria-label="Abrir mostrador: check-in y acceso"
+      >
+        <span className="brand-solid inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
+          <Fingerprint className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-zinc-900 dark:text-white">Abrir mostrador</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Check-in y acceso de miembros</p>
+        </div>
+      </Link>
+
       <div className="grid gap-3 md:grid-cols-5 md:items-stretch">
-        <div className="md:col-span-2 space-y-2.5">
+        <div className="space-y-2.5 md:col-span-2">
           <ReceptionKpiStrip
             items={[
               {
@@ -262,21 +281,30 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
           </div>
         </div>
 
-        <Card padding="sm" rounded="xl" className="md:col-span-3 flex flex-col min-h-[180px] md:min-h-[240px]">
-          <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-brand" />
+        <Card
+          padding="sm"
+          rounded="xl"
+          className="flex min-h-[180px] flex-col md:col-span-3 md:min-h-[240px]"
+        >
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-zinc-900 dark:text-white">
+              <Clock className="text-brand h-3.5 w-3.5" />
               Actividad de hoy
             </h3>
             <Link
               to="/reception?mode=counter&tab=inside"
-              className="text-[10px] sm:text-xs font-semibold text-brand hover:text-brand shrink-0"
+              className="text-brand hover:text-brand shrink-0 text-[10px] font-semibold sm:text-xs"
             >
               Dentro ahora
             </Link>
           </div>
-          <div className="flex-1 min-h-0 flex flex-col md:overflow-y-auto md:max-h-[280px]">
-            <ReceptionActivityFeed limit={10} refreshKey={refreshKey} compact className="flex-1 flex flex-col" />
+          <div className="flex min-h-0 flex-1 flex-col md:max-h-[280px] md:overflow-y-auto">
+            <ReceptionActivityFeed
+              limit={10}
+              refreshKey={refreshKey}
+              compact
+              className="flex flex-1 flex-col"
+            />
           </div>
         </Card>
       </div>

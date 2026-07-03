@@ -1,6 +1,6 @@
 # Guía de pruebas — GymApure
 
-Este proyecto usa **pruebas de API por HTTP** (sin Playwright/Cypress). El servidor debe estar en marcha salvo que indiques lo contrario.
+Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil) para UX crítica. El servidor debe estar en marcha salvo que indiques lo contrario.
 
 ## Requisitos previos
 
@@ -28,28 +28,47 @@ Este proyecto usa **pruebas de API por HTTP** (sin Playwright/Cypress). El servi
 
 ## Comandos
 
-| Comando | Qué valida | Servidor |
-|---------|----------|----------|
-| `npm run lint` | TypeScript strict (`tsc --noEmit`) | No |
-| `npm run build` | Build Vite + bundle Express | No |
-| `npm run test:smoke` | Health, login, RBAC básico, kiosk eliminado, check-in recepción | Sí |
-| `npm run test:integration` | Smoke + sprint 4/5/6 (alertas, pagos, notificaciones) | Sí |
-| `npm run test:security-checklist` | Fases 1–3: sesiones, IDOR trainers, rutinas filtradas | Sí |
-| `npm run test:auth-checklist` | Registro, cambio de contraseña, invalidación JWT | Sí |
-| `npm run test:reception-checklist` | Panel recepción, walk-in, lookup | Sí |
-| `npm run test:e2e` | **Suite completa CI** (integration + security + auth + reception) | Sí |
-| `npm run verify:local-e2e` | Levanta `dev`, espera `/api/health`, ejecuta `test:e2e` | Automático |
+| Comando                            | Qué valida                                                                   | Servidor   |
+| ---------------------------------- | ---------------------------------------------------------------------------- | ---------- |
+| `npm run lint`                     | TypeScript strict (`tsc --noEmit`)                                           | No         |
+| `npm run build`                    | Build Vite + bundle Express                                                  | No         |
+| `npm run test:smoke`               | Health, login, RBAC básico, kiosk eliminado, check-in recepción              | Sí         |
+| `npm run test:integration`         | Smoke + sprint 4/5/6 (alertas, pagos, notificaciones)                        | Sí         |
+| `npm run test:security-checklist`  | Fases 1–3: sesiones, IDOR trainers, rutinas filtradas                        | Sí         |
+| `npm run test:auth-checklist`      | Registro, cambio de contraseña, invalidación JWT                             | Sí         |
+| `npm run test:reception-checklist` | Panel recepción, walk-in, lookup                                             | Sí         |
+| `npm run test:e2e`                 | **Suite completa CI** (integration + security + auth + reception)            | Sí         |
+| `npm run test:ux`                  | UX API: forgot/reset, `workoutsThisWeek`, RBAC admin/member/trainer          | Sí         |
+| `npm run test:ux:browser`          | Playwright: 19 specs (mobile iPhone 14 + desktop 1280px + tablet iPad 834px) | Sí         |
+| `npm run test:ux:browser:ui`       | Playwright con UI de depuración                                              | Sí         |
+| `npm run verify:local-e2e`         | Levanta `dev`, espera `/api/health`, ejecuta `test:e2e`                      | Automático |
 
 ### Sprints individuales (debug)
 
-| Comando | Enfoque |
-|---------|---------|
-| `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones |
-| `test:sprint4` | Alertas de vencimiento |
-| `test:sprint5` | Pagos y membresías |
-| `test:sprint6` | Chat in-app y settings de vencimiento |
+| Comando                         | Enfoque                               |
+| ------------------------------- | ------------------------------------- |
+| `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones             |
+| `test:sprint4`                  | Alertas de vencimiento                |
+| `test:sprint5`                  | Pagos y membresías                    |
+| `test:sprint6`                  | Chat in-app y settings de vencimiento |
 
 Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:alerts`.
+
+### Pruebas UX
+
+| Recurso                       | Descripción                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [`docs/UX-QA.md`](./UX-QA.md) | Checklist manual por rol/viewport                                                                        |
+| `npm run test:ux`             | Automatización API de flujos UX críticos                                                                 |
+| `npm run test:ux:browser`     | E2E Playwright (proyectos `mobile`, `desktop`, `tablet`); primera vez: `npx playwright install chromium` |
+
+Verificación UX local recomendada:
+
+```bash
+npm run dev   # otra terminal
+npm run test:ux
+npm run test:ux:browser
+```
 
 ---
 
@@ -61,7 +80,7 @@ El workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) ejecuta en
 2. `npm run build`
 3. Lighthouse baseline (no bloqueante)
 4. Postgres 16 en servicio → `db:migrate` → `db:restore-demo` → admin checklist
-5. `npm start` + `npm run test:e2e`
+5. `npm start` + `npm run test:e2e` + `npm run test:ux`
 
 Variables de CI relevantes: `DATABASE_URL`, `JWT_SECRET`, `DEMO_PASSWORD`, `ALLOW_PUBLIC_REGISTER=true`.
 
@@ -75,6 +94,14 @@ npm run build
 npm run db:migrate
 npm run db:restore-demo
 npm run verify:local-e2e
+npm run test:ux
+```
+
+Playwright (navegador) no corre en CI por defecto; ejecútalo local antes de release:
+
+```bash
+npx playwright install chromium
+npm run test:ux:browser
 ```
 
 En Windows, si `verify:local-e2e` falla al matar procesos, detén `npm run dev` manualmente y ejecuta `npm run test:e2e` con el servidor ya levantado.
@@ -83,12 +110,12 @@ En Windows, si `verify:local-e2e` falla al matar procesos, detén `npm run dev` 
 
 ## Datos demo (`db:restore-demo`)
 
-| Email | Rol | Notas |
-|-------|-----|-------|
-| `admin@gym.com` | admin | Stats, settings |
-| `receptionist@gym.com` | receptionist | Check-in staff |
-| `trainer@gym.com` | trainer | Rutinas, IDOR tests |
-| `member@gym.com` | member | Cédula `V-11223344`, rutina demo asignada |
+| Email                  | Rol          | Notas                                             |
+| ---------------------- | ------------ | ------------------------------------------------- |
+| `admin@gym.com`        | admin        | Stats, settings                                   |
+| `receptionist@gym.com` | receptionist | Check-in staff                                    |
+| `trainer@gym.com`      | trainer      | Rutinas, IDOR tests                               |
+| `member@gym.com`       | member       | Cédula `V-11223344`, rutina demo con 2 ejercicios |
 
 Contraseña de todas: valor de `DEMO_PASSWORD` en `.env`.
 
@@ -107,16 +134,17 @@ Contraseña de todas: valor de `DEMO_PASSWORD` en `.env`.
 
 ## Variables útiles
 
-| Variable | Uso |
-|----------|-----|
-| `SMOKE_BASE_URL` | URL del servidor (default `http://localhost:3000`) |
-| `DEMO_PASSWORD` | Login cuentas demo |
-| `CHECKLIST_ADMIN_EMAIL` / `CHECKLIST_ADMIN_PASSWORD` | Admin para auth checklist |
+| Variable                                             | Uso                                                |
+| ---------------------------------------------------- | -------------------------------------------------- |
+| `SMOKE_BASE_URL`                                     | URL del servidor (default `http://localhost:3000`) |
+| `DEMO_PASSWORD`                                      | Login cuentas demo                                 |
+| `CHECKLIST_ADMIN_EMAIL` / `CHECKLIST_ADMIN_PASSWORD` | Admin para auth checklist                          |
 
 ---
 
 ## Limitaciones
 
-- No hay tests de navegador (UI). Revisión visual: [`QA-VISUAL-CHECKLIST.md`](./QA-VISUAL-CHECKLIST.md).
+- Revisión visual completa: [`UX-QA.md`](./UX-QA.md) y [`QA-VISUAL-CHECKLIST.md`](./QA-VISUAL-CHECKLIST.md).
+- Playwright cubre flujos móviles críticos, no toda la UI.
 - Los tests crean usuarios temporales con emails `@test.local`; no usar en producción.
 - Rate limiting en producción puede hacer fallar suites repetidas muy rápido; en CI `NODE_ENV=production` aplica límites reales.

@@ -4,7 +4,15 @@ import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Card, PageHeader, Spinner, StatCard, BackToDashboardLink, EmptyState } from '../components/ui';
+import {
+  Badge,
+  Card,
+  PageHeader,
+  Spinner,
+  StatCard,
+  BackToDashboardLink,
+  EmptyState,
+} from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
@@ -43,8 +51,12 @@ export default function Attendance() {
     const load = async () => {
       try {
         const [volume, hourly] = await Promise.all([
-          apiFetch('/api/attendance/volume').then((res) => parseJsonResponse<{ date: string; count: number }[]>(res)),
-          apiFetch('/api/attendance/hourly').then((res) => parseJsonResponse<{ hour: number; count: number }[]>(res)),
+          apiFetch('/api/attendance/volume').then((res) =>
+            parseJsonResponse<{ date: string; count: number }[]>(res)
+          ),
+          apiFetch('/api/attendance/hourly').then((res) =>
+            parseJsonResponse<{ hour: number; count: number }[]>(res)
+          ),
         ]);
         setData(Array.isArray(volume) ? volume : []);
         setHourlyData(Array.isArray(hourly) ? hourly : []);
@@ -73,7 +85,13 @@ export default function Attendance() {
       />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
-        <StatCard compact title="Ingresos 7d" value={totalEntries} icon={Fingerprint} color="orange" />
+        <StatCard
+          compact
+          title="Ingresos 7d"
+          value={totalEntries}
+          icon={Fingerprint}
+          color="orange"
+        />
         <StatCard compact title="Promedio/día" value={avgEntries} icon={TrendingUp} color="blue" />
         <StatCard
           compact
@@ -84,15 +102,15 @@ export default function Attendance() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6">
         <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
-          <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-brand shrink-0" />
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
+            <Calendar className="text-brand h-4 w-4 shrink-0" />
             Volumen diario (7d)
           </h3>
           <div className="h-44 sm:h-56 lg:h-64">
             {loading ? (
-              <div className="h-full flex items-center justify-center">
+              <div className="flex h-full items-center justify-center">
                 <Spinner />
               </div>
             ) : data.length === 0 ? (
@@ -100,14 +118,15 @@ export default function Attendance() {
                 icon={Calendar}
                 title="Sin datos de asistencia"
                 description="Aún no hay check-ins registrados en los últimos 7 días."
-                action={
-                  <Link to="/reception" className="text-xs font-bold text-brand hover:underline">
-                    Ir a recepción
-                  </Link>
-                }
               />
             ) : (
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <Spinner />
+                  </div>
+                }
+              >
                 <DailyVolumeChart data={data} />
               </Suspense>
             )}
@@ -115,13 +134,13 @@ export default function Attendance() {
         </Card>
 
         <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
-          <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
-            <Clock className="h-4 w-4 text-blue-500 shrink-0" />
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
+            <Clock className="h-4 w-4 shrink-0 text-blue-500" />
             Horas pico (30d)
           </h3>
           <div className="h-44 sm:h-56 lg:h-64">
             {loading ? (
-              <div className="h-full flex items-center justify-center">
+              <div className="flex h-full items-center justify-center">
                 <Spinner />
               </div>
             ) : hourlyData.length === 0 ? (
@@ -131,7 +150,13 @@ export default function Attendance() {
                 description="Registra check-ins para ver el patrón horario del gym."
               />
             ) : (
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <Spinner />
+                  </div>
+                }
+              >
                 <HourlyVolumeChart data={hourlyData} />
               </Suspense>
             )}
@@ -140,30 +165,38 @@ export default function Attendance() {
       </div>
 
       <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
-        <h3 className="text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-3 sm:mb-5 flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-brand shrink-0" />
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
+          <AlertTriangle className="text-brand h-4 w-4 shrink-0" />
           Próximos vencimientos ({alertDays}d)
         </h3>
         <div className="space-y-3 sm:space-y-4">
           {lastDoorAlert && (
-            <div className={cn('p-4 border rounded-2xl', expiryBannerClasses(getExpirySeverity(lastDoorAlert.days_remaining, alertDays)).container)}>
+            <div
+              className={cn(
+                'rounded-2xl border p-4',
+                expiryBannerClasses(getExpirySeverity(lastDoorAlert.days_remaining, alertDays))
+                  .container
+              )}
+            >
               <p className="label-caps mb-2">Última alerta en puerta:</p>
               <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                 {lastDoorAlert.full_name} — {lastDoorAlert.membership_name} —{' '}
                 {formatExpiryLabel(lastDoorAlert.days_remaining) === 'Hoy'
                   ? 'vence hoy'
                   : lastDoorAlert.days_remaining === 1
-                  ? 'vence mañana'
-                  : `vence en ${lastDoorAlert.days_remaining} días`}
+                    ? 'vence mañana'
+                    : `vence en ${lastDoorAlert.days_remaining} días`}
               </p>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-300 mt-1">
-                {format(new Date(lastDoorAlert.check_in_time), 'dd MMM yyyy · HH:mm', { locale: es })}
+              <p className="mt-1 text-[10px] text-zinc-400 dark:text-zinc-300">
+                {format(new Date(lastDoorAlert.check_in_time), 'dd MMM yyyy · HH:mm', {
+                  locale: es,
+                })}
               </p>
             </div>
           )}
-          <div className="scroll-area space-y-2 max-h-56 sm:max-h-64">
+          <div className="scroll-area max-h-56 space-y-2 sm:max-h-64">
             {expiring.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 No hay membresías por vencer en los próximos {alertDays} días.
               </p>
             ) : (
@@ -175,15 +208,21 @@ export default function Attendance() {
                     key={member.user_id}
                     to="/members?expiring=true"
                     className={cn(
-                      'flex items-center justify-between p-3 rounded-xl border transition-colors hover:opacity-90',
+                      'flex items-center justify-between rounded-xl border p-3 transition-colors hover:opacity-90',
                       classes.itemBorder
                     )}
                   >
                     <div>
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{member.full_name}</p>
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-300">{member.membership_name}</p>
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                        {member.full_name}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
+                        {member.membership_name}
+                      </p>
                     </div>
-                    <Badge className={classes.badge}>{formatExpiryLabel(member.days_remaining)}</Badge>
+                    <Badge className={classes.badge}>
+                      {formatExpiryLabel(member.days_remaining)}
+                    </Badge>
                   </Link>
                 );
               })

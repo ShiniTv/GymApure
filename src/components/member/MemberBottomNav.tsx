@@ -1,51 +1,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  Home,
-  Dumbbell,
-  UtensilsCrossed,
-  UserCircle,
-  ListChecks,
-  CreditCard,
-  LayoutGrid,
-  MessageSquare,
-  History,
-  X,
-} from 'lucide-react';
+import { Dumbbell, X, LogOut } from 'lucide-react';
 import clsx from 'clsx';
+import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
+import {
+  MEMBER_PRIMARY_TABS,
+  MEMBER_MORE_ITEMS,
+  isMemberFabRoute,
+} from '../../config/navigation/memberBottomNav';
 
-const PRIMARY_ITEMS: {
-  name: string;
-  href: string;
-  icon: typeof Home;
-  center?: boolean;
-}[] = [
-  { name: 'Inicio', href: '/', icon: Home },
-  { name: 'Rutinas', href: '/routines', icon: ListChecks },
-  { name: 'Entrenar', href: '__workout__', icon: Dumbbell, center: true },
-  { name: 'Pagos', href: '/payments', icon: CreditCard },
-  { name: 'Más', href: '__more__', icon: LayoutGrid },
-];
-
-const MORE_ITEMS = [
-  { name: 'Mensajes', href: '/messages', icon: MessageSquare },
-  { name: 'Historial', href: '/history', icon: History },
-  { name: 'Perfil', href: '/profile', icon: UserCircle },
-  { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
-] as const;
+const FAB_ROOT_CLASS = 'member-has-workout-fab';
 
 export function MemberBottomNav() {
   const location = useLocation();
+  const { logout } = useAuth();
   const memberStats = useMemberStatsOptional();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
-  const workoutHref = memberStats?.stats?.primaryRoutine
-    ? `/workout/${memberStats.stats.primaryRoutine.id}`
-    : '/routines';
+  const primaryRoutine = memberStats?.stats?.primaryRoutine;
+  const workoutHref = primaryRoutine ? `/workout/${primaryRoutine.id}` : '/routines';
+
+  const showWorkoutFab = !!primaryRoutine?.id && isMemberFabRoute(location.pathname);
 
   useEffect(() => {
     setMoreOpen(false);
@@ -62,18 +42,56 @@ export function MemberBottomNav() {
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [moreOpen]);
 
-  const isActive = (href: string) => {
+  useEffect(() => {
+    if (!moreOpen || !sheetRef.current) return;
+    const sheet = sheetRef.current;
+    const focusables = sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    requestAnimationFrame(() => first?.focus());
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMoreOpen(false);
+        moreButtonRef.current?.focus();
+        return;
+      }
+      if (e.key !== 'Tab' || focusables.length === 0) return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [moreOpen]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(FAB_ROOT_CLASS, showWorkoutFab);
+    return () => {
+      document.documentElement.classList.remove(FAB_ROOT_CLASS);
+    };
+  }, [showWorkoutFab]);
+
+  const isMoreItemActive = MEMBER_MORE_ITEMS.some(
+    (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
+  );
+
+  const isTabActive = (href: string, action?: 'more') => {
     if (href === '/') return location.pathname === '/';
-    if (href === '__workout__') {
-      return location.pathname.startsWith('/workout/');
-    }
-    if (href === '__more__') {
-      return MORE_ITEMS.some(
-        (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
-      );
-    }
+    if (action === 'more') return isMoreItemActive || moreOpen;
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
+
+  const sheetBottom = showWorkoutFab
+    ? 'bottom-[calc(9.25rem+env(safe-area-inset-bottom))]'
+    : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]';
 
   return (
     <>
@@ -88,120 +106,165 @@ export function MemberBottomNav() {
       <div
         ref={sheetRef}
         className={clsx(
-          'fixed left-0 right-0 z-[46] lg:hidden px-4 transition-transform duration-200 ease-out',
-          moreOpen ? 'translate-y-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))]' : 'translate-y-full bottom-0 pointer-events-none'
+          'fixed right-0 left-0 z-[46] px-4 transition-transform duration-200 ease-out lg:hidden',
+          moreOpen
+            ? clsx('translate-y-0', sheetBottom)
+            : 'pointer-events-none bottom-0 translate-y-full'
         )}
+        role="dialog"
+        aria-modal={moreOpen}
+        aria-label="Más opciones"
+        aria-hidden={!moreOpen}
       >
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl p-2 mb-2">
-          <div className="flex items-center justify-between px-2 py-1 mb-1">
-            <p className="text-xs font-bold text-zinc-900 dark:text-white">Más opciones</p>
+        <div className="mb-2 rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-2 flex items-center justify-between px-1 py-1">
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">Más opciones</p>
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               aria-label="Cerrar menú"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <ul className="grid grid-cols-2 gap-1">
-            {MORE_ITEMS.map((item) => (
-              <li key={item.href}>
-                <Link
-                  to={item.href}
-                  onClick={() => setMoreOpen(false)}
-                  className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                >
-                  <item.icon className="h-4 w-4 text-brand shrink-0" />
-                  <span className="truncate">{item.name}</span>
-                  {item.href === '/messages' && chatUnread > 0 && (
-                    <span className="ml-auto min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full bg-brand text-white text-[9px] font-bold">
-                      {chatUnread > 99 ? '99+' : chatUnread}
+          <ul className="space-y-1">
+            {MEMBER_MORE_ITEMS.map((item) => {
+              const itemActive =
+                location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
+              return (
+                <li key={item.href}>
+                  <Link
+                    to={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className={clsx(
+                      'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
+                      itemActive
+                        ? 'bg-brand/10 text-brand'
+                        : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
+                    )}
+                    aria-current={itemActive ? 'page' : undefined}
+                  >
+                    <span
+                      className={clsx(
+                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+                        itemActive
+                          ? 'bg-brand text-white'
+                          : 'text-brand bg-zinc-100 dark:bg-zinc-800'
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" aria-hidden />
                     </span>
-                  )}
-                </Link>
-              </li>
-            ))}
+                    <span className="flex-1 truncate">{item.name}</span>
+                    {item.showUnreadBadge && chatUnread > 0 && (
+                      <span className="bg-brand flex h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                        {chatUnread > 99 ? '99+' : chatUnread}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  logout();
+                }}
+                className="flex min-h-[var(--touch-min)] w-full touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+              >
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                  <LogOut className="h-4 w-4" aria-hidden />
+                </span>
+                <span className="flex-1 truncate text-left">Cerrar sesión</span>
+              </button>
+            </li>
           </ul>
         </div>
       </div>
 
-      <nav
-        className="member-bottom-nav fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-zinc-200/80 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md"
-        aria-label="Navegación principal"
-      >
-        <ul className="flex items-stretch justify-around px-1 pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
-          {PRIMARY_ITEMS.map((item) => {
-            const href = item.href === '__workout__' ? workoutHref : item.href;
-            const active = isActive(item.href);
+      <div className="member-bottom-nav pointer-events-none fixed right-0 bottom-0 left-0 z-50 px-4 lg:hidden">
+        {showWorkoutFab && (
+          <Link
+            to={workoutHref}
+            className="member-bottom-nav-fab pointer-events-auto absolute touch-manipulation"
+            aria-label="Entrenar"
+          >
+            <span className="brand-solid flex h-full w-full items-center justify-center rounded-2xl shadow-lg ring-2 ring-white/90 transition-transform active:scale-95 dark:ring-zinc-950/90">
+              <Dumbbell className="h-6 w-6 text-white" aria-hidden />
+            </span>
+          </Link>
+        )}
 
-            if (item.href === '__more__') {
-              return (
-                <li key={item.name} className="flex-1 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setMoreOpen((v) => !v)}
-                    className={clsx(
-                      'flex flex-col items-center justify-center gap-0.5 min-h-[var(--touch-min)] min-w-[var(--touch-min)] px-2 rounded-xl text-[10px] font-semibold transition-colors touch-manipulation w-full',
-                      active || moreOpen
-                        ? 'text-brand'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                    )}
-                    aria-expanded={moreOpen}
-                    aria-label="Más opciones"
-                  >
-                    <span className="relative">
-                      <item.icon className={clsx('h-5 w-5', (active || moreOpen) && 'text-brand')} aria-hidden />
-                      {chatUnread > 0 && (
-                        <span className="absolute -top-1 -right-1.5 min-w-[0.875rem] h-[0.875rem] px-0.5 flex items-center justify-center rounded-full bg-brand text-white text-[8px] font-bold">
-                          {chatUnread > 9 ? '9+' : chatUnread}
-                        </span>
+        <nav
+          className="member-bottom-nav-pill pointer-events-auto relative mx-auto max-w-md"
+          aria-label="Navegación principal"
+        >
+          <ul className="flex items-center justify-around px-3 py-2">
+            {MEMBER_PRIMARY_TABS.map((item) => {
+              const active = isTabActive(item.href, item.action);
+
+              if (item.action === 'more') {
+                return (
+                  <li key={item.name} className="flex flex-1 justify-center">
+                    <button
+                      ref={moreButtonRef}
+                      type="button"
+                      onClick={() => setMoreOpen((v) => !v)}
+                      className={clsx(
+                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                        active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
-                    </span>
-                    <span>{item.name}</span>
-                  </button>
-                </li>
-              );
-            }
+                      aria-expanded={moreOpen}
+                      aria-label={item.name}
+                    >
+                      <span className="relative">
+                        <span
+                          className={clsx(
+                            'member-bottom-nav-tab-icon',
+                            (active || moreOpen) && 'member-bottom-nav-tab-icon--active'
+                          )}
+                        >
+                          <item.icon className="h-5 w-5" aria-hidden />
+                        </span>
+                        {chatUnread > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
+                            {chatUnread > 9 ? '9+' : chatUnread}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                );
+              }
 
-            if (item.center) {
               return (
-                <li key={item.name} className="flex items-center -mt-3">
+                <li key={item.name} className="flex flex-1 justify-center">
                   <Link
-                    to={href}
+                    to={item.href}
                     className={clsx(
-                      'flex flex-col items-center justify-center min-h-[var(--touch-comfort)] min-w-[var(--touch-comfort)] rounded-2xl brand-solid shadow-lg transition-transform active:scale-95 touch-manipulation',
-                      active && 'ring-2 ring-brand/30 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950'
+                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                      active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
+                    aria-label={item.name}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <item.icon className="h-6 w-6" aria-hidden />
-                    <span className="sr-only">{item.name}</span>
+                    <span
+                      className={clsx(
+                        'member-bottom-nav-tab-icon',
+                        active && 'member-bottom-nav-tab-icon--active'
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" aria-hidden />
+                    </span>
                   </Link>
                 </li>
               );
-            }
-
-            return (
-              <li key={item.name} className="flex-1 flex justify-center">
-                <Link
-                  to={href}
-                  className={clsx(
-                    'flex flex-col items-center justify-center gap-0.5 min-h-[var(--touch-min)] min-w-[var(--touch-min)] px-2 rounded-xl text-[10px] font-semibold transition-colors touch-manipulation',
-                    active
-                      ? 'text-brand'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                  )}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <item.icon className={clsx('h-5 w-5', active && 'text-brand')} aria-hidden />
-                  <span>{item.name}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+            })}
+          </ul>
+        </nav>
+      </div>
     </>
   );
 }

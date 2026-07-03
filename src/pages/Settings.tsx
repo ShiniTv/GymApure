@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { apiFetch, parseJsonResponse, parseJsonSafe, toDisplayErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
-import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet, Tablet } from 'lucide-react';
-import { Button, Card, Input, Label, PageHeader, Badge, Spinner, BackToDashboardLink } from '../components/ui';
+import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet } from 'lucide-react';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  PageHeader,
+  Badge,
+  Spinner,
+  BackToDashboardLink,
+} from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 interface ExpirySettingsForm {
   expiry_alert_days: number;
@@ -46,13 +55,16 @@ interface HealthMetricsResponse {
 
 export default function Settings() {
   const { user } = useAuth();
+  usePageTitle('Configuración');
   const adminStats = useAdminStats();
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsLoadError, setSettingsLoadError] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [settingsMessageTone, setSettingsMessageTone] = useState<'success' | 'info' | 'error'>('info');
+  const [settingsMessageTone, setSettingsMessageTone] = useState<'success' | 'info' | 'error'>(
+    'info'
+  );
   const [opsMetrics, setOpsMetrics] = useState<HealthMetricsResponse | null>(null);
   const [opsMetricsError, setOpsMetricsError] = useState<string | null>(null);
   const [opsMetricsLoading, setOpsMetricsLoading] = useState(false);
@@ -155,12 +167,14 @@ export default function Settings() {
       if (!res.ok) {
         const data = await parseJsonSafe<{ error?: string; requestId?: string }>(res);
         throw new Error(
-          data.requestId ? `${data.error ?? 'No se pudo exportar'} (req: ${data.requestId})` : data.error ?? 'No se pudo exportar'
+          data.requestId
+            ? `${data.error ?? 'No se pudo exportar'} (req: ${data.requestId})`
+            : (data.error ?? 'No se pudo exportar')
         );
       }
       const blob = await res.blob();
       const disposition = res.headers.get('Content-Disposition') ?? '';
-      const match = disposition.match(/filename="([^"]+)"/);
+      const match = /filename="([^"]+)"/.exec(disposition);
       const filename = match?.[1] ?? `metrics.${format}`;
       const blobUrl = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
@@ -174,18 +188,17 @@ export default function Settings() {
     }
   };
 
-  const opsAlerts =
-    opsMetrics
-      ? [
-          ...(opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
-            ? [`Error rate en ${opsMetrics.request_metrics.errorRatePercent}%`]
-            : []),
-          ...(opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
-            ? [`Slow rate en ${opsMetrics.request_metrics.slowRatePercent}%`]
-            : []),
-          ...(opsMetrics.db.status === 'down' ? ['Base de datos degradada'] : []),
-        ]
-      : [];
+  const opsAlerts = opsMetrics
+    ? [
+        ...(opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
+          ? [`Error rate en ${opsMetrics.request_metrics.errorRatePercent}%`]
+          : []),
+        ...(opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
+          ? [`Slow rate en ${opsMetrics.request_metrics.slowRatePercent}%`]
+          : []),
+        ...(opsMetrics.db.status === 'down' ? ['Base de datos degradada'] : []),
+      ]
+    : [];
 
   if (settingsLoading) {
     return (
@@ -199,46 +212,45 @@ export default function Settings() {
     <div className="page-stack-tight">
       <PageHeader
         compact
-        title={<>Configuración <span className="text-brand">del sistema</span></>}
+        title={
+          <>
+            Configuración <span className="text-brand">del sistema</span>
+          </>
+        }
         subtitle="Avisos de chat y salud operativa."
         action={<BackToDashboardLink />}
       />
 
-          <Card padding="sm" rounded="xl" className="panel-wide">
-            <div className="flex items-center justify-between gap-2 mb-2.5">
-              <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 min-w-0">
-                <Settings2 className="h-4 w-4 text-brand shrink-0" />
-                <span className="truncate">Notificaciones push</span>
-              </h2>
-            </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
-              Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes, check-ins).
-            </p>
-            <PushNotificationsToggle />
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-3">
-              <Link to="/check-in?kiosk=1" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
-                <Tablet className="h-3.5 w-3.5" />
-                Abrir kiosk de check-in (tablet)
-              </Link>
-            </p>
-          </Card>
+      <Card padding="sm" rounded="xl" className="panel-wide">
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+            <Settings2 className="text-brand h-4 w-4 shrink-0" />
+            <span className="truncate">Notificaciones push</span>
+          </h2>
+        </div>
+        <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
+          Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes,
+          check-ins).
+        </p>
+        <PushNotificationsToggle />
+      </Card>
 
-          {settingsLoadError && (
-            <Card padding="sm" rounded="xl" className="panel-wide border-red-500/30 bg-red-500/5">
-              <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
-              </p>
-            </Card>
-          )}
+      {settingsLoadError && (
+        <Card padding="sm" rounded="xl" className="panel-wide border-red-500/30 bg-red-500/5">
+          <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+            No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
+          </p>
+        </Card>
+      )}
 
-          {expirySettings && (
+      {expirySettings && (
         <Card padding="sm" rounded="xl" className="panel-wide">
-          <div className="flex items-center justify-between gap-2 mb-2.5">
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 min-w-0">
-              <Settings2 className="h-4 w-4 text-brand shrink-0" />
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+              <Settings2 className="text-brand h-4 w-4 shrink-0" />
               <span className="truncate">Avisos de membresía</span>
             </h2>
-            <div className="flex gap-1.5 shrink-0">
+            <div className="flex shrink-0 gap-1.5">
               <Button
                 type="button"
                 variant="ghost"
@@ -265,7 +277,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
+          <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
             Vencimiento, pagos y rutinas se envían al chat de cada miembro.
           </p>
 
@@ -290,7 +302,7 @@ export default function Settings() {
 
           {settingsMessage && (
             <p
-              className={`text-[11px] font-bold mt-3 leading-snug ${
+              className={`mt-3 text-[11px] leading-snug font-bold ${
                 settingsMessageTone === 'success'
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : settingsMessageTone === 'info'
@@ -305,13 +317,13 @@ export default function Settings() {
       )}
 
       <Card padding="sm" rounded="xl" className="panel-wide">
-        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-            <Activity className="h-4 w-4 text-brand shrink-0" />
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+            <Activity className="text-brand h-4 w-4 shrink-0" />
             Salud operativa
           </h2>
           {opsMetrics && (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex shrink-0 items-center gap-1.5">
               <Button
                 type="button"
                 variant="ghost"
@@ -347,23 +359,29 @@ export default function Settings() {
           <p className="text-xs font-bold text-red-600 dark:text-red-400">{opsMetricsError}</p>
         ) : opsMetrics ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-              <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">DB ms</p>
-                <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  DB ms
+                </p>
+                <p className="mt-0.5 text-base font-bold text-zinc-900 tabular-nums sm:text-lg dark:text-white">
                   {opsMetrics.db.latency_ms ?? '—'}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Avg req ms</p>
-                <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5">
+              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Avg req ms
+                </p>
+                <p className="mt-0.5 text-base font-bold text-zinc-900 tabular-nums sm:text-lg dark:text-white">
                   {opsMetrics.request_metrics.avgResponseMs}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Error rate</p>
+              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Error rate
+                </p>
                 <p
-                  className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 ${
+                  className={`mt-0.5 text-base font-bold tabular-nums sm:text-lg ${
                     opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
                       ? 'text-red-500'
                       : 'text-emerald-500'
@@ -372,10 +390,12 @@ export default function Settings() {
                   {opsMetrics.request_metrics.errorRatePercent}%
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Slow rate</p>
+              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Slow rate
+                </p>
                 <p
-                  className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 ${
+                  className={`mt-0.5 text-base font-bold tabular-nums sm:text-lg ${
                     opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
                       ? 'text-brand'
                       : 'text-emerald-500'
@@ -388,20 +408,21 @@ export default function Settings() {
 
             {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
               <div className="mt-4">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Top rutas lentas
                 </p>
                 <div className="space-y-1.5">
                   {opsMetrics.request_metrics.topSlowRoutes.map((route) => (
                     <div
                       key={`${route.method}-${route.path}`}
-                      className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-2.5 py-2"
+                      className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800"
                     >
-                      <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+                      <p className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                         {route.method} {route.path}
                       </p>
-                      <p className="text-xs text-zinc-700 dark:text-zinc-200 mt-0.5 tabular-nums">
-                        avg {route.avgDurationMs}ms · max {route.maxDurationMs}ms · {route.count} req
+                      <p className="mt-0.5 text-xs text-zinc-700 tabular-nums dark:text-zinc-200">
+                        avg {route.avgDurationMs}ms · max {route.maxDurationMs}ms · {route.count}{' '}
+                        req
                       </p>
                     </div>
                   ))}
@@ -410,16 +431,23 @@ export default function Settings() {
             )}
 
             <div className="mt-4">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1.5">
+              <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                 Alertas activas
               </p>
               {opsAlerts.length === 0 ? (
-                <p className="text-[11px] font-bold text-emerald-600">Sin alertas. Operación normal.</p>
+                <p className="text-[11px] font-bold text-emerald-600">
+                  Sin alertas. Operación normal.
+                </p>
               ) : (
                 <div className="space-y-1.5">
                   {opsAlerts.map((alert) => (
-                    <div key={alert} className="rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-2">
-                      <p className="text-[11px] font-bold text-red-600 dark:text-red-400">{alert}</p>
+                    <div
+                      key={alert}
+                      className="rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-2"
+                    >
+                      <p className="text-[11px] font-bold text-red-600 dark:text-red-400">
+                        {alert}
+                      </p>
                     </div>
                   ))}
                 </div>

@@ -100,16 +100,16 @@ Deben ser **privados** (acceso solo vía backend).
 
 Configura en Render Dashboard → Environment:
 
-| Variable | Obligatoria | Notas |
-|----------|-------------|-------|
-| `JWT_SECRET` | Sí | `openssl rand -base64 48` — único, no reutilizar dev |
-| `DATABASE_URL` | Sí | Pooler Supabase prod, puerto 6543 |
-| `SUPABASE_SERVICE_ROLE_KEY` | Sí | Service role de prod |
-| `NODE_ENV` | Sí | `production` (ya en blueprint) |
-| `CRON_SECRET` | Recomendada | `openssl rand -base64 32` |
-| `VITE_EXCHANGE_RATE` | Recomendada | Tasa Bs/USD actual — **antes del build** |
-| `CORS_ORIGINS` | Opcional | Solo si usas dominio custom aparte del de Render |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional | Monitoreo de errores |
+| Variable                         | Obligatoria | Notas                                                |
+| -------------------------------- | ----------- | ---------------------------------------------------- |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                    |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                 |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                       |
+| `CRON_SECRET`                    | Recomendada | `openssl rand -base64 32`                            |
+| `VITE_EXCHANGE_RATE`             | Recomendada | Tasa Bs/USD actual — **antes del build**             |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render     |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores                                 |
 
 > **Importante:** Las variables `VITE_*` se embeben en el build. Si las añades después del primer deploy, haz **Manual Deploy → Clear build cache**.
 
@@ -207,16 +207,66 @@ Render
 
 ---
 
+## Videos de ejercicios (producción)
+
+En Render **no** se transcodifica video en el servidor (sin FFmpeg, RAM limitada ~512 MB). El flujo en producción es **Opción C+E**:
+
+1. El entrenador selecciona un MP4/WebM **ya comprimido** (≤ 15 MB, ≤ 60 s, 720p recomendado).
+2. La app pide `POST /api/exercises/upload-url` y sube **directo a Supabase Storage** (bucket `exercise-videos`).
+3. Solo se guarda la referencia `sbmedia:videos:…` en la base de datos.
+4. Los miembros reproducen con **URL firmada** de corta duración (sin proxy por Render).
+
+### Comprimir antes de subir (obligatorio en prod)
+
+Usa HandBrake, FFmpeg local o similar:
+
+```powershell
+ffmpeg -i entrada.mov -c:v libx264 -crf 26 -preset fast -vf "scale='min(1280,iw)':-2" -movflags +faststart -c:a aac -b:a 96k -t 60 salida.mp4
+```
+
+| Límite                 | Valor                                     |
+| ---------------------- | ----------------------------------------- |
+| Duración máx.          | 60 s                                      |
+| Tamaño máx. en prod    | 15 MB (sin transcodificación en servidor) |
+| Formatos               | MP4 (H.264) o WebM                        |
+| Resolución recomendada | 720p                                      |
+
+### Diagnóstico
+
+```powershell
+# Con sesión admin (cookie tras login)
+curl -sS https://<tu-app>.onrender.com/api/health/media -b cookies.txt
+```
+
+Respuesta esperada en prod:
+
+- `track`: `direct_supabase`
+- `directUpload`: `true`
+- `ffmpegOnServer`: `false`
+- `signedPlayback`: `true`
+
+### Cuota Supabase Storage
+
+El plan Free incluye ~1 GB total. Si tienes muchos ejercicios con video, valora **Supabase Pro** o migrar a R2/S3 (mismo patrón de URL firmada).
+
+### Desarrollo local
+
+Sin `SUPABASE_SERVICE_ROLE_KEY` válida: upload multipart clásico a `uploads/videos/` con FFmpeg opcional en tu máquina.
+
+---
+
 ## Solución de problemas
 
-| Síntoma | Causa probable | Solución |
-|---------|----------------|----------|
-| Build `Exited with status 127` | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build` |
-| Servidor no arranca | Falta `SUPABASE_SERVICE_ROLE_KEY` | Configurar en Render; obligatorio en prod |
-| `db: down` en health | `DATABASE_URL` incorrecta o pooler caído | Verificar credenciales y puerto 6543 |
-| Uploads fallan | Clave Supabase mal copiada | Sin comillas; reiniciar servicio tras corregir |
-| App lenta al primer acceso | Plan Free con sleep | Usar plan Starter |
-| Videos no se comprimen | FFmpeg no disponible en Render | Subir MP4 ya optimizados |
+| Síntoma                          | Causa probable                                                               | Solución                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Build `Exited with status 127`   | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build`                 |
+| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`                                            | Configurar en Render; obligatorio en prod                              |
+| `db: down` en health             | `DATABASE_URL` incorrecta o pooler caído                                     | Verificar credenciales y puerto 6543                                   |
+| Uploads fallan                   | Clave Supabase mal copiada                                                   | Sin comillas; reiniciar servicio tras corregir                         |
+| App lenta al primer acceso       | Plan Free con sleep                                                          | Usar plan Starter                                                      |
+| Videos no se comprimen           | FFmpeg no disponible en Render                                               | Comprimir localmente (≤ 15 MB) y usar upload directo en la app         |
+| Video falla al guardar en prod   | Archivo > 15 MB o multipart antiguo                                          | Recomprimir; la UI usa upload directo si `directUpload: true`          |
+| `memory_rss_mb` alto tras videos | Proxy antiguo por Render                                                     | Desplegar versión con URLs firmadas; verificar `GET /api/health/media` |
 
 ---
 

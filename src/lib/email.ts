@@ -1,3 +1,4 @@
+import dns from 'node:dns';
 import { logger } from './logger.ts';
 
 interface EmailSender {
@@ -33,11 +34,29 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<bo
 
   try {
     const nodemailer = await import('nodemailer');
+    const smtpHost = sender!.host;
+    let connectHost = smtpHost;
+    try {
+      const ipv4 = await dns.promises.resolve4(smtpHost);
+      if (ipv4[0]) connectHost = ipv4[0];
+    } catch {
+      // Usar hostname si resolve4 falla
+    }
+
+    const port = sender!.port;
+    // 465 = SSL implícito; 587 = STARTTLS (secure debe ser false)
+    const secure = port === 465 ? true : port === 587 ? false : sender!.secure;
+
     const transporter = nodemailer.createTransport({
-      host: sender!.host,
-      port: sender!.port,
-      secure: sender!.secure,
+      host: connectHost,
+      port,
+      secure,
+      requireTLS: port === 587,
       auth: { user: sender!.user, pass: sender!.pass },
+      tls: {
+        servername: smtpHost,
+        minVersion: 'TLSv1.2',
+      },
     });
 
     await transporter.sendMail({
@@ -81,11 +100,19 @@ function layout(content: string): string {
 </style></head>
 <body>
   <div class="container">
-    <div class="header"><h1>Caribean Gym</h1></div>
+    <div class="header"><h1>GymApure</h1></div>
     <div class="body">${content}</div>
-    <div class="footer">Caribean Gym &mdash; Entrena fuerte, vive sano.</div>
+    <div class="footer">GymApure &mdash; Entrena fuerte, vive sano.</div>
   </div>
 </body></html>`;
+}
+
+export function passwordResetEmail(name: string, resetUrl: string): string {
+  return layout(`<h2 style="margin-top:0">Recuperar contraseña</h2>
+    <p>Hola <strong>${name}</strong>,</p>
+    <p>Recibimos una solicitud para restablecer tu contraseña en GymApure.</p>
+    <p style="text-align:center;margin:24px 0"><a class="btn" href="${resetUrl}">Restablecer contraseña</a></p>
+    <p style="font-size:12px;color:#666">Si no solicitaste este cambio, ignora este correo. El enlace expira en 1 hora.</p>`);
 }
 
 export function welcomeEmail(name: string): string {
@@ -95,7 +122,11 @@ export function welcomeEmail(name: string): string {
     <p style="margin-bottom:0">Si tienes dudas, consulta con el personal del gym.</p>`);
 }
 
-export function paymentApprovedEmail(name: string, amount: number, membershipName?: string | null): string {
+export function paymentApprovedEmail(
+  name: string,
+  amount: number,
+  membershipName?: string | null
+): string {
   return layout(`<h2 style="margin-top:0">Pago aprobado</h2>
     <p>Hola <strong>${name}</strong>,</p>
     <p>Tu pago de <strong>$${amount.toFixed(2)} USD</strong> ha sido aprobado.

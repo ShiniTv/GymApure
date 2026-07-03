@@ -6,14 +6,15 @@ import {
   isDirectVideoFileUrl,
   isHostedExerciseVideo,
 } from '../../lib/exerciseVideo';
+import { useSignedExerciseMedia } from '../../hooks/useSignedExerciseMedia';
 import { resolveMediaUrl } from '../../lib/api';
 import { Spinner } from '../ui/Spinner';
 
-type ExerciseVideoPlayerProps = {
+interface ExerciseVideoPlayerProps {
   url: string;
   posterUrl?: string | null;
   title?: string;
-};
+}
 
 const playerShell =
   'aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black';
@@ -22,12 +23,34 @@ function HostedExerciseVideo({
   src,
   poster,
   title,
+  loading,
+  error,
 }: {
   src: string;
   poster?: string;
   title: string;
+  loading?: boolean;
+  error?: string | null;
 }) {
   const [buffering, setBuffering] = useState(true);
+
+  if (loading) {
+    return (
+      <div className={`${playerShell} relative flex items-center justify-center bg-zinc-950`}>
+        <Spinner size="xl" />
+      </div>
+    );
+  }
+
+  if (error || !src) {
+    return (
+      <div
+        className={`${playerShell} flex items-center justify-center bg-zinc-950 p-4 text-center`}
+      >
+        <p className="text-xs text-zinc-400">{error ?? 'Video no disponible'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`${playerShell} relative`}>
@@ -37,7 +60,11 @@ function HostedExerciseVideo({
           aria-hidden={!buffering}
         >
           {poster && (
-            <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-50" />
+            <img
+              src={poster}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-50"
+            />
           )}
           <Spinner size="xl" className="relative z-10" />
         </div>
@@ -64,7 +91,10 @@ export function ExerciseVideoPlayer({
   title = 'Video tutorial',
 }: ExerciseVideoPlayerProps) {
   const youtubeEmbed = getYouTubeEmbedUrl(url);
-  const poster = posterUrl ? resolveMediaUrl(posterUrl) : undefined;
+  const hostedVideo = useSignedExerciseMedia(
+    isHostedExerciseVideo(url) && url.startsWith('sbmedia:') ? url : null
+  );
+  const hostedPoster = useSignedExerciseMedia(posterUrl?.startsWith('sbmedia:') ? posterUrl : null);
 
   if (youtubeEmbed) {
     return (
@@ -82,8 +112,21 @@ export function ExerciseVideoPlayer({
   }
 
   if (isHostedExerciseVideo(url) || isDirectVideoFileUrl(url)) {
+    const src = url.startsWith('sbmedia:') ? hostedVideo.url : getHostedVideoSrc(url);
+    const poster = posterUrl?.startsWith('sbmedia:')
+      ? hostedPoster.url || undefined
+      : posterUrl
+        ? resolveMediaUrl(posterUrl)
+        : undefined;
+
     return (
-      <HostedExerciseVideo src={getHostedVideoSrc(url)} poster={poster} title={title} />
+      <HostedExerciseVideo
+        src={src}
+        poster={poster}
+        title={title}
+        loading={url.startsWith('sbmedia:') && hostedVideo.loading}
+        error={hostedVideo.error}
+      />
     );
   }
 
@@ -100,7 +143,7 @@ export function ExerciseVideoPlayer({
         </div>
         <div>
           <p className="text-lg font-semibold text-zinc-900 dark:text-white">Ver video tutorial</p>
-          <p className="flex items-center gap-1 text-xs font-medium text-brand dark:text-brand">
+          <p className="text-brand dark:text-brand flex items-center gap-1 text-xs font-medium">
             <ExternalLink className="h-3 w-3" />
             Enlace externo
           </p>

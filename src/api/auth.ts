@@ -1,20 +1,23 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { query } from '../db/index.ts';
 import { authCookieOptions, clearAuthCookieOptions } from '../config/cookies.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import {
   changePasswordSchema,
   formatZodError,
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
 } from '../lib/passwordPolicy.ts';
 import { authenticate, type AuthRequest } from './middleware/auth.ts';
-import { authorize } from './middleware/authorize.ts';
 import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { signSessionToken, sessionFailureStatus, verifySessionToken } from '../lib/sessionAuth.ts';
-import { sendEmail, welcomeEmail } from '../lib/email.ts';
+import { sendEmail, welcomeEmail, passwordResetEmail } from '../lib/email.ts';
+import { logger } from '../lib/logger.ts';
 
 const router = asyncRouter();
 
@@ -90,9 +93,10 @@ router.post(
       full_name: string;
       status: string;
       token_version: number | string;
-    }>('SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1', [
-      normalizedEmail,
-    ]);
+    }>(
+      'SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1',
+      [normalizedEmail]
+    );
     const user = rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -161,7 +165,9 @@ router.post(
       return;
     }
 
-    const existingCedula = await query('SELECT id FROM users WHERE cedula = $1', [normalizedCedula]);
+    const existingCedula = await query('SELECT id FROM users WHERE cedula = $1', [
+      normalizedCedula,
+    ]);
     if (existingCedula.rows.length > 0) {
       res.status(400).json({ error: 'Esta cédula ya está registrada' });
       return;
@@ -186,7 +192,11 @@ router.post(
 
     res.cookie('token', token, authCookieOptions);
     await logAudit(id, 'auth.register', { email: normalizedEmail });
-    void sendEmail({ to: normalizedEmail, subject: 'Bienvenido a Caribean Gym', html: welcomeEmail(full_name) });
+    void sendEmail({
+      to: normalizedEmail,
+      subject: 'Bienvenido a Caribean Gym',
+      html: welcomeEmail(full_name),
+    });
 
     res.status(201).json({
       user: { id, email: normalizedEmail, role: 'member', name: full_name },
@@ -201,9 +211,9 @@ router.post(
     const token = req.cookies.token;
     if (token) {
       const result = await verifySessionToken(token);
-    if (result.type === 'success') {
-      await logAudit(result.user.id, 'auth.logout', {});
-    }
+      if (result.type === 'success') {
+        await logAudit(result.user.id, 'auth.logout', {});
+      }
     }
 
     res.clearCookie('token', clearAuthCookieOptions);
@@ -287,10 +297,9 @@ router.post(
     const { current_password, new_password } = parsed.data;
     const userId = req.user!.id;
 
-    const { rows } = await query<{ password: string }>(
-      'SELECT password FROM users WHERE id = $1',
-      [userId]
-    );
+    const { rows } = await query<{ password: string }>('SELECT password FROM users WHERE id = $1', [
+      userId,
+    ]);
     if (!rows[0]) {
       res.status(404).json({ error: 'Usuario no encontrado' });
       return;
@@ -307,16 +316,119 @@ router.post(
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
-    await query(
-      'UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2',
-      [hashedPassword, userId]
-    );
+    await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
+      hashedPassword,
+      userId,
+    ]);
     await logAudit(userId, 'auth.change_password', {});
 
     res.clearCookie('token', clearAuthCookieOptions);
     res.json({
       success: true,
       message: 'Contraseña actualizada. Inicia sesión de nuevo.',
+    });
+  })
+);
+
+router.post(
+  '/forgot-password',
+  asyncHandler(async (req, res) => {
+    const parsed = forgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const email = parsed.data.email.toLowerCase();
+    const { rows } = await query<{ id: number; full_name: string; email: string }>(
+      'SELECT id, full_name, email FROM users WHERE LOWER(email) = $1 AND status = $2',
+      [email, 'active']
+    );
+
+    if (rows[0]) {
+      const user = rows[0];
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await query(
+        `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+         VALUES ($1, $2, $3)`,
+        [user.id, tokenHash, expiresAt.toISOString()]
+      );
+
+      const appOrigin = process.env.PUBLIC_APP_URL?.replace(/\/$/, '') ?? '';
+      const resetUrl = `${appOrigin}/reset-password?token=${rawToken}`;
+      const sent = await sendEmail({
+        to: user.email,
+        subject: 'Recuperar contraseña — GymApure',
+        html: passwordResetEmail(user.full_name, resetUrl),
+      });
+
+      if (!sent) {
+        logger.error('No se pudo enviar email de recuperación', { userId: user.id });
+        if (process.env.NODE_ENV === 'development') {
+          // En local, el enlace aparece en la terminal por si Gmail falla
+          console.log('\n─── DEV: enlace de recuperación de contraseña ───');
+          console.log(resetUrl);
+          console.log('────────────────────────────────────────────────\n');
+        }
+      }
+
+      await logAudit(user.id, 'auth.forgot_password', {});
+    }
+
+    res.json({
+      success: true,
+      message:
+        'Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.',
+    });
+  })
+);
+
+router.post(
+  '/reset-password',
+  asyncHandler(async (req, res) => {
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const { token, new_password } = parsed.data;
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const { rows } = await query<{
+      id: number;
+      user_id: number;
+      expires_at: string;
+      used_at: string | null;
+    }>(
+      `SELECT id, user_id, expires_at, used_at
+       FROM password_reset_tokens
+       WHERE token_hash = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [tokenHash]
+    );
+
+    const record = rows[0];
+    if (!record || record.used_at || new Date(record.expires_at).getTime() < Date.now()) {
+      res.status(400).json({ error: 'El enlace de recuperación no es válido o ha expirado.' });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
+      hashedPassword,
+      record.user_id,
+    ]);
+    await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1', [record.id]);
+    await logAudit(record.user_id, 'auth.reset_password', {});
+
+    res.json({
+      success: true,
+      message: 'Contraseña actualizada. Ya puedes iniciar sesión.',
     });
   })
 );

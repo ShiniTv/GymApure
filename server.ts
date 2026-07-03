@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import dns from 'node:dns';
 import express from 'express';
 import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
@@ -18,6 +19,9 @@ import { configureEmail } from './src/lib/email.ts';
 import { apiVersionHeader } from './src/api/middleware/apiVersion.ts';
 import { initWebSocket } from './src/lib/wsServer.ts';
 import { configurePush } from './src/lib/pushNotifications.ts';
+
+// Preferir IPv4 para SMTP y otras conexiones salientes (Gmail en Windows)
+dns.setDefaultResultOrder('ipv4first');
 
 async function initSentry() {
   if (!env.SENTRY_DSN) return;
@@ -59,21 +63,22 @@ async function startServer() {
 
   app.use(
     helmet({
-      contentSecurityPolicy: env.NODE_ENV === 'production'
-        ? {
-            directives: {
-              defaultSrc: ["'self'"],
-              scriptSrc: ["'self'"],
-              styleSrc: ["'self'", "'unsafe-inline'"],
-              imgSrc: ["'self'", 'data:', 'blob:'],
-              connectSrc: ["'self'", 'https://*.supabase.co'],
-              fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-              frameAncestors: ["'none'"],
-              formAction: ["'self'"],
-              baseUri: ["'self'"],
-            },
-          }
-        : false,
+      contentSecurityPolicy:
+        env.NODE_ENV === 'production'
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", 'data:', 'blob:'],
+                connectSrc: ["'self'", 'https://*.supabase.co'],
+                fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+                frameAncestors: ["'none'"],
+                formAction: ["'self'"],
+                baseUri: ["'self'"],
+              },
+            }
+          : false,
       crossOriginEmbedderPolicy: false,
       strictTransportSecurity: {
         maxAge: 31536000,
@@ -85,7 +90,10 @@ async function startServer() {
   );
 
   app.use((_req, res, next) => {
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+    res.setHeader(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+    );
     next();
   });
 

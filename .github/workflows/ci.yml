@@ -89,4 +89,5 @@ jobs:
             sleep 1
           done
           npm run test:e2e
+          npm run test:ux
           kill "$SERVER_PID" 2>/dev/null || true

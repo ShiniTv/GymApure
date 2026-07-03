@@ -8,14 +8,11 @@ import {
   type LastDoorAlert,
 } from '../lib/expiringSubscriptions.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
-import {
-  getCachedAdminStats,
-  setCachedAdminStats,
-} from '../lib/adminStatsCache.ts';
-import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
+import { getCachedAdminStats, setCachedAdminStats } from '../lib/adminStatsCache.ts';
+import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
-import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { RECEPTION_ONLY } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -156,7 +153,7 @@ router.get('/admin', authorize(['admin']), async (_req, res) => {
   }
 });
 
-router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => {
   const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
   const alertDays = await getExpiryAlertDays();
 
@@ -240,7 +237,9 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
     let expiringMembers: { id: number; full_name: string; days_remaining: number }[] = [];
 
     if (trainerId && membersWithoutRoutinesSql) {
-      const noRoutineResult = await query<{ count: string }>(membersWithoutRoutinesSql, [trainerId]);
+      const noRoutineResult = await query<{ count: string }>(membersWithoutRoutinesSql, [
+        trainerId,
+      ]);
       membersWithoutRoutines = parseInt(noRoutineResult.rows[0]?.count || '0', 10);
     }
 
@@ -252,8 +251,14 @@ router.get('/trainer', authorize(['admin', 'trainer']), async (req: AuthRequest,
       expiringMembers = expiringResult.rows;
     }
 
-    const [totalMembers, activeSessions, todayWorkouts, routinesCreated, assignedMembers, recentActivities] =
-      baseQueries;
+    const [
+      totalMembers,
+      activeSessions,
+      todayWorkouts,
+      routinesCreated,
+      assignedMembers,
+      recentActivities,
+    ] = baseQueries;
 
     res.json({
       totalMembers: parseInt(totalMembers.rows[0]?.count || '0', 10),
@@ -277,7 +282,15 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   const expiryAlertDays = await getExpiryAlertDays();
 
   try {
-    const [subscription, routines, pendingPayments, lastWorkout, workoutsThisMonth, workoutsThisWeek, workoutDays] = await Promise.all([
+    const [
+      subscription,
+      routines,
+      pendingPayments,
+      lastWorkout,
+      workoutsThisMonth,
+      workoutsThisWeek,
+      workoutDays,
+    ] = await Promise.all([
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
         `SELECT r.id, r.name, r.difficulty, ur.assigned_at, ur.start_date, ur.end_date,
@@ -324,13 +337,15 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       ),
     ]);
 
-    const sub = subscription.rows[0] as {
-      membership_name: string;
-      duration_days: number;
-      days_remaining: number;
-      start_date: string;
-      end_date: string;
-    } | undefined;
+    const sub = subscription.rows[0] as
+      | {
+          membership_name: string;
+          duration_days: number;
+          days_remaining: number;
+          start_date: string;
+          end_date: string;
+        }
+      | undefined;
 
     let progressPercent = 0;
     if (sub) {
@@ -359,7 +374,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/reception', authorize(RECEPTION_STAFF), async (_req, res) => {
+router.get('/reception', authorize(RECEPTION_ONLY), async (_req, res) => {
   try {
     const [todayCheckIns, insideNow, pendingPayments] = await Promise.all([
       query<{ count: string }>(

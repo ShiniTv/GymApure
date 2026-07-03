@@ -21,7 +21,8 @@ export function requireSelfOrRoles(paramName: string, ...staffRoles: string[]) {
     }
 
     if (staffRoles.includes(user.role) || user.id === targetId) {
-      return next();
+      next();
+      return;
     }
 
     return res.status(403).json({ error: 'Permisos insuficientes' });
@@ -75,16 +76,11 @@ function resolveSessionId(req: AuthRequest): number | null {
   return Number.isNaN(id) ? null : id;
 }
 
-/** Members: own session only. Admin: any. Trainers: assigned members only. */
+/** Members: own session only. Trainers: assigned members only. */
 export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) => {
   const user = (req as AuthRequest).user;
   if (!user) {
     res.status(401).json({ error: 'No autorizado' });
-    return;
-  }
-
-  if (user.role === 'admin') {
-    next();
     return;
   }
 

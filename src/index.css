@@ -1,11 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Design tokens — GymApure */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   --color-brand: #18181b;
   --color-brand-hover: #27272a;
   --color-warning: #f97316;
@@ -26,30 +26,38 @@
 /* Base Styles */
 @layer base {
   body {
-    @apply transition-colors duration-300 bg-zinc-50 text-zinc-900;
+    @apply bg-zinc-50 text-zinc-900 transition-colors duration-300;
   }
 
   .dark body {
     @apply bg-zinc-950 text-zinc-100;
   }
 
-  .dark body, .dark .recharts-default-tooltip {
+  .dark body,
+  .dark .recharts-default-tooltip {
     --chart-accent: #fafafa;
   }
 }
 
-body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+body,
+.nav-link,
+.nav-link-active,
+.nav-link-inactive,
+.brand-solid {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Typography utilities — titles bold; forms/body readable */
 @layer components {
   .page-title {
-    @apply text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight;
+    @apply text-xl leading-tight font-bold tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl dark:text-white;
   }
 
   .page-subtitle {
-    @apply text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 sm:mt-1;
+    @apply mt-0.5 text-xs font-medium text-zinc-500 sm:mt-1 sm:text-sm dark:text-zinc-400;
   }
 
   .section-title {
@@ -57,15 +65,15 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
   }
 
   .label-caps {
-    @apply text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400;
+    @apply text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400;
   }
 
   .stat-value {
-    @apply text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight;
+    @apply text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-white;
   }
 
   .stat-label {
-    @apply text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400;
+    @apply text-xs font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400;
   }
 
   .page-stack {
@@ -102,16 +110,16 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
   }
 
   .page-state-center {
-    @apply flex items-center justify-center min-h-[min(40dvh,320px)] py-10;
+    @apply flex min-h-[min(40dvh,320px)] items-center justify-center py-10;
   }
 
   .scroll-x-bleed {
-    @apply overflow-x-auto -mx-1 px-1;
+    @apply -mx-1 overflow-x-auto px-1;
     scrollbar-gutter: stable;
   }
 
   .table-shell {
-    @apply bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm;
+    @apply overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
   }
 
   /* Sidebar / navigation */
@@ -120,7 +128,7 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
   }
 
   .nav-link {
-    @apply flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold min-h-9 transition-colors touch-manipulation;
+    @apply flex min-h-9 touch-manipulation items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors;
   }
 
   .nav-link-active {
@@ -128,11 +136,11 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
   }
 
   .nav-link-inactive {
-    @apply text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white;
+    @apply text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white;
   }
 
   .nav-badge {
-    @apply min-w-[1.125rem] h-[1.125rem] px-1 flex items-center justify-center rounded-full text-[9px] font-bold leading-none;
+    @apply flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[9px] leading-none font-bold;
   }
 
   /* Filled brand surfaces — light bg in dark mode needs dark foreground */
@@ -193,42 +201,46 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent; 
+  background: transparent;
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #09090b; 
+  background: #09090b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db; 
+  background: #d1d5db;
   border-radius: 4px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #52525b; 
+  background: #52525b;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af; 
+  background: #9ca3af;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #71717a; 
+  background: #71717a;
 }
 
 /* Fix for reacharts tooltip in light mode */
 .recharts-default-tooltip {
-  @apply !border-zinc-200 !bg-white !shadow-sm !rounded-lg text-zinc-900;
+  @apply !rounded-lg !border-zinc-200 !bg-white text-zinc-900 !shadow-sm;
 }
 
 .dark .recharts-default-tooltip {
-  @apply !border-zinc-800 !bg-zinc-900 !shadow-xl !rounded-lg text-white;
+  @apply !rounded-lg !border-zinc-800 !bg-zinc-900 text-white !shadow-xl;
 }
 
 @keyframes scan-line {
-  0% { transform: translateY(100%); }
-  100% { transform: translateY(-100%); }
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
 }
 
 .animate-scan-line {
@@ -247,53 +259,108 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-in-from-top-2 {
-  from { opacity: 0; transform: translateY(-0.5rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-in-from-bottom-2 {
-  from { opacity: 0; transform: translateY(0.5rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-in-from-bottom-4 {
-  from { opacity: 0; transform: translateY(1rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-in-from-bottom-8 {
-  from { opacity: 0; transform: translateY(2rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes streak-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
 @keyframes confetti-fall {
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 .animate-in {
@@ -325,11 +392,86 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
 }
 
 .member-bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
+  --member-nav-pill-height: 3.75rem;
+  --member-fab-size: 3.5rem;
+  --member-fab-gap: 0.75rem;
+  --member-nav-stack: calc(0.5rem + var(--member-nav-pill-height));
+}
+
+.member-bottom-nav-fab {
+  left: 50%;
+  width: var(--member-fab-size);
+  height: var(--member-fab-size);
+  margin-left: calc(var(--member-fab-size) / -2);
+  bottom: calc(var(--member-nav-stack) + var(--member-fab-gap) + env(safe-area-inset-bottom, 0px));
+}
+
+.member-bottom-nav-pill {
+  border-radius: 9999px;
+  border: 1px solid rgb(228 228 231 / 0.8);
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 24px rgb(0 0 0 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.dark .member-bottom-nav-pill {
+  border-color: rgb(39 39 42 / 0.9);
+  background: rgb(9 9 11 / 0.92);
+  box-shadow:
+    0 4px 24px rgb(0 0 0 / 0.35),
+    0 1px 2px rgb(0 0 0 / 0.2);
+}
+
+.member-bottom-nav-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.member-bottom-nav-tab-icon--active {
+  @apply bg-brand text-white;
+}
+
+.reception-main-pad {
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .member-main-pad {
-  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.member-has-workout-fab .member-main-pad {
+  padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.member-chat-panel {
+  height: calc(100dvh - 10.5rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .member-chat-panel {
+    height: calc(100dvh - 11rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+html.member-has-workout-fab .member-chat-panel {
+  height: calc(100dvh - 10.5rem - 8.5rem - env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  html.member-has-workout-fab .member-chat-panel {
+    height: calc(100dvh - 11rem - 8.5rem - env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .content-visibility-auto {
@@ -383,7 +525,9 @@ body, .nav-link, .nav-link-active, .nav-link-inactive, .brand-solid {
     animation: none;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }

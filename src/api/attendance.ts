@@ -2,7 +2,7 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
-import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { RECEPTION_ONLY } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -20,7 +20,7 @@ function parseInactiveDays(raw: unknown): number {
   return Math.min(90, Math.max(7, n));
 }
 
-router.get('/stats', authorize(RECEPTION_STAFF), async (req, res) => {
+router.get('/stats', authorize(RECEPTION_ONLY), async (req, res) => {
   try {
     const { rows } = await query(`
       SELECT COUNT(*)::int AS count FROM attendance
@@ -34,7 +34,7 @@ router.get('/stats', authorize(RECEPTION_STAFF), async (req, res) => {
   }
 });
 
-router.get('/inside', authorize(RECEPTION_STAFF), async (_req, res) => {
+router.get('/inside', authorize(RECEPTION_ONLY), async (_req, res) => {
   try {
     const { rows } = await query<{
       id: number;
@@ -55,7 +55,7 @@ router.get('/inside', authorize(RECEPTION_STAFF), async (_req, res) => {
   }
 });
 
-router.get('/today', authorize(RECEPTION_STAFF), async (req, res) => {
+router.get('/today', authorize(RECEPTION_ONLY), async (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
 
   try {

@@ -16,6 +16,9 @@
     "test:e2e": "npm run test:integration && npm run test:security-checklist && npm run test:auth-checklist && npm run test:reception-checklist",
     "test:auth-checklist": "tsx scripts/test-auth-checklist.ts",
     "test:reception-checklist": "tsx scripts/test-reception-checklist.ts",
+    "test:ux": "tsx scripts/test-ux-checklist.ts",
+    "test:ux:browser": "playwright test",
+    "test:ux:browser:ui": "playwright test --ui",
     "test:memberships-checkin": "tsx scripts/test-memberships-checkin.ts",
     "test:payments-checklist": "tsx scripts/test-payments-checklist.ts",
     "test:chat-checklist": "tsx scripts/test-chat-checklist.ts",
@@ -78,6 +81,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.51.0",
     "@sentry/vite-plugin": "^5.3.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/bcryptjs": "^2.4.6",
@@ -113,7 +117,11 @@
     "vite": "^6.2.0"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "server.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],

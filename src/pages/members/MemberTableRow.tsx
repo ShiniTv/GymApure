@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2, IdCard, UtensilsCrossed } from 'lucide-react';
+import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2, IdCard } from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
@@ -43,28 +43,28 @@ export const MemberTableRow = memo(function MemberTableRow({
       : null;
 
   return (
-    <tr className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
-      <td className="px-4 lg:px-5 py-2.5 font-semibold text-zinc-800 dark:text-zinc-100">
+    <tr className="group transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+      <td className="px-4 py-2.5 font-semibold text-zinc-800 lg:px-5 dark:text-zinc-100">
         {member.full_name}
       </td>
       {!isStaffMember && (
-        <td className="px-4 lg:px-5 py-2.5">
+        <td className="px-4 py-2.5 lg:px-5">
           <span className={roleBadgeClass(member.role)}>{member.role}</span>
         </td>
       )}
-      <td className="px-4 lg:px-5 py-2.5 text-zinc-500 dark:text-zinc-400">{member.cedula || '-'}</td>
-      <td className="px-4 lg:px-5 py-2.5">
+      <td className="px-4 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
+        {member.cedula || '-'}
+      </td>
+      <td className="px-4 py-2.5 lg:px-5">
         {member.role === 'member' ? (
           <div className="space-y-1">
             {member.membership_name ? (
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-500">
                     {member.membership_name}
                   </p>
-                  {badgeInfo && (
-                    <Badge className={badgeInfo.className}>{badgeInfo.label}</Badge>
-                  )}
+                  {badgeInfo && <Badge className={badgeInfo.className}>{badgeInfo.label}</Badge>}
                 </div>
                 <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
                   {member.days_remaining ?? 0} días restantes
@@ -80,17 +80,19 @@ export const MemberTableRow = memo(function MemberTableRow({
                 className={cn(
                   'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold transition-opacity',
                   SHIFT_BADGE_CLASSES[member.training_shift],
-                  (isAdmin || userRole === 'receptionist') && 'hover:opacity-80 cursor-pointer'
+                  (isAdmin || userRole === 'receptionist') && 'cursor-pointer hover:opacity-80'
                 )}
-                title={(isAdmin || userRole === 'receptionist') ? 'Editar turno' : undefined}
+                title={isAdmin || userRole === 'receptionist' ? 'Editar turno' : undefined}
               >
                 {SHIFT_SHORT_LABELS[member.training_shift]}
               </button>
-            ) : (isAdmin || userRole === 'receptionist') ? (
+            ) : isAdmin || userRole === 'receptionist' ? (
               <button
                 type="button"
-                onClick={() => { onEditShift(member); }}
-                className="text-[10px] font-semibold text-brand hover:underline"
+                onClick={() => {
+                  onEditShift(member);
+                }}
+                className="text-brand text-[10px] font-semibold hover:underline"
               >
                 Asignar turno
               </button>
@@ -100,32 +102,32 @@ export const MemberTableRow = memo(function MemberTableRow({
           <span className="text-zinc-400 dark:text-zinc-300">—</span>
         )}
       </td>
-      <td className="px-4 lg:px-5 py-2.5">
+      <td className="px-4 py-2.5 lg:px-5">
         <Badge variant={member.status === 'active' ? 'success' : 'danger'}>
           {member.status === 'active' ? 'Activo' : 'Inactivo'}
         </Badge>
       </td>
-      <td className="px-4 lg:px-5 py-2.5 text-right">
+      <td className="px-4 py-2.5 text-right lg:px-5">
         <div className="flex justify-end gap-1 opacity-100 transition-all">
           {isTrainer && member.role === 'member' && (
             <>
               <button
                 onClick={() => navigate(`/members/${member.id}/routines`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
                 title="Ver Rutinas"
               >
                 <Dumbbell className="h-4 w-4" />
               </button>
               <button
                 onClick={() => navigate(`/members/${member.id}/history`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-blue-500/10 hover:text-blue-500 dark:text-zinc-300"
                 title="Historial de Entrenamiento"
               >
                 <History className="h-4 w-4" />
               </button>
               <button
                 onClick={() => navigate(`/messages?member=${member.id}`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
                 title="Enviar mensaje"
               >
                 <MessageSquare className="h-4 w-4" />
@@ -135,22 +137,26 @@ export const MemberTableRow = memo(function MemberTableRow({
           {(userRole === 'admin' || userRole === 'receptionist') && member.role === 'member' && (
             <>
               <button
-                onClick={() => { onShowBadge(member); }}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                onClick={() => {
+                  onShowBadge(member);
+                }}
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
                 title="Ver carné"
               >
                 <IdCard className="h-4 w-4" />
               </button>
               <button
                 onClick={() => navigate(`/messages?member=${member.id}`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
                 title="Enviar mensaje"
               >
                 <MessageSquare className="h-4 w-4" />
               </button>
               <button
-                onClick={() => { onAssignSubscription(member); }}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                onClick={() => {
+                  onAssignSubscription(member);
+                }}
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-zinc-300"
                 title="Asignar membresía"
               >
                 <CreditCard className="h-4 w-4" />
@@ -160,30 +166,20 @@ export const MemberTableRow = memo(function MemberTableRow({
           {isAdmin && member.role === 'member' && (
             <>
               <button
-                onClick={() => navigate(`/members/${member.id}/routines`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                title="Rutinas del miembro"
-              >
-                <Dumbbell className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => navigate(`/members/${member.id}/nutrition`)}
-                className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                title="Plan nutricional"
-              >
-                <UtensilsCrossed className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => { onToggleStatus(member); }}
-                className={`p-1.5 rounded-lg transition-colors ${member.status === 'active' ? 'text-zinc-400 dark:text-zinc-300 hover:text-amber-500 hover:bg-amber-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                onClick={() => {
+                  onToggleStatus(member);
+                }}
+                className={`rounded-lg p-1.5 transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:bg-amber-500/10 hover:text-amber-500 dark:text-zinc-300' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
                 title={member.status === 'active' ? 'Desactivar' : 'Activar'}
               >
                 <Power className="h-4 w-4" />
               </button>
               {member.role === 'member' && member.id !== currentUserId && (
                 <button
-                  onClick={() => { onDelete(member); }}
-                  className="p-1.5 text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                  onClick={() => {
+                    onDelete(member);
+                  }}
+                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
                   title="Eliminar miembro"
                 >
                   <Trash2 className="h-4 w-4" />

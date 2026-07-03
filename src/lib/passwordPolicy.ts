@@ -1,10 +1,26 @@
 import { z } from 'zod';
 
 const COMMON_PASSWORDS = new Set([
-  'password', 'password123', '12345678', '123456789', 'qwerty123',
-  'admin123', 'letmein', 'welcome', 'monkey123', 'dragon123',
-  'master123', 'abc12345', 'test1234', 'gym12345', 'gymapure',
-  'gymapure123', 'caribean', 'caribean123', 'gym2024', 'gym2025',
+  'password',
+  'password123',
+  '12345678',
+  '123456789',
+  'qwerty123',
+  'admin123',
+  'letmein',
+  'welcome',
+  'monkey123',
+  'dragon123',
+  'master123',
+  'abc12345',
+  'test1234',
+  'gym12345',
+  'gymapure',
+  'gymapure123',
+  'caribean',
+  'caribean123',
+  'gym2024',
+  'gym2025',
 ]);
 
 export const passwordSchema = z
@@ -32,11 +48,7 @@ export const registerSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
   email: z.string().trim().email('Email inválido'),
   password: passwordSchema,
-  cedula: z
-    .string()
-    .trim()
-    .min(1, 'La cédula es obligatoria para el check-in en el gym')
-    .max(50),
+  cedula: z.string().trim().min(1, 'La cédula es obligatoria para el check-in en el gym').max(50),
   phone: z.string().trim().max(50).optional(),
 });
 
@@ -62,6 +74,23 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email('Email inválido'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, 'Token inválido'),
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, 'Confirma la nueva contraseña'),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirm_password'],
+  });
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export function formatZodError(error: z.ZodError): string {
   return error.issues.map((issue) => issue.message).join('. ');

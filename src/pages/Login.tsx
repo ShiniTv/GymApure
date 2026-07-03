@@ -6,7 +6,7 @@ import { getDefaultRouteForRole } from '../lib/roles';
 import { Mail } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, PasswordInput, Spinner } from '../components/ui';
+import { Button, Card, Input, Label, PasswordInput } from '../components/ui';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -52,14 +52,14 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <Card className="w-full page-stack-loose shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
+      <Card className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
         <AuthBrandHeader subtitle="Inicia sesión en tu cuenta" />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
           {error && (
             <div
               role="alert"
-              className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
+              className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
             >
               {error}
             </div>
@@ -80,17 +80,26 @@ export default function Login() {
             />
           </div>
           <div>
-              <Label htmlFor="password">Contraseña</Label>
-              <PasswordInput
-                id="password"
-                name="password"
-                autoComplete="current-password"
-                required
-                placeholder="Tu contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+            <Label htmlFor="password">Contraseña</Label>
+            <PasswordInput
+              id="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              placeholder="Tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
+
+          <p className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-brand hover:text-brand text-xs font-semibold"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
 
           <Button type="submit" className="w-full" size="lg" loading={loading}>
             Entrar
@@ -99,7 +108,7 @@ export default function Login() {
           {registerAllowed && (
             <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
               ¿No tienes una cuenta?{' '}
-              <Link to="/register" className="font-semibold text-brand hover:text-brand">
+              <Link to="/register" className="text-brand hover:text-brand font-semibold">
                 Regístrate aquí
               </Link>
             </p>
