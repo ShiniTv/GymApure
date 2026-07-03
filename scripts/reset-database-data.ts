@@ -4,7 +4,8 @@
  *
  * Uso:
  *   npm run db:reset-data              # pide escribir RESET
- *   npm run db:reset-data -- --yes     # sin confirmación interactiva
+ *   npm run db:reset-data -- --yes       # sin confirmación interactiva
+ *   npm run db:reset-data -- --dev --yes # usa DEV_DATABASE_URL (desarrollo)
  */
 import 'dotenv/config';
 import fs from 'fs';
@@ -19,10 +20,25 @@ import {
   isSupabaseStorageConfigured,
 } from '../src/lib/supabaseAdmin.ts';
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+/** Ref Supabase de producción (Render) — bloquear reset accidental. */
+const PROD_SUPABASE_PROJECT_REF = 'ffjwvlcwhyskddqqojnp';
+
+const useDevDatabase = process.argv.includes('--dev');
+const databaseUrl = (
+  useDevDatabase ? process.env.DEV_DATABASE_URL?.trim() : process.env.DATABASE_URL?.trim()
+)?.trim();
+
 if (!databaseUrl) {
-  console.error('Falta DATABASE_URL en .env');
+  if (useDevDatabase) {
+    console.error('Falta DEV_DATABASE_URL en .env (o quita --dev para usar DATABASE_URL).');
+  } else {
+    console.error('Falta DATABASE_URL en .env');
+  }
   process.exit(1);
+}
+
+if (useDevDatabase) {
+  console.log(`Usando base de desarrollo (${databaseUrl.includes(PROD_SUPABASE_PROJECT_REF) ? '¡mismo ref que prod!' : 'DEV_DATABASE_URL'}).`);
 }
 
 const pool = new pg.Pool({
@@ -75,9 +91,6 @@ const VERIFY_COUNT_TABLES = [
   'push_subscriptions',
   'trainer_profiles',
 ] as const;
-
-/** Ref Supabase de producción (Render) — bloquear reset accidental. */
-const PROD_SUPABASE_PROJECT_REF = 'ffjwvlcwhyskddqqojnp';
 
 const LOCAL_UPLOAD_DIRS = [
   'uploads/avatars',
@@ -241,6 +254,7 @@ async function printRowCounts(): Promise<boolean> {
 }
 
 function assertNotProductionDatabase(): void {
+  if (useDevDatabase) return;
   if (!databaseUrl!.includes(PROD_SUPABASE_PROJECT_REF)) return;
   if (process.argv.includes('--allow-prod')) return;
 
