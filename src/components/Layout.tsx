@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
-import { ROLE_LABELS } from '../lib/roles';
+import { ROLE_LABELS, isStaffRole } from '../lib/roles';
 import { Avatar } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
 import { ThemeOnboarding } from './member/ThemeOnboarding';
@@ -72,8 +72,9 @@ const NAV_SECTIONS: NavSection[] = [
   {
     name: 'Gestión',
     items: [
-      { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member', 'receptionist'] },
-      { name: 'Recepción', href: '/reception', icon: Fingerprint, roles: ['admin', 'receptionist'] },
+      { name: 'Dashboard', href: '/', icon: LayoutDashboard, roles: ['admin', 'trainer', 'member'] },
+      { name: 'Inicio', href: '/reception', icon: Fingerprint, roles: ['receptionist'] },
+      { name: 'Recepción', href: '/reception', icon: Fingerprint, roles: ['admin'] },
       { name: 'Miembros', href: '/members', icon: Users, roles: ['admin', 'trainer', 'receptionist'] },
       { name: 'Membresías', href: '/memberships', icon: CreditCard, roles: ['admin'] },
       { name: 'Entrenadores', href: '/trainers', icon: UserCog, roles: ['admin'] },
@@ -128,6 +129,7 @@ export default function Layout() {
     user?.role === 'member';
   const { data: chatUnread = 0 } = useChatUnreadQuery(showChatNav);
   const isMember = user?.role === 'member';
+  const isStaffMobile = isStaffRole(user?.role ?? '') && useMediaQuery('(max-width: 1023px)');
   const isMemberMobileShell = isMember && useMediaQuery('(max-width: 1023px)');
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
 
@@ -239,6 +241,17 @@ export default function Layout() {
           <button type="button" onClick={toggleTheme} className={iconBtnClass} aria-label="Cambiar tema">
             {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </button>
+          {isStaffMobile && (
+            <button
+              type="button"
+              onClick={() => logout()}
+              className={iconBtnClass}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setIsSidebarOpen(!isSidebarOpen); }}

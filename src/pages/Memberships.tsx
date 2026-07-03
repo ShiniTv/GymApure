@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge, EmptyState } from '../components/ui';
+import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge, EmptyState, BackToDashboardLink } from '../components/ui';
 
 interface Membership {
   id: number;
@@ -103,6 +103,7 @@ export default function Memberships() {
         compact
         title={<>Planes de <span className="text-brand">membresía</span></>}
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
+        action={<BackToDashboardLink />}
       />
 
       <div className="flex flex-wrap gap-2 justify-end">

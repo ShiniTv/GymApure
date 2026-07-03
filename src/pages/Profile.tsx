@@ -21,9 +21,11 @@ import {
   Sun,
   Moon,
   IdCard,
+  Bell,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Modal, PageHeader, Label, Input, Spinner, Textarea, PasswordInput, passwordStrength, SegmentedControl, EmptyState, PageState, BackToDashboardLink } from '../components/ui';
+import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
 import { cn } from '../lib/utils';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
@@ -486,6 +488,9 @@ export default function Profile() {
                   Especialidad: <strong>{trainerProfile.specialty}</strong>
                 </p>
               )}
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 pt-1">
+                Para cambiar nivel, turno o especialidad, contacta al administrador (sección Entrenadores).
+              </p>
             </div>
           )}
 
@@ -767,6 +772,18 @@ export default function Profile() {
       )}
 
       {profileTab === 'seguridad' && (
+      <>
+      <Card padding="sm" rounded="xl" className="panel-form mb-3">
+        <h2 className="section-title mb-3 flex items-center gap-1.5">
+          <Bell className="h-3.5 w-3.5 text-brand" />
+          Notificaciones push
+        </h2>
+        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
+          Recibe avisos de pagos, mensajes y novedades del gym en este dispositivo.
+        </p>
+        <PushNotificationsToggle />
+      </Card>
+
       <Card padding="sm" rounded="xl" className="panel-form">
         <h2 className="section-title mb-3 flex items-center gap-1.5">
           <Lock className="h-3.5 w-3.5 text-brand" />
@@ -850,6 +867,7 @@ export default function Profile() {
           </Button>
         </form>
       </Card>
+      </>
       )}
 
       <Modal

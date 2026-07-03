@@ -15,7 +15,8 @@ import {
   Monitor,
   RefreshCw,
   X,
-  LayoutDashboard,
+  ArrowLeft,
+  Tablet,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Button, Card, Input, PageHeader, Badge, Spinner, SegmentedControl, CedulaInput } from '../components/ui';
@@ -23,6 +24,7 @@ import { cn } from '../lib/utils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
+import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 
 interface LookupResult {
   found: boolean;
@@ -417,9 +419,19 @@ export default function Reception() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Ir al dashboard">
-                <LayoutDashboard className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={() => setCounterMode(false)}
+              title="Volver al resumen"
+              aria-label="Volver al resumen"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Link to="/check-in?kiosk=1">
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Kiosk tablet" aria-label="Kiosk tablet">
+                <Tablet className="h-4 w-4" />
               </Button>
             </Link>
             <Button
@@ -479,24 +491,15 @@ export default function Reception() {
 
   return (
     <div className="page-stack">
-      <PageHeader
-        compact
-        title={<>Control de <span className="text-brand">acceso</span></>}
-        subtitle="Busque por cédula para autorizar entrada y salida"
-        action={
-          <Button
-            size="sm"
-            className="h-11 w-11 px-0"
-            onClick={() => setCounterMode(true)}
-            aria-label="Modo mostrador"
-            title="Modo mostrador"
-          >
-            <Monitor className="h-5 w-5" />
-          </Button>
-        }
-      />
+      <ReceptionHomeSummary onOpenCounter={() => setCounterMode(true)} />
 
       <div className="panel-wide space-y-4">
+        <PageHeader
+          compact
+          title={<>Control de <span className="text-brand">acceso</span></>}
+          subtitle="Busque por cédula para autorizar entrada y salida"
+        />
+
         <SegmentedControl
           variant="compact"
           value={tab}

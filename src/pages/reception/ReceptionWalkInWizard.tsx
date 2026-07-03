@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { UserPlus, ChevronRight, ChevronLeft, CheckCircle, Copy, Fingerprint } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
@@ -35,6 +37,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWizardProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
@@ -307,7 +310,22 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           {loadingPlans ? (
             <div className="flex justify-center py-8"><Spinner /></div>
           ) : plans.length === 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">No hay planes disponibles. Contacte al administrador.</p>
+            <div className="text-center py-8 space-y-3">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                No hay planes de membresía disponibles. El administrador debe crear al menos un plan.
+              </p>
+              {user?.role === 'admin' ? (
+                <Link to="/memberships">
+                  <Button size="sm" variant="secondary">
+                    Crear plan de membresía
+                  </Button>
+                </Link>
+              ) : (
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  Pide al administrador que configure los planes en Membresías.
+                </p>
+              )}
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {plans.map((plan) => (

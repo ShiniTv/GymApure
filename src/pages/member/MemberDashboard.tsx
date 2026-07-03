@@ -165,7 +165,12 @@ export default function MemberDashboard() {
               variant="motivational"
               icon={Dumbbell}
               title="Sin rutina asignada"
-              description="Tu entrenador te asignará un plan pronto. Mientras tanto, explora tu perfil."
+              description="Tu entrenador te asignará un plan pronto. Mientras tanto, escríbele por mensajes."
+              action={
+                <Button size="sm" onClick={() => navigate('/messages')}>
+                  Escribir a mi entrenador
+                </Button>
+              }
             />
           )}
         </Card>

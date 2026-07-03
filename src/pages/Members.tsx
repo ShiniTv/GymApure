@@ -376,7 +376,7 @@ export default function Members() {
               ? 'Registra personas nuevas en mostrador. La cédula es obligatoria para el check-in.'
               : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
         }
-        action={user?.role === 'admin' || user?.role === 'trainer' ? <BackToDashboardLink /> : undefined}
+        action={<BackToDashboardLink />}
       />
 
       <div className="space-y-2.5">

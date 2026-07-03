@@ -242,6 +242,11 @@ export default function Trainers() {
           icon={Dumbbell}
           title="Sin entrenadores"
           description="Crea el primer entrenador con turno y nivel asignados."
+          action={
+            <Button size="sm" onClick={() => { setIsCreating(true); }}>
+              Nuevo entrenador
+            </Button>
+          }
         />
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

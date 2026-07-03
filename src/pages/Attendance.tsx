@@ -1,9 +1,10 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Card, PageHeader, Spinner, StatCard, BackToDashboardLink } from '../components/ui';
+import { Badge, Card, PageHeader, Spinner, StatCard, BackToDashboardLink, EmptyState } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
@@ -95,7 +96,16 @@ export default function Attendance() {
                 <Spinner />
               </div>
             ) : data.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">Sin datos</div>
+              <EmptyState
+                icon={Calendar}
+                title="Sin datos de asistencia"
+                description="Aún no hay check-ins registrados en los últimos 7 días."
+                action={
+                  <Link to="/reception" className="text-xs font-bold text-brand hover:underline">
+                    Ir a recepción
+                  </Link>
+                }
+              />
             ) : (
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
                 <DailyVolumeChart data={data} />
@@ -115,7 +125,11 @@ export default function Attendance() {
                 <Spinner />
               </div>
             ) : hourlyData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-zinc-400 dark:text-zinc-300 text-sm">Sin datos</div>
+              <EmptyState
+                icon={Clock}
+                title="Sin horas pico"
+                description="Registra check-ins para ver el patrón horario del gym."
+              />
             ) : (
               <Suspense fallback={<div className="h-full flex items-center justify-center"><Spinner /></div>}>
                 <HourlyVolumeChart data={hourlyData} />
@@ -157,16 +171,20 @@ export default function Attendance() {
                 const severity = getExpirySeverity(member.days_remaining, alertDays);
                 const classes = expiryBannerClasses(severity);
                 return (
-                  <div
+                  <Link
                     key={member.user_id}
-                    className={cn('flex items-center justify-between p-3 rounded-xl border', classes.itemBorder)}
+                    to="/members?expiring=true"
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-xl border transition-colors hover:opacity-90',
+                      classes.itemBorder
+                    )}
                   >
                     <div>
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{member.full_name}</p>
                       <p className="text-[10px] text-zinc-400 dark:text-zinc-300">{member.membership_name}</p>
                     </div>
                     <Badge className={classes.badge}>{formatExpiryLabel(member.days_remaining)}</Badge>
-                  </div>
+                  </Link>
                 );
               })
             )}

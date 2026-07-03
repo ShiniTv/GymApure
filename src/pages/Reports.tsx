@@ -7,7 +7,7 @@ import { FileSpreadsheet, Download, Calendar, DollarSign, Users, Fingerprint } f
 
 import { format, subDays, startOfMonth } from 'date-fns';
 
-import { Button, Card, Input, Label, PageHeader, Spinner, Skeleton } from '../components/ui';
+import { Button, Card, Input, Label, PageHeader, Spinner, Skeleton, BackToDashboardLink } from '../components/ui';
 
 
 
@@ -200,6 +200,7 @@ export default function Reports() {
         compact
         title={<>Reportes <span className="text-brand">exportables</span></>}
         subtitle="CSV para contabilidad, cierre mensual y análisis."
+        action={<BackToDashboardLink />}
       />
 
       {error && (

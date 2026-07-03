@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
@@ -12,7 +12,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
-import { getDefaultRouteForRole } from './lib/roles';
 
 function reportBoundaryError(error: Error) {
   void import('@sentry/react').then((Sentry) => {
@@ -45,6 +44,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Reception = lazy(() => import('./pages/Reception'));
+const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 
 function PageLoader() {
   return (
@@ -61,13 +61,14 @@ function PageLoader() {
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) return <PageLoader />;
   
   if (!user) return <Navigate to="/login" />;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+    return <Navigate to="/access-denied" replace state={{ from: location.pathname }} />;
   }
 
   return children;
@@ -114,6 +115,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }>
             <Route index element={<ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Dashboard /></ErrorBoundary>} />
+            <Route path="access-denied" element={<ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><AccessDenied /></ErrorBoundary>} />
             <Route path="members" element={
               <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist']}>
                 <ErrorBoundary onError={(error) => { reportBoundaryError(error); }}><Members /></ErrorBoundary>

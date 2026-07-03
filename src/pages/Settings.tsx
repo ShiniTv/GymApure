@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { apiFetch, parseJsonResponse, parseJsonSafe, toDisplayErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
-import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet, Bell, BellOff } from 'lucide-react';
+import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet, Tablet } from 'lucide-react';
 import { Button, Card, Input, Label, PageHeader, Badge, Spinner, BackToDashboardLink } from '../components/ui';
-import { usePushNotifications } from '../hooks/usePushNotifications';
+import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
 
 interface ExpirySettingsForm {
   expiry_alert_days: number;
@@ -48,6 +49,7 @@ export default function Settings() {
   const adminStats = useAdminStats();
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsLoadError, setSettingsLoadError] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
   const [settingsMessageTone, setSettingsMessageTone] = useState<'success' | 'info' | 'error'>('info');
@@ -60,8 +62,14 @@ export default function Settings() {
 
     apiFetch('/api/settings/expiry')
       .then((res) => parseJsonResponse<ExpirySettingsForm>(res))
-      .then((data) => setExpirySettings(data))
-      .catch(() => setExpirySettings(null))
+      .then((data) => {
+        setExpirySettings(data);
+        setSettingsLoadError(false);
+      })
+      .catch(() => {
+        setExpirySettings(null);
+        setSettingsLoadError(true);
+      })
       .finally(() => setSettingsLoading(false));
   }, [user?.role]);
 
@@ -206,8 +214,22 @@ export default function Settings() {
             <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 mb-3 leading-snug">
               Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes, check-ins).
             </p>
-            <PushToggle />
+            <PushNotificationsToggle />
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-3">
+              <Link to="/check-in?kiosk=1" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
+                <Tablet className="h-3.5 w-3.5" />
+                Abrir kiosk de check-in (tablet)
+              </Link>
+            </p>
           </Card>
+
+          {settingsLoadError && (
+            <Card padding="sm" rounded="xl" className="panel-wide border-red-500/30 bg-red-500/5">
+              <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
+              </p>
+            </Card>
+          )}
 
           {expirySettings && (
         <Card padding="sm" rounded="xl" className="panel-wide">
@@ -406,38 +428,6 @@ export default function Settings() {
           </>
         ) : null}
       </Card>
-    </div>
-  );
-}
-
-function PushToggle() {
-  const { supported, permission, isSubscribed, subscribe, unsubscribe } = usePushNotifications();
-
-  if (!supported) return <p className="text-[11px] text-zinc-400">Este navegador no soporta notificaciones push.</p>;
-
-  if (permission === 'denied') {
-    return (
-      <p className="text-[11px] text-red-500 leading-snug">
-        Notificaciones bloqueadas. Actívalas desde la configuración del navegador.
-      </p>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-3">
-      <Button
-        type="button"
-        variant={isSubscribed ? 'secondary' : 'primary'}
-        size="sm"
-        onClick={isSubscribed ? unsubscribe : subscribe}
-        className="h-9 min-h-9"
-      >
-        {isSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-        <span>{isSubscribed ? 'Desactivar' : 'Activar'}</span>
-      </Button>
-      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-        {isSubscribed ? 'Notificaciones activas' : 'Notificaciones inactivas'}
-      </span>
     </div>
   );
 }

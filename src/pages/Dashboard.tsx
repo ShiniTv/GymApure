@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
   UtensilsCrossed,
+  Tablet,
 } from 'lucide-react';
 import { QuickAction } from '../components/admin/QuickAction';
 import { DashboardSection } from '../components/admin/DashboardSection';
@@ -34,7 +35,6 @@ import { useTrainerStatsQuery, type TrainerStatsResponse } from '../hooks/querie
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
 import MemberDashboardView from './member/MemberDashboard';
-import ReceptionDashboardView from './reception/ReceptionDashboard';
 
 const RevenueChart = lazy(() => import('../components/RevenueChart'));
 
@@ -90,6 +90,10 @@ export default function Dashboard() {
     sessionStorage.setItem(key, '1');
   }, [user?.role, adminStats.stats]);
 
+  if (user?.role === 'receptionist') {
+    return <Navigate to="/reception" replace />;
+  }
+
   if (pageLoading) {
     return (
       <DashboardSkeleton statCount={isAdmin ? 6 : isMember ? 3 : 4} />
@@ -98,10 +102,6 @@ export default function Dashboard() {
 
   if (user?.role === 'member') {
     return <MemberDashboardView />;
-  }
-
-  if (user?.role === 'receptionist') {
-    return <ReceptionDashboardView />;
   }
 
   if (user?.role === 'admin') {
@@ -260,6 +260,27 @@ export default function Dashboard() {
             title="Nutrición"
             description="Adherencia general"
             tone="emerald"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-3 max-w-md">
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/check-in?kiosk=1"
+            icon={Tablet}
+            title="Kiosk"
+            description="Check-in en tablet"
+            tone="orange"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/reception?mode=counter"
+            icon={Fingerprint}
+            title="Mostrador"
+            description="Recepción staff"
+            tone="blue"
           />
         </div>
 

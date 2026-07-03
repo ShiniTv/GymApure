@@ -3,7 +3,7 @@ import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Shield, RefreshCw, CreditCard, UserX, UserCheck, Trash2, Fingerprint, UserPlus, LogIn, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Button, Card, PageHeader, Spinner, EmptyState, FilterChips } from '../components/ui';
+import { Badge, Button, Card, PageHeader, Spinner, EmptyState, FilterChips, BackToDashboardLink } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
 
@@ -114,15 +114,19 @@ export default function AuditLogs() {
         title={<>Registro de <span className="text-brand">auditoría</span></>}
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 px-0"
-            onClick={loadLogs}
-            aria-label="Actualizar"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <BackToDashboardLink iconOnly className="sm:hidden" />
+            <BackToDashboardLink className="hidden sm:inline-flex" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 px-0"
+              onClick={loadLogs}
+              aria-label="Actualizar"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         }
       />
 
