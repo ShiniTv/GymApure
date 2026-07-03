@@ -1,6 +1,6 @@
 /**
  * Smoke test: direct Supabase video upload + signed playback on production.
- * Usage: SMOKE_BASE_URL=https://caribean-gym.onrender.com npx tsx scripts/test-prod-video-smoke.ts
+ * Usage: SMOKE_BASE_URL=https://caribean-gym.onrender.com npx tsx scripts/_archive/test-prod-video-smoke.ts
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';

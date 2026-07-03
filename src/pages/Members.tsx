@@ -94,7 +94,7 @@ export default function Members() {
   const [savingShift, setSavingShift] = useState(false);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToastOptional();
 
   useEffect(() => {
@@ -104,8 +104,24 @@ export default function Members() {
     const shiftParam = searchParams.get('shift');
     if (shiftParam === 'diurno' || shiftParam === 'vespertino' || shiftParam === 'nocturno') {
       setShiftFilter(shiftParam);
+    } else if (!shiftParam) {
+      setShiftFilter('');
     }
   }, [searchParams]);
+
+  const handleShiftFilterChange = (shift: TrainingShift | '') => {
+    setShiftFilter(shift);
+    setPage(1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (shift) next.set('shift', shift);
+        else next.delete('shift');
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -435,29 +451,23 @@ export default function Members() {
               </Button>
             )}
           </div>
+          {(user?.role === 'admin' || user?.role === 'receptionist') && (
+            <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} />
+          )}
           {user?.role === 'admin' && (
-            <div className="space-y-2">
-              <FilterChips
-                fullWidth
-                className="sm:w-auto sm:shrink-0"
-                options={[
-                  { value: '', label: 'Todos' },
-                  { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-                ]}
-                value={expiringFilter ? 'expiring' : ''}
-                onChange={(v) => {
-                  setExpiringFilter(v === 'expiring');
-                  setPage(1);
-                }}
-              />
-              <ShiftFilter
-                value={shiftFilter}
-                onChange={(shift) => {
-                  setShiftFilter(shift);
-                  setPage(1);
-                }}
-              />
-            </div>
+            <FilterChips
+              fullWidth
+              className="sm:w-auto sm:shrink-0"
+              options={[
+                { value: '', label: 'Todos' },
+                { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+              ]}
+              value={expiringFilter ? 'expiring' : ''}
+              onChange={(v) => {
+                setExpiringFilter(v === 'expiring');
+                setPage(1);
+              }}
+            />
           )}
         </div>
 
@@ -880,7 +890,12 @@ export default function Members() {
         >
           {editShiftTarget && (
             <div className="space-y-4">
-              <ShiftFilter includeAll={false} value={editShiftValue} onChange={setEditShiftValue} />
+              <ShiftFilter
+                includeAll={false}
+                label=""
+                value={editShiftValue}
+                onChange={setEditShiftValue}
+              />
               <div className="flex gap-3">
                 <Button
                   variant="ghost"

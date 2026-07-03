@@ -4,6 +4,7 @@ dist/
 coverage/
 .DS_Store
 *.log
+*.tsbuildinfo
 .env*
 !.env.example
 !.env.dev.example
@@ -13,3 +14,4 @@ uploads/
 test-results/
 playwright-report/
 playwright/.cache/
+supabase/.temp/

@@ -3,7 +3,7 @@
  * Requiere: npm run dev + npm run db:restore-demo (o usuario receptionist@gym.com)
  */
 import 'dotenv/config';
-import { resolveDemoPassword } from '../src/lib/passwordPolicy.ts';
+import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const RECEPTION_EMAIL = process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com';

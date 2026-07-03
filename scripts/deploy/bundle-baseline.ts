@@ -7,7 +7,7 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const ASSETS_DIR = path.join(process.cwd(), 'dist', 'assets');
-const BASELINE_PATH = path.join(process.cwd(), '.bundle-baseline.json');
+const BASELINE_PATH = path.join(process.cwd(), 'scripts', 'fixtures', 'bundle-baseline.json');
 const MAX_REGRESSION_PCT = 5;
 
 function gzipSize(filePath: string): number {

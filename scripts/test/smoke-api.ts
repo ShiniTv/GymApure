@@ -104,7 +104,7 @@ async function main() {
 
   if (DEMO_PASSWORD) {
     const { loginReceptionStaff, receptionCheckIn, receptionCheckOut } = await import(
-      './test-reception-auth.ts'
+      '../lib/test-reception-auth.ts'
     );
     try {
       const receptionCookie = await loginReceptionStaff();

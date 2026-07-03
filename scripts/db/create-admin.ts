@@ -6,8 +6,8 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import readline from 'readline';
-import { query } from '../src/db/index.ts';
-import { passwordSchema } from '../src/lib/passwordPolicy.ts';
+import { query } from '../../src/db/index.ts';
+import { passwordSchema } from '../../src/lib/passwordPolicy.ts';
 
 function ask(question: string, hidden = false): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -55,6 +55,12 @@ async function resolveCredentials(): Promise<{
 }
 
 async function main() {
+  if (process.env.CI !== 'true' && !process.env.ADMIN_EMAIL) {
+    console.warn(
+      'Tip: usa npm run db:create-admin:dev o db:create-admin:prod para apuntar al entorno correcto.\n'
+    );
+  }
+
   const { full_name, email, password } = await resolveCredentials();
 
   const parsedEmail = email.toLowerCase();

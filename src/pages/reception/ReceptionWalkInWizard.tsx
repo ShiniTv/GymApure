@@ -61,9 +61,15 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
   useEffect(() => {
     apiFetch('/api/memberships')
       .then((res) => parseJsonResponse<MembershipPlan[]>(res))
-      .then((data) => { setPlans(Array.isArray(data) ? data : []); })
-      .catch(() => { setPlans([]); })
-      .finally(() => { setLoadingPlans(false); });
+      .then((data) => {
+        setPlans(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        setPlans([]);
+      })
+      .finally(() => {
+        setLoadingPlans(false);
+      });
   }, []);
 
   const selectedPlan = useMemo(
@@ -73,7 +79,8 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
 
   const validateStep = (index: number): string | null => {
     if (index === 0) {
-      if (!form.full_name.trim() || form.full_name.trim().length < 3) return 'Nombre completo requerido (mín. 3 caracteres)';
+      if (!form.full_name.trim() || form.full_name.trim().length < 3)
+        return 'Nombre completo requerido (mín. 3 caracteres)';
       const cedulaRegex = /^([VEve]-)?\d{5,10}$/;
       if (!cedulaRegex.test(form.cedula.trim())) return 'Cédula inválida (ej: V-12345678)';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'Email inválido';
@@ -164,7 +171,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     try {
       await navigator.clipboard.writeText(success.temporary_password);
       setCopied(true);
-      setTimeout(() => { setCopied(false); }, 2000);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch {
       // ignore
     }
@@ -172,35 +181,48 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
 
   if (success) {
     return (
-      <Card padding="md" rounded="2xl" className="max-w-2xl page-stack">
+      <Card padding="md" rounded="2xl" className="page-stack max-w-2xl">
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Registro completado</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{success.user.full_name} ya puede usar el gym</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {success.user.full_name} ya puede usar el gym
+            </p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-2 text-sm">
-          <p><span className="text-zinc-500 dark:text-zinc-400">Cédula:</span> <strong>{success.user.cedula}</strong></p>
-          <p><span className="text-zinc-500 dark:text-zinc-400">Email:</span> <strong>{success.user.email}</strong></p>
-          <p><span className="text-zinc-500 dark:text-zinc-400">Plan:</span> <strong>{success.membership_name}</strong></p>
+        <div className="space-y-2 rounded-2xl border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Cédula:</span>{' '}
+            <strong>{success.user.cedula}</strong>
+          </p>
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Email:</span>{' '}
+            <strong>{success.user.email}</strong>
+          </p>
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Plan:</span>{' '}
+            <strong>{success.membership_name}</strong>
+          </p>
           <p>
             <span className="text-zinc-500 dark:text-zinc-400">Vigencia:</span>{' '}
-            <strong>{success.subscription.startDate} → {success.subscription.endDate}</strong>
+            <strong>
+              {success.subscription.startDate} → {success.subscription.endDate}
+            </strong>
           </p>
           {success.checked_in && (
-            <p className="text-emerald-600 font-bold flex items-center gap-2">
+            <p className="flex items-center gap-2 font-bold text-emerald-600">
               <Fingerprint className="h-4 w-4" />
               Entrada autorizada hoy
             </p>
           )}
         </div>
 
-        <div className="rounded-2xl bg-brand/10 border border-brand/20 p-4">
+        <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
           <p className="label-caps text-brand mb-2">Contraseña temporal</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-lg font-mono font-bold text-zinc-900 dark:text-white break-all">
+            <code className="flex-1 font-mono text-lg font-bold break-all text-zinc-900 dark:text-white">
               {success.temporary_password}
             </code>
             <Button variant="secondary" size="sm" onClick={() => void copyPassword()}>
@@ -208,10 +230,12 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               {copied ? 'Copiado' : 'Copiar'}
             </Button>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">Entréguela al cliente si más adelante usará la app.</p>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            Entréguela al cliente si más adelante usará la app.
+          </p>
         </div>
 
-        <Button className="w-full min-h-[48px]" onClick={resetWizard}>
+        <Button className="min-h-[48px] w-full" onClick={resetWizard}>
           Registrar otra persona
         </Button>
       </Card>
@@ -219,13 +243,13 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
   }
 
   return (
-    <Card padding="md" rounded="2xl" className="max-w-2xl page-stack">
+    <Card padding="md" rounded="2xl" className="page-stack max-w-2xl">
       <div>
         <h3 className="section-title flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-brand" />
+          <UserPlus className="text-brand h-4 w-4" />
           Registro walk-in
         </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una sola operación: cuenta, membresía activa y pago aprobado.
         </p>
       </div>
@@ -235,12 +259,12 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           <div
             key={label}
             className={cn(
-              'flex-1 text-center py-2 rounded-xl text-xs font-semibold border transition-colors',
+              'flex-1 rounded-xl border py-2 text-center text-xs font-semibold transition-colors',
               i === step
                 ? 'bg-brand/10 border-brand/30 text-brand'
                 : i < step
-                  ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-600'
-                  : 'border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-300'
+                  ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-600'
+                  : 'border-zinc-200 text-zinc-400 dark:border-zinc-800 dark:text-zinc-300'
             )}
           >
             {label}
@@ -249,7 +273,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       </div>
 
       {error && (
-        <div className="rounded-2xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm font-bold text-red-600">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600">
           {error}
         </div>
       )}
@@ -260,7 +284,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Nombre completo</Label>
             <Input
               value={form.full_name}
-              onChange={(e) => { setForm({ ...form, full_name: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, full_name: e.target.value });
+              }}
               placeholder="Ej: Juan Pérez"
               className="min-h-[48px] text-base"
             />
@@ -269,7 +295,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Cédula (obligatoria)</Label>
             <CedulaInput
               value={form.cedula}
-              onChange={(value) => { setForm({ ...form, cedula: value }); }}
+              onChange={(value) => {
+                setForm({ ...form, cedula: value });
+              }}
               className="min-h-[48px] text-base font-bold tracking-wider"
             />
           </div>
@@ -278,7 +306,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Input
               type="email"
               value={form.email}
-              onChange={(e) => { setForm({ ...form, email: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, email: e.target.value });
+              }}
               placeholder="juan@ejemplo.com"
               className="min-h-[48px] text-base"
             />
@@ -289,7 +319,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               type="tel"
               inputMode="tel"
               value={form.phone}
-              onChange={(e) => { setForm({ ...form, phone: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, phone: e.target.value });
+              }}
               placeholder="0414-0000000"
               className="min-h-[48px] text-base"
             />
@@ -298,8 +330,11 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Turno de entrenamiento</Label>
             <ShiftFilter
               includeAll={false}
+              label=""
               value={form.training_shift}
-              onChange={(shift) => { setForm({ ...form, training_shift: shift }); }}
+              onChange={(shift) => {
+                setForm({ ...form, training_shift: shift });
+              }}
             />
           </div>
         </div>
@@ -308,11 +343,14 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       {step === 1 && (
         <div className="space-y-4">
           {loadingPlans ? (
-            <div className="flex justify-center py-8"><Spinner /></div>
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
           ) : plans.length === 0 ? (
-            <div className="text-center py-8 space-y-3">
+            <div className="space-y-3 py-8 text-center">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                No hay planes de membresía disponibles. El administrador debe crear al menos un plan.
+                No hay planes de membresía disponibles. El administrador debe crear al menos un
+                plan.
               </p>
               {user?.role === 'admin' ? (
                 <Link to="/memberships">
@@ -327,22 +365,26 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {plans.map((plan) => (
                 <button
                   key={plan.id}
                   type="button"
-                  onClick={() => { setForm({ ...form, membership_id: String(plan.id) }); }}
+                  onClick={() => {
+                    setForm({ ...form, membership_id: String(plan.id) });
+                  }}
                   className={cn(
-                    'text-left p-4 rounded-2xl border transition-all min-h-[88px] touch-manipulation',
+                    'min-h-[88px] touch-manipulation rounded-2xl border p-4 text-left transition-all',
                     form.membership_id === String(plan.id)
-                      ? 'border-brand bg-brand/10 ring-2 ring-brand/20'
-                      : 'border-zinc-200 dark:border-zinc-800 hover:border-brand/40'
+                      ? 'border-brand bg-brand/10 ring-brand/20 ring-2'
+                      : 'hover:border-brand/40 border-zinc-200 dark:border-zinc-800'
                   )}
                 >
                   <p className="font-semibold text-zinc-900 dark:text-white">{plan.name}</p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{plan.duration_days} días</p>
-                  <p className="text-lg font-bold text-brand mt-2">${plan.price_usd}</p>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    {plan.duration_days} días
+                  </p>
+                  <p className="text-brand mt-2 text-lg font-bold">${plan.price_usd}</p>
                 </button>
               ))}
             </div>
@@ -356,11 +398,15 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Método de pago</Label>
             <Select
               value={form.method}
-              onChange={(e) => { setForm({ ...form, method: e.target.value }); }}
-              className="min-h-[48px] text-base w-full"
+              onChange={(e) => {
+                setForm({ ...form, method: e.target.value });
+              }}
+              className="min-h-[48px] w-full text-base"
             >
               {PAYMENT_METHODS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
               ))}
             </Select>
           </div>
@@ -368,23 +414,25 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             <Label>Referencia (opcional)</Label>
             <Input
               value={form.reference}
-              onChange={(e) => { setForm({ ...form, reference: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, reference: e.target.value });
+              }}
               placeholder="Nº de referencia o nota"
               className="min-h-[48px] text-base"
             />
           </div>
-          <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 p-4">
+          <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800/50">
             <p className="stat-label">Monto a cobrar</p>
-            <p className="stat-value mt-1">
-              ${selectedPlan?.price_usd ?? '—'} USD
-            </p>
+            <p className="stat-value mt-1">${selectedPlan?.price_usd ?? '—'} USD</p>
           </div>
-          <label className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 cursor-pointer touch-manipulation min-h-[48px]">
+          <label className="flex min-h-[48px] cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <input
               type="checkbox"
               checked={form.check_in}
-              onChange={(e) => { setForm({ ...form, check_in: e.target.checked }); }}
-              className="h-5 w-5 rounded accent-brand"
+              onChange={(e) => {
+                setForm({ ...form, check_in: e.target.checked });
+              }}
+              className="accent-brand h-5 w-5 rounded"
             />
             <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
               Autorizar entrada al gym al finalizar
@@ -394,16 +442,40 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       )}
 
       {step === 3 && (
-        <div className="space-y-3 text-sm rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4">
-          <p><span className="text-zinc-500 dark:text-zinc-400">Nombre:</span> <strong>{form.full_name}</strong></p>
-          <p><span className="text-zinc-500 dark:text-zinc-400">Cédula:</span> <strong>{form.cedula}</strong></p>
-          <p><span className="text-zinc-500 dark:text-zinc-400">Email:</span> <strong>{form.email}</strong></p>
-          {form.phone && <p><span className="text-zinc-500 dark:text-zinc-400">Teléfono:</span> <strong>{form.phone}</strong></p>}
-          <p><span className="text-zinc-500 dark:text-zinc-400">Plan:</span> <strong>{selectedPlan?.name} — ${selectedPlan?.price_usd}</strong></p>
-          <p><span className="text-zinc-500 dark:text-zinc-400">Pago:</span> <strong>{PAYMENT_METHODS.find((m) => m.value === form.method)?.label}</strong></p>
+        <div className="space-y-3 rounded-2xl border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Nombre:</span>{' '}
+            <strong>{form.full_name}</strong>
+          </p>
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Cédula:</span>{' '}
+            <strong>{form.cedula}</strong>
+          </p>
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Email:</span>{' '}
+            <strong>{form.email}</strong>
+          </p>
+          {form.phone && (
+            <p>
+              <span className="text-zinc-500 dark:text-zinc-400">Teléfono:</span>{' '}
+              <strong>{form.phone}</strong>
+            </p>
+          )}
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Plan:</span>{' '}
+            <strong>
+              {selectedPlan?.name} — ${selectedPlan?.price_usd}
+            </strong>
+          </p>
+          <p>
+            <span className="text-zinc-500 dark:text-zinc-400">Pago:</span>{' '}
+            <strong>{PAYMENT_METHODS.find((m) => m.value === form.method)?.label}</strong>
+          </p>
           <p>
             <span className="text-zinc-500 dark:text-zinc-400">Entrada hoy:</span>{' '}
-            <strong className={form.check_in ? 'text-emerald-600' : 'text-zinc-500 dark:text-zinc-400'}>
+            <strong
+              className={form.check_in ? 'text-emerald-600' : 'text-zinc-500 dark:text-zinc-400'}
+            >
               {form.check_in ? 'Sí' : 'No'}
             </strong>
           </p>
@@ -412,19 +484,28 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
 
       <div className="flex gap-3 pt-2">
         {step > 0 && (
-          <Button variant="secondary" className="min-h-[48px]" onClick={goBack} disabled={submitting}>
-            <ChevronLeft className="h-5 w-5 mr-1" />
+          <Button
+            variant="secondary"
+            className="min-h-[48px]"
+            onClick={goBack}
+            disabled={submitting}
+          >
+            <ChevronLeft className="mr-1 h-5 w-5" />
             Atrás
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="flex-1 min-h-[48px]" onClick={goNext}>
+          <Button className="min-h-[48px] flex-1" onClick={goNext}>
             Siguiente
-            <ChevronRight className="h-5 w-5 ml-1" />
+            <ChevronRight className="ml-1 h-5 w-5" />
           </Button>
         ) : (
-          <Button className="flex-1 min-h-[48px]" onClick={() => void handleSubmit()} loading={submitting}>
-            <CheckCircle className="h-5 w-5 mr-2" />
+          <Button
+            className="min-h-[48px] flex-1"
+            onClick={() => void handleSubmit()}
+            loading={submitting}
+          >
+            <CheckCircle className="mr-2 h-5 w-5" />
             Registrar y activar
           </Button>
         )}

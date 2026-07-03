@@ -8,12 +8,12 @@ Referencia rápida para instalar, correr, probar y seguir mejorando el sistema.
 
 ## 1. Requisitos
 
-| Herramienta | Versión |
-|-------------|---------|
-| Node.js | 20+ |
-| npm | 10+ (viene con Node) |
-| Git | Cualquier versión reciente |
-| PostgreSQL | Supabase (recomendado) o Postgres local |
+| Herramienta | Versión                                 |
+| ----------- | --------------------------------------- |
+| Node.js     | 20+                                     |
+| npm         | 10+ (viene con Node)                    |
+| Git         | Cualquier versión reciente              |
+| PostgreSQL  | Supabase (recomendado) o Postgres local |
 
 Opcional: [GitHub CLI](https://cli.github.com/) (`gh`) para PRs desde terminal.
 
@@ -66,15 +66,15 @@ npm run dev
 
 ## 3. Configuración `.env` (mínimo)
 
-| Variable | Obligatorio | Cómo obtenerla |
-|----------|-------------|----------------|
-| `JWT_SECRET` | Sí | `openssl rand -base64 48` (mín. 32 caracteres) |
-| `DATABASE_URL` | Sí | Supabase → Database → Connection string (pooler **6543**) |
-| `NODE_ENV` | No | `development` en local |
-| `PORT` | No | `3000` por defecto |
-| `DEMO_PASSWORD` | Solo tests | Mín. 12 caracteres; usado por `db:restore-demo` y scripts de prueba |
-| `SUPABASE_SERVICE_ROLE_KEY` | Recomendado | Supabase → API → `service_role` (uploads a Storage) |
-| `ALLOW_PUBLIC_REGISTER` | No | `true` en dev para `/register` |
+| Variable                    | Obligatorio | Cómo obtenerla                                                      |
+| --------------------------- | ----------- | ------------------------------------------------------------------- |
+| `JWT_SECRET`                | Sí          | `openssl rand -base64 48` (mín. 32 caracteres)                      |
+| `DATABASE_URL`              | Sí          | Supabase → Database → Connection string (pooler **6543**)           |
+| `NODE_ENV`                  | No          | `development` en local                                              |
+| `PORT`                      | No          | `3000` por defecto                                                  |
+| `DEMO_PASSWORD`             | Solo tests  | Mín. 12 caracteres; usado por `db:restore-demo` y scripts de prueba |
+| `SUPABASE_SERVICE_ROLE_KEY` | Recomendado | Supabase → API → `service_role` (uploads a Storage)                 |
+| `ALLOW_PUBLIC_REGISTER`     | No          | `true` en dev para `/register`                                      |
 
 Plantilla comentada completa: `.env.example`
 
@@ -113,52 +113,52 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 
 ### Desarrollo
 
-| Comando | Qué hace |
-|---------|----------|
-| `npm run dev` | Express + Vite HMR en `http://localhost:3000` |
-| `npm run dev:clean` | Libera puerto 3000 y arranca dev |
-| `npm run build` | Build frontend (`dist/`) + bundle servidor (`dist/server.cjs`) |
-| `npm start` | Servidor producción (requiere `build` previo) |
-| `npm run lint` | `tsc --noEmit` (TypeScript **strict**) |
-| `npm run clean` | Borra `dist/` |
+| Comando             | Qué hace                                                       |
+| ------------------- | -------------------------------------------------------------- |
+| `npm run dev`       | Express + Vite HMR en `http://localhost:3000`                  |
+| `npm run dev:clean` | Libera puerto 3000 y arranca dev                               |
+| `npm run build`     | Build frontend (`dist/`) + bundle servidor (`dist/server.cjs`) |
+| `npm start`         | Servidor producción (requiere `build` previo)                  |
+| `npm run lint`      | `tsc --noEmit` (TypeScript **strict**)                         |
+| `npm run clean`     | Borra `dist/`                                                  |
 
 ### Base de datos
 
-| Comando | Qué hace |
-|---------|----------|
-| `npm run db:migrate` | Aplica migraciones SQL pendientes |
-| `npm run db:health` | Comprueba conexión a Postgres |
-| `npm run db:create-admin` | Crea/actualiza cuenta admin |
-| `npm run db:reset-data` | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
-| `npm run db:restore-demo` | **Solo tests/CI** — usuarios demo ficticios |
-| `npm run db:migrate-from-sqlite` | Migración única desde `gym.db` legacy |
+| Comando                          | Qué hace                                                                          |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| `npm run db:migrate`             | Aplica migraciones SQL pendientes                                                 |
+| `npm run db:health`              | Comprueba conexión a Postgres                                                     |
+| `npm run db:create-admin`        | Crea/actualiza cuenta admin                                                       |
+| `npm run db:reset-data`          | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
+| `npm run db:restore-demo`        | **Solo tests/CI** — usuarios demo ficticios                                       |
+| `npm run db:migrate-from-sqlite` | Migración única desde `gym.db` legacy                                             |
 
 ### Pruebas (servidor en marcha salvo `verify:local-e2e`)
 
-| Comando | Qué hace |
-|---------|----------|
-| `npm run test:smoke` | Health, login, RBAC básico, kiosk eliminado |
-| `npm run test:integration` | Smoke + sprint 4/5/6 |
-| `npm run test:security-checklist` | Seguridad Fases 1–3 (IDOR, sesiones, kiosk) |
-| `npm run test:auth-checklist` | Registro, contraseña, invalidación JWT |
-| `npm run test:reception-checklist` | Recepción, walk-in, check-in staff |
-| `npm run test:e2e` | **Suite completa** (paridad con CI) |
-| `npm run verify:local-e2e` | Levanta dev + `test:e2e` automático |
-| `npm run test:sprint1` … `test:sprint6` | Módulos individuales (debug) |
-| `npm run test:payments-checklist` | Pagos |
-| `npm run test:memberships-checkin` | Membresías y check-in |
-| `npm run test:chat-checklist` | Chat in-app (conversaciones, mensajes, unread) |
-| `npm run lighthouse:ci` | Baseline Lighthouse (login) |
+| Comando                                 | Qué hace                                       |
+| --------------------------------------- | ---------------------------------------------- |
+| `npm run test:smoke`                    | Health, login, RBAC básico, kiosk eliminado    |
+| `npm run test:integration`              | Smoke + sprint 4/5/6                           |
+| `npm run test:security-checklist`       | Seguridad Fases 1–3 (IDOR, sesiones, kiosk)    |
+| `npm run test:auth-checklist`           | Registro, contraseña, invalidación JWT         |
+| `npm run test:reception-checklist`      | Recepción, walk-in, check-in staff             |
+| `npm run test:e2e`                      | **Suite completa** (paridad con CI)            |
+| `npm run verify:local-e2e`              | Levanta dev + `test:e2e` automático            |
+| `npm run test:sprint1` … `test:sprint6` | Módulos individuales (debug)                   |
+| `npm run test:payments-checklist`       | Pagos                                          |
+| `npm run test:memberships-checkin`      | Membresías y check-in                          |
+| `npm run test:chat-checklist`           | Chat in-app (conversaciones, mensajes, unread) |
+| `npm run lighthouse:ci`                 | Baseline Lighthouse (login)                    |
 
 Detalle: [TESTING.md](./TESTING.md)
 
 ### Git / PR
 
-| Comando | Qué hace |
-|---------|----------|
+| Comando           | Qué hace                            |
+| ----------------- | ----------------------------------- |
 | `npm run pr:open` | Abre compare en GitHub (PowerShell) |
-| `gh pr create` | Crear PR (requiere `gh auth login`) |
-| `gh pr merge <n>` | Mergear PR |
+| `gh pr create`    | Crear PR (requiere `gh auth login`) |
+| `gh pr merge <n>` | Mergear PR                          |
 
 ---
 
@@ -174,24 +174,24 @@ Detalle: [TESTING.md](./TESTING.md)
 
 Tras `npm run db:restore-demo` (contraseña = `DEMO_PASSWORD` en `.env`):
 
-| Email | Rol | Notas |
-|-------|-----|-------|
-| `admin@gym.com` | admin | Dashboard, settings |
-| `receptionist@gym.com` | receptionist | `/reception`, check-in |
-| `trainer@gym.com` | trainer | Rutinas, miembros asignados |
-| `member@gym.com` | member | Cédula `V-11223344`, rutina demo |
+| Email                  | Rol          | Notas                            |
+| ---------------------- | ------------ | -------------------------------- |
+| `admin@gym.com`        | admin        | Dashboard, settings              |
+| `receptionist@gym.com` | receptionist | `/reception`, check-in           |
+| `trainer@gym.com`      | trainer      | Rutinas, miembros asignados      |
+| `member@gym.com`       | member       | Cédula `V-11223344`, rutina demo |
 
 ### Rutas por rol (referencia)
 
-| Ruta | admin | receptionist | trainer | member |
-|------|-------|--------------|---------|--------|
-| `/dashboard` | ✓ | ✓ (recepción) | ✓ | ✓ |
-| `/members` | ✓ | ✓ | ✓ (asignados) | — |
-| `/reception` | ✓ | ✓ | — | — |
-| `/check-in` | ✓ | ✓ | — | — |
-| `/routines` | ✓ | — | ✓ | ✓ (propias) |
-| `/payments` | ✓ | ✓ | — | ✓ (propios) |
-| `/settings` | ✓ | — | — | — |
+| Ruta         | admin | receptionist  | trainer       | member      |
+| ------------ | ----- | ------------- | ------------- | ----------- |
+| `/dashboard` | ✓     | ✓ (recepción) | ✓             | ✓           |
+| `/members`   | ✓     | ✓             | ✓ (asignados) | —           |
+| `/reception` | ✓     | ✓             | —             | —           |
+| `/check-in`  | ✓     | ✓             | —             | —           |
+| `/routines`  | ✓     | —             | ✓             | ✓ (propias) |
+| `/payments`  | ✓     | ✓             | —             | ✓ (propios) |
+| `/settings`  | ✓     | —             | —             | —           |
 
 ---
 
@@ -213,24 +213,33 @@ caribean-gym/
 │   ├── config/            # env, jwt, cookies
 │   └── db/                # Pool PostgreSQL
 ├── supabase/migrations/   # SQL versionado (npm run db:migrate)
-├── scripts/               # Tests API, seeds, utilidades
-└── docs/                  # Documentación
+├── scripts/
+│   ├── db/                # Migraciones, reset, admin, entorno dev/prod
+│   ├── test/              # Checklists e integración API
+│   ├── deploy/            # Preflight, Lighthouse, bundle baseline
+│   ├── dev/               # run-with-env, utilidades locales
+│   ├── lib/               # Helpers compartidos (supabase-refs, auth tests)
+│   └── _archive/          # Legacy (sprints, SQLite)
+├── tests/ux/              # Playwright E2E
+└── docs/                  # Documentación (índice: docs/README.md)
 ```
+
+**Dev vs prod:** ver [docs/README.md](./README.md#entorno-dev-vs-producción). Desarrollo usa `.env.dev` (ref `sqjyxmbtgmiorckigrrg`); Render usa producción (`ffjwvlcwhyskddqqojnp`).
 
 ### Mapa módulo → archivos clave
 
-| Módulo | Frontend | API | Notas |
-|--------|----------|-----|-------|
-| Auth / sesiones | `pages/Login.tsx`, `context/AuthContext.tsx` | `api/auth.ts`, `lib/sessionAuth.ts` | JWT + `token_version` |
-| Miembros | `pages/Members.tsx` | `api/users.ts`, `middleware/access.ts` | IDOR trainers |
-| Pagos | `pages/Payments.tsx`, `hooks/queries/usePaymentsQuery.ts` | `api/payments.ts` | Comprobantes upload |
-| Recepción | `pages/Reception.tsx`, `reception/*` | `api/reception.ts` | Walk-in, check-in |
-| Rutinas | `pages/Routines.tsx`, `routines/*` | `api/routines.ts`, `lib/routineSchemas.ts` | Filtro por rol |
-| Ejercicios | `pages/Exercises.tsx`, `useExercisesQuery.ts` | `api/exercises.ts` | Videos upload |
-| Asistencia | `pages/Attendance.tsx`, `CheckIn.tsx` | `api/attendance.ts` | Solo staff autenticado |
-| Dashboard | `pages/Dashboard.tsx`, `member/`, `reception/` | `api/stats.ts` | Por rol |
-| Settings | `pages/Settings.tsx` | `api/settings.ts` | Alertas, notificaciones |
-| Archivos | — | `api/files.ts`, `lib/mediaStorage.ts` | Supabase Storage |
+| Módulo          | Frontend                                                  | API                                        | Notas                   |
+| --------------- | --------------------------------------------------------- | ------------------------------------------ | ----------------------- |
+| Auth / sesiones | `pages/Login.tsx`, `context/AuthContext.tsx`              | `api/auth.ts`, `lib/sessionAuth.ts`        | JWT + `token_version`   |
+| Miembros        | `pages/Members.tsx`                                       | `api/users.ts`, `middleware/access.ts`     | IDOR trainers           |
+| Pagos           | `pages/Payments.tsx`, `hooks/queries/usePaymentsQuery.ts` | `api/payments.ts`                          | Comprobantes upload     |
+| Recepción       | `pages/Reception.tsx`, `reception/*`                      | `api/reception.ts`                         | Walk-in, check-in       |
+| Rutinas         | `pages/Routines.tsx`, `routines/*`                        | `api/routines.ts`, `lib/routineSchemas.ts` | Filtro por rol          |
+| Ejercicios      | `pages/Exercises.tsx`, `useExercisesQuery.ts`             | `api/exercises.ts`                         | Videos upload           |
+| Asistencia      | `pages/Attendance.tsx`, `CheckIn.tsx`                     | `api/attendance.ts`                        | Solo staff autenticado  |
+| Dashboard       | `pages/Dashboard.tsx`, `member/`, `reception/`            | `api/stats.ts`                             | Por rol                 |
+| Settings        | `pages/Settings.tsx`                                      | `api/settings.ts`                          | Alertas, notificaciones |
+| Archivos        | —                                                         | `api/files.ts`, `lib/mediaStorage.ts`      | Supabase Storage        |
 
 ### Convenciones al agregar código
 
@@ -320,11 +329,11 @@ Resumen:
 
 ## 11. Documentación relacionada
 
-| Documento | Contenido |
-|-----------|-----------|
-| [DEPLOY.md](./DEPLOY.md) | Producción: Supabase + Render + checklist |
-| [TESTING.md](./TESTING.md) | Pruebas, CI, datos demo |
-| [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md) | Revisión manual de UI |
+| Documento                                          | Contenido                                 |
+| -------------------------------------------------- | ----------------------------------------- |
+| [DEPLOY.md](./DEPLOY.md)                           | Producción: Supabase + Render + checklist |
+| [TESTING.md](./TESTING.md)                         | Pruebas, CI, datos demo                   |
+| [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md) | Revisión manual de UI                     |
 
 Tokens de diseño en código: `src/index.css`, `src/lib/typography.ts`, `src/components/ui/`.
 

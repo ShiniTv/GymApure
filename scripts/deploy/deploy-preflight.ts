@@ -3,7 +3,7 @@
  * Uso: NODE_ENV=production npm run deploy:preflight
  */
 import 'dotenv/config';
-import { isSupabaseStorageConfigured } from '../src/lib/supabaseAdmin.ts';
+import { isSupabaseStorageConfigured } from '../../src/lib/supabaseAdmin.ts';
 
 let failed = 0;
 

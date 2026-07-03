@@ -8,8 +8,8 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
+import { PROD_REF } from '../lib/supabase-refs.ts';
 
-const PROD_REF = 'ffjwvlcwhyskddqqojnp';
 const RENDER_HEALTH = 'https://caribean-gym.onrender.com/api/health';
 
 function loadEnvFile(file: string): void {
@@ -57,7 +57,14 @@ async function main() {
   console.log('\nEjecutando reset contra .env.dev (sin --allow-prod)…');
   const reset = spawnSync(
     process.execPath,
-    ['--import', 'tsx', 'scripts/run-with-env.ts', '.env.dev', 'scripts/reset-database-data.ts', '--yes'],
+    [
+      '--import',
+      'tsx',
+      'scripts/dev/run-with-env.ts',
+      '.env.dev',
+      'scripts/db/reset-database-data.ts',
+      '--yes',
+    ],
     { stdio: 'inherit', env: { ...process.env, DATABASE_URL: devUrl } }
   );
   if ((reset.status ?? 1) !== 0) {

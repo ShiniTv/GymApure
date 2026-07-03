@@ -5,8 +5,8 @@
 import { config } from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
+import { PROD_REF } from '../lib/supabase-refs.ts';
 
-const PROD_REF = 'ffjwvlcwhyskddqqojnp';
 const devPath = path.resolve('.env.dev');
 const envPath = path.resolve('.env');
 

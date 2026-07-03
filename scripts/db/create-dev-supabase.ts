@@ -8,10 +8,10 @@ import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { PROD_REF } from '../lib/supabase-refs.ts';
 
 const PROJECT_NAME = 'caribean-gym-dev';
 const REGION = 'us-west-1';
-const PROD_REF = 'ffjwvlcwhyskddqqojnp';
 
 function runSupabase(args: string[], json = false): { ok: boolean; stdout: string } {
   const result = spawnSync('npx', ['supabase', ...args, ...(json ? ['-o', 'json'] : [])], {

@@ -3,7 +3,7 @@
  * Requiere servidor en marcha y admin de checklist (npm run test:auth-checklist primero).
  */
 import 'dotenv/config';
-import { loginReceptionStaff, receptionCheckIn, receptionCheckOut } from './test-reception-auth.ts';
+import { loginReceptionStaff, receptionCheckIn, receptionCheckOut } from '../lib/test-reception-auth.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';

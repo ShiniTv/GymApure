@@ -1,6 +1,11 @@
 -- Tablas internas del backend (acceso vía DATABASE_URL / service_role).
 -- Habilitar RLS y revocar acceso de anon/authenticated para cerrar alertas del Security Advisor.
 
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  filename TEXT PRIMARY KEY,
+  applied_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schema_migrations FORCE ROW LEVEL SECURITY;
 

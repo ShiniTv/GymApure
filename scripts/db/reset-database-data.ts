@@ -18,10 +18,8 @@ import {
   VIDEOS_BUCKET,
   getSupabaseAdmin,
   isSupabaseStorageConfigured,
-} from '../src/lib/supabaseAdmin.ts';
-
-/** Ref Supabase de producción (Render) — bloquear reset accidental. */
-const PROD_SUPABASE_PROJECT_REF = 'ffjwvlcwhyskddqqojnp';
+} from '../../src/lib/supabaseAdmin.ts';
+import { PROD_REF as PROD_SUPABASE_PROJECT_REF } from '../lib/supabase-refs.ts';
 
 const useDevDatabase = process.argv.includes('--dev');
 const databaseUrl = (

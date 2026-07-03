@@ -1,6 +1,6 @@
 /**
  * Ejecuta un script npm/tsx cargando variables desde un archivo .env concreto.
- * Uso: tsx scripts/run-with-env.ts .env.dev scripts/apply-migrations.ts
+ * Uso: tsx scripts/dev/run-with-env.ts .env.dev scripts/db/apply-migrations.ts
  */
 import { config } from 'dotenv';
 import { spawnSync } from 'node:child_process';
@@ -12,7 +12,7 @@ const scriptPath = process.argv[3];
 const scriptArgs = process.argv.slice(4);
 
 if (!envFile || !scriptPath) {
-  console.error('Uso: tsx scripts/run-with-env.ts <.env.dev|.env.prod> <script.ts> [args...]');
+  console.error('Uso: tsx scripts/dev/run-with-env.ts <.env.dev|.env.prod> <script.ts> [args...]');
   process.exit(1);
 }
 

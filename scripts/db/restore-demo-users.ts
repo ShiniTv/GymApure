@@ -5,8 +5,8 @@
  */
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { query } from '../src/db/index.ts';
-import { resolveDemoPassword } from '../src/lib/passwordPolicy.ts';
+import { query } from '../../src/db/index.ts';
+import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 
 const DEMO_PASSWORD = resolveDemoPassword();
 

@@ -22,7 +22,10 @@ const MIGRATION_MARKERS: Record<string, string> = {
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'gym_settings' LIMIT 1`,
   '20260615000003_event_notifications.sql': `
-    SELECT 1 FROM gym_settings WHERE key = 'whatsapp_notifications_enabled' LIMIT 1`,
+    SELECT 1 FROM gym_settings WHERE key = 'whatsapp_notifications_enabled' LIMIT 1
+    UNION ALL
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'chat_system_log' LIMIT 1`,
   '20260616000000_payment_proofs_storage.sql': `
     SELECT 1 FROM storage.buckets WHERE id = 'payment-proofs' LIMIT 1`,
   '20260620000000_media_storage_buckets.sql': `
@@ -111,6 +114,42 @@ async function isAlreadyPresent(pool: pg.Pool, file: string): Promise<boolean> {
   }
 }
 
+function migrationVersionFromFile(file: string): string {
+  const match = file.match(/^(\d+)/);
+  return match?.[1] ?? '';
+}
+
+/** Si la BD fue migrada con Supabase CLI (`db push` / `db reset`), alinear schema_migrations local. */
+async function syncFromSupabaseMigrations(pool: pg.Pool, files: string[]): Promise<number> {
+  try {
+    const { rows } = await pool.query<{ version: string }>(
+      'SELECT version FROM supabase_migrations.schema_migrations'
+    );
+    if (rows.length === 0) return 0;
+
+    const remoteVersions = new Set(rows.map((r) => r.version));
+    let synced = 0;
+
+    for (const file of files) {
+      const version = migrationVersionFromFile(file);
+      if (!version || !remoteVersions.has(version)) continue;
+
+      const result = await pool.query(
+        'INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING RETURNING filename',
+        [file]
+      );
+      if (result.rowCount && result.rowCount > 0) {
+        console.log(`  ⇄ ${file} (sincronizada desde supabase_migrations)`);
+        synced += 1;
+      }
+    }
+
+    return synced;
+  } catch {
+    return 0;
+  }
+}
+
 async function main() {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (!databaseUrl) {
@@ -147,6 +186,15 @@ async function main() {
       'SELECT filename FROM schema_migrations'
     );
     const appliedSet = new Set(applied.map((r) => r.filename));
+
+    const synced = await syncFromSupabaseMigrations(pool, files);
+    if (synced > 0) {
+      const { rows: refreshed } = await pool.query<{ filename: string }>(
+        'SELECT filename FROM schema_migrations'
+      );
+      appliedSet.clear();
+      for (const row of refreshed) appliedSet.add(row.filename);
+    }
 
     let ran = 0;
     let baselined = 0;
@@ -207,7 +255,7 @@ async function main() {
       }
     }
 
-    if (ran === 0 && baselined === 0 && skipped === 0) {
+    if (ran === 0 && baselined === 0 && skipped === 0 && synced === 0) {
       console.log('\nBase de datos al día. No había migraciones pendientes.');
     } else {
       const parts = [];

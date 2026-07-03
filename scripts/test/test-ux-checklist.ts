@@ -5,7 +5,7 @@
 import 'dotenv/config';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { query, pool } from '../src/db/index.ts';
+import { query, pool } from '../../src/db/index.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;

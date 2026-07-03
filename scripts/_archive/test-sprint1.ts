@@ -3,7 +3,7 @@
  * Requiere servidor en marcha y .env con DEMO_PASSWORD.
  */
 import 'dotenv/config';
-import { loginReceptionStaff, receptionCheckIn } from './test-reception-auth.ts';
+import { loginReceptionStaff, receptionCheckIn } from '../lib/test-reception-auth.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
