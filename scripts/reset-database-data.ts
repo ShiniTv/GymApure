@@ -45,6 +45,8 @@ const DATA_TABLES = [
   'chat_messages',
   'chat_conversations',
   'chat_system_log',
+  'password_reset_tokens',
+  'push_subscriptions',
   'workout_logs',
   'workout_sessions',
   'audit_logs',
@@ -52,6 +54,7 @@ const DATA_TABLES = [
   'user_measurements',
   'user_routines',
   'routine_exercises',
+  'trainer_profiles',
   'payments',
   'subscriptions',
   'routines',
@@ -59,6 +62,22 @@ const DATA_TABLES = [
   'users',
   'memberships',
 ] as const;
+
+/** Conteos de verificación post-reset (tablas que deben quedar en 0). */
+const VERIFY_COUNT_TABLES = [
+  'users',
+  'exercises',
+  'routines',
+  'payments',
+  'attendance',
+  'chat_messages',
+  'password_reset_tokens',
+  'push_subscriptions',
+  'trainer_profiles',
+] as const;
+
+/** Ref Supabase de producción (Render) — bloquear reset accidental. */
+const PROD_SUPABASE_PROJECT_REF = 'ffjwvlcwhyskddqqojnp';
 
 const LOCAL_UPLOAD_DIRS = [
   'uploads/avatars',
@@ -197,8 +216,45 @@ async function clearSupabaseBuckets(): Promise<void> {
   }
 }
 
+async function printRowCounts(): Promise<boolean> {
+  console.log('\nVerificación de conteos:');
+  let allZero = true;
+
+  for (const table of VERIFY_COUNT_TABLES) {
+    if (!(await tableExists(table))) continue;
+    const { rows } = await query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM "${table}"`
+    );
+    const count = parseInt(rows[0]?.count ?? '0', 10);
+    const ok = count === 0;
+    if (!ok) allZero = false;
+    console.log(`  ${ok ? '✓' : '✗'} ${table}: ${count}`);
+  }
+
+  const { rows: settingsRows } = await query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM gym_settings`
+  );
+  const settingsCount = parseInt(settingsRows[0]?.count ?? '0', 10);
+  console.log(`  · gym_settings: ${settingsCount} fila(s) (solo defaults esperados)`);
+
+  return allZero;
+}
+
+function assertNotProductionDatabase(): void {
+  if (!databaseUrl!.includes(PROD_SUPABASE_PROJECT_REF)) return;
+  if (process.argv.includes('--allow-prod')) return;
+
+  console.error(
+    `\n✗ DATABASE_URL apunta al proyecto Supabase de producción (${PROD_SUPABASE_PROJECT_REF}).`
+  );
+  console.error('  Usa un proyecto de desarrollo en .env o pasa --allow-prod si es intencional.\n');
+  process.exit(1);
+}
+
 async function main() {
   const autoYes = process.argv.includes('--yes');
+
+  assertNotProductionDatabase();
 
   console.log('\n⚠  RESET DE DATOS — se borrarán usuarios, rutinas, pagos, chat y archivos subidos.');
   console.log('   El esquema y las migraciones NO se tocan.\n');
@@ -221,7 +277,13 @@ async function main() {
   console.log('\nLimpiando Supabase Storage…');
   await clearSupabaseBuckets();
 
-  console.log('\nListo. Siguiente paso: npm run db:create-admin\n');
+  const countsOk = await printRowCounts();
+  if (!countsOk) {
+    console.error('\n✗ Algunas tablas no quedaron vacías. Revisa los conteos arriba.\n');
+    process.exit(1);
+  }
+
+  console.log('\nListo. Base operativa vacía. Siguiente paso: npm run db:create-admin\n');
 }
 
 main().catch((err) => {
