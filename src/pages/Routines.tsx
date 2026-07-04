@@ -189,7 +189,16 @@ export default function Routines() {
 
   useEffect(() => {
     const next = isMember ? (memberRoutines ?? []) : (libraryRoutines ?? []);
-    setRoutines(next);
+    setRoutines((prev) => {
+      const prevById = new Map(prev.map((r) => [r.id, r]));
+      return next.map((r) => {
+        const existing = prevById.get(r.id);
+        if (existing?.exercises !== undefined) {
+          return { ...r, exercises: existing.exercises };
+        }
+        return r;
+      });
+    });
   }, [isMember, memberRoutines, libraryRoutines]);
 
   const changeView = (next: RoutinesView) => {
@@ -213,8 +222,11 @@ export default function Routines() {
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
     const data = await parseJsonResponse<{ exercises: RoutineExercise[] }>(res);
+    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
     setRoutines((prev) =>
-      prev.map((r) => (r.id === routineId ? { ...r, exercises: data.exercises } : r))
+      prev.map((r) =>
+        r.id === routineId ? { ...r, exercises, exercise_count: exercises.length } : r
+      )
     );
   };
 
@@ -322,7 +334,6 @@ export default function Routines() {
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
-      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
     } finally {
@@ -400,7 +411,6 @@ export default function Routines() {
         weight_suggestion: '',
       });
       await refreshRoutineExercises(expandedRoutineId);
-      refreshRoutines();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
       setAddExerciseError(message);
