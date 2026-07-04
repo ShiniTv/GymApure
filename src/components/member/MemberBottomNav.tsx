@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Dumbbell, X, LogOut } from 'lucide-react';
 import clsx from 'clsx';
-import { useAuth } from '../../context/AuthContext';
+import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
 import {
@@ -15,7 +15,7 @@ const FAB_ROOT_CLASS = 'member-has-workout-fab';
 
 export function MemberBottomNav() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const memberStats = useMemberStatsOptional();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -170,7 +170,7 @@ export function MemberBottomNav() {
                 type="button"
                 onClick={() => {
                   setMoreOpen(false);
-                  logout();
+                  requestLogout();
                 }}
                 className="flex min-h-[var(--touch-min)] w-full touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
               >
@@ -265,6 +265,8 @@ export function MemberBottomNav() {
           </ul>
         </nav>
       </div>
+
+      <LogoutConfirmModal {...logoutConfirmProps} />
     </>
   );
 }

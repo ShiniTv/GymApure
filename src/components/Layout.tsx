@@ -18,7 +18,7 @@ import { MobileShellProvider } from '../context/MobileShellContext';
 import { LogOut, Menu, X, Sun, Moon, PanelLeftClose } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
-import { ROLE_LABELS, isStaffRole, PORTAL_TITLES } from '../lib/roles';
+import { ROLE_LABELS, PORTAL_TITLES } from '../lib/roles';
 import { getNavigationForRole } from '../config/navigation';
 import { Avatar } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
@@ -27,6 +27,8 @@ import { shouldHideMemberBottomNav } from '../config/navigation/memberBottomNav'
 import { ThemeOnboarding } from './member/ThemeOnboarding';
 import { THEME_ONBOARDING_KEY } from '../config/themes';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { LogoutConfirmModal, useLogoutConfirm } from './LogoutConfirmModal';
+import { NotificationBell } from './notifications/NotificationBell';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
@@ -34,7 +36,8 @@ const iconBtnClass =
   'inline-flex items-center justify-center h-11 w-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const { data: profile } = useProfileQuery(user?.id);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -53,7 +56,6 @@ export default function Layout() {
   const { data: chatUnread = 0 } = useChatUnreadQuery(showChatNav);
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
-  const isStaffMobile = isStaffRole(user?.role ?? '') && useMediaQuery('(max-width: 1023px)');
   const isMemberMobileShell = isMember && useMediaQuery('(max-width: 1023px)');
   const isReceptionMobileShell = isReceptionist && useMediaQuery('(max-width: 1023px)');
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
@@ -168,6 +170,7 @@ export default function Layout() {
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
             <InstallPrompt />
+            <NotificationBell />
             <button
               type="button"
               onClick={toggleTheme}
@@ -176,17 +179,6 @@ export default function Layout() {
             >
               {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
-            {isStaffMobile && (
-              <button
-                type="button"
-                onClick={() => logout()}
-                className={iconBtnClass}
-                aria-label="Cerrar sesión"
-                title="Cerrar sesión"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            )}
             <button
               type="button"
               onClick={() => {
@@ -241,12 +233,13 @@ export default function Layout() {
                     </p>
                   </motion.div>
                 </AnimatePresence>
+                <NotificationBell compact className="ml-auto" />
                 <button
                   type="button"
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
@@ -332,6 +325,11 @@ export default function Layout() {
                     <InstallPrompt />
                   </div>
                 )}
+                {sidebarCollapsed && (
+                  <div className="hidden justify-center pb-1 lg:flex">
+                    <NotificationBell compact />
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={toggleTheme}
@@ -390,7 +388,7 @@ export default function Layout() {
 
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={requestLogout}
                   className={clsx(
                     'nav-link w-full text-zinc-500 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-400',
                     sidebarCollapsed && 'justify-center px-0'
@@ -428,6 +426,8 @@ export default function Layout() {
 
         {showMemberBottomNav && <MemberBottomNav />}
         {showReceptionBottomNav && <ReceptionBottomNav />}
+
+        <LogoutConfirmModal {...logoutConfirmProps} />
 
         {isMember && (
           <ThemeOnboarding
