@@ -51,6 +51,10 @@ import { dateLocale as es } from '../lib/dateLocale';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
+import {
+  buildRoutineExercisePayload,
+  buildRoutineExerciseUpdatePayload,
+} from '../lib/routineExercisePayload';
 
 type MemberRoutineRow = Routine & { start_date?: string | null; end_date?: string | null };
 
@@ -110,6 +114,8 @@ export default function Routines() {
     exercise: RoutineExercise;
   } | null>(null);
   const [deletingExercise, setDeletingExercise] = useState(false);
+  const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
+  const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -354,18 +360,14 @@ export default function Routines() {
 
   const handleUpdateExercise = async () => {
     if (!editingExercise || !expandedRoutineId) return;
+    setEditExerciseError(null);
     try {
       const res = await apiFetch(
         `/api/routines/${expandedRoutineId}/exercises/${editingExercise.routine_exercise_id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sets: editingExercise.sets,
-            reps: editingExercise.reps,
-            rest_seconds: editingExercise.rest_seconds,
-            weight_suggestion: editingExercise.weight_suggestion,
-          }),
+          body: JSON.stringify(buildRoutineExerciseUpdatePayload(editingExercise)),
         }
       );
       await parseJsonResponse(res);
@@ -373,17 +375,20 @@ export default function Routines() {
       setEditingExercise(null);
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo actualizar el ejercicio';
+      setEditExerciseError(message);
       clientLogger.error('Failed to update routine exercise', err);
     }
   };
 
   const handleAddWorkoutExercise = async () => {
     if (!newExercise.exercise_id || !expandedRoutineId) return;
+    setAddExerciseError(null);
     try {
       const res = await apiFetch(`/api/routines/${expandedRoutineId}/exercises`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newExercise, exercise_id: parseInt(newExercise.exercise_id) }),
+        body: JSON.stringify(buildRoutineExercisePayload(newExercise)),
       });
       await parseJsonResponse(res);
       setIsAddingExercise(false);
@@ -397,6 +402,8 @@ export default function Routines() {
       await refreshRoutineExercises(expandedRoutineId);
       refreshRoutines();
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
+      setAddExerciseError(message);
       clientLogger.error('Failed to add exercise to routine', err);
     }
   };
@@ -615,6 +622,8 @@ export default function Routines() {
             newExercise={newExercise}
             setNewExercise={setNewExercise}
             handleAddWorkoutExercise={handleAddWorkoutExercise}
+            addExerciseError={addExerciseError}
+            editExerciseError={editExerciseError}
             isEditingExercise={isEditingExercise}
             setIsEditingExercise={setIsEditingExercise}
             editingExercise={editingExercise}
@@ -654,10 +663,12 @@ export default function Routines() {
                 setIsCreating(true);
               }}
               onAddExercise={() => {
+                setAddExerciseError(null);
                 setIsAddingExercise(true);
               }}
               onInlineUpdate={handleInlineUpdate}
               onEditExercise={(exercise) => {
+                setEditExerciseError(null);
                 setEditingExercise(exercise);
                 setIsEditingExercise(true);
               }}

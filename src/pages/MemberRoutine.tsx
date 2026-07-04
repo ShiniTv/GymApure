@@ -1,14 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Dumbbell, Calendar, Plus, Edit, Trash2, UserMinus, Scale, History, MessageSquare, UtensilsCrossed } from 'lucide-react';
+import {
+  Dumbbell,
+  Calendar,
+  Plus,
+  Edit,
+  Trash2,
+  UserMinus,
+  Scale,
+  History,
+  MessageSquare,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, Modal, PageHeader, Label, Input, Select, Badge, Spinner, EmptyState, DifficultySelect, Breadcrumbs, Avatar, SegmentedControl, PageState, BackToDashboardLink } from '../components/ui';
+import {
+  Button,
+  Card,
+  Modal,
+  PageHeader,
+  Label,
+  Input,
+  Select,
+  Badge,
+  Spinner,
+  EmptyState,
+  DifficultySelect,
+  Breadcrumbs,
+  Avatar,
+  SegmentedControl,
+  PageState,
+  BackToDashboardLink,
+} from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
+import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
+import {
+  buildRoutineExercisePayload,
+  buildRoutineExerciseUpdatePayload,
+} from '../lib/routineExercisePayload';
 
 import type {
   Routine,
@@ -38,23 +71,26 @@ export default function MemberRoutine() {
     arm: '',
     leg: '',
   });
-  
+
   // Assignment Modal State
   const [isAssigning, setIsAssigning] = useState(false);
   const [availableRoutines, setAvailableRoutines] = useState<RoutineOption[]>([]);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
   const [assignDates, setAssignDates] = useState({
     start_date: new Date().toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
-  
+
   // Create/Edit Routine State
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
   const [routineForm, setRoutineForm] = useState({ name: '', difficulty: 'Beginner' });
   const [unassignTarget, setUnassignTarget] = useState<Routine | null>(null);
-  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{ routineId: number; exercise: Exercise } | null>(null);
+  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{
+    routineId: number;
+    exercise: Exercise;
+  } | null>(null);
 
   // Exercise Management State
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
@@ -67,14 +103,18 @@ export default function MemberRoutine() {
     sets: 3,
     reps: 10,
     rest_seconds: 60,
-    weight_suggestion: ''
+    weight_suggestion: '',
   });
   const [coachingTab, setCoachingTab] = useState<'rutinas' | 'perfil' | 'mediciones'>('rutinas');
+  const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
+  const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
 
   const refreshUserRoutines = () =>
     apiFetch(`/api/users/${id}/routines`)
       .then((res) => parseJsonResponse<Routine[]>(res))
-      .then((data) => { setRoutines(Array.isArray(data) ? data : []); });
+      .then((data) => {
+        setRoutines(Array.isArray(data) ? data : []);
+      });
 
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
@@ -89,7 +129,9 @@ export default function MemberRoutine() {
       apiFetch(`/api/users/${id}`).then((res) => parseJsonResponse<User>(res)),
       apiFetch(`/api/users/${id}/routines`).then((res) => parseJsonResponse<Routine[]>(res)),
       apiFetch(`/api/memberships/user/${id}`).then((res) => parseJsonOptional<Subscription>(res)),
-      apiFetch(`/api/users/${id}/measurements`).then((res) => parseJsonResponse<Measurement[]>(res)),
+      apiFetch(`/api/users/${id}/measurements`).then((res) =>
+        parseJsonResponse<Measurement[]>(res)
+      ),
     ])
       .then(([userData, routinesData, subData, measurementsData]) => {
         setMember(userData);
@@ -97,8 +139,12 @@ export default function MemberRoutine() {
         setSubscription(subData?.membership_name ? subData : null);
         setMeasurements(Array.isArray(measurementsData) ? measurementsData : []);
       })
-      .catch((err) => { clientLogger.error('Failed to load member routine context', err); })
-      .finally(() => { setLoading(false); });
+      .catch((err) => {
+        clientLogger.error('Failed to load member routine context', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id]);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
@@ -137,25 +183,37 @@ export default function MemberRoutine() {
   const apiFetchAvailableRoutines = () => {
     apiFetch('/api/routines')
       .then((res) => parseJsonResponse<RoutineOption[]>(res))
-      .then((data) => { setAvailableRoutines(Array.isArray(data) ? data : []); })
-      .catch((err) => { clientLogger.error('Failed to fetch routines catalog', err); });
+      .then((data) => {
+        setAvailableRoutines(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        clientLogger.error('Failed to fetch routines catalog', err);
+      });
   };
 
-  const handleInlineUpdate = async (routineId: number, exercise: Exercise, field: 'sets' | 'reps', value: number) => {
+  const handleInlineUpdate = async (
+    routineId: number,
+    exercise: Exercise,
+    field: 'sets' | 'reps',
+    value: number
+  ) => {
     if (value === exercise[field]) return;
 
     try {
       const updatedExercise = { ...exercise, [field]: value };
-      const res = await apiFetch(`/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sets: updatedExercise.sets,
-          reps: updatedExercise.reps,
-          rest_seconds: updatedExercise.rest_seconds,
-          weight_suggestion: updatedExercise.weight_suggestion
-        }),
-      });
+      const res = await apiFetch(
+        `/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sets: updatedExercise.sets,
+            reps: updatedExercise.reps,
+            rest_seconds: updatedExercise.rest_seconds,
+            weight_suggestion: updatedExercise.weight_suggestion,
+          }),
+        }
+      );
 
       await parseJsonResponse(res);
       setRoutines((prev) =>
@@ -187,7 +245,7 @@ export default function MemberRoutine() {
           routine_id: parseInt(selectedRoutineId),
           assigned_by: user.id,
           start_date: assignDates.start_date,
-          end_date: assignDates.end_date
+          end_date: assignDates.end_date,
         }),
       });
 
@@ -281,8 +339,12 @@ export default function MemberRoutine() {
   const apiFetchAvailableExercises = () => {
     apiFetch('/api/exercises')
       .then((res) => parseJsonResponse<ExerciseOption[]>(res))
-      .then((data) => { setAvailableExercises(Array.isArray(data) ? data : []); })
-      .catch((err) => { clientLogger.error('Failed to fetch exercise catalog', err); });
+      .then((data) => {
+        setAvailableExercises(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        clientLogger.error('Failed to fetch exercise catalog', err);
+      });
   };
 
   const toggleExpandRoutine = async (routineId: number) => {
@@ -301,24 +363,25 @@ export default function MemberRoutine() {
 
   const handleUpdateExercise = async () => {
     if (!editingExercise || !expandedRoutineId) return;
+    setEditExerciseError(null);
 
     try {
-      const res = await apiFetch(`/api/routines/${expandedRoutineId}/exercises/${editingExercise.routine_exercise_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sets: editingExercise.sets,
-          reps: editingExercise.reps,
-          rest_seconds: editingExercise.rest_seconds,
-          weight_suggestion: editingExercise.weight_suggestion
-        }),
-      });
+      const res = await apiFetch(
+        `/api/routines/${expandedRoutineId}/exercises/${editingExercise.routine_exercise_id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildRoutineExerciseUpdatePayload(editingExercise)),
+        }
+      );
 
       await parseJsonResponse(res);
       setIsEditingExercise(false);
       setEditingExercise(null);
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo actualizar el ejercicio';
+      setEditExerciseError(message);
       clientLogger.error('Failed to update routine exercise', err);
     }
   };
@@ -327,9 +390,12 @@ export default function MemberRoutine() {
     if (!deleteExerciseTarget) return;
     const { routineId, exercise } = deleteExerciseTarget;
     try {
-      const res = await apiFetch(`/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`, {
-        method: 'DELETE',
-      });
+      const res = await apiFetch(
+        `/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`,
+        {
+          method: 'DELETE',
+        }
+      );
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
@@ -340,15 +406,13 @@ export default function MemberRoutine() {
 
   const handleAddExercise = async () => {
     if (!newExercise.exercise_id || !expandedRoutineId) return;
+    setAddExerciseError(null);
 
     try {
       const res = await apiFetch(`/api/routines/${expandedRoutineId}/exercises`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newExercise,
-          exercise_id: parseInt(newExercise.exercise_id)
-        }),
+        body: JSON.stringify(buildRoutineExercisePayload(newExercise)),
       });
 
       await parseJsonResponse(res);
@@ -358,10 +422,12 @@ export default function MemberRoutine() {
         sets: 3,
         reps: 10,
         rest_seconds: 60,
-        weight_suggestion: ''
+        weight_suggestion: '',
       });
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
+      setAddExerciseError(message);
       clientLogger.error('Failed to add exercise to routine', err);
     }
   };
@@ -370,11 +436,12 @@ export default function MemberRoutine() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando miembro…</p>
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando miembro…</p>
       </PageState>
     );
   }
-  if (!member) return <div className="text-zinc-500 dark:text-white p-6">Miembro no encontrado</div>;
+  if (!member)
+    return <div className="p-6 text-zinc-500 dark:text-white">Miembro no encontrado</div>;
 
   return (
     <div className="page-stack-tight">
@@ -395,7 +462,7 @@ export default function MemberRoutine() {
         }
         subtitle="Planes personalizados"
         action={
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5">
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <Button
               variant="ghost"
@@ -459,27 +526,29 @@ export default function MemberRoutine() {
       <Card
         padding="sm"
         rounded="xl"
-        className="sticky top-2 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm"
+        className="sticky top-2 z-10 flex flex-col justify-between gap-2 bg-white/95 backdrop-blur-sm sm:flex-row sm:items-center dark:bg-zinc-900/95"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={member.full_name} size="sm" className="shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white truncate">{member.full_name}</p>
-            <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+              {member.full_name}
+            </p>
+            <p className="mt-0.5 truncate text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">
               {subscription
                 ? `${subscription.membership_name} · ${subscription.days_remaining} días`
                 : 'Sin membresía activa'}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5 shrink-0">
+        <div className="flex shrink-0 flex-wrap gap-1.5">
           {member.goal && (
-            <Badge variant="warning" className="text-[9px] px-1.5 py-0 max-w-[8rem] truncate">
+            <Badge variant="warning" className="max-w-[8rem] truncate px-1.5 py-0 text-[9px]">
               {member.goal}
             </Badge>
           )}
           {routines.length > 0 && (
-            <Badge variant="default" className="text-[9px] px-1.5 py-0">
+            <Badge variant="default" className="px-1.5 py-0 text-[9px]">
               {routines.length} rutina{routines.length !== 1 ? 's' : ''}
             </Badge>
           )}
@@ -500,47 +569,62 @@ export default function MemberRoutine() {
       />
 
       {coachingTab === 'perfil' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3">
-        <Card padding="sm" rounded="xl">
-          <h3 className="section-title mb-2.5">Perfil</h3>
-          <div className="space-y-1.5 text-xs sm:text-sm">
-            {member.height != null && (
-              <p><span className="text-zinc-500 dark:text-zinc-400">Altura:</span> <span className="font-bold">{member.height} cm</span></p>
-            )}
-            {member.initial_weight != null && (
-              <p><span className="text-zinc-500 dark:text-zinc-400">Peso inicial:</span> <span className="font-bold">{member.initial_weight} kg</span></p>
-            )}
-            {member.goal && (
-              <p><span className="text-zinc-500 dark:text-zinc-400">Objetivo:</span> <span className="font-bold">{member.goal}</span></p>
-            )}
-            {!member.height && !member.initial_weight && !member.goal && (
-              <p className="text-zinc-400 dark:text-zinc-300 text-xs">Sin datos de perfil registrados.</p>
-            )}
-          </div>
-        </Card>
-
-        <Card padding="sm" rounded="xl">
-          <h3 className="section-title mb-2.5">Membresía</h3>
-          {subscription ? (
-            <div>
-              <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-500">{subscription.membership_name}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{subscription.days_remaining} días restantes</p>
-              <p className="text-xs text-zinc-400 dark:text-zinc-300 mt-1">
-                Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
-              </p>
+        <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
+          <Card padding="sm" rounded="xl">
+            <h3 className="section-title mb-2.5">Perfil</h3>
+            <div className="space-y-1.5 text-xs sm:text-sm">
+              {member.height != null && (
+                <p>
+                  <span className="text-zinc-500 dark:text-zinc-400">Altura:</span>{' '}
+                  <span className="font-bold">{member.height} cm</span>
+                </p>
+              )}
+              {member.initial_weight != null && (
+                <p>
+                  <span className="text-zinc-500 dark:text-zinc-400">Peso inicial:</span>{' '}
+                  <span className="font-bold">{member.initial_weight} kg</span>
+                </p>
+              )}
+              {member.goal && (
+                <p>
+                  <span className="text-zinc-500 dark:text-zinc-400">Objetivo:</span>{' '}
+                  <span className="font-bold">{member.goal}</span>
+                </p>
+              )}
+              {!member.height && !member.initial_weight && !member.goal && (
+                <p className="text-xs text-zinc-400 dark:text-zinc-300">
+                  Sin datos de perfil registrados.
+                </p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-zinc-400 dark:text-zinc-300">Sin membresía activa</p>
-          )}
-        </Card>
-      </div>
+          </Card>
+
+          <Card padding="sm" rounded="xl">
+            <h3 className="section-title mb-2.5">Membresía</h3>
+            {subscription ? (
+              <div>
+                <p className="text-base font-bold text-emerald-600 sm:text-lg dark:text-emerald-500">
+                  {subscription.membership_name}
+                </p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  {subscription.days_remaining} días restantes
+                </p>
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">
+                  Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-400 dark:text-zinc-300">Sin membresía activa</p>
+            )}
+          </Card>
+        </div>
       )}
 
       {coachingTab === 'mediciones' && (
         <Card padding="sm" rounded="xl">
-          <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
             <h3 className="section-title flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-brand" />
+              <Scale className="text-brand h-3.5 w-3.5" />
               Mediciones
             </h3>
             {(user?.role === 'admin' || user?.role === 'trainer') && (
@@ -548,7 +632,9 @@ export default function MemberRoutine() {
                 type="button"
                 size="sm"
                 className="h-8 px-2.5 text-xs"
-                onClick={() => { setIsAddingMeasurement(true); }}
+                onClick={() => {
+                  setIsAddingMeasurement(true);
+                }}
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Registrar</span>
@@ -558,7 +644,10 @@ export default function MemberRoutine() {
           {measurements.length > 0 ? (
             <div className="space-y-1">
               {measurements.map((m) => (
-                <div key={m.id} className="flex justify-between gap-2 text-xs sm:text-sm border-b border-zinc-100 dark:border-zinc-800 py-2 last:border-0">
+                <div
+                  key={m.id}
+                  className="flex justify-between gap-2 border-b border-zinc-100 py-2 text-xs last:border-0 sm:text-sm dark:border-zinc-800"
+                >
                   <span className="font-bold text-zinc-600 dark:text-zinc-300">
                     {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                   </span>
@@ -570,14 +659,20 @@ export default function MemberRoutine() {
               ))}
             </div>
           ) : (
-            <EmptyState icon={Scale} title="Sin mediciones" description="Registra la primera medición del miembro." />
+            <EmptyState
+              icon={Scale}
+              title="Sin mediciones"
+              description="Registra la primera medición del miembro."
+            />
           )}
         </Card>
       )}
 
       <Modal
         open={isAddingMeasurement}
-        onClose={() => { setIsAddingMeasurement(false); }}
+        onClose={() => {
+          setIsAddingMeasurement(false);
+        }}
         title="Nueva medición"
         maxWidth="xl"
         scrollable
@@ -588,7 +683,9 @@ export default function MemberRoutine() {
             <Input
               type="date"
               value={measurementForm.date}
-              onChange={(e) => { setMeasurementForm({ ...measurementForm, date: e.target.value }); }}
+              onChange={(e) => {
+                setMeasurementForm({ ...measurementForm, date: e.target.value });
+              }}
               required
             />
           </div>
@@ -599,7 +696,9 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.weight}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, weight: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, weight: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -608,7 +707,9 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.body_fat_percentage}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -617,7 +718,9 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.waist}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, waist: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, waist: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -626,7 +729,9 @@ export default function MemberRoutine() {
                 type="number"
                 step="0.1"
                 value={measurementForm.arm}
-                onChange={(e) => { setMeasurementForm({ ...measurementForm, arm: e.target.value }); }}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, arm: e.target.value });
+                }}
               />
             </div>
           </div>
@@ -650,7 +755,9 @@ export default function MemberRoutine() {
             <Input
               type="text"
               value={routineForm.name}
-              onChange={(e) => { setRoutineForm({ ...routineForm, name: e.target.value }); }}
+              onChange={(e) => {
+                setRoutineForm({ ...routineForm, name: e.target.value });
+              }}
               placeholder="Ej: Piernas A"
             />
           </div>
@@ -658,7 +765,9 @@ export default function MemberRoutine() {
             <Label>Dificultad</Label>
             <DifficultySelect
               value={routineForm.difficulty}
-              onChange={(difficulty) => { setRoutineForm({ ...routineForm, difficulty }); }}
+              onChange={(difficulty) => {
+                setRoutineForm({ ...routineForm, difficulty });
+              }}
             />
           </div>
           <Button
@@ -673,7 +782,9 @@ export default function MemberRoutine() {
 
       <Modal
         open={isAddingExercise}
-        onClose={() => { setIsAddingExercise(false); }}
+        onClose={() => {
+          setIsAddingExercise(false);
+        }}
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
@@ -682,7 +793,9 @@ export default function MemberRoutine() {
           <ExercisePicker
             exercises={availableExercises}
             value={newExercise.exercise_id}
-            onChange={(exerciseId) => { setNewExercise({ ...newExercise, exercise_id: exerciseId }); }}
+            onChange={(exerciseId) => {
+              setNewExercise({ ...newExercise, exercise_id: exerciseId });
+            }}
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -690,7 +803,12 @@ export default function MemberRoutine() {
               <Input
                 type="number"
                 value={newExercise.sets}
-                onChange={(e) => { setNewExercise({ ...newExercise, sets: parseInt(e.target.value) }); }}
+                onChange={(e) => {
+                  setNewExercise({
+                    ...newExercise,
+                    sets: parsePositiveInt(e.target.value, newExercise.sets),
+                  });
+                }}
               />
             </div>
             <div>
@@ -698,7 +816,12 @@ export default function MemberRoutine() {
               <Input
                 type="number"
                 value={newExercise.reps}
-                onChange={(e) => { setNewExercise({ ...newExercise, reps: parseInt(e.target.value) }); }}
+                onChange={(e) => {
+                  setNewExercise({
+                    ...newExercise,
+                    reps: parsePositiveInt(e.target.value, newExercise.reps),
+                  });
+                }}
               />
             </div>
           </div>
@@ -708,7 +831,12 @@ export default function MemberRoutine() {
               <Input
                 type="number"
                 value={newExercise.rest_seconds}
-                onChange={(e) => { setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) }); }}
+                onChange={(e) => {
+                  setNewExercise({
+                    ...newExercise,
+                    rest_seconds: parseNonNegativeInt(e.target.value, newExercise.rest_seconds),
+                  });
+                }}
               />
             </div>
             <div>
@@ -717,11 +845,18 @@ export default function MemberRoutine() {
                 type="text"
                 placeholder="Ej: Pesado"
                 value={newExercise.weight_suggestion}
-                onChange={(e) => { setNewExercise({ ...newExercise, weight_suggestion: e.target.value }); }}
+                onChange={(e) => {
+                  setNewExercise({ ...newExercise, weight_suggestion: e.target.value });
+                }}
               />
             </div>
           </div>
-          <Button className="w-full" onClick={handleAddExercise} disabled={!newExercise.exercise_id}>
+          {addExerciseError && <p className="text-sm text-red-500">{addExerciseError}</p>}
+          <Button
+            className="w-full"
+            onClick={handleAddExercise}
+            disabled={!newExercise.exercise_id}
+          >
             Añadir Ejercicio
           </Button>
         </div>
@@ -729,7 +864,9 @@ export default function MemberRoutine() {
 
       <Modal
         open={isEditingExercise && !!editingExercise}
-        onClose={() => { setIsEditingExercise(false); }}
+        onClose={() => {
+          setIsEditingExercise(false);
+        }}
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
         maxWidth="xl"
         scrollable
@@ -742,7 +879,12 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.sets}
-                  onChange={(e) => { setEditingExercise({ ...editingExercise, sets: parseInt(e.target.value) }); }}
+                  onChange={(e) => {
+                    setEditingExercise({
+                      ...editingExercise,
+                      sets: parsePositiveInt(e.target.value, editingExercise.sets),
+                    });
+                  }}
                 />
               </div>
               <div>
@@ -750,7 +892,12 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.reps}
-                  onChange={(e) => { setEditingExercise({ ...editingExercise, reps: parseInt(e.target.value) }); }}
+                  onChange={(e) => {
+                    setEditingExercise({
+                      ...editingExercise,
+                      reps: parsePositiveInt(e.target.value, editingExercise.reps),
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -760,7 +907,15 @@ export default function MemberRoutine() {
                 <Input
                   type="number"
                   value={editingExercise.rest_seconds}
-                  onChange={(e) => { setEditingExercise({ ...editingExercise, rest_seconds: parseInt(e.target.value) }); }}
+                  onChange={(e) => {
+                    setEditingExercise({
+                      ...editingExercise,
+                      rest_seconds: parseNonNegativeInt(
+                        e.target.value,
+                        editingExercise.rest_seconds
+                      ),
+                    });
+                  }}
                 />
               </div>
               <div>
@@ -768,10 +923,13 @@ export default function MemberRoutine() {
                 <Input
                   type="text"
                   value={editingExercise.weight_suggestion}
-                  onChange={(e) => { setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value }); }}
+                  onChange={(e) => {
+                    setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value });
+                  }}
                 />
               </div>
             </div>
+            {editExerciseError && <p className="text-sm text-red-500">{editExerciseError}</p>}
             <Button className="w-full" onClick={handleUpdateExercise}>
               Guardar Cambios
             </Button>
@@ -781,17 +939,28 @@ export default function MemberRoutine() {
 
       <Modal
         open={isAssigning}
-        onClose={() => { setIsAssigning(false); }}
+        onClose={() => {
+          setIsAssigning(false);
+        }}
         title="Asignar Rutina"
       >
         <div className="space-y-4">
           <div>
             <Label>Seleccionar Rutina</Label>
-            <Select value={selectedRoutineId} onChange={(e) => { setSelectedRoutineId(e.target.value); }}>
+            <Select
+              value={selectedRoutineId}
+              onChange={(e) => {
+                setSelectedRoutineId(e.target.value);
+              }}
+            >
               <option value="">Selecciona una rutina...</option>
-              {availableRoutines.filter((ar) => !routines.some((r) => r.id === ar.id)).map((r) => (
-                <option key={r.id} value={r.id}>{r.name} ({formatDifficulty(r.difficulty)})</option>
-              ))}
+              {availableRoutines
+                .filter((ar) => !routines.some((r) => r.id === ar.id))
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({formatDifficulty(r.difficulty)})
+                  </option>
+                ))}
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -800,7 +969,9 @@ export default function MemberRoutine() {
               <Input
                 type="date"
                 value={assignDates.start_date}
-                onChange={(e) => { setAssignDates({ ...assignDates, start_date: e.target.value }); }}
+                onChange={(e) => {
+                  setAssignDates({ ...assignDates, start_date: e.target.value });
+                }}
               />
             </div>
             <div>
@@ -808,7 +979,9 @@ export default function MemberRoutine() {
               <Input
                 type="date"
                 value={assignDates.end_date}
-                onChange={(e) => { setAssignDates({ ...assignDates, end_date: e.target.value }); }}
+                onChange={(e) => {
+                  setAssignDates({ ...assignDates, end_date: e.target.value });
+                }}
               />
             </div>
           </div>
@@ -820,14 +993,22 @@ export default function MemberRoutine() {
 
       <Modal
         open={!!unassignTarget}
-        onClose={() => { setUnassignTarget(null); }}
+        onClose={() => {
+          setUnassignTarget(null);
+        }}
         title="Quitar rutina"
       >
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           ¿Quitar <strong>{unassignTarget?.name}</strong> de {member.full_name}?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => { setUnassignTarget(null); }}>
+          <Button
+            variant="ghost"
+            className="flex-1"
+            onClick={() => {
+              setUnassignTarget(null);
+            }}
+          >
             Cancelar
           </Button>
           <Button
@@ -842,14 +1023,22 @@ export default function MemberRoutine() {
 
       <Modal
         open={!!deleteExerciseTarget}
-        onClose={() => { setDeleteExerciseTarget(null); }}
+        onClose={() => {
+          setDeleteExerciseTarget(null);
+        }}
         title="Quitar ejercicio"
       >
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta rutina?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => { setDeleteExerciseTarget(null); }}>
+          <Button
+            variant="ghost"
+            className="flex-1"
+            onClick={() => {
+              setDeleteExerciseTarget(null);
+            }}
+          >
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={confirmDeleteExercise}>
@@ -859,183 +1048,224 @@ export default function MemberRoutine() {
       </Modal>
 
       {coachingTab === 'rutinas' && (
-      <div className="space-y-2.5">
-        {routines.length === 0 ? (
-          <EmptyState
-            icon={Dumbbell}
-            title="Sin rutinas asignadas"
-            description={`${member.full_name} aún no tiene planes de entrenamiento.`}
-            action={
-              <div className="flex flex-wrap gap-2 justify-center">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setIsCreating(true);
-                    setRoutineForm({ name: '', difficulty: 'Beginner' });
-                  }}
-                >
-                  Crear rutina
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    setIsAssigning(true);
-                    apiFetchAvailableRoutines();
-                  }}
-                >
-                  Asignar existente
-                </Button>
-              </div>
-            }
-          />
-        ) : (
-          routines.map((routine) => {
-            const isExpanded = expandedRoutineId === routine.id;
-            const formatDate = (value: string | null | undefined) => {
-              if (!value) return '—';
-              try {
-                return format(new Date(value), 'dd/MM/yy', { locale: es });
-              } catch {
-                return '—';
+        <div className="space-y-2.5">
+          {routines.length === 0 ? (
+            <EmptyState
+              icon={Dumbbell}
+              title="Sin rutinas asignadas"
+              description={`${member.full_name} aún no tiene planes de entrenamiento.`}
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setIsCreating(true);
+                      setRoutineForm({ name: '', difficulty: 'Beginner' });
+                    }}
+                  >
+                    Crear rutina
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setIsAssigning(true);
+                      apiFetchAvailableRoutines();
+                    }}
+                  >
+                    Asignar existente
+                  </Button>
+                </div>
               }
-            };
+            />
+          ) : (
+            routines.map((routine) => {
+              const isExpanded = expandedRoutineId === routine.id;
+              const formatDate = (value: string | null | undefined) => {
+                if (!value) return '—';
+                try {
+                  return format(new Date(value), 'dd/MM/yy', { locale: es });
+                } catch {
+                  return '—';
+                }
+              };
 
-            return (
-            <Card key={routine.id} padding="sm" rounded="xl" className="overflow-hidden">
-              <div className="flex items-start gap-2.5">
-                <div className="h-9 w-9 shrink-0 bg-brand/10 rounded-lg flex items-center justify-center">
-                  <Dumbbell className="h-4 w-4 text-brand dark:text-brand" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white leading-tight truncate">
-                      {routine.name}
-                    </h3>
-                    <Badge variant="default" className="shrink-0 text-[9px] px-1.5 py-0">
-                      {formatDifficulty(routine.difficulty)}
-                    </Badge>
-                  </div>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1 tabular-nums">
-                    <Calendar className="h-3 w-3 shrink-0" />
-                    {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => toggleExpandRoutine(routine.id)}
-                    className={`h-8 w-8 inline-flex items-center justify-center rounded-lg transition-colors ${
-                      isExpanded
-                        ? 'text-brand bg-brand/10'
-                        : 'text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10'
-                    }`}
-                    aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
-                    title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
-                  >
-                    <Dumbbell className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { openEditModal(routine); }}
-                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                    aria-label={`Editar ${routine.name}`}
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setUnassignTarget(routine); }}
-                    className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                    aria-label={`Quitar ${routine.name}`}
-                  >
-                    <UserMinus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Ejercicios</h4>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-8 px-2.5 text-xs"
-                      onClick={() => {
-                        setIsAddingExercise(true);
-                        apiFetchAvailableExercises();
-                      }}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Añadir</span>
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {routine.exercises?.map((exercise) => (
-                      <div key={exercise.routine_exercise_id} className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-700 rounded-lg px-2.5 py-2 flex justify-between items-start gap-2">
-                        <div className="min-w-0">
-                          <h5 className="font-semibold text-xs text-zinc-900 dark:text-white truncate">{exercise.name}</h5>
-                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 capitalize">{exercise.muscle_group}</p>
-                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                            <label className="inline-flex items-center gap-1">
-                              Sets
-                              <input
-                                type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
-                                defaultValue={exercise.sets}
-                                onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))}
-                                onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                              />
-                            </label>
-                            <label className="inline-flex items-center gap-1">
-                              Reps
-                              <input
-                                type="number"
-                                className="w-9 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded px-1 py-0.5 text-center font-semibold text-zinc-900 dark:text-white focus:ring-1 focus:ring-brand"
-                                defaultValue={exercise.reps}
-                                onBlur={(e) => handleInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))}
-                                onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                              />
-                            </label>
-                            <span>Rst <span className="font-semibold text-zinc-800 dark:text-zinc-200">{exercise.rest_seconds}s</span></span>
-                          </div>
-                        </div>
-                        <div className="flex gap-0.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingExercise(exercise);
-                              setIsEditingExercise(true);
-                            }}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                            aria-label={`Editar ${exercise.name}`}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setDeleteExerciseTarget({ routineId: routine.id, exercise }); }}
-                            className="h-8 w-8 inline-flex items-center justify-center text-zinc-400 dark:text-zinc-300 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                            aria-label={`Eliminar ${exercise.name}`}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+              return (
+                <Card key={routine.id} padding="sm" rounded="xl" className="overflow-hidden">
+                  <div className="flex items-start gap-2.5">
+                    <div className="bg-brand/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                      <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+                          {routine.name}
+                        </h3>
+                        <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                          {formatDifficulty(routine.difficulty)}
+                        </Badge>
                       </div>
-                    ))}
-                    {(!routine.exercises || routine.exercises.length === 0) && (
-                      <p className="text-zinc-400 dark:text-zinc-300 text-[11px] italic col-span-full py-3 text-center">Sin ejercicios en esta rutina.</p>
-                    )}
+                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandRoutine(routine.id)}
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                          isExpanded
+                            ? 'text-brand bg-brand/10'
+                            : 'hover:text-brand hover:bg-brand/10 text-zinc-400 dark:text-zinc-300'
+                        }`}
+                        aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
+                        title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
+                      >
+                        <Dumbbell className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          openEditModal(routine);
+                        }}
+                        className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                        aria-label={`Editar ${routine.name}`}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUnassignTarget(routine);
+                        }}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                        aria-label={`Quitar ${routine.name}`}
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Card>
-            );
-          })
-        )}
-      </div>
+
+                  {isExpanded && (
+                    <div className="mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          Ejercicios
+                        </h4>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8 px-2.5 text-xs"
+                          onClick={() => {
+                            setAddExerciseError(null);
+                            setIsAddingExercise(true);
+                            apiFetchAvailableExercises();
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Añadir</span>
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {routine.exercises?.map((exercise) => (
+                          <div
+                            key={exercise.routine_exercise_id}
+                            className="flex items-start justify-between gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-800/50"
+                          >
+                            <div className="min-w-0">
+                              <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                                {exercise.name}
+                              </h5>
+                              <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
+                                {exercise.muscle_group}
+                              </p>
+                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                                <label className="inline-flex items-center gap-1">
+                                  Sets
+                                  <input
+                                    type="number"
+                                    className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                    defaultValue={exercise.sets}
+                                    onBlur={(e) =>
+                                      handleInlineUpdate(
+                                        routine.id,
+                                        exercise,
+                                        'sets',
+                                        parseInt(e.target.value)
+                                      )
+                                    }
+                                    onKeyDown={(e) =>
+                                      e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                    }
+                                  />
+                                </label>
+                                <label className="inline-flex items-center gap-1">
+                                  Reps
+                                  <input
+                                    type="number"
+                                    className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                    defaultValue={exercise.reps}
+                                    onBlur={(e) =>
+                                      handleInlineUpdate(
+                                        routine.id,
+                                        exercise,
+                                        'reps',
+                                        parseInt(e.target.value)
+                                      )
+                                    }
+                                    onKeyDown={(e) =>
+                                      e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                    }
+                                  />
+                                </label>
+                                <span>
+                                  Rst{' '}
+                                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                    {exercise.rest_seconds}s
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingExercise(exercise);
+                                  setIsEditingExercise(true);
+                                }}
+                                className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                                aria-label={`Editar ${exercise.name}`}
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeleteExerciseTarget({ routineId: routine.id, exercise });
+                                }}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                                aria-label={`Eliminar ${exercise.name}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {(!routine.exercises || routine.exercises.length === 0) && (
+                          <p className="col-span-full py-3 text-center text-[11px] text-zinc-400 italic dark:text-zinc-300">
+                            Sin ejercicios en esta rutina.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })
+          )}
+        </div>
       )}
     </div>
   );

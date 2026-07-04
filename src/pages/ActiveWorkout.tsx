@@ -30,6 +30,8 @@ import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { useWorkoutPageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
+import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
+import { buildRoutineExercisePayload } from '../lib/routineExercisePayload';
 
 interface Exercise {
   id: number;
@@ -115,6 +117,7 @@ export default function ActiveWorkout() {
     rest_seconds: 60,
     weight_suggestion: '',
   });
+  const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -267,15 +270,13 @@ export default function ActiveWorkout() {
 
   const handleAddExercise = async () => {
     if (!newExercise.exercise_id) return;
+    setAddExerciseError(null);
 
     try {
       const res = await apiFetch(`/api/routines/${id}/exercises`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newExercise,
-          exercise_id: parseInt(newExercise.exercise_id),
-        }),
+        body: JSON.stringify(buildRoutineExercisePayload(newExercise)),
       });
 
       await parseJsonResponse(res);
@@ -289,6 +290,8 @@ export default function ActiveWorkout() {
         weight_suggestion: '',
       });
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
+      setAddExerciseError(message);
       clientLogger.error('Failed to add exercise to routine', err);
     }
   };
@@ -695,6 +698,7 @@ export default function ActiveWorkout() {
         open={isAddingExercise}
         onClose={() => {
           setIsAddingExercise(false);
+          setAddExerciseError(null);
         }}
         title="Añadir Ejercicio"
         maxWidth="xl"
@@ -715,7 +719,10 @@ export default function ActiveWorkout() {
                 type="number"
                 value={newExercise.sets}
                 onChange={(e) => {
-                  setNewExercise({ ...newExercise, sets: parseInt(e.target.value) });
+                  setNewExercise({
+                    ...newExercise,
+                    sets: parsePositiveInt(e.target.value, newExercise.sets),
+                  });
                 }}
               />
             </div>
@@ -725,7 +732,10 @@ export default function ActiveWorkout() {
                 type="number"
                 value={newExercise.reps}
                 onChange={(e) => {
-                  setNewExercise({ ...newExercise, reps: parseInt(e.target.value) });
+                  setNewExercise({
+                    ...newExercise,
+                    reps: parsePositiveInt(e.target.value, newExercise.reps),
+                  });
                 }}
               />
             </div>
@@ -737,7 +747,10 @@ export default function ActiveWorkout() {
                 type="number"
                 value={newExercise.rest_seconds}
                 onChange={(e) => {
-                  setNewExercise({ ...newExercise, rest_seconds: parseInt(e.target.value) });
+                  setNewExercise({
+                    ...newExercise,
+                    rest_seconds: parseNonNegativeInt(e.target.value, newExercise.rest_seconds),
+                  });
                 }}
               />
             </div>
@@ -753,6 +766,7 @@ export default function ActiveWorkout() {
               />
             </div>
           </div>
+          {addExerciseError && <p className="text-sm text-red-500">{addExerciseError}</p>}
           <Button
             className="w-full"
             onClick={handleAddExercise}
