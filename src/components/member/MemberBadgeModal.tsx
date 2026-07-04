@@ -1,6 +1,7 @@
-import { Printer, Shield } from 'lucide-react';
+import { Printer } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { Modal, Button, Avatar } from '../ui';
-import { BRAND } from '../../config/brand';
+import Logo from '../Logo';
 import {
   SHIFT_LABELS,
   formatMembershipId,
@@ -9,6 +10,9 @@ import {
 } from '../../lib/trainingShift';
 import { cn } from '../../lib/utils';
 import { resolveAvatarUrl } from '../../lib/api';
+import { dateLocale as es } from '../../lib/dateLocale';
+import { useTheme } from '../../context/ThemeContext';
+import { PALETTES } from '../../config/themes';
 
 export interface MemberBadgeData {
   id: number;
@@ -19,6 +23,7 @@ export interface MemberBadgeData {
   membership_name?: string | null;
   training_shift?: TrainingShift | null;
   role?: string;
+  created_at?: string | null;
 }
 
 interface MemberBadgeModalProps {
@@ -40,137 +45,137 @@ function getRoleLabel(role?: string): string {
   }
 }
 
-function getBadgeStyle(role?: string) {
+function getStatusLabel(role?: string): string {
   switch (role) {
     case 'admin':
-      return {
-        border: 'border-purple-500/40',
-        cardBg: 'bg-gradient-to-b from-zinc-900 via-purple-950/20 to-slate-950',
-        labelBg: 'bg-purple-600 text-white',
-        label: 'ADMINISTRACIÓN',
-      };
+      return 'ADMINISTRACIÓN';
     case 'trainer':
-      return {
-        border: 'border-blue-500/40',
-        cardBg: 'bg-gradient-to-b from-zinc-900 via-blue-950/20 to-slate-950',
-        labelBg: 'bg-blue-600 text-white',
-        label: 'STAFF — ENTRENADOR',
-      };
+      return 'STAFF — ENTRENADOR';
+    case 'receptionist':
+      return 'RECEPCIÓN';
     default:
-      return {
-        border: 'border-emerald-500/40',
-        cardBg: 'bg-gradient-to-b from-zinc-900 via-emerald-950/20 to-slate-950',
-        labelBg: 'bg-emerald-600 text-white',
-        label: 'MIEMBRO ACTIVO',
-      };
+      return 'MIEMBRO ACTIVO';
   }
 }
 
+function formatMemberSince(createdAt?: string | null): string {
+  if (!createdAt) return '—';
+  try {
+    return format(parseISO(createdAt), 'MMM yyyy', { locale: es });
+  } catch {
+    return '—';
+  }
+}
+
+function BadgeDetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <span className="block text-[9px] font-semibold tracking-wide text-zinc-500 uppercase print:text-zinc-500">
+        {label}
+      </span>
+      <span className="mt-0.5 block truncate text-xs font-medium text-zinc-900 dark:text-zinc-100 print:text-zinc-900">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function MemberBadgeModal({ open, onClose, member }: MemberBadgeModalProps) {
+  const { theme, palette } = useTheme();
+
   if (!member) return null;
 
-  const style = getBadgeStyle(member.role);
   const qrUrl = buildBadgeQrUrl(member.cedula);
-  const memberSince = new Date().getFullYear().toString();
+  const memberSince = formatMemberSince(member.created_at);
+  const paletteLabel = PALETTES[palette].label;
 
   const handlePrint = () => {
     window.print();
   };
 
+  const detailRows: { label: string; value: string }[] = [
+    { label: 'Grupo', value: getRoleLabel(member.role) },
+    { label: 'ID Socio', value: formatMembershipId(member.id) },
+    { label: 'Cédula', value: member.cedula },
+    { label: 'Plan', value: member.membership_name || 'Sin plan' },
+  ];
+
+  if (member.training_shift) {
+    detailRows.push({ label: 'Turno', value: SHIFT_LABELS[member.training_shift] });
+  }
+
+  detailRows.push({ label: 'Miembro desde', value: memberSince });
+
   return (
     <Modal open={open} onClose={onClose} title="Carné de membresía" maxWidth="sm">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col gap-3">
         <div
           id="printable-badge"
+          data-appearance={theme}
+          data-palette={palette}
           className={cn(
-            'relative w-full max-w-[20rem] rounded-[28px] border p-6 flex flex-col items-center text-center shadow-2xl overflow-hidden print:shadow-none print:border-zinc-300',
-            style.border,
-            style.cardBg
+            'relative w-full overflow-hidden rounded-2xl border p-4 shadow-lg',
+            'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900',
+            'print:border-zinc-300 print:bg-white print:shadow-none'
           )}
         >
-          <div className="w-full flex items-center justify-between border-b border-white/10 pb-4 mb-5 print:border-zinc-200">
-            <div className="flex items-center gap-2 min-w-0">
-              <Shield className="w-5 h-5 text-white print:text-black shrink-0" />
-              <span className="font-black tracking-tight text-sm uppercase text-white print:text-black truncate">
-                {BRAND.name}
-              </span>
+          <div
+            className="from-brand/12 pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent to-transparent print:hidden"
+            aria-hidden
+          />
+          <div
+            className="bg-brand pointer-events-none absolute inset-y-0 left-0 w-1 print:opacity-90"
+            aria-hidden
+          />
+
+          <div className="relative mb-3 flex items-center justify-between gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-800 print:border-zinc-200">
+            <div className="flex min-w-0 items-center gap-2">
+              <Logo className="h-7 w-7" mode="auto" />
+              <div className="min-w-0 text-left">
+                <span className="block truncate text-sm font-semibold tracking-tight text-zinc-900 dark:text-white print:text-zinc-900">
+                  GymApure
+                </span>
+                <span className="block text-[9px] font-medium text-zinc-500 dark:text-zinc-400 print:hidden">
+                  Tema {paletteLabel}
+                </span>
+              </div>
             </div>
-            <span className={cn('text-[9px] font-bold uppercase px-2 py-0.5 rounded-full', style.labelBg)}>
-              {style.label}
+            <span className="border-brand/35 bg-brand/10 text-brand shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-semibold tracking-wide uppercase print:border-zinc-300 print:bg-zinc-100 print:text-zinc-800">
+              {getStatusLabel(member.role)}
             </span>
           </div>
 
-          <Avatar
-            src={resolveAvatarUrl(member.profile_image)}
-            name={member.full_name}
-            size="lg"
-            className="h-24 w-24 ring-4 ring-zinc-950 relative z-10 print:ring-zinc-100 rounded-2xl"
-          />
+          <div className="relative flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+              <Avatar
+                src={resolveAvatarUrl(member.profile_image)}
+                name={member.full_name}
+                size="lg"
+                className="ring-brand/35 h-14 w-14 rounded-full ring-2 print:ring-zinc-200"
+              />
+              <h2 className="mt-2 line-clamp-2 text-base font-semibold tracking-tight text-zinc-900 dark:text-white print:text-zinc-900">
+                {member.full_name}
+              </h2>
+              {member.email && (
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400 print:hidden">
+                  {member.email}
+                </p>
+              )}
+            </div>
 
-          <div className="mt-4 space-y-1">
-            <h2 className="text-xl font-black tracking-tight text-white print:text-black line-clamp-2">
-              {member.full_name}
-            </h2>
-            {member.email && (
-              <p className="text-xs text-white/50 print:text-zinc-500 font-medium line-clamp-1">
-                {member.email}
-              </p>
-            )}
+            <div className="shrink-0 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm dark:border-zinc-700 print:border-zinc-200">
+              <img
+                src={qrUrl}
+                alt="Código QR de acceso"
+                className="h-[5.5rem] w-[5.5rem] rounded-md"
+              />
+            </div>
           </div>
 
-          <div className="relative p-3 bg-white/5 border border-white/10 rounded-2xl my-5 shadow-inner print:bg-zinc-50 print:border-zinc-200">
-            <img src={qrUrl} alt="Código QR de acceso" className="w-36 h-36 mx-auto rounded-lg" />
-          </div>
-
-          <div className="w-full grid grid-cols-2 gap-3 text-left border-t border-white/10 pt-4 print:border-zinc-200">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                Grupo
-              </span>
-              <span className="text-xs text-white print:text-black font-extrabold block truncate">
-                {getRoleLabel(member.role)}
-              </span>
-            </div>
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                ID Socio
-              </span>
-              <span className="text-xs text-white print:text-black font-mono font-bold block">
-                {formatMembershipId(member.id)}
-              </span>
-            </div>
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                Cédula
-              </span>
-              <span className="text-xs text-white print:text-black font-mono font-bold block truncate">
-                {member.cedula}
-              </span>
-            </div>
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                Plan
-              </span>
-              <span className="text-xs text-white print:text-black font-extrabold block truncate">
-                {member.membership_name || 'Sin plan'}
-              </span>
-            </div>
-            {member.training_shift && (
-              <div className="col-span-2">
-                <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                  Turno
-                </span>
-                <span className="text-xs text-white print:text-black font-extrabold block">
-                  {SHIFT_LABELS[member.training_shift]}
-                </span>
-              </div>
-            )}
-            <div className="col-span-2">
-              <span className="text-[9px] uppercase tracking-wider text-white/30 print:text-zinc-400 font-bold block">
-                Miembro desde
-              </span>
-              <span className="text-xs text-white print:text-black font-bold block">{memberSince}</span>
-            </div>
+          <div className="relative mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-zinc-200 pt-3 dark:border-zinc-800 print:border-zinc-200">
+            {detailRows.map((row) => (
+              <BadgeDetailRow key={row.label} label={row.label} value={row.value} />
+            ))}
           </div>
         </div>
 

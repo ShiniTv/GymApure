@@ -204,7 +204,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
       ),
       query(
         `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
-                u.training_shift,
+                u.training_shift, u.created_at,
                 lw.last_workout,
                 sub.membership_name,
                 sub.end_date AS subscription_end,
@@ -235,7 +235,7 @@ router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (re
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
-              initial_weight, height, goal, profile_image, dob, training_shift
+              initial_weight, height, goal, profile_image, dob, training_shift, created_at
        FROM users WHERE id = $1`,
       [req.params.id]
     );

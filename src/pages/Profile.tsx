@@ -639,6 +639,20 @@ export default function Profile() {
             <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
           </div>
 
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              className="h-9 min-h-9 sm:h-11 sm:min-h-11"
+              onClick={() => {
+                setIsAddingMeasurement(true);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Nueva medición
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
             <Card padding="sm" rounded="xl" className="lg:col-span-2">
               <div className="mb-3 flex items-center justify-between gap-2">
@@ -691,40 +705,17 @@ export default function Profile() {
                   icon={Scale}
                   title="Sin mediciones de peso"
                   description="Registra tu primera medición para ver tu evolución."
-                  action={
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setIsAddingMeasurement(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Nueva medición
-                    </Button>
-                  }
                 />
               )}
             </Card>
           </div>
 
           <Card padding="sm" rounded="xl">
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-3">
               <h2 className="section-title flex min-w-0 items-center gap-1.5">
                 <Scale className="text-brand h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">Historial de mediciones</span>
               </h2>
-              <Button
-                type="button"
-                size="sm"
-                className="h-9 min-h-9 w-9 shrink-0 p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:px-3"
-                onClick={() => {
-                  setIsAddingMeasurement(true);
-                }}
-                aria-label="Nueva medición"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nueva medición</span>
-              </Button>
             </div>
 
             {measurements.length > 0 ? (
@@ -773,18 +764,7 @@ export default function Profile() {
               <EmptyState
                 icon={Scale}
                 title="Sin mediciones registradas"
-                description="Añade tu primera medición para hacer seguimiento de tu progreso."
-                action={
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setIsAddingMeasurement(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nueva medición
-                  </Button>
-                }
+                description="Tu historial aparecerá aquí después del primer registro."
               />
             )}
           </Card>
@@ -1002,6 +982,7 @@ export default function Profile() {
                 membership_name: subscription?.membership_name ?? null,
                 training_shift: profile.training_shift ?? null,
                 role: user.role,
+                created_at: profile.created_at ?? null,
               }
             : null
         }

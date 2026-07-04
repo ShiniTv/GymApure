@@ -296,6 +296,7 @@ export default function Members() {
       membership_name: member.membership_name,
       training_shift: member.training_shift,
       role: member.role,
+      created_at: member.created_at,
     });
   }, []);
 
