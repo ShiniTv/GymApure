@@ -6,19 +6,19 @@ export interface TrainerStatsResponse {
   activeNow: number;
   todayWorkouts: number;
   routinesCreated: number;
-  recentActivities: Array<{
+  recentActivities: {
     user_id: number;
     full_name: string;
     routine_name: string;
     start_time: string;
-  }>;
+  }[];
   membersWithoutRoutines?: number;
-  expiringMembers?: Array<{
+  expiringMembers?: {
     id: number;
     full_name: string;
     days_remaining: number;
     membership_name: string;
-  }>;
+  }[];
   expiryAlertDays?: number;
 }
 
@@ -34,10 +34,11 @@ async function fetchTrainerStats(): Promise<TrainerStatsResponse> {
   return data;
 }
 
-export function useTrainerStatsQuery() {
+export function useTrainerStatsQuery(enabled = true) {
   return useQuery({
     queryKey: ['trainer-stats'],
     queryFn: fetchTrainerStats,
+    enabled,
     staleTime: 30_000,
     retry: 1,
   });

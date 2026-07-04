@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'gymapure-static-v4';
+const STATIC_CACHE = 'gymapure-static-v5';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -72,7 +72,10 @@ self.addEventListener('fetch', (event) => {
 
   // Everything else — network first
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request).catch(async () => {
+      const cached = await caches.match(request);
+      return cached ?? new Response('', { status: 504, statusText: 'Offline' });
+    })
   );
 });
 

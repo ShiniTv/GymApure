@@ -15,7 +15,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const adminStats = useAdminStats();
   const memberStatsCtx = useMemberStatsOptional();
-  const { isLoading: trainerLoading, refetch: refetchTrainer } = useTrainerStatsQuery();
+  const isTrainer = user?.role === 'trainer';
+  const { isLoading: trainerLoading, refetch: refetchTrainer } = useTrainerStatsQuery(isTrainer);
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';

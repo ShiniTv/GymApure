@@ -33,6 +33,8 @@ function HostedExerciseVideo({
   error?: string | null;
 }) {
   const [buffering, setBuffering] = useState(true);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [posterFailed, setPosterFailed] = useState(false);
 
   if (loading) {
     return (
@@ -42,12 +44,12 @@ function HostedExerciseVideo({
     );
   }
 
-  if (error || !src) {
+  if (error || playbackError || !src) {
     return (
       <div
         className={`${playerShell} flex items-center justify-center bg-zinc-950 p-4 text-center`}
       >
-        <p className="text-xs text-zinc-400">{error ?? 'Video no disponible'}</p>
+        <p className="text-xs text-zinc-400">{playbackError ?? error ?? 'Video no disponible'}</p>
       </div>
     );
   }
@@ -59,11 +61,12 @@ function HostedExerciseVideo({
           className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-950/70"
           aria-hidden={!buffering}
         >
-          {poster && (
+          {poster && !posterFailed && (
             <img
               src={poster}
               alt=""
               className="absolute inset-0 h-full w-full object-cover opacity-50"
+              onError={() => setPosterFailed(true)}
             />
           )}
           <Spinner size="xl" className="relative z-10" />
@@ -71,7 +74,7 @@ function HostedExerciseVideo({
       )}
       <video
         src={src}
-        poster={poster}
+        poster={posterFailed ? undefined : poster}
         className="h-full w-full object-contain"
         controls
         playsInline
@@ -80,6 +83,10 @@ function HostedExerciseVideo({
         onCanPlay={() => setBuffering(false)}
         onWaiting={() => setBuffering(true)}
         onPlaying={() => setBuffering(false)}
+        onError={() => {
+          setBuffering(false);
+          setPlaybackError('No se pudo reproducir el video');
+        }}
       />
     </div>
   );
