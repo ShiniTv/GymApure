@@ -1,16 +1,23 @@
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, ChevronRight, X } from 'lucide-react';
 import clsx from 'clsx';
+import { format } from 'date-fns';
 import { expiryBannerClasses } from '../../lib/expiryUtils';
 import type { NotificationItem, NotificationSeverity } from '../../lib/notifications/types';
 import { Modal } from '../ui';
 import { useMediaQuery } from '../../lib/useMediaQuery';
+import {
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+} from '../../hooks/queries/useNotificationsQuery';
+import { dateLocale } from '../../lib/dateLocale';
 
 interface NotificationPanelProps {
   open: boolean;
   onClose: () => void;
-  items: NotificationItem[];
+  persistedItems: NotificationItem[];
+  liveItems: NotificationItem[];
   isLoading?: boolean;
 }
 
@@ -24,22 +31,81 @@ function itemSeverityClasses(severity: NotificationSeverity = 'info') {
   return expiryBannerClasses(severity);
 }
 
-function NotificationList({
-  items,
+function NotificationItemRow({
+  item,
+  onActivate,
+}: {
+  item: NotificationItem;
+  onActivate: (item: NotificationItem) => void;
+}) {
+  const styles = itemSeverityClasses(item.severity);
+  const content = (
+    <>
+      <div className="min-w-0 flex-1 text-left">
+        <p className={clsx('text-sm font-semibold', styles.text)}>{item.title}</p>
+        {item.description && (
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{item.description}</p>
+        )}
+      </div>
+      {item.count != null && item.count > 1 && (
+        <span className="bg-brand flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white">
+          {item.count > 99 ? '99+' : item.count}
+        </span>
+      )}
+      <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+    </>
+  );
+
+  const className = clsx(
+    'flex min-h-[var(--touch-min)] w-full touch-manipulation items-center gap-3 rounded-xl border px-3 py-3 transition-colors hover:opacity-90',
+    styles.itemBorder
+  );
+
+  if (item.source === 'persisted') {
+    return (
+      <button type="button" onClick={() => onActivate(item)} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link to={item.href} onClick={() => onActivate(item)} className={className}>
+      {content}
+    </Link>
+  );
+}
+
+function PanelBody({
+  persistedItems,
+  liveItems,
   isLoading,
   onClose,
+  onActivate,
+  onMarkAll,
+  isMarkingAll,
+  showFooter,
 }: {
-  items: NotificationItem[];
+  persistedItems: NotificationItem[];
+  liveItems: NotificationItem[];
   isLoading?: boolean;
   onClose: () => void;
+  onActivate: (item: NotificationItem) => void;
+  onMarkAll: () => void;
+  isMarkingAll: boolean;
+  showFooter: boolean;
 }) {
-  if (isLoading && items.length === 0) {
+  const hasPersisted = persistedItems.length > 0;
+  const hasLive = liveItems.length > 0;
+  const isEmpty = !hasPersisted && !hasLive;
+
+  if (isLoading && isEmpty) {
     return (
       <p className="px-1 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Cargando…</p>
     );
   }
 
-  if (items.length === 0) {
+  if (isEmpty) {
     return (
       <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden />
@@ -50,44 +116,89 @@ function NotificationList({
   }
 
   return (
-    <ul className="space-y-2">
-      {items.map((item) => {
-        const styles = itemSeverityClasses(item.severity);
-        return (
-          <li key={item.id}>
-            <Link
-              to={item.href}
-              onClick={onClose}
-              className={clsx(
-                'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl border px-3 py-3 transition-colors hover:opacity-90',
-                styles.itemBorder
-              )}
+    <div className="space-y-4">
+      {hasPersisted && (
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+              Novedades
+            </h3>
+            <button
+              type="button"
+              onClick={onMarkAll}
+              disabled={isMarkingAll}
+              className="text-brand text-[11px] font-semibold disabled:opacity-50"
             >
-              <div className="min-w-0 flex-1 text-left">
-                <p className={clsx('text-sm font-semibold', styles.text)}>{item.title}</p>
-                {item.description && (
-                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                    {item.description}
-                  </p>
-                )}
-              </div>
-              {item.count != null && item.count > 1 && (
-                <span className="bg-brand flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white">
-                  {item.count > 99 ? '99+' : item.count}
-                </span>
-              )}
-              <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+              {isMarkingAll ? 'Marcando…' : 'Marcar todas'}
+            </button>
+          </div>
+          <ul className="space-y-2">
+            {persistedItems.map((item) => (
+              <li key={item.id}>
+                <NotificationItemRow item={item} onActivate={onActivate} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {hasLive && (
+        <section>
+          <h3 className="mb-2 px-1 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+            Requiere atención
+          </h3>
+          <ul className="space-y-2">
+            {liveItems.map((item) => (
+              <li key={item.id}>
+                <NotificationItemRow item={item} onActivate={onActivate} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {showFooter && (
+        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+          <Link
+            to="/notifications"
+            onClick={onClose}
+            className="text-brand block text-center text-sm font-semibold"
+          >
+            Ver todas
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
 
-export function NotificationPanel({ open, onClose, items, isLoading }: NotificationPanelProps) {
+export function NotificationPanel({
+  open,
+  onClose,
+  persistedItems,
+  liveItems,
+  isLoading,
+}: NotificationPanelProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const sheetRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const markRead = useMarkNotificationReadMutation();
+  const markAllRead = useMarkAllNotificationsReadMutation();
+
+  const handleActivate = (item: NotificationItem) => {
+    if (item.source === 'persisted' && item.notificationId != null) {
+      void markRead.mutateAsync(item.notificationId).finally(() => {
+        onClose();
+        void navigate(item.href);
+      });
+      return;
+    }
+    onClose();
+  };
+
+  const handleMarkAll = () => {
+    void markAllRead.mutateAsync();
+  };
 
   useEffect(() => {
     if (!open || isDesktop) return;
@@ -109,10 +220,23 @@ export function NotificationPanel({ open, onClose, items, isLoading }: Notificat
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [open, isDesktop, onClose]);
 
+  const body = (
+    <PanelBody
+      persistedItems={persistedItems}
+      liveItems={liveItems}
+      isLoading={isLoading}
+      onClose={onClose}
+      onActivate={handleActivate}
+      onMarkAll={handleMarkAll}
+      isMarkingAll={markAllRead.isPending}
+      showFooter
+    />
+  );
+
   if (isDesktop) {
     return (
       <Modal open={open} onClose={onClose} title="Notificaciones" maxWidth="sm">
-        <NotificationList items={items} isLoading={isLoading} onClose={onClose} />
+        {body}
       </Modal>
     );
   }
@@ -145,9 +269,17 @@ export function NotificationPanel({ open, onClose, items, isLoading }: Notificat
               <X className="h-4 w-4" />
             </button>
           </div>
-          <NotificationList items={items} isLoading={isLoading} onClose={onClose} />
+          {body}
         </div>
       </div>
     </>
   );
+}
+
+export function formatNotificationTime(iso: string): string {
+  try {
+    return format(new Date(iso), 'd MMM, HH:mm', { locale: dateLocale });
+  } catch {
+    return iso;
+  }
 }

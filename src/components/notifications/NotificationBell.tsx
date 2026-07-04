@@ -18,7 +18,7 @@ interface NotificationBellProps {
 export function NotificationBell({ className, compact }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { items, badgeCount, isLoading } = useNotificationItems();
+  const { persistedItems, liveItems, badgeCount, isLoading } = useNotificationItems();
   const badgeLabel = formatNotificationBadgeCount(badgeCount);
 
   useEffect(() => {
@@ -61,7 +61,8 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
       <NotificationPanel
         open={open}
         onClose={() => setOpen(false)}
-        items={items}
+        persistedItems={persistedItems}
+        liveItems={liveItems}
         isLoading={isLoading}
       />
     </>

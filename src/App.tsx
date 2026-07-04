@@ -47,6 +47,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
 const Settings = lazy(() => import('./pages/Settings'));
+const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 
@@ -296,6 +297,20 @@ function AppRoutes() {
                     }}
                   >
                     <Messages />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="notifications"
+              element={
+                <ProtectedRoute>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <NotificationsPage />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

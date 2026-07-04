@@ -45,9 +45,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ['member-stats'] });
     });
 
+    s.on('notification:new', () => {
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    });
+
     socketRef.current = s;
 
-    return () => { s.close(); };
+    return () => {
+      s.close();
+    };
   }, [user?.id, queryClient]);
 
   return (

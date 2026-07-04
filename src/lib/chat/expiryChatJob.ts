@@ -1,12 +1,9 @@
 import { query } from '../../db/index.ts';
 import { getExpirySettings } from '../gymSettings.ts';
-import {
-  getExpiringSubscriptions,
-  markExpiredSubscriptions,
-  type ExpiringSubscription,
-} from '../expiringSubscriptions.ts';
+import { markExpiredSubscriptions, type ExpiringSubscription } from '../expiringSubscriptions.ts';
 import { postSystemMessage } from './systemMessages.ts';
 import { BRAND } from '../../config/brand.ts';
+import { notifyMembershipExpiry } from './eventMessages.ts';
 
 export interface ExpiryJobResult {
   markedExpired: number;
@@ -101,8 +98,16 @@ export async function runExpiryJob(): Promise<ExpiryJobResult> {
         days_remaining: target.days_remaining,
       },
     });
-    if (sent) result.messagesSent += 1;
-    else result.skipped += 1;
+    if (sent) {
+      result.messagesSent += 1;
+      void notifyMembershipExpiry(target.user_id, 'expiring_soon', {
+        membershipName: target.membership_name,
+        daysRemaining: target.days_remaining,
+        subscriptionId: target.subscription_id,
+        endDate: target.end_date,
+        alertDays: settings.expiry_alert_days,
+      });
+    } else result.skipped += 1;
   }
 
   for (const target of expiredTargets) {
@@ -119,8 +124,16 @@ export async function runExpiryJob(): Promise<ExpiryJobResult> {
         end_date: target.end_date,
       },
     });
-    if (sent) result.messagesSent += 1;
-    else result.skipped += 1;
+    if (sent) {
+      result.messagesSent += 1;
+      void notifyMembershipExpiry(target.user_id, 'expired', {
+        membershipName: target.membership_name,
+        daysRemaining: 0,
+        subscriptionId: target.subscription_id,
+        endDate: target.end_date,
+        alertDays: settings.expiry_alert_days,
+      });
+    } else result.skipped += 1;
   }
 
   if (result.messagesSent || result.markedExpired) {
