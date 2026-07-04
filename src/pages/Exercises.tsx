@@ -271,13 +271,27 @@ export default function Exercises() {
           <Modal
             open={!!deleteTarget}
             onClose={() => !deleting && setDeleteTarget(null)}
-            title="Eliminar ejercicio"
+            title={
+              deleteTarget?.is_system && !deleteTarget.owner_trainer_id
+                ? 'Ocultar ejercicio'
+                : 'Eliminar ejercicio'
+            }
           >
             <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
-              ¿Eliminar <strong>{deleteTarget?.name}</strong>?
+              {deleteTarget?.is_system && !deleteTarget.owner_trainer_id ? (
+                <>
+                  ¿Ocultar <strong>{deleteTarget?.name}</strong> de tu biblioteca?
+                </>
+              ) : (
+                <>
+                  ¿Eliminar <strong>{deleteTarget?.name}</strong>?
+                </>
+              )}
             </p>
             <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">
-              No se podrá eliminar si está en alguna rutina.
+              {deleteTarget?.is_system && !deleteTarget.owner_trainer_id
+                ? 'Solo dejará de aparecer en tu catálogo. Otros entrenadores seguirán viéndolo.'
+                : 'No se podrá eliminar si está en alguna rutina.'}
             </p>
             {deleteError && <p className="mb-4 text-sm text-red-500">{deleteError}</p>}
             <div className="flex gap-3">
@@ -297,7 +311,11 @@ export default function Exercises() {
                 onClick={handleDelete}
                 disabled={deleting}
               >
-                {deleting ? 'Eliminando...' : 'Eliminar'}
+                {deleting
+                  ? 'Procesando...'
+                  : deleteTarget?.is_system && !deleteTarget.owner_trainer_id
+                    ? 'Ocultar'
+                    : 'Eliminar'}
               </Button>
             </div>
           </Modal>

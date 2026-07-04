@@ -1,7 +1,7 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { query } from '../db/index.ts';
-import { authorize } from './middleware/auth.ts';
+import { authorize, type AuthRequest } from './middleware/auth.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { videoUpload } from '../lib/uploadStorage.ts';
 import {
@@ -17,6 +17,14 @@ import {
   createExerciseVideoUploadSession,
   getExerciseMediaCapabilities,
 } from '../lib/exerciseVideoStorage.ts';
+import {
+  buildExerciseListQuery,
+  canTrainerMutateExercise,
+  forkSystemExerciseForTrainer,
+  getExerciseById,
+  hideSystemExerciseForTrainer,
+  isSystemCatalogExercise,
+} from '../lib/exerciseLibrary.ts';
 
 const router = asyncRouter();
 
@@ -111,19 +119,14 @@ router.post('/upload-url', authorize(['trainer']), uploadRateLimiter, async (req
   }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: AuthRequest, res) => {
   try {
     const muscleGroup =
       typeof req.query.muscle_group === 'string' ? req.query.muscle_group.trim() : '';
-    const params: unknown[] = [];
-    let where = '';
-
-    if (muscleGroup) {
-      params.push(muscleGroup);
-      where = ` WHERE muscle_group = $${params.length}`;
-    }
-
-    const { rows } = await query(`SELECT * FROM exercises${where} ORDER BY name`, params);
+    const role = req.user?.role ?? 'member';
+    const trainerId = role === 'trainer' ? req.user!.id : null;
+    const { sql, params } = buildExerciseListQuery(role, trainerId, muscleGroup || undefined);
+    const { rows } = await query(sql, params);
     res.json(rows);
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
@@ -135,7 +138,7 @@ router.post(
   authorize(['trainer']),
   uploadRateLimiter,
   videoUpload.single('video'),
-  async (req, res) => {
+  async (req: AuthRequest, res) => {
     const parsed = exercisePayloadSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
@@ -151,10 +154,21 @@ router.post(
 
     try {
       const { rows } = await query<{ id: number }>(
-        `INSERT INTO exercises (name, muscle_group, description, execution, video_url, video_poster_url)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id`,
-        [name, muscle_group, description, execution, resolved.videoUrl, resolved.posterUrl]
+        `INSERT INTO exercises (
+           name, muscle_group, description, execution, video_url, video_poster_url,
+           is_system, owner_trainer_id
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, false, $7)
+         RETURNING id`,
+        [
+          name,
+          muscle_group,
+          description,
+          execution,
+          resolved.videoUrl,
+          resolved.posterUrl,
+          req.user!.id,
+        ]
       );
       res.status(201).json({ id: rows[0].id });
     } catch (err: unknown) {
@@ -168,7 +182,7 @@ router.put(
   authorize(['trainer']),
   uploadRateLimiter,
   videoUpload.single('video'),
-  async (req, res) => {
+  async (req: AuthRequest, res) => {
     const { id } = req.params;
     const parsed = exercisePayloadSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -177,16 +191,12 @@ router.put(
     const { name, muscle_group, description, execution, video_url, video_storage_ref } =
       parsed.data;
 
-    let existing: { video_url: string | null; video_poster_url: string | null } | undefined;
-    try {
-      const { rows } = await query<{ video_url: string | null; video_poster_url: string | null }>(
-        'SELECT video_url, video_poster_url FROM exercises WHERE id = $1',
-        [id]
-      );
-      existing = rows[0];
-      if (!existing) return res.status(404).json({ error: 'Ejercicio no encontrado' });
-    } catch (err: unknown) {
-      return res.status(500).json({ error: getErrorMessage(err) });
+    const existing = await getExerciseById(Number(id));
+    if (!existing) return res.status(404).json({ error: 'Ejercicio no encontrado' });
+
+    const trainerId = req.user!.id;
+    if (!canTrainerMutateExercise(existing, trainerId)) {
+      return res.status(403).json({ error: 'No puedes editar este ejercicio' });
     }
 
     let resolved: ResolvedExerciseVideo;
@@ -208,10 +218,25 @@ router.put(
       resolved.posterUrl !== existing.video_poster_url;
 
     try {
+      if (isSystemCatalogExercise(existing)) {
+        const forkId = await forkSystemExerciseForTrainer(existing, trainerId, {
+          name,
+          muscle_group,
+          description,
+          execution,
+          video_url: resolved.videoUrl,
+          video_poster_url: resolved.posterUrl,
+        });
+
+        res.json({ success: true, id: forkId, forked: true });
+        return;
+      }
+
       await query(
         `UPDATE exercises
-       SET name = $1, muscle_group = $2, description = $3, execution = $4, video_url = $5, video_poster_url = $6
-       WHERE id = $7`,
+         SET name = $1, muscle_group = $2, description = $3, execution = $4,
+             video_url = $5, video_poster_url = $6
+         WHERE id = $7`,
         [name, muscle_group, description, execution, resolved.videoUrl, resolved.posterUrl, id]
       );
 
@@ -226,10 +251,24 @@ router.put(
   }
 );
 
-router.delete('/:id', authorize(['trainer']), async (req, res) => {
+router.delete('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   const { id } = req.params;
+  const trainerId = req.user!.id;
 
   try {
+    const exercise = await getExerciseById(Number(id));
+    if (!exercise) return res.status(404).json({ error: 'Ejercicio no encontrado' });
+
+    if (!canTrainerMutateExercise(exercise, trainerId)) {
+      return res.status(403).json({ error: 'No puedes eliminar este ejercicio' });
+    }
+
+    if (isSystemCatalogExercise(exercise)) {
+      await hideSystemExerciseForTrainer(trainerId, exercise.id);
+      res.json({ success: true, hidden: true });
+      return;
+    }
+
     const { rows } = await query<{ count: string }>(
       'SELECT COUNT(*)::text AS count FROM routine_exercises WHERE exercise_id = $1',
       [id]
@@ -237,17 +276,12 @@ router.delete('/:id', authorize(['trainer']), async (req, res) => {
 
     if (parseInt(rows[0].count, 10) > 0) {
       return res.status(400).json({
-        error: 'This exercise is used in one or more routines and cannot be deleted.',
+        error: 'Este ejercicio está en una o más rutinas y no se puede eliminar.',
       });
     }
 
-    const { rows: exerciseRows } = await query<{
-      video_url: string | null;
-      video_poster_url: string | null;
-    }>('SELECT video_url, video_poster_url FROM exercises WHERE id = $1', [id]);
-
     await query('DELETE FROM exercises WHERE id = $1', [id]);
-    await deleteExerciseMedia(exerciseRows[0]?.video_url, exerciseRows[0]?.video_poster_url);
+    await deleteExerciseMedia(exercise.video_url, exercise.video_poster_url);
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });

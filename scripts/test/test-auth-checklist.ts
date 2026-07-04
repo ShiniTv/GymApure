@@ -142,6 +142,31 @@ async function main() {
   });
   ok('Login inválido → 401', badLogin.res.status === 401);
 
+  const lockoutEmail = `lockout-test-${Date.now()}@test.local`;
+  const lockFail1 = await api('POST', '/api/auth/login', {
+    email: lockoutEmail,
+    password: 'wrong-password',
+  });
+  ok('1er intento fallido no bloquea → 401', lockFail1.res.status === 401);
+
+  const lockFail2 = await api('POST', '/api/auth/login', {
+    email: lockoutEmail,
+    password: 'wrong-password',
+  });
+  ok('2do intento fallido no bloquea → 401', lockFail2.res.status === 401);
+
+  const lockFail3 = await api('POST', '/api/auth/login', {
+    email: lockoutEmail,
+    password: 'wrong-password',
+  });
+  ok('3er intento fallido → 401', lockFail3.res.status === 401);
+
+  const lockBlocked = await api('POST', '/api/auth/login', {
+    email: lockoutEmail,
+    password: 'wrong-password',
+  });
+  ok('4to intento tras 3 fallos → 429', lockBlocked.res.status === 429);
+
   cookie = '';
   const receptionLogin = await api('POST', '/api/auth/login', {
     email: process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com',

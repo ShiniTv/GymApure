@@ -21,20 +21,31 @@ import { logger } from '../lib/logger.ts';
 
 const router = asyncRouter();
 
-const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
+interface LoginAttemptEntry {
+  count: number;
+  windowExpires: number;
+  lockedUntil?: number;
+}
 
-const MAX_LOGIN_ATTEMPTS = 5;
+const loginAttempts = new Map<string, LoginAttemptEntry>();
+
+const MAX_LOGIN_ATTEMPTS = 3;
 const LOGIN_BLOCK_MINUTES = 15;
 const LOGIN_WINDOW_MINUTES = 15;
 
 function checkLoginBlock(email: string): boolean {
   const entry = loginAttempts.get(email);
   if (!entry) return false;
-  if (Date.now() >= entry.blockedUntil) {
-    loginAttempts.delete(email);
-    return false;
+
+  const now = Date.now();
+  if (entry.lockedUntil != null && now < entry.lockedUntil) {
+    return true;
   }
-  return true;
+
+  if (now >= entry.windowExpires) {
+    loginAttempts.delete(email);
+  }
+  return false;
 }
 
 function recordLoginAttempt(email: string, success: boolean) {
@@ -47,21 +58,17 @@ function recordLoginAttempt(email: string, success: boolean) {
   const now = Date.now();
   const entry = loginAttempts.get(normalizedEmail);
 
-  if (!entry || now >= entry.blockedUntil) {
+  if (!entry || now >= entry.windowExpires) {
     loginAttempts.set(normalizedEmail, {
       count: 1,
-      blockedUntil: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
+      windowExpires: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
     });
-  } else {
-    const newCount = entry.count + 1;
-    if (newCount >= MAX_LOGIN_ATTEMPTS) {
-      loginAttempts.set(normalizedEmail, {
-        count: newCount,
-        blockedUntil: now + LOGIN_BLOCK_MINUTES * 60 * 1000,
-      });
-    } else {
-      entry.count = newCount;
-    }
+    return;
+  }
+
+  entry.count += 1;
+  if (entry.count >= MAX_LOGIN_ATTEMPTS) {
+    entry.lockedUntil = now + LOGIN_BLOCK_MINUTES * 60 * 1000;
   }
 }
 

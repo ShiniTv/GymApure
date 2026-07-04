@@ -64,9 +64,21 @@ export function ExerciseLibraryView({
                 <h3 className="truncate text-sm leading-tight font-bold text-zinc-900 sm:text-base dark:text-white">
                   {exercise.name}
                 </h3>
-                <Badge variant="default" className="mt-1 text-[10px]">
-                  {exercise.muscle_group}
-                </Badge>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <Badge variant="default" className="text-[10px]">
+                    {exercise.muscle_group}
+                  </Badge>
+                  {exercise.is_system && !exercise.owner_trainer_id && (
+                    <Badge variant="accent" className="text-[10px]">
+                      Sistema
+                    </Badge>
+                  )}
+                  {exercise.forked_from_id && (
+                    <Badge variant="warning" className="text-[10px]">
+                      Personalizado
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             {!readOnly && onEdit && onDelete && (

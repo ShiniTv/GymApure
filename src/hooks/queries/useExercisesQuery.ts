@@ -9,6 +9,9 @@ export interface Exercise {
   execution: string | null;
   video_url: string | null;
   video_poster_url: string | null;
+  is_system?: boolean;
+  owner_trainer_id?: number | null;
+  forked_from_id?: number | null;
 }
 
 async function fetchExercises(): Promise<Exercise[]> {
