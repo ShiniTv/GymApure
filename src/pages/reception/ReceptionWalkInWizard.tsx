@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, ChevronRight, ChevronLeft, CheckCircle, Copy, Fingerprint } from 'lucide-react';
-import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { apiFetch, apiFetchWithRetry, parseJsonResponse } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -136,7 +136,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     setSubmitting(true);
     setError('');
     try {
-      const res = await apiFetch('/api/reception/walk-in', {
+      const res = await apiFetchWithRetry('/api/reception/walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,6 +151,8 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           check_in: form.check_in,
           training_shift: form.training_shift || null,
         }),
+        timeout: 15_000,
+        retries: 2,
       });
       const data = await parseJsonResponse<WalkInSuccess & { error?: string }>(res);
       if (!res.ok) {
@@ -159,8 +161,12 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       }
       setSuccess(data);
       onComplete?.();
-    } catch {
-      setError('Error de conexión');
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('La solicitud tardó demasiado. Revise la conexión e intente de nuevo.');
+      } else {
+        setError('Sin conexión. Revise la red e intente de nuevo.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -252,6 +258,16 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Una sola operación: cuenta, membresía activa y pago aprobado.
         </p>
+        <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
+          Use esto cuando el cliente{' '}
+          <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
+            paga hoy en el mostrador
+          </strong>{' '}
+          (efectivo, pago móvil, etc.) y quiere entrar al gym.{' '}
+          <Link to="/members" className="text-brand font-semibold hover:underline">
+            ¿Solo crear cuenta sin pago? Ir a Miembros →
+          </Link>
+        </div>
       </div>
 
       <div className="flex gap-2">

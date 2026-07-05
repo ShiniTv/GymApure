@@ -37,7 +37,15 @@ const dialogVariants = {
   },
 } satisfies Variants;
 
-export function Modal({ open, onClose, title, children, className, maxWidth = 'md', scrollable }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  className,
+  maxWidth = 'md',
+  scrollable,
+}: ModalProps) {
   const titleId = useId();
   const contentId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -100,9 +108,9 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
       const preferred = dialog.querySelector<HTMLElement>(
         'input, select, textarea, [contenteditable="true"]'
       );
-      const first = preferred ?? dialog.querySelector<HTMLElement>(
-        'button, [href], [tabindex]:not([tabindex="-1"])'
-      );
+      const first =
+        preferred ??
+        dialog.querySelector<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])');
       first?.focus();
     });
 
@@ -118,7 +126,7 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] overflow-y-auto bg-black/50 backdrop-blur-sm"
           variants={overlayVariants}
           initial="hidden"
           animate="visible"
@@ -137,20 +145,32 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
               animate="visible"
               exit="exit"
               className={cn(
-                'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full shadow-2xl my-auto',
-                scrollable ? 'max-h-[90dvh] flex flex-col overflow-hidden' : 'max-h-[calc(100dvh-3rem)] overflow-y-auto scroll-area p-4 sm:p-5',
+                'my-auto w-full rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900',
+                scrollable
+                  ? 'flex max-h-[90dvh] flex-col overflow-hidden'
+                  : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-4 sm:p-5',
                 maxWidthMap[maxWidth],
                 className
               )}
             >
-              <div className={cn('flex justify-between items-center gap-3 shrink-0', scrollable ? 'px-4 sm:px-5 py-3 border-b border-zinc-100 dark:border-zinc-800' : 'mb-4')}>
-                <h2 id={titleId} className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">
+              <div
+                className={cn(
+                  'flex shrink-0 items-center justify-between gap-3',
+                  scrollable
+                    ? 'border-b border-zinc-100 px-4 py-3 sm:px-5 dark:border-zinc-800'
+                    : 'mb-4'
+                )}
+              >
+                <h2
+                  id={titleId}
+                  className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
+                >
                   {title}
                 </h2>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-white p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+                  className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
                   aria-label="Cerrar"
                 >
                   <X className="h-5 w-5" />
@@ -158,7 +178,7 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
               </div>
               <div
                 id={contentId}
-                className={cn(scrollable && 'flex-1 overflow-y-auto scroll-area p-4 sm:p-5')}
+                className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-4 sm:p-5')}
               >
                 {children}
               </div>

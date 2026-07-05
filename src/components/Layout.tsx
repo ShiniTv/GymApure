@@ -37,7 +37,11 @@ const iconBtnClass =
 
 export default function Layout() {
   const { user } = useAuth();
-  const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
+  const { requestLogout: openLogoutConfirm, logoutConfirmProps } = useLogoutConfirm();
+  const requestLogout = useCallback(() => {
+    setIsSidebarOpen(false);
+    openLogoutConfirm();
+  }, [openLogoutConfirm]);
   const { data: profile } = useProfileQuery(user?.id);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();

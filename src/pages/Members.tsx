@@ -425,7 +425,7 @@ export default function Members() {
             isTrainer
               ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
               : isReceptionist
-                ? 'Registra personas nuevas en mostrador. La cédula es obligatoria para el check-in.'
+                ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro walk-in.'
                 : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
           }
           action={<BackToDashboardLink />}
@@ -487,6 +487,15 @@ export default function Members() {
           }
           scrollable
         >
+          {isReceptionist && (
+            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+              Crea la cuenta del socio. Para activar membresía y cobrar en el mostrador, use{' '}
+              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
+                Modo mostrador → Registro walk-in
+              </strong>
+              .
+            </p>
+          )}
           <div className="form-stack">
             <div>
               <Label>Nombre Completo</Label>
