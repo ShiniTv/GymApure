@@ -129,7 +129,7 @@ export default function Layout() {
   const brandMark = <BrandName variant="split" />;
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
-  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-60';
+  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,17.5rem)] lg:w-60';
   const hideBackToDashboard = showMemberBottomNav;
 
   return (
@@ -197,7 +197,7 @@ export default function Layout() {
           {/* Sidebar */}
           <aside
             className={clsx(
-              'fixed top-14 bottom-0 left-0 z-40 transform border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
+              'fixed top-14 bottom-0 left-0 z-40 flex transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -249,7 +249,19 @@ export default function Layout() {
               </div>
             )}
 
-            <div className="flex h-full flex-col lg:h-[calc(100dvh-3.5rem)]">
+            {!sidebarCollapsed && (
+              <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-3 lg:hidden dark:border-zinc-800">
+                <Logo className="h-8 w-8 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  {brandMark}
+                  <p className="mt-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                    {portalTitle}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex min-h-0 flex-1 flex-col lg:h-[calc(100dvh-3.5rem)]">
               <nav
                 className={clsx(
                   'nav-stack scroll-area min-h-0 flex-1 py-2.5 lg:py-3',
@@ -274,6 +286,7 @@ export default function Layout() {
                           }}
                           className={clsx(
                             'nav-link',
+                            isMobileShell && 'nav-link-mobile',
                             isActive ? 'nav-link-active' : 'nav-link-inactive',
                             sidebarCollapsed && 'justify-center px-0'
                           )}
@@ -319,7 +332,12 @@ export default function Layout() {
                 className={clsx(
                   'shrink-0 space-y-0.5 border-t border-zinc-200 dark:border-zinc-800',
                   sidebarCollapsed ? 'px-0 py-2' : 'px-2.5 py-2.5',
-                  isMobileShell && 'pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-2.5'
+                  isReceptionMobileShell &&
+                    (isSidebarOpen
+                      ? 'pb-[env(safe-area-inset-bottom)]'
+                      : 'pb-[calc(var(--reception-nav-stack)+env(safe-area-inset-bottom))]'),
+                  isMemberMobileShell &&
+                    'pb-[calc(var(--member-nav-stack)+env(safe-area-inset-bottom))] lg:pb-2.5'
                 )}
               >
                 {!sidebarCollapsed && (

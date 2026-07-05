@@ -17,6 +17,7 @@ import { QuickAction } from '../admin/QuickAction';
 import { Card, DashboardSkeleton } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
 import BrandName from '../BrandName';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 
 interface ReceptionStats {
   todayCheckIns: number;
@@ -113,6 +114,7 @@ interface ReceptionHomeSummaryProps {
 }
 
 export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSummaryProps) {
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const [stats, setStats] = useState<ReceptionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -153,7 +155,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
               Resumen del día · <BrandName variant="plain" className="text-brand" />
             </h2>
             <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-              Desliza hacia abajo en móvil para actualizar KPIs
+              Toca actualizar arriba para refrescar KPIs
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -246,7 +248,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
             ]}
           />
 
-          <div className="grid grid-cols-3 gap-2 md:grid-cols-1">
+          <div className="hidden grid-cols-3 gap-2 md:grid-cols-1 lg:grid">
             <QuickAction
               to="/members"
               icon={UserPlus}
@@ -295,17 +297,25 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
               to="/reception?mode=counter&tab=inside"
               className="text-brand hover:text-brand shrink-0 text-[10px] font-semibold sm:text-xs"
             >
-              Dentro ahora
+              {isMobile ? 'Ver todo' : 'Dentro ahora'}
             </Link>
           </div>
           <div className="flex min-h-0 flex-1 flex-col md:max-h-[280px] md:overflow-y-auto">
             <ReceptionActivityFeed
-              limit={10}
+              limit={isMobile ? 3 : 10}
               refreshKey={refreshKey}
               compact
               className="flex flex-1 flex-col"
             />
           </div>
+          {isMobile && (
+            <Link
+              to="/reception?mode=counter&tab=inside"
+              className="text-brand hover:text-brand mt-2 block text-center text-xs font-semibold"
+            >
+              Ver actividad completa
+            </Link>
+          )}
         </Card>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { CheckCircle, XCircle, LogIn, LogOut, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -20,6 +20,7 @@ export default function CheckIn() {
   const [searchParams] = useSearchParams();
   const isKioskMode = searchParams.get('kiosk') === '1';
   const isLargeKioskLayout = useMediaQuery('(min-width: 1024px)');
+  const isMobileKiosk = isKioskMode && !isLargeKioskLayout;
 
   const [mode, setMode] = useState<KioskMode>('check-in');
   const [cedula, setCedula] = useState('');
@@ -29,10 +30,33 @@ export default function CheckIn() {
   const [durationLabel, setDurationLabel] = useState('');
   const [userName, setUserName] = useState('');
   const [now, setNow] = useState(new Date());
+  const [showManualCedula, setShowManualCedula] = useState(false);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const processingRef = useRef(false);
 
   const isCheckIn = mode === 'check-in';
+  const scannerActive = status === 'idle';
+
+  const handleNextVisitor = useCallback(() => {
+    processingRef.current = false;
+    setStatus('idle');
+    setCedula('');
+    setMessage('');
+    setExpiryWarning('');
+    setDurationLabel('');
+    setUserName('');
+    setShowManualCedula(false);
+  }, []);
+
+  const resetToIdle = useCallback((delayMs: number) => {
+    setTimeout(() => {
+      processingRef.current = false;
+      setStatus('idle');
+      setExpiryWarning('');
+      setDurationLabel('');
+      cedulaRef.current?.focus();
+    }, delayMs);
+  }, []);
 
   const processCheck = useCallback(
     (rawInput: string) => {
@@ -43,13 +67,10 @@ export default function CheckIn() {
         setStatus('error');
         setMessage('Código QR o cédula no reconocido');
         setExpiryWarning('');
-        setTimeout(
-          () => {
-            setStatus('idle');
-            cedulaRef.current?.focus();
-          },
-          isKioskMode ? 3500 : 4000
-        );
+        processingRef.current = false;
+        if (!isKioskMode) {
+          resetToIdle(4000);
+        }
         return;
       }
 
@@ -101,37 +122,27 @@ export default function CheckIn() {
             }
 
             setCedula('');
-            setTimeout(
-              () => {
-                processingRef.current = false;
-                setStatus('idle');
-                setExpiryWarning('');
-                setDurationLabel('');
-                cedulaRef.current?.focus();
-              },
-              isKioskMode ? 3500 : 4500
-            );
+            processingRef.current = false;
+            if (!isKioskMode) {
+              resetToIdle(4500);
+            }
           } else {
             setStatus('error');
             setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
             setExpiryWarning('');
             if (data.user_name) setUserName(data.user_name);
-            setTimeout(
-              () => {
-                processingRef.current = false;
-                setStatus('idle');
-                cedulaRef.current?.focus();
-              },
-              isKioskMode ? 3500 : 4000
-            );
+            processingRef.current = false;
+            if (!isKioskMode) {
+              resetToIdle(4000);
+            }
           }
         } catch {
           setStatus('error');
           setMessage('Error de red');
-          setTimeout(() => {
-            processingRef.current = false;
-            setStatus('idle');
-          }, 4000);
+          processingRef.current = false;
+          if (!isKioskMode) {
+            resetToIdle(4000);
+          }
         }
       };
 
@@ -142,7 +153,7 @@ export default function CheckIn() {
         void finishScan();
       }, wait);
     },
-    [isCheckIn, isKioskMode]
+    [isCheckIn, isKioskMode, resetToIdle]
   );
 
   const handleQrScan = useCallback(
@@ -152,6 +163,7 @@ export default function CheckIn() {
     },
     [processCheck, status]
   );
+
   useEffect(() => {
     if (!isKioskMode) return;
     const tick = window.setInterval(() => setNow(new Date()), 1000);
@@ -159,27 +171,60 @@ export default function CheckIn() {
   }, [isKioskMode]);
 
   useEffect(() => {
-    if (status === 'idle') {
+    if (status === 'idle' && !isKioskMode) {
       cedulaRef.current?.focus();
     }
-  }, [status, mode]);
+  }, [status, mode, isKioskMode]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!cedula.trim() || status !== 'idle') return;
     void processCheck(cedula);
   };
+
+  const cedulaField = (
+    <CedulaInput
+      ref={cedulaRef}
+      variant={isKioskMode ? 'kiosk' : 'default'}
+      value={cedula}
+      onChange={setCedula}
+      disabled={status === 'scanning'}
+      preventMobileKeyboard={isKioskMode}
+      className={!isKioskMode ? 'py-4 text-xl md:text-2xl' : undefined}
+    />
+  );
+
+  const submitButton = (
+    <Button
+      type="submit"
+      size="lg"
+      loading={status === 'scanning'}
+      disabled={!cedula.trim()}
+      className={cn(
+        'w-full',
+        isKioskMode && 'min-h-[64px] text-lg',
+        !isCheckIn &&
+          'bg-[var(--color-check-out)] shadow-[var(--color-check-out)]/20 hover:bg-[var(--color-check-out-hover)]'
+      )}
+    >
+      {isCheckIn ? 'Registrar entrada' : 'Registrar salida'}
+    </Button>
+  );
+
   const formContent = (
     <>
       {status === 'idle' || status === 'scanning' ? (
-        <form onSubmit={handleSubmit} className={cn('space-y-8', isKioskMode && 'space-y-10')}>
+        <form
+          onSubmit={handleSubmit}
+          className={cn('space-y-8', isKioskMode && (isMobileKiosk ? 'space-y-5' : 'space-y-10'))}
+        >
           <div className="space-y-4 text-center">
             {isKioskMode && !isLargeKioskLayout ? (
               <QrScannerPanel
-                active={status === 'idle' || status === 'scanning'}
+                active={scannerActive}
                 paused={status !== 'idle'}
                 onScan={handleQrScan}
-                className="mx-auto h-52 w-full max-w-sm"
+                className="kiosk-scanner-region mx-auto max-h-[40dvh] min-h-[200px] w-full max-w-sm"
               />
             ) : !isKioskMode ? (
               <div
@@ -216,7 +261,7 @@ export default function CheckIn() {
               <h2
                 className={cn(
                   'font-bold text-zinc-900 dark:text-white',
-                  isKioskMode ? 'text-2xl' : 'text-lg'
+                  isKioskMode ? (isMobileKiosk ? 'text-xl' : 'text-2xl') : 'text-lg'
                 )}
               >
                 {status === 'scanning'
@@ -228,7 +273,7 @@ export default function CheckIn() {
               <p
                 className={cn(
                   'mt-1 text-zinc-500 dark:text-zinc-400',
-                  isKioskMode ? 'text-base' : 'text-sm'
+                  isKioskMode ? (isMobileKiosk ? 'text-sm' : 'text-base') : 'text-sm'
                 )}
               >
                 {isKioskMode
@@ -241,31 +286,31 @@ export default function CheckIn() {
               </p>
             </div>
           </div>
-          <div className="space-y-4">
-            <CedulaInput
-              ref={cedulaRef}
-              variant={isKioskMode ? 'kiosk' : 'default'}
-              value={cedula}
-              onChange={setCedula}
-              disabled={status === 'scanning'}
-              className={!isKioskMode ? 'py-4 text-xl md:text-2xl' : undefined}
-            />
 
-            <Button
-              type="submit"
-              size="lg"
-              loading={status === 'scanning'}
-              disabled={!cedula.trim()}
-              className={cn(
-                'w-full',
-                isKioskMode && 'min-h-[64px] text-lg',
-                !isCheckIn &&
-                  'bg-[var(--color-check-out)] shadow-[var(--color-check-out)]/20 hover:bg-[var(--color-check-out-hover)]'
+          {isMobileKiosk ? (
+            <div className="space-y-3">
+              {!showManualCedula ? (
+                <button
+                  type="button"
+                  onClick={() => setShowManualCedula(true)}
+                  className="flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:bg-zinc-800/60"
+                >
+                  Ingresar cédula manualmente
+                  <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
+                </button>
+              ) : (
+                <div className="space-y-4">
+                  {cedulaField}
+                  {submitButton}
+                </div>
               )}
-            >
-              {isCheckIn ? 'Registrar entrada' : 'Registrar salida'}
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {cedulaField}
+              {submitButton}
+            </div>
+          )}
         </form>
       ) : (
         <div
@@ -276,13 +321,13 @@ export default function CheckIn() {
                 ? 'text-emerald-500'
                 : 'text-blue-500'
               : 'text-red-500',
-            isKioskMode && 'py-12'
+            isKioskMode && (isMobileKiosk ? 'py-6' : 'py-12')
           )}
         >
           <div
             className={cn(
               'mx-auto mb-6 flex items-center justify-center rounded-full',
-              isKioskMode ? 'h-32 w-32' : 'h-24 w-24',
+              isKioskMode ? (isMobileKiosk ? 'h-24 w-24' : 'h-32 w-32') : 'h-24 w-24',
               status === 'success'
                 ? isCheckIn
                   ? 'bg-emerald-500/10'
@@ -291,15 +336,15 @@ export default function CheckIn() {
             )}
           >
             {status === 'success' ? (
-              <CheckCircle className={isKioskMode ? 'h-16 w-16' : 'h-12 w-12'} />
+              <CheckCircle className={isKioskMode && !isMobileKiosk ? 'h-16 w-16' : 'h-12 w-12'} />
             ) : (
-              <XCircle className={isKioskMode ? 'h-16 w-16' : 'h-12 w-12'} />
+              <XCircle className={isKioskMode && !isMobileKiosk ? 'h-16 w-16' : 'h-12 w-12'} />
             )}
           </div>
           <h2
             className={cn(
               'mb-2 font-bold text-zinc-900 dark:text-white',
-              isKioskMode ? 'text-4xl' : 'text-3xl'
+              isKioskMode ? (isMobileKiosk ? 'text-2xl' : 'text-4xl') : 'text-3xl'
             )}
           >
             {status === 'success'
@@ -312,12 +357,17 @@ export default function CheckIn() {
             <p
               className={cn(
                 'font-semibold text-zinc-900 dark:text-white',
-                isKioskMode ? 'text-2xl' : 'text-xl'
+                isKioskMode ? (isMobileKiosk ? 'text-lg' : 'text-2xl') : 'text-xl'
               )}
             >
               {status === 'success' ? userName : userName || 'Error de validación'}
             </p>
-            <p className={cn('text-zinc-500 dark:text-zinc-400', isKioskMode ? 'text-lg' : '')}>
+            <p
+              className={cn(
+                'text-zinc-500 dark:text-zinc-400',
+                isKioskMode && !isMobileKiosk ? 'text-lg' : ''
+              )}
+            >
               {message}
             </p>
             {durationLabel && (
@@ -330,7 +380,24 @@ export default function CheckIn() {
             )}
           </div>
 
-          {!isKioskMode && (
+          {isKioskMode ? (
+            <div
+              className={cn(
+                'mt-8',
+                isMobileKiosk &&
+                  'sticky bottom-0 -mx-4 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
+              )}
+            >
+              <Button
+                type="button"
+                size="lg"
+                className="min-h-[56px] w-full text-lg"
+                onClick={handleNextVisitor}
+              >
+                Siguiente visitante
+              </Button>
+            </div>
+          ) : (
             <Button
               type="button"
               variant="ghost"
@@ -349,52 +416,82 @@ export default function CheckIn() {
     return (
       <AuthShell variant="kiosk-fullscreen">
         <div className="flex min-h-dvh flex-col text-white">
-          <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-6 py-5 backdrop-blur-md md:px-10">
-            <div className="flex items-center gap-4">
-              <Logo className="h-12 w-12" mode="dark" />
-              <div>
-                <BrandName variant="inline" size="md" onDark className="text-xl" />
-                <p className="text-sm text-zinc-400 dark:text-zinc-300">Control de acceso</p>
+          <header
+            className={cn(
+              'flex shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md',
+              isLargeKioskLayout ? 'px-6 py-5 md:px-10' : 'px-4 py-3'
+            )}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <Logo
+                className={cn('shrink-0', isLargeKioskLayout ? 'h-12 w-12' : 'h-9 w-9')}
+                mode="dark"
+              />
+              <div className="min-w-0">
+                <BrandName
+                  variant="inline"
+                  size="md"
+                  onDark
+                  className={cn(isLargeKioskLayout ? 'text-xl' : 'text-base')}
+                />
+                <p className="truncate text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
+                  Control de acceso
+                </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="font-mono text-3xl font-bold tabular-nums md:text-4xl">
+            <div className="shrink-0 text-right">
+              <p
+                className={cn(
+                  'font-mono font-bold tabular-nums',
+                  isLargeKioskLayout ? 'text-3xl md:text-4xl' : 'text-2xl'
+                )}
+              >
                 {format(now, 'HH:mm:ss')}
               </p>
-              <p className="text-sm text-zinc-400 capitalize dark:text-zinc-300">
+              <p className="hidden text-sm text-zinc-400 capitalize sm:block dark:text-zinc-300">
                 {format(now, 'EEEE d MMM', { locale: es })}
               </p>
             </div>
           </header>
 
-          <main className="grid flex-1 grid-cols-1 gap-0 lg:grid-cols-2">
-            <section className="flex flex-col justify-center border-b border-zinc-800/80 px-6 py-10 md:px-12 lg:border-r lg:border-b-0">
+          <main
+            className={cn(
+              'grid min-h-0 flex-1 grid-cols-1 gap-0 lg:grid-cols-2',
+              !isLargeKioskLayout && 'overflow-hidden'
+            )}
+          >
+            <section
+              className={cn(
+                'flex flex-col border-b border-zinc-800/80 lg:border-r lg:border-b-0',
+                isLargeKioskLayout
+                  ? 'justify-center px-6 py-10 md:px-12'
+                  : 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 pb-[env(safe-area-inset-bottom)]'
+              )}
+            >
               <SegmentedControl
                 variant="kiosk"
                 fullWidth
                 value={mode}
                 onChange={(next) => {
                   setMode(next);
-                  setStatus('idle');
+                  handleNextVisitor();
                 }}
                 options={[
                   { value: 'check-in', label: 'Entrada', icon: LogIn, accent: 'brand' },
                   { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
                 ]}
-                className="mb-8 max-w-md"
+                className={cn('mb-8 max-w-md', isMobileKiosk && 'mb-5')}
               />
               <div className="mx-auto w-full max-w-md lg:mx-0">{formContent}</div>
             </section>
             <section className="hidden flex-col items-center justify-center bg-zinc-900/40 px-12 py-10 lg:flex">
               <div className="w-full max-w-md space-y-6">
-                {isKioskMode && (
-                  <QrScannerPanel
-                    active={status === 'idle' || status === 'scanning'}
-                    paused={status !== 'idle'}
-                    onScan={handleQrScan}
-                    className="h-72 w-full"
-                  />
-                )}
+                <QrScannerPanel
+                  active={scannerActive}
+                  paused={status !== 'idle'}
+                  onScan={handleQrScan}
+                  className="h-72 w-full"
+                />
                 <div className="text-center">
                   <h2 className="mb-2 text-2xl font-bold">
                     {isCheckIn ? 'Escanee su carné' : 'Escanee para salir'}
@@ -415,7 +512,7 @@ export default function CheckIn() {
                   </span>
                 </div>
               </div>
-            </section>{' '}
+            </section>
           </main>
         </div>
       </AuthShell>
@@ -424,7 +521,6 @@ export default function CheckIn() {
 
   return (
     <AuthShell variant="kiosk" backLink={{ to: '/reception', label: 'Volver a recepción' }}>
-      {' '}
       <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-8" />
       <SegmentedControl
         variant="kiosk"
@@ -461,7 +557,7 @@ export default function CheckIn() {
         </Link>
         <Link to="/check-in?kiosk=1" className="text-brand hover:text-brand text-xs font-semibold">
           Abrir modo tablet
-        </Link>{' '}
+        </Link>
       </div>
     </AuthShell>
   );

@@ -1,26 +1,64 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { cn } from '../../lib/utils';
 import { canonicalCedula, validateCedula } from '../../lib/cedulaUtils';
 import { Input } from './Input';
 
-interface CedulaInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+interface CedulaInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'type' | 'onChange'
+> {
   error?: string;
   onChange?: (value: string) => void;
   onValidation?: (error: string | null) => void;
   variant?: 'default' | 'kiosk';
   leadingIcon?: ReactNode;
+  /** Avoid mobile keyboard until the user taps the field (kiosk QR-first flow). */
+  preventMobileKeyboard?: boolean;
 }
 
 export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(function CedulaInput(
-  { error: externalError, onChange, onValidation, variant = 'default', className, value, leadingIcon, ...props },
+  {
+    error: externalError,
+    onChange,
+    onValidation,
+    variant = 'default',
+    className,
+    value,
+    leadingIcon,
+    preventMobileKeyboard = false,
+    ...props
+  },
   forwardedRef
 ) {
   const [internalError, setInternalError] = useState<string | null>(null);
+  const [keyboardEnabled, setKeyboardEnabled] = useState(!preventMobileKeyboard);
   const innerRef = useRef<HTMLInputElement>(null);
 
   useImperativeHandle(forwardedRef, () => innerRef.current!, []);
 
+  useEffect(() => {
+    if (!preventMobileKeyboard) {
+      setKeyboardEnabled(true);
+    }
+  }, [preventMobileKeyboard]);
+
   const error = externalError ?? internalError ?? undefined;
+  const tapToType = preventMobileKeyboard && !keyboardEnabled;
+
+  const enableKeyboard = useCallback(() => {
+    if (!preventMobileKeyboard || keyboardEnabled) return;
+    setKeyboardEnabled(true);
+    requestAnimationFrame(() => innerRef.current?.focus());
+  }, [preventMobileKeyboard, keyboardEnabled]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,30 +101,34 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
 
   if (variant === 'kiosk') {
     return (
-      <div className="w-full">
+      <div className="w-full" onPointerDown={tapToType ? enableKeyboard : undefined}>
         <input
           ref={innerRef}
           type="text"
-          inputMode="text"
+          inputMode={tapToType ? 'none' : 'text'}
+          readOnly={tapToType}
           autoComplete="off"
           autoCapitalize="characters"
           aria-label="Cédula de identidad"
           className={cn(
-            'w-full text-center font-mono tracking-widest outline-none transition-all',
-            'text-3xl md:text-4xl py-6 min-h-[80px] rounded-xl',
-            'bg-zinc-900/50 border border-zinc-700 text-white',
-            'focus:ring-2 focus:ring-brand/30 focus-visible:ring-2 focus-visible:ring-brand',
+            'w-full text-center font-mono tracking-widest transition-all outline-none',
+            'min-h-[80px] rounded-xl py-6 text-3xl md:text-4xl',
+            'border border-zinc-700 bg-zinc-900/50 text-white',
+            'focus:ring-brand/30 focus-visible:ring-brand focus:ring-2 focus-visible:ring-2',
+            tapToType && 'cursor-pointer',
             error && 'border-red-500',
             className
           )}
-          placeholder="V-00000000"
+          placeholder={tapToType ? 'Toque para ingresar cédula' : 'V-00000000'}
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}
           {...props}
         />
         {error && (
-          <p className="text-xs font-medium text-red-500 mt-2 text-center" role="alert">{error}</p>
+          <p className="mt-2 text-center text-xs font-medium text-red-500" role="alert">
+            {error}
+          </p>
         )}
       </div>
     );

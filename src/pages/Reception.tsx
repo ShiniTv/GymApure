@@ -35,6 +35,7 @@ import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 interface LookupResult {
   found: boolean;
@@ -94,6 +95,7 @@ export default function Reception() {
   const [insideCount, setInsideCount] = useState(0);
   const [feedRefresh, setFeedRefresh] = useState(0);
   const cedulaRef = useRef<HTMLInputElement>(null);
+  const isMobileShell = useMediaQuery('(max-width: 1023px)');
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -132,12 +134,6 @@ export default function Reception() {
   useEffect(() => {
     void loadStats();
   }, [loadStats]);
-
-  useEffect(() => {
-    if (tab === 'access') {
-      cedulaRef.current?.focus();
-    }
-  }, [tab]);
 
   const doLookup = useCallback(
     async (value?: string) => {
@@ -201,7 +197,9 @@ export default function Reception() {
           setCedula('');
           setLookup(null);
           void loadStats();
-          setTimeout(() => cedulaRef.current?.focus(), 100);
+          if (!isMobileShell) {
+            setTimeout(() => cedulaRef.current?.focus(), 100);
+          }
         } else {
           setMessageType('error');
           setMessage(data.error || 'Operación fallida');
@@ -213,7 +211,7 @@ export default function Reception() {
         setActionLoading(false);
       }
     },
-    [cedula, loadStats]
+    [cedula, loadStats, isMobileShell]
   );
 
   useReceptionShortcuts({
@@ -547,7 +545,7 @@ export default function Reception() {
     <div className="page-stack">
       <ReceptionHomeSummary onOpenCounter={() => setCounterMode(true)} />
 
-      <div className="panel-wide space-y-4">
+      <div className="panel-wide hidden space-y-4 lg:block">
         <PageHeader
           compact
           title={

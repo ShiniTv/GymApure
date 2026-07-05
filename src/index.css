@@ -131,6 +131,12 @@ body,
     @apply flex min-h-9 touch-manipulation items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors;
   }
 
+  @media (max-width: 1023px) {
+    .nav-link-mobile {
+      @apply min-h-11 py-2;
+    }
+  }
+
   .nav-link-active {
     @apply bg-brand/10 text-brand dark:text-brand shadow-sm;
   }
@@ -391,6 +397,11 @@ body,
   animation: streak-pulse 2.5s ease-in-out infinite;
 }
 
+:root {
+  --reception-nav-pill-height: 3.75rem;
+  --reception-nav-stack: calc(0.5rem + var(--reception-nav-pill-height));
+}
+
 .member-bottom-nav {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
   --member-nav-pill-height: 3.75rem;
@@ -443,7 +454,7 @@ body,
 }
 
 .reception-main-pad {
-  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--reception-nav-stack) + env(safe-area-inset-bottom, 0px));
 }
 
 .member-main-pad {
@@ -569,5 +580,10 @@ html.member-has-workout-fab .member-chat-panel {
 /* html5-qrcode kiosk scanner */
 [id] video {
   border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.kiosk-scanner-region video {
+  max-height: 40dvh;
   object-fit: cover;
 }

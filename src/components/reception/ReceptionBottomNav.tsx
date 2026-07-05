@@ -67,7 +67,7 @@ export function ReceptionBottomNav() {
     (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
   );
 
-  const sheetBottom = 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]';
+  const sheetBottom = 'bottom-[calc(var(--reception-nav-stack)+env(safe-area-inset-bottom))]';
 
   return (
     <>
