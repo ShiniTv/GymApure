@@ -1,7 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, ChevronRight, ChevronLeft, CheckCircle, Copy, Fingerprint } from 'lucide-react';
-import { apiFetch, apiFetchWithRetry, parseJsonResponse } from '../../lib/api';
+import {
+  apiFetch,
+  apiFetchWithRetry,
+  parseJsonResponse,
+  parseJsonSafe,
+  toDisplayErrorMessage,
+} from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -151,12 +157,12 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           check_in: form.check_in,
           training_shift: form.training_shift || null,
         }),
-        timeout: 15_000,
+        timeout: 30_000,
         retries: 2,
       });
-      const data = await parseJsonResponse<WalkInSuccess & { error?: string }>(res);
+      const data = await parseJsonSafe<WalkInSuccess & { error?: string }>(res);
       if (!res.ok) {
-        setError(data?.error || 'No se pudo completar el registro');
+        setError(data.error || `No se pudo completar el registro (${res.status})`);
         return;
       }
       setSuccess(data);
@@ -165,7 +171,7 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
       if (err instanceof Error && err.name === 'AbortError') {
         setError('La solicitud tardó demasiado. Revise la conexión e intente de nuevo.');
       } else {
-        setError('Sin conexión. Revise la red e intente de nuevo.');
+        setError(toDisplayErrorMessage(err, 'Sin conexión. Revise la red e intente de nuevo.'));
       }
     } finally {
       setSubmitting(false);

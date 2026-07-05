@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import type { RequestHandler } from 'express';
+import type { Response } from 'express';
 import { withTransaction } from '../../db/index.ts';
 import { logAudit } from '../../lib/audit.ts';
 import { canonicalCedula, cedulaWhereClause } from '../../lib/cedulaUtils.ts';
@@ -30,7 +30,7 @@ function generateTempPassword(): string {
   return crypto.randomBytes(9).toString('base64url');
 }
 
-export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
+export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {
   const parsed = walkInSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -44,10 +44,13 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
 
   const normalizedEmail = data.email.toLowerCase().trim();
   const tempPassword = generateTempPassword();
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
   try {
     const result = await withTransaction(async (client) => {
-      const existingEmail = await client.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+      const existingEmail = await client.query('SELECT id FROM users WHERE email = $1', [
+        normalizedEmail,
+      ]);
       if (existingEmail.rows[0]) {
         throw Object.assign(new Error('Este correo ya está registrado'), { statusCode: 400 });
       }
@@ -70,7 +73,6 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       }
 
       const amountUsd = data.amount_usd ?? Number(membership.price_usd);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
       const memberShift =
         data.training_shift && isTrainingShift(data.training_shift) ? data.training_shift : null;
 
@@ -140,7 +142,9 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       result.amountUsd,
       result.membershipName,
       result.paymentId
-    ).catch((err) => { console.error('[notify] walk-in payment', err); });
+    ).catch((err) => {
+      console.error('[notify] walk-in payment', err);
+    });
 
     res.status(201).json({
       success: true,
@@ -165,4 +169,4 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(statusCode).json({ error: message });
   }
-};
+}

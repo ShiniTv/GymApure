@@ -12,6 +12,8 @@ interface ModalProps {
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   scrollable?: boolean;
+  /** 'input' (default): focus first field; 'dialog': focus panel without opening mobile keyboard; false: no focus move */
+  initialFocus?: 'input' | 'dialog' | false;
 }
 
 const maxWidthMap = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
@@ -45,6 +47,7 @@ export function Modal({
   className,
   maxWidth = 'md',
   scrollable,
+  initialFocus = 'input',
 }: ModalProps) {
   const titleId = useId();
   const contentId = useId();
@@ -103,7 +106,12 @@ export function Modal({
 
     requestAnimationFrame(() => {
       const dialog = dialogRef.current;
-      if (!dialog) return;
+      if (!dialog || initialFocus === false) return;
+
+      if (initialFocus === 'dialog') {
+        dialog.focus();
+        return;
+      }
 
       const preferred = dialog.querySelector<HTMLElement>(
         'input, select, textarea, [contenteditable="true"]'
@@ -118,7 +126,7 @@ export function Modal({
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, handleKeyDown]);
+  }, [open, handleKeyDown, initialFocus]);
 
   if (!portalTarget) return null;
 
@@ -140,6 +148,7 @@ export function Modal({
               aria-modal="true"
               aria-labelledby={titleId}
               aria-describedby={contentId}
+              tabIndex={-1}
               variants={dialogVariants}
               initial="hidden"
               animate="visible"

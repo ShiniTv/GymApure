@@ -22,6 +22,8 @@ import {
   Moon,
   IdCard,
   Bell,
+  ScanLine,
+  Printer,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -66,6 +68,8 @@ import {
 import { StatMini } from './profile/StatMini';
 import ThemePalettePicker from '../components/ThemePalettePicker';
 import { MemberBadgeModal } from '../components/member/MemberBadgeModal';
+import { MemberBadgeCard, type MemberBadgeData } from '../components/member/MemberBadgeCard';
+import { MemberBadgeScanView } from '../components/member/MemberBadgeScanView';
 import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 
@@ -84,15 +88,16 @@ export default function Profile() {
     isMember
   );
   const loading = profileLoading || measLoading || (isMember && histLoading);
-  const [profileTab, setProfileTab] = useState<'datos' | 'progreso' | 'seguridad' | 'apariencia'>(
-    'datos'
-  );
+  const [profileTab, setProfileTab] = useState<
+    'datos' | 'progreso' | 'seguridad' | 'apariencia' | 'carne'
+  >('datos');
   const [saving, setSaving] = useState(false);
   const toast = useToastOptional();
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarRemoving, setAvatarRemoving] = useState(false);
   const [showRemoveAvatarModal, setShowRemoveAvatarModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [showScanView, setShowScanView] = useState(false);
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
   const [measurementError, setMeasurementError] = useState('');
 
@@ -179,6 +184,39 @@ export default function Profile() {
 
   const subscription = memberStats?.stats?.subscription ?? null;
   const workoutsThisMonth = memberStats?.stats?.workoutsThisMonth ?? 0;
+
+  const badgeMember = useMemo((): MemberBadgeData | null => {
+    if (!profile?.cedula || !user) return null;
+    return {
+      id: profile.id,
+      full_name: profile.full_name,
+      email: profile.email,
+      cedula: profile.cedula,
+      profile_image: profile.profile_image,
+      membership_name: subscription?.membership_name ?? null,
+      training_shift: profile.training_shift ?? null,
+      role: user.role,
+      created_at: profile.created_at ?? null,
+      phone: profile.phone,
+      dob: profile.dob,
+      subscription_end: subscription?.end_date ?? null,
+    };
+  }, [profile, user, subscription]);
+
+  const profileTabOptions = useMemo(() => {
+    const options: { value: typeof profileTab; label: string }[] = [
+      { value: 'datos', label: 'Datos' },
+    ];
+    if (isMember && profile?.cedula) {
+      options.push({ value: 'carne', label: 'Carné' });
+    }
+    options.push(
+      { value: 'progreso', label: 'Progreso' },
+      { value: 'apariencia', label: 'Apariencia' },
+      { value: 'seguridad', label: 'Seguridad' }
+    );
+    return options;
+  }, [isMember, profile?.cedula]);
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -423,12 +461,7 @@ export default function Profile() {
         className="w-full sm:w-auto"
         value={profileTab}
         onChange={setProfileTab}
-        options={[
-          { value: 'datos', label: 'Datos' },
-          { value: 'progreso', label: 'Progreso' },
-          { value: 'apariencia', label: 'Apariencia' },
-          { value: 'seguridad', label: 'Seguridad' },
-        ]}
+        options={profileTabOptions}
       />
 
       {profileTab === 'datos' && (
@@ -496,18 +529,6 @@ export default function Profile() {
                     >
                       Quitar foto
                     </button>
-                    {profile.cedula && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowBadgeModal(true);
-                        }}
-                        className="text-brand inline-flex items-center gap-1 text-[10px] font-semibold hover:underline sm:text-xs"
-                      >
-                        <IdCard className="h-3.5 w-3.5" />
-                        Ver carné
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -796,6 +817,44 @@ export default function Profile() {
         </>
       )}
 
+      {profileTab === 'carne' && isMember && (
+        <div className="panel-content">
+          <Card padding="sm" rounded="xl">
+            <h2 className="section-title mb-3 flex items-center gap-1.5">
+              <IdCard className="text-brand h-3.5 w-3.5" />
+              Mi carné digital
+            </h2>
+            {badgeMember ? (
+              <div className="flex flex-col items-center gap-4">
+                <p className="text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                  Si no tienes el carné físico, muestra este QR en recepción para registrar tu
+                  entrada. Sube el brillo de la pantalla si te lo piden escanear.
+                </p>
+                <MemberBadgeCard member={badgeMember} side="front" />
+                <Button className="w-full" onClick={() => setShowScanView(true)}>
+                  <ScanLine className="h-4 w-4" />
+                  Mostrar QR para escaneo
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setShowBadgeModal(true)}
+                >
+                  <Printer className="h-4 w-4" />
+                  Ver carné completo / Imprimir
+                </Button>
+              </div>
+            ) : (
+              <EmptyState
+                icon={IdCard}
+                title="Carné no disponible"
+                description="Tu cuenta aún no tiene cédula registrada. Contacta a recepción para completar tu perfil."
+              />
+            )}
+          </Card>
+        </div>
+      )}
+
       {profileTab === 'apariencia' && (
         <div className="panel-content space-y-3">
           <Card padding="sm" rounded="xl">
@@ -971,25 +1030,16 @@ export default function Profile() {
         onClose={() => {
           setShowBadgeModal(false);
         }}
-        member={
-          profile?.cedula
-            ? {
-                id: profile.id,
-                full_name: profile.full_name,
-                email: profile.email,
-                cedula: profile.cedula,
-                profile_image: profile.profile_image,
-                membership_name: subscription?.membership_name ?? null,
-                training_shift: profile.training_shift ?? null,
-                role: user.role,
-                created_at: profile.created_at ?? null,
-                phone: profile.phone,
-                dob: profile.dob,
-                subscription_end: subscription?.end_date ?? null,
-              }
-            : null
-        }
+        member={badgeMember}
       />
+
+      {badgeMember && (
+        <MemberBadgeScanView
+          open={showScanView}
+          onClose={() => setShowScanView(false)}
+          member={badgeMember}
+        />
+      )}
 
       <Modal
         open={isAddingMeasurement}

@@ -12,18 +12,17 @@ export async function apiFetchWithRetry(
 ): Promise<Response> {
   const timeout = init.timeout ?? DEFAULT_TIMEOUT;
   const retries = init.retries ?? MAX_RETRIES;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  const signal = init.signal;
-  const combinedSignal = signal
-    ? combineAbortSignals(signal, controller.signal)
-    : controller.signal;
+  const externalSignal = init.signal;
 
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const combinedSignal = externalSignal
+      ? combineAbortSignals(externalSignal, controller.signal)
+      : controller.signal;
+
     try {
       const res = await fetch(input, {
         ...init,
@@ -171,7 +170,7 @@ export async function downloadReport(
   }
   const blob = await res.blob();
   const disposition = res.headers.get('Content-Disposition') ?? '';
-  const match = disposition.match(/filename="([^"]+)"/);
+  const match = /filename="([^"]+)"/.exec(disposition);
   const filename = match?.[1] ?? `${type}.csv`;
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

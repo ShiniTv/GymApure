@@ -109,7 +109,7 @@ router.get(
   })
 );
 
-router.post('/walk-in', walkInHandler);
+router.post('/walk-in', asyncHandler(walkInHandler));
 
 router.post(
   '/check-in',

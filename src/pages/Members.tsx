@@ -486,6 +486,7 @@ export default function Members() {
             </>
           }
           scrollable
+          initialFocus="dialog"
         >
           {isReceptionist && (
             <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
