@@ -5,6 +5,7 @@ import { getRequestMetricsSnapshot } from './middleware/requestMetrics.ts';
 import { authenticate, authorize } from './middleware/auth.ts';
 import { getExerciseMediaCapabilities } from '../lib/exerciseVideoStorage.ts';
 import { isMediaStorageRemote } from '../lib/mediaStorage.ts';
+import { isEmailConfigured } from '../lib/email.ts';
 
 const router = asyncRouter();
 const startedAt = Date.now();
@@ -106,6 +107,7 @@ router.get('/health', async (_req, res) => {
       db_latency_ms: Number(dbLatencyMs.toFixed(2)),
       uptime_seconds: uptimeSeconds,
       allowPublicRegister,
+      email: { configured: isEmailConfigured() },
     });
   } catch {
     res.status(503).json({
@@ -114,6 +116,7 @@ router.get('/health', async (_req, res) => {
       db_latency_ms: null,
       uptime_seconds: uptimeSeconds,
       allowPublicRegister,
+      email: { configured: isEmailConfigured() },
     });
   }
 });

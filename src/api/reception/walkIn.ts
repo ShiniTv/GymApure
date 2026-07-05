@@ -33,13 +33,15 @@ function generateTempPassword(): string {
 export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {
   const parsed = walkInSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    res.status(400).json({ error: formatZodError(parsed.error) });
+    return;
   }
 
   const data = parsed.data;
   const normalizedCedula = canonicalCedula(data.cedula);
   if (!normalizedCedula) {
-    return res.status(400).json({ error: 'Cédula inválida' });
+    res.status(400).json({ error: 'Cédula inválida' });
+    return;
   }
 
   const normalizedEmail = data.email.toLowerCase().trim();

@@ -38,3 +38,21 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: ADMIN_NOTIFY_EMAILS
+        sync: false

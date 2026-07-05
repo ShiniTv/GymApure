@@ -51,9 +51,15 @@ async function startServer() {
     port: env.SMTP_PORT ?? 587,
     secure: env.SMTP_SECURE ?? false,
     user: env.SMTP_USER ?? '',
-    pass: env.SMTP_PASS ?? '',
+    pass: (env.SMTP_PASS ?? '').replace(/\s/g, ''),
     from: env.SMTP_FROM ?? '',
   });
+
+  if (env.NODE_ENV === 'production' && !(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS)) {
+    logger.warn(
+      'SMTP no configurado: correos del sistema (bienvenida, recuperar contraseña, pagos) no se enviarán'
+    );
+  }
 
   configurePush({
     publicKey: env.VAPID_PUBLIC_KEY ?? '',

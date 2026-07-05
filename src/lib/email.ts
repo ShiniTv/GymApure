@@ -19,11 +19,18 @@ interface EmailOptions {
 let sender: EmailSender | null = null;
 
 export function configureEmail(opts: EmailSender) {
-  sender = opts;
+  sender = {
+    ...opts,
+    pass: opts.pass.replace(/\s/g, ''),
+  };
+}
+
+export function isEmailConfigured(): boolean {
+  return sender !== null && !!sender.host && !!sender.user && !!sender.pass;
 }
 
 function isConfigured(): boolean {
-  return sender !== null && !!sender.host && !!sender.user && !!sender.pass;
+  return isEmailConfigured();
 }
 
 export async function sendEmail({ to, subject, html }: EmailOptions): Promise<boolean> {
