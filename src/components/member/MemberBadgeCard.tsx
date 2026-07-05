@@ -12,15 +12,12 @@ import { cn } from '../../lib/utils';
 export interface MemberBadgeData {
   id: number;
   full_name: string;
-  email?: string;
   cedula: string;
   profile_image?: string | null;
   membership_name?: string | null;
   training_shift?: TrainingShift | null;
   role?: string;
   created_at?: string | null;
-  phone?: string | null;
-  dob?: string | null;
   subscription_end?: string | null;
 }
 
@@ -87,15 +84,6 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
 
   if (member.training_shift) {
     detailRows.push({ label: 'Turno', value: SHIFT_LABELS[member.training_shift] });
-  }
-  if (member.phone?.trim()) {
-    detailRows.push({ label: 'Teléfono', value: member.phone.trim() });
-  }
-  if (member.email?.trim()) {
-    detailRows.push({ label: 'Email', value: member.email.trim() });
-  }
-  if (member.dob) {
-    detailRows.push({ label: 'Nacimiento', value: formatBadgeDate(member.dob) });
   }
 
   if (side === 'front') {

@@ -290,15 +290,12 @@ export default function Members() {
     setBadgeTarget({
       id: member.id,
       full_name: member.full_name,
-      email: member.email,
       cedula: member.cedula,
       profile_image: member.profile_image,
       membership_name: member.membership_name,
       training_shift: member.training_shift,
       role: member.role,
       created_at: member.created_at,
-      phone: member.phone,
-      dob: member.dob,
       subscription_end: member.subscription_end,
     });
   }, []);

@@ -190,15 +190,12 @@ export default function Profile() {
     return {
       id: profile.id,
       full_name: profile.full_name,
-      email: profile.email,
       cedula: profile.cedula,
       profile_image: profile.profile_image,
       membership_name: subscription?.membership_name ?? null,
       training_shift: profile.training_shift ?? null,
       role: user.role,
       created_at: profile.created_at ?? null,
-      phone: profile.phone,
-      dob: profile.dob,
       subscription_end: subscription?.end_date ?? null,
     };
   }, [profile, user, subscription]);
