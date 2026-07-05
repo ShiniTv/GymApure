@@ -100,24 +100,16 @@ Deben ser **privados** (acceso solo vía backend).
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                       |
-| -------------------------------- | ----------- | ----------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev        |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                           |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                        |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                              |
-| `CRON_SECRET`                    | Recomendada | `openssl rand -base64 32`                                   |
-| `VITE_EXCHANGE_RATE`             | Recomendada | Tasa Bs/USD actual — **antes del build**                    |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render            |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores                                        |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — correos del sistema                      |
-| `SMTP_PORT`                      | Recomendada | `587`                                                       |
-| `SMTP_SECURE`                    | Recomendada | `false` (STARTTLS en 587)                                   |
-| `SMTP_USER`                      | Recomendada | Cuenta Gmail del sistema (ej. `soporte.gymapure@gmail.com`) |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)              |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                     |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com` (push)                  |
-| `ADMIN_NOTIFY_EMAILS`            | Opcional    | Correo(s) admin para alertas futuras                        |
+| Variable                         | Obligatoria | Notas                                                |
+| -------------------------------- | ----------- | ---------------------------------------------------- |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                    |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                 |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                       |
+| `CRON_SECRET`                    | Recomendada | `openssl rand -base64 32`                            |
+| `VITE_EXCHANGE_RATE`             | Recomendada | Tasa Bs/USD actual — **antes del build**             |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render     |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores                                 |
 
 > **Importante:** Las variables `VITE_*` se embeben en el build. Si las añades después del primer deploy, haz **Manual Deploy → Clear build cache**.
 

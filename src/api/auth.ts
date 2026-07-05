@@ -201,7 +201,7 @@ router.post(
     await logAudit(id, 'auth.register', { email: normalizedEmail });
     void sendEmail({
       to: normalizedEmail,
-      subject: 'Bienvenido a GymApure',
+      subject: 'Bienvenido a Caribean Gym',
       html: welcomeEmail(full_name),
     });
 

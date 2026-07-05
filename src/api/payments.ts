@@ -21,7 +21,11 @@ import {
 } from '../lib/chat/eventMessages.ts';
 import { sendEmail, paymentApprovedEmail, paymentRejectedEmail } from '../lib/email.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
-import { parsePaginationQuery, parseSearchQuery, type PaginatedResult } from '../lib/pagination.ts';
+import {
+  parsePaginationQuery,
+  parseSearchQuery,
+  type PaginatedResult,
+} from '../lib/pagination.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 
@@ -43,8 +47,7 @@ router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: Auth
   });
   const search = parseSearchQuery(req.query);
   const status =
-    typeof req.query.status === 'string' &&
-    ['pending', 'approved', 'rejected'].includes(req.query.status)
+    typeof req.query.status === 'string' && ['pending', 'approved', 'rejected'].includes(req.query.status)
       ? req.query.status
       : '';
 
@@ -108,105 +111,93 @@ router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: Auth
   }
 });
 
-router.get(
-  '/:id/proof',
-  authorize(['admin', 'member', 'receptionist']),
-  async (req: AuthRequest, res) => {
-    const paymentId = parseInt(req.params.id, 10);
-    if (Number.isNaN(paymentId)) {
-      return res.status(400).json({ error: 'ID inválido' });
-    }
-
-    try {
-      const { rows } = await query<{ user_id: number; proof_url: string | null }>(
-        'SELECT user_id, proof_url FROM payments WHERE id = $1',
-        [paymentId]
-      );
-      const payment = rows[0];
-      if (!payment?.proof_url) {
-        return res.status(404).json({ error: 'Este pago no tiene comprobante' });
-      }
-
-      const user = req.user!;
-      if (
-        user.role !== 'admin' &&
-        user.role !== 'receptionist' &&
-        user.id !== Number(payment.user_id)
-      ) {
-        return res.status(403).json({ error: 'Permisos insuficientes' });
-      }
-
-      await streamPaymentProof(payment.proof_url, res);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error interno';
-      res.status(500).json({ error: message });
-    }
+router.get('/:id/proof', authorize(['admin', 'member', 'receptionist']), async (req: AuthRequest, res) => {
+  const paymentId = parseInt(req.params.id, 10);
+  if (Number.isNaN(paymentId)) {
+    return res.status(400).json({ error: 'ID inválido' });
   }
-);
 
-router.post(
-  '/',
-  authorize(['admin', 'member', 'receptionist']),
-  uploadRateLimiter,
-  proofUpload.single('proof'),
-  async (req: AuthRequest, res) => {
-    const parsed = paymentReportSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: formatZodError(parsed.error) });
+  try {
+    const { rows } = await query<{ user_id: number; proof_url: string | null }>(
+      'SELECT user_id, proof_url FROM payments WHERE id = $1',
+      [paymentId]
+    );
+    const payment = rows[0];
+    if (!payment?.proof_url) {
+      return res.status(404).json({ error: 'Este pago no tiene comprobante' });
     }
 
-    const { amount_usd, amount_bs, exchange_rate, method, reference } = parsed.data;
     const user = req.user!;
-    const user_id =
-      user.role === 'member'
-        ? user.id
-        : (parsed.data.user_id ?? parseInt(String(req.body.user_id), 10));
-
-    if ((user.role === 'admin' || user.role === 'receptionist') && Number.isNaN(user_id)) {
-      return res.status(400).json({ error: 'user_id requerido' });
+    if (user.role !== 'admin' && user.role !== 'receptionist' && user.id !== Number(payment.user_id)) {
+      return res.status(403).json({ error: 'Permisos insuficientes' });
     }
 
-    try {
-      const { rows } = await query(
-        `INSERT INTO payments (user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url)
+    await streamPaymentProof(payment.proof_url, res);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.post('/', authorize(['admin', 'member', 'receptionist']), uploadRateLimiter, proofUpload.single('proof'), async (req: AuthRequest, res) => {
+  const parsed = paymentReportSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: formatZodError(parsed.error) });
+  }
+
+  const { amount_usd, amount_bs, exchange_rate, method, reference } = parsed.data;
+  const user = req.user!;
+  const user_id =
+    user.role === 'member'
+      ? user.id
+      : parsed.data.user_id ?? parseInt(String(req.body.user_id), 10);
+
+  if ((user.role === 'admin' || user.role === 'receptionist') && Number.isNaN(user_id)) {
+    return res.status(400).json({ error: 'user_id requerido' });
+  }
+
+  try {
+    const { rows } = await query(
+      `INSERT INTO payments (user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url)
        VALUES ($1, $2, $3, $4, $5, $6, NULL)
        RETURNING id`,
-        [user_id, amount_usd, amount_bs ?? null, exchange_rate ?? null, method, reference ?? null]
-      );
+      [user_id, amount_usd, amount_bs ?? null, exchange_rate ?? null, method, reference ?? null]
+    );
 
-      const paymentId = Number(rows[0].id);
-      let proof_url: string | null = null;
+    const paymentId = Number(rows[0].id);
+    let proof_url: string | null = null;
 
-      if (req.file) {
-        try {
-          assertProofUpload(req.file);
-          if (isProofStorageRemote()) {
-            proof_url = await uploadPaymentProof(req.file, user_id, paymentId);
-          } else {
-            proof_url = localProofPathFromUpload(req.file);
-          }
-          await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [proof_url, paymentId]);
-        } catch (uploadErr) {
-          await query('DELETE FROM payments WHERE id = $1', [paymentId]);
-          throw uploadErr;
+    if (req.file) {
+      try {
+        assertProofUpload(req.file);
+        if (isProofStorageRemote()) {
+          proof_url = await uploadPaymentProof(req.file, user_id, paymentId);
+        } else {
+          proof_url = localProofPathFromUpload(req.file);
         }
+        await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [proof_url, paymentId]);
+      } catch (uploadErr) {
+        await query('DELETE FROM payments WHERE id = $1', [paymentId]);
+        throw uploadErr;
       }
-
-      res.json({ id: paymentId, status: 'pending', proof_url });
-      invalidateAdminStatsCache();
-      void notifyPaymentReported(paymentId, user_id, Number(amount_usd)).catch((err) => {
-        console.error('[notify] payment reported', err);
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error interno';
-      res.status(500).json({ error: message });
     }
+
+    res.json({ id: paymentId, status: 'pending', proof_url });
+    invalidateAdminStatsCache();
+    void notifyPaymentReported(paymentId, user_id, Number(amount_usd)).catch((err) =>
+      console.error('[notify] payment reported', err)
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
   }
-);
+});
 
 router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
   const { id } = req.params;
-  const membershipId = req.body.membership_id ? parseInt(String(req.body.membership_id), 10) : null;
+  const membershipId = req.body.membership_id
+    ? parseInt(String(req.body.membership_id), 10)
+    : null;
 
   try {
     let approvedUserId = 0;
@@ -250,34 +241,25 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
       }
     });
 
-    await logAudit(req.user!.id, 'payment.approve', {
-      payment_id: id,
-      membership_id: membershipId,
-    });
+    await logAudit(req.user!.id, 'payment.approve', { payment_id: id, membership_id: membershipId });
     invalidateAdminStatsCache();
     res.json({ success: true });
 
-    void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName, Number(id)).catch(
-      (err) => {
-        console.error('[notify] payment approved', err);
-      }
+    void notifyPaymentApproved(approvedUserId, approvedAmount, membershipName, Number(id)).catch((err) =>
+      console.error('[notify] payment approved', err)
     );
     void (async () => {
       try {
-        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [
-          approvedUserId,
-        ]);
+        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [approvedUserId]);
         const user = userRes.rows[0];
         if (user?.email) {
           await sendEmail({
             to: user.email,
-            subject: 'Pago aprobado — GymApure',
+            subject: 'Pago aprobado — Caribean Gym',
             html: paymentApprovedEmail(user.full_name, approvedAmount, membershipName),
           });
         }
-      } catch {
-        /* email failure is non-critical */
-      }
+      } catch { /* email failure is non-critical */ }
     })();
   } catch (err: unknown) {
     if (err instanceof AppError) {
@@ -307,29 +289,21 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
     invalidateAdminStatsCache();
     res.json({ success: true });
 
-    void notifyPaymentRejected(
-      Number(rows[0].user_id),
-      Number(rows[0].amount_usd),
-      Number(id)
-    ).catch((err) => {
-      console.error('[notify] payment rejected', err);
-    });
+    void notifyPaymentRejected(Number(rows[0].user_id), Number(rows[0].amount_usd), Number(id)).catch((err) =>
+      console.error('[notify] payment rejected', err)
+    );
     void (async () => {
       try {
-        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [
-          rows[0].user_id,
-        ]);
+        const userRes = await query('SELECT email, full_name FROM users WHERE id = $1', [rows[0].user_id]);
         const user = userRes.rows[0];
         if (user?.email) {
           await sendEmail({
             to: user.email,
-            subject: 'Pago rechazado — GymApure',
+            subject: 'Pago rechazado — Caribean Gym',
             html: paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd)),
           });
         }
-      } catch {
-        /* email failure is non-critical */
-      }
+      } catch { /* email failure is non-critical */ }
     })();
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
