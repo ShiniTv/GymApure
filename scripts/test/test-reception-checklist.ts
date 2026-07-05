@@ -118,7 +118,9 @@ async function main() {
     });
     ok(
       'POST /api/reception/walk-in',
-      walkIn.res.status === 201 && walkIn.data.success === true && walkIn.data.temporary_password,
+      walkIn.res.status === 201 &&
+        walkIn.data.success === true &&
+        (walkIn.data.email_sent === true || !!walkIn.data.temporary_password),
       walkIn.data.error
     );
 

@@ -17,6 +17,11 @@ import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { signSessionToken, sessionFailureStatus, verifySessionToken } from '../lib/sessionAuth.ts';
 import { sendEmail, welcomeEmail, passwordResetEmail } from '../lib/email.ts';
+import {
+  buildPasswordSetupUrl,
+  createPasswordSetupToken,
+  FORGOT_PASSWORD_EXPIRY_HOURS,
+} from '../lib/passwordSetupToken.ts';
 import { logger } from '../lib/logger.ts';
 
 const router = asyncRouter();
@@ -354,18 +359,8 @@ router.post(
 
     if (rows[0]) {
       const user = rows[0];
-      const rawToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-      await query(
-        `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
-         VALUES ($1, $2, $3)`,
-        [user.id, tokenHash, expiresAt.toISOString()]
-      );
-
-      const appOrigin = process.env.PUBLIC_APP_URL?.replace(/\/$/, '') ?? '';
-      const resetUrl = `${appOrigin}/reset-password?token=${rawToken}`;
+      const rawToken = await createPasswordSetupToken(user.id, FORGOT_PASSWORD_EXPIRY_HOURS);
+      const resetUrl = buildPasswordSetupUrl(rawToken);
       const sent = await sendEmail({
         to: user.email,
         subject: 'Recuperar contraseña — GymApure',

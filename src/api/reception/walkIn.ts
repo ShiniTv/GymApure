@@ -12,6 +12,13 @@ import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
 import { isTrainingShift } from '../../lib/trainingShift.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { sendEmail, walkInWelcomeEmail } from '../../lib/email.ts';
+import {
+  buildPasswordSetupUrl,
+  createPasswordSetupToken,
+  WALK_IN_SETUP_EXPIRY_HOURS,
+} from '../../lib/passwordSetupToken.ts';
+import { logger } from '../../lib/logger.ts';
 
 export const walkInSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
@@ -130,11 +137,34 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       }
     }
 
+    let emailSent = false;
+    try {
+      const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
+      const setupUrl = buildPasswordSetupUrl(rawToken);
+      emailSent = await sendEmail({
+        to: normalizedEmail,
+        subject: 'Bienvenido a GymApure — crea tu contraseña',
+        html: walkInWelcomeEmail(data.full_name, setupUrl, result.membershipName),
+      });
+      if (!emailSent) {
+        logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
+          userId: result.userId,
+        });
+      }
+    } catch (err) {
+      logger.error('Walk-in: error enviando correo de bienvenida', {
+        userId: result.userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     await logAudit(req.user!.id, 'reception.walk_in', {
       user_id: result.userId,
       payment_id: result.paymentId,
       membership_id: data.membership_id,
       check_in: data.check_in && checkedIn,
+      email_sent: emailSent,
+      setup_email: true,
     });
 
     invalidateAdminStatsCache();
@@ -159,7 +189,8 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       payment_id: result.paymentId,
       membership_name: result.membershipName,
       subscription: result.subscription,
-      temporary_password: tempPassword,
+      email_sent: emailSent,
+      ...(emailSent ? {} : { temporary_password: tempPassword }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,
     });

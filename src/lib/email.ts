@@ -122,6 +122,15 @@ export function passwordResetEmail(name: string, resetUrl: string): string {
     <p style="font-size:12px;color:#666">Si no solicitaste este cambio, ignora este correo. El enlace expira en 1 hora.</p>`);
 }
 
+export function walkInWelcomeEmail(name: string, setupUrl: string, membershipName: string): string {
+  return layout(`<h2 style="margin-top:0">¡Bienvenido a GymApure, ${name}!</h2>
+    <p>Tu membresía <strong>${membershipName}</strong> ya está activa.</p>
+    <p>Para completar tu registro y acceder a la app, crea tu contraseña personal con el botón de abajo.</p>
+    <p style="text-align:center;margin:24px 0"><a class="btn" href="${setupUrl}">Crear mi contraseña</a></p>
+    <p style="font-size:12px;color:#666">El enlace expira en 48 horas. Mientras tanto, puedes entrar al gym presentando tu cédula en recepción.</p>
+    <p style="margin-bottom:0;font-size:12px;color:#666">Si no reconoces este registro, contacta a recepción.</p>`);
+}
+
 export function welcomeEmail(name: string): string {
   return layout(`<h2 style="margin-top:0">Bienvenido, ${name}</h2>
     <p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder a la plataforma con tu correo y contraseña.</p>
