@@ -28,6 +28,7 @@ import {
   SegmentedControl,
   CedulaInput,
   Label,
+  Modal,
 } from '../components/ui';
 import { cn } from '../lib/utils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
@@ -72,6 +73,15 @@ interface InsideMember {
 
 type Tab = 'access' | 'inside' | 'register';
 
+interface AttendanceActionResult {
+  error?: string;
+  user_name?: string;
+  message?: string;
+  already_checked_in?: boolean;
+  already_checked_out?: boolean;
+  duration_label?: string;
+}
+
 /** Touch-friendly counter inputs — compact on mobile */
 const COUNTER_FIELD =
   'min-h-12 h-12 text-base font-semibold tracking-wide sm:min-h-[52px] sm:h-[52px] sm:text-lg';
@@ -95,6 +105,10 @@ export default function Reception() {
   const [inside, setInside] = useState<InsideMember[]>([]);
   const [insideCount, setInsideCount] = useState(0);
   const [feedRefresh, setFeedRefresh] = useState(0);
+  const [checkoutConfirm, setCheckoutConfirm] = useState<{ cedula: string; name: string } | null>(
+    null
+  );
+  const [checkingOutCedula, setCheckingOutCedula] = useState<string | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const isMobileShell = useMediaQuery('(max-width: 1023px)');
 
@@ -137,13 +151,15 @@ export default function Reception() {
   }, [loadStats]);
 
   const doLookup = useCallback(
-    async (value?: string) => {
+    async (value?: string, options?: { preserveMessage?: boolean }) => {
       const q = (value ?? cedula).trim();
       if (!q) return;
 
       setLookupLoading(true);
-      setMessage('');
-      setMessageType('');
+      if (!options?.preserveMessage) {
+        setMessage('');
+        setMessageType('');
+      }
       try {
         const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
         const data = await parseJsonResponse<LookupResult>(res);
@@ -161,12 +177,32 @@ export default function Reception() {
     [cedula]
   );
 
-  const handleAction = useCallback(
-    async (action: 'check-in' | 'check-out') => {
-      const q = cedula.trim();
-      if (!q) return;
+  const formatAttendanceMessage = useCallback(
+    (action: 'check-in' | 'check-out', data: AttendanceActionResult) => {
+      if (data.message) return data.message;
+      if (action === 'check-in') {
+        return data.already_checked_in
+          ? `${data.user_name}: ya tiene ingreso activo`
+          : `Entrada autorizada: ${data.user_name}`;
+      }
+      return data.already_checked_out
+        ? `${data.user_name}: ya registró salida`
+        : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`;
+    },
+    []
+  );
+
+  const runAttendanceAction = useCallback(
+    async (
+      action: 'check-in' | 'check-out',
+      memberCedula: string,
+      options?: { clearInput?: boolean }
+    ) => {
+      const q = memberCedula.trim();
+      if (!q) return false;
 
       setActionLoading(true);
+      if (action === 'check-out') setCheckingOutCedula(q);
       setMessage('');
       try {
         const res = await apiFetch(`/api/reception/${action}`, {
@@ -174,46 +210,59 @@ export default function Reception() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cedula: q }),
         });
-        const data = await parseJsonResponse<{
-          error?: string;
-          user_name?: string;
-          message?: string;
-          already_checked_in?: boolean;
-          already_checked_out?: boolean;
-          duration_label?: string;
-        }>(res);
+        const data = await parseJsonResponse<AttendanceActionResult>(res);
 
         if (res.ok) {
           setMessageType('success');
-          setMessage(
-            data.message ||
-              (action === 'check-in'
-                ? data.already_checked_in
-                  ? `${data.user_name}: ya tiene ingreso activo`
-                  : `Entrada autorizada: ${data.user_name}`
-                : data.already_checked_out
-                  ? `${data.user_name}: ya registró salida`
-                  : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`)
-          );
-          setCedula('');
-          setLookup(null);
-          void loadStats();
-          if (!isMobileShell) {
-            setTimeout(() => cedulaRef.current?.focus(), 100);
+          setMessage(formatAttendanceMessage(action, data));
+          if (options?.clearInput) {
+            setCedula('');
+            setLookup(null);
+            if (!isMobileShell) {
+              setTimeout(() => cedulaRef.current?.focus(), 100);
+            }
+          } else if (q.toUpperCase() === lookup?.user?.cedula?.toUpperCase()) {
+            void doLookup(q, { preserveMessage: true });
           }
-        } else {
-          setMessageType('error');
-          setMessage(data.error || 'Operación fallida');
+          void loadStats();
+          return true;
         }
+
+        setMessageType('error');
+        setMessage(data.error || 'Operación fallida');
+        return false;
       } catch {
         setMessageType('error');
         setMessage('Error de red');
+        return false;
       } finally {
         setActionLoading(false);
+        setCheckingOutCedula(null);
       }
     },
-    [cedula, loadStats, isMobileShell]
+    [formatAttendanceMessage, loadStats, isMobileShell, lookup?.user?.cedula, doLookup]
   );
+
+  const handleAction = useCallback(
+    (action: 'check-in' | 'check-out') => {
+      const q = cedula.trim();
+      if (!q) return;
+      void runAttendanceAction(action, q, { clearInput: true });
+    },
+    [cedula, runAttendanceAction]
+  );
+
+  const requestCheckout = useCallback((member: InsideMember) => {
+    if (!member.cedula?.trim()) return;
+    setCheckoutConfirm({ cedula: member.cedula.trim(), name: member.full_name });
+  }, []);
+
+  const confirmCheckout = useCallback(() => {
+    if (!checkoutConfirm) return;
+    const { cedula: memberCedula } = checkoutConfirm;
+    setCheckoutConfirm(null);
+    void runAttendanceAction('check-out', memberCedula);
+  }, [checkoutConfirm, runAttendanceAction]);
 
   useReceptionShortcuts({
     enabled: isCounterMode && tab === 'access',
@@ -237,6 +286,30 @@ export default function Reception() {
     }
     return <Badge variant="accent">Puede ingresar</Badge>;
   };
+
+  const actionMessageBanner =
+    message &&
+    (messageType === 'success' ? (
+      <div
+        className={cn(
+          'flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400',
+          isCounterMode && 'px-3 py-2.5'
+        )}
+      >
+        <CheckCircle className="h-5 w-5 shrink-0" />
+        {message}
+      </div>
+    ) : (
+      <div
+        className={cn(
+          'flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-400',
+          isCounterMode && 'px-3 py-2.5'
+        )}
+      >
+        <XCircle className="h-5 w-5 shrink-0" />
+        {message}
+      </div>
+    ));
 
   const lookupPanel = (
     <Card padding="md" rounded="xl" className="space-y-3">
@@ -288,24 +361,7 @@ export default function Reception() {
         )}
       </div>
 
-      {message && (
-        <div
-          className={cn(
-            'flex items-center gap-2 rounded-xl font-medium',
-            isCounterMode ? 'px-3 py-2.5 text-sm' : 'px-4 py-3 text-sm',
-            messageType === 'success'
-              ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-              : 'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
-          )}
-        >
-          {messageType === 'success' ? (
-            <CheckCircle className="h-5 w-5 shrink-0" />
-          ) : (
-            <XCircle className="h-5 w-5 shrink-0" />
-          )}
-          {message}
-        </div>
-      )}
+      {message && actionMessageBanner}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
@@ -421,21 +477,34 @@ export default function Reception() {
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
+      {tab === 'inside' && message && <div className="mb-3">{actionMessageBanner}</div>}
       <div className={cn('scroll-area space-y-2', isCounterMode ? 'max-h-56' : 'max-h-72')}>
         {inside.map((m) => (
           <div
             key={m.id}
-            className="flex items-center justify-between rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+            className="flex items-center gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
           >
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
                 {m.full_name}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">{m.cedula || 'Sin cédula'}</p>
             </div>
-            <p className="ml-2 shrink-0 text-xs font-medium text-emerald-600">
+            <p className="shrink-0 text-xs font-medium text-emerald-600">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
             </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 shrink-0 px-2.5 text-xs"
+              disabled={!m.cedula || actionLoading}
+              loading={checkingOutCedula === m.cedula?.trim()}
+              onClick={() => requestCheckout(m)}
+              title={m.cedula ? 'Registrar salida' : 'Sin cédula registrada'}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Salida</span>
+            </Button>
           </div>
         ))}
         {inside.length === 0 && (
@@ -445,6 +514,28 @@ export default function Reception() {
         )}
       </div>
     </Card>
+  );
+
+  const checkoutConfirmModal = (
+    <Modal
+      open={checkoutConfirm != null}
+      onClose={() => setCheckoutConfirm(null)}
+      title="¿Registrar salida?"
+      maxWidth="sm"
+    >
+      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        Se registrará la salida de{' '}
+        <strong className="text-zinc-900 dark:text-white">{checkoutConfirm?.name}</strong> del gym.
+      </p>
+      <div className="flex gap-3">
+        <Button variant="ghost" className="flex-1" onClick={() => setCheckoutConfirm(null)}>
+          Cancelar
+        </Button>
+        <Button className="flex-1" onClick={() => void confirmCheckout()} loading={actionLoading}>
+          Registrar salida
+        </Button>
+      </div>
+    </Modal>
   );
 
   if (isCounterMode) {
@@ -540,6 +631,7 @@ export default function Reception() {
             </div>
           )}
         </div>
+        {checkoutConfirmModal}
       </div>
     );
   }
@@ -581,6 +673,7 @@ export default function Reception() {
 
         {tab === 'register' && <ReceptionWalkInWizard onComplete={() => void loadStats()} />}
       </div>
+      {checkoutConfirmModal}
     </div>
   );
 }

@@ -95,6 +95,30 @@ async function main() {
     checkOut.data.error
   );
 
+  const insideAfterCheckout = await api('GET', '/api/attendance/inside');
+  const stillInside = Array.isArray(insideAfterCheckout.data.members)
+    ? insideAfterCheckout.data.members.some(
+        (m: { cedula?: string | null }) =>
+          m.cedula?.toUpperCase() === MEMBER_CEDULA.toUpperCase()
+      )
+    : true;
+  ok(
+    'Check-out remueve miembro de lista inside',
+    insideAfterCheckout.res.status === 200 && !stillInside,
+    stillInside ? 'miembro aún aparece dentro' : undefined
+  );
+
+  const lookupAfterCheckout = await api(
+    'GET',
+    `/api/reception/lookup?cedula=${encodeURIComponent(MEMBER_CEDULA)}`
+  );
+  ok(
+    'Lookup refleja salida registrada',
+    lookupAfterCheckout.res.status === 200 &&
+      lookupAfterCheckout.data.attendance?.is_inside === false,
+    lookupAfterCheckout.data.error
+  );
+
   const payments = await api('GET', '/api/payments');
   ok('GET /api/payments como recepcionista', payments.res.status === 200);
 

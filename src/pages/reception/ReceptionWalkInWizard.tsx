@@ -9,6 +9,7 @@ import {
   Fingerprint,
   Mail,
   AlertTriangle,
+  LogOut,
 } from 'lucide-react';
 import {
   apiFetch,
@@ -61,6 +62,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<WalkInSuccess | null>(null);
   const [copied, setCopied] = useState(false);
+  const [checkedOut, setCheckedOut] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   const [form, setForm] = useState({
     full_name: '',
@@ -126,6 +130,9 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     setSuccess(null);
     setError('');
     setCopied(false);
+    setCheckedOut(false);
+    setCheckoutLoading(false);
+    setCheckoutError('');
     setForm({
       full_name: '',
       cedula: '',
@@ -201,6 +208,30 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     }
   };
 
+  const handleWalkInCheckout = async () => {
+    if (!success?.user.cedula || checkedOut) return;
+    setCheckoutLoading(true);
+    setCheckoutError('');
+    try {
+      const res = await apiFetch('/api/reception/check-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cedula: success.user.cedula }),
+      });
+      const data = await parseJsonSafe<{ error?: string; success?: boolean }>(res);
+      if (!res.ok || !data.success) {
+        setCheckoutError(data.error || 'No se pudo registrar la salida');
+        return;
+      }
+      setCheckedOut(true);
+      onComplete?.();
+    } catch {
+      setCheckoutError('Error de red al registrar salida');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   if (success) {
     return (
       <Card padding="md" rounded="2xl" className="page-stack max-w-2xl">
@@ -234,9 +265,23 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             </strong>
           </p>
           {success.checked_in && (
-            <p className="flex items-center gap-2 font-bold text-emerald-600">
-              <Fingerprint className="h-4 w-4" />
-              Entrada autorizada hoy
+            <p
+              className={cn(
+                'flex items-center gap-2 font-bold',
+                checkedOut ? 'text-zinc-500 dark:text-zinc-400' : 'text-emerald-600'
+              )}
+            >
+              {checkedOut ? (
+                <>
+                  <LogOut className="h-4 w-4" />
+                  Salida registrada
+                </>
+              ) : (
+                <>
+                  <Fingerprint className="h-4 w-4" />
+                  Entrada autorizada hoy
+                </>
+              )}
             </p>
           )}
         </div>
@@ -280,6 +325,19 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
             )}
           </>
         )}
+
+        {success.checked_in && !checkedOut && (
+          <Button
+            variant="secondary"
+            className="min-h-[48px] w-full"
+            onClick={() => void handleWalkInCheckout()}
+            loading={checkoutLoading}
+          >
+            <LogOut className="mr-2 h-5 w-5" />
+            Registrar salida ahora
+          </Button>
+        )}
+        {checkoutError && <p className="text-sm text-red-600 dark:text-red-400">{checkoutError}</p>}
 
         <Button className="min-h-[48px] w-full" onClick={resetWizard}>
           Registrar otra persona
