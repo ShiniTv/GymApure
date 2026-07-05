@@ -68,7 +68,7 @@ async function startServer() {
           ? {
               directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'"],
+                scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co'],
                 mediaSrc: ["'self'", 'blob:', 'https://*.supabase.co'],

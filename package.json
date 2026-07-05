@@ -4,8 +4,10 @@
   "version": "2.5.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx scripts/dev/run-with-env.ts .env.dev server.ts",
+    "dev": "npm run copy:zxing-wasm && tsx scripts/dev/run-with-env.ts .env.dev server.ts",
     "dev:clean": "node scripts/dev/dev-clean.mjs",
+    "copy:zxing-wasm": "node scripts/copy-zxing-wasm.mjs",
+    "prebuild": "npm run copy:zxing-wasm",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
@@ -95,7 +97,8 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "web-push": "^3.6.7",
-    "zod": "^3.24.0"
+    "zod": "^3.24.0",
+    "zxing-wasm": "^3.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

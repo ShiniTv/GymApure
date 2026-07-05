@@ -58,10 +58,11 @@ export default function Layout() {
   const isReceptionist = user?.role === 'receptionist';
   const isMemberMobileShell = isMember && useMediaQuery('(max-width: 1023px)');
   const isReceptionMobileShell = isReceptionist && useMediaQuery('(max-width: 1023px)');
+  const isMobileShell = isMemberMobileShell || isReceptionMobileShell;
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
   const showMemberBottomNav = isMemberMobileShell && !hideMemberBottomNav;
-  const showReceptionBottomNav = isReceptionMobileShell;
-  const showMobileHamburger = !isMemberMobileShell && !isReceptionMobileShell;
+  const showReceptionBottomNav = isReceptionMobileShell && !isSidebarOpen;
+  const showMobileHamburger = !isMemberMobileShell;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function Layout() {
             className={clsx(
               'fixed top-14 bottom-0 left-0 z-40 transform border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
               SIDEBAR_WIDTH,
-              isMemberMobileShell && isSidebarOpen && 'z-[60]',
+              isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             )}
           >
@@ -317,7 +318,8 @@ export default function Layout() {
               <div
                 className={clsx(
                   'shrink-0 space-y-0.5 border-t border-zinc-200 dark:border-zinc-800',
-                  sidebarCollapsed ? 'px-0 py-2' : 'px-2.5 py-2.5'
+                  sidebarCollapsed ? 'px-0 py-2' : 'px-2.5 py-2.5',
+                  isMobileShell && 'pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-2.5'
                 )}
               >
                 {!sidebarCollapsed && (
@@ -442,7 +444,7 @@ export default function Layout() {
           <div
             className={clsx(
               'fixed inset-0 bg-black/50 lg:hidden',
-              isMemberMobileShell ? 'z-[55]' : 'z-30'
+              isMobileShell ? 'z-[55]' : 'z-30'
             )}
             onClick={() => {
               setIsSidebarOpen(false);
