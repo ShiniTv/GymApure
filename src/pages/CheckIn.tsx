@@ -189,7 +189,8 @@ export default function CheckIn() {
       value={cedula}
       onChange={setCedula}
       disabled={status === 'scanning'}
-      preventMobileKeyboard={isKioskMode}
+      preventMobileKeyboard={isKioskMode && !isMobileKiosk}
+      kioskSize={isMobileKiosk ? 'compact' : 'default'}
       className={!isKioskMode ? 'py-4 text-xl md:text-2xl' : undefined}
     />
   );
@@ -301,7 +302,7 @@ export default function CheckIn() {
               ) : (
                 <div className="space-y-4">
                   {cedulaField}
-                  {submitButton}
+                  {cedula.trim() ? submitButton : null}
                 </div>
               )}
             </div>

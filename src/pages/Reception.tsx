@@ -72,10 +72,11 @@ interface InsideMember {
 
 type Tab = 'access' | 'inside' | 'register';
 
-/** Touch-friendly but not oversized — counter / kiosk inputs */
-const COUNTER_FIELD = 'min-h-[52px] h-[52px] text-lg font-semibold tracking-wide';
-const COUNTER_ACTION = 'min-h-[52px]';
-const COUNTER_SEARCH_BTN = 'h-[52px] w-[52px] shrink-0 p-0';
+/** Touch-friendly counter inputs — compact on mobile */
+const COUNTER_FIELD =
+  'min-h-12 h-12 text-base font-semibold tracking-wide sm:min-h-[52px] sm:h-[52px] sm:text-lg';
+const COUNTER_ACTION = 'min-h-11 sm:min-h-[52px]';
+const COUNTER_SEARCH_BTN = 'h-12 w-12 shrink-0 p-0 sm:h-[52px] sm:w-[52px]';
 
 export default function Reception() {
   usePageTitle('Recepción');
@@ -269,7 +270,7 @@ export default function Reception() {
           </Button>
         </div>
         {isCounterMode && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-300">
+          <p className="hidden text-xs text-zinc-400 sm:block dark:text-zinc-300">
             Atajos:{' '}
             <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
               Enter
@@ -290,7 +291,8 @@ export default function Reception() {
       {message && (
         <div
           className={cn(
-            'flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium',
+            'flex items-center gap-2 rounded-xl font-medium',
+            isCounterMode ? 'px-3 py-2.5 text-sm' : 'px-4 py-3 text-sm',
             messageType === 'success'
               ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
               : 'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
@@ -307,8 +309,8 @@ export default function Reception() {
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
-          size={isCounterMode ? 'md' : 'sm'}
-          className={cn(isCounterMode && COUNTER_ACTION)}
+          size={isCounterMode ? 'sm' : 'sm'}
+          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
         >
@@ -316,9 +318,9 @@ export default function Reception() {
           <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
         </Button>
         <Button
-          size={isCounterMode ? 'md' : 'sm'}
+          size={isCounterMode ? 'sm' : 'sm'}
           variant="secondary"
-          className={cn(isCounterMode && COUNTER_ACTION)}
+          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
         >
@@ -397,8 +399,8 @@ export default function Reception() {
           </Link>
         </div>
       ) : (
-        <div className="py-5 text-center text-zinc-400 dark:text-zinc-300">
-          <Fingerprint className="mx-auto mb-1.5 h-7 w-7 opacity-30" />
+        <div className="py-4 text-center text-zinc-400 sm:py-5 dark:text-zinc-300">
+          <Fingerprint className="mx-auto mb-1.5 h-6 w-6 opacity-30 sm:h-7 sm:w-7" />
           <p className="label-caps text-[11px] font-medium">Ingrese una cédula para consultar</p>
         </div>
       )}
@@ -460,7 +462,10 @@ export default function Reception() {
                 Modo mostrador
               </h1>
               <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                {insideCount} dentro · F1 entrada · F2 salida
+                <span className="lg:hidden">{insideCount} dentro</span>
+                <span className="hidden lg:inline">
+                  {insideCount} dentro · F1 entrada · F2 salida
+                </span>
               </p>
             </div>
           </div>
@@ -475,7 +480,7 @@ export default function Reception() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <Link to="/check-in?kiosk=1">
+            <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
               <Button
                 variant="ghost"
                 size="sm"
@@ -512,18 +517,12 @@ export default function Reception() {
           />
 
           {tab === 'access' && (
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-              <div className="space-y-4 lg:col-span-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
+              <div className="space-y-3 lg:col-span-3 lg:space-y-4">
                 {lookupPanel}
-                {showMemberPanel ? (
-                  memberPanel
-                ) : (
-                  <p className="label-caps py-1 text-center text-[11px] text-zinc-400 dark:text-zinc-300">
-                    Ingrese una cédula para ver el visitante
-                  </p>
-                )}
+                {showMemberPanel && memberPanel}
               </div>
-              <aside className="space-y-4 lg:col-span-2">
+              <aside className="hidden space-y-4 lg:col-span-2 lg:block">
                 {insideList}
                 <Card padding="md" rounded="xl">
                   <h3 className="section-title mb-2">Actividad reciente</h3>
@@ -535,7 +534,11 @@ export default function Reception() {
 
           {tab === 'inside' && insideList}
 
-          {tab === 'register' && <ReceptionWalkInWizard onComplete={() => void loadStats()} />}
+          {tab === 'register' && (
+            <div className="pb-4">
+              <ReceptionWalkInWizard onComplete={() => void loadStats()} />
+            </div>
+          )}
         </div>
       </div>
     );

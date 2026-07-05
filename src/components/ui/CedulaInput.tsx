@@ -23,6 +23,7 @@ interface CedulaInputProps extends Omit<
   leadingIcon?: ReactNode;
   /** Avoid mobile keyboard until the user taps the field (kiosk QR-first flow). */
   preventMobileKeyboard?: boolean;
+  kioskSize?: 'default' | 'compact';
 }
 
 export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(function CedulaInput(
@@ -35,6 +36,7 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
     value,
     leadingIcon,
     preventMobileKeyboard = false,
+    kioskSize = 'default',
     ...props
   },
   forwardedRef
@@ -100,6 +102,8 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
   }, [externalError]);
 
   if (variant === 'kiosk') {
+    const isCompact = kioskSize === 'compact';
+
     return (
       <div className="w-full" onPointerDown={tapToType ? enableKeyboard : undefined}>
         <input
@@ -112,14 +116,16 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
           aria-label="Cédula de identidad"
           className={cn(
             'w-full text-center font-mono tracking-widest transition-all outline-none',
-            'min-h-[80px] rounded-xl py-6 text-3xl md:text-4xl',
+            isCompact
+              ? 'min-h-[52px] rounded-xl py-3 text-xl'
+              : 'min-h-[80px] rounded-xl py-6 text-3xl md:text-4xl',
             'border border-zinc-700 bg-zinc-900/50 text-white',
             'focus:ring-brand/30 focus-visible:ring-brand focus:ring-2 focus-visible:ring-2',
             tapToType && 'cursor-pointer',
             error && 'border-red-500',
             className
           )}
-          placeholder={tapToType ? 'Toque para ingresar cédula' : 'V-00000000'}
+          placeholder="V-00000000"
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}

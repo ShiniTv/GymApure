@@ -32,7 +32,12 @@ export function MemberBadgeModal({ open, onClose, member }: MemberBadgeModalProp
 
   return (
     <>
-      <Modal open={open} onClose={handleClose} title="Carné de membresía" maxWidth="sm">
+      <Modal
+        open={open && !showScanView}
+        onClose={handleClose}
+        title="Carné de membresía"
+        maxWidth="sm"
+      >
         <div className="flex flex-col gap-3">
           <SegmentedControl
             className="print:hidden"
