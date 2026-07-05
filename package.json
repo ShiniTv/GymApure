@@ -4,10 +4,8 @@
   "version": "2.5.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run copy:zxing-wasm && tsx scripts/dev/run-with-env.ts .env.dev server.ts",
+    "dev": "tsx scripts/dev/run-with-env.ts .env.dev server.ts",
     "dev:clean": "node scripts/dev/dev-clean.mjs",
-    "copy:zxing-wasm": "node scripts/copy-zxing-wasm.mjs",
-    "prebuild": "npm run copy:zxing-wasm",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
@@ -70,7 +68,6 @@
     "@sentry/react": "^10.62.0",
     "@supabase/supabase-js": "^2.108.1",
     "@tanstack/react-query": "^5.101.0",
-    "@yudiel/react-qr-scanner": "^2.6.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "compression": "^1.8.0",
@@ -81,6 +78,7 @@
     "express-rate-limit": "^7.5.0",
     "framer-motion": "^12.42.0",
     "helmet": "^8.1.0",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
     "multer": "^2.0.2",
@@ -97,8 +95,7 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "web-push": "^3.6.7",
-    "zod": "^3.24.0",
-    "zxing-wasm": "^3.1.0"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

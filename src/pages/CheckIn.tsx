@@ -233,8 +233,8 @@ export default function CheckIn() {
               >
                 {isKioskMode
                   ? isCheckIn
-                    ? 'Escanee el código QR del carné o ingrese su cédula'
-                    : 'Escanee el carné o ingrese su cédula para registrar la salida'
+                    ? 'Escanee el QR (carné impreso o “Mostrar QR para escaneo” en Perfil). Suba el brillo si usa pantalla de celular.'
+                    : 'Escanee el carné o ingrese su cédula. Si usa pantalla de celular, suba el brillo al máximo.'
                   : isCheckIn
                     ? 'Ingrese su cédula para registrar la entrada'
                     : 'Ingrese su cédula para registrar la salida'}
@@ -401,7 +401,7 @@ export default function CheckIn() {
                   </h2>
                   <p className="text-base leading-relaxed text-zinc-400">
                     {isCheckIn
-                      ? 'Apunte la cámara al código QR del reverso del carné de membresía.'
+                      ? 'Apunte la cámara al QR del carné. En celular, el miembro debe usar “Mostrar QR para escaneo” con brillo al máximo.'
                       : 'Escanee el mismo código QR para registrar su salida.'}
                   </p>
                 </div>

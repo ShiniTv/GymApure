@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'gymapure-static-v5';
+const STATIC_CACHE = 'gymapure-static-v6';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [

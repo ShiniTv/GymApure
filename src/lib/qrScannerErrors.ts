@@ -1,27 +1,3 @@
-import { prepareZXingModule } from 'zxing-wasm/reader';
-
-const ZXING_WASM_URL = '/zxing/zxing_reader.wasm';
-
-let ready: Promise<void> | undefined;
-
-export function ensureQrScannerReady(): Promise<void> {
-  ready ??= fetch(ZXING_WASM_URL, { cache: 'force-cache' }).then((res) => {
-    if (!res.ok) {
-      throw new Error(`No se pudo cargar el lector QR (${res.status})`);
-    }
-    prepareZXingModule({
-      overrides: {
-        locateFile: (path, prefix) => {
-          if (path.endsWith('.wasm')) return ZXING_WASM_URL;
-          return prefix + path;
-        },
-      },
-    });
-  });
-
-  return ready;
-}
-
 export function formatQrScannerError(message: string): string {
   const lower = message.toLowerCase();
 
@@ -31,7 +7,7 @@ export function formatQrScannerError(message: string): string {
   if (lower.includes('secure context') || lower.includes('https')) {
     return 'La cámara solo funciona con conexión segura (HTTPS).';
   }
-  if (lower.includes('no camera') || lower.includes('notfound')) {
+  if (lower.includes('no camera') || lower.includes('notfound') || lower.includes('device')) {
     return 'No se detectó ninguna cámara en este dispositivo.';
   }
   if (lower.includes('in use') || lower.includes('notreadable')) {

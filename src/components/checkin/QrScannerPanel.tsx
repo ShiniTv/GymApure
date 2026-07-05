@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Scanner } from '@yudiel/react-qr-scanner';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { Spinner } from '../ui';
-import { ensureQrScannerReady, formatQrScannerError } from '../../lib/qrScannerInit';
+import { formatQrScannerError } from '../../lib/qrScannerErrors';
 import { cn } from '../../lib/utils';
 
 interface QrScannerPanelProps {
@@ -11,9 +11,21 @@ interface QrScannerPanelProps {
   className?: string;
 }
 
+function getQrBoxSize(): number {
+  if (typeof window === 'undefined') return 250;
+  return Math.min(280, Math.max(200, Math.floor(window.innerWidth * 0.7)));
+}
+
 export function QrScannerPanel({ active, paused = false, onScan, className }: QrScannerPanelProps) {
+  const regionId = useId().replace(/:/g, '');
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const onScanRef = useRef(onScan);
+  const pausedRef = useRef(paused);
   const [initState, setInitState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  onScanRef.current = onScan;
+  pausedRef.current = paused;
 
   useEffect(() => {
     if (!active) {
@@ -26,35 +38,56 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
     setInitState('loading');
     setCameraError(null);
 
-    void ensureQrScannerReady()
+    const scanner = new Html5Qrcode(regionId, {
+      verbose: false,
+      useBarCodeDetectorIfSupported: false,
+    });
+    scannerRef.current = scanner;
+    const qrbox = getQrBoxSize();
+
+    void scanner
+      .start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: qrbox, height: qrbox },
+          aspectRatio: 1,
+          disableFlip: true,
+        },
+        (decodedText) => {
+          if (pausedRef.current) return;
+          onScanRef.current(decodedText);
+        },
+        () => {
+          // Ignorar frames sin detección
+        }
+      )
       .then(() => {
         if (!cancelled) setInitState('ready');
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (!cancelled) {
           setInitState('error');
-          setCameraError(
-            'No se pudo iniciar el lector QR. Use la cédula manual o recargue la página.'
-          );
+          const message = err instanceof Error ? err.message : String(err);
+          setCameraError(formatQrScannerError(message));
         }
       });
 
     return () => {
       cancelled = true;
+      const instance = scannerRef.current;
+      scannerRef.current = null;
+      if (!instance) return;
+      void instance
+        .stop()
+        .then(() => instance.clear())
+        .catch(() => {
+          instance.clear();
+        });
     };
-  }, [active]);
-
-  const handleScan = useCallback(
-    (detectedCodes: { rawValue: string }[]) => {
-      const value = detectedCodes[0]?.rawValue;
-      if (value) onScan(value);
-    },
-    [onScan]
-  );
+  }, [active, regionId]);
 
   if (!active) return null;
-
-  const showScanner = initState === 'ready' && !cameraError;
 
   return (
     <div
@@ -66,7 +99,7 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
       {initState === 'loading' && (
         <div className="flex h-full min-h-[10rem] flex-col items-center justify-center gap-3 p-4 text-center">
           <Spinner size="lg" className="text-zinc-200" />
-          <p className="text-sm text-zinc-300">Iniciando lector QR…</p>
+          <p className="text-sm text-zinc-300">Iniciando cámara…</p>
         </div>
       )}
 
@@ -78,22 +111,16 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
         </div>
       )}
 
-      {showScanner && (
-        <Scanner
-          paused={paused}
-          allowMultiple={false}
-          onScan={handleScan}
-          onError={(error) => setCameraError(formatQrScannerError(error?.message ?? ''))}
-          constraints={{ facingMode: 'environment' }}
-          formats={['qr_code']}
-          classNames={{
-            container: 'relative h-full w-full min-h-[10rem]',
-            video: 'h-full w-full object-cover',
-          }}
-        />
-      )}
+      <div
+        id={regionId}
+        className={cn(
+          'min-h-[10rem] w-full',
+          initState !== 'ready' &&
+            'pointer-events-none absolute h-0 min-h-0 overflow-hidden opacity-0'
+        )}
+      />
 
-      {showScanner && (
+      {initState === 'ready' && !cameraError && (
         <div
           className="pointer-events-none absolute inset-4 rounded-xl border-2 border-dashed border-white/50"
           aria-hidden

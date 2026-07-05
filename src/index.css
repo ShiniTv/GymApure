@@ -565,3 +565,9 @@ html.member-has-workout-fab .member-chat-panel {
     margin-top: 8mm;
   }
 }
+
+/* html5-qrcode kiosk scanner */
+[id] video {
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
