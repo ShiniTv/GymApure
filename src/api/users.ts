@@ -204,7 +204,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
       ),
       query(
         `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
-                u.training_shift, u.created_at,
+                u.profile_image, u.dob, u.training_shift, u.created_at,
                 lw.last_workout,
                 sub.membership_name,
                 sub.end_date AS subscription_end,

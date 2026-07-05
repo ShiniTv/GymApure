@@ -3,6 +3,7 @@
  * Requiere servidor en marcha, migración aplicada y npm run db:restore-demo.
  */
 import 'dotenv/config';
+import { buildBadgeQrValue, parseBadgeScan } from '../../src/lib/badgeQr';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
@@ -93,7 +94,12 @@ async function main() {
   const memberUser = await api('GET', '/api/users/1');
   ok('Perfil miembro incluye training_shift', memberUser.res.status === 200 || memberUser.res.status === 404);
 
-  ok('buildBadgeQrUrl helper', true);
+  ok('buildBadgeQrValue canonical', buildBadgeQrValue('v12345678') === 'V-12345678');
+  ok('parseBadgeScan plain cedula', parseBadgeScan('V-12345678') === 'V-12345678');
+  ok(
+    'parseBadgeScan legacy JSON',
+    parseBadgeScan('{"cedula":"V-87654321","v":1}') === 'V-87654321'
+  );
 
   console.log(`\nResultado: ${passed} OK, ${failed} FAIL`);
   process.exit(failed > 0 ? 1 : 0);

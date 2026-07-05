@@ -983,6 +983,9 @@ export default function Profile() {
                 training_shift: profile.training_shift ?? null,
                 role: user.role,
                 created_at: profile.created_at ?? null,
+                phone: profile.phone,
+                dob: profile.dob,
+                subscription_end: subscription?.end_date ?? null,
               }
             : null
         }

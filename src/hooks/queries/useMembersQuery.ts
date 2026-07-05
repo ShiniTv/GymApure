@@ -14,6 +14,8 @@ export interface Member {
   days_remaining?: number | null;
   training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
   profile_image?: string | null;
+  phone?: string | null;
+  dob?: string | null;
   created_at?: string | null;
 }
 

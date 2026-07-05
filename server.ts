@@ -94,7 +94,7 @@ async function startServer() {
   app.use((_req, res, next) => {
     res.setHeader(
       'Permissions-Policy',
-      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+      'camera=(self), microphone=(), geolocation=(), interest-cohort=()'
     );
     next();
   });

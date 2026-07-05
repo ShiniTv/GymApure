@@ -297,6 +297,9 @@ export default function Members() {
       training_shift: member.training_shift,
       role: member.role,
       created_at: member.created_at,
+      phone: member.phone,
+      dob: member.dob,
+      subscription_end: member.subscription_end,
     });
   }, []);
 

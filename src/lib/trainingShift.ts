@@ -40,8 +40,3 @@ export function formatMembershipId(userId: number): string {
   const year = new Date().getFullYear();
   return `GA-${year}-${String(userId).padStart(5, '0')}`;
 }
-
-export function buildBadgeQrUrl(cedula: string): string {
-  const payload = encodeURIComponent(JSON.stringify({ cedula, v: 1 }));
-  return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${payload}`;
-}

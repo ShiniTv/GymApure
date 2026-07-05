@@ -551,4 +551,17 @@ html.member-has-workout-fab .member-chat-panel {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+
+  #printable-badge .member-badge-card {
+    width: 54mm;
+    min-height: 85mm;
+    border-radius: 3mm;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #printable-badge .member-badge-card + .member-badge-card {
+    margin-top: 8mm;
+  }
 }
