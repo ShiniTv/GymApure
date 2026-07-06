@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
   useRoutinesLibraryQuery,
@@ -32,11 +32,11 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isWithinInterval,
-  parseISO,
   isAfter,
   isBefore,
   startOfDay,
 } from 'date-fns';
+import { parseDateOnly } from '../lib/dates';
 import type {
   Routine,
   RoutineExercise,
@@ -67,11 +67,11 @@ function getMemberRoutineStatus(
 ): 'upcoming' | 'ending' | 'active' | null {
   const today = startOfDay(new Date());
   if (startDate) {
-    const start = startOfDay(parseISO(startDate));
+    const start = startOfDay(parseDateOnly(startDate));
     if (isAfter(start, today)) return 'upcoming';
   }
   if (endDate) {
-    const end = startOfDay(parseISO(endDate));
+    const end = startOfDay(parseDateOnly(endDate));
     if (isBefore(end, today)) return null;
     if (!isAfter(end, addDays(today, 7))) return 'ending';
   }
@@ -432,12 +432,14 @@ export default function Routines() {
           end_date: assignForm.end_date,
         }),
       });
-      await parseJsonResponse(res);
+      const data = await parseJsonResponse<{ updated?: boolean }>(res);
       setIsAssigningFromCalendar(false);
       setAssignForm((prev) => ({ ...prev, user_id: '', routine_id: '' }));
       invalidateRoutines();
+      toast?.success(data.updated ? 'Fechas actualizadas' : 'Rutina asignada');
     } catch (err) {
       clientLogger.error('Failed to assign routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo asignar la rutina');
     }
   };
 
@@ -457,8 +459,8 @@ export default function Routines() {
       member.routines.forEach((routine) => {
         if (!routine.start_date || !routine.end_date) return;
         try {
-          const start = startOfDay(parseISO(routine.start_date));
-          const end = startOfDay(parseISO(routine.end_date));
+          const start = startOfDay(parseDateOnly(routine.start_date));
+          const end = startOfDay(parseDateOnly(routine.end_date));
           if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return;
           calendarDays.forEach((day) => {
             const dayStart = startOfDay(day);
@@ -481,23 +483,11 @@ export default function Routines() {
     return map;
   }, [assignments, calendarDays]);
 
-  const calendarAutoSelected = useRef(false);
-
   useEffect(() => {
-    if (view !== 'calendar') {
-      calendarAutoSelected.current = false;
+    if (view === 'calendar' && selectedDay === null) {
+      setSelectedDay(new Date());
     }
-  }, [view]);
-
-  useEffect(() => {
-    if (view !== 'calendar' || loadingAssignments || calendarAutoSelected.current) return;
-    const today = new Date();
-    const todayStr = format(today, 'yyyy-MM-dd');
-    if (assignmentsByDay[todayStr]?.length) {
-      setSelectedDay(today);
-      calendarAutoSelected.current = true;
-    }
-  }, [view, loadingAssignments, assignmentsByDay]);
+  }, [view, selectedDay]);
 
   const routinesPage = (
     <div className="page-stack-tight">
@@ -559,7 +549,9 @@ export default function Routines() {
                           {routine.start_date && (
                             <p className="text-[11px] text-zinc-500">
                               Inicia{' '}
-                              {format(parseISO(routine.start_date), 'dd MMM yyyy', { locale: es })}
+                              {format(parseDateOnly(routine.start_date), 'dd MMM yyyy', {
+                                locale: es,
+                              })}
                             </p>
                           )}
                         </div>
@@ -585,7 +577,9 @@ export default function Routines() {
                           {routine.end_date && (
                             <p className="text-[11px] text-zinc-500">
                               Hasta{' '}
-                              {format(parseISO(routine.end_date), 'dd MMM yyyy', { locale: es })}
+                              {format(parseDateOnly(routine.end_date), 'dd MMM yyyy', {
+                                locale: es,
+                              })}
                             </p>
                           )}
                         </div>
@@ -703,7 +697,14 @@ export default function Routines() {
               calendarDays={calendarDays}
               assignmentsByDay={assignmentsByDay}
               onAssignDirect={() => {
-                setAssignSingleDay(false);
+                const day = selectedDay ?? new Date();
+                const dateStr = format(day, 'yyyy-MM-dd');
+                setAssignForm((prev) => ({
+                  ...prev,
+                  start_date: dateStr,
+                  end_date: dateStr,
+                }));
+                setAssignSingleDay(true);
                 setIsAssigningFromCalendar(true);
               }}
               onAssignOnDay={(dateStr) => {

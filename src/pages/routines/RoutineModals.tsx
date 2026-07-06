@@ -1,10 +1,8 @@
 import React from 'react';
-import { UserPlus } from 'lucide-react';
-import { Button, Modal, Label, Input, Select, DifficultySelect } from '../../components/ui';
+import { Button, Modal, Label, Input, DifficultySelect } from '../../components/ui';
+import { AssignRoutineForm } from '../../components/routines/AssignRoutineForm';
 import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
-import { formatDifficulty } from '../../lib/utils';
-import { SHIFT_LABELS } from '../../lib/trainingShift';
 import { parseNonNegativeInt } from '../../lib/parseFormNumber';
 import type { RoutineExerciseForm } from '../../lib/routineExercisePayload';
 import type { Routine, RoutineExercise, Member, ExerciseOption } from './types';
@@ -118,120 +116,23 @@ export function RoutineModals({
         onClose={() => {
           setIsAssigningFromCalendar(false);
         }}
+        initialFocus="dialog"
         title={
           <>
             ASIGNAR <span className="text-brand">RUTINA</span>
           </>
         }
       >
-        <div className="space-y-4">
-          <div>
-            <Label>Seleccionar Miembro</Label>
-            <Select
-              value={assignForm.user_id}
-              onChange={(e) => {
-                setAssignForm({ ...assignForm, user_id: e.target.value, routine_id: '' });
-              }}
-            >
-              <option value="">Selección...</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name}
-                  {m.training_shift ? ` (${SHIFT_LABELS[m.training_shift].split(' / ')[0]})` : ''}
-                </option>
-              ))}
-            </Select>
-            {selectedMemberShift && (
-              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                Turno del miembro:{' '}
-                <span className="text-brand font-semibold">
-                  {SHIFT_LABELS[selectedMemberShift]}
-                </span>
-              </p>
-            )}
-          </div>
-          <div>
-            <Label>Seleccionar Rutina</Label>
-            <Select
-              className="font-mono text-sm"
-              value={assignForm.routine_id}
-              onChange={(e) => {
-                setAssignForm({ ...assignForm, routine_id: e.target.value });
-              }}
-            >
-              <option value="">Selección...</option>
-              {filteredRoutines.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({formatDifficulty(r.difficulty)})
-                  {r.trainer_name ? ` — ${r.trainer_name}` : ''}
-                </option>
-              ))}
-            </Select>
-            {selectedMemberShift && (
-              <div className="border-brand/20 bg-brand/5 mt-2 rounded-lg border px-3 py-2">
-                <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
-                  Disponibles en {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}:
-                </p>
-                <p className="text-brand mt-0.5 text-xs font-bold">
-                  {availableTrainers.length > 0
-                    ? availableTrainers.map((t) => t.full_name).join(', ')
-                    : 'Ningún entrenador asignado a este turno'}
-                </p>
-              </div>
-            )}
-            {selectedMemberShift && filteredRoutines.length === 0 && (
-              <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-                No hay rutinas de entrenadores en el turno{' '}
-                {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}.
-              </p>
-            )}
-          </div>
-          <div className={assignSingleDay ? 'space-y-2' : 'grid grid-cols-2 gap-4'}>
-            <div>
-              <Label>{assignSingleDay ? 'Fecha' : 'Inicio'}</Label>
-              <Input
-                type="date"
-                value={assignForm.start_date}
-                readOnly={assignSingleDay}
-                onChange={(e) => {
-                  const nextStart = e.target.value;
-                  setAssignForm({
-                    ...assignForm,
-                    start_date: nextStart,
-                    ...(assignSingleDay ? { end_date: nextStart } : {}),
-                  });
-                }}
-              />
-            </div>
-            {!assignSingleDay && (
-              <div>
-                <Label>Fin</Label>
-                <Input
-                  type="date"
-                  value={assignForm.end_date}
-                  onChange={(e) => {
-                    setAssignForm({ ...assignForm, end_date: e.target.value });
-                  }}
-                />
-              </div>
-            )}
-            {assignSingleDay && (
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                Asignación para un solo día en el calendario.
-              </p>
-            )}
-          </div>
-          <Button
-            variant="secondary"
-            className="w-full"
-            size="lg"
-            onClick={handleQuickAssign}
-            disabled={!assignForm.user_id || !assignForm.routine_id}
-          >
-            <UserPlus className="h-5 w-5" />
-            Asignar Rutina
-          </Button>
-        </div>
+        <AssignRoutineForm
+          value={assignForm}
+          onChange={setAssignForm}
+          onSubmit={handleQuickAssign}
+          members={members}
+          routines={filteredRoutines}
+          singleDay={assignSingleDay}
+          selectedMemberShift={selectedMemberShift}
+          availableTrainers={availableTrainers}
+        />
       </Modal>
 
       <Modal
@@ -333,6 +234,7 @@ export function RoutineModals({
         onClose={() => {
           setIsAddingExercise(false);
         }}
+        initialFocus="dialog"
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
@@ -394,6 +296,7 @@ export function RoutineModals({
         onClose={() => {
           setIsEditingExercise(false);
         }}
+        initialFocus="dialog"
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
         maxWidth="xl"
         scrollable

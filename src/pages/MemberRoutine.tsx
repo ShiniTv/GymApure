@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -16,8 +16,9 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
+import { formatDateOnly } from '../lib/dates';
 import { useAuth } from '../context/AuthContext';
 import { useToastOptional } from '../context/ToastContext';
 import {
@@ -27,7 +28,6 @@ import {
   PageHeader,
   Label,
   Input,
-  Select,
   Badge,
   Spinner,
   EmptyState,
@@ -39,6 +39,7 @@ import {
   AnchoredMenu,
 } from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
+import { AssignRoutineForm } from '../components/routines/AssignRoutineForm';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -88,10 +89,11 @@ export default function MemberRoutine() {
   // Assignment Modal State
   const [isAssigning, setIsAssigning] = useState(false);
   const [availableRoutines, setAvailableRoutines] = useState<RoutineOption[]>([]);
-  const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
-  const [assignDates, setAssignDates] = useState({
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  const [assignForm, setAssignForm] = useState({
+    user_id: '',
+    routine_id: '',
+    start_date: format(new Date(), 'yyyy-MM-dd'),
+    end_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
   });
 
   // Create/Edit Routine State
@@ -119,6 +121,8 @@ export default function MemberRoutine() {
   const routineMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
+
+  const assignedRoutineIds = useMemo(() => new Set(routines.map((r) => r.id)), [routines]);
 
   const refreshUserRoutines = () =>
     apiFetch(`/api/users/${id}/routines`)
@@ -207,6 +211,16 @@ export default function MemberRoutine() {
       });
   };
 
+  const openAssignModal = () => {
+    setAssignForm((prev) => ({
+      ...prev,
+      user_id: id ?? '',
+      routine_id: '',
+    }));
+    setIsAssigning(true);
+    apiFetchAvailableRoutines();
+  };
+
   const handleInlineUpdate = async (
     routineId: number,
     exercise: Exercise,
@@ -251,25 +265,28 @@ export default function MemberRoutine() {
   };
 
   const handleAssignRoutine = async () => {
-    if (!selectedRoutineId || !user) return;
+    if (!assignForm.routine_id || !user || !id) return;
 
     try {
       const res = await apiFetch(`/api/users/${id}/routines`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          routine_id: parseInt(selectedRoutineId),
+          routine_id: parseInt(assignForm.routine_id),
           assigned_by: user.id,
-          start_date: assignDates.start_date,
-          end_date: assignDates.end_date,
+          start_date: assignForm.start_date,
+          end_date: assignForm.end_date,
         }),
       });
 
-      await parseJsonResponse(res);
+      const data = await parseJsonResponse<{ updated?: boolean }>(res);
       setIsAssigning(false);
+      setAssignForm((prev) => ({ ...prev, routine_id: '' }));
       await refreshUserRoutines();
+      toast?.success(data.updated ? 'Fechas actualizadas' : 'Rutina asignada');
     } catch (err) {
       clientLogger.error('Failed to assign routine to member', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo asignar la rutina');
     }
   };
 
@@ -304,8 +321,10 @@ export default function MemberRoutine() {
       setIsCreating(false);
       setRoutineForm({ name: '', difficulty: 'Beginner' });
       await refreshUserRoutines();
+      toast?.success('Rutina creada y asignada');
     } catch (err) {
       clientLogger.error('Failed to create routine for member', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo crear la rutina');
     }
   };
 
@@ -562,8 +581,7 @@ export default function MemberRoutine() {
           className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
           onClick={() => {
             setMoreMenuOpen(false);
-            setIsAssigning(true);
-            apiFetchAvailableRoutines();
+            openAssignModal();
           }}
         >
           <Plus className="h-4 w-4" />
@@ -833,6 +851,7 @@ export default function MemberRoutine() {
         onClose={() => {
           setIsAddingExercise(false);
         }}
+        initialFocus="dialog"
         title="Añadir Ejercicio"
         maxWidth="xl"
         scrollable
@@ -894,6 +913,7 @@ export default function MemberRoutine() {
         onClose={() => {
           setIsEditingExercise(false);
         }}
+        initialFocus="dialog"
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
         maxWidth="xl"
         scrollable
@@ -948,53 +968,18 @@ export default function MemberRoutine() {
         onClose={() => {
           setIsAssigning(false);
         }}
+        initialFocus="dialog"
         title="Asignar Rutina"
       >
-        <div className="space-y-4">
-          <div>
-            <Label>Seleccionar Rutina</Label>
-            <Select
-              value={selectedRoutineId}
-              onChange={(e) => {
-                setSelectedRoutineId(e.target.value);
-              }}
-            >
-              <option value="">Selecciona una rutina...</option>
-              {availableRoutines
-                .filter((ar) => !routines.some((r) => r.id === ar.id))
-                .map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} ({formatDifficulty(r.difficulty)})
-                  </option>
-                ))}
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Fecha Inicio</Label>
-              <Input
-                type="date"
-                value={assignDates.start_date}
-                onChange={(e) => {
-                  setAssignDates({ ...assignDates, start_date: e.target.value });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Fecha Fin</Label>
-              <Input
-                type="date"
-                value={assignDates.end_date}
-                onChange={(e) => {
-                  setAssignDates({ ...assignDates, end_date: e.target.value });
-                }}
-              />
-            </div>
-          </div>
-          <Button className="w-full" onClick={handleAssignRoutine} disabled={!selectedRoutineId}>
-            Asignar Rutina
-          </Button>
-        </div>
+        <AssignRoutineForm
+          value={assignForm}
+          onChange={setAssignForm}
+          onSubmit={handleAssignRoutine}
+          routines={availableRoutines}
+          memberIdFixed={id}
+          allowReassign
+          assignedRoutineIds={assignedRoutineIds}
+        />
       </Modal>
 
       <Modal
@@ -1075,8 +1060,7 @@ export default function MemberRoutine() {
                     size="sm"
                     variant="secondary"
                     onClick={() => {
-                      setIsAssigning(true);
-                      apiFetchAvailableRoutines();
+                      openAssignModal();
                     }}
                   >
                     Asignar existente
@@ -1096,7 +1080,7 @@ export default function MemberRoutine() {
               const formatDate = (value: string | null | undefined) => {
                 if (!value) return '—';
                 try {
-                  return format(new Date(value), 'dd/MM/yy', { locale: es });
+                  return formatDateOnly(value, 'dd/MM/yy', { locale: es });
                 } catch {
                   return '—';
                 }

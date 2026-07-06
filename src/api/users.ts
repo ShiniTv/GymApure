@@ -603,13 +603,30 @@ router.post('/:id/routines', authorize(['trainer']), async (req: AuthRequest, re
   }
   const assigned_by = req.user!.id;
   try {
-    const { rows } = await query(
+    const existing = await query<{ id: number }>(
+      `SELECT id FROM user_routines WHERE user_id = $1 AND routine_id = $2 LIMIT 1`,
+      [req.params.id, routine_id]
+    );
+
+    if (existing.rows.length > 0) {
+      const { rows } = await query<{ id: number }>(
+        `UPDATE user_routines
+         SET start_date = $1, end_date = $2, assigned_by = $3, assigned_at = NOW()
+         WHERE user_id = $4 AND routine_id = $5
+         RETURNING id`,
+        [start_date, end_date, assigned_by, req.params.id, routine_id]
+      );
+      res.json({ id: rows[0].id, success: true, updated: true });
+      return;
+    }
+
+    const { rows } = await query<{ id: number }>(
       `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
       [req.params.id, routine_id, assigned_by, start_date, end_date]
     );
-    res.json({ id: rows[0].id, success: true });
+    res.json({ id: rows[0].id, success: true, updated: false });
 
     void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) => {
       logger.error('Error enviando notificacion de rutina asignada', {

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { format, parseISO, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
+import { format, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
+import { parseDateOnly } from '../../lib/dates';
 import { dateLocale as es } from '../../lib/dateLocale';
 import {
   AlertTriangle,
@@ -37,12 +38,12 @@ export default function MemberDashboard() {
   const upcomingRoutines = memberRoutines.filter((r) => {
     const row = r as { start_date?: string | null; end_date?: string | null };
     if (!row.start_date) return false;
-    return isAfter(startOfDay(parseISO(row.start_date)), today);
+    return isAfter(startOfDay(parseDateOnly(row.start_date)), today);
   });
   const endingRoutines = memberRoutines.filter((r) => {
     const row = r as { start_date?: string | null; end_date?: string | null };
     if (!row.end_date) return false;
-    const end = startOfDay(parseISO(row.end_date));
+    const end = startOfDay(parseDateOnly(row.end_date));
     return !isBefore(end, today) && !isAfter(end, addDays(today, 7));
   });
 
@@ -177,7 +178,8 @@ export default function MemberDashboard() {
                     </p>
                     {row.start_date && (
                       <p className="mt-0.5 text-xs text-zinc-500">
-                        Inicia {format(parseISO(row.start_date), 'dd MMM yyyy', { locale: es })}
+                        Inicia{' '}
+                        {format(parseDateOnly(row.start_date), 'dd MMM yyyy', { locale: es })}
                       </p>
                     )}
                   </div>
@@ -198,7 +200,7 @@ export default function MemberDashboard() {
                     </p>
                     {row.end_date && (
                       <p className="mt-0.5 text-xs text-zinc-500">
-                        Hasta {format(parseISO(row.end_date), 'dd MMM yyyy', { locale: es })}
+                        Hasta {format(parseDateOnly(row.end_date), 'dd MMM yyyy', { locale: es })}
                       </p>
                     )}
                   </div>
