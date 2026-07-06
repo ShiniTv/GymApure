@@ -54,7 +54,9 @@ import { PullToRefreshContainer } from '../components/PullToRefresh';
 import {
   buildRoutineExercisePayload,
   buildRoutineExerciseUpdatePayload,
+  defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
+import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
 
 type MemberRoutineRow = Routine & { start_date?: string | null; end_date?: string | null };
 
@@ -100,13 +102,7 @@ export default function Routines() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<RoutineExercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [newExercise, setNewExercise] = useState({
-    exercise_id: '',
-    sets: 3,
-    reps: 10,
-    rest_seconds: 60,
-    weight_suggestion: '',
-  });
+  const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [deleteRoutineTarget, setDeleteRoutineTarget] = useState<Routine | null>(null);
   const [deleteRoutineError, setDeleteRoutineError] = useState<string | null>(null);
   const [deletingRoutine, setDeletingRoutine] = useState(false);
@@ -223,7 +219,12 @@ export default function Routines() {
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
     const data = await parseJsonResponse<{ exercises: RoutineExercise[] }>(res);
-    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+    const exercises = (Array.isArray(data.exercises) ? data.exercises : []).map((exercise) => ({
+      ...exercise,
+      set_prescription:
+        parseSetPrescriptionFromApi(exercise.set_prescription) ??
+        deriveSetPrescription(exercise.sets, exercise.reps),
+    }));
     setRoutines((prev) =>
       prev.map((r) =>
         r.id === routineId ? { ...r, exercises, exercise_count: exercises.length } : r
@@ -404,13 +405,7 @@ export default function Routines() {
       });
       await parseJsonResponse(res);
       setIsAddingExercise(false);
-      setNewExercise({
-        exercise_id: '',
-        sets: 3,
-        reps: 10,
-        rest_seconds: 60,
-        weight_suggestion: '',
-      });
+      setNewExercise(defaultRoutineExerciseForm());
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';

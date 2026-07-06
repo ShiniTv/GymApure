@@ -7,6 +7,7 @@ export interface RoutineExercise {
   reps: number;
   rest_seconds: number;
   weight_suggestion: string;
+  set_prescription?: import('../../lib/setPrescription').SetPrescriptionRow[] | null;
 }
 
 export interface Routine {

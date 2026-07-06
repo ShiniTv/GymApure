@@ -34,7 +34,6 @@ import {
   Avatar,
   SegmentedControl,
   PageState,
-  BackToDashboardLink,
 } from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
@@ -43,7 +42,15 @@ import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
 import {
   buildRoutineExercisePayload,
   buildRoutineExerciseUpdatePayload,
+  defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
+import { SetPrescriptionEditor } from '../components/exercise/SetPrescriptionEditor';
+import {
+  deriveSetPrescription,
+  formatSetPrescriptionSummary,
+  parseSetPrescriptionFromApi,
+  resizeSetPrescription,
+} from '../lib/setPrescription';
 
 import type {
   Routine,
@@ -100,16 +107,12 @@ export default function MemberRoutine() {
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
-  const [newExercise, setNewExercise] = useState({
-    exercise_id: '',
-    sets: 3,
-    reps: 10,
-    rest_seconds: 60,
-    weight_suggestion: '',
-  });
+  const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [coachingTab, setCoachingTab] = useState<'rutinas' | 'perfil' | 'mediciones'>('rutinas');
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [routineMenuId, setRoutineMenuId] = useState<number | null>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
+  const routineMenuRef = useRef<HTMLDivElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
 
@@ -123,7 +126,12 @@ export default function MemberRoutine() {
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
     const data = await parseJsonResponse<{ exercises: Exercise[] }>(res);
-    const exercises = Array.isArray(data.exercises) ? data.exercises : [];
+    const exercises = (Array.isArray(data.exercises) ? data.exercises : []).map((exercise) => ({
+      ...exercise,
+      set_prescription:
+        parseSetPrescriptionFromApi(exercise.set_prescription) ??
+        deriveSetPrescription(exercise.sets, exercise.reps),
+    }));
     setRoutines((prev) => prev.map((r) => (r.id === routineId ? { ...r, exercises } : r)));
   };
 
@@ -152,15 +160,23 @@ export default function MemberRoutine() {
   }, [id]);
 
   useEffect(() => {
-    if (!moreMenuOpen) return;
+    if (!moreMenuOpen && routineMenuId == null) return;
     const close = (e: MouseEvent) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (moreMenuOpen && moreMenuRef.current && !moreMenuRef.current.contains(target)) {
         setMoreMenuOpen(false);
+      }
+      if (
+        routineMenuId != null &&
+        routineMenuRef.current &&
+        !routineMenuRef.current.contains(target)
+      ) {
+        setRoutineMenuId(null);
       }
     };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
-  }, [moreMenuOpen]);
+  }, [moreMenuOpen, routineMenuId]);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -432,13 +448,7 @@ export default function MemberRoutine() {
 
       await parseJsonResponse(res);
       setIsAddingExercise(false);
-      setNewExercise({
-        exercise_id: '',
-        sets: 3,
-        reps: 10,
-        rest_seconds: 60,
-        weight_suggestion: '',
-      });
+      setNewExercise(defaultRoutineExerciseForm());
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
@@ -470,24 +480,14 @@ export default function MemberRoutine() {
 
       <PageHeader
         compact
+        showTitleOnMobile
         title={
           <>
             Rutinas de <span className="text-brand">{member.full_name}</span>
           </>
         }
-        subtitle="Planes personalizados"
         action={
           <div className="flex shrink-0 items-center gap-1.5">
-            <BackToDashboardLink iconOnly className="sm:hidden" />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 gap-1.5 px-2.5 text-xs"
-              onClick={() => navigate(`/members/${id}/history`)}
-            >
-              <History className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Historial</span>
-            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -496,6 +496,15 @@ export default function MemberRoutine() {
             >
               <MessageSquare className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Mensaje</span>
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="hidden h-9 gap-1.5 px-2.5 text-xs sm:inline-flex"
+              onClick={() => navigate(`/members/${id}/history`)}
+            >
+              <History className="h-3.5 w-3.5" />
+              Historial
             </Button>
             <div className="relative" ref={moreMenuRef}>
               <Button
@@ -514,6 +523,18 @@ export default function MemberRoutine() {
                   role="menu"
                   className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
                 >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 sm:hidden dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      navigate(`/members/${id}/history`);
+                    }}
+                  >
+                    <History className="h-3.5 w-3.5" />
+                    Historial
+                  </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -562,7 +583,7 @@ export default function MemberRoutine() {
       <Card
         padding="sm"
         rounded="xl"
-        className="sticky top-2 z-10 flex flex-col justify-between gap-2 bg-white/95 backdrop-blur-sm sm:flex-row sm:items-center dark:bg-zinc-900/95"
+        className="sticky top-2 z-10 hidden bg-white/95 backdrop-blur-sm sm:flex sm:flex-row sm:items-center sm:justify-between dark:bg-zinc-900/95"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={member.full_name} size="sm" className="shrink-0" />
@@ -601,7 +622,7 @@ export default function MemberRoutine() {
           { value: 'perfil', label: 'Perfil' },
           { value: 'mediciones', label: 'Mediciones' },
         ]}
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto [&_button]:text-xs sm:[&_button]:text-sm"
       />
 
       {coachingTab === 'perfil' && (
@@ -840,9 +861,15 @@ export default function MemberRoutine() {
                 type="number"
                 value={newExercise.sets}
                 onChange={(e) => {
+                  const nextSets = parsePositiveInt(e.target.value, newExercise.sets);
                   setNewExercise({
                     ...newExercise,
-                    sets: parsePositiveInt(e.target.value, newExercise.sets),
+                    sets: nextSets,
+                    set_prescription: resizeSetPrescription(
+                      newExercise.set_prescription ?? [],
+                      nextSets,
+                      newExercise.reps
+                    ),
                   });
                 }}
               />
@@ -853,14 +880,31 @@ export default function MemberRoutine() {
                 type="number"
                 value={newExercise.reps}
                 onChange={(e) => {
+                  const nextReps = parsePositiveInt(e.target.value, newExercise.reps);
                   setNewExercise({
                     ...newExercise,
-                    reps: parsePositiveInt(e.target.value, newExercise.reps),
+                    reps: nextReps,
+                    set_prescription: resizeSetPrescription(
+                      newExercise.set_prescription ?? [],
+                      newExercise.sets,
+                      nextReps
+                    ),
                   });
                 }}
               />
             </div>
           </div>
+          <SetPrescriptionEditor
+            sets={newExercise.sets}
+            defaultReps={newExercise.reps}
+            value={
+              newExercise.set_prescription ??
+              resizeSetPrescription([], newExercise.sets, newExercise.reps)
+            }
+            onChange={(set_prescription) => {
+              setNewExercise({ ...newExercise, set_prescription });
+            }}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Descanso (seg)</Label>
@@ -916,9 +960,15 @@ export default function MemberRoutine() {
                   type="number"
                   value={editingExercise.sets}
                   onChange={(e) => {
+                    const nextSets = parsePositiveInt(e.target.value, editingExercise.sets);
                     setEditingExercise({
                       ...editingExercise,
-                      sets: parsePositiveInt(e.target.value, editingExercise.sets),
+                      sets: nextSets,
+                      set_prescription: resizeSetPrescription(
+                        editingExercise.set_prescription ?? [],
+                        nextSets,
+                        editingExercise.reps
+                      ),
                     });
                   }}
                 />
@@ -929,14 +979,31 @@ export default function MemberRoutine() {
                   type="number"
                   value={editingExercise.reps}
                   onChange={(e) => {
+                    const nextReps = parsePositiveInt(e.target.value, editingExercise.reps);
                     setEditingExercise({
                       ...editingExercise,
-                      reps: parsePositiveInt(e.target.value, editingExercise.reps),
+                      reps: nextReps,
+                      set_prescription: resizeSetPrescription(
+                        editingExercise.set_prescription ?? [],
+                        editingExercise.sets,
+                        nextReps
+                      ),
                     });
                   }}
                 />
               </div>
             </div>
+            <SetPrescriptionEditor
+              sets={editingExercise.sets}
+              defaultReps={editingExercise.reps}
+              value={
+                editingExercise.set_prescription ??
+                resizeSetPrescription([], editingExercise.sets, editingExercise.reps)
+              }
+              onChange={(set_prescription) => {
+                setEditingExercise({ ...editingExercise, set_prescription });
+              }}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Descanso (seg)</Label>
@@ -1150,7 +1217,7 @@ export default function MemberRoutine() {
                           {routine.exercise_count ?? routine.exercises?.length ?? 0} ejerc.
                         </span>
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="mt-2 flex items-center gap-1.5">
                         <Button
                           type="button"
                           variant="secondary"
@@ -1161,44 +1228,96 @@ export default function MemberRoutine() {
                           <ChevronDown
                             className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                           />
-                          Ejercicios
+                          <span className="hidden sm:inline">Ejercicios</span>
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-[11px]"
-                          onClick={() => {
-                            openEditModal(routine);
-                          }}
+                        <div
+                          className="relative sm:hidden"
+                          ref={routineMenuId === routine.id ? routineMenuRef : undefined}
                         >
-                          <Edit className="h-3.5 w-3.5" />
-                          Editar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-[11px] text-red-600 hover:text-red-600 dark:text-red-400"
-                          onClick={() => {
-                            setUnassignTarget(routine);
-                          }}
-                        >
-                          <UserMinus className="h-3.5 w-3.5" />
-                          Quitar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-[11px]"
-                          onClick={() => {
-                            navigate(`/members/${id}/history?routine=${routine.id}`);
-                          }}
-                        >
-                          <History className="h-3.5 w-3.5" />
-                          Historial
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() =>
+                              setRoutineMenuId((current) =>
+                                current === routine.id ? null : routine.id
+                              )
+                            }
+                            aria-label="Más acciones"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                          {routineMenuId === routine.id && (
+                            <div className="absolute top-full right-0 z-20 mt-1 min-w-[9rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
+                                onClick={() => {
+                                  setRoutineMenuId(null);
+                                  openEditModal(routine);
+                                }}
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-600"
+                                onClick={() => {
+                                  setRoutineMenuId(null);
+                                  setUnassignTarget(routine);
+                                }}
+                              >
+                                <UserMinus className="h-3.5 w-3.5" />
+                                Quitar
+                              </button>
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
+                                onClick={() => {
+                                  setRoutineMenuId(null);
+                                  navigate(`/members/${id}/history?routine=${routine.id}`);
+                                }}
+                              >
+                                <History className="h-3.5 w-3.5" />
+                                Historial
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="hidden flex-wrap gap-1.5 sm:flex">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-[11px]"
+                            onClick={() => openEditModal(routine)}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-[11px] text-red-600 hover:text-red-600 dark:text-red-400"
+                            onClick={() => setUnassignTarget(routine)}
+                          >
+                            <UserMinus className="h-3.5 w-3.5" />
+                            Quitar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-[11px]"
+                            onClick={() => navigate(`/members/${id}/history?routine=${routine.id}`)}
+                          >
+                            <History className="h-3.5 w-3.5" />
+                            Historial
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1237,6 +1356,11 @@ export default function MemberRoutine() {
                               <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
                                 {exercise.muscle_group}
                               </p>
+                              {formatSetPrescriptionSummary(exercise.set_prescription) && (
+                                <p className="mt-0.5 text-[10px] font-medium text-zinc-600 dark:text-zinc-300">
+                                  {formatSetPrescriptionSummary(exercise.set_prescription)}
+                                </p>
+                              )}
                               <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
                                 <label className="inline-flex items-center gap-1">
                                   Sets
@@ -1288,7 +1412,12 @@ export default function MemberRoutine() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setEditingExercise(exercise);
+                                  setEditingExercise({
+                                    ...exercise,
+                                    set_prescription:
+                                      exercise.set_prescription ??
+                                      deriveSetPrescription(exercise.sets, exercise.reps),
+                                  });
                                   setIsEditingExercise(true);
                                 }}
                                 className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"

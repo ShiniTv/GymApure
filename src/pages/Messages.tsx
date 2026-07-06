@@ -522,7 +522,7 @@ function StaffChatView() {
   };
 
   const conversationListPanel = (
-    <div className="flex min-h-[240px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:min-h-0 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <div className="space-y-2 border-b border-zinc-100 p-2.5 dark:border-zinc-800">
         <SearchInput
           value={search}
@@ -579,7 +579,7 @@ function StaffChatView() {
   );
 
   const chatPanel = selected ? (
-    <div className="flex min-h-[280px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-full lg:min-h-0 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
         <button
           type="button"
@@ -604,15 +604,15 @@ function StaffChatView() {
           <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{selected.member_cedula}</p>
         </div>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
         {loadingMessages && !messagesData ? (
-          <div className="flex justify-center py-8">
+          <div className="flex flex-1 justify-center py-8">
             <Spinner />
           </div>
         ) : (
           <Virtuoso
             ref={virtuosoRef}
-            style={{ height: '100%' }}
+            style={{ height: '100%', flex: 1 }}
             data={messagesData?.messages ?? []}
             itemContent={(_index, message) => (
               <div className="px-2.5 sm:px-3">
@@ -645,12 +645,20 @@ function StaffChatView() {
         action={<BackToDashboardLink />}
       />
 
-      <div className="staff-chat-shell max-h-[720px] gap-2.5 sm:gap-3 lg:grid lg:h-[calc(100dvh-11.5rem)] lg:max-h-none lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
-        <div className={clsx(showChatOnMobile && selected ? 'hidden lg:block' : 'block', 'h-full')}>
+      <div className="staff-chat-shell flex min-h-0 flex-col gap-2.5 sm:gap-3 lg:grid lg:h-[calc(100dvh-11.5rem)] lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
+        <div
+          className={clsx(
+            showChatOnMobile && selected ? 'hidden lg:flex' : 'flex',
+            'min-h-0 flex-1 flex-col lg:h-full lg:flex-none'
+          )}
+        >
           {conversationListPanel}
         </div>
         <div
-          className={clsx(!showChatOnMobile || !selected ? 'hidden lg:block' : 'block', 'h-full')}
+          className={clsx(
+            !showChatOnMobile || !selected ? 'hidden lg:flex' : 'flex',
+            'min-h-0 flex-1 flex-col lg:h-full lg:flex-none'
+          )}
         >
           {chatPanel ?? (
             <div className="hidden h-full flex-col items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 lg:flex dark:border-zinc-800 dark:bg-zinc-900">
@@ -713,10 +721,10 @@ function MemberChatView() {
         </p>
       )}
 
-      <div className="member-chat-panel flex max-h-[640px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-[calc(100dvh-11rem)] dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="min-h-0 flex-1">
+      <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-[calc(100dvh-11rem)] dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex min-h-0 flex-1 flex-col">
           {loadingMessages && !messagesData ? (
-            <div className="flex justify-center py-8">
+            <div className="flex flex-1 justify-center py-8">
               <Spinner />
             </div>
           ) : messagesData && messagesData.messages.length === 0 ? (

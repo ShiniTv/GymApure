@@ -172,7 +172,8 @@ router.get('/:id', async (req: AuthRequest, res) => {
     }
 
     const exercisesResult = await query(
-      `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.id as routine_exercise_id
+      `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.set_prescription,
+              re.id as routine_exercise_id
        FROM routine_exercises re
        JOIN exercises e ON re.exercise_id = e.id
        WHERE re.routine_id = $1`,
@@ -281,7 +282,8 @@ router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, r
     return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
-  const { exercise_id, sets, reps, rest_seconds, weight_suggestion } = parsed.data;
+  const { exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription } =
+    parsed.data;
   const routineId = req.params.id;
 
   const trainerId = await getRoutineTrainerId(routineId);
@@ -292,10 +294,18 @@ router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, r
 
   try {
     const { rows } = await query(
-      `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion]
+      [
+        routineId,
+        exercise_id,
+        sets,
+        reps,
+        rest_seconds,
+        weight_suggestion,
+        set_prescription ? JSON.stringify(set_prescription) : null,
+      ]
     );
 
     res.json({ id: rows[0].id, success: true });
@@ -313,7 +323,7 @@ router.put(
       return res.status(400).json({ error: formatZodError(parsed.error) });
     }
 
-    const { sets, reps, rest_seconds, weight_suggestion } = parsed.data;
+    const { sets, reps, rest_seconds, weight_suggestion, set_prescription } = parsed.data;
     const trainerId = await getRoutineTrainerId(req.params.id);
     if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
     if (!assertTrainerOwnsRoutine(req, trainerId)) {
@@ -322,9 +332,17 @@ router.put(
     try {
       await query(
         `UPDATE routine_exercises
-       SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4
-       WHERE id = $5 AND routine_id = $6`,
-        [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
+       SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4, set_prescription = $5
+       WHERE id = $6 AND routine_id = $7`,
+        [
+          sets,
+          reps,
+          rest_seconds,
+          weight_suggestion,
+          set_prescription ? JSON.stringify(set_prescription) : null,
+          req.params.routineExerciseId,
+          req.params.id,
+        ]
       );
       res.json({ success: true });
     } catch (err: unknown) {

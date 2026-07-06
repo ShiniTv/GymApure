@@ -2,9 +2,12 @@ import React from 'react';
 import { UserPlus } from 'lucide-react';
 import { Button, Modal, Label, Input, Select, DifficultySelect } from '../../components/ui';
 import { ExercisePicker } from '../../components/exercise/ExercisePicker';
+import { SetPrescriptionEditor } from '../../components/exercise/SetPrescriptionEditor';
 import { formatDifficulty } from '../../lib/utils';
 import { SHIFT_LABELS } from '../../lib/trainingShift';
 import { parseNonNegativeInt, parsePositiveInt } from '../../lib/parseFormNumber';
+import type { RoutineExerciseForm } from '../../lib/routineExercisePayload';
+import { resizeSetPrescription } from '../../lib/setPrescription';
 import type { Routine, RoutineExercise, Member, ExerciseOption } from './types';
 import type { TrainingShift } from '../../lib/trainingShift';
 
@@ -40,22 +43,8 @@ export interface RoutineModalsProps {
   isAddingExercise: boolean;
   setIsAddingExercise: (open: boolean) => void;
   availableExercises: ExerciseOption[];
-  newExercise: {
-    exercise_id: string;
-    sets: number;
-    reps: number;
-    rest_seconds: number;
-    weight_suggestion: string;
-  };
-  setNewExercise: React.Dispatch<
-    React.SetStateAction<{
-      exercise_id: string;
-      sets: number;
-      reps: number;
-      rest_seconds: number;
-      weight_suggestion: string;
-    }>
-  >;
+  newExercise: RoutineExerciseForm;
+  setNewExercise: React.Dispatch<React.SetStateAction<RoutineExerciseForm>>;
   handleAddWorkoutExercise: () => void;
   addExerciseError: string | null;
   editExerciseError: string | null;
@@ -364,9 +353,15 @@ export function RoutineModals({
                 type="number"
                 value={newExercise.sets}
                 onChange={(e) => {
+                  const nextSets = parsePositiveInt(e.target.value, newExercise.sets);
                   setNewExercise({
                     ...newExercise,
-                    sets: parsePositiveInt(e.target.value, newExercise.sets),
+                    sets: nextSets,
+                    set_prescription: resizeSetPrescription(
+                      newExercise.set_prescription ?? [],
+                      nextSets,
+                      newExercise.reps
+                    ),
                   });
                 }}
               />
@@ -377,14 +372,31 @@ export function RoutineModals({
                 type="number"
                 value={newExercise.reps}
                 onChange={(e) => {
+                  const nextReps = parsePositiveInt(e.target.value, newExercise.reps);
                   setNewExercise({
                     ...newExercise,
-                    reps: parsePositiveInt(e.target.value, newExercise.reps),
+                    reps: nextReps,
+                    set_prescription: resizeSetPrescription(
+                      newExercise.set_prescription ?? [],
+                      newExercise.sets,
+                      nextReps
+                    ),
                   });
                 }}
               />
             </div>
           </div>
+          <SetPrescriptionEditor
+            sets={newExercise.sets}
+            defaultReps={newExercise.reps}
+            value={
+              newExercise.set_prescription ??
+              resizeSetPrescription([], newExercise.sets, newExercise.reps)
+            }
+            onChange={(set_prescription) => {
+              setNewExercise({ ...newExercise, set_prescription });
+            }}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Descanso (seg)</Label>
@@ -440,9 +452,15 @@ export function RoutineModals({
                   type="number"
                   value={editingExercise.sets}
                   onChange={(e) => {
+                    const nextSets = parsePositiveInt(e.target.value, editingExercise.sets);
                     setEditingExercise({
                       ...editingExercise,
-                      sets: parsePositiveInt(e.target.value, editingExercise.sets),
+                      sets: nextSets,
+                      set_prescription: resizeSetPrescription(
+                        editingExercise.set_prescription ?? [],
+                        nextSets,
+                        editingExercise.reps
+                      ),
                     });
                   }}
                 />
@@ -453,14 +471,31 @@ export function RoutineModals({
                   type="number"
                   value={editingExercise.reps}
                   onChange={(e) => {
+                    const nextReps = parsePositiveInt(e.target.value, editingExercise.reps);
                     setEditingExercise({
                       ...editingExercise,
-                      reps: parsePositiveInt(e.target.value, editingExercise.reps),
+                      reps: nextReps,
+                      set_prescription: resizeSetPrescription(
+                        editingExercise.set_prescription ?? [],
+                        editingExercise.sets,
+                        nextReps
+                      ),
                     });
                   }}
                 />
               </div>
             </div>
+            <SetPrescriptionEditor
+              sets={editingExercise.sets}
+              defaultReps={editingExercise.reps}
+              value={
+                editingExercise.set_prescription ??
+                resizeSetPrescription([], editingExercise.sets, editingExercise.reps)
+              }
+              onChange={(set_prescription) => {
+                setEditingExercise({ ...editingExercise, set_prescription });
+              }}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Descanso (seg)</Label>

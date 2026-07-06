@@ -1,28 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCircle2, ChevronRight } from 'lucide-react';
-import clsx from 'clsx';
-import { PageHeader, FilterChips, Button, PaginationBar, EmptyState, Card } from '../components/ui';
-import { expiryBannerClasses } from '../lib/expiryUtils';
-import { mapPersistedToItem } from '../lib/notifications/types';
-import type { NotificationSeverity } from '../lib/notifications/types';
+import { Bell, CheckCircle2 } from 'lucide-react';
+import { PageHeader, FilterChips, Button, PaginationBar, EmptyState } from '../components/ui';
+import { useNotificationItems } from '../hooks/useNotificationItems';
 import {
   useNotificationsQuery,
-  useNotificationUnreadQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
 } from '../hooks/queries/useNotificationsQuery';
+import { mapPersistedToItem } from '../lib/notifications/types';
+import type { NotificationItem } from '../lib/notifications/types';
 import { formatNotificationTime } from '../components/notifications/NotificationPanel';
-
-function severityClasses(severity: NotificationSeverity = 'info') {
-  if (severity === 'info') {
-    return {
-      itemBorder: 'border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/30',
-      text: 'text-zinc-700 dark:text-zinc-300',
-    };
-  }
-  return expiryBannerClasses(severity);
-}
+import { NotificationItemRow } from '../components/notifications/NotificationItemRow';
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -30,39 +19,47 @@ export default function Notifications() {
   const [page, setPage] = useState(1);
   const unreadOnly = filter === 'unread';
 
-  const { data: unreadCount = 0 } = useNotificationUnreadQuery();
-  const { data, isLoading } = useNotificationsQuery(page, unreadOnly);
+  const { liveItems, unreadPersisted, isLoading: itemsLoading } = useNotificationItems();
+  const { data, isLoading: listLoading } = useNotificationsQuery(page, unreadOnly);
   const markRead = useMarkNotificationReadMutation();
   const markAllRead = useMarkAllNotificationsReadMutation();
 
-  const items = (data?.items ?? []).map(mapPersistedToItem);
+  const persistedItems = (data?.items ?? []).map(mapPersistedToItem);
   const total = data?.total ?? 0;
   const limit = data?.limit ?? 20;
+  const hasLive = liveItems.length > 0;
+  const hasPersisted = persistedItems.length > 0;
+  const isEmpty = !hasLive && !hasPersisted;
+  const isLoading = itemsLoading || listLoading;
 
-  const handleOpen = (notificationId: number, href: string, readAt: string | null | undefined) => {
-    const go = () => void navigate(href);
-    if (readAt) {
-      go();
+  const handleActivate = (item: NotificationItem) => {
+    if (item.source === 'persisted' && item.notificationId != null) {
+      const go = () => void navigate(item.href);
+      if (item.readAt) {
+        go();
+        return;
+      }
+      void markRead.mutateAsync(item.notificationId).finally(go);
       return;
     }
-    void markRead.mutateAsync(notificationId).finally(go);
+    void navigate(item.href);
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Notificaciones"
-        subtitle="Historial de novedades y alertas del gym"
+        subtitle="Novedades y alertas que requieren atención"
         showTitleOnMobile
         action={
-          unreadCount > 0 ? (
+          unreadPersisted > 0 ? (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => void markAllRead.mutateAsync()}
               disabled={markAllRead.isPending}
             >
-              {markAllRead.isPending ? 'Marcando…' : 'Marcar todas leídas'}
+              {markAllRead.isPending ? 'Marcando…' : 'Marcar novedades leídas'}
             </Button>
           ) : undefined
         }
@@ -77,76 +74,78 @@ export default function Notifications() {
         }}
         options={[
           { value: 'all', label: 'Todas' },
-          { value: 'unread', label: 'Sin leer', count: unreadCount },
+          { value: 'unread', label: 'Sin leer', count: unreadPersisted },
         ]}
       />
 
-      {isLoading && items.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+      {isLoading && isEmpty ? (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
           Cargando notificaciones…
-        </Card>
-      ) : items.length === 0 ? (
+        </div>
+      ) : isEmpty ? (
         <EmptyState
-          icon={filter === 'unread' ? CheckCircle2 : Bell}
-          title={filter === 'unread' ? 'Sin novedades pendientes' : 'Sin notificaciones'}
+          icon={filter === 'unread' && !hasLive ? CheckCircle2 : Bell}
+          title={
+            filter === 'unread' && !hasLive ? 'Sin novedades pendientes' : 'Sin notificaciones'
+          }
           description={
-            filter === 'unread'
-              ? 'Ya leíste todas tus notificaciones.'
-              : 'Cuando haya novedades aparecerán aquí.'
+            filter === 'unread' && !hasLive
+              ? 'Ya leíste todas tus novedades guardadas.'
+              : 'Cuando haya novedades o alertas aparecerán aquí.'
           }
         />
       ) : (
-        <>
-          <ul className="space-y-2">
-            {items.map((item) => {
-              const styles = severityClasses(item.severity);
-              const isUnread = !item.readAt;
-              return (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      item.notificationId != null &&
-                      handleOpen(item.notificationId, item.href, item.readAt)
-                    }
-                    className={clsx(
-                      'flex w-full touch-manipulation items-start gap-3 rounded-2xl border px-4 py-3 text-left transition-colors',
-                      styles.itemBorder,
-                      isUnread && 'ring-brand/20 ring-1'
-                    )}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={clsx('text-sm font-semibold', styles.text)}>{item.title}</p>
-                        {isUnread && (
-                          <span
-                            className="bg-brand mt-1 h-2 w-2 shrink-0 rounded-full"
-                            aria-hidden
-                          />
-                        )}
-                      </div>
-                      {item.description && (
-                        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                          {item.description}
-                        </p>
-                      )}
-                      {item.createdAt && (
-                        <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-                          {formatNotificationTime(item.createdAt)}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {total > limit && (
-            <PaginationBar page={page} pageSize={limit} total={total} onPageChange={setPage} />
+        <div className="space-y-6">
+          {hasLive && (
+            <section>
+              <h2 className="mb-2 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                Requiere atención
+              </h2>
+              <ul className="space-y-2">
+                {liveItems.map((item) => (
+                  <li key={item.id}>
+                    <NotificationItemRow item={item} onActivate={handleActivate} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
-        </>
+
+          {hasPersisted && (
+            <section>
+              <h2 className="mb-2 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                Novedades
+              </h2>
+              <ul className="space-y-2">
+                {persistedItems.map((item) => (
+                  <li key={item.id}>
+                    <NotificationItemRow
+                      item={item}
+                      onActivate={handleActivate}
+                      showTimestamp
+                      formatTime={formatNotificationTime}
+                    />
+                  </li>
+                ))}
+              </ul>
+              {total > limit && (
+                <PaginationBar
+                  page={page}
+                  pageSize={limit}
+                  total={total}
+                  onPageChange={setPage}
+                  label="novedades"
+                />
+              )}
+            </section>
+          )}
+
+          {filter === 'unread' && !hasPersisted && hasLive && (
+            <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+              Las alertas activas se ocultan cuando se resuelven en su pantalla correspondiente.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

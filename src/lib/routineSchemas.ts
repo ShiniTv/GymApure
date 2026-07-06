@@ -26,4 +26,15 @@ export const routineExerciseSchema = z.object({
       return null;
     }, z.string().max(200).nullable())
     .optional(),
+  set_prescription: z
+    .array(
+      z.object({
+        set_number: z.coerce.number().int().positive().max(50),
+        weight_kg: z.coerce.number().min(0).max(2000).nullable().optional(),
+        reps: z.coerce.number().int().positive().max(500),
+      })
+    )
+    .max(50)
+    .optional()
+    .nullable(),
 });

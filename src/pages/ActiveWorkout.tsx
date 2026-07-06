@@ -31,7 +31,11 @@ import { useWorkoutPageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
 import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
-import { buildRoutineExercisePayload } from '../lib/routineExercisePayload';
+import {
+  buildRoutineExercisePayload,
+  defaultRoutineExerciseForm,
+} from '../lib/routineExercisePayload';
+import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
 
 interface Exercise {
   id: number;
@@ -45,6 +49,7 @@ interface Exercise {
   reps: number;
   rest_seconds: number;
   weight_suggestion: string;
+  set_prescription?: import('../lib/setPrescription').SetPrescriptionRow[] | null;
 }
 
 interface Routine {
@@ -110,13 +115,7 @@ export default function ActiveWorkout() {
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
-  const [newExercise, setNewExercise] = useState({
-    exercise_id: '',
-    sets: 3,
-    reps: 10,
-    rest_seconds: 60,
-    weight_suggestion: '',
-  });
+  const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -124,7 +123,13 @@ export default function ActiveWorkout() {
     apiFetch(`/api/routines/${id}`)
       .then((res) => parseJsonResponse<Routine>(res))
       .then((data) => {
-        setRoutine(data);
+        const exercises = (data.exercises ?? []).map((exercise) => ({
+          ...exercise,
+          set_prescription:
+            parseSetPrescriptionFromApi(exercise.set_prescription) ??
+            deriveSetPrescription(exercise.sets, exercise.reps),
+        }));
+        setRoutine({ ...data, exercises });
         setFetchError(null);
         setLoading(false);
       })
@@ -282,13 +287,7 @@ export default function ActiveWorkout() {
       await parseJsonResponse(res);
       setIsAddingExercise(false);
       reloadRoutine();
-      setNewExercise({
-        exercise_id: '',
-        sets: 3,
-        reps: 10,
-        rest_seconds: 60,
-        weight_suggestion: '',
-      });
+      setNewExercise(defaultRoutineExerciseForm());
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
       setAddExerciseError(message);
@@ -383,6 +382,25 @@ export default function ActiveWorkout() {
             }),
           };
         });
+      } else if (routine) {
+        const seededLogs: Record<string, LogEntry> = {};
+        routine.exercises.forEach((exercise) => {
+          const prescription =
+            exercise.set_prescription ?? deriveSetPrescription(exercise.sets, exercise.reps);
+          prescription.forEach((row) => {
+            const key = `${exercise.id}-${row.set_number}`;
+            seededLogs[key] = {
+              exercise_id: exercise.id,
+              set_number: row.set_number,
+              weight: row.weight_kg != null ? String(row.weight_kg) : '',
+              reps: String(row.reps),
+              completed: false,
+            };
+          });
+        });
+        if (Object.keys(seededLogs).length > 0) {
+          setLogs(seededLogs);
+        }
       }
     } catch (err) {
       clientLogger.error('Failed to start workout session', err);
