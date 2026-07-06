@@ -77,6 +77,16 @@ async function fetchRoutineExercisesRows(routineId: string | number) {
   }
 }
 
+const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
+       FROM (
+         SELECT e.name
+         FROM routine_exercises re
+         JOIN exercises e ON e.id = re.exercise_id
+         WHERE re.routine_id = r.id
+         ORDER BY re.id
+         LIMIT 3
+       ) preview_names)`;
+
 async function getRoutineTrainerId(routineId: string | number): Promise<number | null> {
   const { rows } = await query<{ trainer_id: number }>(
     'SELECT trainer_id FROM routines WHERE id = $1',
@@ -117,7 +127,8 @@ router.get('/', async (req: AuthRequest, res) => {
 
     const { rows } = await query(
       `SELECT r.*, u.full_name as trainer_name, tp.shift as trainer_shift,
-      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
+      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count,
+      ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
       FROM routines r
       JOIN users u ON r.trainer_id = u.id
       LEFT JOIN trainer_profiles tp ON tp.user_id = r.trainer_id

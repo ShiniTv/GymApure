@@ -14,10 +14,12 @@ import {
   UtensilsCrossed,
   MoreHorizontal,
   ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
+import { useToastOptional } from '../context/ToastContext';
 import {
   Button,
   Card,
@@ -50,6 +52,7 @@ import {
   formatSetPrescriptionSummary,
   parseSetPrescriptionFromApi,
 } from '../lib/setPrescription';
+import { buildExerciseSummary } from '../lib/routineDisplay';
 
 import type {
   Routine,
@@ -65,6 +68,7 @@ export default function MemberRoutine() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToastOptional();
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [member, setMember] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -383,11 +387,14 @@ export default function MemberRoutine() {
       return;
     }
 
+    setExpandedRoutineId(routineId);
     try {
       await refreshRoutineExercises(routineId);
-      setExpandedRoutineId(routineId);
     } catch (err) {
       clientLogger.error('Failed to fetch routine exercises', err);
+      toast?.error(
+        err instanceof Error ? err.message : 'No se pudieron cargar los ejercicios de la rutina'
+      );
     }
   };
 
@@ -1095,6 +1102,12 @@ export default function MemberRoutine() {
           ) : (
             routines.map((routine) => {
               const isExpanded = expandedRoutineId === routine.id;
+              const exerciseCount = routine.exercise_count ?? routine.exercises?.length ?? 0;
+              const exerciseSummary = buildExerciseSummary({
+                count: exerciseCount,
+                preview: routine.exercise_preview,
+                loadedExercises: routine.exercises,
+              });
               const formatDate = (value: string | null | undefined) => {
                 if (!value) return '—';
                 try {
@@ -1105,133 +1118,190 @@ export default function MemberRoutine() {
               };
 
               return (
-                <Card key={routine.id} padding="sm" rounded="xl" className="overflow-hidden">
+                <Card
+                  key={routine.id}
+                  padding="sm"
+                  rounded="xl"
+                  className={`touch-manipulation overflow-hidden ${isExpanded ? 'ring-brand/20 ring-2' : ''}`}
+                >
                   <div className="flex items-start gap-2.5">
-                    <div className="bg-brand/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-                      <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
-                          {routine.name}
-                        </h3>
-                        <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
-                          {formatDifficulty(routine.difficulty)}
-                        </Badge>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => void toggleExpandRoutine(routine.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          void toggleExpandRoutine(routine.id);
+                        }
+                      }}
+                      className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 text-left"
+                      aria-expanded={isExpanded}
+                    >
+                      <div className="bg-brand/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9">
+                        <Dumbbell className="text-brand h-4 w-4" />
                       </div>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3 w-3 shrink-0" />
-                          {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
-                        </span>
-                        <span>
-                          {routine.exercise_count ?? routine.exercises?.length ?? 0} ejerc.
-                        </span>
-                      </p>
-                      <div className="mt-2 flex items-center gap-1.5">
-                        <Button
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+                            {routine.name}
+                          </h3>
+                          <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                            {formatDifficulty(routine.difficulty)}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500 tabular-nums sm:text-[10px] dark:text-zinc-400">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3 shrink-0" />
+                            {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                          </span>
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                          {exerciseSummary.label}
+                        </p>
+                        {exerciseSummary.preview && (
+                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                            {exerciseSummary.preview}
+                          </p>
+                        )}
+                        {!isExpanded && (
+                          <span className="text-brand mt-1.5 inline-flex items-center text-[11px] font-semibold sm:text-xs">
+                            Toca para ver ejercicios
+                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void toggleExpandRoutine(routine.id);
+                        }}
+                        className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
+                          isExpanded
+                            ? 'border-zinc-900 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'
+                        }`}
+                        aria-label={isExpanded ? 'Cerrar ejercicios' : 'Ver ejercicios'}
+                        aria-expanded={isExpanded}
+                        title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
+                      >
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      <div
+                        className="relative sm:hidden"
+                        ref={routineMenuId === routine.id ? routineMenuRef : undefined}
+                      >
+                        <button
                           type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="h-8 gap-1 px-2 text-[11px]"
-                          onClick={() => toggleExpandRoutine(routine.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRoutineMenuId((current) =>
+                              current === routine.id ? null : routine.id
+                            );
+                          }}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                          aria-label="Más acciones"
                         >
-                          <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                          />
-                          <span className="hidden sm:inline">Ejercicios</span>
-                        </Button>
-                        <div
-                          className="relative sm:hidden"
-                          ref={routineMenuId === routine.id ? routineMenuRef : undefined}
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                        {routineMenuId === routine.id && (
+                          <div className="absolute top-full right-0 z-20 mt-1 min-w-[10rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200"
+                              onClick={() => {
+                                setRoutineMenuId(null);
+                                openEditModal(routine);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-600"
+                              onClick={() => {
+                                setRoutineMenuId(null);
+                                setUnassignTarget(routine);
+                              }}
+                            >
+                              <UserMinus className="h-4 w-4" />
+                              Quitar
+                            </button>
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200"
+                              onClick={() => {
+                                setRoutineMenuId(null);
+                                void navigate(`/members/${id}/history?routine=${routine.id}`);
+                              }}
+                            >
+                              <History className="h-4 w-4" />
+                              Historial
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="hidden items-center gap-0.5 sm:flex">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(routine);
+                          }}
+                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                          aria-label={`Editar ${routine.name}`}
+                          title="Editar"
                         >
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() =>
-                              setRoutineMenuId((current) =>
-                                current === routine.id ? null : routine.id
-                              )
-                            }
-                            aria-label="Más acciones"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                          {routineMenuId === routine.id && (
-                            <div className="absolute top-full right-0 z-20 mt-1 min-w-[9rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
-                                onClick={() => {
-                                  setRoutineMenuId(null);
-                                  openEditModal(routine);
-                                }}
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                                Editar
-                              </button>
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-600"
-                                onClick={() => {
-                                  setRoutineMenuId(null);
-                                  setUnassignTarget(routine);
-                                }}
-                              >
-                                <UserMinus className="h-3.5 w-3.5" />
-                                Quitar
-                              </button>
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
-                                onClick={() => {
-                                  setRoutineMenuId(null);
-                                  navigate(`/members/${id}/history?routine=${routine.id}`);
-                                }}
-                              >
-                                <History className="h-3.5 w-3.5" />
-                                Historial
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <div className="hidden flex-wrap gap-1.5 sm:flex">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-[11px]"
-                            onClick={() => openEditModal(routine)}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                            Editar
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-[11px] text-red-600 hover:text-red-600 dark:text-red-400"
-                            onClick={() => setUnassignTarget(routine)}
-                          >
-                            <UserMinus className="h-3.5 w-3.5" />
-                            Quitar
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-[11px]"
-                            onClick={() => navigate(`/members/${id}/history?routine=${routine.id}`)}
-                          >
-                            <History className="h-3.5 w-3.5" />
-                            Historial
-                          </Button>
-                        </div>
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUnassignTarget(routine);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                          aria-label={`Quitar ${routine.name}`}
+                          title="Quitar"
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void navigate(`/members/${id}/history?routine=${routine.id}`);
+                          }}
+                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                          aria-label={`Historial de ${routine.name}`}
+                          title="Historial"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
+
+                  {!isExpanded && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="mt-3 h-11 w-full text-sm sm:hidden"
+                      onClick={() => void toggleExpandRoutine(routine.id)}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                      Ver ejercicios
+                    </Button>
+                  )}
 
                   {isExpanded && (
                     <div className="mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
@@ -1242,7 +1312,7 @@ export default function MemberRoutine() {
                         <Button
                           type="button"
                           size="sm"
-                          className="h-8 px-2.5 text-xs"
+                          className="h-10 px-3 text-xs sm:h-8 sm:px-2.5"
                           onClick={() => {
                             setAddExerciseError(null);
                             setIsAddingExercise(true);

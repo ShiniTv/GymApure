@@ -15,6 +15,7 @@ export interface Routine {
   name: string;
   difficulty: string;
   exercise_count: number;
+  exercise_preview?: string | null;
   trainer_id?: number;
   trainer_name?: string;
   trainer_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;

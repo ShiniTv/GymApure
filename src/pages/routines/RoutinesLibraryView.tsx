@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button, Card, Spinner, EmptyState, Badge, PageState } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
+import { buildExerciseSummary } from '../../lib/routineDisplay';
 import type { Routine, RoutineExercise } from './types';
 
 export interface RoutinesLibraryViewProps {
@@ -116,6 +117,11 @@ export function RoutinesLibraryView({
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
+          const exerciseSummary = buildExerciseSummary({
+            count: routine.exercise_count ?? 0,
+            preview: routine.exercise_preview,
+            loadedExercises: routine.exercises,
+          });
 
           return (
             <Card
@@ -164,17 +170,23 @@ export function RoutinesLibraryView({
                       {formatDifficulty(routine.difficulty)}
                     </Badge>
                   </div>
-                  <p className="mt-0.5 text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">
-                    {routine.exercise_count} ejercicio{routine.exercise_count !== 1 ? 's' : ''}
+                  <p className="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    {exerciseSummary.label}
                   </p>
-                  {isMember && (
-                    <span className="text-brand dark:text-brand mt-1 inline-flex items-center text-xs font-semibold">
-                      Toca para ver detalles <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                  {exerciseSummary.preview && (
+                    <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                      {exerciseSummary.preview}
+                    </p>
+                  )}
+                  {canOpen && !isExpanded && (
+                    <span className="text-brand dark:text-brand mt-1.5 inline-flex items-center text-[11px] font-semibold sm:text-xs">
+                      Toca para ver ejercicios
+                      <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                     </span>
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-0.5">
+                <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                   {isStaff && (
                     <>
                       <button
@@ -183,7 +195,7 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           onEditRoutine(routine);
                         }}
-                        className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                        className="hover:text-brand hover:bg-brand/10 inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-400 transition-colors sm:h-8 sm:w-8 sm:rounded-lg dark:text-zinc-300"
                         aria-label={`Configurar ${routine.name}`}
                         title="Configurar"
                       >
@@ -195,7 +207,7 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           onDeleteRoutine(routine);
                         }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 sm:h-8 sm:w-8 sm:rounded-lg dark:text-zinc-300"
                         aria-label={`Eliminar ${routine.name}`}
                         title="Eliminar"
                       >
@@ -207,18 +219,17 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           void onToggleExpandRoutine(routine.id);
                         }}
-                        className={`inline-flex h-8 items-center gap-1 rounded-lg border px-2 transition-colors ${
+                        className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
                           isExpanded
                             ? 'border-zinc-900 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
                             : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400'
                         }`}
                         aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
                         aria-expanded={isExpanded}
-                        title={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
+                        title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
                       >
-                        <span className="text-[11px] font-medium">Ejercicios</span>
                         <ChevronDown
-                          className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                         />
                       </button>
                     </>
@@ -230,24 +241,35 @@ export function RoutinesLibraryView({
                         e.stopPropagation();
                         void onToggleExpandRoutine(routine.id);
                       }}
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                      className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
                         isExpanded
                           ? 'bg-brand border-brand text-white'
                           : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400'
                       }`}
                       aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
                       aria-expanded={isExpanded}
+                      title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
                     >
                       <ChevronDown
                         className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       />
                     </button>
                   )}
-                  {isMember && !isExpanded && (
-                    <ChevronRight className="text-brand h-4 w-4 shrink-0" />
-                  )}
                 </div>
               </div>
+
+              {canOpen && !isExpanded && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3 h-11 w-full text-sm sm:hidden"
+                  onClick={() => void onToggleExpandRoutine(routine.id)}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                  Ver ejercicios
+                </Button>
+              )}
 
               {isExpanded && (
                 <div className="animate-in slide-in-from-top-2 mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 duration-200 dark:border-zinc-800">

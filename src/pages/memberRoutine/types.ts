@@ -6,6 +6,7 @@ export interface Routine {
   start_date?: string;
   end_date?: string;
   exercise_count?: number;
+  exercise_preview?: string | null;
   exercises?: Exercise[];
 }
 

@@ -64,6 +64,16 @@ async function findUserMeasurement(userId: number, measurementId: number) {
   return rows[0] ?? null;
 }
 
+const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
+  FROM (
+    SELECT e.name
+    FROM routine_exercises re
+    JOIN exercises e ON e.id = re.exercise_id
+    WHERE re.routine_id = r.id
+    ORDER BY re.id
+    LIMIT 3
+  ) preview_names)`;
+
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
 }
@@ -388,7 +398,8 @@ router.get('/:id/routines', requireMemberAccess('id'), async (req, res) => {
   try {
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
-              COALESCE(ec.exercise_count, 0)::int AS exercise_count
+              COALESCE(ec.exercise_count, 0)::int AS exercise_count,
+              ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
        FROM routines r
        JOIN user_routines ur ON r.id = ur.routine_id
        LEFT JOIN (
