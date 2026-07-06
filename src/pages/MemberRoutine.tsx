@@ -38,18 +38,17 @@ import {
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
-import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
+import { parseNonNegativeInt } from '../lib/parseFormNumber';
 import {
   buildRoutineExercisePayload,
   buildRoutineExerciseUpdatePayload,
   defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
-import { SetPrescriptionEditor } from '../components/exercise/SetPrescriptionEditor';
+import { RoutineExercisePrescriptionFields } from '../components/exercise/RoutineExercisePrescriptionFields';
 import {
   deriveSetPrescription,
   formatSetPrescriptionSummary,
   parseSetPrescriptionFromApi,
-  resizeSetPrescription,
 } from '../lib/setPrescription';
 
 import type {
@@ -854,55 +853,11 @@ export default function MemberRoutine() {
               setNewExercise({ ...newExercise, exercise_id: exerciseId });
             }}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Series</Label>
-              <Input
-                type="number"
-                value={newExercise.sets}
-                onChange={(e) => {
-                  const nextSets = parsePositiveInt(e.target.value, newExercise.sets);
-                  setNewExercise({
-                    ...newExercise,
-                    sets: nextSets,
-                    set_prescription: resizeSetPrescription(
-                      newExercise.set_prescription ?? [],
-                      nextSets,
-                      newExercise.reps
-                    ),
-                  });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Reps</Label>
-              <Input
-                type="number"
-                value={newExercise.reps}
-                onChange={(e) => {
-                  const nextReps = parsePositiveInt(e.target.value, newExercise.reps);
-                  setNewExercise({
-                    ...newExercise,
-                    reps: nextReps,
-                    set_prescription: resizeSetPrescription(
-                      newExercise.set_prescription ?? [],
-                      newExercise.sets,
-                      nextReps
-                    ),
-                  });
-                }}
-              />
-            </div>
-          </div>
-          <SetPrescriptionEditor
-            sets={newExercise.sets}
-            defaultReps={newExercise.reps}
-            value={
-              newExercise.set_prescription ??
-              resizeSetPrescription([], newExercise.sets, newExercise.reps)
-            }
-            onChange={(set_prescription) => {
-              setNewExercise({ ...newExercise, set_prescription });
+          <RoutineExercisePrescriptionFields
+            formKey="add-exercise"
+            value={newExercise}
+            onChange={(prescription) => {
+              setNewExercise({ ...newExercise, ...prescription });
             }}
           />
           <div className="grid grid-cols-2 gap-4">
@@ -953,55 +908,11 @@ export default function MemberRoutine() {
       >
         {editingExercise && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Series</Label>
-                <Input
-                  type="number"
-                  value={editingExercise.sets}
-                  onChange={(e) => {
-                    const nextSets = parsePositiveInt(e.target.value, editingExercise.sets);
-                    setEditingExercise({
-                      ...editingExercise,
-                      sets: nextSets,
-                      set_prescription: resizeSetPrescription(
-                        editingExercise.set_prescription ?? [],
-                        nextSets,
-                        editingExercise.reps
-                      ),
-                    });
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Reps</Label>
-                <Input
-                  type="number"
-                  value={editingExercise.reps}
-                  onChange={(e) => {
-                    const nextReps = parsePositiveInt(e.target.value, editingExercise.reps);
-                    setEditingExercise({
-                      ...editingExercise,
-                      reps: nextReps,
-                      set_prescription: resizeSetPrescription(
-                        editingExercise.set_prescription ?? [],
-                        editingExercise.sets,
-                        nextReps
-                      ),
-                    });
-                  }}
-                />
-              </div>
-            </div>
-            <SetPrescriptionEditor
-              sets={editingExercise.sets}
-              defaultReps={editingExercise.reps}
-              value={
-                editingExercise.set_prescription ??
-                resizeSetPrescription([], editingExercise.sets, editingExercise.reps)
-              }
-              onChange={(set_prescription) => {
-                setEditingExercise({ ...editingExercise, set_prescription });
+            <RoutineExercisePrescriptionFields
+              formKey={`edit-${editingExercise.routine_exercise_id}`}
+              value={editingExercise}
+              onChange={(prescription) => {
+                setEditingExercise({ ...editingExercise, ...prescription });
               }}
             />
             <div className="grid grid-cols-2 gap-4">

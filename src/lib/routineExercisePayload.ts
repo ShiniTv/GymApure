@@ -83,5 +83,5 @@ export const defaultRoutineExerciseForm = (): RoutineExerciseForm => ({
   reps: 10,
   rest_seconds: 60,
   weight_suggestion: '',
-  set_prescription: deriveSetPrescription(3, 10),
+  set_prescription: null,
 });

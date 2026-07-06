@@ -71,3 +71,21 @@ export function summarySetsReps(rows: SetPrescriptionRow[]): { sets: number; rep
     reps: rows[0]?.reps ?? 10,
   };
 }
+
+export function defaultRepsFromPrescription(
+  prescription: SetPrescriptionRow[] | null | undefined,
+  fallback = 10
+): number {
+  return prescription?.[0]?.reps ?? fallback;
+}
+
+export function hasDetailedSetPrescription(
+  prescription: SetPrescriptionRow[] | null | undefined
+): boolean {
+  if (!prescription?.length) return false;
+  const firstReps = prescription[0]?.reps;
+  return (
+    prescription.some((row) => row.weight_kg != null && row.weight_kg > 0) ||
+    prescription.some((row) => row.reps !== firstReps)
+  );
+}
