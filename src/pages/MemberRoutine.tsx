@@ -1290,19 +1290,6 @@ export default function MemberRoutine() {
                     </div>
                   </div>
 
-                  {!isExpanded && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="mt-3 h-11 w-full text-sm sm:hidden"
-                      onClick={() => void toggleExpandRoutine(routine.id)}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                      Ver ejercicios
-                    </Button>
-                  )}
-
                   {isExpanded && (
                     <div className="mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
                       <div className="flex items-center justify-between gap-2">

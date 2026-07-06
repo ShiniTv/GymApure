@@ -258,19 +258,6 @@ export function RoutinesLibraryView({
                 </div>
               </div>
 
-              {canOpen && !isExpanded && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="mt-3 h-11 w-full text-sm sm:hidden"
-                  onClick={() => void onToggleExpandRoutine(routine.id)}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                  Ver ejercicios
-                </Button>
-              )}
-
               {isExpanded && (
                 <div className="animate-in slide-in-from-top-2 mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 duration-200 dark:border-zinc-800">
                   {isMember ? (
