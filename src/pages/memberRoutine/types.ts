@@ -5,6 +5,7 @@ export interface Routine {
   assigned_at: string;
   start_date?: string;
   end_date?: string;
+  exercise_count?: number;
   exercises?: Exercise[];
 }
 

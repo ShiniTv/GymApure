@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -12,6 +12,8 @@ import {
   History,
   MessageSquare,
   UtensilsCrossed,
+  MoreHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -106,6 +108,8 @@ export default function MemberRoutine() {
     weight_suggestion: '',
   });
   const [coachingTab, setCoachingTab] = useState<'rutinas' | 'perfil' | 'mediciones'>('rutinas');
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
 
@@ -146,6 +150,17 @@ export default function MemberRoutine() {
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [moreMenuOpen]);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -465,60 +480,81 @@ export default function MemberRoutine() {
           <div className="flex shrink-0 items-center gap-1.5">
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => navigate(`/members/${id}/nutrition`)}
-              aria-label="Nutrición"
-              title="Nutrición"
-            >
-              <UtensilsCrossed className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="h-9 gap-1.5 px-2.5 text-xs"
               onClick={() => navigate(`/members/${id}/history`)}
-              aria-label="Ver historial"
-              title="Historial"
             >
-              <History className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => navigate(`/messages?member=${id}`)}
-              aria-label="Enviar mensaje al miembro"
-              title="Mensaje"
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => {
-                setIsCreating(true);
-                setRoutineForm({ name: '', difficulty: 'Beginner' });
-              }}
-              aria-label="Crear rutina"
-              title="Nueva rutina"
-            >
-              <Plus className="h-4 w-4" />
+              <History className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Historial</span>
             </Button>
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => {
-                setIsAssigning(true);
-                apiFetchAvailableRoutines();
-              }}
-              aria-label="Asignar rutina existente"
-              title="Asignar existente"
+              className="h-9 gap-1.5 px-2.5 text-xs"
+              onClick={() => navigate(`/messages?member=${id}`)}
             >
-              <Plus className="h-4 w-4" />
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Mensaje</span>
             </Button>
+            <div className="relative" ref={moreMenuRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1 px-2.5 text-xs"
+                onClick={() => setMoreMenuOpen((open) => !open)}
+                aria-expanded={moreMenuOpen}
+                aria-haspopup="menu"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="hidden sm:inline">Más</span>
+              </Button>
+              {moreMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-full right-0 z-20 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      navigate(`/members/${id}/nutrition`);
+                    }}
+                  >
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                    Nutrición
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      setIsCreating(true);
+                      setRoutineForm({ name: '', difficulty: 'Beginner' });
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Crear rutina
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      setIsAssigning(true);
+                      apiFetchAvailableRoutines();
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Asignar rutina
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         }
       />
@@ -1105,45 +1141,65 @@ export default function MemberRoutine() {
                           {formatDifficulty(routine.difficulty)}
                         </Badge>
                       </div>
-                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
-                        <Calendar className="h-3 w-3 shrink-0" />
-                        {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3 w-3 shrink-0" />
+                          {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                        </span>
+                        <span>
+                          {routine.exercise_count ?? routine.exercises?.length ?? 0} ejerc.
+                        </span>
                       </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() => toggleExpandRoutine(routine.id)}
-                        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                          isExpanded
-                            ? 'text-brand bg-brand/10'
-                            : 'hover:text-brand hover:bg-brand/10 text-zinc-400 dark:text-zinc-300'
-                        }`}
-                        aria-label={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
-                        title={isExpanded ? 'Ocultar ejercicios' : 'Ver ejercicios'}
-                      >
-                        <Dumbbell className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          openEditModal(routine);
-                        }}
-                        className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                        aria-label={`Editar ${routine.name}`}
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUnassignTarget(routine);
-                        }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                        aria-label={`Quitar ${routine.name}`}
-                      >
-                        <UserMinus className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-8 gap-1 px-2 text-[11px]"
+                          onClick={() => toggleExpandRoutine(routine.id)}
+                        >
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                          Ejercicios
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-[11px]"
+                          onClick={() => {
+                            openEditModal(routine);
+                          }}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-[11px] text-red-600 hover:text-red-600 dark:text-red-400"
+                          onClick={() => {
+                            setUnassignTarget(routine);
+                          }}
+                        >
+                          <UserMinus className="h-3.5 w-3.5" />
+                          Quitar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-[11px]"
+                          onClick={() => {
+                            navigate(`/members/${id}/history?routine=${routine.id}`);
+                          }}
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          Historial
+                        </Button>
+                      </div>
                     </div>
                   </div>
 

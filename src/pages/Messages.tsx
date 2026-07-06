@@ -92,6 +92,7 @@ const ChatBubble = memo(function ChatBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [draft, setDraft] = useState(message.body);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const side = resolveBubbleSide(message, user?.role);
   const isOutgoing = side === 'end';
   const isSystem = side === 'center';
@@ -105,6 +106,28 @@ const ChatBubble = memo(function ChatBubble({
   useEffect(() => {
     if (!isEditing) setDraft(message.body);
   }, [message.body, isEditing]);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    },
+    []
+  );
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleLongPressStart = () => {
+    if (!manageable || isEditing) return;
+    clearLongPress();
+    longPressTimerRef.current = setTimeout(() => {
+      setIsEditing(true);
+    }, 500);
+  };
 
   const cancelEdit = () => {
     setDraft(message.body);
@@ -219,35 +242,6 @@ const ChatBubble = memo(function ChatBubble({
             isOutgoing ? 'items-end' : 'items-start'
           )}
         >
-          {manageable && (
-            <div
-              className={clsx(
-                'flex items-center gap-1',
-                'opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100'
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(true);
-                }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                aria-label="Editar mensaje"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteConfirm(true);
-                }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
-                aria-label="Eliminar mensaje"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
           <div
             className={clsx(
               'w-fit max-w-full rounded-xl px-3 py-2',
@@ -255,11 +249,15 @@ const ChatBubble = memo(function ChatBubble({
                 ? 'brand-solid rounded-br-sm'
                 : 'rounded-bl-sm border border-zinc-200/80 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
             )}
+            onTouchStart={handleLongPressStart}
+            onTouchEnd={clearLongPress}
+            onTouchCancel={clearLongPress}
+            onTouchMove={clearLongPress}
           >
             {!isOutgoing && message.sender_name && (
               <p className="mb-0.5 text-[10px] font-bold opacity-70">{message.sender_name}</p>
             )}
-            <p className="text-xs leading-snug break-words whitespace-pre-wrap sm:text-sm">
+            <p className="text-xs leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
               {message.body}
             </p>
             <p
@@ -272,6 +270,37 @@ const ChatBubble = memo(function ChatBubble({
               {message.edited_at ? ' · editado' : ''}
             </p>
           </div>
+          {manageable && (
+            <div
+              className={clsx(
+                'flex items-center gap-1',
+                'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(true);
+                }}
+                className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                aria-label="Editar mensaje"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                <span className="sm:hidden">Editar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                }}
+                className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-500/10"
+                aria-label="Eliminar mensaje"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="sm:hidden">Borrar</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -337,7 +366,7 @@ function ChatComposer({
 
   return (
     <div className="shrink-0 border-t border-zinc-100 bg-white p-2.5 sm:p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex h-11 w-full min-w-0 items-center gap-2">
+      <div className="flex w-full min-w-0 items-end gap-2">
         <textarea
           value={body}
           onChange={(e) => {
@@ -354,7 +383,10 @@ function ChatComposer({
           }}
           className={cn(
             fieldClassName,
-            '!h-11 !max-h-11 !min-h-11 min-w-0 flex-1 resize-none rounded-xl px-3 py-2 text-sm leading-5'
+            'max-h-24 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl px-3 py-2.5 text-sm leading-5',
+            'text-zinc-900 dark:text-white',
+            'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
+            'caret-[var(--color-brand)]'
           )}
         />
         <Button
@@ -362,7 +394,7 @@ function ChatComposer({
           size="sm"
           disabled={disabled || !body.trim() || sendMessage.isPending}
           onClick={() => void handleSend()}
-          className="h-11 min-h-11 w-11 min-w-11 shrink-0 rounded-xl p-0"
+          className="mb-0.5 h-11 min-h-11 w-11 min-w-11 shrink-0 rounded-xl p-0"
           aria-label="Enviar mensaje"
         >
           <Send className="h-4 w-4" />
@@ -613,7 +645,7 @@ function StaffChatView() {
         action={<BackToDashboardLink />}
       />
 
-      <div className="h-[calc(100dvh-10.5rem)] max-h-[720px] gap-2.5 sm:h-[calc(100dvh-11.5rem)] sm:gap-3 lg:grid lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
+      <div className="staff-chat-shell max-h-[720px] gap-2.5 sm:gap-3 lg:grid lg:h-[calc(100dvh-11.5rem)] lg:max-h-none lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)]">
         <div className={clsx(showChatOnMobile && selected ? 'hidden lg:block' : 'block', 'h-full')}>
           {conversationListPanel}
         </div>

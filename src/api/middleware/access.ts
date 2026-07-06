@@ -121,5 +121,10 @@ export const requireWorkoutSessionAccess = asyncHandler(async (req, res, next) =
     return;
   }
 
+  if (user.role === 'admin' || user.role === 'receptionist') {
+    next();
+    return;
+  }
+
   res.status(403).json({ error: 'Permisos insuficientes' });
 });

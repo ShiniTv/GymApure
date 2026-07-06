@@ -547,7 +547,8 @@ router.get('/:id/history', requireMemberAccess('id'), async (req, res) => {
         [userId]
       ),
       query(
-        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, r.name AS routine_name,
+        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, ws.routine_id,
+                r.name AS routine_name,
                 COALESCE(wl.sets_completed, 0)::int AS sets_completed
          FROM workout_sessions ws
          JOIN routines r ON ws.routine_id = r.id
@@ -581,6 +582,14 @@ router.get('/:id/history', requireMemberAccess('id'), async (req, res) => {
 
 router.post('/:id/routines', authorize(['trainer']), async (req: AuthRequest, res) => {
   const { routine_id, start_date, end_date } = req.body;
+  if (!routine_id || !start_date || !end_date) {
+    return res.status(400).json({ error: 'Rutina y fechas son requeridas' });
+  }
+  if (start_date > end_date) {
+    return res.status(400).json({
+      error: 'La fecha de inicio debe ser anterior o igual a la de fin',
+    });
+  }
   const assigned_by = req.user!.id;
   try {
     const { rows } = await query(

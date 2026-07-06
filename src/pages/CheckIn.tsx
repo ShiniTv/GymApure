@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown, ArrowLeft } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -419,11 +419,18 @@ export default function CheckIn() {
         <div className="flex min-h-dvh flex-col text-white">
           <header
             className={cn(
-              'flex shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md',
+              'relative flex shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md',
               isLargeKioskLayout ? 'px-6 py-5 md:px-10' : 'px-4 py-3'
             )}
           >
-            <div className="flex min-w-0 items-center gap-3">
+            <Link
+              to="/reception"
+              className="absolute top-3 left-4 z-10 inline-flex items-center gap-1 text-[11px] text-zinc-500 transition-colors hover:text-zinc-300 sm:left-6 sm:text-xs"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Volver a recepción
+            </Link>
+            <div className="flex min-w-0 items-center gap-3 pt-5 sm:pt-0">
               <Logo
                 className={cn('shrink-0', isLargeKioskLayout ? 'h-12 w-12' : 'h-9 w-9')}
                 mode="dark"

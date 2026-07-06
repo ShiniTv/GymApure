@@ -87,6 +87,7 @@ export default function Routines() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isAssigningFromCalendar, setIsAssigningFromCalendar] = useState(false);
+  const [assignSingleDay, setAssignSingleDay] = useState(false);
   const [assignForm, setAssignForm] = useState({
     user_id: '',
     routine_id: '',
@@ -456,11 +457,12 @@ export default function Routines() {
       member.routines.forEach((routine) => {
         if (!routine.start_date || !routine.end_date) return;
         try {
-          const start = parseISO(routine.start_date);
-          const end = parseISO(routine.end_date);
+          const start = startOfDay(parseISO(routine.start_date));
+          const end = startOfDay(parseISO(routine.end_date));
           if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return;
           calendarDays.forEach((day) => {
-            if (isWithinInterval(day, { start, end })) {
+            const dayStart = startOfDay(day);
+            if (isWithinInterval(dayStart, { start, end })) {
               const dateStr = format(day, 'yyyy-MM-dd');
               if (!map[dateStr]) map[dateStr] = [];
               map[dateStr].push({
@@ -612,7 +614,11 @@ export default function Routines() {
 
           <RoutineModals
             isAssigningFromCalendar={isAssigningFromCalendar}
-            setIsAssigningFromCalendar={setIsAssigningFromCalendar}
+            setIsAssigningFromCalendar={(open) => {
+              setIsAssigningFromCalendar(open);
+              if (!open) setAssignSingleDay(false);
+            }}
+            assignSingleDay={assignSingleDay}
             assignForm={assignForm}
             setAssignForm={setAssignForm}
             members={members}
@@ -696,10 +702,16 @@ export default function Routines() {
               calendarDays={calendarDays}
               assignmentsByDay={assignmentsByDay}
               onAssignDirect={() => {
+                setAssignSingleDay(false);
                 setIsAssigningFromCalendar(true);
               }}
               onAssignOnDay={(dateStr) => {
-                setAssignForm((prev) => ({ ...prev, start_date: dateStr }));
+                setAssignForm((prev) => ({
+                  ...prev,
+                  start_date: dateStr,
+                  end_date: dateStr,
+                }));
+                setAssignSingleDay(true);
                 setIsAssigningFromCalendar(true);
               }}
               onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}

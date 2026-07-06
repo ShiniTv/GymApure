@@ -11,6 +11,7 @@ import type { TrainingShift } from '../../lib/trainingShift';
 export interface RoutineModalsProps {
   isAssigningFromCalendar: boolean;
   setIsAssigningFromCalendar: (open: boolean) => void;
+  assignSingleDay?: boolean;
   assignForm: {
     user_id: string;
     routine_id: string;
@@ -82,6 +83,7 @@ export interface RoutineModalsProps {
 export function RoutineModals({
   isAssigningFromCalendar,
   setIsAssigningFromCalendar,
+  assignSingleDay = false,
   assignForm,
   setAssignForm,
   members,
@@ -196,27 +198,40 @@ export function RoutineModals({
               </p>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className={assignSingleDay ? 'space-y-2' : 'grid grid-cols-2 gap-4'}>
             <div>
-              <Label>Inicio</Label>
+              <Label>{assignSingleDay ? 'Fecha' : 'Inicio'}</Label>
               <Input
                 type="date"
                 value={assignForm.start_date}
+                readOnly={assignSingleDay}
                 onChange={(e) => {
-                  setAssignForm({ ...assignForm, start_date: e.target.value });
+                  const nextStart = e.target.value;
+                  setAssignForm({
+                    ...assignForm,
+                    start_date: nextStart,
+                    ...(assignSingleDay ? { end_date: nextStart } : {}),
+                  });
                 }}
               />
             </div>
-            <div>
-              <Label>Fin</Label>
-              <Input
-                type="date"
-                value={assignForm.end_date}
-                onChange={(e) => {
-                  setAssignForm({ ...assignForm, end_date: e.target.value });
-                }}
-              />
-            </div>
+            {!assignSingleDay && (
+              <div>
+                <Label>Fin</Label>
+                <Input
+                  type="date"
+                  value={assignForm.end_date}
+                  onChange={(e) => {
+                    setAssignForm({ ...assignForm, end_date: e.target.value });
+                  }}
+                />
+              </div>
+            )}
+            {assignSingleDay && (
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                Asignación para un solo día en el calendario.
+              </p>
+            )}
           </div>
           <Button
             variant="secondary"

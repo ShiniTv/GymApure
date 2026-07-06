@@ -479,6 +479,22 @@ html.member-has-workout-fab .member-chat-panel {
   height: calc(100dvh - 10.5rem - 8.5rem - env(safe-area-inset-bottom, 0px));
 }
 
+.staff-chat-shell {
+  height: calc(100dvh - 10.5rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .staff-chat-shell {
+    height: calc(100dvh - 11.5rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .staff-chat-shell {
+    height: calc(100dvh - 11.5rem);
+  }
+}
+
 @media (min-width: 640px) {
   html.member-has-workout-fab .member-chat-panel {
     height: calc(100dvh - 11rem - 8.5rem - env(safe-area-inset-bottom, 0px));
