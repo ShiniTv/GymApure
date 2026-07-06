@@ -25,3 +25,4 @@ export { Accordion, AccordionItem } from './Accordion';
 export { FilterChips } from './FilterChips';
 export type { FilterChipOption } from './FilterChips';
 export { BackToDashboardLink } from './BackToDashboardLink';
+export { AnchoredMenu } from './AnchoredMenu';
