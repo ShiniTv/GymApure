@@ -22,7 +22,7 @@ export interface RoutinesLibraryViewProps {
   onEditRoutine: (routine: Routine) => void;
   onDeleteRoutine: (routine: Routine) => void;
   onCreateRoutine: () => void;
-  onAddExercise: () => void;
+  onAddExercise: (routineId: number) => void;
   onInlineUpdate: (
     routineId: number,
     exercise: RoutineExercise,
@@ -207,17 +207,18 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           void onToggleExpandRoutine(routine.id);
                         }}
-                        className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                        className={`inline-flex h-8 items-center gap-1 rounded-lg border px-2 transition-colors ${
                           isExpanded
                             ? 'border-zinc-900 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
                             : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400'
                         }`}
                         aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
                         aria-expanded={isExpanded}
-                        title={isExpanded ? 'Cerrar' : 'Ejercicios'}
+                        title={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
                       >
+                        <span className="text-[11px] font-medium">Ejercicios</span>
                         <ChevronDown
-                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                         />
                       </button>
                     </>
@@ -299,7 +300,7 @@ export function RoutinesLibraryView({
                           type="button"
                           size="sm"
                           className="h-8 px-2.5 text-xs"
-                          onClick={onAddExercise}
+                          onClick={() => onAddExercise(routine.id)}
                           aria-label="Añadir ejercicio"
                         >
                           <Plus className="h-3.5 w-3.5" />

@@ -12,6 +12,7 @@ import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToastOptional } from '../context/ToastContext';
 import {
   PageHeader,
   SegmentedControl,
@@ -116,6 +117,7 @@ export default function Routines() {
 
   const navigate = useNavigate();
   const { user } = useAuth();
+  const toast = useToastOptional();
   const invalidateRoutines = useInvalidateRoutines();
   const isMember = user?.role === 'member';
   const isStaffRoutines = user?.role === 'trainer';
@@ -363,11 +365,14 @@ export default function Routines() {
       setExpandedRoutineId(null);
       return;
     }
+    setExpandedRoutineId(routineId);
     try {
       await refreshRoutineExercises(routineId);
-      setExpandedRoutineId(routineId);
     } catch (err) {
       clientLogger.error('Failed to fetch routine exercises', err);
+      toast?.error(
+        err instanceof Error ? err.message : 'No se pudieron cargar los ejercicios de la rutina'
+      );
     }
   };
 
@@ -673,7 +678,8 @@ export default function Routines() {
               onCreateRoutine={() => {
                 setIsCreating(true);
               }}
-              onAddExercise={() => {
+              onAddExercise={(routineId) => {
+                setExpandedRoutineId(routineId);
                 setAddExerciseError(null);
                 setIsAddingExercise(true);
               }}
