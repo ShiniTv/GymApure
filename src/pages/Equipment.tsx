@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Plus,
@@ -15,6 +15,7 @@ import {
   Hammer,
   Archive,
   Download,
+  MoreHorizontal,
 } from 'lucide-react';
 import { cn, formatMoney } from '../lib/utils';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -48,6 +49,7 @@ import {
   Textarea,
   Select,
   SearchInput,
+  AnchoredMenu,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 
@@ -108,11 +110,18 @@ interface MaintenanceEvent {
 type AddStep = 'pick' | 'details';
 type ConfigTab = 'zones' | 'vendors';
 
-const STATUS_SUMMARY_STYLES: Record<EquipmentStatus, string> = {
-  operational: 'text-emerald-600 dark:text-emerald-400',
-  limited: 'text-orange-600 dark:text-orange-400',
-  maintenance: 'text-brand',
-  out_of_service: 'text-red-600 dark:text-red-400',
+const STATUS_BORDER_STYLES: Record<EquipmentStatus, string> = {
+  operational: 'border-l-emerald-500',
+  limited: 'border-l-orange-500',
+  maintenance: 'border-l-brand',
+  out_of_service: 'border-l-red-500',
+};
+
+const STATUS_SHORT_LABELS: Record<EquipmentStatus, string> = {
+  operational: 'OK',
+  limited: 'Limit.',
+  maintenance: 'Mant.',
+  out_of_service: 'Fuera',
 };
 
 const emptyEquipmentForm = {
@@ -148,15 +157,21 @@ type LayoutView = 'flat' | 'zones';
 function EquipmentListCard({
   item,
   onOpen,
+  hideZone = false,
 }: {
   item: EquipmentItem;
   onOpen: (id: number) => void;
+  hideZone?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={() => onOpen(item.id)}
-      className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+      className={cn(
+        'flex items-center gap-3 rounded-xl border border-l-4 bg-white p-3 text-left transition hover:border-zinc-300 dark:bg-zinc-900 dark:hover:border-zinc-600',
+        STATUS_BORDER_STYLES[item.status],
+        'border-zinc-200 dark:border-zinc-800'
+      )}
     >
       {item.photo_url ? (
         <img
@@ -173,10 +188,12 @@ function EquipmentListCard({
         <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
           {equipmentDisplayName(item)}
         </p>
-        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-zinc-500">
-          <MapPin className="h-3 w-3 shrink-0" />
-          {item.zone_name ?? 'Sin zona'}
-        </p>
+        {!hideZone && (
+          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-zinc-500">
+            <MapPin className="h-3 w-3 shrink-0" />
+            {item.zone_name ?? 'Sin zona'}
+          </p>
+        )}
         {isInspectionDue(item.next_inspection_at) && (
           <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-orange-600 dark:text-orange-400">
             <Clock className="h-3 w-3" />
@@ -185,7 +202,8 @@ function EquipmentListCard({
         )}
       </div>
       <Badge variant={EQUIPMENT_STATUS_BADGE[item.status]} className="shrink-0 text-[10px]">
-        {EQUIPMENT_STATUS_LABELS[item.status]}
+        <span className="sm:hidden">{STATUS_SHORT_LABELS[item.status]}</span>
+        <span className="hidden sm:inline">{EQUIPMENT_STATUS_LABELS[item.status]}</span>
       </Badge>
     </button>
   );
@@ -254,6 +272,9 @@ export default function Equipment() {
   const [retireReason, setRetireReason] = useState('');
   const [retireError, setRetireError] = useState('');
   const [retiring, setRetiring] = useState(false);
+
+  const detailMoreRef = useRef<HTMLButtonElement>(null);
+  const [detailMoreOpen, setDetailMoreOpen] = useState(false);
 
   const [zoneName, setZoneName] = useState('');
   const [vendorForm, setVendorForm] = useState({
@@ -399,6 +420,7 @@ export default function Equipment() {
   };
 
   const closeDetail = () => {
+    setDetailMoreOpen(false);
     setSearchParams({});
   };
 
@@ -712,9 +734,32 @@ export default function Equipment() {
     setStaffQuickFilter('all');
   };
 
-  const toggleStatusFilter = (status: EquipmentStatus) => {
-    setStatusFilter((current) => (current === status ? 'all' : status));
+  const attentionCount = useMemo(
+    () =>
+      (statusCounts.limited ?? 0) +
+      (statusCounts.maintenance ?? 0) +
+      (statusCounts.out_of_service ?? 0),
+    [statusCounts]
+  );
+
+  const adminSummaryFilter = inspectionDueOnly
+    ? '__inspection__'
+    : statusFilter !== 'all'
+      ? statusFilter
+      : 'all';
+
+  const handleAdminSummaryFilter = (value: string) => {
+    if (value === '__inspection__') {
+      setInspectionDueOnly(true);
+      setStatusFilter('all');
+      return;
+    }
+    setInspectionDueOnly(false);
+    setStatusFilter(value);
   };
+
+  const showAttentionAlert =
+    isAdmin && attentionCount > 0 && statusFilter === 'all' && !inspectionDueOnly;
 
   if (loading) {
     return (
@@ -728,89 +773,64 @@ export default function Equipment() {
     <div className="page-stack">
       <PageHeader
         compact
+        showTitleOnMobile
         title={
           <>
             Equipamiento <span className="text-brand">del gym</span>
           </>
         }
         subtitle={
-          isAdmin ? 'Estado del equipamiento del local' : 'Consulta el estado y reporta incidencias'
+          isAdmin ? 'Inventario y mantenimiento' : 'Consulta el estado y reporta incidencias'
         }
         action={
-          <div className="flex items-center gap-2">
-            <BackToDashboardLink />
-            {isAdmin && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setConfigOpen(true)}
-                  aria-label="Configuración de zonas y proveedores"
-                >
-                  <Settings2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Configuración</span>
-                </Button>
-                <Button onClick={() => openAddFromCatalog()}>
-                  <Plus className="h-4 w-4" />
-                  Añadir
-                </Button>
-              </>
-            )}
-          </div>
+          isAdmin ? (
+            <div className="flex items-center gap-1.5">
+              <BackToDashboardLink iconOnly className="lg:hidden" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 px-0"
+                onClick={() => setConfigOpen(true)}
+                aria-label="Zonas y proveedores"
+                title="Zonas y proveedores"
+              >
+                <Settings2 className="h-4 w-4" />
+              </Button>
+              <Button onClick={() => openAddFromCatalog()} className="gap-1.5">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Añadir equipo</span>
+                <span className="sm:hidden">Añadir</span>
+              </Button>
+            </div>
+          ) : (
+            <BackToDashboardLink iconOnly className="lg:hidden" />
+          )
         }
       />
 
       <div className="flex flex-col gap-3">
         {isAdmin ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="font-semibold text-zinc-800 tabular-nums dark:text-zinc-200">
-              {allItems.length}
-            </span>{' '}
-            {allItems.length === 1 ? 'equipo' : 'equipos'}
-            {activeFilterCount > 0 && (
-              <span className="text-zinc-400">
-                {' '}
-                · {items.length} {items.length === 1 ? 'resultado' : 'resultados'}
-              </span>
-            )}
-            {EQUIPMENT_STATUSES.map((status) => {
-              const count = statusCounts[status] ?? 0;
-              if (count === 0) return null;
-              return (
-                <span key={status}>
-                  {' · '}
-                  <button
-                    type="button"
-                    onClick={() => toggleStatusFilter(status)}
-                    className={cn(
-                      'font-semibold transition-colors',
-                      STATUS_SUMMARY_STYLES[status],
-                      statusFilter === status && 'underline underline-offset-2'
-                    )}
-                  >
-                    {count} {EQUIPMENT_STATUS_LABELS[status].toLowerCase()}
-                    {count !== 1 ? 's' : ''}
-                  </button>
-                </span>
-              );
-            })}
-            {inspectionDueCount > 0 && (
-              <span>
-                {' · '}
-                <button
-                  type="button"
-                  onClick={() => setInspectionDueOnly((v) => !v)}
-                  className={cn(
-                    'font-semibold text-orange-600 transition-colors dark:text-orange-400',
-                    inspectionDueOnly && 'underline underline-offset-2'
-                  )}
-                >
-                  {inspectionDueCount} revisión{inspectionDueCount !== 1 ? 'es' : ''} pendiente
-                  {inspectionDueCount !== 1 ? 's' : ''}
-                </button>
-              </span>
-            )}
-          </p>
+          <FilterChips
+            value={adminSummaryFilter}
+            onChange={handleAdminSummaryFilter}
+            options={[
+              { value: 'all', label: 'Todos', count: allItems.length },
+              ...EQUIPMENT_STATUSES.filter((s) => (statusCounts[s] ?? 0) > 0).map((s) => ({
+                value: s,
+                label: EQUIPMENT_STATUS_LABELS[s],
+                count: statusCounts[s],
+              })),
+              ...(inspectionDueCount > 0
+                ? [
+                    {
+                      value: '__inspection__',
+                      label: 'Revisión pendiente',
+                      count: inspectionDueCount,
+                    },
+                  ]
+                : []),
+            ]}
+          />
         ) : (
           <FilterChips
             value={staffQuickFilter}
@@ -820,10 +840,7 @@ export default function Equipment() {
               {
                 value: 'attention',
                 label: 'Requieren atención',
-                count:
-                  (statusCounts.limited ?? 0) +
-                  (statusCounts.maintenance ?? 0) +
-                  (statusCounts.out_of_service ?? 0),
+                count: attentionCount,
               },
               {
                 value: 'inspection_due',
@@ -834,62 +851,95 @@ export default function Equipment() {
           />
         )}
 
-        <div className="flex gap-2">
-          <SearchInput
-            className="flex-1"
-            placeholder="Buscar equipo, marca o modelo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Button
-            type="button"
-            variant={filtersOpen || activeFilterCount > 0 ? 'primary' : 'secondary'}
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={() => setFiltersOpen((v) => !v)}
-            aria-expanded={filtersOpen}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filtros
-            {activeFilterCount > 0 && (
-              <span className="rounded-md bg-white/20 px-1.5 text-[10px] font-bold tabular-nums">
-                {activeFilterCount}
-              </span>
-            )}
-          </Button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <SegmentedControl
-            variant="compact"
-            value={layoutView}
-            onChange={(v) => setLayoutView(v)}
-            options={[
-              { value: 'flat', label: 'Lista' },
-              { value: 'zones', label: 'Por zona' },
-            ]}
-          />
-          {isAdmin && items.length > 0 && (
+        {showAttentionAlert && (
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-2">
+            <p className="flex items-center gap-2 text-xs font-medium text-orange-800 dark:text-orange-300">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {attentionCount} equipo{attentionCount !== 1 ? 's' : ''} requieren atención
+            </p>
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              className="gap-1.5"
-              onClick={() => downloadEquipmentCsv(items)}
+              className="h-8 shrink-0 text-orange-700 dark:text-orange-300"
+              onClick={() => {
+                setFiltersOpen(true);
+                if ((statusCounts.maintenance ?? 0) > 0) {
+                  setStatusFilter('maintenance');
+                } else if ((statusCounts.out_of_service ?? 0) > 0) {
+                  setStatusFilter('out_of_service');
+                } else {
+                  setStatusFilter('limited');
+                }
+                setInspectionDueOnly(false);
+              }}
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Exportar CSV</span>
-              <span className="sm:hidden">CSV</span>
+              Ver
             </Button>
-          )}
-        </div>
+          </div>
+        )}
+
+        <Card padding="sm" rounded="xl" className="space-y-3">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <SearchInput
+              className="min-w-0 flex-1"
+              placeholder="Buscar equipo, marca o modelo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <SegmentedControl
+                variant="compact"
+                value={layoutView}
+                onChange={(v) => setLayoutView(v)}
+                className="shrink-0"
+                options={[
+                  { value: 'flat', label: 'Lista' },
+                  { value: 'zones', label: 'Por zona' },
+                ]}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden sm:inline">Filtros</span>
+                {activeFilterCount > 0 && (
+                  <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+              {isAdmin && items.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 shrink-0 px-0"
+                  onClick={() => downloadEquipmentCsv(items)}
+                  aria-label="Exportar CSV"
+                  title="Exportar CSV"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {filtersOpen && (
           <Card padding="sm" rounded="xl" className="space-y-3">
             {isAdmin && (
               <FilterChips
                 value={statusFilter}
-                onChange={setStatusFilter}
+                onChange={(value) => {
+                  setInspectionDueOnly(false);
+                  setStatusFilter(value);
+                }}
                 options={[
                   { value: 'all', label: 'Todos los estados' },
                   ...EQUIPMENT_STATUSES.map((s) => ({
@@ -975,7 +1025,7 @@ export default function Equipment() {
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {group.items.map((item) => (
-                    <EquipmentListCard key={item.id} item={item} onOpen={openDetail} />
+                    <EquipmentListCard key={item.id} item={item} onOpen={openDetail} hideZone />
                   ))}
                 </div>
               </section>
@@ -1313,44 +1363,68 @@ export default function Equipment() {
                       <Pencil className="h-4 w-4" />
                       Editar
                     </Button>
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium dark:border-zinc-700">
-                      <Camera className="h-4 w-4" />
-                      Foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) void handlePhotoUpload(file);
-                        }}
-                      />
-                    </label>
-                    {detail.status !== 'out_of_service' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setRetireReason('');
-                          setRetireError('');
-                          setRetireOpen(true);
-                        }}
-                      >
-                        <Archive className="h-4 w-4" />
-                        Retirar
-                      </Button>
-                    )}
                     <Button
+                      ref={detailMoreRef}
+                      type="button"
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => {
-                        setDeleteError('');
-                        setDeleteOpen(true);
-                      }}
+                      className="h-9 w-9 px-0"
+                      onClick={() => setDetailMoreOpen((v) => !v)}
+                      aria-label="Más acciones"
+                      aria-expanded={detailMoreOpen}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
+                    <AnchoredMenu
+                      open={detailMoreOpen}
+                      onClose={() => setDetailMoreOpen(false)}
+                      anchorRef={detailMoreRef}
+                      align="end"
+                    >
+                      <div className="flex flex-col p-1">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                          <Camera className="h-4 w-4" />
+                          Subir foto
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              setDetailMoreOpen(false);
+                              if (file) void handlePhotoUpload(file);
+                            }}
+                          />
+                        </label>
+                        {detail.status !== 'out_of_service' && (
+                          <button
+                            type="button"
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            onClick={() => {
+                              setDetailMoreOpen(false);
+                              setRetireReason('');
+                              setRetireError('');
+                              setRetireOpen(true);
+                            }}
+                          >
+                            <Archive className="h-4 w-4" />
+                            Retirar del gym
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                          onClick={() => {
+                            setDetailMoreOpen(false);
+                            setDeleteError('');
+                            setDeleteOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar
+                        </button>
+                      </div>
+                    </AnchoredMenu>
                   </>
                 )}
               </div>
