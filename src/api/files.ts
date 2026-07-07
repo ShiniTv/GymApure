@@ -216,4 +216,20 @@ router.get('/videos/:filename', async (req: AuthRequest, res) => {
   }
 });
 
+router.get('/media/equipment', async (req: AuthRequest, res) => {
+  const key = req.query.key;
+  if (!key || typeof key !== 'string' || key.includes('..')) {
+    return res.status(400).json({ error: 'Clave inválida' });
+  }
+  const ref = `sbmedia:equipment:${key}`;
+  try {
+    const { rows } = await query(`SELECT id FROM gym_equipment WHERE photo_url = $1`, [ref]);
+    if (!rows[0]) return res.status(404).json({ error: 'Foto no encontrada' });
+    await streamMediaFile(ref, res, req);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
 export default router;

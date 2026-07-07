@@ -137,6 +137,16 @@ export function resolveMediaUrl(url: string | null | undefined): string {
   return url;
 }
 
+export function resolveEquipmentPhotoUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('sbmedia:equipment:')) {
+    const key = url.slice('sbmedia:equipment:'.length);
+    return `/api/files/media/equipment?key=${encodeURIComponent(key)}`;
+  }
+  if (url.startsWith('/api/files/avatars/')) return url;
+  return resolveAvatarUrl(url);
+}
+
 export function resolveAvatarUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (url.startsWith('sbmedia:avatars:')) {

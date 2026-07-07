@@ -8,6 +8,7 @@ import {
   CalendarDays,
   BookOpen,
   UserCircle,
+  Wrench,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -24,6 +25,7 @@ export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock },
   { name: 'Calendario', href: '/routines?view=calendar', icon: CalendarDays },
   { name: 'Ejercicios', href: '/exercises', icon: BookOpen },
+  { name: 'Equipamiento', href: '/equipment', icon: Wrench },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 

@@ -18,6 +18,7 @@ import chatRoutes from './chat.ts';
 import nutritionRoutes from './nutrition.ts';
 import trainerRoutes from './trainers.ts';
 import pushSubscriptionRoutes from './pushSubscriptions.ts';
+import equipmentRoutes from './equipment.ts';
 import notificationRoutes from './notifications.ts';
 import { authenticate } from './middleware/auth.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
@@ -52,6 +53,7 @@ router.use(nutritionRoutes);
 router.use('/files', fileRoutes);
 router.use('/push', pushSubscriptionRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/equipment', equipmentRoutes);
 
 router.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

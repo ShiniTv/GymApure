@@ -5,6 +5,7 @@ import {
   isSupabaseStorageConfigured,
   AVATARS_BUCKET,
   VIDEOS_BUCKET,
+  EQUIPMENT_PHOTOS_BUCKET,
   STORAGE_MEDIA_PREFIX,
   supabaseStorageRemove,
   supabaseStorageUpload,
@@ -15,12 +16,12 @@ import { VIDEO_MAX_OUTPUT_BYTES } from './videoConfig.ts';
 import { VideoValidationError } from './videoOptimizer.ts';
 import { logger } from './logger.ts';
 
-export type MediaKind = 'avatars' | 'videos';
+export type MediaKind = 'avatars' | 'videos' | 'equipment';
 
-export type ExerciseVideoUploadResult = {
+export interface ExerciseVideoUploadResult {
   videoUrl: string;
   posterUrl: string | null;
-};
+}
 
 function buildStorageMediaRef(kind: MediaKind, objectKey: string): string {
   return `${STORAGE_MEDIA_PREFIX}${kind}:${objectKey}`;
@@ -35,14 +36,20 @@ export function parseStorageMediaRef(
   if (colon <= 0) return null;
   const kind = rest.slice(0, colon) as MediaKind;
   const objectKey = rest.slice(colon + 1);
-  if ((kind !== 'avatars' && kind !== 'videos') || !objectKey || objectKey.includes('..')) {
+  if (
+    (kind !== 'avatars' && kind !== 'videos' && kind !== 'equipment') ||
+    !objectKey ||
+    objectKey.includes('..')
+  ) {
     return null;
   }
   return { kind, objectKey };
 }
 
 function bucketForKind(kind: MediaKind): string {
-  return kind === 'avatars' ? AVATARS_BUCKET : VIDEOS_BUCKET;
+  if (kind === 'avatars') return AVATARS_BUCKET;
+  if (kind === 'equipment') return EQUIPMENT_PHOTOS_BUCKET;
+  return VIDEOS_BUCKET;
 }
 
 function extensionFromMime(mime: string, kind: MediaKind): string {
@@ -72,7 +79,12 @@ export async function uploadMediaFile(
     throw new Error('No se pudo leer el archivo subido');
   }
 
-  if (kind === 'avatars' && (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/webp')) {
+  if (
+    (kind === 'avatars' || kind === 'equipment') &&
+    (file.mimetype === 'image/jpeg' ||
+      file.mimetype === 'image/png' ||
+      file.mimetype === 'image/webp')
+  ) {
     try {
       const { optimizeAvatar } = await import('./imageOptimizer.ts');
       const result = await optimizeAvatar(body);
@@ -83,7 +95,10 @@ export async function uploadMediaFile(
     }
   }
 
-  const ext = kind === 'avatars' ? '.webp' : path.extname(file.originalname) || extensionFromMime(file.mimetype, kind);
+  const ext =
+    kind === 'avatars' || kind === 'equipment'
+      ? '.webp'
+      : path.extname(file.originalname) || extensionFromMime(file.mimetype, kind);
   const objectKey = `${objectPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
   await supabaseStorageUpload(bucketForKind(kind), objectKey, body, file.mimetype);
@@ -128,14 +143,19 @@ async function transcodeExerciseVideo(
   }
 }
 
-export async function uploadExerciseVideo(file: Express.Multer.File): Promise<ExerciseVideoUploadResult> {
+export async function uploadExerciseVideo(
+  file: Express.Multer.File
+): Promise<ExerciseVideoUploadResult> {
   const body = file.buffer ?? (file.path ? fs.readFileSync(file.path) : null);
   if (!body) {
     throw new Error('No se pudo leer el archivo subido');
   }
 
   const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const { videoBuffer, videoMime, posterBuffer } = await transcodeExerciseVideo(body, file.mimetype);
+  const { videoBuffer, videoMime, posterBuffer } = await transcodeExerciseVideo(
+    body,
+    file.mimetype
+  );
 
   const videoKey = `exercises/${baseName}.mp4`;
   await supabaseStorageUpload(bucketForKind('videos'), videoKey, videoBuffer, videoMime);
@@ -176,7 +196,10 @@ export async function localExerciseVideoFromUpload(
   }
 
   const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const { videoBuffer, videoMime, posterBuffer } = await transcodeExerciseVideo(body, file.mimetype);
+  const { videoBuffer, videoMime, posterBuffer } = await transcodeExerciseVideo(
+    body,
+    file.mimetype
+  );
 
   const uploadsDir = path.join(process.cwd(), 'uploads', 'videos');
   if (!fs.existsSync(uploadsDir)) {
@@ -212,7 +235,11 @@ export function isMediaStorageRemote(): boolean {
   return isSupabaseStorageConfigured();
 }
 
-export async function streamMediaFile(storedUrl: string, res: Response, req?: Request): Promise<void> {
+export async function streamMediaFile(
+  storedUrl: string,
+  res: Response,
+  req?: Request
+): Promise<void> {
   const parsed = parseStorageMediaRef(storedUrl);
   if (parsed) {
     try {
@@ -254,12 +281,11 @@ export async function streamMediaFile(storedUrl: string, res: Response, req?: Re
     return;
   }
 
-  const localSegment =
-    storedUrl.startsWith('/api/files/avatars/')
-      ? storedUrl.replace('/api/files/avatars/', '')
-      : storedUrl.startsWith('/api/files/videos/')
-        ? storedUrl.replace('/api/files/videos/', '')
-        : null;
+  const localSegment = storedUrl.startsWith('/api/files/avatars/')
+    ? storedUrl.replace('/api/files/avatars/', '')
+    : storedUrl.startsWith('/api/files/videos/')
+      ? storedUrl.replace('/api/files/videos/', '')
+      : null;
 
   if (!localSegment) {
     res.status(404).json({ error: 'Archivo no encontrado' });
@@ -278,7 +304,12 @@ export async function streamMediaFile(storedUrl: string, res: Response, req?: Re
 
 export async function localAvatarPathFromUpload(file: Express.Multer.File): Promise<string> {
   let buffer = file.buffer;
-  if (buffer && (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/webp')) {
+  if (
+    buffer &&
+    (file.mimetype === 'image/jpeg' ||
+      file.mimetype === 'image/png' ||
+      file.mimetype === 'image/webp')
+  ) {
     try {
       const { optimizeAvatar } = await import('./imageOptimizer.ts');
       const result = await optimizeAvatar(buffer);
@@ -319,12 +350,11 @@ export async function deleteMediaFile(storedUrl: string): Promise<void> {
       return;
     }
 
-    const localSegment =
-      storedUrl.startsWith('/api/files/avatars/')
-        ? storedUrl.replace('/api/files/avatars/', '')
-        : storedUrl.startsWith('/api/files/videos/')
-          ? storedUrl.replace('/api/files/videos/', '')
-          : null;
+    const localSegment = storedUrl.startsWith('/api/files/avatars/')
+      ? storedUrl.replace('/api/files/avatars/', '')
+      : storedUrl.startsWith('/api/files/videos/')
+        ? storedUrl.replace('/api/files/videos/', '')
+        : null;
 
     if (!localSegment) return;
 

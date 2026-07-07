@@ -46,6 +46,7 @@ const NutritionOverview = lazy(() => import('./pages/NutritionOverview'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
+const Equipment = lazy(() => import('./pages/Equipment'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
@@ -269,6 +270,20 @@ function AppRoutes() {
                     }}
                   >
                     <Reports />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="equipment"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <Equipment />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

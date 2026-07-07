@@ -12,6 +12,10 @@ import { getCachedAdminStats, setCachedAdminStats } from '../lib/adminStatsCache
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
+import {
+  getEquipmentStatsSummary,
+  syncEquipmentInspectionAlerts,
+} from '../lib/equipmentInspectionAlerts.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
 
 const router = asyncRouter();
@@ -31,6 +35,11 @@ export interface AdminStatsPayload {
   revenueHistory: { month: string; income: string }[];
   revenueDaily: { date: string; income: string }[];
   lastDoorAlert: LastDoorAlert | null;
+  equipmentOperational: number;
+  equipmentLimited: number;
+  equipmentMaintenance: number;
+  equipmentOutOfService: number;
+  equipmentInspectionsDue: number;
 }
 
 async function buildAdminStats(): Promise<AdminStatsPayload> {
@@ -49,6 +58,7 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     expiringList,
     expiredThisWeek,
     lastDoorAlert,
+    equipmentStats,
   ] = await Promise.all([
     query<{ total: string | null }>(
       "SELECT SUM(amount_usd)::text AS total FROM payments WHERE status = 'approved'"
@@ -102,7 +112,10 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     getExpiringSubscriptions(alertDays),
     getExpiredThisWeekCount(),
     getLastDoorAlert(alertDays),
+    getEquipmentStatsSummary(),
   ]);
+
+  void syncEquipmentInspectionAlerts();
 
   return {
     totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),
@@ -119,6 +132,11 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     revenueHistory: revenueHistory.rows,
     revenueDaily: revenueDaily.rows,
     lastDoorAlert,
+    equipmentOperational: equipmentStats.operational,
+    equipmentLimited: equipmentStats.limited,
+    equipmentMaintenance: equipmentStats.maintenance,
+    equipmentOutOfService: equipmentStats.outOfService,
+    equipmentInspectionsDue: equipmentStats.inspectionsDueThisWeek,
   };
 }
 

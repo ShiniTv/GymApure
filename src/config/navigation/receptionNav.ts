@@ -1,4 +1,12 @@
-import { Fingerprint, LogIn, Users, CreditCard, MessageSquare, UserCircle } from 'lucide-react';
+import {
+  Fingerprint,
+  LogIn,
+  Users,
+  CreditCard,
+  MessageSquare,
+  UserCircle,
+  Wrench,
+} from 'lucide-react';
 import type { NavSection } from './types';
 
 export const RECEPTION_NAV: NavSection[] = [
@@ -13,6 +21,7 @@ export const RECEPTION_NAV: NavSection[] = [
     name: 'Operaciones',
     items: [
       { name: 'Miembros', href: '/members', icon: Users },
+      { name: 'Equipamiento', href: '/equipment', icon: Wrench },
       { name: 'Pagos', href: '/payments', icon: CreditCard },
       { name: 'Mensajes', href: '/messages', icon: MessageSquare },
     ],

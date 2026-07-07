@@ -29,6 +29,11 @@ export interface AdminStats {
     days_remaining: number;
     check_in_time: string;
   } | null;
+  equipmentOperational?: number;
+  equipmentLimited?: number;
+  equipmentMaintenance?: number;
+  equipmentOutOfService?: number;
+  equipmentInspectionsDue?: number;
 }
 
 interface AdminStatsContextValue {
@@ -41,9 +46,7 @@ interface AdminStatsContextValue {
 const AdminStatsContext = createContext<AdminStatsContextValue | null>(null);
 
 async function fetchAdminStats(): Promise<AdminStats> {
-  const data = await apiFetch('/api/stats/admin').then((res) =>
-    parseJsonResponse<AdminStats>(res)
-  );
+  const data = await apiFetch('/api/stats/admin').then((res) => parseJsonResponse<AdminStats>(res));
   if (data.revenueHistory && !Array.isArray(data.revenueHistory)) {
     data.revenueHistory = [];
   }
@@ -84,11 +87,7 @@ export function AdminStatsProvider({ children }: { children: ReactNode }) {
     [stats, isLoading, refresh]
   );
 
-  return (
-    <AdminStatsContext.Provider value={value}>
-      {children}
-    </AdminStatsContext.Provider>
-  );
+  return <AdminStatsContext.Provider value={value}>{children}</AdminStatsContext.Provider>;
 }
 
 export function useAdminStats(): AdminStatsContextValue {

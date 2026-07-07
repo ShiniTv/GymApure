@@ -21,8 +21,7 @@ import {
   UtensilsCrossed,
   FileSpreadsheet,
   BarChart2,
-  Users,
-  MessageSquare,
+  Wrench,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { format } from 'date-fns';
@@ -39,7 +38,6 @@ import {
 import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
-import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -48,7 +46,6 @@ type RevenueRange = '7d' | '30d' | '6m';
 export default function AdminDashboard() {
   usePageTitle('Dashboard');
   const adminStats = useAdminStats();
-  const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
@@ -79,6 +76,10 @@ export default function AdminDashboard() {
 
   const revenueChartMode = revenueRange === '6m' ? ('month' as const) : ('day' as const);
 
+  const equipmentOutOfService = stats?.equipmentOutOfService ?? 0;
+  const equipmentInspectionsDue = stats?.equipmentInspectionsDue ?? 0;
+  const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
+
   useEffect(() => {
     if (!stats) return;
     const critical = expiringList.filter(
@@ -104,57 +105,37 @@ export default function AdminDashboard() {
       />
 
       <div className="grid grid-cols-2 gap-2 sm:hidden">
-        <QuickAction
-          compact
-          to="/members"
-          icon={Users}
-          title="Miembros"
-          description="Gestionar socios"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          to="/payments?status=pending"
-          icon={AlertTriangle}
-          title="Pagos"
-          description="Revisar pendientes"
-          count={pendingPayments}
-          tone="red"
-        />
-        <QuickAction
-          compact
-          to="/messages"
-          icon={MessageSquare}
-          title="Mensajes"
-          description="Chat con el gym"
-          count={chatUnread}
-          tone="brand"
-        />
-        <QuickAction
-          compact
-          to="/attendance"
-          icon={Fingerprint}
-          title="Asistencias"
-          description="Volumen de ingreso"
-          tone="blue"
-        />
+        {pendingPayments > 0 && (
+          <Link
+            to="/payments?status=pending"
+            className="flex items-center justify-between gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+              <span className="truncate text-xs font-semibold text-red-700 dark:text-red-400">
+                {pendingPayments} pago{pendingPayments !== 1 ? 's' : ''} pendiente
+                {pendingPayments !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
+          </Link>
+        )}
+        {equipmentOutOfService > 0 && (
+          <Link
+            to="/equipment"
+            className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <Wrench className="h-4 w-4 shrink-0 text-orange-500" />
+              <span className="truncate text-xs font-semibold text-orange-700 dark:text-orange-400">
+                {equipmentOutOfService} equipo{equipmentOutOfService !== 1 ? 's' : ''} fuera de
+                servicio
+              </span>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-orange-500" />
+          </Link>
+        )}
       </div>
-
-      {pendingPayments > 0 && (
-        <Link
-          to="/payments?status=pending"
-          className="flex items-center justify-between gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-            <span className="truncate text-xs font-semibold text-red-700 dark:text-red-400">
-              {pendingPayments} pago{pendingPayments !== 1 ? 's' : ''} pendiente
-              {pendingPayments !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
-        </Link>
-      )}
 
       <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 [&>*]:h-full">
         <StaggerItem>
@@ -209,7 +190,7 @@ export default function AdminDashboard() {
         </p>
       )}
 
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5">
         <QuickAction
           compact
           iconOnlyMobile
@@ -228,6 +209,16 @@ export default function AdminDashboard() {
           title="Miembros"
           description="Membresías por vencer"
           count={expiringSoon}
+          tone="orange"
+        />
+        <QuickAction
+          compact
+          iconOnlyMobile
+          to="/equipment"
+          icon={Wrench}
+          title="Equipamiento"
+          description="Inventario y mantenimiento"
+          count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
           tone="orange"
         />
         <QuickAction
