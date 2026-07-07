@@ -1,9 +1,7 @@
-const STATIC_CACHE = 'gymapure-static-v6';
+const STATIC_CACHE = 'gymapure-static-v7';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/offline.html',
   '/theme-init.js',
   '/manifest.webmanifest',
@@ -34,39 +32,35 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  if (request.method !== 'GET') {
+    return;
+  }
+
   // API — network only (avoid stale authenticated responses)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(request));
     return;
   }
 
-  // Static assets — cache first
-  if (
-    request.destination === 'style' ||
-    request.destination === 'font' ||
-    request.destination === 'image' ||
-    url.pathname.startsWith('/assets/')
-  ) {
+  // Images and fonts can be safely reused offline.
+  if (request.destination === 'font' || request.destination === 'image') {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Navigations — network first, fallback to cache, then offline page
+  // Scripts and styles must prefer the network after deploys to avoid old chunks.
+  if (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    url.pathname.startsWith('/assets/')
+  ) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Navigations — network first, fallback to offline page only.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (!response.ok) {
-            return response;
-          }
-          const clone = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL) || caches.match('/'))
-        )
-    );
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
     return;
   }
 
@@ -84,12 +78,32 @@ async function cacheFirst(request) {
   if (cached) return cached;
   try {
     const response = await fetch(request);
-    const cache = await caches.open(STATIC_CACHE);
-    cache.put(request, response.clone());
+    if (isCacheableResponse(response)) {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     return new Response('', { status: 408 });
   }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (isCacheableResponse(response)) {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    return cached ?? new Response('', { status: 504, statusText: 'Offline' });
+  }
+}
+
+function isCacheableResponse(response) {
+  return response.ok && response.type !== 'opaque';
 }
 
 // ─── Push notifications ──────────────────────────────────
