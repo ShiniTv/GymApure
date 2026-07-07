@@ -400,6 +400,8 @@ body,
 :root {
   --reception-nav-pill-height: 3.75rem;
   --reception-nav-stack: calc(0.5rem + var(--reception-nav-pill-height));
+  --trainer-nav-pill-height: 3.75rem;
+  --trainer-nav-stack: calc(0.5rem + var(--trainer-nav-pill-height));
 }
 
 .member-bottom-nav {
@@ -457,6 +459,10 @@ body,
   padding-bottom: calc(var(--reception-nav-stack) + env(safe-area-inset-bottom, 0px));
 }
 
+.trainer-main-pad {
+  padding-bottom: calc(var(--trainer-nav-stack) + env(safe-area-inset-bottom, 0px));
+}
+
 .member-main-pad {
   padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
@@ -490,6 +496,12 @@ html.member-has-workout-fab .member-chat-panel {
   );
 }
 
+.trainer-main-pad .staff-chat-shell {
+  height: calc(
+    100dvh - var(--chat-top-chrome) - var(--trainer-nav-stack) - env(safe-area-inset-bottom, 0px)
+  );
+}
+
 @media (min-width: 640px) {
   .staff-chat-shell {
     --chat-top-chrome: 11.5rem;
@@ -506,6 +518,10 @@ html.member-has-workout-fab .member-chat-panel {
   }
 
   .reception-main-pad .staff-chat-shell {
+    height: calc(100dvh - 11.5rem);
+  }
+
+  .trainer-main-pad .staff-chat-shell {
     height: calc(100dvh - 11.5rem);
   }
 }

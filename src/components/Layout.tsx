@@ -23,6 +23,7 @@ import { getNavigationForRole } from '../config/navigation';
 import { Avatar } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
 import { ReceptionBottomNav } from './reception/ReceptionBottomNav';
+import { TrainerBottomNav } from './trainer/TrainerBottomNav';
 import { shouldHideMemberBottomNav } from '../config/navigation/memberBottomNav';
 import { ThemeOnboarding } from './member/ThemeOnboarding';
 import { THEME_ONBOARDING_KEY } from '../config/themes';
@@ -60,13 +61,19 @@ export default function Layout() {
   const { data: chatUnread = 0 } = useChatUnreadQuery(showChatNav);
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
+  const isTrainer = user?.role === 'trainer';
+  const isAdmin = user?.role === 'admin';
   const isMemberMobileShell = isMember && useMediaQuery('(max-width: 1023px)');
   const isReceptionMobileShell = isReceptionist && useMediaQuery('(max-width: 1023px)');
-  const isMobileShell = isMemberMobileShell || isReceptionMobileShell;
+  const isTrainerMobileShell = isTrainer && useMediaQuery('(max-width: 1023px)');
+  const isAdminMobile = isAdmin && useMediaQuery('(max-width: 1023px)');
+  const isMobileShell = isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell;
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
   const showMemberBottomNav = isMemberMobileShell && !hideMemberBottomNav;
   const showReceptionBottomNav = isReceptionMobileShell && !isSidebarOpen;
-  const showMobileHamburger = !isMemberMobileShell;
+  const showTrainerBottomNav = isTrainerMobileShell;
+  const showMobileHamburger = !isMemberMobileShell && !isTrainerMobileShell;
+  const useMobileNavLinks = isMobileShell || isAdminMobile;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
 
   useEffect(() => {
@@ -134,7 +141,7 @@ export default function Layout() {
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
   const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,17.5rem)] lg:w-60';
-  const hideBackToDashboard = showMemberBottomNav;
+  const hideBackToDashboard = showMemberBottomNav || showTrainerBottomNav;
 
   return (
     <MobileShellProvider hideBackToDashboard={hideBackToDashboard}>
@@ -290,7 +297,7 @@ export default function Layout() {
                           }}
                           className={clsx(
                             'nav-link',
-                            isMobileShell && 'nav-link-mobile',
+                            useMobileNavLinks && 'nav-link-mobile',
                             isActive ? 'nav-link-active' : 'nav-link-inactive',
                             sidebarCollapsed && 'justify-center px-0'
                           )}
@@ -340,6 +347,8 @@ export default function Layout() {
                     (isSidebarOpen
                       ? 'pb-[env(safe-area-inset-bottom)]'
                       : 'pb-[calc(var(--reception-nav-stack)+env(safe-area-inset-bottom))]'),
+                  isTrainerMobileShell &&
+                    'pb-[calc(var(--trainer-nav-stack)+env(safe-area-inset-bottom))]',
                   isMemberMobileShell &&
                     'pb-[calc(var(--member-nav-stack)+env(safe-area-inset-bottom))] lg:pb-2.5'
                 )}
@@ -432,7 +441,8 @@ export default function Layout() {
             className={clsx(
               'h-dvh flex-1 overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
-              isReceptionMobileShell && 'reception-main-pad'
+              isReceptionMobileShell && 'reception-main-pad',
+              isTrainerMobileShell && 'trainer-main-pad'
             )}
           >
             <AnimatePresence mode="wait">
@@ -445,11 +455,14 @@ export default function Layout() {
           </main>
         </div>
 
-        <OfflineBanner memberNav={isMemberMobileShell || isReceptionMobileShell} />
+        <OfflineBanner
+          aboveBottomNav={isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell}
+        />
         <ScrollToTop />
 
         {showMemberBottomNav && <MemberBottomNav />}
         {showReceptionBottomNav && <ReceptionBottomNav />}
+        {showTrainerBottomNav && <TrainerBottomNav />}
 
         <LogoutConfirmModal {...logoutConfirmProps} />
 

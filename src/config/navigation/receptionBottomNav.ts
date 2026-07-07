@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 import {
   Fingerprint,
   Users,
@@ -8,20 +7,10 @@ import {
   LogIn,
   UserCircle,
 } from 'lucide-react';
+import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
-export interface ReceptionBottomTab {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  showUnreadBadge?: boolean;
-  action?: 'more';
-}
-
-export interface ReceptionMoreItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-}
+export type ReceptionBottomTab = StaffBottomNavTab;
+export type ReceptionMoreItem = StaffBottomNavMoreItem;
 
 /** Primary tabs for reception mobile bottom nav */
 export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
@@ -37,9 +26,32 @@ export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 
-export function isReceptionBottomNavActive(pathname: string, href: string): boolean {
+export function isReceptionBottomNavActive(
+  pathname: string,
+  _search: string,
+  href: string
+): boolean {
   if (href === '/reception') {
     return pathname === '/reception' || pathname.startsWith('/reception/');
   }
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function isReceptionMoreItemActive(
+  pathname: string,
+  _search: string,
+  href: string
+): boolean {
+  const path = href.split('?')[0];
+  return (
+    pathname === path ||
+    pathname.startsWith(`${path}/`) ||
+    (path === '/check-in' && pathname === '/check-in')
+  );
+}
+
+export function isReceptionMoreTabActive(pathname: string, search: string): boolean {
+  return RECEPTION_MORE_ITEMS.some((item) =>
+    isReceptionMoreItemActive(pathname, search, item.href)
+  );
 }

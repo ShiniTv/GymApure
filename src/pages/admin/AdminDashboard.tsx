@@ -21,6 +21,8 @@ import {
   UtensilsCrossed,
   FileSpreadsheet,
   BarChart2,
+  Users,
+  MessageSquare,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { format } from 'date-fns';
@@ -37,6 +39,7 @@ import {
 import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -45,6 +48,7 @@ type RevenueRange = '7d' | '30d' | '6m';
 export default function AdminDashboard() {
   usePageTitle('Dashboard');
   const adminStats = useAdminStats();
+  const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
@@ -98,6 +102,43 @@ export default function AdminDashboard() {
         }
         subtitle="Supervisión y gestión del gym"
       />
+
+      <div className="grid grid-cols-2 gap-2 sm:hidden">
+        <QuickAction
+          compact
+          to="/members"
+          icon={Users}
+          title="Miembros"
+          description="Gestionar socios"
+          tone="blue"
+        />
+        <QuickAction
+          compact
+          to="/payments?status=pending"
+          icon={AlertTriangle}
+          title="Pagos"
+          description="Revisar pendientes"
+          count={pendingPayments}
+          tone="red"
+        />
+        <QuickAction
+          compact
+          to="/messages"
+          icon={MessageSquare}
+          title="Mensajes"
+          description="Chat con el gym"
+          count={chatUnread}
+          tone="brand"
+        />
+        <QuickAction
+          compact
+          to="/attendance"
+          icon={Fingerprint}
+          title="Asistencias"
+          description="Volumen de ingreso"
+          tone="blue"
+        />
+      </div>
 
       {pendingPayments > 0 && (
         <Link
