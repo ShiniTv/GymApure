@@ -16,6 +16,7 @@ import {
   AVATARS_BUCKET,
   PAYMENT_PROOFS_BUCKET,
   VIDEOS_BUCKET,
+  EQUIPMENT_PHOTOS_BUCKET,
   getSupabaseAdmin,
   isSupabaseStorageConfigured,
 } from '../../src/lib/supabaseAdmin.ts';
@@ -54,11 +55,15 @@ async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
 }
 
 const DATA_TABLES = [
+  'equipment_maintenance_events',
+  'gym_equipment',
+  'equipment_vendors',
   'nutrition_log_entries',
   'nutrition_plans',
   'chat_messages',
   'chat_conversations',
   'chat_system_log',
+  'user_notifications',
   'password_reset_tokens',
   'push_subscriptions',
   'workout_logs',
@@ -68,6 +73,7 @@ const DATA_TABLES = [
   'user_measurements',
   'user_routines',
   'routine_exercises',
+  'trainer_exercise_hidden',
   'trainer_profiles',
   'payments',
   'subscriptions',
@@ -75,6 +81,7 @@ const DATA_TABLES = [
   'exercises',
   'users',
   'memberships',
+  'expiry_notification_log',
 ] as const;
 
 /** Conteos de verificación post-reset (tablas que deben quedar en 0). */
@@ -88,6 +95,9 @@ const VERIFY_COUNT_TABLES = [
   'password_reset_tokens',
   'push_subscriptions',
   'trainer_profiles',
+  'gym_equipment',
+  'equipment_vendors',
+  'user_notifications',
 ] as const;
 
 const LOCAL_UPLOAD_DIRS = [
@@ -96,7 +106,20 @@ const LOCAL_UPLOAD_DIRS = [
   'uploads',
 ] as const;
 
-const STORAGE_BUCKETS = [AVATARS_BUCKET, PAYMENT_PROOFS_BUCKET, VIDEOS_BUCKET] as const;
+const STORAGE_BUCKETS = [
+  AVATARS_BUCKET,
+  PAYMENT_PROOFS_BUCKET,
+  VIDEOS_BUCKET,
+  EQUIPMENT_PHOTOS_BUCKET,
+] as const;
+
+const DEFAULT_GYM_ZONES = [
+  ['Cardio', 1],
+  ['Pesas libres', 2],
+  ['Zona funcional', 3],
+  ['Infraestructura', 4],
+  ['Recepción', 5],
+] as const;
 
 function askConfirm(question: string): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -140,11 +163,25 @@ async function resetGymSettings(): Promise<void> {
 
   await query(`DELETE FROM gym_settings`);
   await query(
-    `INSERT INTO gym_settings (key, value, updated_at)
-     VALUES ('expiry_alert_days', '7', NOW())
-     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+    `INSERT INTO gym_settings (key, value, updated_at) VALUES
+       ('expiry_alert_days', '7', NOW()),
+       ('equipment_inspection_alert_days', '7', NOW())`
   );
-  console.log('  ✓ gym_settings restaurado (expiry_alert_days = 7)');
+  console.log('  ✓ gym_settings restaurado (expiry_alert_days, equipment_inspection_alert_days = 7)');
+}
+
+async function resetGymZones(): Promise<void> {
+  if (!(await tableExists('gym_zones'))) return;
+
+  await query(`DELETE FROM gym_zones`);
+  for (const [name, sortOrder] of DEFAULT_GYM_ZONES) {
+    await query(
+      `INSERT INTO gym_zones (name, sort_order) VALUES ($1, $2)
+       ON CONFLICT (name) DO UPDATE SET sort_order = EXCLUDED.sort_order`,
+      [name, sortOrder]
+    );
+  }
+  console.log(`  ✓ gym_zones restauradas (${DEFAULT_GYM_ZONES.length} zonas por defecto)`);
 }
 
 function clearLocalUploads(): void {
@@ -282,6 +319,7 @@ async function main() {
   console.log('\nVaciando base de datos…');
   await truncateDataTables();
   await resetGymSettings();
+  await resetGymZones();
 
   console.log('\nLimpiando archivos locales…');
   clearLocalUploads();
@@ -295,7 +333,10 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('\nListo. Base operativa vacía. Siguiente paso: npm run db:create-admin\n');
+  console.log('\nListo. Base operativa vacía.');
+  console.log('  1. npm run db:create-admin:dev   — tu cuenta admin real');
+  console.log('  2. (opcional) npm run db:seed-system-exercises -- --skip-existing — biblioteca de ejercicios');
+  console.log('  No uses db:restore-demo salvo para tests automatizados.\n');
 }
 
 main().catch((err) => {
