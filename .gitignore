@@ -4,6 +4,8 @@ dist/
 coverage/
 .DS_Store
 *.log
+*-prod-log.txt
+seed-*-log.txt
 *.tsbuildinfo
 .env*
 !.env.example
