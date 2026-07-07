@@ -348,7 +348,8 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
         `SELECT DISTINCT routine_id FROM workout_sessions
          WHERE user_id = $1
            AND end_time IS NOT NULL
-           AND DATE(start_time) = CURRENT_DATE`,
+           AND success = 1
+           AND ${sqlTodayRange('start_time')}`,
         [userId]
       ),
     ]);

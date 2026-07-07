@@ -4,6 +4,7 @@ import type { Exercise } from '../../hooks/queries/useExercisesQuery';
 import { Card, Badge, EmptyState, Button } from '../ui';
 import { filterExercises } from '../../lib/exerciseMuscleGroups';
 import { ExerciseVideoPlayer } from './ExerciseVideoPlayer';
+import { ExerciseExecutionSteps } from './ExerciseExecutionSteps';
 
 interface ExerciseLibraryViewProps {
   exercises: Exercise[];
@@ -132,23 +133,11 @@ export function ExerciseLibraryView({
                     <h4 className="label-caps flex items-center gap-2">
                       <BookOpen className="h-3 w-3" /> Guía de ejecución
                     </h4>
-                    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-800/50">
-                      <div className="space-y-4">
-                        {exercise.execution
-                          .split('\n')
-                          .filter((line) => line.trim())
-                          .map((step, idx) => (
-                            <div key={idx} className="flex gap-4">
-                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900">
-                                {idx + 1}
-                              </span>
-                              <p className="pt-0.5 text-sm leading-relaxed font-medium text-zinc-600 dark:text-zinc-300">
-                                {step.replace(/^\d+\.\s*/, '')}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
+                    <ExerciseExecutionSteps
+                      execution={exercise.execution}
+                      title="Guía de ejecución"
+                      showTitle={false}
+                    />
                   </div>
                 )}
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, parseJsonResponse, ApiError } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,10 @@ import { cn } from '../lib/utils';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
 import { formatWorkoutTime } from './activeWorkout/utils';
 import { ExerciseVideoPlayer } from '../components/exercise/ExerciseVideoPlayer';
+import {
+  ExerciseExecutionSteps,
+  executionStepCount,
+} from '../components/exercise/ExerciseExecutionSteps';
 import { hapticLight, hapticSuccess } from '../lib/haptics';
 import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { useWorkoutPageTitle } from '../hooks/usePageTitle';
@@ -117,6 +121,10 @@ export default function ActiveWorkout() {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
   const isMobileFocus = useIsMobile();
+  const isStartingRef = useRef(false);
+  const routineId = id ? Number(id) : null;
+  const completedTodayIds = memberStatsCtx?.stats?.completedRoutineIdsToday ?? [];
+  const isRoutineCompletedToday = routineId != null && completedTodayIds.includes(routineId);
 
   useWorkoutPageTitle(routine?.name);
 
@@ -172,8 +180,16 @@ export default function ActiveWorkout() {
   }, [isPaused]);
 
   useEffect(() => {
+    if (!routine || loading) return;
+    if (isRoutineCompletedToday) {
+      setRoutineBlockedToday(true);
+      setSessionError('Ya completaste esta rutina hoy. Vuelve mañana.');
+    }
+  }, [routine, loading, isRoutineCompletedToday]);
+
+  useEffect(() => {
     if (user && routine && !sessionId && !loading && !isResetting && !routineBlockedToday) {
-      startSession(routine.id);
+      void startSession(routine.id);
     }
   }, [user, routine, sessionId, loading, isResetting, routineBlockedToday]);
 
@@ -316,7 +332,8 @@ export default function ActiveWorkout() {
   };
 
   const startSession = async (routineId: number) => {
-    if (!user || !routine) return;
+    if (!user || !routine || isStartingRef.current || routineBlockedToday) return;
+    isStartingRef.current = true;
     try {
       const res = await apiFetch('/api/workouts/start', {
         method: 'POST',
@@ -387,6 +404,8 @@ export default function ActiveWorkout() {
       }
       clientLogger.error('Failed to start workout session', err);
       setSessionError('No se pudo iniciar la sesión. Recarga la página para reintentar.');
+    } finally {
+      isStartingRef.current = false;
     }
   };
 
@@ -508,7 +527,10 @@ export default function ActiveWorkout() {
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
-      void memberStatsCtx?.refresh();
+      if (success) {
+        setRoutineBlockedToday(true);
+      }
+      await memberStatsCtx?.refresh();
       setIsFinishing(false);
       if (success) {
         hapticSuccess();
@@ -916,25 +938,27 @@ export default function ActiveWorkout() {
                           onClick={() => {
                             setShowExecution((prev) => ({
                               ...prev,
-                              [exercise.id]: !prev[exercise.id],
+                              [exercise.id]: !(prev[exercise.id] ?? true),
                             }));
                           }}
                         >
                           <BookOpen className="h-3.5 w-3.5" />
-                          {showExecution[exercise.id] ? 'Ocultar' : 'Ejecución'}
+                          <span>
+                            {(showExecution[exercise.id] ?? true) ? 'Ocultar' : 'Ejecución'}
+                          </span>
+                          <span className="bg-brand/10 text-brand dark:bg-brand/20 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                            {executionStepCount(exercise.execution)} pasos
+                          </span>
                         </button>
                       )}
                     </div>
 
-                    {exercise.execution && showExecution[exercise.id] && (
-                      <div className="bg-brand/5 dark:bg-brand/10 border-brand/20 animate-in slide-in-from-top-2 mt-3 w-full rounded-2xl border p-4">
-                        <h4 className="label-caps text-brand dark:text-brand mb-2">
-                          Pasos a seguir
-                        </h4>
-                        <p className="text-xs leading-relaxed whitespace-pre-line text-zinc-600 dark:text-zinc-300">
-                          {exercise.execution}
-                        </p>
-                      </div>
+                    {exercise.execution && (showExecution[exercise.id] ?? true) && (
+                      <ExerciseExecutionSteps
+                        execution={exercise.execution}
+                        compact
+                        className="mt-3 w-full"
+                      />
                     )}
 
                     {showVideo[exercise.id] && exercise.video_url && (

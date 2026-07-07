@@ -4,6 +4,7 @@ import { AuthRequest } from './middleware/auth.ts';
 import { requireWorkoutSessionAccess } from './middleware/access.ts';
 import { trainerHasMemberRoutineAccess } from '../lib/trainerAccess.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
+import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import {
   startWorkoutSchema,
   logWorkoutSchema,
@@ -47,10 +48,42 @@ router.post(
       }
     }
 
-    const existing = await query(
+    const successfulToday = await query<{ id: number }>(
+      `SELECT id FROM workout_sessions
+       WHERE user_id = $1 AND routine_id = $2
+         AND end_time IS NOT NULL AND success = 1
+         AND ${sqlTodayRange('start_time')}
+       LIMIT 1`,
+      [targetUserId, routine_id]
+    );
+
+    if (successfulToday.rows[0]) {
+      await query(
+        `UPDATE workout_sessions
+         SET end_time = NOW(), success = 0
+         WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL`,
+        [targetUserId, routine_id]
+      );
+      res.status(409).json({
+        error: 'Ya completaste esta rutina hoy',
+        code: 'ROUTINE_COMPLETED_TODAY',
+      });
+      return;
+    }
+
+    await query(
+      `UPDATE workout_sessions
+       SET end_time = NOW(), success = 0
+       WHERE user_id = $1 AND routine_id = $2
+         AND end_time IS NULL
+         AND start_time < NOW() - INTERVAL '12 hours'`,
+      [targetUserId, routine_id]
+    );
+
+    const existing = await query<{ id: number; start_time: string }>(
       `SELECT id, start_time FROM workout_sessions
-     WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL
-     ORDER BY start_time DESC LIMIT 1`,
+       WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL
+       ORDER BY start_time DESC LIMIT 1`,
       [targetUserId, routine_id]
     );
 
@@ -58,7 +91,7 @@ router.post(
       const session = existing.rows[0];
       const logs = await query(
         `SELECT exercise_id, set_number, weight, reps
-       FROM workout_logs WHERE session_id = $1`,
+         FROM workout_logs WHERE session_id = $1`,
         [session.id]
       );
       res.json({
@@ -70,37 +103,48 @@ router.post(
       return;
     }
 
-    const completedToday = await query<{ id: number }>(
-      `SELECT id FROM workout_sessions
-       WHERE user_id = $1 AND routine_id = $2
-         AND end_time IS NOT NULL
-         AND DATE(start_time) = CURRENT_DATE
-       LIMIT 1`,
-      [targetUserId, routine_id]
-    );
+    try {
+      const insert = await query<{ id: number; start_time: string }>(
+        `INSERT INTO workout_sessions (user_id, routine_id, success)
+         VALUES ($1, $2, 0)
+         RETURNING id, start_time`,
+        [targetUserId, routine_id]
+      );
 
-    if (completedToday.rows[0]) {
-      res.status(409).json({
-        error: 'Ya completaste esta rutina hoy',
-        code: 'ROUTINE_COMPLETED_TODAY',
+      const newSession = insert.rows[0];
+      res.json({
+        id: newSession.id,
+        start_time: newSession.start_time,
+        status: 'started',
+        logs: [],
       });
-      return;
+    } catch (err: unknown) {
+      const pgErr = err as { code?: string };
+      if (pgErr.code === '23505') {
+        const raced = await query<{ id: number; start_time: string }>(
+          `SELECT id, start_time FROM workout_sessions
+           WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL
+           ORDER BY start_time DESC LIMIT 1`,
+          [targetUserId, routine_id]
+        );
+        if (raced.rows[0]) {
+          const session = raced.rows[0];
+          const logs = await query(
+            `SELECT exercise_id, set_number, weight, reps
+             FROM workout_logs WHERE session_id = $1`,
+            [session.id]
+          );
+          res.json({
+            id: session.id,
+            start_time: session.start_time,
+            status: 'resumed',
+            logs: logs.rows,
+          });
+          return;
+        }
+      }
+      throw err;
     }
-
-    const insert = await query(
-      `INSERT INTO workout_sessions (user_id, routine_id)
-     VALUES ($1, $2)
-     RETURNING id, start_time`,
-      [targetUserId, routine_id]
-    );
-
-    const newSession = insert.rows[0];
-    res.json({
-      id: newSession.id,
-      start_time: newSession.start_time,
-      status: 'started',
-      logs: [],
-    });
   })
 );
 
@@ -115,6 +159,15 @@ router.post(
     }
 
     const { session_id, exercise_id, set_number, weight, reps } = parsed.data;
+
+    const openSession = await query<{ id: number }>(
+      `SELECT id FROM workout_sessions WHERE id = $1 AND end_time IS NULL`,
+      [session_id]
+    );
+    if (!openSession.rows[0]) {
+      res.status(409).json({ error: 'La sesión ya finalizó' });
+      return;
+    }
 
     const { rows } = await query(
       `INSERT INTO workout_logs (session_id, exercise_id, set_number, weight, reps)
@@ -140,12 +193,16 @@ router.post(
 
     const { session_id, success } = parsed.data;
 
-    await query(
+    const { rowCount } = await query(
       `UPDATE workout_sessions
-     SET end_time = NOW(), success = $1
-     WHERE id = $2`,
+       SET end_time = NOW(), success = $1
+       WHERE id = $2 AND end_time IS NULL`,
       [success ? 1 : 0, session_id]
     );
+    if (rowCount === 0) {
+      res.status(409).json({ error: 'La sesión ya finalizó' });
+      return;
+    }
     res.json({ success: true });
   })
 );

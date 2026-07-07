@@ -71,7 +71,7 @@ function parseCsv(content: string): CsvRow[] {
       name: cols[nameIdx] ?? '',
       muscle_group: cols[muscleIdx] ?? '',
       description: descIdx >= 0 ? (cols[descIdx] ?? '') : '',
-      execution: execIdx >= 0 ? (cols[execIdx] ?? '') : '',
+      execution: execIdx >= 0 ? (cols[execIdx] ?? '').replace(/\|/g, '\n') : '',
     };
   });
 }
