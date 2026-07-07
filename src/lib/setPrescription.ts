@@ -89,3 +89,55 @@ export function hasDetailedSetPrescription(
     prescription.some((row) => row.reps !== firstReps)
   );
 }
+
+export interface WorkoutLogSeed {
+  exercise_id: number;
+  set_number: number;
+  weight: string;
+  reps: string;
+  completed: boolean;
+}
+
+export function buildPrescriptionLogSeeds(
+  exercises: {
+    id: number;
+    sets: number;
+    reps: number;
+    set_prescription?: SetPrescriptionRow[] | null;
+  }[]
+): Record<string, WorkoutLogSeed> {
+  const seeded: Record<string, WorkoutLogSeed> = {};
+  for (const exercise of exercises) {
+    const prescription =
+      exercise.set_prescription ?? deriveSetPrescription(exercise.sets, exercise.reps);
+    for (const row of prescription) {
+      const key = `${exercise.id}-${row.set_number}`;
+      seeded[key] = {
+        exercise_id: exercise.id,
+        set_number: row.set_number,
+        weight: row.weight_kg != null ? String(row.weight_kg) : '',
+        reps: String(row.reps),
+        completed: false,
+      };
+    }
+  }
+  return seeded;
+}
+
+export function mergeWorkoutLogSeeds(
+  seeded: Record<string, WorkoutLogSeed>,
+  apiLogs: { exercise_id: number; set_number: number; weight: number; reps: number }[]
+): Record<string, WorkoutLogSeed> {
+  const merged = { ...seeded };
+  for (const log of apiLogs) {
+    const key = `${log.exercise_id}-${log.set_number}`;
+    merged[key] = {
+      exercise_id: log.exercise_id,
+      set_number: log.set_number,
+      weight: log.weight.toString(),
+      reps: log.reps.toString(),
+      completed: true,
+    };
+  }
+  return merged;
+}

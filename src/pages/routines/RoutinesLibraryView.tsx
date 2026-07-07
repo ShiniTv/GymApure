@@ -33,6 +33,7 @@ export interface RoutinesLibraryViewProps {
   onEditExercise: (exercise: RoutineExercise) => void;
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
   onStartWorkout?: (routineId: number) => void;
+  completedRoutineIdsToday?: number[];
 }
 
 function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
@@ -56,7 +57,9 @@ export function RoutinesLibraryView({
   onEditExercise,
   onDeleteExercise,
   onStartWorkout,
+  completedRoutineIdsToday = [],
 }: RoutinesLibraryViewProps) {
+  const completedTodaySet = new Set(completedRoutineIdsToday);
   const isStaff = userRole === 'trainer' || userRole === 'admin';
   const isMember = userRole === 'member';
   const totalExercises = routines.reduce((sum, r) => sum + (r.exercise_count ?? 0), 0);
@@ -117,6 +120,7 @@ export function RoutinesLibraryView({
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
+          const completedToday = completedTodaySet.has(routine.id);
           const exerciseSummary = buildExerciseSummary({
             count: routine.exercise_count ?? 0,
             preview: routine.exercise_preview,
@@ -163,12 +167,19 @@ export function RoutinesLibraryView({
                     <h3 className="flex-1 truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
                       {routine.name}
                     </h3>
-                    <Badge
-                      variant={difficultyVariant(routine.difficulty)}
-                      className="shrink-0 px-1.5 py-0 text-[9px]"
-                    >
-                      {formatDifficulty(routine.difficulty)}
-                    </Badge>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <Badge
+                        variant={difficultyVariant(routine.difficulty)}
+                        className="shrink-0 px-1.5 py-0 text-[9px]"
+                      >
+                        {formatDifficulty(routine.difficulty)}
+                      </Badge>
+                      {completedToday && (
+                        <Badge variant="success" className="shrink-0 px-1.5 py-0 text-[9px]">
+                          Hecha hoy
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     {exerciseSummary.label}
@@ -293,10 +304,11 @@ export function RoutinesLibraryView({
                         type="button"
                         size="sm"
                         className="w-full sm:w-auto"
+                        disabled={completedToday}
                         onClick={() => onStartWorkout?.(routine.id)}
                       >
                         <Play className="h-4 w-4" />
-                        Empezar entrenamiento
+                        {completedToday ? 'Completada hoy' : 'Empezar entrenamiento'}
                       </Button>
                     </>
                   ) : (

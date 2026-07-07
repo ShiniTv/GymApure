@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonResponse, ApiError } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -29,13 +29,19 @@ import { hapticLight, hapticSuccess } from '../lib/haptics';
 import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { useWorkoutPageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { toDisplayErrorMessage } from '../lib/api';
 import { parseNonNegativeInt, parsePositiveInt } from '../lib/parseFormNumber';
 import {
   buildRoutineExercisePayload,
   defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
-import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
+import {
+  deriveSetPrescription,
+  parseSetPrescriptionFromApi,
+  buildPrescriptionLogSeeds,
+  mergeWorkoutLogSeeds,
+} from '../lib/setPrescription';
 
 interface Exercise {
   id: number;
@@ -85,6 +91,7 @@ export default function ActiveWorkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
+  const memberStatsCtx = useMemberStatsOptional();
 
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -93,6 +100,7 @@ export default function ActiveWorkout() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [routineBlockedToday, setRoutineBlockedToday] = useState(false);
   const [setValidationError, setSetValidationError] = useState<string | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -164,10 +172,10 @@ export default function ActiveWorkout() {
   }, [isPaused]);
 
   useEffect(() => {
-    if (user && routine && !sessionId && !loading && !isResetting) {
+    if (user && routine && !sessionId && !loading && !isResetting && !routineBlockedToday) {
       startSession(routine.id);
     }
-  }, [user, routine, sessionId, loading, isResetting]);
+  }, [user, routine, sessionId, loading, isResetting, routineBlockedToday]);
 
   // Rest timer — single interval while resting (avoids re-creating interval every second)
   useEffect(() => {
@@ -308,7 +316,7 @@ export default function ActiveWorkout() {
   };
 
   const startSession = async (routineId: number) => {
-    if (!user) return;
+    if (!user || !routine) return;
     try {
       const res = await apiFetch('/api/workouts/start', {
         method: 'POST',
@@ -324,7 +332,7 @@ export default function ActiveWorkout() {
 
       // Load completed exercises from localStorage
       const savedCompletedStr = localStorage.getItem(
-        `active_workout_completed_exercises_${sessionId || data.id}`
+        `active_workout_completed_exercises_${data.id}`
       );
       if (savedCompletedStr) {
         try {
@@ -336,7 +344,6 @@ export default function ActiveWorkout() {
 
       // Initialize Timer
       if (data.start_time) {
-        // Append 'Z' to treat as UTC if missing
         const startTimeStr = data.start_time.endsWith('Z')
           ? data.start_time
           : `${data.start_time}Z`;
@@ -346,22 +353,14 @@ export default function ActiveWorkout() {
         setTimer(elapsed > 0 ? elapsed : 0);
       }
 
-      // Initialize Logs
-      if (Array.isArray(data.logs)) {
-        const initialLogs: Record<string, LogEntry> = {};
+      const seeded = buildPrescriptionLogSeeds(routine.exercises);
+      const apiLogs = Array.isArray(data.logs) ? data.logs : [];
+      const merged = mergeWorkoutLogSeeds(seeded, apiLogs);
+      setLogs(merged);
+
+      if (apiLogs.length > 0) {
         const maxSetsPerExercise: Record<number, number> = {};
-
-        data.logs.forEach((log) => {
-          const key = `${log.exercise_id}-${log.set_number}`;
-          initialLogs[key] = {
-            exercise_id: log.exercise_id,
-            set_number: log.set_number,
-            weight: log.weight.toString(),
-            reps: log.reps.toString(),
-            completed: true,
-          };
-
-          // Track max set number
+        apiLogs.forEach((log) => {
           if (
             !maxSetsPerExercise[log.exercise_id] ||
             log.set_number > maxSetsPerExercise[log.exercise_id]
@@ -369,9 +368,6 @@ export default function ActiveWorkout() {
             maxSetsPerExercise[log.exercise_id] = log.set_number;
           }
         });
-        setLogs(initialLogs);
-
-        // Update routine sets if logs have more sets
         setRoutine((prev) => {
           if (!prev) return null;
           return {
@@ -382,27 +378,13 @@ export default function ActiveWorkout() {
             }),
           };
         });
-      } else if (routine) {
-        const seededLogs: Record<string, LogEntry> = {};
-        routine.exercises.forEach((exercise) => {
-          const prescription =
-            exercise.set_prescription ?? deriveSetPrescription(exercise.sets, exercise.reps);
-          prescription.forEach((row) => {
-            const key = `${exercise.id}-${row.set_number}`;
-            seededLogs[key] = {
-              exercise_id: exercise.id,
-              set_number: row.set_number,
-              weight: row.weight_kg != null ? String(row.weight_kg) : '',
-              reps: String(row.reps),
-              completed: false,
-            };
-          });
-        });
-        if (Object.keys(seededLogs).length > 0) {
-          setLogs(seededLogs);
-        }
       }
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setRoutineBlockedToday(true);
+        setSessionError('Ya completaste esta rutina hoy. Vuelve mañana.');
+        return;
+      }
       clientLogger.error('Failed to start workout session', err);
       setSessionError('No se pudo iniciar la sesión. Recarga la página para reintentar.');
     }
@@ -526,6 +508,7 @@ export default function ActiveWorkout() {
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+      void memberStatsCtx?.refresh();
       setIsFinishing(false);
       if (success) {
         hapticSuccess();
@@ -604,6 +587,29 @@ export default function ActiveWorkout() {
           title="Rutina no disponible"
           description={fetchError ?? 'No se encontró la rutina solicitada.'}
           action={<Button onClick={() => navigate('/routines')}>Volver a rutinas</Button>}
+        />
+      </div>
+    );
+  }
+
+  if (routineBlockedToday) {
+    return (
+      <div className="page-stack">
+        <EmptyState
+          icon={CheckCircle}
+          title="Rutina completada hoy"
+          description={
+            sessionError ??
+            'Ya entrenaste esta rutina hoy. Puedes volver mañana o revisar tu historial.'
+          }
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="secondary" onClick={() => navigate('/history')}>
+                Ver historial
+              </Button>
+              <Button onClick={() => navigate('/routines')}>Volver a rutinas</Button>
+            </div>
+          }
         />
       </div>
     );

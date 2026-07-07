@@ -121,6 +121,8 @@ export default function MemberRoutine() {
   const routineMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState(5);
+  const [savingWeeklyGoal, setSavingWeeklyGoal] = useState(false);
 
   const assignedRoutineIds = useMemo(() => new Set(routines.map((r) => r.id)), [routines]);
 
@@ -155,6 +157,7 @@ export default function MemberRoutine() {
     ])
       .then(([userData, routinesData, subData, measurementsData]) => {
         setMember(userData);
+        setWeeklyGoal(userData.weekly_training_goal ?? 5);
         setRoutines(Array.isArray(routinesData) ? routinesData : []);
         setSubscription(subData?.membership_name ? subData : null);
         setMeasurements(Array.isArray(measurementsData) ? measurementsData : []);
@@ -219,6 +222,30 @@ export default function MemberRoutine() {
     }));
     setIsAssigning(true);
     apiFetchAvailableRoutines();
+  };
+
+  const handleSaveWeeklyGoal = async () => {
+    if (!id) return;
+    const goal = Math.min(7, Math.max(1, weeklyGoal));
+    setSavingWeeklyGoal(true);
+    try {
+      const res = await apiFetch(`/api/users/${id}/weekly-training-goal`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekly_training_goal: goal }),
+      });
+      const data = await parseJsonResponse<{ weekly_training_goal: number }>(res);
+      setWeeklyGoal(data.weekly_training_goal);
+      setMember((prev) =>
+        prev ? { ...prev, weekly_training_goal: data.weekly_training_goal } : prev
+      );
+      toast?.success('Meta semanal actualizada');
+    } catch (err) {
+      clientLogger.error('Failed to update weekly training goal', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo guardar la meta semanal');
+    } finally {
+      setSavingWeeklyGoal(false);
+    }
   };
 
   const handleInlineUpdate = async (
@@ -657,6 +684,10 @@ export default function MemberRoutine() {
                   <span className="font-bold">{member.goal}</span>
                 </p>
               )}
+              <p>
+                <span className="text-zinc-500 dark:text-zinc-400">Meta semanal:</span>{' '}
+                <span className="font-bold">{member.weekly_training_goal ?? 5} días</span>
+              </p>
               {!member.height && !member.initial_weight && !member.goal && (
                 <p className="text-xs text-zinc-400 dark:text-zinc-300">
                   Sin datos de perfil registrados.
@@ -664,6 +695,36 @@ export default function MemberRoutine() {
               )}
             </div>
           </Card>
+
+          {(user?.role === 'admin' || user?.role === 'trainer') && (
+            <Card padding="sm" rounded="xl">
+              <h3 className="section-title mb-2.5">Meta de entrenamiento</h3>
+              <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+                Días de entrenamiento por semana que verá el miembro en su dashboard.
+              </p>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label>Días por semana (1–7)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={7}
+                    value={weeklyGoal}
+                    onChange={(e) => {
+                      setWeeklyGoal(parseInt(e.target.value, 10) || 5);
+                    }}
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => void handleSaveWeeklyGoal()}
+                  disabled={savingWeeklyGoal}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </Card>
+          )}
 
           <Card padding="sm" rounded="xl">
             <h3 className="section-title mb-2.5">Membresía</h3>

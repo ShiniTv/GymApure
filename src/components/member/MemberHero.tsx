@@ -4,8 +4,6 @@ import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
 import { cn } from '../../lib/utils';
 
-const WEEKLY_GOAL = 4;
-
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Buenos días';
@@ -16,46 +14,62 @@ function getGreeting(): string {
 interface MemberHeroProps {
   name: string;
   workoutsThisWeek: number;
+  weeklyTrainingGoal?: number;
   workoutStreak: number;
   routineId?: number;
   routineName?: string;
+  routineCompletedToday?: boolean;
   className?: string;
 }
 
 export function MemberHero({
   name,
   workoutsThisWeek,
+  weeklyTrainingGoal = 5,
   workoutStreak,
   routineId,
   routineName,
+  routineCompletedToday = false,
   className,
 }: MemberHeroProps) {
   const navigate = useNavigate();
   const firstName = name.split(' ')[0] ?? name;
+  const canTrain = routineId && !routineCompletedToday;
 
   return (
     <Card
       padding="lg"
       rounded="2xl"
       className={cn(
-        'relative overflow-hidden border-brand/20 bg-gradient-to-br from-brand/5 via-transparent to-transparent',
+        'border-brand/20 from-brand/5 relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
         className
       )}
     >
-      <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-brand/10 blur-2xl pointer-events-none" aria-hidden />
+      <div
+        className="bg-brand/10 pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-2xl"
+        aria-hidden
+      />
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand">{getGreeting()}</p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight mt-1 truncate">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1">
+          <p className="text-brand text-xs font-semibold tracking-wide uppercase">
+            {getGreeting()}
+          </p>
+          <h2 className="mt-1 truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-white">
             {firstName}
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
+          {routineCompletedToday && (
+            <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              Rutina completada hoy — vuelve mañana
+            </p>
+          )}
+
           {workoutStreak > 0 && (
-            <div className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 streak-badge">
+            <div className="streak-badge mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5">
               <Flame className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
               <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
                 Racha de {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
@@ -63,22 +77,27 @@ export function MemberHero({
             </div>
           )}
 
-          <div className="hidden sm:flex mt-5">
+          <div className="mt-5 hidden sm:flex">
             <Button
               size="lg"
               className="min-h-[var(--touch-comfort)]"
-              onClick={() => navigate(routineId ? `/workout/${routineId}` : '/routines')}
+              disabled={!!routineId && routineCompletedToday}
+              onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
             >
-              <Dumbbell className="h-5 w-5 mr-2" />
-              {routineId ? 'Entrenar ahora' : 'Ver rutinas'}
+              <Dumbbell className="mr-2 h-5 w-5" />
+              {routineCompletedToday
+                ? 'Completada hoy'
+                : routineId
+                  ? 'Entrenar ahora'
+                  : 'Ver rutinas'}
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center justify-center sm:justify-end gap-6 shrink-0">
+        <div className="flex shrink-0 items-center justify-center gap-6 sm:justify-end">
           <ProgressRing
             value={workoutsThisWeek}
-            max={WEEKLY_GOAL}
+            max={weeklyTrainingGoal}
             label="Esta semana"
             sublabel="meta semanal"
           />

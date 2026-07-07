@@ -32,6 +32,8 @@ export interface MemberStats {
   workoutsThisMonth: number;
   workoutsThisWeek?: number;
   workoutStreak?: number;
+  weeklyTrainingGoal?: number;
+  completedRoutineIdsToday?: number[];
 }
 
 interface MemberStatsContextValue {
@@ -93,9 +95,7 @@ export function MemberStatsProvider({ children }: { children: ReactNode }) {
     [stats, loading, error, refresh]
   );
 
-  return (
-    <MemberStatsContext.Provider value={value}>{children}</MemberStatsContext.Provider>
-  );
+  return <MemberStatsContext.Provider value={value}>{children}</MemberStatsContext.Provider>;
 }
 
 export function useMemberStats(): MemberStatsContextValue {

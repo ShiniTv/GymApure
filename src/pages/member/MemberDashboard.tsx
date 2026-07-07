@@ -51,6 +51,8 @@ export default function MemberDashboard() {
   const routine = memberStats?.primaryRoutine;
   const pending = memberStats?.pendingPayments ?? 0;
   const alertDays = memberStats?.expiryAlertDays ?? 7;
+  const completedToday = new Set(memberStats?.completedRoutineIdsToday ?? []);
+  const primaryRoutineCompletedToday = routine ? completedToday.has(routine.id) : false;
 
   if (statsError && !memberStats) {
     return (
@@ -79,9 +81,11 @@ export default function MemberDashboard() {
       <MemberHero
         name={user?.name ?? 'Atleta'}
         workoutsThisWeek={memberStats?.workoutsThisWeek ?? 0}
+        weeklyTrainingGoal={memberStats?.weeklyTrainingGoal ?? 5}
         workoutStreak={memberStats?.workoutStreak ?? 0}
         routineId={routine?.id}
         routineName={routine?.name}
+        routineCompletedToday={primaryRoutineCompletedToday}
       />
 
       {pending > 0 && (
@@ -266,9 +270,18 @@ export default function MemberDashboard() {
                   </p>
                 </div>
               </div>
-              <Button className="mt-6 w-full" onClick={() => navigate(`/workout/${routine.id}`)}>
-                Empezar entrenamiento
+              <Button
+                className="mt-6 w-full"
+                disabled={primaryRoutineCompletedToday}
+                onClick={() => navigate(`/workout/${routine.id}`)}
+              >
+                {primaryRoutineCompletedToday ? 'Completada hoy' : 'Empezar entrenamiento'}
               </Button>
+              {primaryRoutineCompletedToday && (
+                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Ya entrenaste esta rutina hoy. Vuelve mañana.
+                </p>
+              )}
               {(memberStats?.assignedRoutinesCount ?? 0) > 1 && (
                 <Link
                   to="/routines"

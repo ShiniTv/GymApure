@@ -245,7 +245,8 @@ router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (re
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
-              initial_weight, height, goal, profile_image, dob, training_shift, created_at
+              initial_weight, height, goal, profile_image, dob, training_shift,
+              weekly_training_goal, created_at
        FROM users WHERE id = $1`,
       [req.params.id]
     );
@@ -553,8 +554,11 @@ router.get('/:id/history', requireMemberAccess('id'), async (req, res) => {
         [userId]
       ),
       query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM workout_sessions
-         WHERE user_id = $1 AND start_time >= NOW() - INTERVAL '7 days'`,
+        `SELECT COUNT(DISTINCT DATE(start_time))::text AS count
+         FROM workout_sessions
+         WHERE user_id = $1
+           AND end_time IS NOT NULL
+           AND start_time >= DATE_TRUNC('week', CURRENT_DATE)`,
         [userId]
       ),
       query(
@@ -740,6 +744,43 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.patch(
+  '/:id/weekly-training-goal',
+  requireMemberAccess('id', 'admin', 'trainer'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const raw = Number(req.body?.weekly_training_goal);
+    if (!Number.isInteger(raw) || raw < 1 || raw > 7) {
+      res.status(400).json({ error: 'La meta semanal debe ser un número entre 1 y 7' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE users SET weekly_training_goal = $1
+       WHERE id = $2 AND role = 'member'
+       RETURNING id, full_name, weekly_training_goal`,
+      [raw, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Miembro no encontrado' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'user.weekly_training_goal_update', {
+      target_id: targetId,
+      weekly_training_goal: raw,
+    });
+
+    res.json(rows[0]);
+  })
+);
 
 router.patch(
   '/:id/training-shift',

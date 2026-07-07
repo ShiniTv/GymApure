@@ -290,6 +290,8 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       workoutsThisMonth,
       workoutsThisWeek,
       workoutDays,
+      memberProfile,
+      completedTodayRows,
     ] = await Promise.all([
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
@@ -325,14 +327,28 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
         [userId]
       ),
       query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM workout_sessions
-         WHERE user_id = $1 AND start_time >= DATE_TRUNC('week', CURRENT_DATE)`,
+        `SELECT COUNT(DISTINCT DATE(start_time))::text AS count
+         FROM workout_sessions
+         WHERE user_id = $1
+           AND end_time IS NOT NULL
+           AND start_time >= DATE_TRUNC('week', CURRENT_DATE)`,
         [userId]
       ),
       query<{ d: string }>(
         `SELECT DISTINCT DATE(start_time)::text AS d FROM workout_sessions
          WHERE user_id = $1 AND end_time IS NOT NULL
          ORDER BY d DESC LIMIT 90`,
+        [userId]
+      ),
+      query<{ weekly_training_goal: number }>(
+        `SELECT weekly_training_goal FROM users WHERE id = $1`,
+        [userId]
+      ),
+      query<{ routine_id: number }>(
+        `SELECT DISTINCT routine_id FROM workout_sessions
+         WHERE user_id = $1
+           AND end_time IS NOT NULL
+           AND DATE(start_time) = CURRENT_DATE`,
         [userId]
       ),
     ]);
@@ -367,6 +383,8 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       workoutsThisMonth: parseInt(workoutsThisMonth.rows[0]?.count || '0', 10),
       workoutsThisWeek: parseInt(workoutsThisWeek.rows[0]?.count || '0', 10),
       workoutStreak: computeWorkoutStreak(workoutDays.rows.map((r) => r.d)),
+      weeklyTrainingGoal: memberProfile.rows[0]?.weekly_training_goal ?? 5,
+      completedRoutineIdsToday: completedTodayRows.rows.map((r) => r.routine_id),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

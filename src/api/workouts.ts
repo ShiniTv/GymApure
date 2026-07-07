@@ -70,6 +70,23 @@ router.post(
       return;
     }
 
+    const completedToday = await query<{ id: number }>(
+      `SELECT id FROM workout_sessions
+       WHERE user_id = $1 AND routine_id = $2
+         AND end_time IS NOT NULL
+         AND DATE(start_time) = CURRENT_DATE
+       LIMIT 1`,
+      [targetUserId, routine_id]
+    );
+
+    if (completedToday.rows[0]) {
+      res.status(409).json({
+        error: 'Ya completaste esta rutina hoy',
+        code: 'ROUTINE_COMPLETED_TODAY',
+      });
+      return;
+    }
+
     const insert = await query(
       `INSERT INTO workout_sessions (user_id, routine_id)
      VALUES ($1, $2)

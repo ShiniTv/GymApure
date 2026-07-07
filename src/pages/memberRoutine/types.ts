@@ -29,6 +29,7 @@ export interface MemberUser {
   initial_weight?: number | null;
   height?: number | null;
   goal?: string | null;
+  weekly_training_goal?: number;
 }
 
 export interface Subscription {

@@ -12,6 +12,7 @@ import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useToastOptional } from '../context/ToastContext';
 import {
   PageHeader,
@@ -118,6 +119,7 @@ export default function Routines() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
+  const memberStatsCtx = useMemberStatsOptional();
   const invalidateRoutines = useInvalidateRoutines();
   const isMember = user?.role === 'member';
   const isStaffRoutines = user?.role === 'trainer';
@@ -687,6 +689,9 @@ export default function Routines() {
                 setDeleteExerciseTarget({ routineId, exercise });
               }}
               onStartWorkout={handleStartWorkout}
+              completedRoutineIdsToday={
+                isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
+              }
             />
           ) : view === 'calendar' ? (
             <RoutinesCalendarView

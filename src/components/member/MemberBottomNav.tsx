@@ -23,9 +23,12 @@ export function MemberBottomNav() {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   const primaryRoutine = memberStats?.stats?.primaryRoutine;
+  const completedToday = new Set(memberStats?.stats?.completedRoutineIdsToday ?? []);
+  const primaryCompletedToday = primaryRoutine ? completedToday.has(primaryRoutine.id) : false;
   const workoutHref = primaryRoutine ? `/workout/${primaryRoutine.id}` : '/routines';
 
-  const showWorkoutFab = !!primaryRoutine?.id && isMemberFabRoute(location.pathname);
+  const showWorkoutFab =
+    !!primaryRoutine?.id && isMemberFabRoute(location.pathname) && !primaryCompletedToday;
 
   useEffect(() => {
     setMoreOpen(false);
