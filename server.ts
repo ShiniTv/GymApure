@@ -12,6 +12,7 @@ import { initDb, pool } from './src/db/index.ts';
 import { env } from './src/config/env.ts';
 import { errorHandler, notFoundHandler } from './src/api/middleware/errorHandler.ts';
 import { startExpiryCron } from './src/jobs/expiryCron.ts';
+import { startExchangeRateCron, ensureExchangeRateOnStartup } from './src/jobs/exchangeRateCron.ts';
 import { logger } from './src/lib/logger.ts';
 import { requestMetricsMiddleware } from './src/api/middleware/requestMetrics.ts';
 import { corsMiddleware } from './src/api/middleware/cors.ts';
@@ -184,7 +185,9 @@ async function startServer() {
       logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     }
     initWebSocket(server);
+    void ensureExchangeRateOnStartup();
     startExpiryCron();
+    startExchangeRateCron();
   });
 
   const shutdown = async (signal: string) => {

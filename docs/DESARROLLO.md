@@ -322,7 +322,7 @@ Resumen:
 1. Merge del PR a `main`
 2. Crear proyecto Supabase de producción y `npm run db:migrate` + `npm run db:create-admin`
 3. Deploy en Render (ver [`render.yaml`](../render.yaml))
-4. Variables de entorno: `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `VITE_EXCHANGE_RATE`
+4. Variables de entorno: `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`
 5. Smoke: `GET /api/health` · Manual: login admin, pago con comprobante
 
 ---

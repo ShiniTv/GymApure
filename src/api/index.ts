@@ -20,6 +20,7 @@ import trainerRoutes from './trainers.ts';
 import pushSubscriptionRoutes from './pushSubscriptions.ts';
 import equipmentRoutes from './equipment.ts';
 import notificationRoutes from './notifications.ts';
+import exchangeRateRoutes from './exchangeRate.ts';
 import { authenticate } from './middleware/auth.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
@@ -38,6 +39,7 @@ router.use(authenticate);
 router.use('/users', userRoutes);
 router.use('/trainers', trainerRoutes);
 router.use('/memberships', membershipRoutes);
+router.use('/exchange-rate', exchangeRateRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/routines', routineRoutes);

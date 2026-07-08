@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
 import { dateLocale } from '../../lib/dateLocale';
-import { clientEnv } from '../../config/client';
 
 export interface Payment {
   id: number;
@@ -13,12 +12,9 @@ export interface Payment {
   reference: string;
   proof_url?: string | null;
 }
-
-export const EXCHANGE_RATE = clientEnv.EXCHANGE_RATE;
-
 export function formatPaymentDate(iso: string): string {
   try {
-    return format(new Date(iso), "d MMM yyyy · HH:mm", { locale: dateLocale });
+    return format(new Date(iso), 'd MMM yyyy · HH:mm', { locale: dateLocale });
   } catch {
     return iso;
   }
@@ -39,3 +35,5 @@ export function paymentStatusVariant(status: Payment['status']): 'success' | 'da
   if (status === 'rejected') return 'danger';
   return 'warning';
 }
+
+export const BS_PAYMENT_METHODS = new Set(['pago_movil', 'transferencia']);

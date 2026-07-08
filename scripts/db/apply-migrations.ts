@@ -67,6 +67,9 @@ const MIGRATION_MARKERS: Record<string, string> = {
   '20260705000000_user_notifications.sql': `
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'user_notifications' LIMIT 1`,
+  '20260708130000_exchange_rates.sql': `
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'exchange_rates' LIMIT 1`,
 };
 
 /** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */

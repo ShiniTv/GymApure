@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
+import { useExchangeRateQuery } from '../../hooks/queries/useExchangeRateQuery';
 
 interface MembershipPlan {
   id: number;
@@ -96,6 +97,12 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     () => plans.find((p) => String(p.id) === form.membership_id),
     [plans, form.membership_id]
   );
+  const needsBsRate = form.method === 'pago_movil' || form.method === 'transferencia';
+  const { data: exchangeRate } = useExchangeRateQuery(step === 2 && needsBsRate);
+  const amountBs =
+    needsBsRate && selectedPlan?.price_usd && exchangeRate
+      ? (selectedPlan.price_usd * exchangeRate.rate).toFixed(2)
+      : null;
 
   const validateStep = (index: number): string | null => {
     if (index === 0) {
@@ -538,6 +545,14 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800/50">
             <p className="stat-label">Monto a cobrar</p>
             <p className="stat-value mt-1">${selectedPlan?.price_usd ?? '—'} USD</p>
+            {needsBsRate && amountBs && exchangeRate && (
+              <p className="mt-2 text-sm font-semibold text-zinc-700 tabular-nums dark:text-zinc-300">
+                ≈ {Number(amountBs).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
+                <span className="ml-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                  (tasa BCV {exchangeRate.effective_date})
+                </span>
+              </p>
+            )}
           </div>
           <label className="flex min-h-[48px] cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <input

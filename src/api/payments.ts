@@ -21,6 +21,7 @@ import {
 } from '../lib/chat/eventMessages.ts';
 import { sendEmail, paymentApprovedEmail, paymentRejectedEmail } from '../lib/email.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
+import { BS_PAYMENT_METHODS, getActiveUsdRate, roundBsAmount } from '../lib/exchangeRate.ts';
 import { parsePaginationQuery, parseSearchQuery, type PaginatedResult } from '../lib/pagination.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
@@ -166,12 +167,26 @@ router.post(
       return res.status(400).json({ error: 'user_id requerido' });
     }
 
+    let finalAmountBs = amount_bs ?? null;
+    let finalExchangeRate = exchange_rate ?? null;
+
+    if (BS_PAYMENT_METHODS.has(method)) {
+      const activeRate = await getActiveUsdRate();
+      if (!activeRate) {
+        return res.status(503).json({
+          error: 'Tasa de cambio no disponible. Contacta al gimnasio.',
+        });
+      }
+      finalExchangeRate = activeRate.rate;
+      finalAmountBs = roundBsAmount(amount_usd, activeRate.rate);
+    }
+
     try {
       const { rows } = await query(
         `INSERT INTO payments (user_id, amount_usd, amount_bs, exchange_rate, method, reference, proof_url)
        VALUES ($1, $2, $3, $4, $5, $6, NULL)
        RETURNING id`,
-        [user_id, amount_usd, amount_bs ?? null, exchange_rate ?? null, method, reference ?? null]
+        [user_id, amount_usd, finalAmountBs, finalExchangeRate, method, reference ?? null]
       );
 
       const paymentId = Number(rows[0].id);

@@ -2,7 +2,16 @@ import { useState, useEffect } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, toDisplayErrorMessage } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
-import { Settings2, Save, Activity, Zap, FileJson, FileSpreadsheet } from 'lucide-react';
+import {
+  Settings2,
+  Save,
+  Activity,
+  Zap,
+  FileJson,
+  FileSpreadsheet,
+  DollarSign,
+  RefreshCw,
+} from 'lucide-react';
 import {
   Button,
   Card,
@@ -18,6 +27,31 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 interface ExpirySettingsForm {
   expiry_alert_days: number;
+}
+
+interface ExchangeRateAdminView {
+  active: {
+    currency: 'USD';
+    rate: number;
+    effective_date: string;
+    source: 'bcv' | 'manual';
+    fetched_at: string;
+  } | null;
+  override: {
+    rate: number | null;
+    note: string;
+  };
+  history: {
+    id: number;
+    rate: number;
+    effective_date: string;
+    fetched_at: string;
+  }[];
+}
+
+interface ExchangeRateForm {
+  override_rate: string;
+  override_note: string;
 }
 
 interface HealthMetricsResponse {
@@ -58,6 +92,11 @@ export default function Settings() {
   usePageTitle('Configuración');
   const adminStats = useAdminStats();
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
+  const [exchangeRateView, setExchangeRateView] = useState<ExchangeRateAdminView | null>(null);
+  const [exchangeRateForm, setExchangeRateForm] = useState<ExchangeRateForm>({
+    override_rate: '',
+    override_note: '',
+  });
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsLoadError, setSettingsLoadError] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -83,6 +122,19 @@ export default function Settings() {
         setSettingsLoadError(true);
       })
       .finally(() => setSettingsLoading(false));
+
+    apiFetch('/api/settings/exchange-rate')
+      .then((res) => parseJsonResponse<ExchangeRateAdminView>(res))
+      .then((data) => {
+        setExchangeRateView(data);
+        setExchangeRateForm({
+          override_rate: data.override.rate != null ? String(data.override.rate) : '',
+          override_note: data.override.note ?? '',
+        });
+      })
+      .catch(() => {
+        setExchangeRateView(null);
+      });
   }, [user?.role]);
 
   useEffect(() => {
@@ -133,6 +185,87 @@ export default function Settings() {
     } catch (err) {
       setSettingsMessageTone('error');
       setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar'));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const refreshExchangeRate = async () => {
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      const res = await apiFetch('/api/settings/exchange-rate/refresh', { method: 'POST' });
+      const data = await parseJsonResponse<
+        ExchangeRateAdminView & { result?: { message?: string } }
+      >(res);
+      if (!res.ok) throw new Error((data as { error?: string }).error || 'Error al actualizar');
+      setExchangeRateView(data);
+      setExchangeRateForm({
+        override_rate: data.override.rate != null ? String(data.override.rate) : '',
+        override_note: data.override.note ?? '',
+      });
+      setSettingsMessageTone('success');
+      setSettingsMessage(data.result?.message ?? 'Tasa BCV actualizada');
+    } catch (err) {
+      setSettingsMessageTone('error');
+      setSettingsMessage(toDisplayErrorMessage(err, 'Error al actualizar tasa BCV'));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const saveExchangeRateOverride = async () => {
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      const rate = Number.parseFloat(exchangeRateForm.override_rate);
+      if (!Number.isFinite(rate) || rate <= 0) {
+        throw new Error('Ingresa una tasa manual válida');
+      }
+      const res = await apiFetch('/api/settings/exchange-rate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          override_rate: rate,
+          override_note: exchangeRateForm.override_note,
+        }),
+      });
+      const data = await parseJsonResponse<ExchangeRateAdminView>(res);
+      if (!res.ok) throw new Error((data as { error?: string }).error || 'Error al guardar');
+      setExchangeRateView(data);
+      setExchangeRateForm({
+        override_rate: data.override.rate != null ? String(data.override.rate) : '',
+        override_note: data.override.note ?? '',
+      });
+      setSettingsMessageTone('success');
+      setSettingsMessage('Tasa manual guardada');
+    } catch (err) {
+      setSettingsMessageTone('error');
+      setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar tasa'));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const clearExchangeRateOverride = async () => {
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      const res = await apiFetch('/api/settings/exchange-rate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clear_override: true }),
+      });
+      const data = await parseJsonResponse<ExchangeRateAdminView>(res);
+      if (!res.ok)
+        throw new Error((data as { error?: string }).error || 'Error al quitar override');
+      setExchangeRateView(data);
+      setExchangeRateForm({ override_rate: '', override_note: '' });
+      setSettingsMessageTone('success');
+      setSettingsMessage('Override manual eliminado');
+    } catch (err) {
+      setSettingsMessageTone('error');
+      setSettingsMessage(toDisplayErrorMessage(err, 'Error al quitar override'));
     } finally {
       setSettingsSaving(false);
     }
@@ -217,7 +350,7 @@ export default function Settings() {
             Configuración <span className="text-brand">del sistema</span>
           </>
         }
-        subtitle="Avisos de chat y salud operativa."
+        subtitle="Avisos de chat, tasa BCV y salud operativa."
         action={<BackToDashboardLink />}
       />
 
@@ -312,6 +445,144 @@ export default function Settings() {
             >
               {settingsMessage}
             </p>
+          )}
+        </Card>
+      )}
+
+      {exchangeRateView && (
+        <Card padding="sm" rounded="xl" className="panel-wide">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+              <DollarSign className="text-brand h-4 w-4 shrink-0" />
+              <span className="truncate">Tasa de cambio USD (BCV)</span>
+            </h2>
+            <div className="flex shrink-0 gap-1.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 px-0"
+                onClick={refreshExchangeRate}
+                disabled={settingsSaving}
+                aria-label="Actualizar desde BCV"
+                title="Actualizar desde BCV"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 w-9 px-0"
+                onClick={saveExchangeRateOverride}
+                disabled={settingsSaving}
+                aria-label="Guardar override"
+                title="Guardar override manual"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
+            Tasa oficial del Banco Central de Venezuela para pagos en bolívares (pago móvil y
+            transferencia).
+          </p>
+
+          {exchangeRateView.active ? (
+            <div className="mb-4 rounded-lg border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
+              <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Tasa activa
+              </p>
+              <p className="mt-1 text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                {exchangeRateView.active.rate.toLocaleString('es-VE', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 4,
+                })}{' '}
+                Bs/USD
+              </p>
+              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                Fuente: {exchangeRateView.active.source === 'manual' ? 'Manual' : 'BCV'} · Fecha
+                valor: {exchangeRateView.active.effective_date}
+              </p>
+            </div>
+          ) : (
+            <p className="mb-4 text-sm font-medium text-amber-600 dark:text-amber-400">
+              Sin tasa disponible. Usa &quot;Actualizar desde BCV&quot; o ingresa un override
+              manual.
+            </p>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="exchange_override_rate" className="text-[11px]">
+                Override manual (Bs/USD)
+              </Label>
+              <Input
+                id="exchange_override_rate"
+                type="number"
+                min={1}
+                step="0.01"
+                placeholder="Ej. 685.94"
+                value={exchangeRateForm.override_rate}
+                onChange={(e) =>
+                  setExchangeRateForm({ ...exchangeRateForm, override_rate: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="exchange_override_note" className="text-[11px]">
+                Nota (opcional)
+              </Label>
+              <Input
+                id="exchange_override_note"
+                value={exchangeRateForm.override_note}
+                onChange={(e) =>
+                  setExchangeRateForm({ ...exchangeRateForm, override_note: e.target.value })
+                }
+                placeholder="Motivo del override"
+              />
+            </div>
+          </div>
+
+          {exchangeRateView.override.rate != null && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-3"
+              onClick={clearExchangeRateOverride}
+              disabled={settingsSaving}
+            >
+              Quitar override manual
+            </Button>
+          )}
+
+          {exchangeRateView.history.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Historial BCV reciente
+              </p>
+              <div className="space-y-1.5">
+                {exchangeRateView.history.slice(0, 5).map((row) => (
+                  <div
+                    key={row.id}
+                    className="rounded-lg border border-zinc-100 px-2.5 py-2 text-xs dark:border-zinc-800"
+                  >
+                    <span className="font-bold text-zinc-900 tabular-nums dark:text-white">
+                      {row.rate.toLocaleString('es-VE', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 4,
+                      })}{' '}
+                      Bs/USD
+                    </span>
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      {' '}
+                      · {row.effective_date}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </Card>
       )}

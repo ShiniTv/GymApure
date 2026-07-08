@@ -59,8 +59,8 @@ async function login(email: string, password: string) {
 async function reportPayment(reference: string, amountUsd = 30) {
   const form = new FormData();
   form.append('amount_usd', String(amountUsd));
-  form.append('amount_bs', String(amountUsd * 40.5));
-  form.append('exchange_rate', '40.5');
+  form.append('amount_bs', '1');
+  form.append('exchange_rate', '1');
   form.append('method', 'pago_movil');
   form.append('reference', reference);
 
@@ -111,6 +111,12 @@ async function main() {
   });
 
   await login(MEMBER_APPROVE_EMAIL, MEMBER_PASSWORD);
+
+  const rateRes = await jsonApi('GET', '/api/exchange-rate');
+  ok('GET tasa BCV activa', rateRes.res.status === 200 && (rateRes.data as { rate?: number }).rate! > 0);
+  const activeRate = (rateRes.data as { rate: number }).rate;
+  const expectedBs = Math.round(30 * activeRate * 100) / 100;
+
   const meBefore = await jsonApi('GET', '/api/auth/me');
   const userIdBefore = meBefore.data.user?.id as number;
   const beforeSub = await jsonApi('GET', `/api/memberships/user/${userIdBefore}`);
@@ -120,6 +126,21 @@ async function main() {
   ok('Miembro reporta pago', report1.res.status === 200 && report1.data.status === 'pending');
   const paymentIdApprove = report1.data.id as number;
 
+  await login(ADMIN_EMAIL, ADMIN_PASSWORD);
+  const storedPayment = await jsonApi('GET', '/api/payments');
+  const approvedRow = (
+    (storedPayment.data as { items?: { id: number; amount_bs: number; exchange_rate: number }[] })
+      .items ?? []
+  ).find((p) => Number(p.id) === Number(paymentIdApprove));
+  ok(
+    'Servidor recalcula Bs con tasa activa',
+    approvedRow != null &&
+      Math.abs(Number(approvedRow.exchange_rate) - activeRate) < 0.0001 &&
+      Math.abs(Number(approvedRow.amount_bs) - expectedBs) < 0.01,
+    JSON.stringify(approvedRow)
+  );
+
+  await login(MEMBER_APPROVE_EMAIL, MEMBER_PASSWORD);
   const memberPayments = await jsonApi('GET', '/api/payments');
   ok('Miembro ve sus pagos', memberPayments.res.status === 200);
   const memberList = (memberPayments.data as { items?: { id: number }[] }).items ?? [];

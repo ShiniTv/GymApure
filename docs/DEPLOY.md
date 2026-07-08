@@ -100,24 +100,23 @@ Deben ser **privados** (acceso solo vía backend).
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                    |
-| -------------------------------- | ----------- | -------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev     |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                        |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                     |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                           |
-| `CRON_SECRET`                    | Recomendada | `openssl rand -base64 32`                                |
-| `VITE_EXCHANGE_RATE`             | Recomendada | Tasa Bs/USD actual — **antes del build**                 |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render         |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores                                     |
-| `PUBLIC_APP_URL`                 | Recomendada | `https://caribean-gym.onrender.com` — enlaces en correos |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos         |
-| `SMTP_PORT`                      | Recomendada | `587`                                                    |
-| `SMTP_SECURE`                    | Recomendada | `false`                                                  |
-| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                             |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)           |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                  |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                      |
+| Variable                         | Obligatoria | Notas                                                        |
+| -------------------------------- | ----------- | ------------------------------------------------------------ |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev         |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                            |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                         |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                               |
+| `CRON_SECRET`                    | Recomendada | `openssl rand -base64 32` — cron BCV y avisos de vencimiento |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render             |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores                                         |
+| `PUBLIC_APP_URL`                 | Recomendada | `https://caribean-gym.onrender.com` — enlaces en correos     |
+| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos             |
+| `SMTP_PORT`                      | Recomendada | `587`                                                        |
+| `SMTP_SECURE`                    | Recomendada | `false`                                                      |
+| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                 |
+| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)               |
+| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                      |
+| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                          |
 
 Tras configurar SMTP, verifica: `GET /api/health` debe incluir `"email": { "configured": true }`.
 
@@ -173,6 +172,20 @@ El servidor ejecuta cron in-process cada hora. Para redundancia:
 curl -sS -X POST "https://<tu-app>.onrender.com/api/settings/expiry/run" -H "x-cron-secret: $CRON_SECRET"
 ```
 
+### 7. Cron tasa BCV (opcional)
+
+La tasa USD se actualiza automáticamente al arrancar el servidor y cada hora (cron in-process). Para redundancia en días laborables:
+
+1. Render → **New Cron Job**
+2. Schedule: `0 10,14,18 * * 1-5` (6am, 10am, 2pm hora Venezuela aprox.)
+3. Command:
+
+```bash
+curl -sS -X POST "https://<tu-app>.onrender.com/api/exchange-rate/refresh" -H "x-cron-secret: $CRON_SECRET"
+```
+
+Si el BCV no responde, el admin puede ingresar un override manual en **Configuración → Tasa de cambio USD**.
+
 ---
 
 ## En cada deploy posterior
@@ -210,7 +223,7 @@ Render
 [ ] DATABASE_URL pooler :6543
 [ ] SUPABASE_SERVICE_ROLE_KEY configurado
 [ ] CRON_SECRET configurado
-[ ] VITE_EXCHANGE_RATE configurado antes del build
+[ ] Migración `exchange_rates` aplicada (`npm run db:migrate`)
 [ ] Plan Starter
 [ ] GET /api/health → 200 + db up
 [ ] Login admin funciona

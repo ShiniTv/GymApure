@@ -27,13 +27,13 @@ import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
 import {
-  EXCHANGE_RATE,
   formatPaymentDate,
   formatPaymentMethod,
   paymentStatusLabel,
   paymentStatusVariant,
   type Payment,
 } from './payments/helpers';
+import { formatBsRateLabel, useExchangeRateQuery } from '../hooks/queries/useExchangeRateQuery';
 
 function PaymentRejectionNote() {
   return (
@@ -105,6 +105,13 @@ export default function Payments() {
   const [file, setFile] = useState<File | null>(null);
   const [approveTarget, setApproveTarget] = useState<Payment | null>(null);
   const { data: membershipPlans = [] } = useMembershipPlansQuery(isMember || isStaffPayment);
+  const needsBsRate = method === 'pago_movil' || method === 'transferencia';
+  const {
+    data: exchangeRate,
+    isPending: exchangeRateLoading,
+    isError: exchangeRateError,
+    refetch: refetchExchangeRate,
+  } = useExchangeRateQuery(showModal && needsBsRate);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [rejectTarget, setRejectTarget] = useState<Payment | null>(null);
   const [proofPreview, setProofPreview] = useState<Payment | null>(null);
@@ -125,23 +132,37 @@ export default function Payments() {
 
   useEffect(() => {
     const usd = parseFloat(amountUsd);
+    if (!needsBsRate) {
+      setAmountBs('');
+      return;
+    }
+    if (!exchangeRate) {
+      setAmountBs('');
+      return;
+    }
     if (!Number.isNaN(usd) && usd > 0) {
-      setAmountBs((usd * EXCHANGE_RATE).toFixed(2));
+      setAmountBs((usd * exchangeRate.rate).toFixed(2));
     } else {
       setAmountBs('');
     }
-  }, [amountUsd]);
+  }, [amountUsd, exchangeRate, needsBsRate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+    if (needsBsRate && !exchangeRate) {
+      setSubmitError('La tasa de cambio no está disponible. Intenta de nuevo en unos minutos.');
+      return;
+    }
     const formData = new FormData();
     formData.append('user_id', user!.id.toString());
     formData.append('amount_usd', amountUsd);
-    formData.append('amount_bs', amountBs);
+    if (needsBsRate && amountBs) formData.append('amount_bs', amountBs);
     formData.append('method', method);
     formData.append('reference', reference);
-    formData.append('exchange_rate', String(EXCHANGE_RATE));
+    if (needsBsRate && exchangeRate) {
+      formData.append('exchange_rate', String(exchangeRate.rate));
+    }
     if (file) formData.append('proof', file);
 
     try {
@@ -678,15 +699,6 @@ export default function Payments() {
               />
             </div>
             <div>
-              <Label>Monto (Bs) — tasa {EXCHANGE_RATE}</Label>
-              <Input
-                type="number"
-                readOnly
-                className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
-                value={amountBs}
-              />
-            </div>
-            <div>
               <Label>Método</Label>
               <Select value={method} onChange={(e) => setMethod(e.target.value)}>
                 <option value="pago_movil">Pago móvil</option>
@@ -694,6 +706,41 @@ export default function Payments() {
                 <option value="efectivo_usd">Efectivo USD</option>
               </Select>
             </div>
+            {needsBsRate && (
+              <div>
+                <Label>
+                  Monto (Bs)
+                  {exchangeRate ? ` — Tasa ${formatBsRateLabel(exchangeRate)}` : ' — Tasa BCV'}
+                </Label>
+                {exchangeRateLoading ? (
+                  <div className="flex items-center gap-2 py-2 text-sm text-zinc-500">
+                    <Spinner className="h-4 w-4" />
+                    Cargando tasa del día…
+                  </div>
+                ) : exchangeRateError || !exchangeRate ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-red-500">
+                      No se pudo cargar la tasa de cambio oficial.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void refetchExchangeRate()}
+                    >
+                      Reintentar
+                    </Button>
+                  </div>
+                ) : (
+                  <Input
+                    type="number"
+                    readOnly
+                    className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
+                    value={amountBs}
+                  />
+                )}
+              </div>
+            )}
             <div>
               <Label>Número de Referencia</Label>
               <Input
@@ -738,7 +785,12 @@ export default function Payments() {
               >
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1" size="lg">
+              <Button
+                type="submit"
+                className="flex-1"
+                size="lg"
+                disabled={needsBsRate && (exchangeRateLoading || !exchangeRate)}
+              >
                 Enviar
               </Button>
             </div>

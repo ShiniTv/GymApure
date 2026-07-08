@@ -44,13 +44,6 @@ function main() {
   const cron = process.env.CRON_SECRET?.trim() ?? '';
   ok('CRON_SECRET definido (recomendado)', cron.length >= 16, 'openssl rand -base64 32');
 
-  const exchange = process.env.VITE_EXCHANGE_RATE?.trim() ?? '';
-  ok(
-    'VITE_EXCHANGE_RATE definido (build-time)',
-    exchange.length > 0,
-    'Configurar en Render antes del build'
-  );
-
   console.log('');
   if (failed === 0) {
     console.log('Preflight: OK — puedes ejecutar npm run db:migrate y desplegar.');
