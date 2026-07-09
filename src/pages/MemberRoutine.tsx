@@ -55,6 +55,9 @@ import {
   parseSetPrescriptionFromApi,
 } from '../lib/setPrescription';
 import { buildExerciseSummary } from '../lib/routineDisplay';
+import { useHealthProfileQuery } from '../hooks/queries/useHealthProfileQuery';
+import { hasCriticalHealthFlags } from '../lib/healthConditions';
+import { ACTIVITY_LEVELS } from '../lib/metabolicRate';
 
 import type {
   Routine,
@@ -125,6 +128,14 @@ export default function MemberRoutine() {
   const [savingWeeklyGoal, setSavingWeeklyGoal] = useState(false);
 
   const assignedRoutineIds = useMemo(() => new Set(routines.map((r) => r.id)), [routines]);
+  const memberId = id ? parseInt(id, 10) : undefined;
+  const { data: healthProfile } = useHealthProfileQuery(
+    memberId,
+    Boolean(memberId) && (user?.role === 'trainer' || user?.role === 'admin')
+  );
+  const showHealthAlert = healthProfile
+    ? hasCriticalHealthFlags(healthProfile.condition_flags)
+    : false;
 
   const refreshUserRoutines = () =>
     apiFetch(`/api/users/${id}/routines`)
@@ -640,6 +651,11 @@ export default function MemberRoutine() {
               {member.goal}
             </Badge>
           )}
+          {showHealthAlert && (
+            <Badge variant="danger" className="px-1.5 py-0 text-[9px]">
+              Salud
+            </Badge>
+          )}
           {routines.length > 0 && (
             <Badge variant="default" className="px-1.5 py-0 text-[9px]">
               {routines.length} rutina{routines.length !== 1 ? 's' : ''}
@@ -742,6 +758,108 @@ export default function MemberRoutine() {
               </div>
             ) : (
               <p className="text-sm text-zinc-400 dark:text-zinc-300">Sin membresía activa</p>
+            )}
+          </Card>
+
+          <Card padding="sm" rounded="xl">
+            <h3 className="section-title mb-2.5">Salud y limitaciones</h3>
+            {healthProfile &&
+            (healthProfile.condition_labels.length > 0 ||
+              healthProfile.conditions_notes ||
+              healthProfile.limitations_notes ||
+              healthProfile.allergies_notes ||
+              healthProfile.medications_notes) ? (
+              <div className="space-y-2 text-xs sm:text-sm">
+                {healthProfile.condition_labels.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {healthProfile.condition_labels.map((flag) => (
+                      <Badge key={flag.id} variant="warning" className="text-[10px]">
+                        {flag.label}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {healthProfile.conditions_notes && (
+                  <p>
+                    <span className="text-zinc-500 dark:text-zinc-400">Patologías:</span>{' '}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {healthProfile.conditions_notes}
+                    </span>
+                  </p>
+                )}
+                {healthProfile.limitations_notes && (
+                  <p>
+                    <span className="text-zinc-500 dark:text-zinc-400">Limitaciones:</span>{' '}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {healthProfile.limitations_notes}
+                    </span>
+                  </p>
+                )}
+                {healthProfile.allergies_notes && (
+                  <p>
+                    <span className="text-zinc-500 dark:text-zinc-400">Alergias:</span>{' '}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {healthProfile.allergies_notes}
+                    </span>
+                  </p>
+                )}
+                {healthProfile.medications_notes && (
+                  <p>
+                    <span className="text-zinc-500 dark:text-zinc-400">Medicación:</span>{' '}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {healthProfile.medications_notes}
+                    </span>
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
+                El miembro aún no ha completado su perfil de salud.
+              </p>
+            )}
+          </Card>
+
+          <Card padding="sm" rounded="xl">
+            <h3 className="section-title mb-2.5">Metabolismo estimado</h3>
+            {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null ? (
+              <div className="space-y-2 text-xs sm:text-sm">
+                <p>
+                  <span className="text-zinc-500 dark:text-zinc-400">TMB:</span>{' '}
+                  <span className="font-bold text-zinc-900 dark:text-white">
+                    {healthProfile.bmr_kcal} kcal/día
+                  </span>
+                </p>
+                <p>
+                  <span className="text-zinc-500 dark:text-zinc-400">GET:</span>{' '}
+                  <span className="font-bold text-emerald-600 dark:text-emerald-500">
+                    {healthProfile.tdee_kcal} kcal/día
+                  </span>
+                </p>
+                {healthProfile.activity_level && (
+                  <p className="text-zinc-500 dark:text-zinc-400">
+                    Actividad:{' '}
+                    {ACTIVITY_LEVELS.find((l) => l.id === healthProfile.activity_level)?.label ??
+                      healthProfile.activity_level}
+                  </p>
+                )}
+                {healthProfile.metabolic_computed_at && (
+                  <p className="text-[10px] text-zinc-400">
+                    Calculado{' '}
+                    {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy', {
+                      locale: es,
+                    })}
+                    {healthProfile.weight_used_kg != null &&
+                      ` · ${healthProfile.weight_used_kg} kg`}
+                  </p>
+                )}
+                <p className="text-[10px] text-zinc-400">
+                  Estimación basada en datos declarados por el miembro.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
+                Sin cálculo de TMB/GET registrado.
+              </p>
             )}
           </Card>
         </div>

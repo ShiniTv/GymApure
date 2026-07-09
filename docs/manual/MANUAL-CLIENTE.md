@@ -110,6 +110,21 @@ Grid de iconos: Rutinas, Biblioteca, Nutrición, Historial, Pagos.
 
 ---
 
+## Perfil de salud y metabolismo
+
+En **Mi Perfil** → pestaña **Salud**:
+
+1. Marca condiciones frecuentes (diabetes, lesiones, etc.) y describe patologías o limitaciones en texto libre.
+2. Indica alergias y medicación relevante si aplica.
+3. Acepta el aviso de información autodeclarada.
+4. En la sección **Metabolismo**, selecciona sexo biológico y nivel de actividad.
+5. Completa antes en **Datos**: fecha de nacimiento, altura y peso.
+6. Pulsa **Calcular y guardar TMB/GET** para ver tu tasa metabólica basal y gasto energético total estimados.
+
+Tu entrenador verá esta información (solo lectura) para adaptar rutinas y, en el futuro, planes alimenticios.
+
+---
+
 ## Errores comunes
 
 | Problema          | Solución                                               |

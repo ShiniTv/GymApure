@@ -29,6 +29,7 @@ import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { isTrainingShift } from '../lib/trainingShift.ts';
+import { mountHealthProfileRoutes } from './healthProfile.ts';
 
 const router = asyncRouter();
 
@@ -915,5 +916,7 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+mountHealthProfileRoutes(router);
 
 export default router;

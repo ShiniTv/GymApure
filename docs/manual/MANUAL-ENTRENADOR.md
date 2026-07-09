@@ -70,6 +70,15 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 
 Ver [NUTRICION.md](../modulos/NUTRICION.md).
 
+### Perfil de salud y metabolismo del miembro
+
+1. Ficha del miembro → pestaña **Perfil**.
+2. Revisa **Salud y limitaciones** (condiciones marcadas, notas, alergias).
+3. Revisa **Metabolismo estimado** (TMB/GET en kcal, nivel de actividad, fecha del cálculo).
+4. Si aparece badge **Salud** en la cabecera, hay condiciones que requieren atención (cardiovascular o post-operatorio).
+
+El miembro completa y actualiza estos datos en su **Perfil → Salud**. Son estimaciones autodeclaradas; no sustituyen evaluación médica.
+
 ### Historial de entrenamientos
 
 1. Ficha del miembro → **Historial**.

@@ -71,6 +71,7 @@ import { MemberBadgeModal } from '../components/member/MemberBadgeModal';
 import { MemberBadgeCard, type MemberBadgeData } from '../components/member/MemberBadgeCard';
 import { MemberBadgeScanView } from '../components/member/MemberBadgeScanView';
 import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
+import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 
 export default function Profile() {
@@ -89,7 +90,7 @@ export default function Profile() {
   );
   const loading = profileLoading || measLoading || (isMember && histLoading);
   const [profileTab, setProfileTab] = useState<
-    'datos' | 'progreso' | 'seguridad' | 'apariencia' | 'carne'
+    'datos' | 'salud' | 'progreso' | 'seguridad' | 'apariencia' | 'carne'
   >('datos');
   const [saving, setSaving] = useState(false);
   const toast = useToastOptional();
@@ -204,6 +205,9 @@ export default function Profile() {
     const options: { value: typeof profileTab; label: string }[] = [
       { value: 'datos', label: 'Datos' },
     ];
+    if (isMember) {
+      options.push({ value: 'salud', label: 'Salud' });
+    }
     if (isMember && profile?.cedula) {
       options.push({ value: 'carne', label: 'Carné' });
     }
@@ -631,6 +635,15 @@ export default function Profile() {
             </form>
           </Card>
         </div>
+      )}
+
+      {profileTab === 'salud' && isMember && (
+        <ProfileHealthTab
+          userId={user.id}
+          profile={profile}
+          measurements={measurements}
+          onSwitchToDatos={() => setProfileTab('datos')}
+        />
       )}
 
       {profileTab === 'progreso' && (
