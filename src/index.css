@@ -402,14 +402,14 @@ body,
   --reception-nav-stack: calc(0.5rem + var(--reception-nav-pill-height));
   --trainer-nav-pill-height: 3.75rem;
   --trainer-nav-stack: calc(0.5rem + var(--trainer-nav-pill-height));
+  --member-nav-pill-height: 3.75rem;
+  --member-nav-stack: calc(0.5rem + var(--member-nav-pill-height));
 }
 
 .member-bottom-nav {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
-  --member-nav-pill-height: 3.75rem;
   --member-fab-size: 3.5rem;
   --member-fab-gap: 0.75rem;
-  --member-nav-stack: calc(0.5rem + var(--member-nav-pill-height));
 }
 
 .member-bottom-nav-fab {
@@ -469,6 +469,18 @@ body,
 
 html.member-has-workout-fab .member-main-pad {
   padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.scroll-to-top-btn {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.member-has-workout-fab .scroll-to-top-btn {
+  bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.member-has-workout-fab .offline-banner-above-nav {
+  bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .member-chat-panel {

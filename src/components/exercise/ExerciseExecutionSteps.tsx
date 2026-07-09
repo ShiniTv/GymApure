@@ -56,7 +56,7 @@ export function ExerciseExecutionSteps({
             <p
               className={cn(
                 'pt-0.5 leading-relaxed font-medium text-zinc-600 dark:text-zinc-300',
-                compact ? 'text-xs' : 'text-sm'
+                compact ? 'text-sm leading-relaxed' : 'text-sm'
               )}
             >
               {step}

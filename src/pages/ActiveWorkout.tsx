@@ -891,13 +891,13 @@ export default function ActiveWorkout() {
               isMobileFocus && index !== focusedIndex && 'hidden'
             )}
           >
-            <div className="mb-6 flex items-start justify-between">
-              <div>
-                <h3 className="flex items-center gap-3 text-lg font-bold text-zinc-900 dark:text-white">
-                  <span className="brand-solid flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold not-italic">
+            <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="flex min-w-0 items-center gap-3 text-lg font-bold text-zinc-900 dark:text-white">
+                  <span className="brand-solid flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold not-italic">
                     {index + 1}
                   </span>
-                  {exercise.name}
+                  <span className="truncate">{exercise.name}</span>
                 </h3>
                 <p className="mt-2 text-sm font-medium text-zinc-500 capitalize dark:text-zinc-400">
                   {exercise.muscle_group} · Descanso: {exercise.rest_seconds}s
@@ -907,78 +907,13 @@ export default function ActiveWorkout() {
                     Consejo: {exercise.weight_suggestion}
                   </p>
                 )}
-
-                {(exercise.description || exercise.execution || exercise.video_url) && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {exercise.description && (
-                      <div className="w-full">
-                        <p className="text-xs text-zinc-500 italic dark:text-zinc-400">
-                          "{exercise.description}"
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      {exercise.video_url && (
-                        <button
-                          onClick={() => {
-                            toggleVideo(exercise.id);
-                          }}
-                          className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:text-white"
-                        >
-                          <Video className="h-3.5 w-3.5" />
-                          {showVideo[exercise.id] ? 'Cerrar Video' : 'Video Guía'}
-                        </button>
-                      )}
-
-                      {exercise.execution && (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:text-white"
-                          onClick={() => {
-                            setShowExecution((prev) => ({
-                              ...prev,
-                              [exercise.id]: !(prev[exercise.id] ?? true),
-                            }));
-                          }}
-                        >
-                          <BookOpen className="h-3.5 w-3.5" />
-                          <span>
-                            {(showExecution[exercise.id] ?? true) ? 'Ocultar' : 'Ejecución'}
-                          </span>
-                          <span className="bg-brand/10 text-brand dark:bg-brand/20 rounded px-1.5 py-0.5 text-[10px] font-bold">
-                            {executionStepCount(exercise.execution)} pasos
-                          </span>
-                        </button>
-                      )}
-                    </div>
-
-                    {exercise.execution && (showExecution[exercise.id] ?? true) && (
-                      <ExerciseExecutionSteps
-                        execution={exercise.execution}
-                        compact
-                        className="mt-3 w-full"
-                      />
-                    )}
-
-                    {showVideo[exercise.id] && exercise.video_url && (
-                      <div className="mt-4">
-                        <ExerciseVideoPlayer
-                          url={exercise.video_url}
-                          posterUrl={exercise.video_poster_url}
-                          title={`${exercise.name} — video tutorial`}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <button
                 onClick={() => {
                   toggleExerciseComplete(exercise.id);
                 }}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+                className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
                   completedExercises[exercise.id]
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
                     : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
@@ -989,12 +924,73 @@ export default function ActiveWorkout() {
               </button>
             </div>
 
+            {(exercise.description || exercise.execution || exercise.video_url) && (
+              <div className="mb-4 space-y-3">
+                {exercise.description && (
+                  <p className="text-xs text-zinc-500 italic dark:text-zinc-400">
+                    "{exercise.description}"
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {exercise.video_url && (
+                    <button
+                      onClick={() => {
+                        toggleVideo(exercise.id);
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:text-white"
+                    >
+                      <Video className="h-3.5 w-3.5" />
+                      {showVideo[exercise.id] ? 'Cerrar Video' : 'Video Guía'}
+                    </button>
+                  )}
+
+                  {exercise.execution && (
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:text-white"
+                      onClick={() => {
+                        setShowExecution((prev) => ({
+                          ...prev,
+                          [exercise.id]: !(prev[exercise.id] ?? true),
+                        }));
+                      }}
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      <span>{(showExecution[exercise.id] ?? true) ? 'Ocultar' : 'Ejecución'}</span>
+                      <span className="bg-brand/10 text-brand dark:bg-brand/20 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                        {executionStepCount(exercise.execution)} pasos
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {exercise.execution && (showExecution[exercise.id] ?? true) && (
+                  <ExerciseExecutionSteps
+                    execution={exercise.execution}
+                    compact
+                    className="w-full"
+                  />
+                )}
+
+                {showVideo[exercise.id] && exercise.video_url && (
+                  <div className="w-full">
+                    <ExerciseVideoPlayer
+                      url={exercise.video_url}
+                      posterUrl={exercise.video_poster_url}
+                      title={`${exercise.name} — video tutorial`}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-4">
-              <div className="grid grid-cols-10 gap-3 px-2 text-center text-xs font-medium text-zinc-400 dark:text-zinc-500">
-                <div className="col-span-2">Serie</div>
-                <div className="col-span-3">kg</div>
-                <div className="col-span-3">Reps</div>
-                <div className="col-span-2">Ok</div>
+              <div className="grid grid-cols-[minmax(0,2.5rem)_1fr_1fr_auto] gap-2 px-1 text-center text-xs font-medium text-zinc-400 sm:grid-cols-10 sm:gap-3 sm:px-2 dark:text-zinc-500">
+                <div className="sm:col-span-2">Serie</div>
+                <div className="sm:col-span-3">kg</div>
+                <div className="sm:col-span-3">Reps</div>
+                <div>Ok</div>
               </div>
 
               {Array.from({ length: exercise.sets }).map((_, i) => {
@@ -1005,18 +1001,18 @@ export default function ActiveWorkout() {
                 return (
                   <div
                     key={setNum}
-                    className={`grid grid-cols-10 items-center gap-3 rounded-2xl p-2 transition-all ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-zinc-50 dark:bg-zinc-800/30'}`}
+                    className={`grid grid-cols-[minmax(0,2.5rem)_1fr_1fr_auto] items-center gap-2 rounded-2xl p-2 transition-all sm:grid-cols-10 sm:gap-3 ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-zinc-50 dark:bg-zinc-800/30'}`}
                   >
-                    <div className="col-span-2 flex justify-center">
+                    <div className="flex justify-center sm:col-span-2">
                       <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-white text-sm font-semibold text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                         {setNum}
                       </span>
                     </div>
-                    <div className="col-span-3">
+                    <div className="min-w-0 sm:col-span-3">
                       <Input
                         type="number"
                         placeholder="0"
-                        className="min-h-[48px] py-4 text-center text-lg font-bold md:py-3 md:text-sm"
+                        className="min-h-[44px] py-3 text-center text-base font-bold sm:min-h-[48px] sm:py-4 sm:text-lg md:py-3 md:text-sm"
                         value={logs[key]?.weight || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'weight', e.target.value);
@@ -1024,11 +1020,11 @@ export default function ActiveWorkout() {
                         disabled={isCompleted}
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="min-w-0 sm:col-span-3">
                       <Input
                         type="number"
                         placeholder={exercise.reps.toString()}
-                        className="min-h-[48px] py-4 text-center text-lg font-bold md:py-3 md:text-sm"
+                        className="min-h-[44px] py-3 text-center text-base font-bold sm:min-h-[48px] sm:py-4 sm:text-lg md:py-3 md:text-sm"
                         value={logs[key]?.reps || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'reps', e.target.value);
@@ -1036,7 +1032,7 @@ export default function ActiveWorkout() {
                         disabled={isCompleted}
                       />
                     </div>
-                    <div className="col-span-2 flex justify-center">
+                    <div className="flex justify-center sm:col-span-2">
                       {isCompleted ? (
                         <button
                           onClick={() => {

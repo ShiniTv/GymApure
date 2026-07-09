@@ -127,8 +127,10 @@ export default function MemberDashboard() {
           );
         })()}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5">
         <QuickAction
+          compact
+          iconOnlyMobile
           to="/routines"
           icon={Dumbbell}
           title="Rutinas"
@@ -136,6 +138,8 @@ export default function MemberDashboard() {
           tone="blue"
         />
         <QuickAction
+          compact
+          iconOnlyMobile
           to="/exercises"
           icon={BookOpen}
           title="Biblioteca"
@@ -143,6 +147,8 @@ export default function MemberDashboard() {
           tone="orange"
         />
         <QuickAction
+          compact
+          iconOnlyMobile
           to="/nutrition"
           icon={UtensilsCrossed}
           title="Nutrición"
@@ -150,6 +156,8 @@ export default function MemberDashboard() {
           tone="emerald"
         />
         <QuickAction
+          compact
+          iconOnlyMobile
           to="/history"
           icon={Clock}
           title="Historial"
@@ -157,6 +165,8 @@ export default function MemberDashboard() {
           tone="blue"
         />
         <QuickAction
+          compact
+          iconOnlyMobile
           to="/payments"
           icon={CreditCard}
           title="Pagos"

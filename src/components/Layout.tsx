@@ -71,7 +71,7 @@ export default function Layout() {
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
   const showMemberBottomNav = isMemberMobileShell && !hideMemberBottomNav;
   const showReceptionBottomNav = isReceptionMobileShell && !isSidebarOpen;
-  const showTrainerBottomNav = isTrainerMobileShell;
+  const showTrainerBottomNav = isTrainerMobileShell && !isSidebarOpen;
   const showMobileHamburger = !isMemberMobileShell && !isTrainerMobileShell;
   const useMobileNavLinks = isMobileShell || isAdminMobile;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
@@ -348,9 +348,13 @@ export default function Layout() {
                       ? 'pb-[env(safe-area-inset-bottom)]'
                       : 'pb-[calc(var(--reception-nav-stack)+env(safe-area-inset-bottom))]'),
                   isTrainerMobileShell &&
-                    'pb-[calc(var(--trainer-nav-stack)+env(safe-area-inset-bottom))]',
+                    (isSidebarOpen
+                      ? 'pb-[env(safe-area-inset-bottom)]'
+                      : 'pb-[calc(var(--trainer-nav-stack)+env(safe-area-inset-bottom))]'),
                   isMemberMobileShell &&
-                    'pb-[calc(var(--member-nav-stack)+env(safe-area-inset-bottom))] lg:pb-2.5'
+                    (isSidebarOpen
+                      ? 'pb-[env(safe-area-inset-bottom)]'
+                      : 'pb-[calc(var(--member-nav-stack)+env(safe-area-inset-bottom))] lg:pb-2.5')
                 )}
               >
                 {!sidebarCollapsed && (

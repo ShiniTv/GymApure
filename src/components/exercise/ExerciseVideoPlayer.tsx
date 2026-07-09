@@ -17,7 +17,7 @@ interface ExerciseVideoPlayerProps {
 }
 
 const playerShell =
-  'aspect-video rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black';
+  'aspect-video w-full rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-inner bg-black';
 
 function HostedExerciseVideo({
   src,
