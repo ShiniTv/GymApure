@@ -22,6 +22,14 @@ export default function Login() {
   }
 
   useEffect(() => {
+    const sessionMessage = sessionStorage.getItem('auth:session-message');
+    if (sessionMessage) {
+      setError(sessionMessage);
+      sessionStorage.removeItem('auth:session-message');
+    }
+  }, []);
+
+  useEffect(() => {
     apiFetch('/api/health')
       .then((res) => parseJsonSafe<{ allowPublicRegister?: boolean }>(res))
       .then((data) => setRegisterAllowed(data.allowPublicRegister !== false))

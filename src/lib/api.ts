@@ -2,8 +2,39 @@ const DEFAULT_TIMEOUT = 15_000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 1_000;
 
+let authBootstrapComplete = false;
+let onUnauthorized: (() => void) | null = null;
+
+export function setAuthBootstrapComplete(complete: boolean) {
+  authBootstrapComplete = complete;
+}
+
+export function registerUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler;
+}
+
+function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.pathname : input.url;
+  return (
+    !url.includes('/api/auth/login') &&
+    !url.includes('/api/auth/register') &&
+    !url.includes('/api/auth/forgot-password') &&
+    !url.includes('/api/auth/reset-password')
+  );
+}
+
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...init });
+  return fetch(input, { credentials: 'include', ...init }).then((res) => {
+    if (
+      res.status === 401 &&
+      authBootstrapComplete &&
+      onUnauthorized &&
+      shouldHandleUnauthorized(input)
+    ) {
+      onUnauthorized();
+    }
+    return res;
+  });
 }
 
 export async function apiFetchWithRetry(

@@ -150,6 +150,29 @@ async function main() {
     console.log('  SKIP IDOR/rutinas (member@gym.com no encontrado — db:restore-demo)');
   }
 
+  // --- Sesión única: segundo login invalida el primero ---
+  {
+    cookie = '';
+    ok('Login member (sesión A)', await loginAs('member@gym.com'));
+    const cookieA = cookie;
+
+    cookie = '';
+    ok('Login member (sesión B)', await loginAs('member@gym.com'));
+    const cookieB = cookie;
+
+    cookie = cookieA;
+    const staleAfterDualLogin = await api('GET', '/api/auth/me');
+    ok(
+      'Sesión A invalidada tras login en otro dispositivo → 401',
+      staleAfterDualLogin.res.status === 401,
+      `status ${staleAfterDualLogin.res.status}`
+    );
+
+    cookie = cookieB;
+    const activeSession = await api('GET', '/api/auth/me');
+    ok('Sesión B activa tras segundo login → 200', activeSession.res.status === 200);
+  }
+
   // --- Fase 1: invalidación de sesión al cambiar status ---
   cookie = '';
   ok('Login admin para status', await loginAs('admin@gym.com'));

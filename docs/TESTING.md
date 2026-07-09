@@ -45,14 +45,20 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 
 ### Sprints individuales (debug)
 
-| Comando                         | Enfoque                               |
-| ------------------------------- | ------------------------------------- |
-| `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones             |
-| `test:sprint4`                  | Alertas de vencimiento                |
-| `test:sprint5`                  | Pagos y membresías                    |
-| `test:sprint6`                  | Chat in-app y settings de vencimiento |
+| Comando                         | Enfoque                                |
+| ------------------------------- | -------------------------------------- |
+| `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones              |
+| `test:sprint4`                  | Alertas de vencimiento                 |
+| `test:sprint5`                  | Pagos y membresías                     |
+| `test:sprint6`                  | Chat in-app y settings de vencimiento  |
+| `test:exchange-rate`            | Tasa BCV: lectura, override, historial |
+| `test:trainer-shifts`           | Perfiles entrenador, turnos, filtros   |
+| `test:routine-exercises`        | Prescripción por serie en rutinas      |
+| `test:alerts`                   | Panel alertas y notificaciones usuario |
 
-Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:alerts`.
+Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:alerts`, `test:exchange-rate`, `test:trainer-shifts`, `test:routine-exercises`.
+
+`test:security-checklist` incluye **dual login**: segundo login invalida la cookie del primero (`401` en `/api/auth/me`). `test:auth-checklist` verifica que **logout** invalida el token server-side.
 
 ### Pruebas UX
 
@@ -128,7 +134,7 @@ Contraseña de todas: valor de `DEMO_PASSWORD` en `.env`.
 - Trainer **403** en miembro sin rutina asignada; **200** en miembro con rutina demo
 - Trainer solo ve rutinas propias en `GET /api/routines`
 - Miembro solo ve rutinas asignadas en `GET /api/routines`
-- Cookie invalidada tras `PATCH /api/users/:id/status` (cambio de `token_version`)
+- Cookie invalidada tras cambio de `token_version` (status, contraseña, **login en otro dispositivo**, logout)
 
 ---
 

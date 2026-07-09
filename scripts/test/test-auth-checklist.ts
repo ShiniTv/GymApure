@@ -110,6 +110,12 @@ async function main() {
     password: newPass,
   });
   ok('Re-login con nueva contraseña', relogin.res.status === 200);
+  saveCookie(relogin.res);
+
+  const logoutRes = await api('POST', '/api/auth/logout');
+  ok('Logout → 200', logoutRes.res.status === 200);
+  const afterLogout = await api('GET', '/api/auth/me');
+  ok('Cookie invalidada tras logout → 401', afterLogout.res.status === 401);
 
   cookie = '';
   const adminAgain = await api('POST', '/api/auth/login', {

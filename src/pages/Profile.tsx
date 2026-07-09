@@ -74,7 +74,7 @@ import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logoutLocal } = useAuth();
   usePageTitle('Perfil');
   const memberStats = useMemberStatsOptional();
   const invalidateProfile = useInvalidateProfile();
@@ -304,10 +304,7 @@ export default function Profile() {
       });
       await parseJsonResponse(res);
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-      setPasswordMsg('Contraseña actualizada correctamente');
-      setTimeout(() => {
-        setPasswordMsg('');
-      }, 4000);
+      logoutLocal('Contraseña actualizada. Inicia sesión de nuevo.');
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
     } finally {

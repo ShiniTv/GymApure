@@ -15,7 +15,14 @@ import {
 import { authenticate, type AuthRequest } from './middleware/auth.ts';
 import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
-import { signSessionToken, sessionFailureStatus, verifySessionToken } from '../lib/sessionAuth.ts';
+import {
+  signSessionToken,
+  sessionFailureStatus,
+  verifySessionToken,
+  createLoginSession,
+  bumpUserTokenVersion,
+} from '../lib/sessionAuth.ts';
+import { emitToUser } from '../lib/wsServer.ts';
 import { sendEmail, welcomeEmail, passwordResetEmail } from '../lib/email.ts';
 import {
   buildPasswordSetupUrl,
@@ -136,19 +143,24 @@ router.post(
     recordLoginAttempt(normalizedEmail, true);
 
     const userId = Number(user.id);
-    const token = signSessionToken({
-      id: userId,
-      role: user.role,
-      full_name: user.full_name,
-      email: user.email,
-      token_version: Number(user.token_version ?? 0),
-    });
+    emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });
 
-    res.cookie('token', token, authCookieOptions);
-    await logAudit(userId, 'auth.login', { ip: clientIp });
+    const session = await createLoginSession(userId);
+    if (session.type === 'failure') {
+      res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
+      return;
+    }
+
+    res.cookie('token', session.token, authCookieOptions);
+    await logAudit(userId, 'auth.login', { ip: clientIp, previous_sessions_invalidated: true });
 
     res.json({
-      user: { id: userId, email: user.email, role: user.role, name: user.full_name },
+      user: {
+        id: userId,
+        email: session.user.email,
+        role: session.user.role,
+        name: session.user.full_name,
+      },
     });
   })
 );
@@ -224,6 +236,7 @@ router.post(
     if (token) {
       const result = await verifySessionToken(token);
       if (result.type === 'success') {
+        await bumpUserTokenVersion(result.user.id);
         await logAudit(result.user.id, 'auth.logout', {});
       }
     }

@@ -494,15 +494,15 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <SocketProvider>
-            <BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <SocketProvider>
               <AppRoutes />
-            </BrowserRouter>
-          </SocketProvider>
-        </ToastProvider>
-      </AuthProvider>
+            </SocketProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
