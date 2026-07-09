@@ -204,11 +204,11 @@ export default function Layout() {
           </div>
         </div>
 
-        <div className="flex">
+        <div className="flex min-h-0">
           {/* Sidebar */}
           <aside
             className={clsx(
-              'fixed top-14 bottom-0 left-0 z-40 flex transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
+              'fixed top-14 bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -216,7 +216,7 @@ export default function Layout() {
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
-              <div className="hidden h-14 items-center justify-center border-b border-zinc-200 lg:flex dark:border-zinc-800">
+              <div className="hidden h-14 shrink-0 items-center justify-center border-b border-zinc-200 lg:flex dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={() => {
@@ -230,7 +230,7 @@ export default function Layout() {
                 </button>
               </div>
             ) : (
-              <div className="hidden h-14 items-center gap-2.5 border-b border-zinc-200 px-3 lg:flex dark:border-zinc-800">
+              <div className="hidden h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-3 lg:flex dark:border-zinc-800">
                 <Logo className="h-8 w-8 shrink-0" />
                 <AnimatePresence>
                   <motion.div
@@ -272,7 +272,7 @@ export default function Layout() {
               </div>
             )}
 
-            <div className="flex min-h-0 flex-1 flex-col lg:h-[calc(100dvh-3.5rem)]">
+            <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
                   'nav-stack scroll-area min-h-0 flex-1 py-2.5 lg:py-3',
@@ -439,7 +439,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'h-dvh flex-1 overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
+              'h-dvh min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
               isTrainerMobileShell && 'trainer-main-pad'
@@ -447,7 +447,7 @@ export default function Layout() {
           >
             <AnimatePresence mode="wait">
               <PageTransition key={location.pathname}>
-                <div className="mx-auto max-w-7xl">
+                <div className="mx-auto max-w-7xl min-w-0">
                   <Outlet />
                 </div>
               </PageTransition>

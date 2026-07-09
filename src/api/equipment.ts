@@ -107,6 +107,62 @@ const equipmentSelect = `
   LEFT JOIN gym_zones gz ON gz.id = ge.zone_id
 `;
 
+const DUPLICATE_EQUIPMENT_MESSAGE =
+  'Este equipo ya está registrado. Edítalo para cambiar la cantidad.';
+
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: string }).code === '23505'
+  );
+}
+
+async function findExistingEquipment(
+  catalogId: number | null | undefined,
+  customName: string | null | undefined,
+  excludeId?: number
+): Promise<{ id: number } | null> {
+  if (catalogId) {
+    const params: unknown[] = [catalogId];
+    let sql = `SELECT id FROM gym_equipment WHERE catalog_id = $1`;
+    if (excludeId) {
+      params.push(excludeId);
+      sql += ` AND id <> $${params.length}`;
+    }
+    sql += ` LIMIT 1`;
+    const { rows } = await query<{ id: number }>(sql, params);
+    return rows[0] ?? null;
+  }
+
+  const name = customName?.trim();
+  if (!name) return null;
+
+  const params: unknown[] = [name];
+  let sql = `
+    SELECT id FROM gym_equipment
+    WHERE catalog_id IS NULL
+      AND LOWER(TRIM(custom_name)) = LOWER($1)`;
+  if (excludeId) {
+    params.push(excludeId);
+    sql += ` AND id <> $${params.length}`;
+  }
+  sql += ` LIMIT 1`;
+  const { rows } = await query<{ id: number }>(sql, params);
+  return rows[0] ?? null;
+}
+
+function sendDuplicateEquipmentError(
+  res: { status: (code: number) => { json: (body: unknown) => void } },
+  existingId: number
+) {
+  res.status(409).json({
+    error: DUPLICATE_EQUIPMENT_MESSAGE,
+    details: { existing_id: existingId },
+  });
+}
+
 router.get(
   '/zones',
   staffRead,
@@ -388,27 +444,46 @@ router.post(
         .json({ error: 'Selecciona un tipo del catálogo o indica un nombre personalizado' });
       return;
     }
-    const { rows } = await query(
-      `INSERT INTO gym_equipment (
-         catalog_id, custom_name, zone_id, status, brand, model, serial_number, quantity,
-         installed_at, warranty_until, notes, next_inspection_at
-       ) VALUES ($1, $2, $3, $4::equipment_status, $5, $6, $7, $8, $9, $10, $11, $12)
-       RETURNING id`,
-      [
-        data.catalog_id ?? null,
-        data.custom_name?.trim() || null,
-        data.zone_id ?? null,
-        data.status ?? 'operational',
-        data.brand ?? null,
-        data.model ?? null,
-        data.serial_number ?? null,
-        data.quantity ?? 1,
-        data.installed_at || null,
-        data.warranty_until || null,
-        data.notes ?? null,
-        data.next_inspection_at || null,
-      ]
-    );
+
+    const existing = await findExistingEquipment(data.catalog_id, data.custom_name);
+    if (existing) {
+      sendDuplicateEquipmentError(res, existing.id);
+      return;
+    }
+
+    let rows: { id: number }[];
+    try {
+      ({ rows } = await query(
+        `INSERT INTO gym_equipment (
+           catalog_id, custom_name, zone_id, status, brand, model, serial_number, quantity,
+           installed_at, warranty_until, notes, next_inspection_at
+         ) VALUES ($1, $2, $3, $4::equipment_status, $5, $6, $7, $8, $9, $10, $11, $12)
+         RETURNING id`,
+        [
+          data.catalog_id ?? null,
+          data.custom_name?.trim() || null,
+          data.zone_id ?? null,
+          data.status ?? 'operational',
+          data.brand ?? null,
+          data.model ?? null,
+          data.serial_number ?? null,
+          data.quantity ?? 1,
+          data.installed_at || null,
+          data.warranty_until || null,
+          data.notes ?? null,
+          data.next_inspection_at || null,
+        ]
+      ));
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        const fallback = await findExistingEquipment(data.catalog_id, data.custom_name);
+        if (fallback) {
+          sendDuplicateEquipmentError(res, fallback.id);
+          return;
+        }
+      }
+      throw err;
+    }
     const id = rows[0].id;
     await logAudit(req.user!.id, 'equipment_create', { equipment_id: id });
     const detail = await query(`${equipmentSelect} WHERE ge.id = $1`, [id]);
@@ -425,49 +500,84 @@ router.patch(
       res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
       return;
     }
-    const current = await query<{ status: string }>(
-      `SELECT status::text FROM gym_equipment WHERE id = $1`,
-      [req.params.id]
-    );
+    const current = await query<{
+      status: string;
+      catalog_id: number | null;
+      custom_name: string | null;
+    }>(`SELECT status::text, catalog_id, custom_name FROM gym_equipment WHERE id = $1`, [
+      req.params.id,
+    ]);
     if (!current.rows[0]) {
       res.status(404).json({ error: 'Equipo no encontrado' });
       return;
     }
     const data = parsed.data;
     const newStatus = data.status;
-    const { rows } = await query(
-      `UPDATE gym_equipment SET
-         catalog_id = COALESCE($2, catalog_id),
-         custom_name = COALESCE($3, custom_name),
-         zone_id = COALESCE($4, zone_id),
-         status = COALESCE($5::equipment_status, status),
-         brand = COALESCE($6, brand),
-         model = COALESCE($7, model),
-         serial_number = COALESCE($8, serial_number),
-         quantity = COALESCE($9, quantity),
-         installed_at = COALESCE($10, installed_at),
-         warranty_until = COALESCE($11, warranty_until),
-         notes = COALESCE($12, notes),
-         next_inspection_at = COALESCE($13, next_inspection_at),
-         updated_at = NOW()
-       WHERE id = $1
-       RETURNING id`,
-      [
-        req.params.id,
-        data.catalog_id ?? null,
-        data.custom_name ?? null,
-        data.zone_id ?? null,
-        newStatus ?? null,
-        data.brand ?? null,
-        data.model ?? null,
-        data.serial_number ?? null,
-        data.quantity ?? null,
-        data.installed_at ?? null,
-        data.warranty_until ?? null,
-        data.notes ?? null,
-        data.next_inspection_at ?? null,
-      ]
+
+    const effectiveCatalogId =
+      data.catalog_id !== undefined ? data.catalog_id : current.rows[0].catalog_id;
+    const effectiveCustomName =
+      data.custom_name !== undefined ? data.custom_name : current.rows[0].custom_name;
+
+    const duplicate = await findExistingEquipment(
+      effectiveCatalogId,
+      effectiveCustomName,
+      Number(req.params.id)
     );
+    if (duplicate) {
+      sendDuplicateEquipmentError(res, duplicate.id);
+      return;
+    }
+
+    let rows: { id: number }[];
+    try {
+      ({ rows } = await query(
+        `UPDATE gym_equipment SET
+           catalog_id = COALESCE($2, catalog_id),
+           custom_name = COALESCE($3, custom_name),
+           zone_id = COALESCE($4, zone_id),
+           status = COALESCE($5::equipment_status, status),
+           brand = COALESCE($6, brand),
+           model = COALESCE($7, model),
+           serial_number = COALESCE($8, serial_number),
+           quantity = COALESCE($9, quantity),
+           installed_at = COALESCE($10, installed_at),
+           warranty_until = COALESCE($11, warranty_until),
+           notes = COALESCE($12, notes),
+           next_inspection_at = COALESCE($13, next_inspection_at),
+           updated_at = NOW()
+         WHERE id = $1
+         RETURNING id`,
+        [
+          req.params.id,
+          data.catalog_id ?? null,
+          data.custom_name ?? null,
+          data.zone_id ?? null,
+          newStatus ?? null,
+          data.brand ?? null,
+          data.model ?? null,
+          data.serial_number ?? null,
+          data.quantity ?? null,
+          data.installed_at ?? null,
+          data.warranty_until ?? null,
+          data.notes ?? null,
+          data.next_inspection_at ?? null,
+        ]
+      ));
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        const fallback = await findExistingEquipment(
+          effectiveCatalogId,
+          effectiveCustomName,
+          Number(req.params.id)
+        );
+        if (fallback) {
+          sendDuplicateEquipmentError(res, fallback.id);
+          return;
+        }
+      }
+      throw err;
+    }
     if (newStatus && newStatus !== current.rows[0].status) {
       await query(
         `INSERT INTO equipment_maintenance_events (

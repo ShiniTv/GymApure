@@ -21,7 +21,7 @@ import { cn, formatMoney } from '../lib/utils';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { groupEquipmentByZone, downloadEquipmentCsv } from '../lib/equipment/inventoryHelpers';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch, parseJsonResponse, resolveEquipmentPhotoUrl } from '../lib/api';
+import { apiFetch, parseJsonResponse, resolveEquipmentPhotoUrl, ApiError } from '../lib/api';
 import {
   EQUIPMENT_STATUSES,
   EQUIPMENT_CATEGORIES,
@@ -168,7 +168,7 @@ function EquipmentListCard({
       type="button"
       onClick={() => onOpen(item.id)}
       className={cn(
-        'flex items-center gap-3 rounded-xl border border-l-4 bg-white p-3 text-left transition hover:border-zinc-300 dark:bg-zinc-900 dark:hover:border-zinc-600',
+        'flex w-full min-w-0 items-center gap-3 rounded-xl border border-l-4 bg-white p-3 text-left transition hover:border-zinc-300 dark:bg-zinc-900 dark:hover:border-zinc-600',
         STATUS_BORDER_STYLES[item.status],
         'border-zinc-200 dark:border-zinc-800'
       )}
@@ -187,6 +187,11 @@ function EquipmentListCard({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
           {equipmentDisplayName(item)}
+          {item.quantity > 1 && (
+            <span className="ml-1.5 text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
+              ×{item.quantity}
+            </span>
+          )}
         </p>
         {!hideZone && (
           <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-zinc-500">
@@ -244,6 +249,7 @@ export default function Equipment() {
   const [selectedCatalogId, setSelectedCatalogId] = useState<number | null>(null);
   const [equipmentForm, setEquipmentForm] = useState(emptyEquipmentForm);
   const [formError, setFormError] = useState('');
+  const [duplicateExistingId, setDuplicateExistingId] = useState<number | null>(null);
 
   const detailId = searchParams.get('detail');
   const [detail, setDetail] = useState<EquipmentItem | null>(null);
@@ -331,6 +337,24 @@ export default function Equipment() {
   ]);
 
   const zoneGroups = useMemo(() => groupEquipmentByZone(items, zones), [items, zones]);
+
+  const registeredByCatalogId = useMemo(() => {
+    const map = new Map<number, EquipmentItem>();
+    for (const item of allItems) {
+      if (item.catalog_id) map.set(item.catalog_id, item);
+    }
+    return map;
+  }, [allItems]);
+
+  const registeredCustomNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const item of allItems) {
+      if (!item.catalog_id && item.custom_name?.trim()) {
+        names.add(item.custom_name.trim().toLowerCase());
+      }
+    }
+    return names;
+  }, [allItems]);
 
   const loadInventory = useCallback(async () => {
     const params = new URLSearchParams();
@@ -427,6 +451,7 @@ export default function Equipment() {
   const handleCreateEquipment = async (e: FormEvent) => {
     e.preventDefault();
     setFormError('');
+    setDuplicateExistingId(null);
     const payload = {
       catalog_id: selectedCatalogId,
       custom_name: equipmentForm.custom_name.trim() || null,
@@ -442,6 +467,24 @@ export default function Equipment() {
     if (!payload.catalog_id && !payload.custom_name) {
       setFormError('Selecciona un tipo del catálogo o escribe un nombre personalizado');
       return;
+    }
+    if (payload.catalog_id) {
+      const existing = registeredByCatalogId.get(payload.catalog_id);
+      if (existing) {
+        setFormError('Este equipo ya está registrado. Edítalo para cambiar la cantidad.');
+        setDuplicateExistingId(existing.id);
+        return;
+      }
+    } else if (payload.custom_name) {
+      const normalized = payload.custom_name.toLowerCase();
+      if (registeredCustomNames.has(normalized)) {
+        const existing = allItems.find(
+          (item) => !item.catalog_id && item.custom_name?.trim().toLowerCase() === normalized
+        );
+        setFormError('Este equipo ya está registrado. Edítalo para cambiar la cantidad.');
+        setDuplicateExistingId(existing?.id ?? null);
+        return;
+      }
     }
     setAddSaving(true);
     try {
@@ -466,6 +509,10 @@ export default function Equipment() {
       await loadInventory();
       openDetail(created.id);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        const details = err.details as { existing_id?: number } | undefined;
+        if (details?.existing_id) setDuplicateExistingId(details.existing_id);
+      }
       setFormError(err instanceof Error ? err.message : 'No se pudo crear el equipo');
     } finally {
       setAddSaving(false);
@@ -697,6 +744,16 @@ export default function Equipment() {
     });
   }, [catalog, catalogSearch, catalogCategoryFilter]);
 
+  const handleCatalogPick = (item: CatalogItem) => {
+    const existing = registeredByCatalogId.get(item.id);
+    if (existing) {
+      closeAddModal();
+      openDetail(existing.id);
+      return;
+    }
+    openAddFromCatalog(item);
+  };
+
   const openAddFromCatalog = (item?: CatalogItem) => {
     setAddPhotoFile(null);
     if (item) {
@@ -722,6 +779,7 @@ export default function Equipment() {
     setAddOpen(false);
     setAddStep('pick');
     setFormError('');
+    setDuplicateExistingId(null);
     setAddPhotoFile(null);
     setAddSaving(false);
   };
@@ -770,10 +828,9 @@ export default function Equipment() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack min-w-0">
       <PageHeader
         compact
-        showTitleOnMobile
         title={
           <>
             Equipamiento <span className="text-brand">del gym</span>
@@ -784,7 +841,7 @@ export default function Equipment() {
         }
         action={
           isAdmin ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1">
               <BackToDashboardLink iconOnly className="lg:hidden" />
               <Button
                 variant="ghost"
@@ -796,10 +853,10 @@ export default function Equipment() {
               >
                 <Settings2 className="h-4 w-4" />
               </Button>
-              <Button onClick={() => openAddFromCatalog()} className="gap-1.5">
+              <Button onClick={() => openAddFromCatalog()} className="h-9 gap-1.5 px-2.5 sm:px-4">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Añadir equipo</span>
-                <span className="sm:hidden">Añadir</span>
+                <span className="sr-only sm:hidden">Añadir equipo</span>
               </Button>
             </div>
           ) : (
@@ -811,6 +868,8 @@ export default function Equipment() {
       <div className="flex flex-col gap-3">
         {isAdmin ? (
           <FilterChips
+            fullWidth
+            className="sm:w-auto"
             value={adminSummaryFilter}
             onChange={handleAdminSummaryFilter}
             options={[
@@ -833,6 +892,8 @@ export default function Equipment() {
           />
         ) : (
           <FilterChips
+            fullWidth
+            className="sm:w-auto"
             value={staffQuickFilter}
             onChange={(v) => setStaffQuickFilter(v as typeof staffQuickFilter)}
             options={[
@@ -852,8 +913,8 @@ export default function Equipment() {
         )}
 
         {showAttentionAlert && (
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-2">
-            <p className="flex items-center gap-2 text-xs font-medium text-orange-800 dark:text-orange-300">
+          <div className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-2">
+            <p className="flex min-w-0 flex-1 items-center gap-2 truncate text-xs font-medium text-orange-800 dark:text-orange-300">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               {attentionCount} equipo{attentionCount !== 1 ? 's' : ''} requieren atención
             </p>
@@ -879,20 +940,20 @@ export default function Equipment() {
           </div>
         )}
 
-        <Card padding="sm" rounded="xl" className="space-y-3">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <Card padding="sm" rounded="xl" className="min-w-0 space-y-3">
+          <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center">
             <SearchInput
-              className="min-w-0 flex-1"
+              containerClassName="min-w-0 w-full flex-1"
               placeholder="Buscar equipo, marca o modelo..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <SegmentedControl
                 variant="compact"
                 value={layoutView}
                 onChange={(v) => setLayoutView(v)}
-                className="shrink-0"
+                className="w-full min-w-0 sm:w-auto"
                 options={[
                   { value: 'flat', label: 'Lista' },
                   { value: 'zones', label: 'Por zona' },
@@ -902,7 +963,7 @@ export default function Equipment() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="shrink-0 gap-1.5"
+                className="gap-1.5"
                 onClick={() => setFiltersOpen((v) => !v)}
                 aria-expanded={filtersOpen}
               >
@@ -935,6 +996,8 @@ export default function Equipment() {
           <Card padding="sm" rounded="xl" className="space-y-3">
             {isAdmin && (
               <FilterChips
+                fullWidth
+                className="sm:w-auto"
                 value={statusFilter}
                 onChange={(value) => {
                   setInspectionDueOnly(false);
@@ -951,6 +1014,8 @@ export default function Equipment() {
               />
             )}
             <FilterChips
+              fullWidth
+              className="sm:w-auto"
               value={zoneFilter}
               onChange={setZoneFilter}
               options={[
@@ -959,6 +1024,8 @@ export default function Equipment() {
               ]}
             />
             <FilterChips
+              fullWidth
+              className="sm:w-auto"
               value={categoryFilter}
               onChange={setCategoryFilter}
               options={[
@@ -970,6 +1037,8 @@ export default function Equipment() {
               ]}
             />
             <FilterChips
+              fullWidth
+              className="sm:w-auto"
               value={inspectionDueOnly ? 'due' : 'all'}
               onChange={(v) => setInspectionDueOnly(v === 'due')}
               options={[
@@ -1023,7 +1092,7 @@ export default function Equipment() {
                     {group.items.length}
                   </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {group.items.map((item) => (
                     <EquipmentListCard key={item.id} item={item} onOpen={openDetail} hideZone />
                   ))}
@@ -1032,7 +1101,7 @@ export default function Equipment() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
               <EquipmentListCard key={item.id} item={item} onOpen={openDetail} />
             ))}
@@ -1157,19 +1226,34 @@ export default function Equipment() {
                     : 'No hay resultados para esta búsqueda.'}
                 </p>
               ) : (
-                filteredCatalog.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => openAddFromCatalog(item)}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700"
-                  >
-                    <span className="font-medium">{item.name}</span>
-                    <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-                      {EQUIPMENT_CATEGORY_LABELS[item.category]}
-                    </span>
-                  </button>
-                ))
+                filteredCatalog.map((item) => {
+                  const existing = registeredByCatalogId.get(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleCatalogPick(item)}
+                      className={cn(
+                        'flex w-full min-w-0 items-center justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm transition-colors',
+                        existing
+                          ? 'bg-zinc-100/80 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800/80 dark:text-zinc-300'
+                          : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700'
+                      )}
+                    >
+                      <span className="min-w-0 truncate font-medium">{item.name}</span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {existing && (
+                          <Badge variant="default" className="px-1.5 py-0.5 text-[10px]">
+                            Registrado
+                          </Badge>
+                        )}
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {EQUIPMENT_CATEGORY_LABELS[item.category]}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
               )}
             </div>
             <Button
@@ -1322,7 +1406,24 @@ export default function Equipment() {
                 rows={3}
               />
             </div>
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
+            {formError && (
+              <div className="space-y-2">
+                <p className="text-sm text-red-500">{formError}</p>
+                {duplicateExistingId && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      closeAddModal();
+                      openDetail(duplicateExistingId);
+                    }}
+                  >
+                    Editar equipo existente
+                  </Button>
+                )}
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={addSaving}>
               {addSaving ? 'Registrando...' : 'Registrar en inventario'}
             </Button>
