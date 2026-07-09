@@ -16,8 +16,11 @@ import { useMemberRoutinesQuery } from '../../hooks/queries/useRoutinesQuery';
 import {
   expiryBannerClasses,
   formatExpiryCountdown,
+  formatRemainingDaysShort,
   getExpirySeverity,
+  getSubscriptionBarStyle,
   shouldShowExpiryAlert,
+  subscriptionPlanNameClass,
 } from '../../lib/expiryUtils';
 import { formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
@@ -53,6 +56,7 @@ export default function MemberDashboard() {
   const alertDays = memberStats?.expiryAlertDays ?? 7;
   const completedToday = new Set(memberStats?.completedRoutineIdsToday ?? []);
   const primaryRoutineCompletedToday = routine ? completedToday.has(routine.id) : false;
+  const subscriptionBarStyle = getSubscriptionBarStyle(memberStats?.remainingPercent ?? 0);
 
   if (statsError && !memberStats) {
     return (
@@ -237,16 +241,28 @@ export default function MemberDashboard() {
           <h3 className="section-title mb-6">Membresía</h3>
           {sub ? (
             <>
-              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">
+              <p
+                className={`text-2xl font-bold ${subscriptionPlanNameClass(sub.days_remaining, alertDays)}`}
+              >
                 {sub.membership_name}
               </p>
               <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                {formatRemainingDaysShort(sub.days_remaining)}
+                {' · '}
                 Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
               </p>
               <div className="mt-6 h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
                 <div
-                  className="h-3 rounded-full bg-emerald-500 transition-all"
-                  style={{ width: `${memberStats?.progressPercent ?? 0}%` }}
+                  className="h-3 rounded-full transition-[width,background-color] duration-500"
+                  style={{
+                    width: `${subscriptionBarStyle.widthPercent}%`,
+                    backgroundColor: subscriptionBarStyle.backgroundColor,
+                  }}
+                  role="progressbar"
+                  aria-valuenow={subscriptionBarStyle.widthPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={formatRemainingDaysShort(sub.days_remaining)}
                 />
               </div>
             </>

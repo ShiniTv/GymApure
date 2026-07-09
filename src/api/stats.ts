@@ -17,6 +17,7 @@ import {
   syncEquipmentInspectionAlerts,
 } from '../lib/equipmentInspectionAlerts.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
+import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 
 const router = asyncRouter();
 
@@ -382,18 +383,18 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
         }
       | undefined;
 
-    let progressPercent = 0;
+    let remainingPercent = 0;
     if (sub) {
-      const startMs = new Date(sub.start_date).getTime();
-      const endMs = new Date(sub.end_date).getTime();
-      const totalDays = Math.max(1, Math.round((endMs - startMs) / 86_400_000));
-      const elapsed = Math.max(0, totalDays - sub.days_remaining);
-      progressPercent = Math.min(100, Math.round((elapsed / totalDays) * 100));
+      remainingPercent = computeSubscriptionRemainingPercent(
+        sub.days_remaining,
+        sub.start_date,
+        sub.end_date
+      );
     }
 
     res.json({
       subscription: sub ?? null,
-      progressPercent,
+      remainingPercent,
       primaryRoutine: routines.rows[0] ?? null,
       assignedRoutinesCount: routines.rows.length,
       pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),

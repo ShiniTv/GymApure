@@ -17,7 +17,7 @@ export interface MemberStats {
     end_date: string;
     duration_days: number;
   } | null;
-  progressPercent: number;
+  remainingPercent: number;
   primaryRoutine: {
     id: number;
     name: string;
