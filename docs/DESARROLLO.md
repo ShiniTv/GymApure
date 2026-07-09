@@ -2,6 +2,8 @@
 
 Referencia rápida para instalar, correr, probar y seguir mejorando el sistema.
 
+**Índice completo:** [docs/README.md](./README.md) · **Manuales por rol:** [docs/manual/](./manual/)
+
 **Stack:** React 19 + Vite + Tailwind · Express · PostgreSQL (Supabase) · TypeScript strict
 
 ---
@@ -124,14 +126,21 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 
 ### Base de datos
 
-| Comando                          | Qué hace                                                                          |
-| -------------------------------- | --------------------------------------------------------------------------------- |
-| `npm run db:migrate`             | Aplica migraciones SQL pendientes                                                 |
-| `npm run db:health`              | Comprueba conexión a Postgres                                                     |
-| `npm run db:create-admin`        | Crea/actualiza cuenta admin                                                       |
-| `npm run db:reset-data`          | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
-| `npm run db:restore-demo`        | **Solo tests/CI** — usuarios demo ficticios                                       |
-| `npm run db:migrate-from-sqlite` | Migración única desde `gym.db` legacy                                             |
+| Comando                            | Qué hace                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| `npm run db:migrate`               | Aplica migraciones SQL pendientes                                                 |
+| `npm run db:health`                | Comprueba conexión a Postgres                                                     |
+| `npm run db:create-admin`          | Crea/actualiza cuenta admin                                                       |
+| `npm run db:reset-data`            | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
+| `npm run db:restore-demo`          | **Solo tests/CI** — usuarios demo ficticios                                       |
+| `npm run db:migrate-from-sqlite`   | Migración única desde `gym.db` legacy                                             |
+| `npm run db:migrate:dev`           | Migrar contra `.env.dev`                                                          |
+| `npm run db:migrate:prod`          | Migrar contra `.env.prod`                                                         |
+| `npm run db:setup:dev`             | Migrar + health + activar `.env.dev`                                              |
+| `npm run db:seed-system-exercises` | Sembrar catálogo de ejercicios del sistema                                        |
+| `npm run env:configure-dev`        | Reconfigurar `.env.dev` tras cambio de contraseña Supabase                        |
+| `npm run db:verify-isolation`      | Verificar que dev y prod no están cruzados                                        |
+| `npm run deploy:preflight`         | Validar `.env` antes de migrar/desplegar producción                               |
 
 ### Pruebas (servidor en marcha salvo `verify:local-e2e`)
 
@@ -148,7 +157,14 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 | `npm run test:payments-checklist`       | Pagos                                          |
 | `npm run test:memberships-checkin`      | Membresías y check-in                          |
 | `npm run test:chat-checklist`           | Chat in-app (conversaciones, mensajes, unread) |
+| `npm run test:exchange-rate`            | Tasa BCV: API, override, cron                  |
+| `npm run test:trainer-shifts`           | Perfiles entrenador, turnos, asignación        |
+| `npm run test:routine-exercises`        | Prescripción por serie, ejercicios en rutina   |
+| `npm run test:alerts`                   | Panel de alertas y notificaciones              |
+| `npm run test:ux`                       | UX API: forgot/reset, workoutsThisWeek, RBAC   |
+| `npm run test:ux:browser`               | Playwright E2E (mobile + desktop + tablet)     |
 | `npm run lighthouse:ci`                 | Baseline Lighthouse (login)                    |
+| `npm run bundle:baseline`               | Tamaño de bundle (tracking)                    |
 
 Detalle: [TESTING.md](./TESTING.md)
 
@@ -181,17 +197,38 @@ Tras `npm run db:restore-demo` (contraseña = `DEMO_PASSWORD` en `.env`):
 | `trainer@gym.com`      | trainer      | Rutinas, miembros asignados      |
 | `member@gym.com`       | member       | Cédula `V-11223344`, rutina demo |
 
-### Rutas por rol (referencia)
+### Rutas por rol (referencia completa)
 
-| Ruta         | admin | receptionist  | trainer       | member      |
-| ------------ | ----- | ------------- | ------------- | ----------- |
-| `/dashboard` | ✓     | ✓ (recepción) | ✓             | ✓           |
-| `/members`   | ✓     | ✓             | ✓ (asignados) | —           |
-| `/reception` | ✓     | ✓             | —             | —           |
-| `/check-in`  | ✓     | ✓             | —             | —           |
-| `/routines`  | ✓     | —             | ✓             | ✓ (propias) |
-| `/payments`  | ✓     | ✓             | —             | ✓ (propios) |
-| `/settings`  | ✓     | —             | —             | —           |
+Fuente: `src/App.tsx`. Manuales detallados en [docs/manual/](./manual/).
+
+| Ruta                     | admin | receptionist | trainer       | member      |
+| ------------------------ | ----- | ------------ | ------------- | ----------- |
+| `/` (dashboard)          | ✓     | ✓            | ✓             | ✓           |
+| `/members`               | ✓     | ✓            | ✓ (asignados) | —           |
+| `/reception`             | —     | ✓            | —             | —           |
+| `/check-in`              | —     | ✓            | —             | —           |
+| `/attendance`            | ✓     | —            | —             | —           |
+| `/memberships`           | ✓     | —            | —             | —           |
+| `/trainers`              | ✓     | —            | —             | —           |
+| `/equipment`             | ✓     | ✓            | ✓             | —           |
+| `/payments`              | ✓     | ✓            | —             | ✓ (propios) |
+| `/reports`               | ✓     | —            | —             | —           |
+| `/audit-logs`            | ✓     | —            | —             | —           |
+| `/settings`              | ✓     | —            | —             | —           |
+| `/messages`              | ✓     | ✓            | ✓             | ✓           |
+| `/notifications`         | ✓     | ✓            | ✓             | ✓           |
+| `/routines`              | —     | —            | ✓             | ✓ (propias) |
+| `/exercises`             | —     | —            | ✓             | ✓           |
+| `/nutrition-overview`    | ✓     | —            | —             | —           |
+| `/nutrition`             | —     | —            | —             | ✓           |
+| `/workout/:id`           | —     | —            | —             | ✓           |
+| `/history`               | —     | —            | —             | ✓           |
+| `/members/:id/routines`  | —     | —            | ✓             | —           |
+| `/members/:id/nutrition` | —     | —            | ✓             | —           |
+| `/members/:id/history`   | —     | —            | ✓             | —           |
+| `/profile`               | ✓     | ✓            | ✓             | ✓           |
+
+Rutas públicas: `/login`, `/register` (si `ALLOW_PUBLIC_REGISTER=true`), `/forgot-password`, `/reset-password`.
 
 ---
 
@@ -228,18 +265,28 @@ caribean-gym/
 
 ### Mapa módulo → archivos clave
 
-| Módulo          | Frontend                                                  | API                                        | Notas                   |
-| --------------- | --------------------------------------------------------- | ------------------------------------------ | ----------------------- |
-| Auth / sesiones | `pages/Login.tsx`, `context/AuthContext.tsx`              | `api/auth.ts`, `lib/sessionAuth.ts`        | JWT + `token_version`   |
-| Miembros        | `pages/Members.tsx`                                       | `api/users.ts`, `middleware/access.ts`     | IDOR trainers           |
-| Pagos           | `pages/Payments.tsx`, `hooks/queries/usePaymentsQuery.ts` | `api/payments.ts`                          | Comprobantes upload     |
-| Recepción       | `pages/Reception.tsx`, `reception/*`                      | `api/reception.ts`                         | Walk-in, check-in       |
-| Rutinas         | `pages/Routines.tsx`, `routines/*`                        | `api/routines.ts`, `lib/routineSchemas.ts` | Filtro por rol          |
-| Ejercicios      | `pages/Exercises.tsx`, `useExercisesQuery.ts`             | `api/exercises.ts`                         | Videos upload           |
-| Asistencia      | `pages/Attendance.tsx`, `CheckIn.tsx`                     | `api/attendance.ts`                        | Solo staff autenticado  |
-| Dashboard       | `pages/Dashboard.tsx`, `member/`, `reception/`            | `api/stats.ts`                             | Por rol                 |
-| Settings        | `pages/Settings.tsx`                                      | `api/settings.ts`                          | Alertas, notificaciones |
-| Archivos        | —                                                         | `api/files.ts`, `lib/mediaStorage.ts`      | Supabase Storage        |
+| Módulo          | Frontend                                                  | API                                        | Notas                        |
+| --------------- | --------------------------------------------------------- | ------------------------------------------ | ---------------------------- |
+| Auth / sesiones | `pages/Login.tsx`, `context/AuthContext.tsx`              | `api/auth.ts`, `lib/sessionAuth.ts`        | JWT + `token_version`        |
+| Miembros        | `pages/Members.tsx`                                       | `api/users.ts`, `middleware/access.ts`     | IDOR trainers                |
+| Pagos           | `pages/Payments.tsx`, `hooks/queries/usePaymentsQuery.ts` | `api/payments.ts`                          | Comprobantes upload          |
+| Recepción       | `pages/Reception.tsx`, `reception/*`                      | `api/reception.ts`                         | Walk-in, check-in            |
+| Rutinas         | `pages/Routines.tsx`, `routines/*`                        | `api/routines.ts`, `lib/routineSchemas.ts` | Filtro por rol               |
+| Ejercicios      | `pages/Exercises.tsx`, `useExercisesQuery.ts`             | `api/exercises.ts`                         | Videos upload                |
+| Asistencia      | `pages/Attendance.tsx`, `CheckIn.tsx`                     | `api/attendance.ts`                        | Solo staff autenticado       |
+| Dashboard       | `pages/Dashboard.tsx`, `member/`, `reception/`            | `api/stats.ts`                             | Por rol                      |
+| Settings        | `pages/Settings.tsx`                                      | `api/settings.ts`                          | Alertas, BCV, notificaciones |
+| Equipamiento    | `pages/Equipment.tsx`                                     | `api/equipment.ts`                         | CMMS, zonas, mantenimiento   |
+| Entrenadores    | `pages/Trainers.tsx`                                      | `api/trainers.ts`                          | Perfiles, turnos             |
+| Nutrición       | `pages/Nutrition.tsx`, `NutritionOverview.tsx`            | `api/nutrition.ts`                         | Planes por miembro           |
+| Workouts        | `pages/ActiveWorkout.tsx`, `History.tsx`                  | `api/workouts.ts`                          | Sesión activa, historial     |
+| Notificaciones  | `pages/Notifications.tsx`, `NotificationBell.tsx`         | `api/notifications.ts`                     | Centro de avisos             |
+| Chat            | `pages/Messages.tsx`                                      | `api/chat.ts`, `wsServer.ts`               | WebSocket tiempo real        |
+| Tipo de cambio  | (en Settings)                                             | `api/exchangeRate.ts`                      | BCV, override manual         |
+| Membresías      | `pages/Memberships.tsx`                                   | `api/memberships.ts`                       | Planes y precios             |
+| Reportes        | `pages/Reports.tsx`                                       | `api/reports.ts`                           | Exportaciones admin          |
+| Auditoría       | `pages/AuditLogs.tsx`                                     | `api/auditLogs.ts`                         | Logs de acciones             |
+| Archivos        | —                                                         | `api/files.ts`, `lib/mediaStorage.ts`      | Supabase Storage             |
 
 ### Convenciones al agregar código
 

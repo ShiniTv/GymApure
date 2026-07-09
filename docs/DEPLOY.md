@@ -79,6 +79,7 @@ En Supabase Dashboard → **Storage**, confirma que existen los buckets:
 - `payment-proofs`
 - `avatars`
 - `exercise-videos`
+- `equipment-photos`
 
 Deben ser **privados** (acceso solo vía backend).
 

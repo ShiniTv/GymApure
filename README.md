@@ -1,10 +1,33 @@
 # GymApure
 
-Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entrenamientos.
+Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas, equipamiento y entrenamientos.
 
 **Stack:** React 19 + Vite + Tailwind · Express · PostgreSQL (Supabase)
 
-> **Guía de desarrollo:** **[docs/DESARROLLO.md](docs/DESARROLLO.md)** · **Índice docs:** **[docs/README.md](docs/README.md)**
+> **Documentación completa:** **[docs/README.md](docs/README.md)** — índice maestro con manuales por rol, módulos y guías técnicas.
+
+## Manuales de uso por rol
+
+| Rol           | Manual                                                               |
+| ------------- | -------------------------------------------------------------------- |
+| Administrador | [docs/manual/MANUAL-ADMIN.md](docs/manual/MANUAL-ADMIN.md)           |
+| Recepcionista | [docs/manual/MANUAL-RECEPCION.md](docs/manual/MANUAL-RECEPCION.md)   |
+| Entrenador    | [docs/manual/MANUAL-ENTRENADOR.md](docs/manual/MANUAL-ENTRENADOR.md) |
+| Cliente       | [docs/manual/MANUAL-CLIENTE.md](docs/manual/MANUAL-CLIENTE.md)       |
+
+## Instalación en otro equipo
+
+1. [Inicio rápido](docs/INICIO-RAPIDO.md) — 15 pasos para operar el gym
+2. [Instalación detallada](docs/tecnico/INSTALACION-NUEVO-EQUIPO.md)
+3. [Reglas de seguridad](docs/tecnico/ENTORNOS-Y-SEGURIDAD.md) — **leer antes de tocar la base de datos**
+
+## Guías técnicas
+
+| Documento                                | Contenido                                |
+| ---------------------------------------- | ---------------------------------------- |
+| [docs/DESARROLLO.md](docs/DESARROLLO.md) | Desarrollo local, comandos, convenciones |
+| [docs/DEPLOY.md](docs/DEPLOY.md)         | Despliegue Render + Supabase             |
+| [docs/TESTING.md](docs/TESTING.md)       | Tests automatizados y CI                 |
 
 ## Requisitos
 

@@ -2,7 +2,7 @@
 
 Matriz manual por rol y viewport. Complementa las suites automatizadas (`npm run test:ux`, `npm run test:ux:browser`).
 
-**Última revisión:** 2026-07-03 (fase 3 — tablet, PTR, offline, a11y Más)
+**Última revisión:** 2026-07-09 (equipamiento, BCV, UX móvil sidebar/workout)
 
 ## Setup
 
@@ -33,9 +33,27 @@ npm run dev
 | 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                             | Browser | ☐         |
 | 7   | Errores               | Offline → Reintentar en rutinas                                      | Browser | ☐         |
 | —   | FAB entrenar          | Centrado en `/`, `/routines`, `/exercises`; oculto en `/nutrition`   | Browser | ☐         |
-| —   | Back link             | Sin "Volver a Inicio" duplicado cuando hay bottom nav                | Manual  | ☐         |
+| —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)           | Manual  | ☐         |
+| —   | Workout layout        | Completar, pasos y video a ancho completo del card                   | Manual  | ☐         |
 
 ---
+
+## Admin — mobile / desktop
+
+| #   | Flujo          | Criterio                                      | Auto   | Resultado |
+| --- | -------------- | --------------------------------------------- | ------ | --------- |
+| 16  | Equipamiento   | Registrar desde catálogo; badge "Registrado"  | Manual | ☐         |
+| 17  | Tipo de cambio | Settings → override manual → refleja en pagos | Manual | ☐         |
+| 18  | Equipamiento   | Sin duplicados al registrar misma máquina     | Manual | ☐         |
+
+---
+
+## Trainer — mobile (390px)
+
+| #   | Flujo          | Criterio                                              | Auto   | Resultado |
+| --- | -------------- | ----------------------------------------------------- | ------ | --------- |
+| 19  | Bottom nav     | Visible con drawer cerrado; oculta con drawer abierto | Manual | ☐         |
+| 20  | Sidebar footer | Sin hueco vacío debajo del footer al abrir drawer     | Manual | ☐         |
 
 ## Recepción — mobile (390px)
 
