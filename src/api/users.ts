@@ -30,6 +30,7 @@ import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
+import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 
 const router = asyncRouter();
 
@@ -868,13 +869,19 @@ router.patch(
 
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;
+  const targetId = parseInt(String(req.params.id), 10);
+  if (Number.isNaN(targetId)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
   try {
     await query('UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2', [
       status,
-      req.params.id,
+      targetId,
     ]);
+    invalidateSessionUserCache(targetId);
     await logAudit(req.user!.id, 'user.status_change', {
-      target_id: req.params.id,
+      target_id: targetId,
       status,
     });
     res.json({ success: true });
