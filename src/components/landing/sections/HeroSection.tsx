@@ -7,17 +7,21 @@ import { LandingDemoCta } from '../LandingDemoCta';
 import { ProductMockupFrame } from '../ProductMockupFrame';
 import { AdminPanelMockup } from '../mockups/AdminPanelMockup';
 import { useLandingPreview } from '../useLandingPreview';
-import { toLandingShowcaseStatic, type LandingShowcaseData } from '../../../config/landingShowcase';
+import {
+  toLandingShowcaseStatic,
+  toLandingShowcaseIllustration,
+  type LandingShowcaseData,
+} from '../../../config/landingShowcase';
 import { LANDING_EYEBROW, LANDING_HERO, LANDING_CONTAINER } from '../landingStyles';
 import { cn } from '../../../lib/utils';
 
 function HeroPreviewPanel({
   data,
-  isLive,
+  previewSource,
   className,
 }: {
   data: LandingShowcaseData['admin'];
-  isLive: boolean;
+  previewSource: LandingShowcaseData['source'];
   className?: string;
 }) {
   return (
@@ -32,9 +36,14 @@ function HeroPreviewPanel({
       >
         <AdminPanelMockup data={data} />
       </ProductMockupFrame>
-      {isLive && (
+      {previewSource === 'live' && (
         <p className="text-brand mt-3 text-center text-[10px] font-semibold tracking-wide uppercase">
           Vista con datos demo locales
+        </p>
+      )}
+      {previewSource === 'illustration' && (
+        <p className="mt-3 text-center text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          Vista ilustrativa
         </p>
       )}
     </div>
@@ -43,7 +52,11 @@ function HeroPreviewPanel({
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
-  const { data: preview = toLandingShowcaseStatic() } = useLandingPreview();
+  const {
+    data: preview = import.meta.env.PROD
+      ? toLandingShowcaseIllustration()
+      : toLandingShowcaseStatic(),
+  } = useLandingPreview();
 
   const copy = (
     <>
@@ -95,7 +108,7 @@ export function HeroSection() {
 
         {prefersReducedMotion ? (
           <div className="mx-auto w-full max-w-md md:max-w-lg lg:max-w-none">
-            <HeroPreviewPanel data={preview.admin} isLive={preview.source === 'live'} />
+            <HeroPreviewPanel data={preview.admin} previewSource={preview.source} />
           </div>
         ) : (
           <motion.div
@@ -104,7 +117,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.55, delay: 0.12, ease: 'easeOut' as const }}
           >
-            <HeroPreviewPanel data={preview.admin} isLive={preview.source === 'live'} />
+            <HeroPreviewPanel data={preview.admin} previewSource={preview.source} />
           </motion.div>
         )}
       </div>

@@ -8,7 +8,10 @@ import { ReceptionPanelMockup } from '../mockups/ReceptionPanelMockup';
 import { ReportsPanelMockup } from '../mockups/ReportsPanelMockup';
 import { LandingSectionHeader } from '../LandingSectionHeader';
 import { useLandingPreview } from '../useLandingPreview';
-import { toLandingShowcaseStatic } from '../../../config/landingShowcase';
+import {
+  toLandingShowcaseStatic,
+  toLandingShowcaseIllustration,
+} from '../../../config/landingShowcase';
 import { landingSectionClass, LANDING_CONTAINER_MD } from '../landingStyles';
 import { cn } from '../../../lib/utils';
 import type { LandingShowcaseData } from '../../../config/landingShowcase';
@@ -59,7 +62,11 @@ function renderMockup(id: ShowcaseId, data: LandingShowcaseData) {
 export function ShowcaseSection() {
   const [active, setActive] = useState<ShowcaseId>('panel');
   const prefersReducedMotion = useReducedMotion();
-  const { data: preview = toLandingShowcaseStatic() } = useLandingPreview();
+  const {
+    data: preview = import.meta.env.PROD
+      ? toLandingShowcaseIllustration()
+      : toLandingShowcaseStatic(),
+  } = useLandingPreview();
   const current = SHOWCASES.find((s) => s.id === active) ?? SHOWCASES[0];
 
   return (
@@ -68,11 +75,20 @@ export function ShowcaseSection() {
         <LandingSectionHeader
           eyebrow="Vista previa"
           title="Así se ve en operación"
-          subtitle="Interfaces del sistema con datos de demostración: panel administrativo, recepción y reportes."
+          subtitle={
+            import.meta.env.PROD
+              ? 'Interfaces del sistema: panel administrativo, recepción y reportes.'
+              : 'Interfaces del sistema con datos de demostración: panel administrativo, recepción y reportes.'
+          }
         >
-          {preview?.source === 'live' && (
+          {preview.source === 'live' && (
             <p className="text-brand mt-2 text-[10px] font-semibold tracking-wide uppercase sm:text-xs">
               Datos en vivo desde tu entorno local
+            </p>
+          )}
+          {preview.source === 'illustration' && (
+            <p className="mt-2 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase sm:text-xs dark:text-zinc-400">
+              Vista ilustrativa — datos de ejemplo
             </p>
           )}
         </LandingSectionHeader>

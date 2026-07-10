@@ -1,4 +1,4 @@
-/** Datos canónicos de la vista previa en la landing (mockups + seed local). */
+/** Datos alineados con el seed local de desarrollo (no usar en producción). */
 export const LANDING_SHOWCASE = {
   admin: {
     revenueThisMonth: 4280,
@@ -26,8 +26,34 @@ export const LANDING_SHOWCASE = {
   },
 } as const;
 
+/** Datos genéricos para mockups en producción — sin nombres reales ni datos del gym. */
+export const LANDING_SHOWCASE_ILLUSTRATION = {
+  admin: {
+    revenueThisMonth: 3850,
+    todayCheckIns: 32,
+    activeMembers: 142,
+    pendingPayments: 2,
+    revenueTrendPercent: 8,
+    chartBars: [38, 52, 41, 60, 45, 55, 48] as const,
+  },
+  reception: {
+    todayCheckIns: 32,
+    insideNow: 14,
+    pendingPayments: 1,
+    memberCedula: 'V-********',
+    memberName: 'Miembro de ejemplo',
+    membershipName: 'Membresía activa',
+    daysRemaining: 12,
+  },
+  reports: {
+    payments: 96,
+    attendance: 340,
+    members: 142,
+  },
+} as const;
+
 export interface LandingShowcaseData {
-  source: 'static' | 'live';
+  source: 'static' | 'live' | 'illustration';
   admin: {
     revenueThisMonth: number;
     todayCheckIns: number;
@@ -80,6 +106,24 @@ export function toLandingShowcaseStatic(): LandingShowcaseData {
     reception: { ...LANDING_SHOWCASE.reception },
     reports: {
       ...LANDING_SHOWCASE.reports,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+    },
+  };
+}
+
+/** Vista previa segura para producción: sin datos del gym ni identificadores reales. */
+export function toLandingShowcaseIllustration(): LandingShowcaseData {
+  const range = getReportRange();
+  return {
+    source: 'illustration',
+    admin: {
+      ...LANDING_SHOWCASE_ILLUSTRATION.admin,
+      chartBars: [...LANDING_SHOWCASE_ILLUSTRATION.admin.chartBars],
+    },
+    reception: { ...LANDING_SHOWCASE_ILLUSTRATION.reception },
+    reports: {
+      ...LANDING_SHOWCASE_ILLUSTRATION.reports,
       dateFrom: range.dateFrom,
       dateTo: range.dateTo,
     },

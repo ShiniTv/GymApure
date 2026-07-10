@@ -11,6 +11,7 @@ import {
   LANDING_SHOWCASE,
   getReportRange,
   toLandingShowcaseStatic,
+  toLandingShowcaseIllustration,
   type LandingShowcaseData,
 } from '../config/landingShowcase.ts';
 
@@ -140,7 +141,7 @@ async function buildLiveLandingPreview(): Promise<LandingShowcaseData> {
 router.get('/preview', async (_req, res) => {
   try {
     if (env.NODE_ENV === 'production') {
-      return res.json(toLandingShowcaseStatic());
+      return res.json(toLandingShowcaseIllustration());
     }
 
     const seeded = await isLandingDemoSeeded();

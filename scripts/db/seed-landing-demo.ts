@@ -9,6 +9,11 @@ import { query } from '../../src/db/index.ts';
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 import { LANDING_SHOWCASE, getReportRange } from '../../src/config/landingShowcase.ts';
 
+if (process.env.NODE_ENV === 'production') {
+  console.error('db:seed-landing-demo no puede ejecutarse en producción.');
+  process.exit(1);
+}
+
 const LANDING_EMAIL_DOMAIN = 'gym.local';
 const MARIA_EMAIL = 'maria.gonzalez@gym.local';
 const DEMO_PASSWORD = resolveDemoPassword();
