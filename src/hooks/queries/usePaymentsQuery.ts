@@ -45,6 +45,7 @@ export function usePaymentsQuery(params: PaymentsQueryParams) {
   return useQuery({
     queryKey: paymentsQueryKey(params),
     queryFn: () => fetchPayments(params),
+    refetchOnWindowFocus: false,
   });
 }
 

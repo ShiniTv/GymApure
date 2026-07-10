@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PageTransition } from './animations';
 import { useAuth } from '../context/AuthContext';
 import { useProfileQuery } from '../hooks/queries/useProfileQuery';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -30,6 +28,7 @@ import { THEME_ONBOARDING_KEY } from '../config/themes';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LogoutConfirmModal, useLogoutConfirm } from './LogoutConfirmModal';
 import { NotificationBell } from './notifications/NotificationBell';
+import { routePrefetchHandlers } from '../lib/routePrefetch';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
@@ -232,19 +231,12 @@ export default function Layout() {
             ) : (
               <div className="hidden h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-3 lg:flex dark:border-zinc-800">
                 <Logo className="h-8 w-8 shrink-0" />
-                <AnimatePresence>
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: 'auto' }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="overflow-hidden whitespace-nowrap"
-                  >
-                    {brandMark}
-                    <p className="mt-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
-                      {portalTitle}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
+                <div className="overflow-hidden whitespace-nowrap transition-opacity duration-200">
+                  {brandMark}
+                  <p className="mt-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                    {portalTitle}
+                  </p>
+                </div>
                 <NotificationBell compact className="ml-auto" />
                 <button
                   type="button"
@@ -292,6 +284,7 @@ export default function Layout() {
                         <Link
                           key={item.name}
                           to={item.href}
+                          {...routePrefetchHandlers(item.href)}
                           onClick={() => {
                             setIsSidebarOpen(false);
                           }}
@@ -451,13 +444,9 @@ export default function Layout() {
               isTrainerMobileShell && 'trainer-main-pad'
             )}
           >
-            <AnimatePresence mode="wait">
-              <PageTransition key={location.pathname}>
-                <div className="mx-auto max-w-7xl min-w-0">
-                  <Outlet />
-                </div>
-              </PageTransition>
-            </AnimatePresence>
+            <div key={location.pathname} className="animate-page-enter mx-auto max-w-7xl min-w-0">
+              <Outlet />
+            </div>
           </main>
         </div>
 

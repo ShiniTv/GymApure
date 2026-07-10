@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 const DIST = path.join(process.cwd(), 'dist');
 const PORT = 4173;
@@ -41,6 +42,8 @@ const TARGETS: LighthouseTarget[] = [
   },
 ];
 
+const COMPRESSIBLE = new Set(['.js', '.css', '.html', '.svg', '.json']);
+
 function serveStatic(): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
@@ -51,8 +54,25 @@ function serveStatic(): Promise<http.Server> {
           : path.join(DIST, urlPath.replace(/^\//, ''));
 
       const send = (target: string, contentType: string) => {
+        const raw = fs.readFileSync(target);
+        const ext = path.extname(target);
+        const acceptEncoding = req.headers['accept-encoding'] ?? '';
+        const canGzip =
+          COMPRESSIBLE.has(ext) && acceptEncoding.includes('gzip') && raw.length > 1024;
+
+        if (canGzip) {
+          const compressed = gzipSync(raw);
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Encoding': 'gzip',
+            Vary: 'Accept-Encoding',
+          });
+          res.end(compressed);
+          return;
+        }
+
         res.writeHead(200, { 'Content-Type': contentType });
-        res.end(fs.readFileSync(target));
+        res.end(raw);
       };
 
       try {

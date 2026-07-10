@@ -57,6 +57,7 @@ export function useMembersQuery(params: MembersQueryParams) {
   return useQuery({
     queryKey: membersQueryKey(params),
     queryFn: () => fetchMembers(params),
+    refetchOnWindowFocus: false,
   });
 }
 

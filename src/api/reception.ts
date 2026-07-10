@@ -8,7 +8,6 @@ import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
 import { walkInHandler } from './reception/walkIn.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
-import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { z } from 'zod';
 
 const router = asyncRouter();
@@ -43,64 +42,86 @@ router.get(
       status: string;
       role: string;
       profile_image: string | null;
+      sub_id: number | null;
+      membership_name: string | null;
+      end_date: string | null;
+      days_remaining: number | null;
+      att_id: number | null;
+      check_in_time: Date | string | null;
+      check_out_time: Date | string | null;
     }>(
-      `SELECT id, full_name, email, cedula, phone, status, role, profile_image
-     FROM users
-     WHERE ${cedulaWhereClause('cedula', 1)}
-     LIMIT 1`,
+      `SELECT u.id, u.full_name, u.email, u.cedula, u.phone, u.status, u.role, u.profile_image,
+              sub.id AS sub_id, sub.membership_name, sub.end_date, sub.days_remaining,
+              att.id AS att_id, att.check_in_time, att.check_out_time
+       FROM users u
+       LEFT JOIN LATERAL (
+         SELECT s.id, m.name AS membership_name, s.end_date,
+                GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
+         FROM subscriptions s
+         JOIN memberships m ON m.id = s.membership_id
+         WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
+         ORDER BY s.end_date DESC
+         LIMIT 1
+       ) sub ON true
+       LEFT JOIN LATERAL (
+         SELECT a.id, a.check_in_time, a.check_out_time
+         FROM attendance a
+         WHERE a.user_id = u.id AND ${sqlTodayRange('a.check_in_time')}
+         ORDER BY a.check_in_time DESC
+         LIMIT 1
+       ) att ON true
+       WHERE ${cedulaWhereClause('u.cedula', 1)}
+       LIMIT 1`,
       [cedula]
     );
 
-    const user = userResult.rows[0];
-    if (!user) {
+    const row = userResult.rows[0];
+    if (!row) {
       res.status(404).json({ error: 'Usuario no encontrado', found: false });
       return;
     }
 
-    const subscription = await getActiveSubscriptionByUserId({ query }, user.id);
+    const subscription =
+      row.sub_id != null && row.membership_name && row.end_date
+        ? {
+            id: row.sub_id,
+            membership_name: row.membership_name,
+            end_date: row.end_date,
+            days_remaining: row.days_remaining ?? 0,
+          }
+        : null;
 
-    const attendanceResult = await query<{
-      id: number;
-      check_in_time: Date | string;
-      check_out_time: Date | string | null;
-    }>(
-      `SELECT id, check_in_time, check_out_time
-     FROM attendance
-     WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')}
-     ORDER BY check_in_time DESC
-     LIMIT 1`,
-      [user.id]
-    );
+    const todaySession =
+      row.att_id != null && row.check_in_time
+        ? {
+            id: row.att_id,
+            check_in_time: row.check_in_time,
+            check_out_time: row.check_out_time,
+          }
+        : null;
 
-    const todaySession = attendanceResult.rows[0];
     const isInside = todaySession ? todaySession.check_out_time == null : false;
 
     let accessStatus: 'allowed' | 'inactive' | 'no_subscription' = 'allowed';
-    if (user.status !== 'active') accessStatus = 'inactive';
+    if (row.status !== 'active') accessStatus = 'inactive';
     else if (!subscription) accessStatus = 'no_subscription';
 
     res.json({
       found: true,
       user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        cedula: user.cedula,
-        phone: user.phone,
-        status: user.status,
-        role: user.role,
-        profile_image: user.profile_image,
+        id: row.id,
+        full_name: row.full_name,
+        email: row.email,
+        cedula: row.cedula,
+        phone: row.phone,
+        status: row.status,
+        role: row.role,
+        profile_image: row.profile_image,
       },
       subscription,
       attendance: {
         is_inside: isInside,
-        today_session: todaySession
-          ? {
-              id: todaySession.id,
-              check_in_time: todaySession.check_in_time,
-              check_out_time: todaySession.check_out_time,
-            }
-          : null,
+        today_session: todaySession,
       },
       access_status: accessStatus,
       can_check_in: accessStatus === 'allowed' && !isInside,

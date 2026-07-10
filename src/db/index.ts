@@ -15,6 +15,10 @@ const pool = new pg.Pool({
   ssl: env.DATABASE_URL.includes('supabase') ? { rejectUnauthorized: false } : undefined,
 });
 
+pool.on('connect', (client) => {
+  void client.query('SET statement_timeout = 30000');
+});
+
 export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   text: string,
   params?: unknown[]
@@ -39,6 +43,13 @@ export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<
 
 export async function initDb() {
   await query('SELECT 1');
+
+  if (env.DATABASE_URL.includes('supabase') && !env.DATABASE_URL.includes(':6543/')) {
+    logger.warn('DATABASE_URL no usa el pooler de Supabase (puerto 6543)', {
+      hint: 'En producción usa Transaction mode pooler para evitar agotar conexiones directas.',
+    });
+  }
+
   const { rows } = await query<{ count: string }>('SELECT COUNT(*)::text AS count FROM users');
   if (parseInt(rows[0].count, 10) === 0) {
     logger.warn('Base de datos sin usuarios', {

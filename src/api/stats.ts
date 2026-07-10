@@ -12,10 +12,7 @@ import { getCachedAdminStats, setCachedAdminStats } from '../lib/adminStatsCache
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
-import {
-  getEquipmentStatsSummary,
-  syncEquipmentInspectionAlerts,
-} from '../lib/equipmentInspectionAlerts.ts';
+import { getEquipmentStatsSummary } from '../lib/equipmentInspectionAlerts.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
 import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 
@@ -115,8 +112,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     getLastDoorAlert(alertDays),
     getEquipmentStatsSummary(),
   ]);
-
-  void syncEquipmentInspectionAlerts();
 
   return {
     totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),

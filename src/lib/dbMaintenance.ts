@@ -1,5 +1,6 @@
 import { query } from '../db/index.ts';
 import { logger } from './logger.ts';
+import { syncEquipmentInspectionAlerts } from './equipmentInspectionAlerts.ts';
 
 const DEFAULT_AUDIT_RETENTION_DAYS = 90;
 const DEFAULT_NOTIF_LOG_RETENTION_DAYS = 180;
@@ -32,7 +33,10 @@ export async function runDbMaintenanceIfDue(): Promise<DbMaintenanceResult | nul
 }
 
 export async function runDbMaintenance(): Promise<DbMaintenanceResult> {
-  const auditRetentionDays = parseRetentionDays('AUDIT_LOG_RETENTION_DAYS', DEFAULT_AUDIT_RETENTION_DAYS);
+  const auditRetentionDays = parseRetentionDays(
+    'AUDIT_LOG_RETENTION_DAYS',
+    DEFAULT_AUDIT_RETENTION_DAYS
+  );
   const notifLogRetentionDays = parseRetentionDays(
     'EXPIRY_NOTIF_LOG_RETENTION_DAYS',
     DEFAULT_NOTIF_LOG_RETENTION_DAYS
@@ -57,6 +61,12 @@ export async function runDbMaintenance(): Promise<DbMaintenanceResult> {
   if (result.auditDeleted > 0 || result.notifLogDeleted > 0) {
     logger.info('Mantenimiento de BD', { ...result });
   }
+
+  void syncEquipmentInspectionAlerts().catch((err) => {
+    logger.warn('Equipment inspection alerts sync failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
 
   return result;
 }

@@ -10,7 +10,7 @@ import { proofUpload } from '../lib/uploadStorage.ts';
 import { assertProofUpload } from '../lib/uploadValidation.ts';
 import {
   isProofStorageRemote,
-  localProofPathFromUpload,
+  finalizeLocalProof,
   streamPaymentProof,
   uploadPaymentProof,
 } from '../lib/proofStorage.ts';
@@ -198,7 +198,7 @@ router.post(
           if (isProofStorageRemote()) {
             proof_url = await uploadPaymentProof(req.file, user_id, paymentId);
           } else {
-            proof_url = localProofPathFromUpload(req.file);
+            proof_url = await finalizeLocalProof(req.file);
           }
           await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [proof_url, paymentId]);
         } catch (uploadErr) {

@@ -10,6 +10,7 @@ import {
   MEMBER_MORE_ITEMS,
   isMemberFabRoute,
 } from '../../config/navigation/memberBottomNav';
+import { routePrefetchHandlers } from '../../lib/routePrefetch';
 
 const FAB_ROOT_CLASS = 'member-has-workout-fab';
 
@@ -139,6 +140,7 @@ export function MemberBottomNav() {
                 <li key={item.href}>
                   <Link
                     to={item.href}
+                    {...routePrefetchHandlers(item.href)}
                     onClick={() => setMoreOpen(false)}
                     className={clsx(
                       'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
@@ -191,6 +193,7 @@ export function MemberBottomNav() {
         {showWorkoutFab && (
           <Link
             to={workoutHref}
+            {...routePrefetchHandlers(workoutHref)}
             className="member-bottom-nav-fab pointer-events-auto absolute touch-manipulation"
             aria-label="Entrenar"
           >
@@ -246,6 +249,7 @@ export function MemberBottomNav() {
                 <li key={item.name} className="flex flex-1 justify-center">
                   <Link
                     to={item.href}
+                    {...routePrefetchHandlers(item.href)}
                     className={clsx(
                       'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
