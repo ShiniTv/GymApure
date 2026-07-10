@@ -44,7 +44,7 @@ jobs:
 
       - run: npm run build
 
-      - name: Lighthouse baseline (login shell)
+      - name: Lighthouse baseline (login + landing advisory)
         run: |
           npx lighthouse --version || npm install -g lighthouse@12
           npm run lighthouse:ci

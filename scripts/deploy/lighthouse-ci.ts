@@ -1,6 +1,9 @@
 /**
  * Lighthouse CI with performance budgets.
  * Usage: npm run build && npm run lighthouse:ci
+ *
+ * Gate (fails CI): /login — shell de autenticación, debe ser liviano.
+ * Advisory (warn only): / — landing de marketing con animaciones y mockups.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -9,9 +12,34 @@ import path from 'node:path';
 
 const DIST = path.join(process.cwd(), 'dist');
 const PORT = 4173;
-const PERF_MIN = 0.9;
-const A11Y_MIN = 0.95;
-const LCP_MAX_MS = 2500;
+
+interface LighthouseTarget {
+  path: string;
+  label: string;
+  perfMin: number;
+  a11yMin: number;
+  lcpMaxMs: number;
+  /** Si true, no falla el job — solo imprime advertencias. */
+  advisory?: boolean;
+}
+
+const TARGETS: LighthouseTarget[] = [
+  {
+    path: '/login',
+    label: 'login',
+    perfMin: 0.9,
+    a11yMin: 0.95,
+    lcpMaxMs: 2500,
+  },
+  {
+    path: '/',
+    label: 'landing',
+    perfMin: 0.65,
+    a11yMin: 0.9,
+    lcpMaxMs: 5000,
+    advisory: true,
+  },
+];
 
 function serveStatic(): Promise<http.Server> {
   return new Promise((resolve, reject) => {
@@ -77,29 +105,37 @@ interface LighthouseReport {
   audits?: Record<string, { numericValue?: number; score?: number }>;
 }
 
-function checkBudgets(report: LighthouseReport, label: string): boolean {
+function checkBudgets(report: LighthouseReport, target: LighthouseTarget): boolean {
   const perf = report.categories?.performance?.score ?? 0;
   const a11y = report.categories?.accessibility?.score ?? 0;
   const lcp = report.audits?.['largest-contentful-paint']?.numericValue ?? 0;
 
+  const prefix = target.advisory ? `[${target.label} advisory]` : `[${target.label}]`;
   console.log(
-    `[${label}] performance: ${(perf * 100).toFixed(0)}, accessibility: ${(a11y * 100).toFixed(0)}, LCP: ${Math.round(lcp)}ms`
+    `${prefix} performance: ${(perf * 100).toFixed(0)}, accessibility: ${(a11y * 100).toFixed(0)}, LCP: ${Math.round(lcp)}ms`
   );
 
   let ok = true;
-  if (perf < PERF_MIN) {
-    console.error(`[${label}] Performance below ${PERF_MIN * 100} (got ${(perf * 100).toFixed(0)})`);
-    ok = false;
+  const logIssue = (message: string) => {
+    if (target.advisory) {
+      console.warn(`${prefix} ${message}`);
+    } else {
+      console.error(`${prefix} ${message}`);
+      ok = false;
+    }
+  };
+
+  if (perf < target.perfMin) {
+    logIssue(`Performance below ${target.perfMin * 100} (got ${(perf * 100).toFixed(0)})`);
   }
-  if (a11y < A11Y_MIN) {
-    console.error(`[${label}] Accessibility below ${A11Y_MIN * 100} (got ${(a11y * 100).toFixed(0)})`);
-    ok = false;
+  if (a11y < target.a11yMin) {
+    logIssue(`Accessibility below ${target.a11yMin * 100} (got ${(a11y * 100).toFixed(0)})`);
   }
-  if (lcp > LCP_MAX_MS) {
-    console.error(`[${label}] LCP above ${LCP_MAX_MS}ms (got ${Math.round(lcp)}ms)`);
-    ok = false;
+  if (lcp > target.lcpMaxMs) {
+    logIssue(`LCP above ${target.lcpMaxMs}ms (got ${Math.round(lcp)}ms)`);
   }
-  return ok;
+
+  return target.advisory ? true : ok;
 }
 
 async function main() {
@@ -113,21 +149,28 @@ async function main() {
 
   const server = await serveStatic();
   try {
-    const loginReportPath = path.join(outDir, 'login-report.json');
-    const code = await runLighthouse(`http://127.0.0.1:${PORT}/`, loginReportPath);
-
     let budgetsOk = true;
-    if (fs.existsSync(loginReportPath)) {
-      const report = JSON.parse(fs.readFileSync(loginReportPath, 'utf8')) as LighthouseReport;
-      budgetsOk = checkBudgets(report, 'login') && budgetsOk;
+
+    for (const target of TARGETS) {
+      const reportPath = path.join(outDir, `${target.label}-report.json`);
+      const code = await runLighthouse(`http://127.0.0.1:${PORT}${target.path}`, reportPath);
+
+      if (code !== 0) {
+        console.error(`[${target.label}] Lighthouse exited with code ${code}`);
+        if (!target.advisory) budgetsOk = false;
+        continue;
+      }
+
+      if (fs.existsSync(reportPath)) {
+        const report = JSON.parse(fs.readFileSync(reportPath, 'utf8')) as LighthouseReport;
+        budgetsOk = checkBudgets(report, target) && budgetsOk;
+      }
     }
 
     if (!budgetsOk) {
       console.error('Lighthouse budgets failed.');
       process.exit(1);
     }
-
-    process.exit(code);
   } finally {
     server.close();
   }
