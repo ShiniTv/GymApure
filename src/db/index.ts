@@ -12,9 +12,7 @@ const pool = new pg.Pool({
   idleTimeoutMillis: 30_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
   connectionTimeoutMillis: env.NODE_ENV === 'development' ? 30_000 : 10_000,
-  ssl: env.DATABASE_URL.includes('supabase')
-    ? { rejectUnauthorized: false }
-    : undefined,
+  ssl: env.DATABASE_URL.includes('supabase') ? { rejectUnauthorized: false } : undefined,
 });
 
 export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
@@ -24,9 +22,7 @@ export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   return pool.query<T>(text, params);
 }
 
-export async function withTransaction<T>(
-  fn: (client: pg.PoolClient) => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -51,10 +47,16 @@ export async function initDb() {
   }
 
   if (env.NODE_ENV === 'production' && !isSupabaseStorageConfigured()) {
-    logger.error('SUPABASE_SERVICE_ROLE_KEY es obligatorio en producción', {
-      hint: 'Los archivos deben ir a Supabase Storage; el disco de Render es efímero.',
-    });
-    process.exit(1);
+    if (process.env.CI === 'true') {
+      logger.warn('CI: servidor sin Supabase Storage — uploads en disco local para tests', {
+        hint: 'En Render/producción real sigue siendo obligatorio SUPABASE_SERVICE_ROLE_KEY.',
+      });
+    } else {
+      logger.error('SUPABASE_SERVICE_ROLE_KEY es obligatorio en producción', {
+        hint: 'Los archivos deben ir a Supabase Storage; el disco de Render es efímero.',
+      });
+      process.exit(1);
+    }
   } else if (isSupabaseStorageConfigured()) {
     logger.debug('Storage de comprobantes configurado', {
       backend: 'supabase',
