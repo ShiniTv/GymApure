@@ -40,6 +40,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Install Playwright Chromium (Lighthouse)
+        run: npx playwright install chromium
+
       - run: npm run lint
 
       - run: npm run build
@@ -87,4 +90,5 @@ jobs:
           done
           npm run test:e2e
           npm run test:ux
+          LIGHTHOUSE_AUTH_PANEL=1 DEMO_PASSWORD="${{ env.DEMO_PASSWORD }}" npm run lighthouse:ci
           kill "$SERVER_PID" 2>/dev/null || true

@@ -3,6 +3,7 @@
  * Usage: npm run build && npm run lighthouse:ci
  *
  * Gate (fails CI): /login — performance budgets enforced.
+ * Advisory (optional): /panel — set LIGHTHOUSE_AUTH_PANEL=1 with a running server + DEMO_PASSWORD.
  *
  * Uses Playwright's Chromium when system Chrome is not installed (common on Windows CI/dev).
  */
@@ -35,6 +36,17 @@ const TARGETS: LighthouseTarget[] = [
     lcpMaxMs: 2500,
   },
 ];
+
+const AUTH_PANEL_TARGET: LighthouseTarget = {
+  path: '/panel',
+  label: 'panel',
+  perfMin: 0.75,
+  a11yMin: 0.9,
+  lcpMaxMs: 3500,
+  advisory: true,
+};
+
+const SERVER_BASE = process.env.LIGHTHOUSE_SERVER_URL ?? 'http://127.0.0.1:3000';
 
 const COMPRESSIBLE = new Set(['.js', '.css', '.html', '.svg', '.json']);
 
@@ -123,7 +135,8 @@ function serveStatic(): Promise<http.Server> {
 async function runLighthouse(
   url: string,
   reportPath: string,
-  chromePath: string
+  chromePath: string,
+  extraHeaders?: Record<string, string>
 ): Promise<number> {
   const lighthouseCli = resolveLighthouseCli();
   if (!lighthouseCli) return 1;
@@ -141,6 +154,10 @@ async function runLighthouse(
     '--output=json',
     `--output-path=${reportPath}`,
   ];
+
+  if (extraHeaders && Object.keys(extraHeaders).length > 0) {
+    args.push(`--extra-headers=${JSON.stringify(extraHeaders)}`);
+  }
 
   const tmpDir = path.join(process.cwd(), '.lighthouse', 'tmp');
   fs.mkdirSync(tmpDir, { recursive: true });
@@ -202,6 +219,90 @@ function checkBudgets(report: LighthouseReport, target: LighthouseTarget): boole
   return target.advisory ? true : ok;
 }
 
+async function waitForHealth(baseUrl: string, timeoutMs = 60_000): Promise<boolean> {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const res = await fetch(`${baseUrl}/api/health`);
+      if (res.ok) return true;
+    } catch {
+      /* retry */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  return false;
+}
+
+async function fetchAuthCookie(baseUrl: string): Promise<string | null> {
+  const password = process.env.DEMO_PASSWORD;
+  if (!password) {
+    console.warn('[panel] DEMO_PASSWORD not set — skipping authenticated Lighthouse.');
+    return null;
+  }
+
+  const res = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@gym.com', password }),
+  });
+
+  if (!res.ok) {
+    console.warn(`[panel] Login failed with status ${res.status}`);
+    return null;
+  }
+
+  const cookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const tokenCookie = cookies.find((cookie) => cookie.startsWith('token='));
+  if (tokenCookie) return tokenCookie.split(';')[0] ?? null;
+
+  const raw = res.headers.get('set-cookie');
+  if (!raw) return null;
+  const match = raw.match(/token=[^;]+/);
+  return match?.[0] ?? null;
+}
+
+async function runAuthenticatedPanelAudit(
+  chromePath: string,
+  outDir: string
+): Promise<boolean> {
+  const healthy = await waitForHealth(SERVER_BASE);
+  if (!healthy) {
+    console.warn(`[panel] Server not healthy at ${SERVER_BASE} — skipping authenticated Lighthouse.`);
+    return true;
+  }
+
+  const cookie = await fetchAuthCookie(SERVER_BASE);
+  if (!cookie) return true;
+
+  const target = AUTH_PANEL_TARGET;
+  const reportPath = path.join(outDir, `${target.label}-report.json`);
+  const code = await runLighthouse(
+    `${SERVER_BASE}${target.path}`,
+    reportPath,
+    chromePath,
+    { Cookie: cookie }
+  );
+
+  const reportExists = fs.existsSync(reportPath);
+  if (code !== 0 && !reportExists) {
+    console.warn(`[${target.label}] Lighthouse exited with code ${code} (no report)`);
+    return true;
+  }
+
+  if (code !== 0 && reportExists) {
+    console.warn(
+      `[${target.label}] Lighthouse exited with code ${code} (Windows Chrome cleanup EPERM ignored).`
+    );
+  }
+
+  if (reportExists) {
+    const report = JSON.parse(fs.readFileSync(reportPath, 'utf8')) as LighthouseReport;
+    return checkBudgets(report, target);
+  }
+
+  return true;
+}
+
 async function main() {
   if (!fs.existsSync(DIST)) {
     console.error('Run npm run build first (dist missing).');
@@ -250,6 +351,10 @@ async function main() {
     if (!budgetsOk) {
       console.error('Lighthouse budgets failed.');
       process.exit(1);
+    }
+
+    if (process.env.LIGHTHOUSE_AUTH_PANEL === '1') {
+      await runAuthenticatedPanelAudit(chromePath, outDir);
     }
   } finally {
     server.close();

@@ -31,3 +31,8 @@ export const uploadRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
 });
+
+/**
+ * Optional distributed rate limiting: set REDIS_URL and add `redis` + `rate-limit-redis`
+ * (requires express-rate-limit v8+) when running multiple server instances.
+ */

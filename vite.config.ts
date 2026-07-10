@@ -58,7 +58,6 @@ export default defineConfig({
           icons: ['lucide-react'],
           query: ['@tanstack/react-query'],
           dateFns: ['date-fns'],
-          animation: ['framer-motion'],
           supabase: ['@supabase/supabase-js'],
           qrcode: ['html5-qrcode'],
           socket: ['socket.io-client'],
