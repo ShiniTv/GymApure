@@ -95,7 +95,24 @@ async function ensureSupabaseApiRoles(pool: pg.Pool): Promise<void> {
 const SUPABASE_ONLY_MIGRATIONS = new Set([
   '20260616000000_payment_proofs_storage.sql',
   '20260620000000_media_storage_buckets.sql',
+  '20260701100000_exercise_videos_poster_mime.sql',
+  '20260708120200_equipment_photos_bucket.sql',
 ]);
+
+function referencesSupabaseStorage(sql: string): boolean {
+  return /\bstorage\./i.test(sql);
+}
+
+function shouldSkipSupabaseStorageMigration(
+  file: string,
+  sql: string,
+  supabaseStorageAvailable: boolean
+): boolean {
+  return (
+    !supabaseStorageAvailable &&
+    (SUPABASE_ONLY_MIGRATIONS.has(file) || referencesSupabaseStorage(sql))
+  );
+}
 
 async function hasSupabaseStorage(pool: pg.Pool): Promise<boolean> {
   try {
@@ -213,16 +230,6 @@ async function main() {
         continue;
       }
 
-      if (SUPABASE_ONLY_MIGRATIONS.has(file) && !supabaseStorageAvailable) {
-        await pool.query(
-          'INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING',
-          [file]
-        );
-        console.log(`  ⊘ ${file} (omitida — Supabase Storage no disponible)`);
-        skipped += 1;
-        continue;
-      }
-
       if (await isAlreadyPresent(pool, file)) {
         await pool.query(
           'INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING',
@@ -234,6 +241,17 @@ async function main() {
       }
 
       const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
+
+      if (shouldSkipSupabaseStorageMigration(file, sql, supabaseStorageAvailable)) {
+        await pool.query(
+          'INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT DO NOTHING',
+          [file]
+        );
+        console.log(`  ⊘ ${file} (omitida — Supabase Storage no disponible)`);
+        skipped += 1;
+        continue;
+      }
+
       console.log(`→ Aplicando ${file}...`);
 
       const client = await pool.connect();
