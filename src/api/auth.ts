@@ -30,6 +30,7 @@ import {
   FORGOT_PASSWORD_EXPIRY_HOURS,
 } from '../lib/passwordSetupToken.ts';
 import { logger } from '../lib/logger.ts';
+import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 
 const router = asyncRouter();
 
@@ -345,6 +346,7 @@ router.post(
       hashedPassword,
       userId,
     ]);
+    invalidateSessionUserCache(userId);
     await logAudit(userId, 'auth.change_password', {});
 
     res.clearCookie('token', clearAuthCookieOptions);
@@ -438,6 +440,7 @@ router.post(
       hashedPassword,
       record.user_id,
     ]);
+    invalidateSessionUserCache(record.user_id);
     await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1', [record.id]);
     await logAudit(record.user_id, 'auth.reset_password', {});
 
