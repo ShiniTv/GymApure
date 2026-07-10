@@ -28,7 +28,7 @@ export interface MemberMoreItem {
 
 /** Primary tabs in the floating pill (mobile member). */
 export const MEMBER_PRIMARY_TABS: MemberBottomTab[] = [
-  { name: 'Inicio', href: '/', icon: Home },
+  { name: 'Inicio', href: '/panel', icon: Home },
   { name: 'Rutinas', href: '/routines', icon: ListChecks },
   { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
@@ -44,11 +44,11 @@ export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
 ];
 
 /** Routes where the contextual workout FAB is shown */
-export const MEMBER_FAB_ROUTES = ['/', '/routines', '/exercises'] as const;
+export const MEMBER_FAB_ROUTES = ['/panel', '/routines', '/exercises'] as const;
 
 export function isMemberFabRoute(pathname: string): boolean {
   return MEMBER_FAB_ROUTES.some(
-    (route) => pathname === route || (route !== '/' && pathname.startsWith(`${route}/`))
+    (route) => pathname === route || (route !== '/panel' && pathname.startsWith(`${route}/`))
   );
 }
 

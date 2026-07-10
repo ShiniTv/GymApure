@@ -13,7 +13,7 @@ import {
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
 export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
-  { name: 'Inicio', href: '/', icon: LayoutDashboard },
+  { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
   { name: 'Miembros', href: '/members', icon: Users },
   { name: 'Rutinas', href: '/routines', icon: Dumbbell },
   { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
@@ -30,7 +30,7 @@ export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
 ];
 
 export function isTrainerBottomNavActive(pathname: string, _search: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
+  if (href === '/panel') return pathname === '/panel';
   if (href === '/routines') {
     return pathname === '/routines' || pathname.startsWith('/routines/');
   }

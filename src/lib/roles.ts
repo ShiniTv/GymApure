@@ -49,8 +49,11 @@ export function canViewExerciseLibrary(role: UserRole | string): boolean {
   return role === 'trainer' || role === 'member';
 }
 
+/** Ruta del panel principal (dashboard) para roles con acceso al home. */
+export const APP_HOME = '/panel';
+
 /** Ruta principal tras login según rol. */
 export function getDefaultRouteForRole(role: UserRole | string): string {
   if (role === 'receptionist') return '/reception';
-  return '/';
+  return APP_HOME;
 }

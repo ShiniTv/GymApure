@@ -14,7 +14,7 @@ export const MEMBER_NAV: NavSection[] = [
   {
     name: 'Mi entrenamiento',
     items: [
-      { name: 'Inicio', href: '/', icon: LayoutDashboard },
+      { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
       { name: 'Rutinas', href: '/routines', icon: Dumbbell },
       { name: 'Biblioteca', href: '/exercises', icon: BookOpen },
       { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },

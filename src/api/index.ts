@@ -1,6 +1,7 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import authRoutes from './auth.ts';
 import healthRoutes from './health.ts';
+import landingRoutes from './landing.ts';
 import userRoutes from './users.ts';
 import membershipRoutes from './memberships.ts';
 import paymentRoutes from './payments.ts';
@@ -26,8 +27,9 @@ import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
 const router = asyncRouter();
 
-// Health (public, no auth)
+// Health + landing preview (public, no auth)
 router.use(healthRoutes);
+router.use('/landing', landingRoutes);
 
 // Public routes (rate-limited)
 router.use('/auth', authRateLimiter, authRoutes);

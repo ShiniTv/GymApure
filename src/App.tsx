@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
+import { getDefaultRouteForRole } from './lib/roles';
 
 function reportBoundaryError(error: Error) {
   void import('@sentry/react')
@@ -51,6 +52,8 @@ const Settings = lazy(() => import('./pages/Settings'));
 const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
+const Landing = lazy(() => import('./pages/Landing'));
+const DemoRequest = lazy(() => import('./pages/DemoRequest'));
 
 function PageLoader() {
   return (
@@ -105,6 +108,22 @@ function RegisterRoute() {
   return <Register />;
 }
 
+function LandingRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <PageLoader />;
+  if (user) return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  return <Landing />;
+}
+
+function DemoRequestRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <PageLoader />;
+  if (user) return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  return <DemoRequest />;
+}
+
 function AppRoutes() {
   return (
     <ErrorBoundary
@@ -115,6 +134,8 @@ function AppRoutes() {
       <ProgressBar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          <Route path="/" element={<LandingRoute />} />
+          <Route path="/solicitar-demo" element={<DemoRequestRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -135,7 +156,6 @@ function AppRoutes() {
           />
 
           <Route
-            path="/"
             element={
               <ProtectedRoute>
                 <AdminStatsProvider>
@@ -153,7 +173,7 @@ function AppRoutes() {
             }
           >
             <Route
-              index
+              path="panel"
               element={
                 <ErrorBoundary
                   onError={(error) => {

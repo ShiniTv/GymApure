@@ -7,7 +7,7 @@ test.describe('Trainer nutrición quick action', () => {
   });
 
   test('quick action Nutrición apunta al plan de un miembro', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/panel');
     const nutritionLink = page.getByRole('link', { name: /nutrición:/i });
     await expect(nutritionLink).toBeVisible({ timeout: 15_000 });
 

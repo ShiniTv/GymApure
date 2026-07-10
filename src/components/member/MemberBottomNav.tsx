@@ -87,7 +87,7 @@ export function MemberBottomNav() {
   );
 
   const isTabActive = (href: string, action?: 'more') => {
-    if (href === '/') return location.pathname === '/';
+    if (href === '/panel') return location.pathname === '/panel';
     if (action === 'more') return isMoreItemActive || moreOpen;
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };

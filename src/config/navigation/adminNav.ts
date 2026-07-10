@@ -17,7 +17,7 @@ import type { NavSection } from './types';
 export const ADMIN_NAV: NavSection[] = [
   {
     name: 'Resumen',
-    items: [{ name: 'Panel', href: '/', icon: LayoutDashboard }],
+    items: [{ name: 'Panel', href: '/panel', icon: LayoutDashboard }],
   },
   {
     name: 'Gestión',

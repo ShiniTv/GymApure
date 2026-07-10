@@ -170,3 +170,54 @@ export function membershipExpiredEmail(name: string): string {
     <p>Tu membresía ha vencido. Para seguir entrenando, renueva tu plan en recepción o desde la plataforma.</p>
     <p>¡Te esperamos de vuelta!</p>`);
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function demoField(label: string, value: string | null | undefined): string {
+  if (!value?.trim()) return '';
+  return `<tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top;white-space:nowrap">${escapeHtml(label)}</td><td style="padding:6px 0">${escapeHtml(value)}</td></tr>`;
+}
+
+export function demoRequestAdminEmail(data: {
+  contactName: string;
+  email: string;
+  phone?: string | null;
+  gymName: string;
+  city?: string | null;
+  memberCount?: string | null;
+  currentTools?: string | null;
+  requirements: string;
+  preferredContact: string;
+  requestId: string;
+}): string {
+  const rows = [
+    demoField('Contacto', data.contactName),
+    demoField('Correo', data.email),
+    demoField('Teléfono', data.phone),
+    demoField('Gimnasio', data.gymName),
+    demoField('Ciudad', data.city),
+    demoField('Miembros aprox.', data.memberCount),
+    demoField('Herramientas actuales', data.currentTools),
+    demoField('Preferencia de contacto', data.preferredContact),
+  ].join('');
+
+  return layout(`<h2 style="margin-top:0">Nueva solicitud de demo</h2>
+    <p>Se recibió una solicitud desde la landing de GymApure.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">${rows}</table>
+    <p style="margin:0 0 6px;font-weight:600">Requisitos / necesidades:</p>
+    <p style="margin:0 0 16px;white-space:pre-wrap">${escapeHtml(data.requirements)}</p>
+    <p style="font-size:12px;color:#666;margin:0">ID: ${escapeHtml(data.requestId)}</p>`);
+}
+
+export function demoRequestConfirmationEmail(name: string): string {
+  return layout(`<h2 style="margin-top:0">Recibimos tu solicitud</h2>
+    <p>Hola <strong>${escapeHtml(name)}</strong>,</p>
+    <p>Gracias por tu interés en GymApure. Nuestro equipo de soporte revisará tu solicitud y se pondrá en contacto contigo para coordinar la demo.</p>
+    <p style="margin-bottom:0;font-size:12px;color:#666">Si no enviaste esta solicitud, puedes ignorar este correo.</p>`);
+}

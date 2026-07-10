@@ -43,9 +43,20 @@ const itemVariants: Variants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut' } },
 };
 
-export function StaggerContainer({ children, className }: { children: ReactNode; className?: string }) {
+export function StaggerContainer({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <motion.div variants={containerVariants} initial="initial" animate="animate" className={className}>
+    <motion.div
+      variants={containerVariants}
+      initial="initial"
+      animate="animate"
+      className={className}
+    >
       {children}
     </motion.div>
   );
@@ -72,3 +83,47 @@ export function ScaleIn({ children }: { children: ReactNode }) {
     </motion.div>
   );
 }
+
+/* ── Scroll reveal (whileInView) ── */
+
+const scrollRevealVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+};
+
+const scrollRevealScaleVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.96 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: 'easeOut' } },
+};
+
+export function ScrollRevealMotion({
+  children,
+  className,
+  variant = 'slide',
+}: {
+  children: ReactNode;
+  className?: string;
+  variant?: 'slide' | 'scale';
+}) {
+  return (
+    <motion.div
+      variants={variant === 'scale' ? scrollRevealScaleVariants : scrollRevealVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-80px' }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+export const scrollStaggerContainerVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+export const scrollStaggerItemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+};

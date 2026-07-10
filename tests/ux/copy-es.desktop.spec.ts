@@ -23,7 +23,7 @@ async function waitForDashboard(page: import('@playwright/test').Page) {
 test.describe('Copy en español', () => {
   test('member: sin Dashboard ni Kiosk', async ({ page }) => {
     await loginDesktop(page, MEMBER_EMAIL, demoPassword());
-    await page.goto('/');
+    await page.goto('/panel');
     await waitForDashboard(page);
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);
@@ -32,7 +32,7 @@ test.describe('Copy en español', () => {
 
   test('trainer: Panel sin Dashboard', async ({ page }) => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
-    await page.goto('/');
+    await page.goto('/panel');
     await waitForDashboard(page);
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);
@@ -41,7 +41,7 @@ test.describe('Copy en español', () => {
 
   test('admin: Panel sin Dashboard', async ({ page }) => {
     await loginDesktop(page, ADMIN_EMAIL, demoPassword());
-    await page.goto('/');
+    await page.goto('/panel');
     await waitForDashboard(page);
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);

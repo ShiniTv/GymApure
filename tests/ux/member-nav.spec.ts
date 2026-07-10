@@ -7,7 +7,7 @@ test.describe('Member bottom nav', () => {
   });
 
   test('pill visible en inicio y oculta en workout activo', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/panel');
     await expect(page.locator(memberBottomNav)).toBeVisible();
 
     await page.goto('/routines');

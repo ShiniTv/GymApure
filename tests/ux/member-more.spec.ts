@@ -4,7 +4,7 @@ import { login, demoPassword, MEMBER_EMAIL } from './helpers';
 test.describe('Member sheet Más', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, MEMBER_EMAIL, demoPassword());
-    await page.goto('/');
+    await page.goto('/panel');
   });
 
   test('abre sheet con mensajes y cerrar sesión; sin hamburger', async ({ page }) => {

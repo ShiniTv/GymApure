@@ -31,3 +31,12 @@ export const uploadRateLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
 });
+
+/** Public landing demo request form. */
+export const landingDemoRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: strictLimits ? 5 : 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes de demo. Inténtalo más tarde.' },
+});

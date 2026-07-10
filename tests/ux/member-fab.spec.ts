@@ -26,7 +26,7 @@ test.describe('Member workout FAB', () => {
   });
 
   test('posición estable al navegar a rutinas', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/panel');
     const fab = page.locator(memberWorkoutFab);
     await expect(fab).toBeVisible({ timeout: 15_000 });
     const boxBefore = await fab.boundingBox();

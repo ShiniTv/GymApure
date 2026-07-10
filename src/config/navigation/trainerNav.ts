@@ -14,7 +14,7 @@ import type { NavSection } from './types';
 export const TRAINER_NAV: NavSection[] = [
   {
     name: 'Inicio',
-    items: [{ name: 'Panel', href: '/', icon: LayoutDashboard }],
+    items: [{ name: 'Panel', href: '/panel', icon: LayoutDashboard }],
   },
   {
     name: 'Mis miembros',

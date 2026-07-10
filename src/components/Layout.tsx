@@ -312,13 +312,15 @@ export default function Layout() {
                                   {chatUnread > 99 ? '99+' : chatUnread}
                                 </span>
                               )}
-                              {user?.role === 'admin' && item.href === '/' && expiringCount > 0 && (
-                                <span className="nav-badge brand-solid">
-                                  {expiringCount > 99 ? '99+' : expiringCount}
-                                </span>
-                              )}
+                              {user?.role === 'admin' &&
+                                item.href === '/panel' &&
+                                expiringCount > 0 && (
+                                  <span className="nav-badge brand-solid">
+                                    {expiringCount > 99 ? '99+' : expiringCount}
+                                  </span>
+                                )}
                               {user?.role === 'member' &&
-                                item.href === '/' &&
+                                item.href === '/panel' &&
                                 memberExpiryDays != null &&
                                 shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
                                   <span

@@ -4,7 +4,7 @@ import { login, demoPassword, MEMBER_EMAIL } from './helpers';
 test.describe('Member sheet Más accesibilidad', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, MEMBER_EMAIL, demoPassword());
-    await page.goto('/');
+    await page.goto('/panel');
   });
 
   test('Escape cierra sheet y devuelve foco al botón Más', async ({ page }) => {
