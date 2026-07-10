@@ -1,36 +1,54 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion, useScroll } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import Logo from '../Logo';
 import BrandName from '../BrandName';
 import { Button } from '../ui';
 import { cn } from '../../lib/utils';
 import { useMediaQuery } from '../../lib/useMediaQuery';
-import { LANDING_NAV_LINKS, scrollToAnchor } from './landingNav';
+import {
+  LANDING_NAV_EXTRA,
+  LANDING_NAV_LINKS,
+  LANDING_NAV_PRIORITY,
+  scrollToAnchor,
+} from './landingNav';
 import { getDemoRequestPath } from '../../config/landingContact';
+import { LANDING_ISLAND_TOP } from './landingStyles';
+
+type IslandMode = 'mini' | 'compact' | 'expanded';
 
 export function DynamicIslandNav() {
-  const isWideNav = useMediaQuery('(min-width: 1280px)');
+  const location = useLocation();
+  const isSm = useMediaQuery('(min-width: 640px)');
+  const isLgNav = useMediaQuery('(min-width: 1024px)');
+  const isXlNav = useMediaQuery('(min-width: 1280px)');
   const prefersReducedMotion = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  const compact = !isWideNav || scrolled;
+  const demoPath = getDemoRequestPath();
+  const isDemoPage = location.pathname === demoPath;
+
+  const islandMode: IslandMode = isLgNav ? 'expanded' : isSm ? 'compact' : 'mini';
+  const showHamburger = islandMode !== 'expanded';
 
   useEffect(() => {
     const unsubscribe = scrollY.on('change', (y) => {
-      setScrolled(y > 64);
+      setScrolled(y > 24);
     });
     return unsubscribe;
   }, [scrollY]);
 
   useEffect(() => {
     setMenuOpen(false);
-  }, [scrolled]);
+    setMoreOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -50,6 +68,17 @@ export function DynamicIslandNav() {
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!menuOpen || !menuRef.current) return;
@@ -90,20 +119,61 @@ export function DynamicIslandNav() {
 
   const handleNavClick = (href: string) => {
     setMenuOpen(false);
+    setMoreOpen(false);
+    if (location.pathname !== '/') {
+      window.location.href = `/${href}`;
+      return;
+    }
     scrollToAnchor(href);
   };
 
+  const navLinkClass =
+    'hover:text-brand rounded-full px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-zinc-600 transition-colors lg:text-sm dark:text-zinc-300';
+
+  const demoCta = (
+    <Link
+      to={demoPath}
+      className={cn(islandMode === 'mini' && 'shrink-0')}
+      onClick={() => setMenuOpen(false)}
+    >
+      <Button
+        size="sm"
+        variant={isDemoPage ? 'secondary' : 'primary'}
+        className={cn(
+          'whitespace-nowrap',
+          islandMode === 'mini' ? 'px-2.5 text-xs' : islandMode === 'compact' ? 'px-3' : ''
+        )}
+      >
+        {islandMode === 'mini' ? 'Demo' : 'Solicitar demo'}
+      </Button>
+    </Link>
+  );
+
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-50 flex justify-center px-3 sm:px-4">
-      <div className="relative w-full max-w-6xl">
+    <header
+      className={cn(
+        'pointer-events-none fixed inset-x-0 z-50 flex justify-center px-3 sm:px-4',
+        LANDING_ISLAND_TOP
+      )}
+    >
+      <div
+        className={cn(
+          'relative',
+          islandMode === 'expanded'
+            ? 'w-full max-w-6xl'
+            : 'w-fit max-w-[min(100%,calc(100%-1.5rem))]'
+        )}
+      >
         <motion.nav
           {...motionProps}
           className={cn(
-            'pointer-events-auto mx-auto flex w-full items-center gap-1.5 rounded-full border shadow-lg backdrop-blur-xl sm:gap-2',
-            scrolled
+            'pointer-events-auto flex items-center gap-1.5 rounded-full border shadow-lg backdrop-blur-xl sm:gap-2',
+            islandMode === 'expanded' ? 'mx-auto w-full' : 'mx-auto',
+            scrolled || isDemoPage
               ? 'border-white/[0.08] bg-zinc-950/80 ring-1 shadow-black/20 ring-white/[0.06] dark:border-white/[0.08] dark:bg-zinc-950/85'
               : 'border-zinc-200/60 bg-white/85 shadow-zinc-900/10 dark:border-white/10 dark:bg-zinc-900/75',
-            compact ? 'px-2.5 py-2 sm:px-3' : 'px-3 py-2.5 xl:px-4'
+            islandMode === 'mini' ? 'px-2 py-1.5' : 'px-2.5 py-2 sm:px-3',
+            islandMode === 'expanded' && 'px-3 py-2.5 lg:px-4'
           )}
           aria-label="Navegación principal"
         >
@@ -112,35 +182,67 @@ export function DynamicIslandNav() {
             className="focus-visible:ring-brand/50 flex shrink-0 items-center gap-2 rounded-full outline-none focus-visible:ring-2"
             aria-label="GymApure inicio"
           >
-            <Logo className="h-7 w-7 sm:h-8 sm:w-8" />
-            {!compact && <BrandName size="sm" className="hidden text-base sm:inline" />}
+            <Logo className={cn(islandMode === 'mini' ? 'h-7 w-7' : 'h-7 w-7 sm:h-8 sm:w-8')} />
+            {islandMode !== 'mini' && (
+              <BrandName size="sm" className="hidden text-base sm:inline" />
+            )}
           </Link>
 
-          {!compact && (
-            <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
-              {LANDING_NAV_LINKS.map((link) => (
+          {islandMode === 'expanded' && (
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex">
+              {(isXlNav ? LANDING_NAV_LINKS : LANDING_NAV_PRIORITY).map((link) => (
                 <button
                   key={link.href}
                   type="button"
                   onClick={() => handleNavClick(link.href)}
-                  className="hover:text-brand rounded-full px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-zinc-600 transition-colors xl:px-3 xl:text-sm dark:text-zinc-300"
+                  className={navLinkClass}
                 >
                   {link.label}
                 </button>
               ))}
+
+              {!isXlNav && (
+                <div ref={moreRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen((o) => !o)}
+                    className={cn(navLinkClass, 'inline-flex items-center gap-0.5')}
+                    aria-expanded={moreOpen}
+                    aria-haspopup="true"
+                  >
+                    Más
+                    <ChevronDown
+                      className={cn('h-3.5 w-3.5 transition-transform', moreOpen && 'rotate-180')}
+                    />
+                  </button>
+                  {moreOpen && (
+                    <div
+                      className={cn(
+                        'absolute top-[calc(100%+0.35rem)] left-1/2 z-50 min-w-[10rem] -translate-x-1/2 rounded-xl border p-1.5 shadow-xl',
+                        'border-zinc-200/80 bg-white/95 dark:border-zinc-800 dark:bg-zinc-900/95'
+                      )}
+                    >
+                      {LANDING_NAV_EXTRA.map((link) => (
+                        <button
+                          key={link.href}
+                          type="button"
+                          onClick={() => handleNavClick(link.href)}
+                          className="hover:text-brand block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        >
+                          {link.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
-          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-            {!compact && (
-              <Link to={getDemoRequestPath()} className="hidden sm:block">
-                <Button size="sm" variant="primary" className="whitespace-nowrap">
-                  Solicitar demo
-                </Button>
-              </Link>
-            )}
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+            {demoCta}
 
-            {compact && (
+            {showHamburger && (
               <button
                 ref={menuButtonRef}
                 type="button"
@@ -157,7 +259,7 @@ export function DynamicIslandNav() {
         </motion.nav>
 
         <AnimatePresence>
-          {compact && menuOpen && (
+          {showHamburger && menuOpen && (
             <motion.div
               ref={menuRef}
               id="landing-island-menu"
@@ -169,7 +271,8 @@ export function DynamicIslandNav() {
               exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'pointer-events-auto absolute top-[calc(100%+0.5rem)] right-0 left-0 max-h-[min(70dvh,22rem)] overflow-y-auto rounded-2xl border p-3 shadow-xl sm:left-auto sm:w-[min(100%,20rem)]',
+                'pointer-events-auto absolute top-[calc(100%+0.5rem)] right-0 max-h-[min(70dvh,22rem)] overflow-y-auto rounded-2xl border p-3 shadow-xl sm:w-[min(100%,20rem)]',
+                islandMode === 'mini' ? 'left-0' : 'left-auto sm:left-auto',
                 'border-zinc-200/80 bg-white/95 dark:border-zinc-800 dark:bg-zinc-900/95'
               )}
             >
@@ -184,15 +287,13 @@ export function DynamicIslandNav() {
                     {link.label}
                   </button>
                 ))}
-                <Link
-                  to={getDemoRequestPath()}
-                  className="mt-1 block"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <Button className="w-full" size="sm">
-                    Solicitar demo
-                  </Button>
-                </Link>
+                {!isDemoPage && (
+                  <Link to={demoPath} className="mt-1 block" onClick={() => setMenuOpen(false)}>
+                    <Button className="w-full" size="sm">
+                      Solicitar demo
+                    </Button>
+                  </Link>
+                )}
                 <Link
                   to="/login"
                   className="hover:text-brand mt-1 flex min-h-11 items-center justify-center text-sm font-medium text-zinc-500 dark:text-zinc-400"

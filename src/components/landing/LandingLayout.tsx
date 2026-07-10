@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { DynamicIslandNav } from './DynamicIslandNav';
 import { LandingBackground } from './LandingBackground';
@@ -6,6 +7,7 @@ import { LandingStickyCta } from './LandingStickyCta';
 import { useLandingDarkDefault } from './useLandingDarkDefault';
 import { useLandingMeta } from './useLandingMeta';
 import { LandingFooter } from './sections/LandingFooter';
+import { getDemoRequestPath } from '../../config/landingContact';
 
 interface LandingLayoutProps {
   children: ReactNode;
@@ -14,6 +16,9 @@ interface LandingLayoutProps {
 export function LandingLayout({ children }: LandingLayoutProps) {
   useLandingDarkDefault();
   useLandingMeta();
+
+  const location = useLocation();
+  const isDemoFormPage = location.pathname === getDemoRequestPath();
 
   return (
     <div
@@ -26,11 +31,13 @@ export function LandingLayout({ children }: LandingLayoutProps) {
 
       <DynamicIslandNav />
 
-      <main className="relative pb-24 md:pb-0">{children}</main>
+      <main className={cn('relative', isDemoFormPage ? 'pb-8 md:pb-10' : 'pb-24 md:pb-0')}>
+        {children}
+      </main>
 
       <LandingFooter />
 
-      <LandingStickyCta />
+      {!isDemoFormPage && <LandingStickyCta />}
     </div>
   );
 }

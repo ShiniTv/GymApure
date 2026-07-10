@@ -1,8 +1,26 @@
 import { cn } from '../../lib/utils';
 
+/** Isla fija — alinear con DynamicIslandNav. */
+export const LANDING_ISLAND_TOP = 'top-[max(0.75rem,env(safe-area-inset-top))]';
+
+/** Offset superior unificado (hero, páginas landing, scroll anchors). */
+export const LANDING_OFFSET = 'pt-[calc(5.75rem+env(safe-area-inset-top))] sm:pt-28';
+
+export const LANDING_SCROLL_MT =
+  'scroll-mt-[calc(5.75rem+env(safe-area-inset-top))] sm:scroll-mt-28';
+
 /** Padding y scroll offset coherentes en todas las secciones. */
-export const LANDING_SECTION =
-  'scroll-mt-[calc(5.5rem+env(safe-area-inset-top))] px-4 py-14 sm:scroll-mt-28 sm:px-6 sm:py-20 lg:px-8 lg:py-24';
+export const LANDING_SECTION = cn(
+  LANDING_SCROLL_MT,
+  'px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-24'
+);
+
+/** Página /solicitar-demo — clearance extra bajo isla expandida (lg+). */
+export const LANDING_FORM_PAGE = cn(
+  LANDING_SCROLL_MT,
+  'px-4 pb-10 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16',
+  'pt-[calc(6.75rem+env(safe-area-inset-top))] sm:pt-32 lg:pt-36'
+);
 
 export const LANDING_SECTION_ALT =
   'border-t border-zinc-200/40 bg-zinc-100/30 dark:border-white/[0.04] dark:bg-zinc-950/50';
@@ -20,8 +38,21 @@ export const LANDING_TITLE =
 export const LANDING_LEAD =
   'mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-pretty text-zinc-600 sm:mt-3 sm:text-base dark:text-zinc-400';
 
-export const LANDING_HERO =
-  'relative flex min-h-[calc(100dvh-2rem)] flex-col items-center justify-center px-4 pt-[calc(5.75rem+env(safe-area-inset-top))] pb-12 sm:min-h-[90dvh] sm:px-6 sm:pt-28 sm:pb-16 lg:pb-20';
+export const LANDING_HERO = cn(
+  'relative flex min-h-[calc(100dvh-2rem)] flex-col items-center justify-center px-4 pb-12 sm:min-h-[90dvh] sm:px-6 sm:pb-16 lg:pb-20',
+  LANDING_OFFSET
+);
+
+/** Shell premium reutilizable (CTA, formulario demo). */
+export const LANDING_CTA_SHELL = 'relative rounded-2xl p-px sm:rounded-3xl';
+
+export const LANDING_CTA_INNER = cn(
+  'relative rounded-[calc(1rem-1px)] bg-zinc-50 px-4 py-8 sm:rounded-[calc(1.5rem-1px)] sm:px-6 sm:py-10 md:px-8',
+  'dark:bg-zinc-950/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]'
+);
+
+export const LANDING_FORM_GROUP =
+  'space-y-4 rounded-xl border border-zinc-200/60 bg-white/50 p-4 sm:p-5 dark:border-white/[0.06] dark:bg-white/[0.02]';
 
 export const LANDING_HERO_TITLE =
   'font-display text-4xl font-extrabold tracking-tight text-balance sm:text-5xl md:text-6xl lg:text-[3.75rem] lg:leading-[1.08]';
