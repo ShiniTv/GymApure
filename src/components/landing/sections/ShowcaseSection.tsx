@@ -12,7 +12,7 @@ import {
   toLandingShowcaseStatic,
   toLandingShowcaseIllustration,
 } from '../../../config/landingShowcase';
-import { landingSectionClass, LANDING_CONTAINER_MD } from '../landingStyles';
+import { landingSectionClass, LANDING_CONTAINER_MD, LANDING_GLOW } from '../landingStyles';
 import { cn } from '../../../lib/utils';
 import type { LandingShowcaseData } from '../../../config/landingShowcase';
 
@@ -70,7 +70,10 @@ export function ShowcaseSection() {
   const current = SHOWCASES.find((s) => s.id === active) ?? SHOWCASES[0];
 
   return (
-    <section id="vista-previa" className={landingSectionClass()}>
+    <section
+      id="vista-previa"
+      className={landingSectionClass('border-t border-zinc-200/40 dark:border-white/[0.04]')}
+    >
       <div className={LANDING_CONTAINER_MD}>
         <LandingSectionHeader
           eyebrow="Vista previa"
@@ -94,31 +97,41 @@ export function ShowcaseSection() {
         </LandingSectionHeader>
 
         <div className="-mx-4 mt-8 overflow-x-auto px-4 sm:mx-0 sm:mt-10 sm:overflow-visible sm:px-0">
-          <div className="flex w-max min-w-full gap-2 pb-1 sm:w-auto sm:min-w-0 sm:flex-wrap sm:justify-center">
-            {SHOWCASES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActive(item.id)}
-                className={cn(
-                  'inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors sm:px-4',
-                  active === item.id
-                    ? 'border-brand/40 bg-brand/10 text-brand'
-                    : 'hover:border-brand/20 hover:text-brand border-zinc-200/80 bg-white/60 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400'
-                )}
-                aria-pressed={active === item.id}
-              >
-                <item.icon className="h-4 w-4" aria-hidden />
-                <span className="sm:hidden">{item.shortLabel}</span>
-                <span className="hidden sm:inline">{item.label}</span>
-              </button>
-            ))}
+          <div className="relative flex w-max min-w-full gap-1 border-b border-zinc-200/60 pb-0 sm:w-auto sm:min-w-0 sm:justify-center dark:border-white/[0.06]">
+            {SHOWCASES.map((item) => {
+              const isActive = active === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActive(item.id)}
+                  className={cn(
+                    'relative inline-flex shrink-0 items-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'text-brand'
+                      : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  )}
+                  aria-pressed={isActive}
+                >
+                  <item.icon className="h-4 w-4" aria-hidden />
+                  <span className="sm:hidden">{item.shortLabel}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="showcase-tab-indicator"
+                      className="bg-brand absolute right-0 -bottom-px left-0 h-0.5 rounded-full shadow-[0_0_12px_rgba(249,115,22,0.6)]"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-12">
           <ScrollReveal className="order-2 text-center lg:order-1 lg:text-left">
-            <h3 className="text-lg font-bold text-zinc-900 sm:text-xl md:text-2xl dark:text-white">
+            <h3 className="font-display text-lg font-bold text-zinc-900 sm:text-xl md:text-2xl dark:text-white">
               {current.title}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600 sm:text-base dark:text-zinc-400">
@@ -128,7 +141,7 @@ export function ShowcaseSection() {
 
           <div className="order-1 lg:order-2">
             {prefersReducedMotion ? (
-              <ProductMockupFrame url={current.url}>
+              <ProductMockupFrame url={current.url} className={LANDING_GLOW}>
                 {renderMockup(current.id, preview)}
               </ProductMockupFrame>
             ) : (
@@ -138,7 +151,7 @@ export function ShowcaseSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
               >
-                <ProductMockupFrame url={current.url}>
+                <ProductMockupFrame url={current.url} className={LANDING_GLOW}>
                   {renderMockup(current.id, preview)}
                 </ProductMockupFrame>
               </motion.div>

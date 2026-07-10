@@ -1,7 +1,7 @@
 import { cn } from '../lib/utils';
 import { BRAND } from '../config/brand';
 
-type BrandNameVariant = 'split' | 'inline' | 'plain';
+type BrandNameVariant = 'split' | 'inline' | 'plain' | 'hero';
 type BrandNameSize = 'sm' | 'md' | 'lg';
 
 interface BrandNameProps {
@@ -24,24 +24,33 @@ export default function BrandName({
   className,
   onDark = false,
 }: BrandNameProps) {
-  if (variant === 'plain') {
+  if (variant === 'hero') {
     return (
-      <span className={cn(className)}>
-        {BRAND.name}
+      <span className={cn('font-display font-extrabold tracking-tight', className)}>
+        <span className="text-zinc-900 dark:text-white">{BRAND.nameParts.primary}</span>
+        <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
+          {BRAND.nameParts.accent}
+        </span>
       </span>
     );
   }
 
+  if (variant === 'plain') {
+    return <span className={cn(className)}>{BRAND.name}</span>;
+  }
+
   if (variant === 'split') {
     return (
-      <span className={cn('flex flex-col leading-none min-w-0', className)}>
-        <span className={cn(
-          'text-sm font-bold tracking-tight truncate',
-          onDark ? 'text-white' : 'text-zinc-900 dark:text-white'
-        )}>
+      <span className={cn('flex min-w-0 flex-col leading-none', className)}>
+        <span
+          className={cn(
+            'truncate text-sm font-bold tracking-tight',
+            onDark ? 'text-white' : 'text-zinc-900 dark:text-white'
+          )}
+        >
           {BRAND.nameParts.primary}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand -mt-px truncate">
+        <span className="text-brand -mt-px truncate text-[10px] font-semibold tracking-[0.14em] uppercase">
           {BRAND.nameParts.accent}
         </span>
       </span>

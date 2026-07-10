@@ -12,8 +12,17 @@ import {
   toLandingShowcaseIllustration,
   type LandingShowcaseData,
 } from '../../../config/landingShowcase';
-import { LANDING_EYEBROW, LANDING_HERO, LANDING_CONTAINER } from '../landingStyles';
+import {
+  LANDING_EYEBROW,
+  LANDING_HERO,
+  LANDING_CONTAINER,
+  LANDING_HERO_TITLE,
+  LANDING_HERO_SPOTLIGHT,
+  LANDING_GLOW,
+} from '../landingStyles';
 import { cn } from '../../../lib/utils';
+
+const TRUST_MODULES = ['Panel admin', 'Recepción', 'Reportes', 'Miembros'] as const;
 
 function HeroPreviewPanel({
   data,
@@ -27,12 +36,16 @@ function HeroPreviewPanel({
   return (
     <div className={cn('relative w-full', className)}>
       <div
-        className="bg-brand/15 pointer-events-none absolute -top-6 -right-6 h-32 w-32 rounded-full blur-3xl sm:-top-8 sm:-right-8 sm:h-40 sm:w-40"
+        className="pointer-events-none absolute -inset-8 rounded-full opacity-80 sm:-inset-12"
+        style={{ backgroundImage: LANDING_HERO_SPOTLIGHT }}
         aria-hidden
       />
       <ProductMockupFrame
         url="gymapure.app/panel"
-        className="shadow-brand/10 relative mx-auto shadow-2xl transition-transform lg:rotate-1 lg:hover:rotate-0"
+        className={cn(
+          LANDING_GLOW,
+          'relative mx-auto shadow-2xl transition-transform duration-300 lg:rotate-1 lg:hover:rotate-0'
+        )}
       >
         <AdminPanelMockup data={data} />
       </ProductMockupFrame>
@@ -61,17 +74,27 @@ export function HeroSection() {
   const copy = (
     <>
       <p className={cn(LANDING_EYEBROW, 'mb-3 sm:mb-4')}>Para dueños y administradores</p>
-      <h1 className="text-3xl font-bold tracking-tight text-balance text-zinc-900 sm:text-4xl md:text-5xl lg:text-[3.25rem] lg:leading-tight dark:text-white">
-        <BrandName size="lg" className="block sm:text-4xl md:text-5xl lg:text-[3.25rem]" />
+      <h1 className={cn(LANDING_HERO_TITLE, 'text-zinc-900 dark:text-white')}>
+        {BRAND.heroHeadline}
       </h1>
       <p className="mt-3 text-base leading-relaxed text-pretty text-zinc-600 sm:mt-4 sm:text-lg md:text-xl dark:text-zinc-400">
-        {BRAND.tagline}
+        {BRAND.heroSubheadline}
       </p>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-500 sm:text-base lg:mx-0 dark:text-zinc-500">
-        Todo tu gimnasio en un solo sistema: membresías, acceso, recepción y reportes.
+      <p className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-500 lg:justify-start dark:text-zinc-500">
+        <span>Con</span>
+        <BrandName variant="hero" className="inline text-2xl sm:text-3xl" />
       </p>
 
-      <LandingDemoCta className="mt-6 sm:mt-8" align="start" />
+      <LandingDemoCta className="mt-6 sm:mt-8" align="start" variant="hero" />
+
+      <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-wide text-zinc-400 uppercase sm:mt-5 sm:text-xs dark:text-zinc-500">
+        {TRUST_MODULES.map((item, index) => (
+          <span key={item} className="inline-flex items-center gap-2">
+            {index > 0 && <span className="text-zinc-300 dark:text-zinc-600">·</span>}
+            {item}
+          </span>
+        ))}
+      </p>
 
       <button
         type="button"
@@ -125,7 +148,7 @@ export function HeroSection() {
       <button
         type="button"
         onClick={() => scrollToAnchor('#modulos')}
-        className="hover:text-brand mt-10 animate-bounce text-zinc-400 transition-colors sm:mt-12 lg:mt-14"
+        className="hover:text-brand mt-10 text-zinc-400 opacity-70 transition-all hover:opacity-100 motion-safe:animate-pulse sm:mt-12 lg:mt-14"
         aria-label="Desplazarse a módulos"
       >
         <ChevronDown className="h-6 w-6" />

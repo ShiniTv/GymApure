@@ -1,7 +1,12 @@
 import { Shield, Fingerprint, Dumbbell, User } from 'lucide-react';
 import { ScrollReveal } from '../ScrollReveal';
 import { LandingSectionHeader } from '../LandingSectionHeader';
-import { landingSectionClass, LANDING_CONTAINER_MD } from '../landingStyles';
+import {
+  landingSectionClass,
+  LANDING_CONTAINER_MD,
+  LANDING_CARD,
+  LANDING_CARD_HOVER,
+} from '../landingStyles';
 import { cn } from '../../../lib/utils';
 
 const ROLES = [
@@ -46,10 +51,10 @@ export function RolesSection() {
             <ScrollReveal key={role.title} variant="scale">
               <article
                 className={cn(
-                  'h-full rounded-2xl border p-4 sm:p-6',
-                  role.emphasized
-                    ? 'border-brand/30 bg-brand/5 dark:border-brand/25 dark:bg-brand/10'
-                    : 'border-zinc-200/80 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
+                  LANDING_CARD,
+                  LANDING_CARD_HOVER,
+                  'h-full p-4 sm:p-6',
+                  role.emphasized && 'border-brand/30 dark:border-brand/25'
                 )}
               >
                 <div
@@ -62,7 +67,7 @@ export function RolesSection() {
                 >
                   <role.icon className="h-5 w-5" aria-hidden />
                 </div>
-                <h3 className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-white">
+                <h3 className="font-display text-base font-semibold text-zinc-900 sm:text-lg dark:text-white">
                   {role.title}
                 </h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-600 sm:mt-2 dark:text-zinc-400">

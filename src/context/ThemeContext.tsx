@@ -12,6 +12,7 @@ interface ThemeContextType {
   theme: Appearance;
   palette: PaletteId;
   toggleTheme: () => void;
+  setTheme: (theme: Appearance) => void;
   setPalette: (palette: PaletteId) => void;
 }
 
@@ -31,12 +32,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  const setThemeExplicit = (next: Appearance) => {
+    setTheme(next);
+  };
+
   const setPalette = (next: PaletteId) => {
     setPaletteState(next);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, palette, toggleTheme, setPalette }}>
+    <ThemeContext.Provider
+      value={{ theme, palette, toggleTheme, setTheme: setThemeExplicit, setPalette }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -99,8 +99,10 @@ export function DynamicIslandNav() {
         <motion.nav
           {...motionProps}
           className={cn(
-            'pointer-events-auto mx-auto flex w-full items-center gap-1.5 rounded-full border shadow-lg shadow-zinc-900/10 backdrop-blur-xl sm:gap-2',
-            'border-zinc-200/60 bg-white/85 dark:border-white/10 dark:bg-zinc-900/80',
+            'pointer-events-auto mx-auto flex w-full items-center gap-1.5 rounded-full border shadow-lg backdrop-blur-xl sm:gap-2',
+            scrolled
+              ? 'border-white/[0.08] bg-zinc-950/80 ring-1 shadow-black/20 ring-white/[0.06] dark:border-white/[0.08] dark:bg-zinc-950/85'
+              : 'border-zinc-200/60 bg-white/85 shadow-zinc-900/10 dark:border-white/10 dark:bg-zinc-900/75',
             compact ? 'px-2.5 py-2 sm:px-3' : 'px-3 py-2.5 xl:px-4'
           )}
           aria-label="Navegación principal"

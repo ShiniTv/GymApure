@@ -11,7 +11,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ScrollReveal } from '../ScrollReveal';
 import { LandingSectionHeader } from '../LandingSectionHeader';
 import { scrollStaggerContainerVariants, scrollStaggerItemVariants } from '../../animations';
-import { landingSectionClass, LANDING_CONTAINER_MD } from '../landingStyles';
+import { landingSectionClass, LANDING_CONTAINER_MD, LANDING_CARD_FEATURE } from '../landingStyles';
 import { cn } from '../../../lib/utils';
 
 const FEATURES = [
@@ -19,31 +19,37 @@ const FEATURES = [
     icon: CreditCard,
     title: 'Membresías y pagos',
     description: 'Planes, vencimientos y cobros centralizados sin hojas de cálculo.',
+    featured: true,
   },
   {
     icon: Fingerprint,
     title: 'Control de acceso',
     description: 'Check-in con QR y registro de asistencia en tiempo real.',
+    featured: false,
   },
   {
     icon: Users,
     title: 'Recepción y walk-in',
     description: 'Mostrador ágil para visitas, altas rápidas y operación diaria.',
+    featured: false,
   },
   {
     icon: Dumbbell,
     title: 'Rutinas y entrenadores',
     description: 'Asignación de rutinas, ejercicios y seguimiento del equipo.',
+    featured: false,
   },
   {
     icon: BarChart2,
     title: 'Reportes y auditoría',
     description: 'Visibilidad operativa con historial y métricas para decidir mejor.',
+    featured: false,
   },
   {
     icon: Wrench,
     title: 'Equipamiento',
     description: 'Inventario, inspecciones y alertas de mantenimiento del gym.',
+    featured: false,
   },
 ] as const;
 
@@ -65,13 +71,13 @@ export function FeaturesSection() {
           ? {
               className: cn(
                 LANDING_CONTAINER_MD,
-                'mt-10 grid gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3'
+                'mt-10 grid auto-rows-fr gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3'
               ),
             }
           : {
               className: cn(
                 LANDING_CONTAINER_MD,
-                'mt-10 grid gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3'
+                'mt-10 grid auto-rows-fr gap-3 sm:mt-12 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3'
               ),
               variants: scrollStaggerContainerVariants,
               initial: 'hidden',
@@ -85,15 +91,37 @@ export function FeaturesSection() {
             <Item
               key={feature.title}
               {...(prefersReducedMotion ? {} : { variants: scrollStaggerItemVariants })}
-              className="group hover:border-brand/30 rounded-2xl border border-zinc-200/80 bg-white/60 p-4 text-left backdrop-blur-sm transition-colors sm:p-6 dark:border-zinc-800 dark:bg-zinc-900/50"
+              className={cn(
+                LANDING_CARD_FEATURE,
+                'group text-left',
+                feature.featured && 'lg:col-span-2 lg:row-span-2 lg:p-8'
+              )}
             >
-              <div className="bg-brand/10 text-brand mb-3 inline-flex rounded-xl p-2.5 sm:mb-4">
-                <feature.icon className="h-5 w-5" aria-hidden />
+              <div
+                className={cn(
+                  'bg-brand/10 text-brand mb-3 inline-flex rounded-xl p-2.5 sm:mb-4',
+                  feature.featured && 'p-3'
+                )}
+              >
+                <feature.icon
+                  className={cn('h-5 w-5', feature.featured && 'h-6 w-6')}
+                  aria-hidden
+                />
               </div>
-              <h3 className="text-base font-semibold text-zinc-900 sm:text-lg dark:text-white">
+              <h3
+                className={cn(
+                  'text-base font-semibold text-zinc-900 sm:text-lg dark:text-white',
+                  feature.featured && 'text-xl sm:text-2xl'
+                )}
+              >
                 {feature.title}
               </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-zinc-600 sm:mt-2 dark:text-zinc-400">
+              <p
+                className={cn(
+                  'mt-1.5 text-sm leading-relaxed text-zinc-600 sm:mt-2 dark:text-zinc-400',
+                  feature.featured && 'mt-2 max-w-lg text-base'
+                )}
+              >
                 {feature.description}
               </p>
             </Item>

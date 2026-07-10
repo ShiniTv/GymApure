@@ -22,7 +22,7 @@ export function LandingFooter() {
   }, []);
 
   return (
-    <footer className="border-t border-zinc-200/80 px-4 py-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-12 dark:border-zinc-800">
+    <footer className="border-t border-zinc-200/60 bg-zinc-100/40 px-4 py-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-12 dark:border-white/[0.06] dark:bg-zinc-950/80">
       <div
         className={cn(
           LANDING_CONTAINER_MD,

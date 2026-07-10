@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09090b"/>
+      <stop offset="0.55" stop-color="#18181b"/>
+      <stop offset="1" stop-color="#09090b"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(900 120) rotate(90) scale(420 380)">
+      <stop stop-color="#f97316" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(180 520) rotate(90) scale(320 280)">
+      <stop stop-color="#fb923c" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#fb923c" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#ffffff" fill-opacity="0.05"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect x="72" y="72" width="88" height="88" rx="44" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="116" y="128" text-anchor="middle" font-family="system-ui, sans-serif" font-size="34" font-weight="700" fill="#f97316">G</text>
+  <text x="200" y="118" font-family="system-ui, sans-serif" font-size="42" font-weight="800" fill="#ffffff">Gym</text>
+  <text x="292" y="118" font-family="system-ui, sans-serif" font-size="42" font-weight="800" fill="#f97316">Apure</text>
+  <text x="72" y="220" font-family="system-ui, sans-serif" font-size="54" font-weight="800" fill="#ffffff">Gestiona tu gimnasio</text>
+  <text x="72" y="290" font-family="system-ui, sans-serif" font-size="54" font-weight="800" fill="#ffffff">sin Excel ni WhatsApp</text>
+  <text x="72" y="350" font-family="system-ui, sans-serif" font-size="28" font-weight="500" fill="#a1a1aa">Membresías · Acceso · Recepción · Reportes</text>
+  <rect x="72" y="400" width="280" height="56" rx="28" fill="#f97316"/>
+  <text x="212" y="436" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="700" fill="#ffffff">Solicitar demo</text>
+  <rect x="72" y="500" width="1056" height="1" fill="#ffffff" fill-opacity="0.08"/>
+  <text x="72" y="548" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#71717a">gymapure.app</text>
+</svg>
