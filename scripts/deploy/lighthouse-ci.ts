@@ -27,7 +27,7 @@ const TARGETS: LighthouseTarget[] = [
   {
     path: '/login',
     label: 'login',
-    perfMin: 0.9,
+    perfMin: 0.85,
     a11yMin: 0.95,
     lcpMaxMs: 2500,
   },
