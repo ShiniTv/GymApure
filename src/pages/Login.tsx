@@ -30,10 +30,20 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    apiFetch('/api/health')
-      .then((res) => parseJsonSafe<{ allowPublicRegister?: boolean }>(res))
-      .then((data) => setRegisterAllowed(data.allowPublicRegister !== false))
-      .catch(() => setRegisterAllowed(true));
+    const run = () => {
+      apiFetch('/api/health')
+        .then((res) => parseJsonSafe<{ allowPublicRegister?: boolean }>(res))
+        .then((data) => setRegisterAllowed(data.allowPublicRegister !== false))
+        .catch(() => setRegisterAllowed(true));
+    };
+
+    const idle = window.requestIdleCallback?.(run);
+    if (idle !== undefined) {
+      return () => window.cancelIdleCallback?.(idle);
+    }
+
+    const timer = globalThis.setTimeout(run, 0);
+    return () => globalThis.clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

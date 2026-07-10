@@ -144,13 +144,15 @@ function AppRoutes() {
             path="/check-in"
             element={
               <ProtectedRoute allowedRoles={['receptionist']}>
-                <ErrorBoundary
-                  onError={(error) => {
-                    reportBoundaryError(error);
-                  }}
-                >
-                  <CheckIn />
-                </ErrorBoundary>
+                <SocketProvider>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <CheckIn />
+                  </ErrorBoundary>
+                </SocketProvider>
               </ProtectedRoute>
             }
           />
@@ -158,17 +160,19 @@ function AppRoutes() {
           <Route
             element={
               <ProtectedRoute>
-                <AdminStatsProvider>
-                  <MemberStatsProvider>
-                    <ErrorBoundary
-                      onError={(error) => {
-                        reportBoundaryError(error);
-                      }}
-                    >
-                      <Layout />
-                    </ErrorBoundary>
-                  </MemberStatsProvider>
-                </AdminStatsProvider>
+                <SocketProvider>
+                  <AdminStatsProvider>
+                    <MemberStatsProvider>
+                      <ErrorBoundary
+                        onError={(error) => {
+                          reportBoundaryError(error);
+                        }}
+                      >
+                        <Layout />
+                      </ErrorBoundary>
+                    </MemberStatsProvider>
+                  </AdminStatsProvider>
+                </SocketProvider>
               </ProtectedRoute>
             }
           >
@@ -517,9 +521,7 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <AuthProvider>
-            <SocketProvider>
-              <AppRoutes />
-            </SocketProvider>
+            <AppRoutes />
           </AuthProvider>
         </BrowserRouter>
       </ToastProvider>

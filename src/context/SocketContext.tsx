@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { io, type Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { dispatchSessionRevoked } from '../lib/sessionEvents';
 import { useQueryClient } from '@tanstack/react-query';
@@ -18,50 +18,64 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      setIsConnected(false);
+      return;
+    }
 
-    const s = io({
-      withCredentials: true,
-      transports: ['websocket', 'polling'],
-    });
+    let active = true;
 
-    s.on('connect', () => setIsConnected(true));
-    s.on('disconnect', () => setIsConnected(false));
+    void import('socket.io-client').then(({ io }) => {
+      if (!active) return;
 
-    s.on('check-in:new', () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-    });
-
-    s.on('payment:updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-    });
-
-    s.on('message:new', () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-unread'] });
-    });
-
-    s.on('stats:updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['member-stats'] });
-    });
-
-    s.on('notification:new', () => {
-      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
-
-    s.on('session:revoked', () => {
-      dispatchSessionRevoked({
-        message: 'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.',
+      const s = io({
+        withCredentials: true,
+        transports: ['websocket', 'polling'],
       });
-    });
 
-    socketRef.current = s;
+      s.on('connect', () => setIsConnected(true));
+      s.on('disconnect', () => setIsConnected(false));
+
+      s.on('check-in:new', () => {
+        queryClient.invalidateQueries({ queryKey: ['members'] });
+      });
+
+      s.on('payment:updated', () => {
+        queryClient.invalidateQueries({ queryKey: ['payments'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      });
+
+      s.on('message:new', () => {
+        queryClient.invalidateQueries({ queryKey: ['chat-unread'] });
+      });
+
+      s.on('stats:updated', () => {
+        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+      });
+
+      s.on('notification:new', () => {
+        void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      });
+
+      s.on('session:revoked', () => {
+        dispatchSessionRevoked({
+          message: 'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.',
+        });
+      });
+
+      socketRef.current = s;
+    });
 
     return () => {
-      s.close();
+      active = false;
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      setIsConnected(false);
     };
-  }, [user?.id, queryClient]);
+  }, [user, queryClient]);
 
   return (
     <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>

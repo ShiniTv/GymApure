@@ -55,17 +55,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    apiFetch('/api/auth/me')
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error('Not authenticated');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 2500);
+
+    apiFetch('/api/auth/me', { signal: controller.signal })
+      .then(async (res) => {
+        const contentType = res.headers.get('content-type') ?? '';
+        if (!res.ok || !contentType.includes('application/json')) {
+          throw new Error('Not authenticated');
+        }
+        return res.json() as Promise<{ user: User }>;
       })
       .then((data) => setUser(data.user))
       .catch(() => setUser(null))
       .finally(() => {
+        window.clearTimeout(timeout);
         setIsLoading(false);
         setAuthBootstrapComplete(true);
       });
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {

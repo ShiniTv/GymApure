@@ -89,6 +89,7 @@ async function runLighthouse(url: string, reportPath: string): Promise<number> {
         'lighthouse',
         url,
         '--quiet',
+        '--preset=desktop',
         '--chrome-flags=--headless --no-sandbox',
         '--only-categories=performance,accessibility,best-practices',
         '--output=json',

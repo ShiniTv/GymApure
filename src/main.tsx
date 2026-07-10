@@ -4,7 +4,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import { queryClient } from './lib/queryClient.ts';
 import '@fontsource/inter/latin.css';
-import '@fontsource/jetbrains-mono/latin.css';
 import './index.css';
 
 const CHUNK_RELOAD_KEY = 'cg-chunk-reload';
