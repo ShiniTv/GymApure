@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStats } from '../context/AdminStatsContext';
@@ -7,9 +7,10 @@ import { DashboardSkeleton } from '../components/ui';
 import { useTrainerStatsQuery } from '../hooks/queries/useDashboardQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
-import MemberDashboardView from './member/MemberDashboard';
-import AdminDashboard from './admin/AdminDashboard';
-import TrainerDashboard from './trainer/TrainerDashboard';
+
+const MemberDashboardView = lazy(() => import('./member/MemberDashboard'));
+const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
+const TrainerDashboard = lazy(() => import('./trainer/TrainerDashboard'));
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -57,7 +58,9 @@ export default function Dashboard() {
     return (
       <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
         <div {...handlers}>
-          <MemberDashboardView />
+          <Suspense fallback={<DashboardSkeleton statCount={3} />}>
+            <MemberDashboardView />
+          </Suspense>
         </div>
       </PullToRefreshContainer>
     );
@@ -67,7 +70,9 @@ export default function Dashboard() {
     return (
       <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
         <div {...handlers}>
-          <AdminDashboard />
+          <Suspense fallback={<DashboardSkeleton statCount={6} />}>
+            <AdminDashboard />
+          </Suspense>
         </div>
       </PullToRefreshContainer>
     );
@@ -76,7 +81,9 @@ export default function Dashboard() {
   return (
     <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
       <div {...handlers}>
-        <TrainerDashboard />
+        <Suspense fallback={<DashboardSkeleton statCount={4} />}>
+          <TrainerDashboard />
+        </Suspense>
       </div>
     </PullToRefreshContainer>
   );

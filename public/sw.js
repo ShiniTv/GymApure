@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'gymapure-static-v7';
+const STATIC_CACHE = 'gymapure-static-v8';
 const OFFLINE_URL = '/offline.html';
 
 const STATIC_ASSETS = [
@@ -6,8 +6,6 @@ const STATIC_ASSETS = [
   '/theme-init.js',
   '/manifest.webmanifest',
   '/favicon.svg',
-  '/logo-mark-light.jpg',
-  '/logo-mark-dark.jpg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -48,13 +46,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Scripts and styles must prefer the network after deploys to avoid old chunks.
+  // Bundled assets must always come from the network after deploys.
   if (
     request.destination === 'script' ||
     request.destination === 'style' ||
     url.pathname.startsWith('/assets/')
   ) {
-    event.respondWith(networkFirst(request));
+    event.respondWith(fetch(request));
     return;
   }
 

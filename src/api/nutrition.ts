@@ -497,71 +497,93 @@ router.get(
        ORDER BY u.full_name ASC`
     );
 
-    const overview = await Promise.all(
-      members.map(async (member) => {
-        const { rows: aggRows } = await query(
-          `SELECT
-            COALESCE(SUM(calories), 0)::int AS calories,
-            COALESCE(SUM(protein_g), 0)::float AS protein,
-            COALESCE(SUM(carbs_g), 0)::float AS carbs,
-            COALESCE(SUM(fat_g), 0)::float AS fat,
-            COUNT(DISTINCT (logged_at AT TIME ZONE 'UTC')::date)::int AS logged_days
-           FROM nutrition_log_entries
-           WHERE user_id = $1
-             AND (logged_at AT TIME ZONE 'UTC')::date >= $2::date
-             AND (logged_at AT TIME ZONE 'UTC')::date <= $3::date`,
-          [member.user_id, startDate, endDate]
-        );
+    if (members.length === 0) {
+      res.json({
+        period_days: days,
+        start_date: startDate,
+        end_date: endDate,
+        members: [],
+        with_plan: 0,
+        logging_active: 0,
+      });
+      return;
+    }
 
-        const totals = totalsFromRow(aggRows[0]);
-        const loggedDays = Number((aggRows[0] as Record<string, unknown>)?.logged_days ?? 0);
-        const plan: NutritionPlan = {
-          id: 0,
-          user_id: member.user_id,
-          trainer_id: 0,
-          title: member.plan_title,
-          calories_target: member.calories_target,
-          protein_target_g: member.protein_target_g,
-          carbs_target_g: member.carbs_target_g,
-          fat_target_g: member.fat_target_g,
-          calories_margin: member.calories_margin,
-          protein_margin_g: member.protein_margin_g,
-          carbs_margin_g: member.carbs_margin_g,
-          fat_margin_g: member.fat_margin_g,
-          notes: null,
-          start_date: null,
-          end_date: null,
-          is_active: true,
-          created_at: '',
-          updated_at: '',
-        };
-
-        const dailyAdherence =
-          loggedDays > 0
-            ? Math.round(
-                adherencePercent(plan, {
-                  calories: Math.round(totals.calories / loggedDays),
-                  protein: totals.protein / loggedDays,
-                  carbs: totals.carbs / loggedDays,
-                  fat: totals.fat / loggedDays,
-                })
-              )
-            : 0;
-
-        return {
-          user_id: member.user_id,
-          full_name: member.full_name,
-          plan_title: member.plan_title,
-          logged_days: loggedDays,
-          adherence_percent: dailyAdherence,
-          calories_status: getMacroStatus(
-            totals.calories,
-            plan.calories_target * Math.max(loggedDays, 1),
-            plan.calories_margin * Math.max(loggedDays, 1)
-          ),
-        };
-      })
+    const memberIds = members.map((m) => m.user_id);
+    const { rows: aggRows } = await query<{
+      user_id: number;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+      logged_days: number;
+    }>(
+      `SELECT user_id,
+              COALESCE(SUM(calories), 0)::int AS calories,
+              COALESCE(SUM(protein_g), 0)::float AS protein,
+              COALESCE(SUM(carbs_g), 0)::float AS carbs,
+              COALESCE(SUM(fat_g), 0)::float AS fat,
+              COUNT(DISTINCT (logged_at AT TIME ZONE 'UTC')::date)::int AS logged_days
+       FROM nutrition_log_entries
+       WHERE user_id = ANY($1::int[])
+         AND (logged_at AT TIME ZONE 'UTC')::date >= $2::date
+         AND (logged_at AT TIME ZONE 'UTC')::date <= $3::date
+       GROUP BY user_id`,
+      [memberIds, startDate, endDate]
     );
+
+    const aggByUser = new Map(aggRows.map((row) => [row.user_id, row]));
+
+    const overview = members.map((member) => {
+      const agg = aggByUser.get(member.user_id);
+      const totals = totalsFromRow(agg ?? {});
+      const loggedDays = agg?.logged_days ?? 0;
+      const plan: NutritionPlan = {
+        id: 0,
+        user_id: member.user_id,
+        trainer_id: 0,
+        title: member.plan_title,
+        calories_target: member.calories_target,
+        protein_target_g: member.protein_target_g,
+        carbs_target_g: member.carbs_target_g,
+        fat_target_g: member.fat_target_g,
+        calories_margin: member.calories_margin,
+        protein_margin_g: member.protein_margin_g,
+        carbs_margin_g: member.carbs_margin_g,
+        fat_margin_g: member.fat_margin_g,
+        notes: null,
+        start_date: null,
+        end_date: null,
+        is_active: true,
+        created_at: '',
+        updated_at: '',
+      };
+
+      const dailyAdherence =
+        loggedDays > 0
+          ? Math.round(
+              adherencePercent(plan, {
+                calories: Math.round(totals.calories / loggedDays),
+                protein: totals.protein / loggedDays,
+                carbs: totals.carbs / loggedDays,
+                fat: totals.fat / loggedDays,
+              })
+            )
+          : 0;
+
+      return {
+        user_id: member.user_id,
+        full_name: member.full_name,
+        plan_title: member.plan_title,
+        logged_days: loggedDays,
+        adherence_percent: dailyAdherence,
+        calories_status: getMacroStatus(
+          totals.calories,
+          plan.calories_target * Math.max(loggedDays, 1),
+          plan.calories_margin * Math.max(loggedDays, 1)
+        ),
+      };
+    });
 
     res.json({
       period_days: days,

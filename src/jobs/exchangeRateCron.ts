@@ -2,6 +2,7 @@ import { getActiveUsdRate, refreshBcvUsdRate } from '../lib/exchangeRate.ts';
 import { logger } from '../lib/logger.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
+const STARTUP_DEFER_MS = 30_000;
 
 function resolveIntervalMs(): number {
   const raw = parseInt(
@@ -41,7 +42,7 @@ export function startExchangeRateCron(): void {
 
   const intervalMs = resolveIntervalMs();
   logger.info('Cron tasa BCV activo', { intervalMinutes: Math.round(intervalMs / 60_000) });
-  void tick();
+  setTimeout(() => void tick(), STARTUP_DEFER_MS);
   setInterval(() => void tick(), intervalMs);
 }
 
@@ -51,16 +52,20 @@ export async function runExchangeRateRefreshNow(): Promise<
   return refreshBcvUsdRate();
 }
 
-export async function ensureExchangeRateOnStartup(): Promise<void> {
-  try {
-    const active = await getActiveUsdRate();
-    if (!active) {
-      const result = await refreshBcvUsdRate();
-      logger.info('Tasa BCV inicial cargada al arranque', { message: result.message });
-    }
-  } catch (err) {
-    logger.warn('No se pudo cargar tasa BCV al arranque', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+export function ensureExchangeRateOnStartup(): void {
+  setTimeout(() => {
+    void (async () => {
+      try {
+        const active = await getActiveUsdRate();
+        if (!active) {
+          const result = await refreshBcvUsdRate();
+          logger.info('Tasa BCV inicial cargada al arranque', { message: result.message });
+        }
+      } catch (err) {
+        logger.warn('No se pudo cargar tasa BCV al arranque', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    })();
+  }, STARTUP_DEFER_MS);
 }

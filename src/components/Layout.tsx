@@ -28,6 +28,7 @@ import { THEME_ONBOARDING_KEY } from '../config/themes';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LogoutConfirmModal, useLogoutConfirm } from './LogoutConfirmModal';
 import { NotificationBell } from './notifications/NotificationBell';
+import { useAppFonts } from '../hooks/useAppFonts';
 import { routePrefetchHandlers } from '../lib/routePrefetch';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
@@ -36,6 +37,7 @@ const iconBtnClass =
   'inline-flex items-center justify-center h-11 w-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
 
 export default function Layout() {
+  useAppFonts();
   const { user } = useAuth();
   const { requestLogout: openLogoutConfirm, logoutConfirmProps } = useLogoutConfirm();
   const requestLogout = useCallback(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
 import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown, ArrowLeft } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -10,10 +10,13 @@ import AuthBrandHeader from '../components/AuthBrandHeader';
 import BrandName from '../components/BrandName';
 import Logo from '../components/Logo';
 import { Button, Card, SegmentedControl, Spinner, CedulaInput } from '../components/ui';
-import { QrScannerPanel } from '../components/checkin/QrScannerPanel';
 import { parseBadgeScan } from '../lib/badgeQr';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { cn } from '../lib/utils';
+
+const QrScannerPanel = lazy(() =>
+  import('../components/checkin/QrScannerPanel').then((m) => ({ default: m.QrScannerPanel }))
+);
 type KioskMode = 'check-in' | 'check-out';
 
 export default function CheckIn() {
@@ -221,12 +224,20 @@ export default function CheckIn() {
         >
           <div className="space-y-4 text-center">
             {isKioskMode && !isLargeKioskLayout ? (
-              <QrScannerPanel
-                active={scannerActive}
-                paused={status !== 'idle'}
-                onScan={handleQrScan}
-                className="kiosk-scanner-region mx-auto max-h-[40dvh] min-h-[200px] w-full max-w-sm"
-              />
+              <Suspense
+                fallback={
+                  <div className="mx-auto flex h-[200px] max-w-sm items-center justify-center">
+                    <Spinner size="lg" />
+                  </div>
+                }
+              >
+                <QrScannerPanel
+                  active={scannerActive}
+                  paused={status !== 'idle'}
+                  onScan={handleQrScan}
+                  className="kiosk-scanner-region mx-auto max-h-[40dvh] min-h-[200px] w-full max-w-sm"
+                />
+              </Suspense>
             ) : !isKioskMode ? (
               <div
                 className={cn(
@@ -494,12 +505,20 @@ export default function CheckIn() {
             </section>
             <section className="hidden flex-col items-center justify-center bg-zinc-900/40 px-12 py-10 lg:flex">
               <div className="w-full max-w-md space-y-6">
-                <QrScannerPanel
-                  active={scannerActive}
-                  paused={status !== 'idle'}
-                  onScan={handleQrScan}
-                  className="h-72 w-full"
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex h-72 w-full items-center justify-center rounded-2xl bg-zinc-800/50">
+                      <Spinner size="lg" />
+                    </div>
+                  }
+                >
+                  <QrScannerPanel
+                    active={scannerActive}
+                    paused={status !== 'idle'}
+                    onScan={handleQrScan}
+                    className="h-72 w-full"
+                  />
+                </Suspense>
                 <div className="text-center">
                   <h2 className="mb-2 text-2xl font-bold">
                     {isCheckIn ? 'Escanee su carné' : 'Escanee para salir'}

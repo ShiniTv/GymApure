@@ -43,16 +43,12 @@
   };
 
   var savedTheme = safeGetItem('theme');
-  var path = window.location.pathname;
-  var isLanding = path === '/' || path === '/solicitar-demo';
   var theme =
     savedTheme === 'light' || savedTheme === 'dark'
       ? savedTheme
-      : isLanding
-        ? 'dark'
-        : window.matchMedia('(prefers-color-scheme: light)').matches
-          ? 'light'
-          : 'dark';
+      : window.matchMedia('(prefers-color-scheme: light)').matches
+        ? 'light'
+        : 'dark';
 
   var palette = safeGetItem('gymapure-palette');
   if (!PALETTES[palette]) palette = 'ember';

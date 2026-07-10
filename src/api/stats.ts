@@ -11,10 +11,10 @@ import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { getCachedAdminStats, setCachedAdminStats } from '../lib/adminStatsCache.ts';
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
 import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
+import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { getEquipmentStatsSummary } from '../lib/equipmentInspectionAlerts.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
-import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 
 const router = asyncRouter();
 
@@ -51,12 +51,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     yesterdayCheckIns,
     revenueThisMonth,
     revenueLastMonth,
-    revenueHistory,
-    revenueDaily,
-    expiringList,
-    expiredThisWeek,
-    lastDoorAlert,
-    equipmentStats,
   ] = await Promise.all([
     query<{ total: string | null }>(
       "SELECT SUM(amount_usd)::text AS total FROM payments WHERE status = 'approved'"
@@ -87,6 +81,9 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
          AND created_at < DATE_TRUNC('month', CURRENT_DATE)`
     ),
+  ]);
+
+  const [revenueHistory, revenueDaily] = await Promise.all([
     query<{ month: string; income: string }>(
       `SELECT
         TO_CHAR(created_at, 'YYYY-MM') AS month,
@@ -107,6 +104,9 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
       GROUP BY created_at::date
       ORDER BY date ASC`
     ),
+  ]);
+
+  const [expiringList, expiredThisWeek, lastDoorAlert, equipmentStats] = await Promise.all([
     getExpiringSubscriptions(alertDays),
     getExpiredThisWeekCount(),
     getLastDoorAlert(alertDays),

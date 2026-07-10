@@ -1,13 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
-import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useAuth } from './AuthContext';
 
 export interface MemberStats {
@@ -45,54 +38,40 @@ interface MemberStatsContextValue {
 
 const MemberStatsContext = createContext<MemberStatsContextValue | null>(null);
 
-let inflightRequest: Promise<MemberStats> | null = null;
-
 async function fetchMemberStats(): Promise<MemberStats> {
-  if (inflightRequest) return inflightRequest;
-
-  inflightRequest = apiFetch('/api/stats/member')
-    .then((res) => parseJsonResponse<MemberStats>(res))
-    .finally(() => {
-      inflightRequest = null;
-    });
-
-  return inflightRequest;
+  const res = await apiFetch('/api/stats/member');
+  return parseJsonResponse<MemberStats>(res);
 }
 
 export function MemberStatsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [stats, setStats] = useState<MemberStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data: stats,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['member-stats', user?.id],
+    queryFn: fetchMemberStats,
+    enabled: user?.role === 'member',
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+  });
 
   const refresh = useCallback(async () => {
-    if (user?.role !== 'member') return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchMemberStats();
-      setStats(data);
-    } catch (err) {
-      setStats(null);
-      setError(toDisplayErrorMessage(err, 'No se pudieron cargar tus datos. Intenta de nuevo.'));
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.role]);
-
-  useEffect(() => {
-    if (user?.role !== 'member') {
-      setStats(null);
-      setLoading(false);
-      return;
-    }
-
-    void refresh();
-  }, [user?.role, user?.id, refresh]);
+    await refetch();
+  }, [refetch]);
 
   const value = useMemo(
-    () => ({ stats, loading, error, refresh }),
-    [stats, loading, error, refresh]
+    () => ({
+      stats: stats ?? null,
+      loading: isLoading,
+      error: isError ? 'No se pudieron cargar tus datos. Intenta de nuevo.' : null,
+      refresh,
+    }),
+    [stats, isLoading, isError, refresh]
   );
 
   return <MemberStatsContext.Provider value={value}>{children}</MemberStatsContext.Provider>;

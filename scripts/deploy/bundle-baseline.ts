@@ -52,7 +52,9 @@ function main() {
   };
   const deltaPct = ((total - baseline.totalGzipBytes) / baseline.totalGzipBytes) * 100;
 
-  console.log(`Total JS gzip: ${(total / 1024).toFixed(1)} KB (baseline ${(baseline.totalGzipBytes / 1024).toFixed(1)} KB)`);
+  console.log(
+    `Total JS gzip: ${(total / 1024).toFixed(1)} KB (baseline ${(baseline.totalGzipBytes / 1024).toFixed(1)} KB)`
+  );
   console.log(`Delta: ${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}%`);
 
   if (deltaPct > MAX_REGRESSION_PCT) {

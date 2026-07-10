@@ -16,4 +16,5 @@ uploads/
 test-results/
 playwright-report/
 playwright/.cache/
+.lighthouse/
 supabase/.temp/

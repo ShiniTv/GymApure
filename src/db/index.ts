@@ -8,7 +8,7 @@ pg.types.setTypeParser(20, (value) => parseInt(value, 10));
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
-  max: 10,
+  max: 20,
   idleTimeoutMillis: 30_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
   connectionTimeoutMillis: env.NODE_ENV === 'development' ? 30_000 : 10_000,

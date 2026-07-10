@@ -68,7 +68,7 @@ export function AdminStatsProvider({ children }: { children: ReactNode }) {
     queryFn: fetchAdminStats,
     enabled: user?.role === 'admin',
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     staleTime: 10_000,
     placeholderData: keepPreviousData,
   });

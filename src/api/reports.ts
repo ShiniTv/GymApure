@@ -3,11 +3,38 @@ import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { parseDateParam, toCsv } from '../lib/csv.ts';
 import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
-import { sqlDateRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
 
 const router = asyncRouter();
 
-function sendCsv(res: import('express').Response, filename: string, headers: string[], rows: unknown[][]) {
+const MAX_EXPORT_ROWS = 50_000;
+const MAX_EXPORT_RANGE_DAYS = 366;
+
+function validateExportDateRange(from: string | null, to: string | null): string | null {
+  if (!from || !to) return null;
+
+  const fromMs = Date.parse(`${from}T00:00:00Z`);
+  const toMs = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) {
+    return 'Rango de fechas inválido';
+  }
+  if (toMs < fromMs) {
+    return 'La fecha final debe ser posterior a la inicial';
+  }
+
+  const diffDays = Math.ceil((toMs - fromMs) / (1000 * 60 * 60 * 24));
+  if (diffDays > MAX_EXPORT_RANGE_DAYS) {
+    return `El rango máximo de exportación es ${MAX_EXPORT_RANGE_DAYS} días`;
+  }
+
+  return null;
+}
+
+function sendCsv(
+  res: import('express').Response,
+  filename: string,
+  headers: string[],
+  rows: unknown[][]
+) {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.send(toCsv(headers, rows));
@@ -69,6 +96,12 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
 router.get('/payments', authorize(['admin']), async (req, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
+  const rangeError = validateExportDateRange(from, to);
+  if (rangeError) {
+    res.status(400).json({ error: rangeError });
+    return;
+  }
+
   const { sql, params } = buildDateFilter('p.created_at', from, to);
 
   try {
@@ -89,9 +122,17 @@ router.get('/payments', authorize(['admin']), async (req, res) => {
        FROM payments p
        JOIN users u ON u.id = p.user_id
        WHERE 1=1${sql}
-       ORDER BY p.created_at DESC`,
+       ORDER BY p.created_at DESC
+       LIMIT ${MAX_EXPORT_ROWS}`,
       params
     );
+
+    if (rows.length >= MAX_EXPORT_ROWS) {
+      res.status(413).json({
+        error: `La exportación supera el límite de ${MAX_EXPORT_ROWS.toLocaleString('es-VE')} filas. Acota el rango de fechas.`,
+      });
+      return;
+    }
 
     const csvRows = rows.map((r) => [
       r.id,
@@ -107,18 +148,23 @@ router.get('/payments', authorize(['admin']), async (req, res) => {
     ]);
 
     const suffix = from && to ? `${from}_${to}` : from || to || 'all';
-    sendCsv(res, `pagos-${suffix}.csv`, [
-      'ID',
-      'Fecha',
-      'Miembro',
-      'Email',
-      'Monto USD',
-      'Monto Bs',
-      'Tasa',
-      'Método',
-      'Referencia',
-      'Estado',
-    ], csvRows);
+    sendCsv(
+      res,
+      `pagos-${suffix}.csv`,
+      [
+        'ID',
+        'Fecha',
+        'Miembro',
+        'Email',
+        'Monto USD',
+        'Monto Bs',
+        'Tasa',
+        'Método',
+        'Referencia',
+        'Estado',
+      ],
+      csvRows
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -128,6 +174,12 @@ router.get('/payments', authorize(['admin']), async (req, res) => {
 router.get('/attendance', authorize(['admin']), async (req, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
+  const rangeError = validateExportDateRange(from, to);
+  if (rangeError) {
+    res.status(400).json({ error: rangeError });
+    return;
+  }
+
   const { sql, params } = buildDateFilter('a.check_in_time', from, to);
 
   try {
@@ -148,9 +200,17 @@ router.get('/attendance', authorize(['admin']), async (req, res) => {
        FROM attendance a
        JOIN users u ON u.id = a.user_id
        WHERE 1=1${sql}
-       ORDER BY a.check_in_time DESC`,
+       ORDER BY a.check_in_time DESC
+       LIMIT ${MAX_EXPORT_ROWS}`,
       params
     );
+
+    if (rows.length >= MAX_EXPORT_ROWS) {
+      res.status(413).json({
+        error: `La exportación supera el límite de ${MAX_EXPORT_ROWS.toLocaleString('es-VE')} filas. Acota el rango de fechas.`,
+      });
+      return;
+    }
 
     const csvRows = rows.map((r) => [
       r.id,
@@ -162,14 +222,12 @@ router.get('/attendance', authorize(['admin']), async (req, res) => {
     ]);
 
     const suffix = from && to ? `${from}_${to}` : from || to || 'all';
-    sendCsv(res, `asistencias-${suffix}.csv`, [
-      'ID',
-      'Miembro',
-      'Cédula',
-      'Entrada',
-      'Salida',
-      'Duración (min)',
-    ], csvRows);
+    sendCsv(
+      res,
+      `asistencias-${suffix}.csv`,
+      ['ID', 'Miembro', 'Cédula', 'Entrada', 'Salida', 'Duración (min)'],
+      csvRows
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -197,6 +255,7 @@ router.get('/members', authorize(['admin']), async (_req, res) => {
       ${activeSubscriptionLateralSql()}
       WHERE u.role = 'member'
       ORDER BY u.full_name ASC
+      LIMIT ${MAX_EXPORT_ROWS}
     `);
 
     const csvRows = rows.map((r) => [
@@ -211,17 +270,22 @@ router.get('/members', authorize(['admin']), async (_req, res) => {
       r.days_remaining ?? '',
     ]);
 
-    sendCsv(res, 'miembros.csv', [
-      'ID',
-      'Nombre',
-      'Email',
-      'Cédula',
-      'Teléfono',
-      'Estado cuenta',
-      'Membresía',
-      'Vence',
-      'Días restantes',
-    ], csvRows);
+    sendCsv(
+      res,
+      'miembros.csv',
+      [
+        'ID',
+        'Nombre',
+        'Email',
+        'Cédula',
+        'Teléfono',
+        'Estado cuenta',
+        'Membresía',
+        'Vence',
+        'Días restantes',
+      ],
+      csvRows
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

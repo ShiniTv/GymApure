@@ -1,6 +1,5 @@
 import { useEffect, useRef, useId, useCallback, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -17,27 +16,6 @@ interface ModalProps {
 }
 
 const maxWidthMap = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
-
-const overlayVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
-const dialogVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: 8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: 'spring' as const, duration: 0.3, bounce: 0.15 },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: 8,
-    transition: { duration: 0.15, ease: 'easeIn' },
-  },
-} satisfies Variants;
 
 export function Modal({
   open,
@@ -56,10 +34,21 @@ export function Modal({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     setPortalTarget(document.body);
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setVisible(false);
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -128,74 +117,65 @@ export function Modal({
     };
   }, [open, handleKeyDown, initialFocus]);
 
-  if (!portalTarget) return null;
+  if (!portalTarget || !open) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-[80] overflow-y-auto bg-black/50 backdrop-blur-sm"
-          variants={overlayVariants}
-          initial="hidden"
-          animate="visible"
-          exit="hidden"
-          transition={{ duration: 0.15 }}
-        >
-          <div className="flex min-h-full items-center justify-center p-4 py-6 sm:py-4">
-            <motion.div
-              ref={dialogRef}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby={titleId}
-              aria-describedby={contentId}
-              tabIndex={-1}
-              variants={dialogVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className={cn(
-                'my-auto w-full rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900',
-                scrollable
-                  ? 'flex max-h-[90dvh] flex-col overflow-hidden'
-                  : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-4 sm:p-5',
-                maxWidthMap[maxWidth],
-                className
-              )}
-            >
-              <div
-                className={cn(
-                  'flex shrink-0 items-center justify-between gap-3',
-                  scrollable
-                    ? 'border-b border-zinc-100 px-4 py-3 sm:px-5 dark:border-zinc-800'
-                    : 'mb-4'
-                )}
-              >
-                <h2
-                  id={titleId}
-                  className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
-                >
-                  {title}
-                </h2>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-                  aria-label="Cerrar"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <div
-                id={contentId}
-                className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-4 sm:p-5')}
-              >
-                {children}
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
+    <div
+      className={cn(
+        'fixed inset-0 z-[80] overflow-y-auto bg-black/50 backdrop-blur-sm transition-opacity duration-150',
+        visible ? 'opacity-100' : 'opacity-0'
       )}
-    </AnimatePresence>,
+    >
+      <div className="flex min-h-full items-center justify-center p-4 py-6 sm:py-4">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={contentId}
+          tabIndex={-1}
+          className={cn(
+            'my-auto w-full rounded-2xl border border-zinc-200 bg-white shadow-2xl transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900',
+            visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
+            scrollable
+              ? 'flex max-h-[90dvh] flex-col overflow-hidden'
+              : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-4 sm:p-5',
+            maxWidthMap[maxWidth],
+            className
+          )}
+        >
+          <div
+            className={cn(
+              'flex shrink-0 items-center justify-between gap-3',
+              scrollable
+                ? 'border-b border-zinc-100 px-4 py-3 sm:px-5 dark:border-zinc-800'
+                : 'mb-4'
+            )}
+          >
+            <h2
+              id={titleId}
+              className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
+            >
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              aria-label="Cerrar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div
+            id={contentId}
+            className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-4 sm:p-5')}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>,
     portalTarget
   );
 }

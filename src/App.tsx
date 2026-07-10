@@ -1,20 +1,24 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
-import { AdminStatsProvider } from './context/AdminStatsContext';
-import { MemberStatsProvider } from './context/MemberStatsContext';
+import AuthenticatedShell from './components/AuthenticatedShell';
 import { SocketProvider } from './context/SocketContext';
-import Layout from './components/Layout';
 import { Spinner } from './components/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
-import Login from './pages/Login';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import NotFound from './pages/NotFound';
-import { getDefaultRouteForRole } from './lib/roles';
+import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
+import { loadAppFonts } from './lib/fonts';
+
+const PUBLIC_AUTH_PATHS = new Set([
+  '/',
+  '/solicitar-demo',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+]);
 
 function reportBoundaryError(error: Error) {
   void import('@sentry/react')
@@ -52,8 +56,10 @@ const Settings = lazy(() => import('./pages/Settings'));
 const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
-const Landing = lazy(() => import('./pages/Landing'));
-const DemoRequest = lazy(() => import('./pages/DemoRequest'));
+const Login = lazy(() => import('./pages/Login'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
   return (
@@ -78,7 +84,7 @@ function ProtectedRoute({
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading && !user) return <PageLoader />;
 
   if (!user) return <Navigate to="/login" />;
 
@@ -108,23 +114,16 @@ function RegisterRoute() {
   return <Register />;
 }
 
-function LandingRoute() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) return <PageLoader />;
-  if (user) return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
-  return <Landing />;
-}
-
-function DemoRequestRoute() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) return <PageLoader />;
-  if (user) return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
-  return <DemoRequest />;
-}
-
 function AppRoutes() {
+  const location = useLocation();
+
+  useEffect(() => {
+    onRouteChangeForServiceWorker(location.pathname);
+    if (!PUBLIC_AUTH_PATHS.has(location.pathname)) {
+      loadAppFonts();
+    }
+  }, [location.pathname]);
+
   return (
     <ErrorBoundary
       onError={(error) => {
@@ -134,8 +133,8 @@ function AppRoutes() {
       <ProgressBar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<LandingRoute />} />
-          <Route path="/solicitar-demo" element={<DemoRequestRoute />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/solicitar-demo" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -160,19 +159,13 @@ function AppRoutes() {
           <Route
             element={
               <ProtectedRoute>
-                <SocketProvider>
-                  <AdminStatsProvider>
-                    <MemberStatsProvider>
-                      <ErrorBoundary
-                        onError={(error) => {
-                          reportBoundaryError(error);
-                        }}
-                      >
-                        <Layout />
-                      </ErrorBoundary>
-                    </MemberStatsProvider>
-                  </AdminStatsProvider>
-                </SocketProvider>
+                <ErrorBoundary
+                  onError={(error) => {
+                    reportBoundaryError(error);
+                  }}
+                >
+                  <AuthenticatedShell />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >

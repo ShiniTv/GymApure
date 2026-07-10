@@ -49,11 +49,12 @@ export function ProgressBar() {
   }, [location.pathname, location.search, location.key]);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] h-[3px] pointer-events-none">
+    <div className="pointer-events-none fixed top-0 right-0 left-0 z-[100] h-[3px]">
       <div
         ref={ref}
-        className="h-full bg-brand transition-none"
-        style={{ width: '0%', opacity: 0 }}
+        className="bg-brand h-full transition-none"
+        style={{ width: '0%', opacity: '0' }}
+        suppressHydrationWarning
       />
     </div>
   );
