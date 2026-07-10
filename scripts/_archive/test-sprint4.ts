@@ -105,8 +105,8 @@ async function main() {
 
   const badChange = await api('POST', '/api/auth/change-password', {
     current_password: 'wrong-password',
-    new_password: 'newpassword123',
-    confirm_password: 'newpassword123',
+    new_password: 'WrongPass123!',
+    confirm_password: 'WrongPass123!',
   });
   ok('Rechaza contraseña actual incorrecta', badChange.res.status === 401);
 
