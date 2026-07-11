@@ -25,6 +25,8 @@
     "test:chat-checklist": "tsx scripts/test/test-chat-checklist.ts",
     "test:alerts": "tsx scripts/test/verify-alerts-panel.ts",
     "verify:local-e2e": "tsx scripts/test/verify-local-e2e.ts",
+    "test:full-system": "tsx scripts/test/run-full-system-test.ts",
+    "test:full-system:fast": "tsx scripts/test/run-full-system-test.ts -- --fast --skip-checklists",
     "pr:open": "powershell -ExecutionPolicy Bypass -File scripts/deploy/open-github-pr.ps1",
     "test:sprint1": "tsx scripts/_archive/test-sprint1.ts",
     "test:sprint2": "tsx scripts/_archive/test-sprint2.ts",

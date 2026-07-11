@@ -42,6 +42,8 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `npm run test:ux:browser`          | Playwright: 19 specs (mobile iPhone 14 + desktop 1280px + tablet iPad 834px) | Sí         |
 | `npm run test:ux:browser:ui`       | Playwright con UI de depuración                                              | Sí         |
 | `npm run verify:local-e2e`         | Levanta `dev`, espera `/api/health`, ejecuta `test:e2e`                      | Automático |
+| `npm run test:full-system`         | **Test integral**: 2 meses simulados, 107 usuarios, verificación completa    | Sí         |
+| `npm run test:full-system:fast`    | Test integral rápido (2 semanas, sin checklists)                             | Sí         |
 
 ### Sprints individuales (debug)
 
