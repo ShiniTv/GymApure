@@ -345,10 +345,10 @@ export async function verifyFeaturesViaApi(
   const settings = await client.request('GET', '/api/settings/expiry');
   check('Settings vencimiento', settings.ok);
 
-  const nutritionOverview = await client.request('GET', '/api/nutrition/admin/overview');
+  const nutritionOverview = await client.request('GET', '/api/admin/overview');
   check('Overview nutrición admin', nutritionOverview.ok);
 
-  const equipment = await client.request('GET', '/api/equipment/inventory');
+  const equipment = await client.request('GET', '/api/equipment/');
   check('Inventario equipamiento', equipment.ok);
 
   await client.logout();

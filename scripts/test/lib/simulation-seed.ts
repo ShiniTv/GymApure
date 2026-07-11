@@ -474,7 +474,7 @@ export async function cleanupSimulationData(): Promise<void> {
   await query(`DELETE FROM workout_sessions WHERE user_id = ANY($1::int[])`, [ids]);
   await query(`DELETE FROM attendance WHERE user_id = ANY($1::int[])`, [ids]);
   await query(`DELETE FROM nutrition_log_entries WHERE user_id = ANY($1::int[])`, [ids]);
-  await query(`DELETE FROM nutrition_plans WHERE user_id = ANY($1::int[]) OR trainer_id = ANY($1::int[])`);
+  await query(`DELETE FROM nutrition_plans WHERE user_id = ANY($1::int[]) OR trainer_id = ANY($1::int[])`, [ids]);
   await query(`DELETE FROM user_measurements WHERE user_id = ANY($1::int[])`, [ids]);
   await query(`DELETE FROM member_health_profiles WHERE user_id = ANY($1::int[])`, [ids]);
   await query(`DELETE FROM user_routines WHERE user_id = ANY($1::int[]) OR assigned_by = ANY($1::int[])`, [ids]);
