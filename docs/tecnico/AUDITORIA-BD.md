@@ -134,3 +134,48 @@ npm run db:audit:prod
 - [Migraciones y BD](./MIGRACIONES-Y-BD.md)
 - [Variables de entorno](./VARIABLES-ENTORNO.md)
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
+
+---
+
+## Reporte en vivo (2026-07-11)
+
+Auditoría ejecutada vía Supabase MCP en ambos proyectos.
+
+| Proyecto                         | Ref                    | Usuarios | Pagos | Suscripciones |
+| -------------------------------- | ---------------------- | -------- | ----- | ------------- |
+| CARIBEAN GYM Project (dev local) | `ffjwvlcwhyskddqqojnp` | 4        | 1     | 1             |
+| CARIBEAN GYM Producción (Render) | `sqjyxmbtgmiorckigrrg` | 187      | 128   | 187           |
+
+### Acciones aplicadas
+
+1. Migración `drop_demo_requests` — tabla huérfana eliminada en ambos entornos
+2. Migración `cleanup_legacy_settings` — columna `image_url` eliminada; keys legacy purgadas
+3. Migración `ensure_rls_lockdown_all_tables` — política `backend_only` en **todas** las tablas public
+4. `schema_migrations` actualizado a **39** archivos en ambos entornos
+5. Tokens de reset expirados purgados en dev (prod: 0 tokens)
+
+### Estado post-remediación
+
+| Check                           | Dev     | Prod    |
+| ------------------------------- | ------- | ------- |
+| Migraciones al día              | 39/39   | 39/39   |
+| Subscriptions activas expiradas | 0       | 0       |
+| Supabase security advisors      | 0 lints | 0 lints |
+| `demo_requests` existe          | No      | No      |
+| `equipment_catalog.image_url`   | No      | No      |
+
+### Tablas más grandes (prod)
+
+| Tabla         | Filas | Tamaño |
+| ------------- | ----- | ------ |
+| attendance    | 376   | 200 kB |
+| users         | 187   | 184 kB |
+| exercises     | 76    | 152 kB |
+| subscriptions | 187   | 136 kB |
+| payments      | 128   | 112 kB |
+
+### Pendiente manual
+
+- Ejecutar `npm run db:audit-storage:prod` con credenciales locales para auditar buckets Storage
+- Revisar storage huérfanos antes de `db:storage-cleanup --apply` en prod
+- Mergear [PR #5](https://github.com/ShiniTv/caribean-gym/pull/5) y desplegar en Render

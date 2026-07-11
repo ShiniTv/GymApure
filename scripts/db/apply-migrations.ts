@@ -75,6 +75,10 @@ const MIGRATION_MARKERS: Record<string, string> = {
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'equipment_catalog' AND column_name = 'image_url'
     )`,
+  '20260711100000_ensure_rls_lockdown_all_tables.sql': `
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'gym_equipment' AND policyname = 'backend_only'
+    LIMIT 1`,
 };
 
 /** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */
