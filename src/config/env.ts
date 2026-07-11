@@ -38,6 +38,7 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
+  ENABLE_HIBP_CHECK: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -99,5 +100,7 @@ function resolveAllowPublicRegister(): boolean {
   return env.NODE_ENV !== 'production';
 }
 
-/** When false, POST /api/auth/register returns 403 (default: off in production). */
+/** When true, reject passwords found in Have I Been Pwned (requires outbound HTTPS). */
+export const enableHibpCheck = parseEnvBoolean(parsedEnv.ENABLE_HIBP_CHECK, false);
+
 export const allowPublicRegister = resolveAllowPublicRegister();

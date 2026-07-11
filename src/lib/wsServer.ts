@@ -26,7 +26,7 @@ export function initWebSocket(httpServer: HttpServer) {
   io.use(async (socket, next) => {
     try {
       const cookies = cookie.parse(socket.handshake.headers.cookie || '');
-      const token = cookies.token || socket.handshake.auth?.token;
+      const token = cookies.token;
       if (!token || typeof token !== 'string') {
         return next(new Error('Token requerido'));
       }

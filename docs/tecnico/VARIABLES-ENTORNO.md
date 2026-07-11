@@ -51,6 +51,12 @@ Referencia completa basada en [`.env.example`](../../.env.example). Plantilla co
 | ----------------------- | ---------------------------------------------------------------- |
 | `ALLOW_PUBLIC_REGISTER` | `true` permite `/register` (dev); desactivado en prod            |
 | `CORS_ORIGINS`          | Orígenes separados por coma si API y frontend en hosts distintos |
+| `ENABLE_HIBP_CHECK`     | `true` rechaza contraseñas filtradas (Have I Been Pwned, HTTPS)   |
+| `REDIS_URL`             | Rate limit y bloqueo de login distribuido (recomendado multi-instancia) |
+
+### CSRF (cross-origin)
+
+Si `CORS_ORIGINS` define orígenes externos, las rutas protegidas exigen cookie `csrf_token` + header `X-CSRF-Token` en `POST`/`PUT`/`PATCH`/`DELETE`. En despliegues **same-origin** en Render (sin `CORS_ORIGINS`), la protección CSRF se omite en producción; el frontend sigue enviando el token cuando la cookie existe.
 
 ---
 

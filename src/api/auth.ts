@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { asyncRouter } from './middleware/asyncRouter.ts';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { query } from '../db/index.ts';
 import { authCookieOptions, clearAuthCookieOptions } from '../config/cookies.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import {
+  assertPasswordNotBreached,
   changePasswordSchema,
   formatZodError,
   forgotPasswordSchema,
@@ -39,6 +39,12 @@ import {
   signMfaChallengeToken,
   verifyMfaToken,
 } from '../lib/mfa.ts';
+import {
+  hashPassword,
+  passwordHashNeedsRehash,
+  verifyPassword,
+} from '../lib/passwordHash.ts';
+import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import mfaRoutes from './mfa.ts';
 
 const router = asyncRouter();
@@ -88,7 +94,7 @@ router.post(
     );
     const user = rows[0];
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await verifyPassword(password, user.password))) {
       await recordLoginAttempt(normalizedEmail, false);
       await logAudit(null, 'auth.login_failed', {
         email: normalizedEmail,
@@ -114,6 +120,11 @@ router.post(
 
     const userId = Number(user.id);
 
+    if (passwordHashNeedsRehash(user.password)) {
+      const upgradedHash = await hashPassword(password);
+      await query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, userId]);
+    }
+
     if (user.mfa_enabled && user.mfa_secret && isMfaStaffRole(user.role)) {
       const mfaChallengeToken = signMfaChallengeToken(userId, normalizedEmail, user.role);
       res.json({
@@ -132,6 +143,7 @@ router.post(
     }
 
     res.cookie('token', session.token, authCookieOptions);
+    setCsrfCookie(res);
     await logAudit(userId, 'auth.login', { ip: clientIp, previous_sessions_invalidated: true });
 
     res.json({
@@ -177,7 +189,13 @@ router.post(
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const breachError = await assertPasswordNotBreached(password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(password);
     const insert = await query<{ id: number | string; token_version: number | string }>(
       `INSERT INTO users (full_name, email, password, role, cedula, phone, status)
        VALUES ($1, $2, $3, 'member', $4, $5, 'active')
@@ -195,6 +213,7 @@ router.post(
     });
 
     res.cookie('token', token, authCookieOptions);
+    setCsrfCookie(res);
     await logAudit(id, 'auth.register', { email: normalizedEmail });
     void sendEmail({
       to: normalizedEmail,
@@ -222,6 +241,7 @@ router.post(
     }
 
     res.clearCookie('token', clearAuthCookieOptions);
+    clearCsrfCookie(res);
     res.json({ message: 'Sesión cerrada' });
   })
 );
@@ -278,6 +298,7 @@ router.post(
     });
 
     res.cookie('token', newToken, authCookieOptions);
+    setCsrfCookie(res);
     res.json({
       user: {
         id: result.user.id,
@@ -310,17 +331,23 @@ router.post(
       return;
     }
 
-    if (!(await bcrypt.compare(current_password, rows[0].password))) {
+    if (!(await verifyPassword(current_password, rows[0].password))) {
       res.status(401).json({ error: 'Contraseña actual incorrecta' });
       return;
     }
 
-    if (await bcrypt.compare(new_password, rows[0].password)) {
+    if (await verifyPassword(new_password, rows[0].password)) {
       res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const breachError = await assertPasswordNotBreached(new_password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(new_password);
     await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
       hashedPassword,
       userId,
@@ -329,6 +356,7 @@ router.post(
     await logAudit(userId, 'auth.change_password', {});
 
     res.clearCookie('token', clearAuthCookieOptions);
+    clearCsrfCookie(res);
     res.json({
       success: true,
       message: 'Contraseña actualizada. Inicia sesión de nuevo.',
@@ -414,7 +442,13 @@ router.post(
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const breachError = await assertPasswordNotBreached(new_password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(new_password);
     await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
       hashedPassword,
       record.user_id,

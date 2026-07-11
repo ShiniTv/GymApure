@@ -1,11 +1,12 @@
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logAudit } from '../lib/audit.ts';
-import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
+import { createUserSchema, formatZodError, assertPasswordNotBreached } from '../lib/passwordPolicy.ts';
+import { hashPassword } from '../lib/passwordHash.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { isTrainerLevel, isTrainingShift } from '../lib/trainingShift.ts';
 
@@ -68,13 +69,16 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req, res
       conditions.push(`tp.level = $${params.length}`);
     }
 
-    const search = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+    const search = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     if (search) {
-      params.push(`%${search}%`);
-      const idx = params.length;
-      conditions.push(
-        `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(tp.specialty, '')) LIKE $${idx})`
-      );
+      const pattern = toLikeContainsPattern(search);
+      if (pattern) {
+        params.push(pattern);
+        const idx = params.length;
+        conditions.push(
+          `(LOWER(u.full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(tp.specialty, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+        );
+      }
     }
 
     const whereExtra = conditions.length > 0 ? ` AND ${conditions.join(' AND ')}` : '';
@@ -135,7 +139,13 @@ router.post('/', authorize(['admin']), asyncHandler(async (req: AuthRequest, res
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const breachError = await assertPasswordNotBreached(password);
+  if (breachError) {
+    res.status(400).json({ error: breachError });
+    return;
+  }
+
+  const hashedPassword = await hashPassword(password);
 
   const userResult = await query<{ id: number }>(
     `INSERT INTO users (full_name, email, cedula, role, password, status)

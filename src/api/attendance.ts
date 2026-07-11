@@ -2,6 +2,7 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { RECEPTION_ONLY } from '../lib/roles.ts';
 
 const router = asyncRouter();
@@ -62,8 +63,11 @@ router.get('/today', authorize(RECEPTION_ONLY), async (req, res) => {
     const params: string[] = [];
     let searchSql = '';
     if (q) {
-      params.push(`%${q.toLowerCase()}%`);
-      searchSql = ` AND (LOWER(u.full_name) LIKE $1 OR LOWER(COALESCE(u.cedula, '')) LIKE $1)`;
+      const pattern = toLikeContainsPattern(q);
+      if (pattern) {
+        params.push(pattern);
+        searchSql = ` AND (LOWER(u.full_name) LIKE $1${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $1${LIKE_ESCAPE_CLAUSE})`;
+      }
     }
 
     const { rows } = await query<{

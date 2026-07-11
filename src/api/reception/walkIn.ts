@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import type { Response } from 'express';
 import { withTransaction } from '../../db/index.ts';
@@ -8,6 +7,7 @@ import { canonicalCedula, cedulaWhereClause } from '../../lib/cedulaUtils.ts';
 import { assignSubscription } from '../../lib/subscriptions.ts';
 import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
+import { hashPassword } from '../../lib/passwordHash.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
 import { isTrainingShift } from '../../lib/trainingShift.ts';
@@ -35,7 +35,7 @@ export const walkInSchema = z.object({
 
 function generateUnusablePasswordHash(): Promise<string> {
   const randomSecret = crypto.randomBytes(32).toString('hex');
-  return bcrypt.hash(randomSecret, 10);
+  return hashPassword(randomSecret);
 }
 
 export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {

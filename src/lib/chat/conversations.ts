@@ -1,5 +1,6 @@
 import { query } from '../../db/index.ts';
 import { toDbId } from '../ids.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../sqlLike.ts';
 import type { ChatConversationListItem, ChatConversationRow } from './types.ts';
 
 function mapConversationRow(row: ChatConversationRow): ChatConversationRow {
@@ -64,8 +65,13 @@ export async function listStaffConversations(
   const conditions: string[] = [`u.role = 'member'`];
 
   if (search?.trim()) {
-    params.push(`%${search.trim()}%`);
-    conditions.push(`(u.full_name ILIKE $${params.length} OR u.cedula ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+    const pattern = toLikeContainsPattern(search);
+    if (pattern) {
+      params.push(pattern);
+      conditions.push(
+        `(u.full_name ILIKE $${params.length}${LIKE_ESCAPE_CLAUSE} OR u.cedula ILIKE $${params.length}${LIKE_ESCAPE_CLAUSE} OR u.email ILIKE $${params.length}${LIKE_ESCAPE_CLAUSE})`
+      );
+    }
   }
 
   if (options?.trainerId) {

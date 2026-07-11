@@ -8,8 +8,11 @@ const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
 
 let cookie = '';
+let csrfToken = '';
 let passed = 0;
 let failed = 0;
+
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function ok(name: string, cond: boolean, detail?: string) {
   if (cond) {
@@ -25,32 +28,44 @@ async function api(
   method: string,
   path: string,
   body?: unknown,
-  extraHeaders?: Record<string, string>
+  extraHeaders?: Record<string, string>,
+  options?: { skipCsrf?: boolean }
 ) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(cookie ? { Cookie: cookie } : {}),
+    ...extraHeaders,
+  };
+  if (csrfToken && MUTATING_METHODS.has(method) && !options?.skipCsrf) {
+    headers['x-csrf-token'] = csrfToken;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-      ...extraHeaders,
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
   return { res, data };
 }
 
-function saveCookie(res: Response) {
+function saveCookies(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
+  for (const entry of cookies) {
+    if (entry.startsWith('token=')) cookie = entry.split(';')[0];
+    if (entry.startsWith('csrf_token=')) {
+      const raw = entry.split(';')[0].slice('csrf_token='.length);
+      csrfToken = decodeURIComponent(raw);
+    }
+  }
 }
 
 async function loginAs(email: string, password = DEMO_PASSWORD!) {
   cookie = '';
+  csrfToken = '';
   const login = await api('POST', '/api/auth/login', { email, password });
-  saveCookie(login.res);
+  saveCookies(login.res);
   return login.res.status === 200;
 }
 
@@ -261,6 +276,56 @@ async function main() {
         'x-cron-secret': process.env.CRON_SECRET,
       });
       ok('Cron con CRON_SECRET válido → 200', cronOk.res.status === 200);
+    }
+
+    // CSRF en rutas protegidas (dev o cuando CORS_ORIGINS está definido)
+    cookie = '';
+    csrfToken = '';
+    ok('Login admin para CSRF', await loginAs('admin@gym.com'));
+    ok('Login establece cookie csrf_token', csrfToken.length > 0);
+
+    const csrfBlocked = await api(
+      'POST',
+      '/api/users',
+      {
+        full_name: 'CSRF Block Test',
+        email: `csrf-block-${Date.now()}@test.local`,
+        password: 'CsrfBlock123!',
+        cedula: `V-${80000000 + Math.floor(Math.random() * 999999)}`,
+        role: 'member',
+      },
+      undefined,
+      { skipCsrf: true }
+    );
+    const csrfEnforced =
+      process.env.NODE_ENV !== 'production' || Boolean(process.env.CORS_ORIGINS?.trim());
+    ok(
+      'POST protegido sin X-CSRF-Token → 403 cuando CSRF aplica',
+      !csrfEnforced || csrfBlocked.res.status === 403,
+      `status ${csrfBlocked.res.status}`
+    );
+
+    if (process.env.CORS_ORIGINS?.trim()) {
+      const allowed = process.env.CORS_ORIGINS.split(',')[0]?.trim();
+      const corsRes = await fetch(`${BASE}/api/health`, {
+        headers: { Origin: 'https://evil.example.test' },
+      });
+      const acao = corsRes.headers.get('Access-Control-Allow-Origin');
+      ok(
+        'CORS: origen no permitido no recibe Access-Control-Allow-Origin',
+        acao !== 'https://evil.example.test'
+      );
+      if (allowed) {
+        const allowedRes = await fetch(`${BASE}/api/health`, {
+          headers: { Origin: allowed },
+        });
+        ok(
+          'CORS: origen permitido recibe Access-Control-Allow-Origin',
+          allowedRes.headers.get('Access-Control-Allow-Origin') === allowed
+        );
+      }
+    } else {
+      console.log('  SKIP CORS negativo (CORS_ORIGINS no configurado en servidor)');
     }
   }
 

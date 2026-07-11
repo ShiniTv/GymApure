@@ -6,6 +6,8 @@ import { logAudit } from '../lib/audit.ts';
 import { authCookieOptions } from '../config/cookies.ts';
 import { createLoginSession } from '../lib/sessionAuth.ts';
 import { emitToUser } from '../lib/wsServer.ts';
+import { setCsrfCookie } from '../lib/csrf.ts';
+import { verifyPassword } from '../lib/passwordHash.ts';
 import {
   buildMfaQrDataUrl,
   disableMfa,
@@ -69,6 +71,7 @@ router.post(
     }
 
     res.cookie('token', session.token, authCookieOptions);
+    setCsrfCookie(res);
     await logAudit(challenge.userId, 'auth.login', { ip: clientIp, mfa: true });
 
     res.json({
@@ -158,12 +161,11 @@ router.post(
       return;
     }
 
-    const bcrypt = await import('bcryptjs');
     const { query } = await import('../db/index.ts');
     const { rows } = await query<{ password: string }>('SELECT password FROM users WHERE id = $1', [
       req.user!.id,
     ]);
-    if (!rows[0] || !(await bcrypt.compare(parsed.data.password, rows[0].password))) {
+    if (!rows[0] || !(await verifyPassword(parsed.data.password, rows[0].password))) {
       res.status(401).json({ error: 'Contraseña incorrecta' });
       return;
     }
