@@ -58,6 +58,7 @@ const CHECKLIST_SCRIPTS = [
   'test:exchange-rate',
   'test:trainer-shifts',
   'test:routine-exercises',
+  'test:email-checklist',
   'test:ux',
 ] as const;
 
