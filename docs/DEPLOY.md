@@ -117,10 +117,12 @@ Configura en Render Dashboard → Environment:
 | `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                  |
 | `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                      |
 | `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él |
-| `REDIS_URL`                      | Recomendada | Upstash Redis u otro Redis — rate limit y lockout distribuidos      |
+| `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in |
+| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias    |
 | `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                      |
+| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)              |
+| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL               |
 | `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)       |
-| `PUBLIC_APP_URL`                 | Recomendada | `https://caribean-gym.onrender.com` — enlaces en correos y walk-in    |
 | `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                      |
 | `SMTP_PORT`                      | Recomendada | `587`                                                                 |
 | `SMTP_SECURE`                    | Recomendada | `false`                                                               |
@@ -129,7 +131,16 @@ Configura en Render Dashboard → Environment:
 | `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                               |
 | `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                   |
 
-**Redis (`REDIS_URL`):** recomendado si escalas a más de una instancia en Render. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar o no se comparten entre instancias). En [Upstash](https://upstash.com) crea una base Redis y pega la URL en Render.
+**Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
+
+1. [Upstash](https://upstash.com) → **Create Database** → región cercana a Render
+2. Copia la URL `rediss://…` (TLS)
+3. En Render → Environment → `REDIS_URL=<url>`
+4. Redeploy del Web Service
+
+**`PUBLIC_APP_URL`:** obligatorio en producción. Debe ser la URL HTTPS pública final (Render o dominio custom). Se usa en enlaces de recuperar contraseña y walk-in. Si cambias a dominio custom, actualiza esta variable y redeploy.
+
+**`ENABLE_HIBP_CHECK`:** opcional. Con `true`, el registro y cambio de contraseña consultan Have I Been Pwned. Si la API no responde en producción, la operación se rechaza (fail-closed).
 
 Tras configurar SMTP, verifica con sesión admin:
 
@@ -222,13 +233,15 @@ Si el BCV no responde, el admin puede ingresar un override manual en **Configura
 
 ## Seguridad post-deploy
 
-### MFA para staff (admin y recepcionista)
+### MFA para staff (admin, recepcionista y entrenador)
 
 1. Inicia sesión como admin o recepcionista
 2. Ve a **Seguridad MFA** en el menú (ruta `/security`)
 3. Pulsa **Configurar MFA** → escanea el QR con Google Authenticator, Authy u otra app TOTP
 4. Introduce el código de 6 dígitos y activa
-5. A partir de entonces, el login pedirá email + contraseña + código MFA
+5. A partir de entonces, el login pedirá email + contraseña + código MFA (solo si MFA está activo)
+
+**CSRF:** las rutas protegidas con mutaciones exigen cookie `csrf_token` + header `X-CSRF-Token`. El frontend lo envía automáticamente; no requiere configuración extra en Render same-origin.
 
 API relacionada (referencia):
 
@@ -279,7 +292,9 @@ Seguridad (código)
 [x] WebSocket usa verifySessionToken + CORS restringido
 [x] Cron externo funciona con x-cron-secret (sin JWT)
 [x] Walk-in no devuelve contraseñas en texto plano
-[x] MFA TOTP disponible para admin/recepcionista
+[x] MFA TOTP disponible para admin/recepcionista/entrenador
+[x] CSRF en rutas protegidas; bcrypt cost 12 con rehash automático
+[x] PUBLIC_APP_URL obligatorio en producción
 
 Supabase producción
 [ ] Proyecto nuevo creado (separado de dev)
@@ -293,8 +308,8 @@ Render
 [ ] DATABASE_URL pooler :6543
 [ ] SUPABASE_SERVICE_ROLE_KEY configurado
 [ ] CRON_SECRET configurado (obligatorio)
-[ ] REDIS_URL configurado (recomendado multi-instancia)
-[ ] PUBLIC_APP_URL apunta al dominio real
+[ ] PUBLIC_APP_URL = https://<dominio-real> (obligatorio)
+[ ] REDIS_URL configurado (recomendado)
 [ ] Plan Starter
 [ ] GET /api/health → 200 + db up
 [ ] GET /api/health/ops (admin) → email configured
@@ -359,7 +374,7 @@ Sin `SUPABASE_SERVICE_ROLE_KEY` válida: upload multipart clásico a `uploads/vi
 | Síntoma                          | Causa probable                                                               | Solución                                                               |
 | -------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Build `Exited with status 127`   | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build`                 |
-| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY` o `CRON_SECRET`                            | Configurar ambas en Render; obligatorias en prod                       |
+| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` o `PUBLIC_APP_URL` (HTTPS) | Configurar las tres en Render; obligatorias en prod                    |
 | `db: down` en health             | `DATABASE_URL` incorrecta o pooler caído                                     | Verificar credenciales y puerto 6543                                   |
 | Cron externo responde 403         | `CRON_SECRET` incorrecto o no definido en el Cron Job de Render              | Misma variable en Web Service y Cron Job; header `x-cron-secret`       |
 | Login staff pide código extra     | MFA activo para admin/recepcionista                                          | Usar app TOTP; configurar en `/security`                               |
