@@ -27,13 +27,15 @@ function withCsrfHeaders(init: RequestInit = {}): RequestInit {
 }
 
 let authBootstrapComplete = false;
-let onUnauthorized: (() => void) | null = null;
+let onUnauthorized: ((reason: 'revoked' | 'inactive') => void) | null = null;
 
 export function setAuthBootstrapComplete(complete: boolean) {
   authBootstrapComplete = complete;
 }
 
-export function registerUnauthorizedHandler(handler: (() => void) | null) {
+export function registerUnauthorizedHandler(
+  handler: ((reason: 'revoked' | 'inactive') => void) | null
+) {
   onUnauthorized = handler;
 }
 
@@ -48,15 +50,26 @@ function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
 }
 
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then((res) => {
-    if (
-      res.status === 401 &&
-      authBootstrapComplete &&
-      onUnauthorized &&
-      shouldHandleUnauthorized(input)
-    ) {
-      onUnauthorized();
+  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then(async (res) => {
+    if (!authBootstrapComplete || !onUnauthorized || !shouldHandleUnauthorized(input)) {
+      return res;
     }
+
+    if (res.status === 401) {
+      onUnauthorized('revoked');
+      return res;
+    }
+
+    if (res.status === 403) {
+      const body = (await res
+        .clone()
+        .json()
+        .catch(() => ({}))) as { code?: string };
+      if (body.code === 'account_inactive') {
+        onUnauthorized('inactive');
+      }
+    }
+
     return res;
   });
 }

@@ -75,6 +75,25 @@ export function sessionFailureStatus(result: SessionVerifyResult): 401 | 403 | n
   return result.reason === 'inactive' ? 403 : 401;
 }
 
+export function sessionFailureCode(
+  result: Extract<SessionVerifyResult, { type: 'failure' }>
+): string {
+  if (result.reason === 'inactive') return 'account_inactive';
+  if (result.reason === 'revoked') return 'session_revoked';
+  return 'session_invalid';
+}
+
+export function sessionFailurePayload(result: Extract<SessionVerifyResult, { type: 'failure' }>) {
+  const status = sessionFailureStatus(result)!;
+  return {
+    status,
+    body: {
+      error: status === 403 ? 'Cuenta inactiva. Contacta al administrador.' : 'Sesión expirada',
+      code: sessionFailureCode(result),
+    },
+  };
+}
+
 export async function verifySessionToken(token: string): Promise<SessionVerifyResult> {
   let decoded: JwtUserPayload;
   try {

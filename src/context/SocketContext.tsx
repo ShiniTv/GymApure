@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { dispatchSessionRevoked } from '../lib/sessionEvents';
+import { dispatchSessionRevoked, SESSION_MESSAGES } from '../lib/sessionEvents';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface SocketContextValue {
@@ -60,9 +60,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       });
 
-      s.on('session:revoked', () => {
+      s.on('session:revoked', (payload?: { reason?: string }) => {
+        const message =
+          payload?.reason === 'account_inactive'
+            ? SESSION_MESSAGES.accountInactive
+            : SESSION_MESSAGES.loginElsewhere;
         dispatchSessionRevoked({
-          message: 'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.',
+          message,
+          reason: payload?.reason === 'account_inactive' ? 'account_inactive' : 'login_elsewhere',
         });
       });
 

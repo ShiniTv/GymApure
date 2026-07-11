@@ -17,7 +17,7 @@ import { logAudit } from '../lib/audit.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import {
   signSessionToken,
-  sessionFailureStatus,
+  sessionFailurePayload,
   verifySessionToken,
   createLoginSession,
   bumpUserTokenVersion,
@@ -252,10 +252,8 @@ router.get(
       return;
     }
 
-    const status = sessionFailureStatus(result);
-    res.status(status!).json({
-      error: status === 403 ? 'Cuenta inactiva. Contacta al administrador.' : 'Sesión expirada',
-    });
+    const { status, body } = sessionFailurePayload(result);
+    res.status(status).json(body);
   })
 );
 
@@ -270,8 +268,9 @@ router.post(
 
     const result = await verifySessionToken(token);
     if (result.type !== 'success') {
-      const status = sessionFailureStatus(result);
-      res.status(status!).json({
+      const { status, body } = sessionFailurePayload(result);
+      res.status(status).json({
+        ...body,
         error:
           status === 403
             ? 'Cuenta inactiva. Contacta al administrador.'

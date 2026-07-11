@@ -61,7 +61,8 @@ export class TestApiClient {
       'Content-Type': 'application/json',
       ...(options?.extraHeaders ?? {}),
     };
-    const cookie = this.cookieHeader;
+    const explicitCookie = options?.extraHeaders?.Cookie;
+    const cookie = explicitCookie ?? this.cookieHeader;
     if (cookie) headers.Cookie = cookie;
     if (this.csrfToken && MUTATING_METHODS.has(method) && !options?.skipCsrf) {
       headers['x-csrf-token'] = this.csrfToken;

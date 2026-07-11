@@ -59,7 +59,10 @@ async function main() {
   ok('Miembro envía mensaje', memberMsg.status === 201, `status ${memberMsg.status}`);
 
   await client.login(ADMIN_EMAIL, ADMIN_PASSWORD);
-  ok('Staff tiene unread > 0', ((await client.json('GET', '/api/chat/unread-count')).data as { count?: number }).count ?? 0) > 0);
+  ok(
+    'Staff tiene unread > 0',
+    (((await client.json('GET', '/api/chat/unread-count')).data as { count?: number }).count ?? 0) > 0
+  );
 
   const list = await client.json('GET', '/api/chat/conversations');
   const items = (list.data as { items?: { id: number; member_id: number }[] }).items ?? [];

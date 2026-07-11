@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
-import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
+import { dispatchSessionRevoked, onSessionRevoked, SESSION_MESSAGES } from '../lib/sessionEvents';
 import type { UserRole } from '../lib/roles';
 
 interface User {
@@ -30,8 +30,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEFAULT_SESSION_REVOKED_MESSAGE =
-  'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.';
+const DEFAULT_SESSION_REVOKED_MESSAGE = SESSION_MESSAGES.loginElsewhere;
+const INACTIVE_ACCOUNT_MESSAGE = SESSION_MESSAGES.accountInactive;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -81,11 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    registerUnauthorizedHandler(() => {
-      if (userRef.current) {
-        dispatchSessionRevoked({ message: DEFAULT_SESSION_REVOKED_MESSAGE });
-        logoutLocal(DEFAULT_SESSION_REVOKED_MESSAGE);
-      }
+    registerUnauthorizedHandler((reason) => {
+      if (!userRef.current) return;
+      const message =
+        reason === 'inactive' ? INACTIVE_ACCOUNT_MESSAGE : DEFAULT_SESSION_REVOKED_MESSAGE;
+      dispatchSessionRevoked({
+        message,
+        reason: reason === 'inactive' ? 'account_inactive' : 'expired',
+      });
+      logoutLocal(message);
     });
     return () => registerUnauthorizedHandler(null);
   }, [logoutLocal]);
