@@ -2,6 +2,7 @@ import pg from 'pg';
 import { env } from '../config/env.ts';
 import { isSupabaseStorageConfigured, getSupabaseServiceKey } from '../lib/supabaseAdmin.ts';
 import { logger } from '../lib/logger.ts';
+import { reportPoolPressure, reportSlowQuery, sqlPreview } from '../lib/dbMonitoring.ts';
 
 // BIGINT (OID 20) → number — ids del gym caben en Number.MAX_SAFE_INTEGER
 pg.types.setTypeParser(20, (value) => parseInt(value, 10));
@@ -23,7 +24,26 @@ export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   text: string,
   params?: unknown[]
 ) {
-  return pool.query<T>(text, params);
+  reportPoolPressure(pool.waitingCount, pool.totalCount);
+  const start = process.hrtime.bigint();
+  try {
+    return await pool.query<T>(text, params);
+  } finally {
+    const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
+    reportSlowQuery(durationMs, sqlPreview(text));
+  }
+}
+
+export function getPoolStats(): {
+  totalCount: number;
+  idleCount: number;
+  waitingCount: number;
+} {
+  return {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
 }
 
 export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {

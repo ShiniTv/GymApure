@@ -1,7 +1,10 @@
 import { query } from '../db/index.ts';
-import { insertNotification } from './notifications/repository.ts';
+import { insertNotificationsBatch, getUnreadCount } from './notifications/repository.ts';
 import { getEquipmentInspectionAlertDays } from './equipmentSettings.ts';
 import { equipmentDisplayName } from './equipment/constants.ts';
+import { mapWithConcurrency } from './runInBatches.ts';
+import { emitToUser } from './wsServer.ts';
+import { sendPushToUser } from './pushNotifications.ts';
 
 export async function syncEquipmentInspectionAlerts(): Promise<number> {
   const alertDays = await getEquipmentInspectionAlertDays();
@@ -28,26 +31,42 @@ export async function syncEquipmentInspectionAlerts(): Promise<number> {
     `SELECT id FROM users WHERE role = 'admin' AND status = 'active'`
   );
 
-  let created = 0;
-  for (const admin of admins) {
-    for (const item of dueRows) {
+  if (admins.length === 0) return 0;
+
+  const inputs = admins.flatMap((admin) =>
+    dueRows.map((item) => {
       const name = equipmentDisplayName(item);
-      const dedupeKey = `equipment-inspection:${item.id}:${item.next_inspection_at}`;
-      const inserted = await insertNotification({
+      return {
         userId: admin.id,
         type: 'equipment_inspection',
         title: 'Inspección de equipo pendiente',
         body: `${name} requiere revisión antes del ${item.next_inspection_at}`,
         href: `/equipment?detail=${item.id}`,
-        severity: 'warning',
-        dedupeKey,
+        severity: 'warning' as const,
+        dedupeKey: `equipment-inspection:${item.id}:${item.next_inspection_at}`,
         metadata: { equipment_id: item.id },
-      });
-      if (inserted) created++;
-    }
-  }
+      };
+    })
+  );
 
-  return created;
+  const inserted = await insertNotificationsBatch(inputs);
+  if (inserted.length === 0) return 0;
+
+  const notifiedAdminIds = [...new Set(inserted.map((row) => row.user_id))];
+  await mapWithConcurrency(
+    notifiedAdminIds,
+    async (adminId) => {
+      const unreadCount = await getUnreadCount(adminId);
+      emitToUser(adminId, 'notification:new', { unreadCount });
+      const sample = inserted.find((row) => row.user_id === adminId);
+      if (sample) {
+        void sendPushToUser(adminId, sample.title, sample.body, sample.href).catch(() => undefined);
+      }
+    },
+    5
+  );
+
+  return inserted.length;
 }
 
 export async function getEquipmentStatsSummary(): Promise<{

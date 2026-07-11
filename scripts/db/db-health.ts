@@ -1,9 +1,12 @@
 /**
- * Verifica hardening de Supabase/Postgres (RLS, FK indexes, índices redundantes).
+ * Verifica hardening de Supabase/Postgres (RLS, FK indexes, migraciones, integridad).
  * Uso: npm run db:health
  */
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import pg from 'pg';
+import { runIntegrityChecks } from './audit-lib.ts';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -87,6 +90,70 @@ try {
     ok: parseInt(grants[0].count, 10) === 0,
     detail: grants[0].count === '0' ? 'sin grants anon/authenticated' : `${grants[0].count} grants`,
   });
+
+  const dbUrl = process.env.DATABASE_URL ?? '';
+  const usesPooler = dbUrl.includes(':6543/');
+  checks.push({
+    name: 'Pooler Supabase (6543)',
+    ok: !dbUrl.includes('supabase') || usesPooler,
+    detail: usesPooler ? 'ok' : 'DATABASE_URL no usa puerto 6543',
+  });
+
+  const migrationsDir = path.join(process.cwd(), 'supabase', 'migrations');
+  const migrationFiles = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+  const appliedRows = await q<{ filename: string }>(
+    `SELECT filename FROM schema_migrations ORDER BY filename`
+  );
+  const applied = new Set(appliedRows.map((r) => r.filename));
+  const pending = migrationFiles.filter((f) => !applied.has(f));
+  checks.push({
+    name: 'Migraciones al día',
+    ok: pending.length === 0,
+    detail:
+      pending.length === 0
+        ? `${applied.size}/${migrationFiles.length} aplicadas`
+        : `${pending.length} pendiente(s): ${pending.slice(0, 3).join(', ')}${pending.length > 3 ? '…' : ''}`,
+  });
+
+  const integrity = await runIntegrityChecks(pool);
+  const integrityIssues = integrity.filter((c) => !c.ok);
+  checks.push({
+    name: 'Integridad referencial (muestra)',
+    ok: integrityIssues.length === 0,
+    detail:
+      integrityIssues.length === 0
+        ? 'sin violaciones detectadas'
+        : integrityIssues.map((c) => `${c.name}=${c.count}`).join(', '),
+  });
+
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { getSupabaseAdmin } = await import('../../src/lib/supabaseAdmin.ts');
+      const admin = getSupabaseAdmin();
+      const buckets = ['payment-proofs', 'avatars', 'exercise-videos', 'equipment-photos'];
+      const bucketResults = await Promise.all(
+        buckets.map(async (bucket) => {
+          const { error } = await admin.storage.from(bucket).list('', { limit: 1 });
+          return { bucket, ok: !error, detail: error?.message ?? 'accesible' };
+        })
+      );
+      const failedBuckets = bucketResults.filter((b) => !b.ok);
+      checks.push({
+        name: 'Storage buckets accesibles',
+        ok: failedBuckets.length === 0,
+        detail:
+          failedBuckets.length === 0
+            ? `${buckets.length} buckets ok`
+            : failedBuckets.map((b) => `${b.bucket}: ${b.detail}`).join(', '),
+      });
+    } catch (err) {
+      checks.push({
+        name: 'Storage buckets accesibles',
+        ok: false,
+        detail: err instanceof Error ? err.message : 'error desconocido',
+      });
+    }
+  }
 } finally {
   await pool.end();
 }

@@ -14,7 +14,10 @@ import {
   EQUIPMENT_EVENT_TYPES,
 } from '../lib/equipment/constants.ts';
 import { STAFF_ROLES } from '../lib/roles.ts';
-import { syncEquipmentInspectionAlerts } from '../lib/equipmentInspectionAlerts.ts';
+import {
+  syncEquipmentInspectionAlerts,
+  getEquipmentStatsSummary,
+} from '../lib/equipmentInspectionAlerts.ts';
 
 const router = asyncRouter();
 
@@ -162,6 +165,28 @@ function sendDuplicateEquipmentError(
     details: { existing_id: existingId },
   });
 }
+
+router.get(
+  '/bootstrap',
+  staffRead,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const isAdmin = req.user!.role === 'admin';
+    const [zones, catalog, vendors, stats] = await Promise.all([
+      query(`SELECT * FROM gym_zones ORDER BY sort_order, name`),
+      query(`SELECT * FROM equipment_catalog ORDER BY category, name`),
+      isAdmin
+        ? query(`SELECT * FROM equipment_vendors ORDER BY name`)
+        : Promise.resolve({ rows: [] }),
+      getEquipmentStatsSummary(),
+    ]);
+    res.json({
+      zones: zones.rows,
+      catalog: catalog.rows,
+      vendors: vendors.rows,
+      stats,
+    });
+  })
+);
 
 router.get(
   '/zones',

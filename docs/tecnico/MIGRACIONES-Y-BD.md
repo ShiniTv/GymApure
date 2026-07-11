@@ -16,33 +16,39 @@ Política de migraciones SQL y resumen de cambios recientes.
 
 ## Comandos
 
-| Comando                   | Entorno                  |
-| ------------------------- | ------------------------ |
-| `npm run db:migrate`      | `.env` activo            |
-| `npm run db:migrate:dev`  | `.env.dev`               |
-| `npm run db:migrate:prod` | `.env.prod`              |
-| `npm run db:health`       | Verificar conexión y RLS |
+| Comando                    | Entorno                                           |
+| -------------------------- | ------------------------------------------------- |
+| `npm run db:migrate`       | `.env` activo                                     |
+| `npm run db:migrate:dev`   | `.env.dev`                                        |
+| `npm run db:migrate:prod`  | `.env.prod`                                       |
+| `npm run db:health`        | Verificar conexión, RLS, migraciones e integridad |
+| `npm run db:audit`         | Auditoría completa (tablas + storage)             |
+| `npm run db:audit:compare` | Comparativa dev vs prod                           |
 
 Antes de migrar prod: `npm run deploy:preflight` + `npm run db:verify-isolation`.
+
+Ver [AUDITORIA-BD.md](./AUDITORIA-BD.md) para checklist mensual y retención de datos.
 
 ---
 
 ## Migraciones recientes (julio 2026)
 
-| Migración                                    | Qué introduce                                             |
-| -------------------------------------------- | --------------------------------------------------------- |
-| `20260702000000_trainer_profiles_and_shifts` | Perfiles entrenador, turnos, `training_shift` en miembros |
-| `20260704000000_system_exercises`            | Catálogo de ejercicios del sistema                        |
-| `20260705000000_user_notifications`          | Centro de notificaciones con dedupe                       |
-| `20260706000000_routine_set_prescription`    | Peso/reps por serie en rutinas (JSON)                     |
-| `20260707000000_weekly_training_goal`        | Meta semanal de sesiones (1–7)                            |
-| `20260707100000_workout_session_integrity`   | Integridad de sesiones de entrenamiento                   |
-| `20260707110000_exercise_execution_guides`   | Texto de pasos de ejecución                               |
-| `20260708120000_equipment_cmms`              | Módulo equipamiento: zonas, catálogo, inventario          |
-| `20260708120100_equipment_catalog_seed`      | Seed catálogo de máquinas                                 |
-| `20260708120200_equipment_photos_bucket`     | Bucket Storage equipment-photos                           |
-| `20260708130000_exchange_rates`              | Tabla tasas BCV + override manual                         |
-| `20260709120000_gym_equipment_unique`        | Deduplicación y unique indexes en equipamiento            |
+| Migración                                         | Qué introduce                                             |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| `20260702000000_trainer_profiles_and_shifts`      | Perfiles entrenador, turnos, `training_shift` en miembros |
+| `20260704000000_system_exercises`                 | Catálogo de ejercicios del sistema                        |
+| `20260705000000_user_notifications`               | Centro de notificaciones con dedupe                       |
+| `20260706000000_routine_set_prescription`         | Peso/reps por serie en rutinas (JSON)                     |
+| `20260707000000_weekly_training_goal`             | Meta semanal de sesiones (1–7)                            |
+| `20260707100000_workout_session_integrity`        | Integridad de sesiones de entrenamiento                   |
+| `20260707110000_exercise_execution_guides`        | Texto de pasos de ejecución                               |
+| `20260708120000_equipment_cmms`                   | Módulo equipamiento: zonas, catálogo, inventario          |
+| `20260708120100_equipment_catalog_seed`           | Seed catálogo de máquinas                                 |
+| `20260708120200_equipment_photos_bucket`          | Bucket Storage equipment-photos                           |
+| `20260708130000_exchange_rates`                   | Tabla tasas BCV + override manual                         |
+| `20260709120000_gym_equipment_unique`             | Deduplicación y unique indexes en equipamiento            |
+| `20260711120000_cleanup_legacy_settings`          | Elimina keys legacy de gym_settings                       |
+| `20260711120100_drop_equipment_catalog_image_url` | Elimina columna `image_url` sin uso                       |
 
 ---
 
@@ -72,6 +78,7 @@ Ver [ENTORNOS-Y-SEGURIDAD.md](./ENTORNOS-Y-SEGURIDAD.md).
 
 ## Enlaces
 
+- [Auditoría de BD](./AUDITORIA-BD.md)
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
 - [Equipamiento](../modulos/EQUIPAMIENTO.md)
 - [Desarrollo §7](../DESARROLLO.md)

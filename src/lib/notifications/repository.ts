@@ -29,23 +29,54 @@ export interface InsertNotificationInput {
 export async function insertNotification(
   input: InsertNotificationInput
 ): Promise<UserNotificationRow | null> {
+  const rows = await insertNotificationsBatch([input]);
+  return rows[0] ?? null;
+}
+
+/** Bulk insert with dedupe — one round-trip for many notifications. */
+export async function insertNotificationsBatch(
+  inputs: InsertNotificationInput[]
+): Promise<UserNotificationRow[]> {
+  if (inputs.length === 0) return [];
+
+  const userIds: number[] = [];
+  const types: string[] = [];
+  const titles: string[] = [];
+  const bodies: string[] = [];
+  const hrefs: string[] = [];
+  const severities: string[] = [];
+  const metadataJson: string[] = [];
+  const dedupeKeys: (string | null)[] = [];
+
+  for (const input of inputs) {
+    userIds.push(input.userId);
+    types.push(input.type);
+    titles.push(input.title);
+    bodies.push(input.body);
+    hrefs.push(input.href ?? '/');
+    severities.push(input.severity ?? 'info');
+    metadataJson.push(JSON.stringify(input.metadata ?? {}));
+    dedupeKeys.push(input.dedupeKey ?? null);
+  }
+
   const { rows } = await query<UserNotificationRow>(
     `INSERT INTO user_notifications (user_id, type, title, body, href, severity, metadata, dedupe_key)
-     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)
+     SELECT user_id, type, title, body, href, severity, metadata::jsonb, dedupe_key
+     FROM UNNEST(
+       $1::int[],
+       $2::text[],
+       $3::text[],
+       $4::text[],
+       $5::text[],
+       $6::text[],
+       $7::text[],
+       $8::text[]
+     ) AS t(user_id, type, title, body, href, severity, metadata, dedupe_key)
      ON CONFLICT (user_id, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
      RETURNING *`,
-    [
-      input.userId,
-      input.type,
-      input.title,
-      input.body,
-      input.href ?? '/',
-      input.severity ?? 'info',
-      JSON.stringify(input.metadata ?? {}),
-      input.dedupeKey ?? null,
-    ]
+    [userIds, types, titles, bodies, hrefs, severities, metadataJson, dedupeKeys]
   );
-  return rows[0] ?? null;
+  return rows;
 }
 
 export async function listNotifications(
@@ -60,20 +91,22 @@ export async function listNotifications(
   const whereClause = unreadOnly ? 'WHERE user_id = $1 AND read_at IS NULL' : 'WHERE user_id = $1';
   const params: (number | string)[] = [userId];
 
-  const countResult = await query<{ count: string }>(
-    `SELECT COUNT(*)::text AS count FROM user_notifications ${whereClause}`,
-    params
-  );
+  const [countResult, listResult] = await Promise.all([
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM user_notifications ${whereClause}`,
+      params
+    ),
+    query<UserNotificationRow>(
+      `SELECT id, user_id, type, title, body, href, severity, metadata, dedupe_key, read_at, created_at
+       FROM user_notifications
+       ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [...params, limit, offset]
+    ),
+  ]);
   const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
-
-  const { rows } = await query<UserNotificationRow>(
-    `SELECT id, user_id, type, title, body, href, severity, metadata, dedupe_key, read_at, created_at
-     FROM user_notifications
-     ${whereClause}
-     ORDER BY created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [...params, limit, offset]
-  );
+  const { rows } = listResult;
 
   return { items: rows, total };
 }

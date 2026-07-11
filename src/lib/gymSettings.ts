@@ -19,7 +19,9 @@ function parseSettingsRow(rows: { key: string; value: string }[]): ExpirySetting
   const map = new Map(rows.map((r) => [r.key, r.value]));
   const days = parseInt(map.get('expiry_alert_days') ?? String(DEFAULTS.expiry_alert_days), 10);
   return {
-    expiry_alert_days: Number.isFinite(days) ? Math.min(90, Math.max(1, days)) : DEFAULTS.expiry_alert_days,
+    expiry_alert_days: Number.isFinite(days)
+      ? Math.min(90, Math.max(1, days))
+      : DEFAULTS.expiry_alert_days,
   };
 }
 
@@ -57,20 +59,22 @@ export async function updateExpirySettings(
   const next: ExpirySettings = {
     ...current,
     ...partial,
-    expiry_alert_days: partial.expiry_alert_days != null
-      ? Math.min(90, Math.max(1, partial.expiry_alert_days))
-      : current.expiry_alert_days,
+    expiry_alert_days:
+      partial.expiry_alert_days != null
+        ? Math.min(90, Math.max(1, partial.expiry_alert_days))
+        : current.expiry_alert_days,
   };
 
-  for (const key of EXPIRY_KEYS) {
-    const value = String(next[key]);
-    await query(
-      `INSERT INTO gym_settings (key, value, updated_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-      [key, value]
-    );
-  }
+  await Promise.all(
+    EXPIRY_KEYS.map((key) =>
+      query(
+        `INSERT INTO gym_settings (key, value, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [key, String(next[key])]
+      )
+    )
+  );
 
   invalidateSettingsCache();
   return next;

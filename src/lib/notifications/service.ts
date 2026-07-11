@@ -1,7 +1,8 @@
 import { sendPushToUser } from '../pushNotifications.ts';
 import { emitToUser } from '../wsServer.ts';
 import { logger } from '../logger.ts';
-import { getStaffUserIds, getUnreadCount, insertNotification } from './repository.ts';
+import { getStaffUserIds, getUnreadCount, insertNotificationsBatch } from './repository.ts';
+import { mapWithConcurrency } from '../runInBatches.ts';
 import type { NotificationSeverity } from './types.ts';
 
 export type { NotificationSeverity };
@@ -27,6 +28,8 @@ export interface CreateStaffNotificationInput {
   dedupeKey?: string | null;
 }
 
+const NOTIFY_CONCURRENCY = 5;
+
 async function notifyUserChannels(
   userId: number,
   title: string,
@@ -44,7 +47,8 @@ async function notifyUserChannels(
 }
 
 export async function createUserNotification(input: CreateUserNotificationInput): Promise<boolean> {
-  const row = await insertNotification(input);
+  const rows = await insertNotificationsBatch([input]);
+  const row = rows[0];
   if (!row) return false;
 
   await notifyUserChannels(input.userId, input.title, input.body, input.href ?? '/');
@@ -55,10 +59,10 @@ export async function createStaffNotification(
   input: CreateStaffNotificationInput
 ): Promise<number> {
   const staffIds = await getStaffUserIds();
-  let created = 0;
+  if (staffIds.length === 0) return 0;
 
-  for (const userId of staffIds) {
-    const row = await insertNotification({
+  const inserted = await insertNotificationsBatch(
+    staffIds.map((userId) => ({
       userId,
       type: input.type,
       title: input.title,
@@ -67,11 +71,18 @@ export async function createStaffNotification(
       severity: input.severity,
       metadata: input.metadata,
       dedupeKey: input.dedupeKey,
-    });
-    if (!row) continue;
-    created += 1;
-    await notifyUserChannels(userId, input.title, input.body, input.href ?? '/');
-  }
+    }))
+  );
 
-  return created;
+  if (inserted.length === 0) return 0;
+
+  await mapWithConcurrency(
+    inserted,
+    async (row) => {
+      await notifyUserChannels(row.user_id, row.title, row.body, row.href);
+    },
+    NOTIFY_CONCURRENCY
+  );
+
+  return inserted.length;
 }

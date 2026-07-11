@@ -1,5 +1,5 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
-import { query } from '../db/index.ts';
+import { query, getPoolStats } from '../db/index.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import { getRequestMetricsSnapshot } from './middleware/requestMetrics.ts';
 import { authenticate, authorize } from './middleware/auth.ts';
@@ -33,6 +33,7 @@ async function buildMetricsSnapshot() {
         db: {
           status: 'up' as const,
           latency_ms: Number(dbLatencyMs.toFixed(2)),
+          pool: getPoolStats(),
         },
       },
     };
@@ -50,6 +51,7 @@ async function buildMetricsSnapshot() {
         db: {
           status: 'down' as const,
           latency_ms: null,
+          pool: getPoolStats(),
         },
       },
     };
@@ -105,6 +107,7 @@ router.get('/health', async (_req, res) => {
       status: 'ok',
       db: 'up',
       db_latency_ms: Number(dbLatencyMs.toFixed(2)),
+      db_pool: getPoolStats(),
       uptime_seconds: uptimeSeconds,
       allowPublicRegister,
       email: { configured: isEmailConfigured() },
