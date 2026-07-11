@@ -14,7 +14,7 @@ import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { getEquipmentStatsSummary } from '../lib/equipmentInspectionAlerts.ts';
-import { RECEPTION_OPERATORS } from '../lib/roles.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -439,7 +439,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/reception', authorize(RECEPTION_OPERATORS), async (_req, res) => {
+router.get('/reception', authorize(RECEPTION_STAFF), async (_req, res) => {
   try {
     const [todayCheckIns, insideNow, pendingPayments] = await Promise.all([
       query<{ count: string }>(
