@@ -1,7 +1,7 @@
 import { useCallback, lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAdminStats } from '../context/AdminStatsContext';
+import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { DashboardSkeleton } from '../components/ui';
 import { useTrainerStatsQuery } from '../hooks/queries/useDashboardQuery';
@@ -14,17 +14,17 @@ const TrainerDashboard = lazy(() => import('./trainer/TrainerDashboard'));
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const adminStats = useAdminStats();
+  const adminStats = useAdminStatsOptional();
   const memberStatsCtx = useMemberStatsOptional();
   const isTrainer = user?.role === 'trainer';
-  const { isLoading: trainerLoading, refetch: refetchTrainer } = useTrainerStatsQuery(isTrainer);
+  const { refetch: refetchTrainer } = useTrainerStatsQuery(isTrainer);
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
 
   const onRefresh = useCallback(async () => {
     if (isAdmin) {
-      await adminStats.refresh();
+      await adminStats?.refresh();
     } else if (isMember) {
       await memberStatsCtx?.refresh();
     } else if (!isReceptionist) {
@@ -39,12 +39,10 @@ export default function Dashboard() {
 
   const memberStats = memberStatsCtx?.stats ?? null;
   const pageLoading = isAdmin
-    ? adminStats.loading && !adminStats.stats
+    ? Boolean(adminStats?.loading && !adminStats?.stats)
     : isMember
       ? memberStatsCtx?.loading && !memberStats
-      : isReceptionist
-        ? false
-        : trainerLoading;
+      : false;
 
   if (user?.role === 'receptionist') {
     return <Navigate to="/reception" replace />;
@@ -81,7 +79,7 @@ export default function Dashboard() {
   return (
     <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
       <div {...handlers}>
-        <Suspense fallback={null}>
+        <Suspense fallback={<DashboardSkeleton statCount={4} />}>
           <TrainerDashboard />
         </Suspense>
       </div>

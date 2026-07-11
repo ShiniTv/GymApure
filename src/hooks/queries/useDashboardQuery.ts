@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { apiFetchWithRetry, parseJsonResponse } from '../../lib/api';
 
 export interface TrainerStatsResponse {
   assignedMembers: number;
@@ -23,7 +23,7 @@ export interface TrainerStatsResponse {
 }
 
 async function fetchTrainerStats(): Promise<TrainerStatsResponse> {
-  const res = await apiFetch('/api/stats/trainer');
+  const res = await apiFetchWithRetry('/api/stats/trainer', { timeout: 15_000 });
   const data = await parseJsonResponse<TrainerStatsResponse>(res);
   if (data?.recentActivities && !Array.isArray(data.recentActivities)) {
     data.recentActivities = [];
