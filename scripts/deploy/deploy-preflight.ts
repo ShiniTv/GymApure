@@ -44,6 +44,24 @@ function main() {
   const cron = process.env.CRON_SECRET?.trim() ?? '';
   ok('CRON_SECRET definido (obligatorio en producción)', cron.length >= 16, 'openssl rand -base64 32');
 
+  const publicUrl = process.env.PUBLIC_APP_URL?.trim() ?? '';
+  ok(
+    'PUBLIC_APP_URL definido (HTTPS en producción)',
+    !isProd || publicUrl.startsWith('https://'),
+    'https://caribean-gym.onrender.com o tu dominio custom'
+  );
+
+  const redisUrl = process.env.REDIS_URL?.trim() ?? '';
+  if (isProd) {
+    ok(
+      'REDIS_URL configurado (recomendado en producción)',
+      redisUrl.length > 0,
+      'Render Key Value o Upstash; ver render.yaml'
+    );
+  } else {
+    ok('REDIS_URL (opcional en dev)', true);
+  }
+
   console.log('');
   if (failed === 0) {
     console.log('Preflight: OK — puedes ejecutar npm run db:migrate y desplegar.');

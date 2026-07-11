@@ -7,8 +7,8 @@
 #   3. npm run db:create-admin
 #   4. Configurar secretos en Render Dashboard (sync: false)
 #
-# En cada deploy con cambios de schema:
-#   npm run db:migrate  (contra prod, antes o justo después del deploy)
+# Tras cambios en este archivo:
+#   Render Dashboard → Blueprint → Sync (crea/actualiza Key Value y env vars)
 
 services:
   - type: web
@@ -22,6 +22,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PUBLIC_APP_URL
+        value: https://caribean-gym.onrender.com
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: caribean-gym-kv
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: DATABASE_URL
@@ -29,8 +36,6 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: CRON_SECRET
-        sync: false
-      - key: REDIS_URL
         sync: false
       - key: ENABLE_HIBP_CHECK
         sync: false
@@ -41,8 +46,6 @@ services:
       - key: VITE_SENTRY_DSN
         sync: false
       - key: SENTRY_DSN
-        sync: false
-      - key: PUBLIC_APP_URL
         sync: false
       - key: SMTP_HOST
         sync: false
@@ -60,3 +63,9 @@ services:
         sync: false
       - key: ADMIN_NOTIFY_EMAILS
         sync: false
+
+  - type: keyvalue
+    name: caribean-gym-kv
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

@@ -108,6 +108,10 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 ### 2. Variables de entorno
 
+**Opción A — Blueprint Sync (recomendado):** tras cada cambio en [`render.yaml`](../render.yaml), en Render Dashboard → **Blueprints** → **Sync**. Eso crea el Key Value `caribean-gym-kv`, inyecta `REDIS_URL` y fija `PUBLIC_APP_URL=https://caribean-gym.onrender.com`.
+
+**Opción B — Manual:** configura en Render Dashboard → Environment (plantilla en [`scripts/deploy/render-prod.env.example`](../scripts/deploy/render-prod.env.example)):
+
 Configura en Render Dashboard → Environment:
 
 | Variable                         | Obligatoria | Notas                                                                  |
