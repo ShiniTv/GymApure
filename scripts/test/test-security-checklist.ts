@@ -260,23 +260,28 @@ async function main() {
     const authConfig = await api('GET', '/api/auth/config');
     ok('GET /api/auth/config → 200', authConfig.res.status === 200);
 
-    const cronNoSecret = await api('POST', '/api/settings/expiry/run');
+    const cronNoSecret = await api('POST', '/api/cron/expiry/run');
     ok('Cron sin secret ni sesión → 403', cronNoSecret.res.status === 403);
 
     const cronBadSecret = await api(
       'POST',
-      '/api/settings/expiry/run',
+      '/api/cron/expiry/run',
       undefined,
       { 'x-cron-secret': 'definitely-wrong-cron-secret-value' }
     );
     ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
 
     if (process.env.CRON_SECRET) {
-      const cronOk = await api('POST', '/api/settings/expiry/run', undefined, {
+      const cronOk = await api('POST', '/api/cron/expiry/run', undefined, {
         'x-cron-secret': process.env.CRON_SECRET,
       });
       ok('Cron con CRON_SECRET válido → 200', cronOk.res.status === 200);
     }
+
+    cookie = '';
+    ok('Login admin para cron UI vs cron route', await loginAs('admin@gym.com'));
+    const adminCronBlocked = await api('POST', '/api/cron/expiry/run');
+    ok('Admin con sesión no ejecuta cron externo → 403', adminCronBlocked.res.status === 403);
 
     // CSRF en rutas protegidas (dev o cuando CORS_ORIGINS está definido)
     cookie = '';

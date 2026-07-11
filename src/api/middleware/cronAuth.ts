@@ -1,6 +1,5 @@
 import { type NextFunction, type Response } from 'express';
 import type { AuthRequest } from './authTypes.ts';
-import { authorize } from './authorize.ts';
 import { isValidCronSecret } from '../../lib/secretCompare.ts';
 
 export function extractCronSecret(req: AuthRequest): string | null {
@@ -16,11 +15,15 @@ export function isValidCronRequest(req: AuthRequest): boolean {
   return isValidCronSecret(extractCronSecret(req));
 }
 
-export function authorizeCronOrAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+/** Cron jobs accept only CRON_SECRET — admin UI uses authenticated /api/settings/* routes. */
+export function authorizeCronOnly(req: AuthRequest, res: Response, next: NextFunction) {
   if (isValidCronRequest(req)) {
     next();
     return;
   }
 
-  return authorize(['admin'])(req, res, next);
+  return res.status(403).json({ error: 'CRON_SECRET inválido o ausente' });
 }
+
+/** @deprecated Use authorizeCronOnly — admin sessions no longer trigger cron endpoints. */
+export const authorizeCronOrAdmin = authorizeCronOnly;

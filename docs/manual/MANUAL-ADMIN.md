@@ -31,7 +31,8 @@ Guía de uso diario para el rol **admin** en GymApure.
 1. Abre `/login`.
 2. Ingresa email y contraseña de admin.
 3. Redirige al **Panel** (`/panel`).
-4. Activa **MFA** en **Seguridad** antes de crear otros administradores o staff.
+4. En **producción**, los administradores deben tener **MFA activo** antes de poder iniciar sesión.
+5. Activa **MFA** en **Seguridad** antes de crear otros administradores o staff.
 
 [captura: dashboard admin]
 

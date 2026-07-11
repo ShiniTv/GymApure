@@ -1,6 +1,6 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
-import { AuthRequest, authorize } from './middleware/auth.ts';
+import { AuthRequest, requireAdmin } from './middleware/auth.ts';
 import { parseDateParam, toCsv } from '../lib/csv.ts';
 import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
 import { logAudit } from '../lib/audit.ts';
@@ -61,7 +61,7 @@ function buildDateFilter(column: string, from: string | null, to: string | null)
   };
 }
 
-router.get('/preview', authorize(['admin']), async (req, res) => {
+router.get('/preview', requireAdmin, async (req, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
   const paymentsFilter = buildDateFilter('p.created_at', from, to);
@@ -94,7 +94,7 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/payments', authorize(['admin']), async (req: AuthRequest, res) => {
+router.get('/payments', requireAdmin, async (req: AuthRequest, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
   const rangeError = validateExportDateRange(from, to);
@@ -178,7 +178,7 @@ router.get('/payments', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/attendance', authorize(['admin']), async (req: AuthRequest, res) => {
+router.get('/attendance', requireAdmin, async (req: AuthRequest, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
   const rangeError = validateExportDateRange(from, to);
@@ -247,7 +247,7 @@ router.get('/attendance', authorize(['admin']), async (req: AuthRequest, res) =>
   }
 });
 
-router.get('/members', authorize(['admin']), async (req: AuthRequest, res) => {
+router.get('/members', requireAdmin, async (req: AuthRequest, res) => {
   try {
     const { rows } = await query<{
       id: number;

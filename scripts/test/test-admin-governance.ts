@@ -237,6 +237,27 @@ async function main() {
     }
   }
 
+  // --- Audit logs pagination ---
+  {
+    cookie = '';
+    ok('Login admin para auditoría', await loginAs('admin@gym.com'));
+    const page1 = await api('GET', '/api/audit-logs?limit=5&offset=0');
+    ok('GET /api/audit-logs paginado → 200', page1.res.status === 200);
+    const payload = page1.data as {
+      items?: unknown[];
+      total?: number;
+      hasMore?: boolean;
+    };
+    ok('Respuesta incluye items y total', Array.isArray(payload.items) && typeof payload.total === 'number');
+
+    const authConfig = await api('GET', '/api/auth/config');
+    ok('GET /api/auth/config → 200', authConfig.res.status === 200);
+    ok(
+      'requireAdminMfa expuesto en config',
+      typeof (authConfig.data as { requireAdminMfa?: boolean }).requireAdminMfa === 'boolean'
+    );
+  }
+
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);
 }

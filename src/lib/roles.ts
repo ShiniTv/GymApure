@@ -26,6 +26,10 @@ export function isStaffRole(role: string): boolean {
   return STAFF_ROLES.includes(role as UserRole);
 }
 
+export function isAdmin(role: string | null | undefined): boolean {
+  return role === 'admin';
+}
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
   trainer: 'Entrenador',

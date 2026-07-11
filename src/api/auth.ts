@@ -34,6 +34,7 @@ import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
 import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
 import { isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
+import { adminMustEnableMfaBeforeLogin } from '../lib/adminMfaPolicy.ts';
 import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import mfaRoutes from './mfa.ts';
@@ -43,7 +44,10 @@ const router = asyncRouter();
 router.get(
   '/config',
   asyncHandler(async (_req, res) => {
-    res.json({ allowPublicRegister });
+    res.json({
+      allowPublicRegister,
+      requireAdminMfa: process.env.NODE_ENV === 'production',
+    });
   })
 );
 
@@ -110,6 +114,23 @@ router.post(
     await recordLoginAttempt(normalizedEmail, true);
 
     const userId = Number(user.id);
+
+    if (
+      user.role === 'admin' &&
+      adminMustEnableMfaBeforeLogin(Boolean(user.mfa_enabled), env.NODE_ENV)
+    ) {
+      await logAudit(userId, 'auth.login_failed', {
+        email: normalizedEmail,
+        ip: clientIp,
+        reason: 'admin_mfa_required',
+      });
+      res.status(403).json({
+        error:
+          'Los administradores deben activar MFA antes de iniciar sesión. Configúralo en Seguridad o contacta soporte.',
+        code: 'ADMIN_MFA_REQUIRED',
+      });
+      return;
+    }
 
     if (passwordHashNeedsRehash(user.password)) {
       const upgradedHash = await hashPassword(password);

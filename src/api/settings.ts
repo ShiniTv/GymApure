@@ -10,6 +10,8 @@ import {
 import { runExchangeRateRefreshNow } from '../jobs/exchangeRateCron.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { logAudit } from '../lib/audit.ts';
+import { runExpiryJob } from '../lib/chat/expiryChatJob.ts';
+import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 
 const router = asyncRouter();
 
@@ -98,12 +100,30 @@ router.post('/exchange-rate/refresh', authorize(['admin']), async (req: AuthRequ
       inserted: result.inserted,
       effective_date: result.rate?.effective_date,
       rate: result.rate?.rate,
+      source: 'admin_ui',
     });
     const data = await getExchangeRateAdminView();
     res.json({ success: true, result, ...data });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(502).json({ error: message });
+  }
+});
+
+router.post('/expiry/run', authorize(['admin']), async (req: AuthRequest, res) => {
+  try {
+    const maintenance = await runDbMaintenanceIfDue();
+    const result = await runExpiryJob();
+    invalidateAdminStatsCache();
+    await logAudit(req.user!.id, 'settings.expiry.run', {
+      ...result,
+      maintenance,
+      source: 'admin_ui',
+    });
+    res.json({ success: true, result, maintenance });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
   }
 });
 

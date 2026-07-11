@@ -1,6 +1,6 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
-import { AuthRequest, authorize } from './middleware/auth.ts';
+import { AuthRequest, authorize, requireAdmin } from './middleware/auth.ts';
 import {
   getExpiringSubscriptions,
   getExpiredThisWeekCount,
@@ -38,6 +38,14 @@ export interface AdminStatsPayload {
   equipmentMaintenance: number;
   equipmentOutOfService: number;
   equipmentInspectionsDue: number;
+  recentActivity: {
+    id: number;
+    action: string;
+    details: string | null;
+    created_at: string;
+    user_name: string | null;
+    user_email: string | null;
+  }[];
 }
 
 async function buildAdminStats(): Promise<AdminStatsPayload> {
@@ -106,12 +114,28 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     ),
   ]);
 
-  const [expiringList, expiredThisWeek, lastDoorAlert, equipmentStats] = await Promise.all([
-    getExpiringSubscriptions(alertDays),
-    getExpiredThisWeekCount(),
-    getLastDoorAlert(alertDays),
-    getEquipmentStatsSummary(),
-  ]);
+  const [expiringList, expiredThisWeek, lastDoorAlert, equipmentStats, recentActivity] =
+    await Promise.all([
+      getExpiringSubscriptions(alertDays),
+      getExpiredThisWeekCount(),
+      getLastDoorAlert(alertDays),
+      getEquipmentStatsSummary(),
+      query<{
+        id: number;
+        action: string;
+        details: string | null;
+        created_at: string;
+        user_name: string | null;
+        user_email: string | null;
+      }>(
+        `SELECT a.id, a.action, a.details, a.created_at,
+              u.full_name AS user_name, u.email AS user_email
+       FROM audit_logs a
+       LEFT JOIN users u ON u.id = a.user_id
+       ORDER BY a.created_at DESC
+       LIMIT 8`
+      ),
+    ]);
 
   return {
     totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),
@@ -133,10 +157,11 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     equipmentMaintenance: equipmentStats.maintenance,
     equipmentOutOfService: equipmentStats.outOfService,
     equipmentInspectionsDue: equipmentStats.inspectionsDueThisWeek,
+    recentActivity: recentActivity.rows,
   };
 }
 
-router.get('/admin/summary', authorize(['admin']), async (_req, res) => {
+router.get('/admin/summary', requireAdmin, async (_req, res) => {
   try {
     const cached = getCachedAdminStats<AdminStatsPayload>();
     if (cached) {
@@ -151,7 +176,7 @@ router.get('/admin/summary', authorize(['admin']), async (_req, res) => {
   }
 });
 
-router.get('/admin', authorize(['admin']), async (_req, res) => {
+router.get('/admin', requireAdmin, async (_req, res) => {
   try {
     const cached = getCachedAdminStats<AdminStatsPayload>();
     if (cached) {

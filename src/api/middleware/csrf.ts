@@ -12,8 +12,8 @@ const CSRF_EXEMPT_PREFIXES = [
   '/api/auth/mfa/verify-login',
   '/api/auth/config',
   '/api/health',
-  '/api/settings/expiry/run',
-  '/api/exchange-rate/refresh',
+  '/api/cron/expiry/run',
+  '/api/cron/exchange-rate/refresh',
 ];
 
 function isCsrfExempt(path: string): boolean {
