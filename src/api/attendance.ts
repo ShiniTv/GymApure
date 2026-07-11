@@ -2,8 +2,7 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
 import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
-import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
-import { RECEPTION_ONLY } from '../lib/roles.ts';
+import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -21,7 +20,7 @@ function parseInactiveDays(raw: unknown): number {
   return Math.min(90, Math.max(7, n));
 }
 
-router.get('/stats', authorize(RECEPTION_ONLY), async (req, res) => {
+router.get('/stats', authorize(RECEPTION_OPERATORS), async (req, res) => {
   try {
     const { rows } = await query(`
       SELECT COUNT(*)::int AS count FROM attendance
@@ -35,7 +34,7 @@ router.get('/stats', authorize(RECEPTION_ONLY), async (req, res) => {
   }
 });
 
-router.get('/inside', authorize(RECEPTION_ONLY), async (_req, res) => {
+router.get('/inside', authorize(RECEPTION_OPERATORS), async (_req, res) => {
   try {
     const { rows } = await query<{
       id: number;
@@ -56,18 +55,15 @@ router.get('/inside', authorize(RECEPTION_ONLY), async (_req, res) => {
   }
 });
 
-router.get('/today', authorize(RECEPTION_ONLY), async (req, res) => {
+router.get('/today', authorize(RECEPTION_OPERATORS), async (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
 
   try {
     const params: string[] = [];
     let searchSql = '';
     if (q) {
-      const pattern = toLikeContainsPattern(q);
-      if (pattern) {
-        params.push(pattern);
-        searchSql = ` AND (LOWER(u.full_name) LIKE $1${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $1${LIKE_ESCAPE_CLAUSE})`;
-      }
+      params.push(`%${q.toLowerCase()}%`);
+      searchSql = ` AND (LOWER(u.full_name) LIKE $1 OR LOWER(COALESCE(u.cedula, '')) LIKE $1)`;
     }
 
     const { rows } = await query<{

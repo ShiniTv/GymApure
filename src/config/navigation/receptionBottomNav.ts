@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   LogIn,
   UserCircle,
+  Wrench,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -23,6 +24,7 @@ export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
 
 export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
   { name: 'Modo tablet / Check-in', href: '/check-in?kiosk=1', icon: LogIn },
+  { name: 'Equipamiento', href: '/equipment', icon: Wrench },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 

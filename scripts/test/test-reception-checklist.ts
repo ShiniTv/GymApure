@@ -179,6 +179,75 @@ async function main() {
     );
   }
 
+  const memberList = await api('GET', '/api/users?role=member&pageSize=5');
+  const sampleMember = Array.isArray(memberList.data.items) ? memberList.data.items[0] : null;
+  ok('Miembro demo disponible para pagos', sampleMember?.id != null);
+
+  if (sampleMember?.id && planId) {
+    const assignNoPayment = await api('POST', '/api/memberships/assign', {
+      user_id: sampleMember.id,
+      membership_id: planId,
+    });
+    ok(
+      'Assign sin payment_id bloqueado para recepcionista (400)',
+      assignNoPayment.res.status === 400,
+      assignNoPayment.data.error
+    );
+
+    const registerPayment = await api('POST', '/api/payments', {
+      user_id: sampleMember.id,
+      amount_usd: 10,
+      method: 'efectivo_usd',
+      reference: `TEST-${Date.now()}`,
+    });
+    ok(
+      'POST /api/payments con user_id (staff)',
+      registerPayment.res.status === 200 && registerPayment.data.status === 'pending',
+      registerPayment.data.error
+    );
+
+    const pendingId = registerPayment.data.id;
+    if (pendingId) {
+      const approve = await api('POST', `/api/payments/${pendingId}/approve`, {
+        membership_id: planId,
+      });
+      ok(
+        'POST /api/payments/:id/approve como recepcionista',
+        approve.res.status === 200,
+        approve.data.error
+      );
+
+      const assignWithPayment = await api('POST', '/api/memberships/assign', {
+        user_id: sampleMember.id,
+        membership_id: planId,
+        payment_id: pendingId,
+      });
+      ok(
+        'POST /api/memberships/assign con payment_id aprobado',
+        assignWithPayment.res.status === 201,
+        assignWithPayment.data.error
+      );
+    }
+
+    if (sampleMember.cedula) {
+      const altCedula = sampleMember.cedula.startsWith('V-')
+        ? sampleMember.cedula.replace('V-', 'E-')
+        : `V-${91000000 + (Date.now() % 99999)}`;
+      const cedulaPatch = await api('PATCH', `/api/users/${sampleMember.id}/cedula`, {
+        cedula: altCedula,
+      });
+      ok('PATCH /api/users/:id/cedula', cedulaPatch.res.status === 200, cedulaPatch.data.error);
+      if (cedulaPatch.res.status === 200 && sampleMember.cedula) {
+        await api('PATCH', `/api/users/${sampleMember.id}/cedula`, {
+          cedula: sampleMember.cedula,
+        });
+      }
+    }
+  }
+
+  const userOptions = await api('GET', '/api/users/options?role=member');
+  ok('GET /api/users/options para registrar pagos', userOptions.res.status === 200);
+
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);
 }

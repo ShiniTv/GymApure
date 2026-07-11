@@ -8,10 +8,7 @@ import { assignSubscription, getActiveSubscriptionByUserId } from '../lib/subscr
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
-import {
-  getExpiringSubscriptions,
-  getLastDoorAlert,
-} from '../lib/expiringSubscriptions.ts';
+import { getExpiringSubscriptions, getLastDoorAlert } from '../lib/expiringSubscriptions.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 
@@ -25,7 +22,10 @@ const membershipSchema = z.object({
 
 router.get('/expiring', authorize(['admin']), async (req, res) => {
   const defaultDays = await getExpiryAlertDays();
-  const days = Math.min(90, Math.max(1, parseInt(String(req.query.days ?? defaultDays), 10) || defaultDays));
+  const days = Math.min(
+    90,
+    Math.max(1, parseInt(String(req.query.days ?? defaultDays), 10) || defaultDays)
+  );
 
   try {
     const [expiring, lastDoorAlert] = await Promise.all([
@@ -116,7 +116,8 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     );
     if (parseInt(active.rows[0].count, 10) > 0) {
       return res.status(400).json({
-        error: 'No se puede eliminar un plan con suscripciones activas. Espera a que venzan o reasigna a los miembros.',
+        error:
+          'No se puede eliminar un plan con suscripciones activas. Espera a que venzan o reasigna a los miembros.',
       });
     }
 
@@ -144,19 +145,24 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/user/:userId', requireMemberAccess('userId', 'admin'), asyncHandler(async (req, res) => {
-  const userId = Number(req.params.userId);
-  if (Number.isNaN(userId)) {
-    res.status(400).json({ error: 'userId inválido' });
-    return;
-  }
-  const sub = await getActiveSubscriptionByUserId({ query }, userId);
-  res.json(sub ?? null);
-}));
+router.get(
+  '/user/:userId',
+  requireMemberAccess('userId', 'admin'),
+  asyncHandler(async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      res.status(400).json({ error: 'userId inválido' });
+      return;
+    }
+    const sub = await getActiveSubscriptionByUserId({ query }, userId);
+    res.json(sub ?? null);
+  })
+);
 
 const assignSchema = z.object({
   membership_id: z.coerce.number().int().positive(),
   start_date: z.string().optional(),
+  payment_id: z.coerce.number().int().positive().optional(),
 });
 
 router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
@@ -170,16 +176,39 @@ router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res)
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
 
+  const isReceptionist = req.user!.role === 'receptionist';
+  if (isReceptionist && !parsed.data.payment_id) {
+    return res.status(400).json({
+      error: 'Debe vincular un pago aprobado (payment_id). Registre y apruebe el pago primero.',
+    });
+  }
+
   try {
-    const memberCheck = await query<{ role: string }>(
-      "SELECT role FROM users WHERE id = $1",
-      [userId]
-    );
+    const memberCheck = await query<{ role: string }>('SELECT role FROM users WHERE id = $1', [
+      userId,
+    ]);
     if (!memberCheck.rows[0]) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     if (memberCheck.rows[0].role !== 'member') {
       return res.status(400).json({ error: 'Solo se asigna membresía a miembros' });
+    }
+
+    if (parsed.data.payment_id) {
+      const paymentResult = await query<{ user_id: number; status: string }>(
+        'SELECT user_id, status FROM payments WHERE id = $1',
+        [parsed.data.payment_id]
+      );
+      const payment = paymentResult.rows[0];
+      if (!payment) {
+        return res.status(404).json({ error: 'Pago no encontrado' });
+      }
+      if (payment.status !== 'approved') {
+        return res.status(400).json({ error: 'El pago debe estar aprobado' });
+      }
+      if (Number(payment.user_id) !== userId) {
+        return res.status(400).json({ error: 'El pago no corresponde a este miembro' });
+      }
     }
 
     const result = await withTransaction(async (client) =>
@@ -189,6 +218,7 @@ router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res)
     await logAudit(req.user!.id, 'membership.assign', {
       user_id: userId,
       membership_id: parsed.data.membership_id,
+      payment_id: parsed.data.payment_id ?? null,
     });
 
     invalidateAdminStatsCache();

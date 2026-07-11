@@ -26,7 +26,6 @@ import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePay
 import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
-import { ResponsiveTable } from '../components/ResponsiveTable';
 import {
   formatPaymentDate,
   formatPaymentMethod,
@@ -198,7 +197,7 @@ export default function Payments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
-    if (isStaffPayment && !isMember && !selectedMemberId) {
+    if (isStaffPayment && !selectedMemberId) {
       setSubmitError('Seleccione un miembro');
       return;
     }
@@ -229,9 +228,7 @@ export default function Payments() {
       await adminStats?.refresh();
       await memberStats?.refresh();
       toast?.success(
-        isStaffPayment && !isMember
-          ? 'Pago registrado correctamente'
-          : 'Pago reportado correctamente'
+        isStaffPayment ? 'Pago registrado correctamente' : 'Pago reportado correctamente'
       );
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'No se pudo enviar el pago');
@@ -378,307 +375,340 @@ export default function Payments() {
 
         <Card padding="none" rounded="xl" className="overflow-hidden">
           {isMember ? (
-            <ResponsiveTable
-              items={payments}
-              keyExtractor={(payment) => payment.id}
-              loading={loading}
-              loadingSkeleton={
-                <>
-                  <div className="flex justify-center p-8 lg:hidden">
+            <>
+              <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+                {loading ? (
+                  <div className="flex justify-center p-8">
                     <Spinner />
                   </div>
-                  <div className="hidden overflow-x-auto lg:block">
-                    <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                      <tbody>
-                        <tr>
-                          <td colSpan={6} className="px-5 py-8 text-center">
-                            <Spinner />
+                ) : payments.length === 0 ? (
+                  <EmptyState
+                    icon={CreditCard}
+                    title="Sin pagos registrados"
+                    description="Cuando reportes un pago, aparecerá aquí con su estado."
+                    action={
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSubmitError('');
+                          setShowModal(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Reportar pago
+                      </Button>
+                    }
+                  />
+                ) : (
+                  payments.map((payment) => (
+                    <div key={payment.id} className="px-3 py-2.5">
+                      <div className="flex min-w-0 items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-brand text-base leading-none font-bold tabular-nums sm:text-lg">
+                            ${payment.amount_usd}
+                          </p>
+                          <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+                            <time dateTime={payment.created_at}>
+                              {formatPaymentDate(payment.created_at)}
+                            </time>
+                            <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                            <span className="capitalize">
+                              {formatPaymentMethod(payment.method)}
+                            </span>
+                            {payment.reference && (
+                              <>
+                                <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                                <span className="font-mono" title={payment.reference}>
+                                  Ref: {payment.reference}
+                                </span>
+                              </>
+                            )}
+                          </p>
+                          {payment.status === 'rejected' && <PaymentRejectionNote />}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {payment.proof_url && (
+                            <ProofPreviewButton
+                              onClick={() => setProofPreview(payment)}
+                              className="h-8 w-8"
+                            />
+                          )}
+                          <Badge
+                            variant={paymentStatusVariant(payment.status)}
+                            className="shrink-0 px-1.5 py-0 text-[9px]"
+                          >
+                            {paymentStatusLabel(payment.status)}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="hidden overflow-x-auto lg:block">
+                <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
+                  <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+                    <tr>
+                      <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
+                      <th className="px-3 py-2.5 lg:px-5">Fecha</th>
+                      <th className="px-3 py-2.5 lg:px-5">Método</th>
+                      <th className="px-3 py-2.5 lg:px-5">Referencia</th>
+                      <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
+                      <th className="px-3 py-2.5 lg:px-5">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-8 text-center">
+                          <Spinner />
+                        </td>
+                      </tr>
+                    ) : payments.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
+                        >
+                          No hay pagos registrados
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((payment) => (
+                        <tr
+                          key={payment.id}
+                          className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                        >
+                          <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                            ${payment.amount_usd}
+                          </td>
+                          <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                            {formatPaymentDate(payment.created_at)}
+                          </td>
+                          <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                            {formatPaymentMethod(payment.method)}
+                          </td>
+                          <td
+                            className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
+                            title={payment.reference}
+                          >
+                            {payment.reference}
+                          </td>
+                          <td className="px-3 py-2.5 lg:px-5">
+                            {payment.proof_url ? (
+                              <ProofPreviewButton onClick={() => setProofPreview(payment)} />
+                            ) : (
+                              <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 lg:px-5">
+                            <Badge
+                              variant={paymentStatusVariant(payment.status)}
+                              className="px-1.5 py-0 text-[9px]"
+                            >
+                              {paymentStatusLabel(payment.status)}
+                            </Badge>
+                            {payment.status === 'rejected' && (
+                              <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
+                                No verificado ·{' '}
+                                <Link to="/messages" className="font-semibold underline">
+                                  Mensajes
+                                </Link>
+                              </p>
+                            )}
                           </td>
                         </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              }
-              emptyState={
-                <EmptyState
-                  icon={CreditCard}
-                  title="Sin pagos registrados"
-                  description="Cuando reportes un pago, aparecerá aquí con su estado."
-                  action={
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setSubmitError('');
-                        setShowModal(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Reportar pago
-                    </Button>
-                  }
-                />
-              }
-              mobileClassName="divide-y divide-zinc-100 dark:divide-zinc-800"
-              mobile={(payment) => (
-                <div className="px-3 py-2.5">
-                  <div className="flex min-w-0 items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-brand text-base leading-none font-bold tabular-nums sm:text-lg">
-                        ${payment.amount_usd}
-                      </p>
-                      <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-                        <time dateTime={payment.created_at}>
-                          {formatPaymentDate(payment.created_at)}
-                        </time>
-                        <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                        <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
-                        {payment.reference && (
-                          <>
-                            <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                            <span className="font-mono" title={payment.reference}>
-                              Ref: {payment.reference}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                      {payment.status === 'rejected' && <PaymentRejectionNote />}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {payment.proof_url && (
-                        <ProofPreviewButton
-                          onClick={() => setProofPreview(payment)}
-                          className="h-8 w-8"
-                        />
-                      )}
-                      <Badge
-                        variant={paymentStatusVariant(payment.status)}
-                        className="shrink-0 px-1.5 py-0 text-[9px]"
-                      >
-                        {paymentStatusLabel(payment.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              )}
-              header={
-                <tr>
-                  <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
-                  <th className="px-3 py-2.5 lg:px-5">Fecha</th>
-                  <th className="px-3 py-2.5 lg:px-5">Método</th>
-                  <th className="px-3 py-2.5 lg:px-5">Referencia</th>
-                  <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
-                  <th className="px-3 py-2.5 lg:px-5">Estado</th>
-                </tr>
-              }
-              desktop={(payment) => (
-                <tr className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
-                  <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
-                    ${payment.amount_usd}
-                  </td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
-                    {formatPaymentDate(payment.created_at)}
-                  </td>
-                  <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
-                    {formatPaymentMethod(payment.method)}
-                  </td>
-                  <td
-                    className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
-                    title={payment.reference}
-                  >
-                    {payment.reference}
-                  </td>
-                  <td className="px-3 py-2.5 lg:px-5">
-                    {payment.proof_url ? (
-                      <ProofPreviewButton onClick={() => setProofPreview(payment)} />
-                    ) : (
-                      <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                      ))
                     )}
-                  </td>
-                  <td className="px-3 py-2.5 lg:px-5">
-                    <Badge
-                      variant={paymentStatusVariant(payment.status)}
-                      className="px-1.5 py-0 text-[9px]"
-                    >
-                      {paymentStatusLabel(payment.status)}
-                    </Badge>
-                    {payment.status === 'rejected' && (
-                      <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
-                        No verificado ·{' '}
-                        <Link to="/messages" className="font-semibold underline">
-                          Mensajes
-                        </Link>
-                      </p>
-                    )}
-                  </td>
-                </tr>
-              )}
-            />
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
-            <ResponsiveTable
-              items={payments}
-              keyExtractor={(payment) => payment.id}
-              loading={loading}
-              loadingSkeleton={
-                <>
-                  <div className="flex justify-center p-8 lg:hidden">
+            <>
+              <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+                {loading ? (
+                  <div className="flex justify-center p-8">
                     <Spinner />
                   </div>
-                  <div className="hidden overflow-x-auto lg:block">
-                    <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                      <tbody>
-                        <tr>
-                          <td colSpan={7} className="px-5 py-8 text-center">
-                            <Spinner />
+                ) : payments.length === 0 ? (
+                  <EmptyState
+                    icon={CreditCard}
+                    title="Sin pagos registrados"
+                    description="Los reportes de miembros aparecerán aquí para revisión."
+                    action={
+                      <Button size="sm" onClick={() => openRegisterModal()}>
+                        <Plus className="h-4 w-4" />
+                        Registrar pago
+                      </Button>
+                    }
+                  />
+                ) : (
+                  payments.map((payment) => (
+                    <div key={payment.id} className="px-3 py-2.5">
+                      <div className="flex min-w-0 items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {payment.user_name}
+                          </p>
+                          <p className="text-brand mt-0.5 text-base leading-none font-bold tabular-nums">
+                            ${payment.amount_usd}
+                          </p>
+                          <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+                            <time dateTime={payment.created_at}>
+                              {formatPaymentDate(payment.created_at)}
+                            </time>
+                            <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                            <span className="capitalize">
+                              {formatPaymentMethod(payment.method)}
+                            </span>
+                            {payment.reference && (
+                              <>
+                                <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                                <span className="font-mono" title={payment.reference}>
+                                  Ref: {payment.reference}
+                                </span>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {isStaffPayment && payment.status === 'pending' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openApproveModal(payment)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
+                                aria-label="Aprobar pago"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRejectTarget(payment)}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
+                                aria-label="Rechazar pago"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
+                          {payment.proof_url && (
+                            <ProofPreviewButton
+                              onClick={() => setProofPreview(payment)}
+                              className="h-8 w-8"
+                            />
+                          )}
+                          <Badge
+                            variant={paymentStatusVariant(payment.status)}
+                            className="px-1.5 py-0 text-[9px]"
+                          >
+                            {paymentStatusLabel(payment.status)}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="hidden overflow-x-auto lg:block">
+                <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
+                  <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+                    <tr>
+                      <th className="px-3 py-2.5 lg:px-5">Usuario</th>
+                      <th className="px-3 py-2.5 lg:px-5">Fecha</th>
+                      <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
+                      <th className="px-3 py-2.5 lg:px-5">Método</th>
+                      <th className="px-3 py-2.5 lg:px-5">Referencia</th>
+                      <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
+                      <th className="px-3 py-2.5 lg:px-5">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-8 text-center">
+                          <Spinner />
+                        </td>
+                      </tr>
+                    ) : payments.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
+                        >
+                          No hay pagos registrados
+                        </td>
+                      </tr>
+                    ) : (
+                      payments.map((payment) => (
+                        <tr
+                          key={payment.id}
+                          className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                        >
+                          <td className="px-3 py-2.5 font-medium text-zinc-700 lg:px-5 dark:text-zinc-200">
+                            {payment.user_name}
+                          </td>
+                          <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                            {formatPaymentDate(payment.created_at)}
+                          </td>
+                          <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                            ${payment.amount_usd}
+                          </td>
+                          <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                            {formatPaymentMethod(payment.method)}
+                          </td>
+                          <td
+                            className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
+                            title={payment.reference}
+                          >
+                            {payment.reference}
+                          </td>
+                          <td className="px-3 py-2.5 lg:px-5">
+                            {payment.proof_url ? (
+                              <ProofPreviewButton onClick={() => setProofPreview(payment)} />
+                            ) : (
+                              <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 lg:px-5">
+                            <div className="flex items-center gap-1">
+                              <Badge
+                                variant={paymentStatusVariant(payment.status)}
+                                className="px-1.5 py-0 text-[9px]"
+                              >
+                                {paymentStatusLabel(payment.status)}
+                              </Badge>
+                              {isStaffPayment && payment.status === 'pending' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openApproveModal(payment)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
+                                    aria-label="Aprobar pago"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setRejectTarget(payment)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
+                                    aria-label="Rechazar pago"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </td>
                         </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              }
-              emptyState={
-                <EmptyState
-                  icon={CreditCard}
-                  title="Sin pagos registrados"
-                  description="Los reportes de miembros aparecerán aquí para revisión."
-                />
-              }
-              mobileClassName="divide-y divide-zinc-100 dark:divide-zinc-800"
-              mobile={(payment) => (
-                <div className="px-3 py-2.5">
-                  <div className="flex min-w-0 items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                        {payment.user_name}
-                      </p>
-                      <p className="text-brand mt-0.5 text-base leading-none font-bold tabular-nums">
-                        ${payment.amount_usd}
-                      </p>
-                      <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-                        <time dateTime={payment.created_at}>
-                          {formatPaymentDate(payment.created_at)}
-                        </time>
-                        <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                        <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
-                        {payment.reference && (
-                          <>
-                            <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                            <span className="font-mono" title={payment.reference}>
-                              Ref: {payment.reference}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {isStaffPayment && payment.status === 'pending' && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => openApproveModal(payment)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
-                            aria-label="Aprobar pago"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRejectTarget(payment)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
-                            aria-label="Rechazar pago"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </>
-                      )}
-                      {payment.proof_url && (
-                        <ProofPreviewButton
-                          onClick={() => setProofPreview(payment)}
-                          className="h-8 w-8"
-                        />
-                      )}
-                      <Badge
-                        variant={paymentStatusVariant(payment.status)}
-                        className="px-1.5 py-0 text-[9px]"
-                      >
-                        {paymentStatusLabel(payment.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              )}
-              header={
-                <tr>
-                  <th className="px-3 py-2.5 lg:px-5">Usuario</th>
-                  <th className="px-3 py-2.5 lg:px-5">Fecha</th>
-                  <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
-                  <th className="px-3 py-2.5 lg:px-5">Método</th>
-                  <th className="px-3 py-2.5 lg:px-5">Referencia</th>
-                  <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
-                  <th className="px-3 py-2.5 lg:px-5">Estado</th>
-                </tr>
-              }
-              desktop={(payment) => (
-                <tr className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
-                  <td className="px-3 py-2.5 font-medium text-zinc-700 lg:px-5 dark:text-zinc-200">
-                    {payment.user_name}
-                  </td>
-                  <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
-                    {formatPaymentDate(payment.created_at)}
-                  </td>
-                  <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
-                    ${payment.amount_usd}
-                  </td>
-                  <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
-                    {formatPaymentMethod(payment.method)}
-                  </td>
-                  <td
-                    className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
-                    title={payment.reference}
-                  >
-                    {payment.reference}
-                  </td>
-                  <td className="px-3 py-2.5 lg:px-5">
-                    {payment.proof_url ? (
-                      <ProofPreviewButton onClick={() => setProofPreview(payment)} />
-                    ) : (
-                      <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                      ))
                     )}
-                  </td>
-                  <td className="px-3 py-2.5 lg:px-5">
-                    <div className="flex items-center gap-1">
-                      <Badge
-                        variant={paymentStatusVariant(payment.status)}
-                        className="px-1.5 py-0 text-[9px]"
-                      >
-                        {paymentStatusLabel(payment.status)}
-                      </Badge>
-                      {isStaffPayment && payment.status === 'pending' && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => openApproveModal(payment)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
-                            aria-label="Aprobar pago"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRejectTarget(payment)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
-                            aria-label="Rechazar pago"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            />
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
           <PaginationBar
             page={page}

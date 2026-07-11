@@ -4,10 +4,13 @@ export const ALL_ROLES: UserRole[] = ['admin', 'trainer', 'member', 'receptionis
 
 export const STAFF_ROLES: UserRole[] = ['admin', 'trainer', 'receptionist'];
 
-/** Admin + receptionist — shared file/proof access, legacy compat. */
+/** Admin + receptionist — shared file/proof access, payment approve/reject, membership assign. */
 export const RECEPTION_STAFF: UserRole[] = ['admin', 'receptionist'];
 
-/** Reception desk operations only (check-in, walk-in, counter). */
+/** Front-desk API access: check-in, walk-in, reception stats (admin can cover the counter). */
+export const RECEPTION_OPERATORS: UserRole[] = ['admin', 'receptionist'];
+
+/** @deprecated Use RECEPTION_OPERATORS — kept for imports that mean receptionist-only semantics. */
 export const RECEPTION_ONLY: UserRole[] = ['receptionist'];
 
 export const ADMIN_OVERSIGHT_ROLES: UserRole[] = ['admin'];

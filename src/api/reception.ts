@@ -5,14 +5,16 @@ import { logAudit } from '../lib/audit.ts';
 import { cedulaWhereClause, normalizeCedulaInput } from '../lib/cedulaUtils.ts';
 import { performCheckIn, performCheckOut } from './attendance/attendanceCore.ts';
 import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
-import { RECEPTION_ONLY } from '../lib/roles.ts';
+import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 import { walkInHandler } from './reception/walkIn.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
+import { proofUpload } from '../lib/uploadStorage.ts';
+import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { z } from 'zod';
 
 const router = asyncRouter();
 
-router.use(authorize(RECEPTION_ONLY));
+router.use(authorize(RECEPTION_OPERATORS));
 
 const lookupQuerySchema = z.object({
   cedula: z.string().min(1, 'Cédula requerida'),
@@ -130,7 +132,12 @@ router.get(
   })
 );
 
-router.post('/walk-in', asyncHandler(walkInHandler));
+router.post(
+  '/walk-in',
+  uploadRateLimiter,
+  proofUpload.single('proof'),
+  asyncHandler(walkInHandler)
+);
 
 router.post(
   '/check-in',

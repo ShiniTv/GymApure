@@ -1,13 +1,13 @@
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import type { Response } from 'express';
-import { withTransaction } from '../../db/index.ts';
+import { query, withTransaction } from '../../db/index.ts';
 import { logAudit } from '../../lib/audit.ts';
 import { canonicalCedula, cedulaWhereClause } from '../../lib/cedulaUtils.ts';
 import { assignSubscription } from '../../lib/subscriptions.ts';
 import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
-import { hashPassword } from '../../lib/passwordHash.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
 import { isTrainingShift } from '../../lib/trainingShift.ts';
@@ -19,6 +19,12 @@ import {
   WALK_IN_SETUP_EXPIRY_HOURS,
 } from '../../lib/passwordSetupToken.ts';
 import { logger } from '../../lib/logger.ts';
+import { assertProofUpload } from '../../lib/uploadValidation.ts';
+import {
+  finalizeLocalProof,
+  isProofStorageRemote,
+  uploadPaymentProof,
+} from '../../lib/proofStorage.ts';
 
 export const walkInSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
@@ -29,13 +35,19 @@ export const walkInSchema = z.object({
   amount_usd: z.coerce.number().positive('Monto inválido').optional(),
   method: z.string().trim().min(1, 'Método requerido').max(50).default('efectivo'),
   reference: z.string().trim().max(200).optional().nullable(),
-  check_in: z.boolean().optional().default(true),
+  check_in: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) return true;
+      if (typeof value === 'boolean') return value;
+      return value === 'true' || value === '1';
+    }),
   training_shift: z.enum(['diurno', 'vespertino', 'nocturno']).optional().nullable(),
 });
 
-function generateUnusablePasswordHash(): Promise<string> {
-  const randomSecret = crypto.randomBytes(32).toString('hex');
-  return hashPassword(randomSecret);
+function generateTempPassword(): string {
+  return crypto.randomBytes(9).toString('base64url');
 }
 
 export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {
@@ -53,9 +65,15 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
   }
 
   const normalizedEmail = data.email.toLowerCase().trim();
-  const hashedPassword = await generateUnusablePasswordHash();
+  const tempPassword = generateTempPassword();
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  const proofFile = req.file ?? null;
 
   try {
+    if (proofFile) {
+      assertProofUpload(proofFile);
+    }
+
     const result = await withTransaction(async (client) => {
       const existingEmail = await client.query('SELECT id FROM users WHERE email = $1', [
         normalizedEmail,
@@ -118,6 +136,26 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       };
     });
 
+    if (proofFile) {
+      try {
+        let proof_url: string;
+        if (isProofStorageRemote()) {
+          proof_url = await uploadPaymentProof(proofFile, result.userId, result.paymentId);
+        } else {
+          proof_url = await finalizeLocalProof(proofFile);
+        }
+        await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [
+          proof_url,
+          result.paymentId,
+        ]);
+      } catch (uploadErr) {
+        logger.error('Walk-in: error subiendo comprobante', {
+          paymentId: result.paymentId,
+          error: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
+        });
+      }
+    }
+
     let checkedIn = false;
     let checkInMessage: string | undefined;
 
@@ -138,14 +176,13 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
     }
 
     let emailSent = false;
-    let passwordSetupUrl: string | undefined;
     try {
       const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
-      passwordSetupUrl = buildPasswordSetupUrl(rawToken);
+      const setupUrl = buildPasswordSetupUrl(rawToken);
       emailSent = await sendEmail({
         to: normalizedEmail,
         subject: 'Bienvenido a GymApure — crea tu contraseña',
-        html: walkInWelcomeEmail(data.full_name, passwordSetupUrl, result.membershipName),
+        html: walkInWelcomeEmail(data.full_name, setupUrl, result.membershipName),
       });
       if (!emailSent) {
         logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
@@ -191,7 +228,7 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       membership_name: result.membershipName,
       subscription: result.subscription,
       email_sent: emailSent,
-      ...(emailSent || !passwordSetupUrl ? {} : { password_setup_url: passwordSetupUrl }),
+      ...(emailSent ? {} : { temporary_password: tempPassword }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,
     });
