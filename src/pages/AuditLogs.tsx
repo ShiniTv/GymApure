@@ -1,9 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Shield, RefreshCw, CreditCard, UserX, UserCheck, Trash2, Fingerprint, UserPlus, LogIn, LogOut } from 'lucide-react';
+import {
+  Shield,
+  RefreshCw,
+  CreditCard,
+  UserX,
+  UserCheck,
+  Trash2,
+  Fingerprint,
+  UserPlus,
+  LogIn,
+  LogOut,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Button, Card, PageHeader, Spinner, EmptyState, FilterChips, BackToDashboardLink } from '../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  PageHeader,
+  Spinner,
+  EmptyState,
+  FilterChips,
+  BackToDashboardLink,
+} from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
 
@@ -21,32 +41,59 @@ const ACTION_LABELS: Record<string, string> = {
   'payment.approve': 'Pago aprobado',
   'payment.reject': 'Pago rechazado',
   'membership.assign': 'Membresía asignada',
+  'membership.create': 'Plan creado',
+  'membership.update': 'Plan actualizado',
   'membership.delete': 'Membresía eliminada',
   'user.status_change': 'Estado de usuario',
+  'user.role_change': 'Cambio de rol',
   'user.delete': 'Usuario eliminado',
   'user.create': 'Usuario creado',
   'user.profile_update': 'Perfil actualizado',
+  'trainer.create': 'Entrenador creado',
+  'trainer.profile_update': 'Perfil entrenador',
+  equipment_create: 'Equipo creado',
+  equipment_delete: 'Equipo eliminado',
+  equipment_retire: 'Equipo retirado',
+  equipment_zone_create: 'Zona creada',
+  'report.export': 'Exportación CSV',
+  'admin.bootstrap': 'Bootstrap admin',
   'reception.check_in': 'Entrada recepción',
   'reception.check_out': 'Salida recepción',
   'reception.walk_in': 'Registro walk-in',
   'settings.expiry.update': 'Config. vencimientos',
   'settings.expiry.run': 'Job vencimientos',
+  'settings.exchange_rate.override': 'Override tasa BCV',
+  'settings.exchange_rate.clear_override': 'Quitar override BCV',
+  'settings.exchange_rate.refresh': 'Refresh tasa BCV',
+  'exchange_rate.refresh': 'Refresh tasa BCV',
   'auth.login': 'Inicio de sesión',
   'auth.logout': 'Cierre de sesión',
   'auth.register': 'Registro',
   'auth.change_password': 'Cambio contraseña',
+  'auth.mfa.enabled': 'MFA activado',
+  'auth.mfa.disabled': 'MFA desactivado',
+  'auth.mfa.setup_started': 'MFA configuración',
+  'auth.mfa_login_failed': 'MFA fallido',
 };
 
 const ACTION_FILTERS = [
   { value: '', label: 'Todas' },
   { value: 'payment.approve', label: 'Pagos aprobados' },
   { value: 'payment.reject', label: 'Pagos rechazados' },
-  { value: 'membership.assign', label: 'Membresías' },
+  { value: 'membership.assign', label: 'Membresías asignadas' },
+  { value: 'membership.create', label: 'Planes creados' },
+  { value: 'membership.update', label: 'Planes editados' },
+  { value: 'membership.delete', label: 'Planes eliminados' },
+  { value: 'user.create', label: 'Usuarios creados' },
+  { value: 'user.role_change', label: 'Cambios de rol' },
+  { value: 'report.export', label: 'Exportaciones' },
+  { value: 'admin.bootstrap', label: 'Bootstrap admin' },
   { value: 'reception.check_in', label: 'Entradas' },
   { value: 'reception.check_out', label: 'Salidas' },
   { value: 'reception.walk_in', label: 'Walk-in' },
   { value: 'user.status_change', label: 'Estados' },
   { value: 'user.delete', label: 'Eliminaciones' },
+  { value: 'auth.mfa.enabled', label: 'MFA activado' },
 ];
 
 function formatDetails(details: string | null): string {
@@ -66,7 +113,8 @@ function actionLabel(action: string): string {
 }
 
 function actionBadgeVariant(action: string): 'success' | 'danger' | 'default' | 'accent' {
-  if (action.startsWith('payment.approve') || action.startsWith('reception.check_in')) return 'success';
+  if (action.startsWith('payment.approve') || action.startsWith('reception.check_in'))
+    return 'success';
   if (action.startsWith('payment.reject') || action.startsWith('user.delete')) return 'danger';
   if (action.startsWith('reception.')) return 'accent';
   return 'default';
@@ -111,7 +159,11 @@ export default function AuditLogs() {
   return (
     <div className="page-stack">
       <PageHeader
-        title={<>Registro de <span className="text-brand">auditoría</span></>}
+        title={
+          <>
+            Registro de <span className="text-brand">auditoría</span>
+          </>
+        }
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
           <div className="flex items-center gap-1.5">
@@ -130,15 +182,11 @@ export default function AuditLogs() {
         }
       />
 
-      <FilterChips
-        options={ACTION_FILTERS}
-        value={actionFilter}
-        onChange={setActionFilter}
-      />
+      <FilterChips options={ACTION_FILTERS} value={actionFilter} onChange={setActionFilter} />
 
       <Card padding="lg" rounded="2xl">
         {loading ? (
-          <div className="py-12 flex justify-center">
+          <div className="flex justify-center py-12">
             <Spinner />
           </div>
         ) : logs.length === 0 ? (
@@ -158,7 +206,7 @@ export default function AuditLogs() {
                 <li key={log.id} className="relative flex gap-4 pb-8">
                   {!isLast && (
                     <span
-                      className="absolute left-5 top-10 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800"
+                      className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"
                       aria-hidden
                     />
                   )}
@@ -168,30 +216,31 @@ export default function AuditLogs() {
                       variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
                       variant === 'danger' && 'bg-red-500/10 text-red-600',
                       variant === 'accent' && 'bg-brand/10 text-brand',
-                      variant === 'default' && 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                      variant === 'default' &&
+                        'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                     )}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
                       <Badge variant={variant}>{actionLabel(log.action)}</Badge>
                       <time
                         className="text-xs text-zinc-400 dark:text-zinc-300"
                         dateTime={log.created_at}
                       >
-                        {format(new Date(log.created_at), "dd MMM yyyy · HH:mm", { locale: es })}
+                        {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
                       </time>
                     </div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {log.user_name ?? 'Sistema'}
                       {log.user_email && (
-                        <span className="text-zinc-500 dark:text-zinc-400 font-normal ml-2 text-xs">
+                        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
                           {log.user_email}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 break-words">
+                    <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
                       {formatDetails(log.details)}
                     </p>
                   </div>

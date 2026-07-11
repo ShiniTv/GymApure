@@ -31,7 +31,8 @@ import {
 } from '../lib/pagination.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
-import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { RECEPTION_STAFF, ALL_ROLES, STAFF_ROLES, isUserStatus } from '../lib/roles.ts';
+import { mfaRequiredError } from '../lib/mfa.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
@@ -691,6 +692,13 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
       .json({ error: 'Solo el administrador puede crear otros roles de staff' });
   }
 
+  if (req.user!.role === 'admin' && STAFF_ROLES.includes(assignedRole)) {
+    const mfaError = await mfaRequiredError(req.user!.id);
+    if (mfaError) {
+      return res.status(403).json({ error: mfaError });
+    }
+  }
+
   const normalizedCedula = cedula?.trim() ? canonicalCedula(cedula.trim()) : null;
   if (!normalizedCedula) {
     return res.status(400).json({ error: 'La cédula es obligatoria para el check-in en el gym' });
@@ -755,6 +763,7 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
     await logAudit(req.user!.id, 'user.create', {
       target_id: newUserId,
       role: assignedRole,
+      elevated: assignedRole !== 'member',
     });
 
     res.status(201).json({ id: newUserId, success: true });
@@ -885,12 +894,30 @@ router.patch(
 
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;
+  if (!isUserStatus(status)) {
+    return res.status(400).json({ error: 'Estado inválido. Use active o inactive.' });
+  }
+
   const targetId = parseInt(String(req.params.id), 10);
   if (Number.isNaN(targetId)) {
     return res.status(400).json({ error: 'ID inválido' });
   }
 
+  if (req.user!.id === targetId) {
+    return res.status(403).json({ error: 'No puedes cambiar tu propio estado' });
+  }
+
   try {
+    const { rows } = await query<{ role: string }>('SELECT role FROM users WHERE id = $1', [
+      targetId,
+    ]);
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    if (rows[0].role === 'admin') {
+      return res.status(403).json({ error: 'No se puede cambiar el estado de un administrador' });
+    }
+
     await query('UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2', [
       status,
       targetId,
@@ -901,6 +928,82 @@ router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) 
       status,
     });
     res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+router.patch('/:id/role', authorize(['admin']), async (req: AuthRequest, res) => {
+  const rawRole = typeof req.body?.role === 'string' ? req.body.role.trim() : '';
+  if (!ALL_ROLES.includes(rawRole as (typeof ALL_ROLES)[number])) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
+  const newRole = rawRole as (typeof ALL_ROLES)[number];
+
+  const targetId = parseInt(String(req.params.id), 10);
+  if (Number.isNaN(targetId)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  if (req.user!.id === targetId) {
+    return res.status(403).json({ error: 'No puedes cambiar tu propio rol' });
+  }
+
+  const mfaError = await mfaRequiredError(req.user!.id);
+  if (mfaError) {
+    return res.status(403).json({ error: mfaError });
+  }
+
+  try {
+    const { rows } = await query<{ role: string; status: string }>(
+      'SELECT role, status FROM users WHERE id = $1',
+      [targetId]
+    );
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const previousRole = rows[0].role;
+    if (previousRole === newRole) {
+      return res.json({ success: true, role: newRole });
+    }
+
+    if (previousRole === 'admin' && newRole !== 'admin') {
+      const { rows: adminCount } = await query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM users WHERE role = 'admin' AND status = 'active'`
+      );
+      if (parseInt(adminCount[0]?.count ?? '0', 10) <= 1) {
+        return res.status(403).json({
+          error: 'No se puede degradar al último administrador activo',
+        });
+      }
+    }
+
+    await query(
+      `UPDATE users SET role = $1, token_version = token_version + 1,
+       training_shift = CASE WHEN $1 = 'member' THEN training_shift ELSE NULL END
+       WHERE id = $2`,
+      [newRole, targetId]
+    );
+
+    if (newRole === 'trainer' && previousRole !== 'trainer') {
+      await query(
+        `INSERT INTO trainer_profiles (user_id, level, shift)
+         VALUES ($1, 'basico', 'diurno')
+         ON CONFLICT (user_id) DO NOTHING`,
+        [targetId]
+      );
+    }
+
+    invalidateSessionUserCache(targetId);
+    await logAudit(req.user!.id, 'user.role_change', {
+      target_id: targetId,
+      previous_role: previousRole,
+      new_role: newRole,
+      elevated: newRole === 'admin' || previousRole === 'admin',
+    });
+
+    res.json({ success: true, role: newRole });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
   }

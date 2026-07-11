@@ -3,14 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
-import {
-  UtensilsCrossed,
-  Target,
-  Save,
-  History,
-  MessageSquare,
-  Dumbbell,
-} from 'lucide-react';
+import { UtensilsCrossed, Target, Save, History, MessageSquare, Dumbbell } from 'lucide-react';
 import {
   Button,
   Card,
@@ -31,6 +24,7 @@ import {
   useInvalidateNutrition,
   fetchMemberGoal,
 } from '../../hooks/queries/useNutritionQuery';
+import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 
 const defaultPlanForm = {
@@ -47,19 +41,27 @@ const defaultPlanForm = {
 };
 
 export default function MemberNutrition() {
+  const { user } = useAuth();
+  const isReadOnly = user?.role === 'admin';
   const { id } = useParams();
   const memberId = id ? parseInt(id, 10) : NaN;
   const navigate = useNavigate();
   const invalidate = useInvalidateNutrition();
 
-  const [member, setMember] = useState<{ full_name: string; goal: string | null; profile_image: string | null } | null>(null);
+  const [member, setMember] = useState<{
+    full_name: string;
+    goal: string | null;
+    profile_image: string | null;
+  } | null>(null);
   const [memberLoading, setMemberLoading] = useState(true);
   const [planForm, setPlanForm] = useState(defaultPlanForm);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [saveError, setSaveError] = useState('');
 
-  const { data: plan, isPending: planLoading } = useNutritionPlanQuery(Number.isNaN(memberId) ? undefined : memberId);
+  const { data: plan, isPending: planLoading } = useNutritionPlanQuery(
+    Number.isNaN(memberId) ? undefined : memberId
+  );
   const { data: summary, isPending: summaryLoading } = useNutritionSummaryQuery(
     Number.isNaN(memberId) ? undefined : memberId,
     7
@@ -69,7 +71,9 @@ export default function MemberNutrition() {
     if (Number.isNaN(memberId)) return;
     setMemberLoading(true);
     Promise.all([
-      apiFetch(`/api/users/${memberId}`).then((r) => parseJsonResponse<{ full_name: string; profile_image: string | null }>(r)),
+      apiFetch(`/api/users/${memberId}`).then((r) =>
+        parseJsonResponse<{ full_name: string; profile_image: string | null }>(r)
+      ),
       fetchMemberGoal(memberId),
     ])
       .then(([userData, goal]) => setMember({ ...userData, goal }))
@@ -131,13 +135,13 @@ export default function MemberNutrition() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-zinc-500 dark:text-zinc-400 text-xs">Cargando…</p>
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando…</p>
       </PageState>
     );
   }
 
   if (!member || Number.isNaN(memberId)) {
-    return <div className="text-zinc-500 dark:text-zinc-400 p-6">Miembro no encontrado</div>;
+    return <div className="p-6 text-zinc-500 dark:text-zinc-400">Miembro no encontrado</div>;
   }
 
   const avgAdherence =
@@ -149,8 +153,14 @@ export default function MemberNutrition() {
     <div className="page-stack-tight max-w-3xl">
       <Breadcrumbs
         items={[
-          { label: 'Miembros', href: '/members' },
-          { label: member.full_name, href: `/members/${memberId}/routines` },
+          {
+            label: isReadOnly ? 'Nutrición general' : 'Miembros',
+            href: isReadOnly ? '/nutrition-overview' : '/members',
+          },
+          {
+            label: member.full_name,
+            href: isReadOnly ? undefined : `/members/${memberId}/routines`,
+          },
           { label: 'Nutrición' },
         ]}
       />
@@ -164,28 +174,32 @@ export default function MemberNutrition() {
         }
         subtitle="Metas diarias y adherencia"
         action={
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-1.5">
             <BackToDashboardLink iconOnly className="sm:hidden" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => navigate(`/members/${memberId}/routines`)}
-              title="Rutinas"
-              aria-label="Rutinas"
-            >
-              <Dumbbell className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 shrink-0 p-0"
-              onClick={() => navigate(`/members/${memberId}/history`)}
-              title="Historial"
-              aria-label="Historial"
-            >
-              <History className="h-4 w-4" />
-            </Button>
+            {!isReadOnly && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 shrink-0 p-0"
+                  onClick={() => navigate(`/members/${memberId}/routines`)}
+                  title="Rutinas"
+                  aria-label="Rutinas"
+                >
+                  <Dumbbell className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 shrink-0 p-0"
+                  onClick={() => navigate(`/members/${memberId}/history`)}
+                  title="Historial"
+                  aria-label="Historial"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -201,138 +215,179 @@ export default function MemberNutrition() {
       />
 
       <div className="flex items-center gap-3">
-        <Avatar src={member.profile_image} name={member.full_name} size="md" className="rounded-xl" />
+        <Avatar
+          src={member.profile_image}
+          name={member.full_name}
+          size="md"
+          className="rounded-xl"
+        />
         {member.goal && (
-          <div className="min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/50 px-3 py-2 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+          <div className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="flex items-center gap-1 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
               <Target className="h-3 w-3" />
               Objetivo del miembro
             </p>
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 mt-0.5 line-clamp-2">{member.goal}</p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-zinc-700 dark:text-zinc-300">
+              {member.goal}
+            </p>
           </div>
         )}
       </div>
 
       <Card padding="sm" rounded="xl">
         <h2 className="section-title mb-3 flex items-center gap-1.5">
-          <UtensilsCrossed className="h-3.5 w-3.5 text-brand" />
+          <UtensilsCrossed className="text-brand h-3.5 w-3.5" />
           Plan nutricional
         </h2>
-        {saveMsg && <p className="text-xs text-emerald-600 mb-2">{saveMsg}</p>}
-        {saveError && <p className="text-xs text-red-500 mb-2">{saveError}</p>}
-        <form onSubmit={handleSavePlan} className="space-y-3">
-          <div>
-            <Label>Título del plan</Label>
-            <Input
-              value={planForm.title}
-              onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
-              required
-            />
+        {saveMsg && <p className="mb-2 text-xs text-emerald-600">{saveMsg}</p>}
+        {saveError && <p className="mb-2 text-xs text-red-500">{saveError}</p>}
+        {isReadOnly ? (
+          <div className="space-y-3 text-sm">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Vista de solo lectura. Solo el entrenador asignado puede editar el plan.
+            </p>
+            {plan ? (
+              <>
+                <p>
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                    {plan.title}
+                  </span>
+                </p>
+                <p className="text-zinc-600 tabular-nums dark:text-zinc-400">
+                  {plan.calories_target} kcal · P {plan.protein_target_g}g · C {plan.carbs_target_g}
+                  g · G {plan.fat_target_g}g
+                </p>
+                {plan.notes && (
+                  <p className="text-xs whitespace-pre-wrap text-zinc-500 dark:text-zinc-400">
+                    {plan.notes}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-zinc-500 dark:text-zinc-400">
+                Este miembro no tiene plan nutricional activo.
+              </p>
+            )}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        ) : (
+          <form onSubmit={handleSavePlan} className="space-y-3">
             <div>
-              <Label>kcal / día</Label>
+              <Label>Título del plan</Label>
               <Input
-                type="number"
-                min={1}
-                value={planForm.calories_target}
-                onChange={(e) => setPlanForm({ ...planForm, calories_target: e.target.value })}
+                value={planForm.title}
+                onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
                 required
               />
             </div>
-            <div>
-              <Label>Proteína (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.protein_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, protein_target_g: e.target.value })}
-                required
-              />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div>
+                <Label>kcal / día</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={planForm.calories_target}
+                  onChange={(e) => setPlanForm({ ...planForm, calories_target: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Proteína (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.protein_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, protein_target_g: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Carbos (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.carbs_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, carbs_target_g: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Grasas (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.fat_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, fat_target_g: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div>
+                <Label>± kcal</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.calories_margin}
+                  onChange={(e) => setPlanForm({ ...planForm, calories_margin: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± proteína (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.protein_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, protein_margin_g: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± carbos (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.carbs_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, carbs_margin_g: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± grasas (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.fat_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, fat_margin_g: e.target.value })}
+                />
+              </div>
             </div>
             <div>
-              <Label>Carbos (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.carbs_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, carbs_target_g: e.target.value })}
-                required
+              <Label>Notas para el cliente</Label>
+              <Textarea
+                value={planForm.notes}
+                onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
+                placeholder="Indicaciones, horarios, preferencias…"
+                rows={3}
               />
             </div>
-            <div>
-              <Label>Grasas (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.fat_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, fat_target_g: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div>
-              <Label>± kcal</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.calories_margin}
-                onChange={(e) => setPlanForm({ ...planForm, calories_margin: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± proteína (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.protein_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, protein_margin_g: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± carbos (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.carbs_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, carbs_margin_g: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± grasas (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.fat_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, fat_margin_g: e.target.value })}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Notas para el cliente</Label>
-            <Textarea
-              value={planForm.notes}
-              onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
-              placeholder="Indicaciones, horarios, preferencias…"
-              rows={3}
-            />
-          </div>
-          <Button type="submit" loading={saving} size="sm">
-            <Save className="h-4 w-4" />
-            {plan ? 'Actualizar plan' : 'Crear plan'}
-          </Button>
-        </form>
+            <Button type="submit" loading={saving} size="sm">
+              <Save className="h-4 w-4" />
+              {plan ? 'Actualizar plan' : 'Crear plan'}
+            </Button>
+          </form>
+        )}
       </Card>
 
       <Card padding="sm" rounded="xl">
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="section-title">Adherencia (7 días)</h2>
           {avgAdherence != null && (
             <span
               className={cn(
                 'text-xs font-bold tabular-nums',
-                avgAdherence >= 75 ? 'text-emerald-600' : avgAdherence >= 50 ? 'text-amber-600' : 'text-red-500'
+                avgAdherence >= 75
+                  ? 'text-emerald-600'
+                  : avgAdherence >= 50
+                    ? 'text-amber-600'
+                    : 'text-red-500'
               )}
             >
               Promedio {avgAdherence}%
@@ -344,11 +399,11 @@ export default function MemberNutrition() {
             <Spinner />
           </div>
         ) : !plan ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
+          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
             Guarda un plan nutricional arriba para ver la adherencia del cliente.
           </p>
         ) : !summary || summary.days.every((d) => d.totals.calories === 0) ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
+          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
             El cliente aún no ha registrado comidas esta semana.
           </p>
         ) : (
@@ -356,24 +411,28 @@ export default function MemberNutrition() {
             {summary.days.map((day) => (
               <div
                 key={day.date}
-                className="rounded-lg border border-zinc-100 dark:border-zinc-800 px-3 py-2"
+                className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                     {format(new Date(day.date + 'T12:00:00'), 'EEE d MMM', { locale: es })}
                   </p>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 tabular-nums">
-                    {day.totals.calories} kcal · P {Math.round(day.totals.protein)}g · C {Math.round(day.totals.carbs)}g · G{' '}
-                    {Math.round(day.totals.fat)}g
+                  <p className="text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                    {day.totals.calories} kcal · P {Math.round(day.totals.protein)}g · C{' '}
+                    {Math.round(day.totals.carbs)}g · G {Math.round(day.totals.fat)}g
                   </p>
                 </div>
-                <AdherenceBar percent={day.adherence_percent} status={day.calories_status} label="Cumplimiento" />
+                <AdherenceBar
+                  percent={day.adherence_percent}
+                  status={day.calories_status}
+                  label="Cumplimiento"
+                />
               </div>
             ))}
           </div>
         )}
         {!plan && (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
             Guarda un plan arriba para que el cliente pueda ver sus metas en{' '}
             <Link to="/nutrition" className="text-brand font-semibold hover:underline">
               Mi nutrición

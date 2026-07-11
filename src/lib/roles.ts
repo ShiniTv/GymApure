@@ -15,6 +15,17 @@ export const TRAINER_OPERATIONAL_ROLES: UserRole[] = ['trainer'];
 export const RECEPTION_OPERATIONAL_ROLES: UserRole[] = ['receptionist'];
 export const MEMBER_ROLES: UserRole[] = ['member'];
 
+export const USER_STATUSES = ['active', 'inactive'] as const;
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+export function isUserStatus(value: unknown): value is UserStatus {
+  return typeof value === 'string' && (USER_STATUSES as readonly string[]).includes(value);
+}
+
+export function isStaffRole(role: string): boolean {
+  return STAFF_ROLES.includes(role as UserRole);
+}
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
   trainer: 'Entrenador',
@@ -28,10 +39,6 @@ export const PORTAL_TITLES: Record<UserRole, string> = {
   member: 'Mi entrenamiento',
   receptionist: 'Mostrador',
 };
-
-export function isStaffRole(role: string): boolean {
-  return STAFF_ROLES.includes(role as UserRole);
-}
 
 export function canOperateRoutines(role: UserRole | string): boolean {
   return role === 'trainer';

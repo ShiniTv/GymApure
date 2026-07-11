@@ -1,8 +1,9 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
-import { authorize } from './middleware/auth.ts';
+import { AuthRequest, authorize } from './middleware/auth.ts';
 import { parseDateParam, toCsv } from '../lib/csv.ts';
 import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
+import { logAudit } from '../lib/audit.ts';
 
 const router = asyncRouter();
 
@@ -93,7 +94,7 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/payments', authorize(['admin']), async (req, res) => {
+router.get('/payments', authorize(['admin']), async (req: AuthRequest, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
   const rangeError = validateExportDateRange(from, to);
@@ -148,6 +149,12 @@ router.get('/payments', authorize(['admin']), async (req, res) => {
     ]);
 
     const suffix = from && to ? `${from}_${to}` : from || to || 'all';
+    await logAudit(req.user!.id, 'report.export', {
+      type: 'payments',
+      from,
+      to,
+      row_count: rows.length,
+    });
     sendCsv(
       res,
       `pagos-${suffix}.csv`,
@@ -171,7 +178,7 @@ router.get('/payments', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/attendance', authorize(['admin']), async (req, res) => {
+router.get('/attendance', authorize(['admin']), async (req: AuthRequest, res) => {
   const from = parseDateParam(req.query.from);
   const to = parseDateParam(req.query.to);
   const rangeError = validateExportDateRange(from, to);
@@ -222,6 +229,12 @@ router.get('/attendance', authorize(['admin']), async (req, res) => {
     ]);
 
     const suffix = from && to ? `${from}_${to}` : from || to || 'all';
+    await logAudit(req.user!.id, 'report.export', {
+      type: 'attendance',
+      from,
+      to,
+      row_count: rows.length,
+    });
     sendCsv(
       res,
       `asistencias-${suffix}.csv`,
@@ -234,7 +247,7 @@ router.get('/attendance', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/members', authorize(['admin']), async (_req, res) => {
+router.get('/members', authorize(['admin']), async (req: AuthRequest, res) => {
   try {
     const { rows } = await query<{
       id: number;
@@ -270,6 +283,10 @@ router.get('/members', authorize(['admin']), async (_req, res) => {
       r.days_remaining ?? '',
     ]);
 
+    await logAudit(req.user!.id, 'report.export', {
+      type: 'members',
+      row_count: rows.length,
+    });
     sendCsv(
       res,
       'miembros.csv',
