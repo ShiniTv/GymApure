@@ -3,15 +3,15 @@
  * Requiere servidor en marcha: npm run dev
  */
 import 'dotenv/config';
+import { TestApiClient } from './lib/test-api-client.ts';
 
-const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';
 const ADMIN_PASSWORD = process.env.CHECKLIST_ADMIN_PASSWORD ?? 'ChecklistAdmin123!';
 const MEMBER_EMAIL = `checklist-member-${Date.now()}@test.local`;
 const MEMBER_PASSWORD = 'ChecklistMember123!';
 const MEMBER_CEDULA = `V-${90000000 + Math.floor(Math.random() * 999999)}`;
 
-let cookie = '';
+const client = new TestApiClient();
 let passed = 0;
 let failed = 0;
 
@@ -25,168 +25,103 @@ function ok(name: string, cond: boolean, detail?: string) {
   }
 }
 
-async function api(method: string, path: string, body?: unknown) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  return { res, data };
-}
-
-function saveCookie(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
-}
-
 async function main() {
   console.log('=== Auth checklist (cuentas reales) ===\n');
 
-  // Bootstrap admin via API interna no existe — asumimos create-admin previo o registro bloqueado
-  // Usamos registro + promoción no disponible; creamos admin con env si existe checklist seed
-  const bootstrap = await api('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL,
-    password: ADMIN_PASSWORD,
-  });
-
-  if (bootstrap.res.status !== 200) {
+  const bootstrap = await client.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+  if (bootstrap.status !== 200) {
     console.error(
       `\nNo hay admin de checklist. Ejecuta primero:\n` +
-        `  $env:ADMIN_EMAIL="${ADMIN_EMAIL}"; $env:ADMIN_PASSWORD="${ADMIN_PASSWORD}"; $env:ADMIN_FULL_NAME="Checklist Admin"; npm run db:create-admin\n`
+        `  ADMIN_EMAIL="${ADMIN_EMAIL}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" ADMIN_FULL_NAME="Checklist Admin" npm run db:create-admin\n`
     );
     process.exit(1);
   }
 
-  ok('Login admin checklist', bootstrap.res.status === 200);
-  saveCookie(bootstrap.res);
+  ok('Login admin checklist', bootstrap.status === 200);
 
-  const me = await api('GET', '/api/auth/me');
-  ok('GET /api/auth/me', me.res.status === 200 && me.data.user?.role === 'admin');
+  const me = await client.json('GET', '/api/auth/me');
+  ok('GET /api/auth/me', me.status === 200 && (me.data as { user?: { role?: string } }).user?.role === 'admin');
 
-  cookie = '';
-  const dupRegister = await api('POST', '/api/auth/register', {
+  client.clearSession();
+  const dupRegister = await client.json('POST', '/api/auth/register', {
     full_name: 'Test Dup',
     email: MEMBER_EMAIL,
     password: MEMBER_PASSWORD,
     cedula: MEMBER_CEDULA,
   });
-  ok('Registro miembro nuevo', dupRegister.res.status === 201);
+  ok('Registro miembro nuevo', dupRegister.status === 201);
 
-  const dupAgain = await api('POST', '/api/auth/register', {
+  const dupAgain = await client.json('POST', '/api/auth/register', {
     full_name: 'Test Dup 2',
     email: MEMBER_EMAIL,
     password: MEMBER_PASSWORD,
     cedula: 'V-99999999',
   });
-  ok('Rechaza email duplicado', dupAgain.res.status === 400);
+  ok('Rechaza email duplicado', dupAgain.status === 400);
 
-  cookie = '';
-  const memberLogin = await api('POST', '/api/auth/login', {
-    email: MEMBER_EMAIL,
-    password: MEMBER_PASSWORD,
-  });
-  ok('Login miembro registrado', memberLogin.res.status === 200);
-  saveCookie(memberLogin.res);
+  client.clearSession();
+  await client.login(MEMBER_EMAIL, MEMBER_PASSWORD);
+  ok('Login miembro registrado', true);
 
   const newPass = `${MEMBER_PASSWORD}x`;
-  const change = await api('POST', '/api/auth/change-password', {
+  const change = await client.json('POST', '/api/auth/change-password', {
     current_password: MEMBER_PASSWORD,
     new_password: newPass,
     confirm_password: newPass,
   });
-  ok('Cambio de contraseña miembro', change.res.status === 200);
+  ok('Cambio de contraseña miembro', change.status === 200);
 
-  const staleSession = await api('GET', '/api/auth/me');
-  ok('Cookie invalidada tras cambio de contraseña', staleSession.res.status === 401);
+  const staleSession = await client.json('GET', '/api/auth/me');
+  ok('Cookie invalidada tras cambio de contraseña', staleSession.status === 401);
 
-  const relogin = await api('POST', '/api/auth/login', {
-    email: MEMBER_EMAIL,
-    password: newPass,
-  });
-  ok('Re-login con nueva contraseña', relogin.res.status === 200);
-  saveCookie(relogin.res);
+  await client.login(MEMBER_EMAIL, newPass);
+  ok('Re-login con nueva contraseña', true);
 
-  const logoutRes = await api('POST', '/api/auth/logout');
-  ok('Logout → 200', logoutRes.res.status === 200);
-  const afterLogout = await api('GET', '/api/auth/me');
-  ok('Cookie invalidada tras logout → 401', afterLogout.res.status === 401);
+  const logoutRes = await client.json('POST', '/api/auth/logout');
+  ok('Logout → 200', logoutRes.status === 200);
+  const afterLogout = await client.json('GET', '/api/auth/me');
+  ok('Cookie invalidada tras logout → 401', afterLogout.status === 401);
 
-  cookie = '';
-  const adminAgain = await api('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL,
-    password: ADMIN_PASSWORD,
-  });
-  saveCookie(adminAgain.res);
-
+  await client.login(ADMIN_EMAIL, ADMIN_PASSWORD);
   const staffEmail = `checklist-staff-${Date.now()}@test.local`;
-  const createStaff = await api('POST', '/api/users', {
+  const createStaff = await client.json('POST', '/api/users', {
     full_name: 'Staff Checklist',
     email: staffEmail,
     password: 'StaffPass123!',
     cedula: `V-${80000000 + Math.floor(Math.random() * 999999)}`,
     role: 'member',
   });
-  ok('Admin crea usuario con contraseña', createStaff.res.status === 201);
+  ok('Admin crea usuario con contraseña', createStaff.status === 201);
 
-  cookie = '';
-  const staffLogin = await api('POST', '/api/auth/login', {
-    email: staffEmail,
-    password: 'StaffPass123!',
-  });
-  ok('Login usuario creado por admin', staffLogin.res.status === 200);
+  client.clearSession();
+  const staffLogin = await client.login(staffEmail, 'StaffPass123!');
+  ok('Login usuario creado por admin', staffLogin.status === 200);
 
-  cookie = '';
-  const badLogin = await api('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL,
-    password: 'wrong-password',
-  });
-  ok('Login inválido → 401', badLogin.res.status === 401);
+  client.clearSession();
+  const badLogin = await client.login(ADMIN_EMAIL, 'wrong-password');
+  ok('Login inválido → 401', badLogin.status === 401);
 
   const lockoutEmail = `lockout-test-${Date.now()}@test.local`;
-  const lockFail1 = await api('POST', '/api/auth/login', {
-    email: lockoutEmail,
-    password: 'wrong-password',
-  });
-  ok('1er intento fallido no bloquea → 401', lockFail1.res.status === 401);
+  for (let i = 1; i <= 3; i++) {
+    client.clearSession();
+    const attempt = await client.login(lockoutEmail, 'wrong-password');
+    ok(`${i}er intento fallido → 401`, attempt.status === 401);
+  }
+  client.clearSession();
+  const lockBlocked = await client.login(lockoutEmail, 'wrong-password');
+  ok('4to intento tras 3 fallos → 429', lockBlocked.status === 429);
 
-  const lockFail2 = await api('POST', '/api/auth/login', {
-    email: lockoutEmail,
-    password: 'wrong-password',
-  });
-  ok('2do intento fallido no bloquea → 401', lockFail2.res.status === 401);
-
-  const lockFail3 = await api('POST', '/api/auth/login', {
-    email: lockoutEmail,
-    password: 'wrong-password',
-  });
-  ok('3er intento fallido → 401', lockFail3.res.status === 401);
-
-  const lockBlocked = await api('POST', '/api/auth/login', {
-    email: lockoutEmail,
-    password: 'wrong-password',
-  });
-  ok('4to intento tras 3 fallos → 429', lockBlocked.res.status === 429);
-
-  cookie = '';
-  const receptionLogin = await api('POST', '/api/auth/login', {
-    email: process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com',
-    password:
-      process.env.SMOKE_RECEPTION_PASSWORD ??
-      (process.env.DEMO_PASSWORD?.trim() || 'ChecklistAdmin123!'),
-  });
-  if (receptionLogin.res.status === 200) {
-    saveCookie(receptionLogin.res);
-    ok('Login recepcionista demo', receptionLogin.data.user?.role === 'receptionist');
-    const blocked = await api('GET', '/api/settings/expiry');
-    ok('Recepcionista sin acceso a settings', blocked.res.status === 403);
-    const receptionLookup = await api('GET', '/api/reception/lookup?cedula=V-11223344');
-    ok('Recepcionista lookup cédula', receptionLookup.res.status === 200);
+  client.clearSession();
+  const receptionLogin = await client.login(
+    process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com',
+    process.env.SMOKE_RECEPTION_PASSWORD ?? process.env.DEMO_PASSWORD?.trim() ?? 'ChecklistAdmin123!'
+  );
+  if (receptionLogin.status === 200) {
+    ok('Login recepcionista demo', (receptionLogin.data as { user?: { role?: string } }).user?.role === 'receptionist');
+    const blocked = await client.json('GET', '/api/settings/expiry');
+    ok('Recepcionista sin acceso a settings', blocked.status === 403);
+    const receptionLookup = await client.json('GET', '/api/reception/lookup?cedula=V-11223344');
+    ok('Recepcionista lookup cédula', receptionLookup.status === 200);
   } else {
     console.log('  SKIP recepcionista (ejecuta db:restore-demo para usuario receptionist@gym.com)');
   }

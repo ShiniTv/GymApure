@@ -37,6 +37,39 @@ export interface SimSeedResult {
 
 const DIFFICULTY_ORDER: DifficultyLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
 
+/** Ejercicios mínimos y tasa BCV para tests locales sin seed de videos. */
+export async function ensureTestPrerequisites(): Promise<void> {
+  const exCount = await query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM exercises`);
+  if (parseInt(exCount.rows[0].count, 10) < 5) {
+    const seeds = [
+      ['Press banca sim', 'chest'],
+      ['Sentadilla sim', 'legs'],
+      ['Remo sim', 'back'],
+      ['Curl bíceps sim', 'arms'],
+      ['Press militar sim', 'shoulders'],
+      ['Prensa sim', 'legs'],
+      ['Jalón sim', 'back'],
+      ['Fondos sim', 'chest'],
+    ] as const;
+    for (const [name, muscle] of seeds) {
+      await query(
+        `INSERT INTO exercises (name, muscle_group, is_system)
+         SELECT $1, $2, true
+         WHERE NOT EXISTS (SELECT 1 FROM exercises WHERE name = $1)`,
+        [name, muscle]
+      );
+    }
+  }
+
+  await query(
+    `INSERT INTO exchange_rates (currency, rate, effective_date, source)
+     SELECT 'USD/VES', 75.50, CURRENT_DATE, 'manual'
+     WHERE NOT EXISTS (
+       SELECT 1 FROM exchange_rates WHERE effective_date = CURRENT_DATE
+     )`
+  );
+}
+
 function buildMemberDifficulties(): DifficultyLevel[] {
   const list: DifficultyLevel[] = [];
   for (const level of DIFFICULTY_ORDER) {
@@ -241,6 +274,8 @@ export async function seedSimulationData(simulationStartDate: string): Promise<S
   if (!password || password.length < 12) {
     throw new Error('SIMULATION_PASSWORD o DEMO_PASSWORD debe tener al menos 12 caracteres');
   }
+
+  await ensureTestPrerequisites();
 
   const hashedPassword = await hashPassword(password);
   const membershipIds = await ensureMemberships();

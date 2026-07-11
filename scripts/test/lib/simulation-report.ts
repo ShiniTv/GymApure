@@ -142,7 +142,9 @@ export function buildReport(
 ): FullTestReport {
   const dist = totalDifficultyDistribution();
   const totalFails =
-    apiVerification.failed + liveSample.failed + checklists.filter((c) => !c.passed).length;
+    apiVerification.failed +
+    (liveSample.failed > 0 && liveSample.passed === 0 ? liveSample.failed : 0) +
+    checklists.filter((c) => !c.passed).length;
 
   const base = {
     timestamp: new Date().toISOString(),

@@ -3,8 +3,8 @@
  * Requiere servidor en marcha y DEMO_PASSWORD en .env.
  */
 import 'dotenv/config';
+import { createApiSession } from '../test/lib/legacy-api-session.ts';
 
-const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
 
 if (!DEMO_PASSWORD) {
@@ -12,7 +12,7 @@ if (!DEMO_PASSWORD) {
   process.exit(1);
 }
 
-let cookie = '';
+const { api, loginAs } = createApiSession();
 let passed = 0;
 let failed = 0;
 
@@ -26,32 +26,10 @@ function ok(name: string, cond: boolean, detail?: string) {
   }
 }
 
-async function api(method: string, path: string, body?: unknown) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  return { res, data };
-}
-
-function saveCookie(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
-}
-
 async function main() {
   console.log('=== Sprint 6 — Chat in-app ===\n');
 
-  const login = await api('POST', '/api/auth/login', { email: 'admin@gym.com', password: DEMO_PASSWORD });
-  ok('Login admin', login.res.status === 200);
-  saveCookie(login.res);
+  ok('Login admin', await loginAs('admin@gym.com'));
 
   const settings = await api('GET', '/api/settings/expiry');
   const s = settings.data as { expiry_alert_days?: number; providers?: unknown };

@@ -15,6 +15,7 @@ import {
 } from './simulation-config.ts';
 import type { SimSeedResult, SimUser } from './simulation-seed.ts';
 import { SimulationApiClient } from './simulation-api-client.ts';
+import { query } from '../../../src/db/index.ts';
 
 export interface SimulationStats {
   workingDays: number;
@@ -458,13 +459,42 @@ export async function runLiveDaySample(
 
   console.log('\n── Fase 6: Muestra en vivo (check-in + entrenamiento vía API) ──');
 
+  const { rows: availableMembers } = await query<{ id: number; email: string; cedula: string; routine_id: number | null }>(
+    `SELECT u.id, u.email, u.cedula,
+            (SELECT ur.routine_id FROM user_routines ur WHERE ur.user_id = u.id ORDER BY ur.id DESC LIMIT 1) AS routine_id
+     FROM users u
+     WHERE u.email LIKE 'sim.t%.m%@gym.test'
+       AND NOT EXISTS (
+         SELECT 1 FROM workout_sessions ws
+         WHERE ws.user_id = u.id AND ws.end_time IS NOT NULL AND ws.success = 1
+           AND ws.start_time::date = CURRENT_DATE
+       )
+     LIMIT 1`
+  );
+
+  const sampleFromDb = availableMembers[0];
+  const sampleMember =
+    sampleFromDb != null
+      ? {
+          ...seed.members.find((m) => m.id === sampleFromDb.id),
+          id: sampleFromDb.id,
+          email: sampleFromDb.email,
+          cedula: sampleFromDb.cedula,
+          routine_id: sampleFromDb.routine_id ?? seed.members.find((m) => m.id === sampleFromDb.id)?.routine_id,
+        }
+      : seed.members.find((m) => m.routine_id);
+
+  if (!sampleMember?.cedula || !sampleMember.routine_id) {
+    console.log('  SKIP muestra en vivo — no hay miembro disponible sin entrenamiento hoy');
+    return { passed, failed };
+  }
+
   const receptionLogin = await client.login(seed.receptionist.email, seed.password);
   if (!receptionLogin.ok) {
     console.log('  SKIP muestra en vivo — recepcionista no pudo iniciar sesión');
     return { passed, failed };
   }
 
-  const sampleMember = seed.members[5];
   const checkIn = await client.request('POST', '/api/reception/check-in', {
     cedula: sampleMember.cedula,
   });
@@ -484,12 +514,12 @@ export async function runLiveDaySample(
       user_id: sampleMember.id,
       routine_id: sampleMember.routine_id,
     });
+    const startData = start.data as { id?: number; code?: string };
     if (start.ok || start.status === 200) {
       passed++;
       console.log('  OK  Inicio entrenamiento en vivo');
-      const sessionId = (start.data as { id?: number }).id;
-      if (sessionId) {
-        const finish = await client.request('POST', '/api/workouts/finish', { session_id: sessionId });
+      if (startData.id) {
+        const finish = await client.request('POST', '/api/workouts/finish', { session_id: startData.id });
         if (finish.ok) {
           passed++;
           console.log('  OK  Finalización entrenamiento en vivo');
@@ -497,6 +527,9 @@ export async function runLiveDaySample(
           failed++;
         }
       }
+    } else if (start.status === 409 && startData.code === 'ROUTINE_COMPLETED_TODAY') {
+      passed++;
+      console.log('  OK  Regla "rutina completada hoy" activa (409 esperado)');
     } else {
       failed++;
       console.log(`  FAIL Inicio entrenamiento (${start.status})`);
