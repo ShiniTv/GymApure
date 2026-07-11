@@ -1,0 +1,42 @@
+name: DB Migrate Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Configure production environment
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          set -euo pipefail
+          URL="${PROD_DATABASE_URL:-${DATABASE_URL_PROD:-}}"
+          if [ -z "$URL" ]; then
+            echo "No PROD_DATABASE_URL or DATABASE_URL_PROD secret configured."
+            exit 1
+          fi
+          if [ -z "${JWT_SECRET:-}" ]; then
+            echo "JWT_SECRET secret is required for env validation."
+            exit 1
+          fi
+          printf 'DATABASE_URL=%s\nJWT_SECRET=%s\n' "$URL" "$JWT_SECRET" > .env.prod
+
+      - name: Apply pending migrations
+        run: npm run db:migrate:prod
+
+      - name: Database health check
+        run: npm run db:health:prod
