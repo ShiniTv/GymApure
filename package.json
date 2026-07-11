@@ -33,6 +33,7 @@
     "test:sprint5": "tsx scripts/_archive/test-sprint5.ts",
     "test:sprint6": "tsx scripts/_archive/test-sprint6.ts",
     "test:trainer-shifts": "tsx scripts/test/test-trainer-shifts.ts",
+    "test:trainer-auth": "tsx scripts/test/test-trainer-auth.ts",
     "test:routine-exercises": "tsx scripts/test/test-routine-exercises.ts",
     "db:migrate": "tsx scripts/db/apply-migrations.ts",
     "db:migrate:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/apply-migrations.ts",

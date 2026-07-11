@@ -8,6 +8,7 @@ import {
   MessageSquare,
   UserCircle,
   Wrench,
+  UtensilsCrossed,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -18,7 +19,10 @@ export const TRAINER_NAV: NavSection[] = [
   },
   {
     name: 'Mis miembros',
-    items: [{ name: 'Miembros', href: '/members', icon: Users }],
+    items: [
+      { name: 'Miembros', href: '/members', icon: Users },
+      { name: 'Nutrición', href: '/members', icon: UtensilsCrossed },
+    ],
   },
   {
     name: 'Programación',

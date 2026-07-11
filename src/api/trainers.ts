@@ -62,13 +62,19 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req, res
     const conditions: string[] = [];
 
     const shift = typeof req.query.shift === 'string' ? req.query.shift.trim() : '';
-    if (shift && isTrainingShift(shift)) {
+    if (shift) {
+      if (!isTrainingShift(shift)) {
+        return res.status(400).json({ error: 'Turno inválido' });
+      }
       params.push(shift);
       conditions.push(`tp.shift = $${params.length}`);
     }
 
     const level = typeof req.query.level === 'string' ? req.query.level.trim() : '';
-    if (level && isTrainerLevel(level)) {
+    if (level) {
+      if (!isTrainerLevel(level)) {
+        return res.status(400).json({ error: 'Nivel inválido' });
+      }
       params.push(level);
       conditions.push(`tp.level = $${params.length}`);
     }

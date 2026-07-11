@@ -27,9 +27,6 @@ export default function TrainerDashboard() {
   const expiringMembers = trainerStats?.expiringMembers ?? [];
   const trainerHasAlerts = withoutRoutines > 0 || expiringMembers.length > 0;
 
-  const nutritionMemberId = stats?.recentActivities?.[0]?.user_id;
-  const nutritionHref = nutritionMemberId ? `/members/${nutritionMemberId}/nutrition` : '/members';
-
   return (
     <div className="page-stack-tight">
       <PageHeader
@@ -40,7 +37,7 @@ export default function TrainerDashboard() {
           </>
         }
         subtitle="Actividad con tus miembros asignados"
-        badge={stats?.activeNow ? `${stats.activeNow} en el gym` : undefined}
+        badge={stats?.activeNow ? `${stats.activeNow} de mis miembros en el gym` : undefined}
       />
 
       {trainerHasAlerts && (
@@ -55,7 +52,7 @@ export default function TrainerDashboard() {
                     to="/members"
                     className="bg-brand/10 text-brand dark:text-brand hover:bg-brand/15 inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold"
                   >
-                    {withoutRoutines} sin rutina
+                    {withoutRoutines} sin rutina activa
                   </Link>
                 )}
                 {expiringMembers.length > 0 && (
@@ -83,7 +80,7 @@ export default function TrainerDashboard() {
           />
           <StatCard
             compact
-            title="Activos ahora"
+            title="En el gym"
             value={stats?.activeNow || 0}
             icon={Activity}
             color="orange"
@@ -159,10 +156,10 @@ export default function TrainerDashboard() {
         <QuickAction
           compact
           iconOnlyMobile
-          to={nutritionHref}
+          to="/members"
           icon={UtensilsCrossed}
           title="Nutrición"
-          description="Plan del miembro activo"
+          description="Selecciona un miembro"
           tone="emerald"
         />
       </div>

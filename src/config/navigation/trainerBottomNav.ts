@@ -9,6 +9,7 @@ import {
   BookOpen,
   UserCircle,
   Wrench,
+  UtensilsCrossed,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -22,6 +23,7 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
 
 /** Sheet items — synced with secondary items in trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
+  { name: 'Nutrición', href: '/members', icon: UtensilsCrossed },
   { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock },
   { name: 'Calendario', href: '/routines?view=calendar', icon: CalendarDays },
   { name: 'Ejercicios', href: '/exercises', icon: BookOpen },

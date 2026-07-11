@@ -14,7 +14,7 @@ import { getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
 import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { getEquipmentStatsSummary } from '../lib/equipmentInspectionAlerts.ts';
-import { RECEPTION_ONLY } from '../lib/roles.ts';
+import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -205,12 +205,33 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
          LIMIT 5`;
 
     const membersWithoutRoutinesSql = trainerId
-      ? `SELECT COUNT(*)::text AS count FROM users u
-         WHERE u.role = 'member' AND u.status = 'active'
-           AND NOT EXISTS (
-             SELECT 1 FROM user_routines ur
+      ? `SELECT COUNT(*)::text AS count
+         FROM (
+           SELECT DISTINCT ur.user_id
+           FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id
+           WHERE r.trainer_id = $1
+         ) assigned
+         WHERE NOT EXISTS (
+           SELECT 1 FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id
+           WHERE ur.user_id = assigned.user_id
+             AND r.trainer_id = $1
+             AND ur.start_date <= CURRENT_DATE
+             AND ur.end_date >= CURRENT_DATE
+         )`
+      : null;
+
+    const assignedActiveNowSql = trainerId
+      ? `SELECT COUNT(DISTINCT u.id)::text AS count
+         FROM users u
+         JOIN attendance a ON a.user_id = u.id
+         WHERE a.check_in_time >= NOW() - INTERVAL '2 hours'
+           AND a.check_out_time IS NULL
+           AND u.id IN (
+             SELECT DISTINCT ur.user_id FROM user_routines ur
              JOIN routines r ON r.id = ur.routine_id
-             WHERE ur.user_id = u.id AND r.trainer_id = $1
+             WHERE r.trainer_id = $1
            )`
       : null;
 
@@ -232,11 +253,22 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       : null;
 
     const baseQueries = await Promise.all([
-      query<{ count: string }>("SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'"),
       query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM attendance
-         WHERE check_in_time >= NOW() - INTERVAL '2 hours'
-           AND check_out_time IS NULL`
+        trainerId
+          ? `SELECT COUNT(DISTINCT ur.user_id)::text AS count
+             FROM user_routines ur
+             JOIN routines r ON r.id = ur.routine_id
+             WHERE r.trainer_id = $1`
+          : "SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'",
+        trainerId ? [trainerId] : []
+      ),
+      query<{ count: string }>(
+        trainerId && assignedActiveNowSql
+          ? assignedActiveNowSql
+          : `SELECT COUNT(*)::text AS count FROM attendance
+             WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+               AND check_out_time IS NULL`,
+        trainerId ? [trainerId] : []
       ),
       query<{ count: string }>(todayWorkoutsSql, trainerId ? [trainerId] : []),
       query<{ count: string }>(routinesSql, trainerId ? [trainerId] : []),
@@ -407,7 +439,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/reception', authorize(RECEPTION_ONLY), async (_req, res) => {
+router.get('/reception', authorize(RECEPTION_OPERATORS), async (_req, res) => {
   try {
     const [todayCheckIns, insideNow, pendingPayments] = await Promise.all([
       query<{ count: string }>(

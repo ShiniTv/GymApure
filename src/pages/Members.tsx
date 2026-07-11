@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Search, Plus, Dumbbell } from 'lucide-react';
+import { Search, Plus, Dumbbell, AlertTriangle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -82,6 +82,10 @@ export default function Members() {
   const [assignTarget, setAssignTarget] = useState<Member | null>(null);
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [selectedPaymentId, setSelectedPaymentId] = useState('');
+  const [approvedPayments, setApprovedPayments] = useState<
+    { id: number; amount_usd: number; method: string; created_at: string }[]
+  >([]);
   const [assignError, setAssignError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -150,6 +154,59 @@ export default function Members() {
   const members = membersData?.items ?? [];
   const total = membersData?.total ?? 0;
 
+  const openAssignSubscription = useCallback(
+    async (member: Member) => {
+      setAssignTarget(member);
+      setAssignError('');
+      setSelectedPlanId('');
+      setSelectedPaymentId('');
+      setApprovedPayments([]);
+      try {
+        const plansRes = await apiFetch('/api/memberships');
+        const plansData = await parseJsonResponse<MembershipPlan[]>(plansRes);
+        setMembershipPlans(Array.isArray(plansData) ? plansData : []);
+
+        if (user?.role === 'receptionist') {
+          const paymentsRes = await apiFetch('/api/payments?pageSize=100&status=approved');
+          const paymentsData = await parseJsonResponse<{
+            items: {
+              id: number;
+              user_id: number;
+              amount_usd: number;
+              method: string;
+              created_at: string;
+            }[];
+          }>(paymentsRes);
+          const forMember = (paymentsData.items ?? []).filter((p) => p.user_id === member.id);
+          setApprovedPayments(forMember);
+        }
+      } catch {
+        setMembershipPlans([]);
+        setApprovedPayments([]);
+      }
+    },
+    [user?.role]
+  );
+
+  useEffect(() => {
+    const assignUserId = searchParams.get('assignUserId');
+    if (!assignUserId || loading) return;
+    const memberId = Number(assignUserId);
+    if (Number.isNaN(memberId)) return;
+    const member = members.find((m) => m.id === memberId);
+    if (member) {
+      void openAssignSubscription(member);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('assignUserId');
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, members, loading, openAssignSubscription, setSearchParams]);
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -204,6 +261,7 @@ export default function Members() {
       });
 
       if (res.ok) {
+        const data = await parseJsonResponse<{ id?: number }>(res);
         setIsAdding(false);
         setErrors({});
         setNewMember({
@@ -216,6 +274,14 @@ export default function Members() {
           training_shift: '',
         });
         invalidateMembers();
+        if (isTrainer) {
+          toast?.success(
+            'Cuenta creada. Asigna una rutina en Asignaciones; recepción debe activar la membresía.'
+          );
+          if (data.id) {
+            navigate('/routines?view=assignments');
+          }
+        }
       } else {
         const data = await parseJsonResponse<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear usuario' });
@@ -270,19 +336,6 @@ export default function Members() {
     setToggleTarget(member);
   }, []);
 
-  const openAssignSubscription = useCallback(async (member: Member) => {
-    setAssignTarget(member);
-    setAssignError('');
-    setSelectedPlanId('');
-    try {
-      const res = await apiFetch('/api/memberships');
-      const data = await parseJsonResponse<MembershipPlan[]>(res);
-      setMembershipPlans(Array.isArray(data) ? data : []);
-    } catch {
-      setMembershipPlans([]);
-    }
-  }, []);
-
   const handleDeleteClick = useCallback((member: Member) => {
     setDeleteTarget(member);
   }, []);
@@ -335,6 +388,10 @@ export default function Members() {
       setAssignError('Selecciona un plan');
       return;
     }
+    if (isReceptionist && !selectedPaymentId) {
+      setAssignError('Selecciona un pago aprobado vinculado a este miembro');
+      return;
+    }
 
     try {
       await parseJsonResponse(
@@ -344,11 +401,13 @@ export default function Members() {
           body: JSON.stringify({
             user_id: assignTarget.id,
             membership_id: Number(selectedPlanId),
+            ...(selectedPaymentId ? { payment_id: Number(selectedPaymentId) } : {}),
           }),
         })
       );
 
       setAssignTarget(null);
+      setSelectedPaymentId('');
       invalidateMembers();
       await adminStats?.refresh();
       toast?.success('Membresía asignada');
@@ -379,7 +438,7 @@ export default function Members() {
       return {
         title: 'Aún no tienes miembros asignados',
         description:
-          'Solo aparecen miembros a los que les hayas asignado una rutina. Ve a Rutinas → Asignaciones para vincularlos contigo.',
+          '1) Crea la cuenta del miembro. 2) Asigna una rutina en Rutinas → Asignaciones. 3) Recepción activa la membresía para check-in y cobros.',
       };
     }
     if (search) {
@@ -395,6 +454,10 @@ export default function Members() {
   })();
 
   const showTrainerAssignCta = isTrainer && !search && !expiringFilter;
+  const membersWithoutPlan = useMemo(
+    () => filteredMembers.filter((m) => m.role === 'member' && !m.membership_name),
+    [filteredMembers]
+  );
 
   const membersEmptyAction = showTrainerAssignCta ? (
     <div className="flex flex-wrap items-center justify-center gap-2">
@@ -482,7 +545,7 @@ export default function Members() {
           {(user?.role === 'admin' || user?.role === 'receptionist') && (
             <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} />
           )}
-          {user?.role === 'admin' && (
+          {(user?.role === 'admin' || isTrainer) && (
             <FilterChips
               fullWidth
               className="sm:w-auto sm:shrink-0"
@@ -499,6 +562,25 @@ export default function Members() {
           )}
         </div>
 
+        {isTrainer && membersWithoutPlan.length > 0 && !loading && (
+          <Card padding="sm" rounded="xl" className="border-amber-500/30 bg-amber-500/5">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="font-semibold text-zinc-900 dark:text-white">
+                  {membersWithoutPlan.length === 1
+                    ? '1 miembro sin membresía activa'
+                    : `${membersWithoutPlan.length} miembros sin membresía activa`}
+                </p>
+                <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+                  Puedes asignar rutinas y entrenar. Para check-in y cobros en mostrador, recepción
+                  debe activar el plan del socio.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <Modal
           open={isAdding}
           onClose={() => {
@@ -512,6 +594,19 @@ export default function Members() {
           scrollable
           initialFocus="dialog"
         >
+          {isTrainer && (
+            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+              Tras crear la cuenta:{' '}
+              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
+                asigna una rutina
+              </strong>{' '}
+              en Asignaciones. La{' '}
+              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
+                membresía la activa recepción
+              </strong>{' '}
+              en mostrador.
+            </p>
+          )}
           {isReceptionist && (
             <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
               Crea la cuenta del socio. Para activar membresía y cobrar en el mostrador, use{' '}
@@ -755,6 +850,32 @@ export default function Members() {
                   {assignTarget.days_remaining} días). La nueva suscripción se encadena al
                   vencimiento.
                 </p>
+              )}
+              {isReceptionist && (
+                <div className="mb-4">
+                  <Label>Pago aprobado (obligatorio)</Label>
+                  <select
+                    className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
+                    value={selectedPaymentId}
+                    onChange={(e) => {
+                      setSelectedPaymentId(e.target.value);
+                      setAssignError('');
+                    }}
+                  >
+                    <option value="">Seleccionar pago aprobado…</option>
+                    {approvedPayments.map((payment) => (
+                      <option key={payment.id} value={payment.id}>
+                        ${payment.amount_usd} — {payment.method} —{' '}
+                        {new Date(payment.created_at).toLocaleDateString('es-VE')}
+                      </option>
+                    ))}
+                  </select>
+                  {approvedPayments.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                      No hay pagos aprobados para este miembro. Registre y apruebe un pago primero.
+                    </p>
+                  )}
+                </div>
               )}
               <select
                 className="mb-4 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"

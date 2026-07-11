@@ -238,11 +238,31 @@ router.patch(
   '/sessions/:sessionId/success',
   requireWorkoutSessionAccess,
   asyncHandler(async (req, res) => {
-    const { sessionId } = req.params;
+    const sessionId = parseInt(req.params.sessionId, 10);
+    if (Number.isNaN(sessionId)) {
+      res.status(400).json({ error: 'ID de sesión inválido' });
+      return;
+    }
+
     const { success } = req.body;
 
     if (typeof success !== 'boolean') {
       res.status(400).json({ error: 'success debe ser un booleano' });
+      return;
+    }
+
+    const { rows } = await query<{ end_time: string | null }>(
+      'SELECT end_time FROM workout_sessions WHERE id = $1',
+      [sessionId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Sesión no encontrada' });
+      return;
+    }
+
+    if (rows[0].end_time !== null) {
+      res.status(409).json({ error: 'La sesión ya finalizó' });
       return;
     }
 

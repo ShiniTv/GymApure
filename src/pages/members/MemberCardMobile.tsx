@@ -1,6 +1,15 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2, IdCard } from 'lucide-react';
+import {
+  Dumbbell,
+  History,
+  MessageSquare,
+  CreditCard,
+  Power,
+  Trash2,
+  IdCard,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { Badge, Avatar, DataCard } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ROLE_LABELS, type UserRole } from '../../lib/roles';
@@ -124,6 +133,14 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 aria-label="Historial"
               >
                 <History className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${member.id}/nutrition`)}
+                className={mobileIconBtnClass}
+                aria-label="Nutrición"
+              >
+                <UtensilsCrossed className="h-4 w-4" />
               </button>
               <button
                 type="button"

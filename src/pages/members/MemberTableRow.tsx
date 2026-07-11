@@ -1,6 +1,15 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, History, MessageSquare, CreditCard, Power, Trash2, IdCard } from 'lucide-react';
+import {
+  Dumbbell,
+  History,
+  MessageSquare,
+  CreditCard,
+  Power,
+  Trash2,
+  IdCard,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
@@ -124,6 +133,13 @@ export const MemberTableRow = memo(function MemberTableRow({
                 title="Historial de Entrenamiento"
               >
                 <History className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => navigate(`/members/${member.id}/nutrition`)}
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-zinc-300"
+                title="Plan nutricional"
+              >
+                <UtensilsCrossed className="h-4 w-4" />
               </button>
               <button
                 onClick={() => navigate(`/messages?member=${member.id}`)}
