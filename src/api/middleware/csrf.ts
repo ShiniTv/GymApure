@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME, tokensMatch } from '../../lib/csrf.ts';
-import { env } from '../../config/env.ts';
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -29,12 +28,6 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 
   const path = req.path.startsWith('/api/v1') ? req.path.replace(/^\/api\/v1/, '/api') : req.path;
   if (isCsrfExempt(path)) {
-    next();
-    return;
-  }
-
-  // Same-origin monolith: skip CSRF when no CORS_ORIGINS configured (typical Render deploy).
-  if (!env.CORS_ORIGINS?.trim() && env.NODE_ENV === 'production') {
     next();
     return;
   }

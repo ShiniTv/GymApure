@@ -8,7 +8,7 @@ import type { UserRole } from './roles.ts';
 const MFA_ISSUER = 'GymApure';
 const MFA_CHALLENGE_TTL_SECONDS = 5 * 60;
 
-export const MFA_STAFF_ROLES: UserRole[] = ['admin', 'receptionist'];
+export const MFA_STAFF_ROLES: UserRole[] = ['admin', 'receptionist', 'trainer'];
 
 export function isMfaStaffRole(role: string): boolean {
   return MFA_STAFF_ROLES.includes(role as UserRole);

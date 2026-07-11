@@ -297,11 +297,9 @@ async function main() {
       undefined,
       { skipCsrf: true }
     );
-    const csrfEnforced =
-      process.env.NODE_ENV !== 'production' || Boolean(process.env.CORS_ORIGINS?.trim());
     ok(
-      'POST protegido sin X-CSRF-Token → 403 cuando CSRF aplica',
-      !csrfEnforced || csrfBlocked.res.status === 403,
+      'POST protegido sin X-CSRF-Token → 403',
+      csrfBlocked.res.status === 403,
       `status ${csrfBlocked.res.status}`
     );
 

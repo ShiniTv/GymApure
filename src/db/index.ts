@@ -2,6 +2,7 @@ import pg from 'pg';
 import { env } from '../config/env.ts';
 import { isSupabaseStorageConfigured, getSupabaseServiceKey } from '../lib/supabaseAdmin.ts';
 import { logger } from '../lib/logger.ts';
+import { getPgSslConfig } from '../lib/dbSsl.ts';
 
 // BIGINT (OID 20) → number — ids del gym caben en Number.MAX_SAFE_INTEGER
 pg.types.setTypeParser(20, (value) => parseInt(value, 10));
@@ -12,7 +13,7 @@ const pool = new pg.Pool({
   idleTimeoutMillis: 30_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
   connectionTimeoutMillis: env.NODE_ENV === 'development' ? 30_000 : 10_000,
-  ssl: env.DATABASE_URL.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getPgSslConfig(env.DATABASE_URL),
 });
 
 pool.on('connect', (client) => {

@@ -8,6 +8,7 @@ import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
 import { uploadMediaFile, deleteMediaFile, isMediaStorageRemote } from '../lib/mediaStorage.ts';
 import { localAvatarPathFromUpload } from '../lib/mediaStorage.ts';
+import { assertImageUpload } from '../lib/uploadValidation.ts';
 import {
   EQUIPMENT_STATUSES,
   EQUIPMENT_CATEGORIES,
@@ -737,6 +738,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res) => {
     if (!req.file) {
       res.status(400).json({ error: 'Archivo de imagen requerido' });
+      return;
+    }
+    try {
+      assertImageUpload(req.file);
+    } catch (err) {
+      res.status(400).json({ error: err instanceof Error ? err.message : 'Imagen inválida' });
       return;
     }
     const { rows } = await query<{ photo_url: string | null }>(

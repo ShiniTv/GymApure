@@ -3,6 +3,13 @@ import crypto from 'crypto';
 const HIBP_RANGE_URL = 'https://api.pwnedpasswords.com/range/';
 const REQUEST_TIMEOUT_MS = 4_000;
 
+class HibpCheckError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'HibpCheckError';
+  }
+}
+
 function sha1Hex(value: string): string {
   return crypto.createHash('sha1').update(value, 'utf8').digest('hex').toUpperCase();
 }
@@ -24,15 +31,18 @@ export async function isPasswordBreached(password: string): Promise<boolean> {
       signal: controller.signal,
       headers: { 'Add-Padding': 'true' },
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      throw new HibpCheckError(`HIBP respondió HTTP ${res.status}`);
+    }
 
     const body = await res.text();
     return body.split('\n').some((line) => {
       const [hashSuffix] = line.split(':');
       return hashSuffix?.trim() === suffix;
     });
-  } catch {
-    return false;
+  } catch (err) {
+    if (err instanceof HibpCheckError) throw err;
+    throw new HibpCheckError('No se pudo contactar Have I Been Pwned');
   } finally {
     clearTimeout(timeout);
   }

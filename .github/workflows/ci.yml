@@ -30,6 +30,7 @@ jobs:
       CRON_SECRET: ci-test-cron-secret-min-16-chars
       DEMO_PASSWORD: Ci-demo-pass-12!
       ALLOW_PUBLIC_REGISTER: 'true'
+      PUBLIC_APP_URL: https://localhost:3000
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +50,7 @@ jobs:
       - run: npm run build
 
       - name: Dependency audit
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
 
       - name: Lighthouse performance budgets (login)
         run: npm run lighthouse:ci

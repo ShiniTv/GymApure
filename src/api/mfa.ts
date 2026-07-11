@@ -8,6 +8,7 @@ import { createLoginSession } from '../lib/sessionAuth.ts';
 import { emitToUser } from '../lib/wsServer.ts';
 import { setCsrfCookie } from '../lib/csrf.ts';
 import { verifyPassword } from '../lib/passwordHash.ts';
+import { mfaVerifyRateLimiter } from './middleware/rateLimit.ts';
 import {
   buildMfaQrDataUrl,
   disableMfa,
@@ -33,6 +34,7 @@ const mfaDisableSchema = z.object({
 
 router.post(
   '/verify-login',
+  mfaVerifyRateLimiter,
   asyncHandler(async (req, res) => {
     const schema = z.object({
       mfa_challenge_token: z.string().min(1),

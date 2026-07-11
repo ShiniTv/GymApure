@@ -4,9 +4,9 @@
  * Uso: npm run db:restore-demo
  */
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
 import { query } from '../../src/db/index.ts';
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
+import { hashPassword } from '../../src/lib/passwordHash.ts';
 
 const DEMO_PASSWORD = resolveDemoPassword();
 
@@ -26,7 +26,7 @@ const DEMO_USERS = [
 ] as const;
 
 async function main() {
-  const hashedPassword = bcrypt.hashSync(DEMO_PASSWORD, 10);
+  const hashedPassword = await hashPassword(DEMO_PASSWORD);
 
   for (const user of DEMO_USERS) {
     if ('initial_weight' in user) {

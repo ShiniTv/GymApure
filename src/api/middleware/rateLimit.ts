@@ -44,6 +44,20 @@ export let uploadRateLimiter = createLimiter({
   message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
 });
 
+/** Per-IP limit for forgot-password (anti email flooding). */
+export let forgotPasswordRateLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: strictLimits ? 5 : 100,
+  message: { error: 'Demasiadas solicitudes de recuperación. Espera e inténtalo más tarde.' },
+});
+
+/** Per-IP limit for MFA verify-login (anti brute force). */
+export let mfaVerifyRateLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: strictLimits ? 10 : 200,
+  message: { error: 'Demasiados intentos MFA. Espera e inicia sesión de nuevo.' },
+});
+
 export async function initRateLimiters(): Promise<void> {
   const store = await buildStore();
   if (!store) return;
@@ -66,6 +80,22 @@ export async function initRateLimiters(): Promise<void> {
     {
       max: strictLimits ? 30 : 500,
       message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
+    },
+    store
+  );
+  forgotPasswordRateLimiter = createLimiter(
+    {
+      windowMs: 60 * 60 * 1000,
+      max: strictLimits ? 5 : 100,
+      message: { error: 'Demasiadas solicitudes de recuperación. Espera e inténtalo más tarde.' },
+    },
+    store
+  );
+  mfaVerifyRateLimiter = createLimiter(
+    {
+      windowMs: 15 * 60 * 1000,
+      max: strictLimits ? 10 : 200,
+      message: { error: 'Demasiados intentos MFA. Espera e inicia sesión de nuevo.' },
     },
     store
   );

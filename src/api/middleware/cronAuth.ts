@@ -1,7 +1,7 @@
 import { type NextFunction, type Response } from 'express';
 import type { AuthRequest } from './authTypes.ts';
 import { authorize } from './authorize.ts';
-import { env } from '../../config/env.ts';
+import { isValidCronSecret } from '../../lib/secretCompare.ts';
 
 export function extractCronSecret(req: AuthRequest): string | null {
   const headerSecret =
@@ -13,10 +13,7 @@ export function extractCronSecret(req: AuthRequest): string | null {
 }
 
 export function isValidCronRequest(req: AuthRequest): boolean {
-  const cronSecret = env.CRON_SECRET?.trim();
-  if (!cronSecret) return false;
-  const headerSecret = extractCronSecret(req);
-  return headerSecret === cronSecret;
+  return isValidCronSecret(extractCronSecret(req));
 }
 
 export function authorizeCronOrAdmin(req: AuthRequest, res: Response, next: NextFunction) {

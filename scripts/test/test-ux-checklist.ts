@@ -4,8 +4,8 @@
  */
 import 'dotenv/config';
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 import { query, pool } from '../../src/db/index.ts';
+import { hashPassword } from '../../src/lib/passwordHash.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
@@ -144,7 +144,7 @@ async function main() {
   ok('login con contraseña reseteada → 200', loginNew.res.status === 200);
 
   // Restaurar contraseña demo
-  const hashedDemo = await bcrypt.hash(DEMO_PASSWORD, 10);
+  const hashedDemo = await hashPassword(DEMO_PASSWORD!);
   await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
     hashedDemo,
     memberId,

@@ -87,6 +87,7 @@ async function startServer() {
                 frameAncestors: ["'none'"],
                 formAction: ["'self'"],
                 baseUri: ["'self'"],
+                objectSrc: ["'none'"],
               },
             }
           : false,
@@ -105,6 +106,11 @@ async function startServer() {
       'Permissions-Policy',
       'camera=(self), microphone=(), geolocation=(), interest-cohort=()'
     );
+    next();
+  });
+
+  app.use('/reset-password', (_req, res, next) => {
+    res.setHeader('Referrer-Policy', 'no-referrer');
     next();
   });
 

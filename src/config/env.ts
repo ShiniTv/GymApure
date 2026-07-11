@@ -39,6 +39,7 @@ const envSchema = z.object({
   CRON_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
   ENABLE_HIBP_CHECK: z.string().optional(),
+  PUBLIC_APP_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -74,6 +75,19 @@ function parseEnv(): Env {
     if (cronSecret.length < 16) {
       logger.error('CRON_SECRET es obligatorio en producción (mínimo 16 caracteres)', {});
       process.exit(1);
+    }
+
+    const publicUrl = data.PUBLIC_APP_URL?.trim() ?? '';
+    if (!publicUrl.startsWith('https://')) {
+      logger.error('PUBLIC_APP_URL es obligatorio en producción (URL HTTPS del sitio)', {});
+      process.exit(1);
+    }
+
+    if (!data.REDIS_URL?.trim()) {
+      logger.warn(
+        'REDIS_URL no configurado en producción — rate limit y bloqueo de login solo en memoria local',
+        { hint: 'Recomendado en Render multi-instancia (Upstash Redis).' }
+      );
     }
   }
 

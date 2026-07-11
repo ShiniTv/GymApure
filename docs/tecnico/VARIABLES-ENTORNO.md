@@ -54,9 +54,9 @@ Referencia completa basada en [`.env.example`](../../.env.example). Plantilla co
 | `ENABLE_HIBP_CHECK`     | `true` rechaza contraseñas filtradas (Have I Been Pwned, HTTPS)   |
 | `REDIS_URL`             | Rate limit y bloqueo de login distribuido (recomendado multi-instancia) |
 
-### CSRF (cross-origin)
+### CSRF (todas las mutaciones protegidas)
 
-Si `CORS_ORIGINS` define orígenes externos, las rutas protegidas exigen cookie `csrf_token` + header `X-CSRF-Token` en `POST`/`PUT`/`PATCH`/`DELETE`. En despliegues **same-origin** en Render (sin `CORS_ORIGINS`), la protección CSRF se omite en producción; el frontend sigue enviando el token cuando la cookie existe.
+Las rutas autenticadas con `POST`/`PUT`/`PATCH`/`DELETE` exigen cookie `csrf_token` + header `X-CSRF-Token`. El frontend lo envía automáticamente vía `apiFetch`. Rutas públicas de auth y cron están exentas.
 
 ---
 
@@ -92,7 +92,9 @@ La tasa se actualiza automáticamente en el servidor (cron + scraper bcv.org.ve)
 | `SMTP_USER`      | cuenta Gmail                        |
 | `SMTP_PASS`      | contraseña de aplicación Google     |
 | `SMTP_FROM`      | `GymApure <soporte@...>`            |
-| `PUBLIC_APP_URL` | `https://caribean-gym.onrender.com` |
+| `PUBLIC_APP_URL`      | URL HTTPS pública del sitio (obligatorio en prod; enlaces de reset) |
+| `DATABASE_SSL_CA`     | Ruta al CA de Supabase para verificar TLS de PostgreSQL (recomendado prod) |
+| `DEV_LOG_RESET_LINKS` | `true` imprime enlaces de reset en consola (solo desarrollo) |
 
 Sin SMTP: no hay correos de bienvenida, recuperar contraseña ni pagos. Los avisos de vencimiento van al **chat in-app**, no por correo.
 

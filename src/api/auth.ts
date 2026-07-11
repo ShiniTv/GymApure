@@ -33,6 +33,7 @@ import {
 import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
+import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
 import {
   getUserMfaState,
   isMfaStaffRole,
@@ -366,6 +367,7 @@ router.post(
 
 router.post(
   '/forgot-password',
+  forgotPasswordRateLimiter,
   asyncHandler(async (req, res) => {
     const parsed = forgotPasswordSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -391,7 +393,7 @@ router.post(
 
       if (!sent) {
         logger.error('No se pudo enviar email de recuperación', { userId: user.id });
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development' && process.env.DEV_LOG_RESET_LINKS === 'true') {
           // En local, el enlace aparece en la terminal por si Gmail falla
           console.log('\n─── DEV: enlace de recuperación de contraseña ───');
           console.log(resetUrl);
@@ -454,7 +456,9 @@ router.post(
       record.user_id,
     ]);
     invalidateSessionUserCache(record.user_id);
-    await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1', [record.id]);
+    await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1', [
+      record.user_id,
+    ]);
     await logAudit(record.user_id, 'auth.reset_password', {});
 
     res.json({
