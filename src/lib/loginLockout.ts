@@ -82,7 +82,11 @@ export async function recordLoginAttempt(email: string, success: boolean): Promi
   if (count != null) {
     if (count >= MAX_LOGIN_ATTEMPTS) {
       const lockedUntil = Date.now() + LOGIN_BLOCK_MINUTES * 60 * 1000;
-      await redisSet(`${LOCK_PREFIX}${normalizedEmail}`, String(lockedUntil), LOGIN_BLOCK_MINUTES * 60);
+      await redisSet(
+        `${LOCK_PREFIX}${normalizedEmail}`,
+        String(lockedUntil),
+        LOGIN_BLOCK_MINUTES * 60
+      );
     }
     return;
   }

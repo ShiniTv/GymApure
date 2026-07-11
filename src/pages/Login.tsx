@@ -72,9 +72,12 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await parseJsonSafe<
-        { user: LoginUser; mfa_required?: boolean; mfa_challenge_token?: string; error?: string }
-      >(res);
+      const data = await parseJsonSafe<{
+        user: LoginUser;
+        mfa_required?: boolean;
+        mfa_challenge_token?: string;
+        error?: string;
+      }>(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Error de inicio de sesión');
@@ -133,11 +136,7 @@ export default function Login() {
     <AuthShell>
       <Card className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
         <AuthBrandHeader
-          subtitle={
-            mfaChallengeToken
-              ? 'Verificación en dos pasos'
-              : 'Inicia sesión en tu cuenta'
-          }
+          subtitle={mfaChallengeToken ? 'Verificación en dos pasos' : 'Inicia sesión en tu cuenta'}
         />
 
         {mfaChallengeToken ? (

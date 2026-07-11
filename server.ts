@@ -187,7 +187,7 @@ async function startServer() {
       logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     }
     initWebSocket(server);
-    void ensureExchangeRateOnStartup();
+    ensureExchangeRateOnStartup();
     startExpiryCron();
     startExchangeRateCron();
   });
