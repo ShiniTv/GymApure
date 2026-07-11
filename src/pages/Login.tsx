@@ -6,7 +6,7 @@ import { getDefaultRouteForRole, type UserRole } from '../lib/roles';
 import { Mail, ShieldCheck } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, PasswordInput } from '../components/ui';
+import { Button, Card, Input, Label, PasswordInput, Alert } from '../components/ui';
 
 interface LoginUser {
   id: number;
@@ -141,14 +141,7 @@ export default function Login() {
 
         {mfaChallengeToken ? (
           <form className="form-stack" onSubmit={handleMfaSubmit} noValidate>
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
-              >
-                {error}
-              </div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Ingresa el código de 6 dígitos de tu aplicación de autenticación.
@@ -179,14 +172,7 @@ export default function Login() {
           </form>
         ) : (
           <form className="form-stack" onSubmit={handleSubmit} noValidate>
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
-              >
-                {error}
-              </div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
             <div>
               <Label htmlFor="email">Correo electrónico</Label>

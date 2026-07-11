@@ -508,7 +508,7 @@ function StaffChatView() {
     if (selectedId != null) {
       markRead.mutate(selectedId);
     }
-  }, [selectedId, messagesData?.messages.length]);
+  }, [selectedId]);
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 

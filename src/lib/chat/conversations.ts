@@ -28,7 +28,7 @@ export async function getOrCreateConversation(memberId: number): Promise<ChatCon
     [normalizedMemberId]
   );
   const member = memberRows[0];
-  if (!member || member.role !== 'member') {
+  if (member?.role !== 'member') {
     throw new Error('Miembro no encontrado');
   }
 
@@ -48,7 +48,9 @@ export async function getOrCreateConversation(memberId: number): Promise<ChatCon
   return mapConversationRow(created[0]);
 }
 
-export async function getConversationById(conversationId: number): Promise<ChatConversationRow | null> {
+export async function getConversationById(
+  conversationId: number
+): Promise<ChatConversationRow | null> {
   const { rows } = await query<ChatConversationRow>(
     `SELECT id, member_id, last_message_at::text, created_at::text
      FROM chat_conversations WHERE id = $1`,
@@ -133,7 +135,9 @@ export async function listStaffConversations(
   return rows.map(mapConversationListItem);
 }
 
-export async function getMemberConversationSummary(memberId: number): Promise<ChatConversationListItem> {
+export async function getMemberConversationSummary(
+  memberId: number
+): Promise<ChatConversationListItem> {
   const conversation = await getOrCreateConversation(memberId);
   const { rows } = await query<ChatConversationListItem>(
     `SELECT
@@ -182,5 +186,7 @@ export async function getMemberConversationSummary(memberId: number): Promise<Ch
 }
 
 export async function touchConversation(conversationId: number): Promise<void> {
-  await query(`UPDATE chat_conversations SET last_message_at = NOW() WHERE id = $1`, [toDbId(conversationId)]);
+  await query(`UPDATE chat_conversations SET last_message_at = NOW() WHERE id = $1`, [
+    toDbId(conversationId),
+  ]);
 }

@@ -14,7 +14,11 @@ import {
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
 import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
-import { createUserSchema, formatZodError, assertPasswordNotBreached } from '../lib/passwordPolicy.ts';
+import {
+  createUserSchema,
+  formatZodError,
+  assertPasswordNotBreached,
+} from '../lib/passwordPolicy.ts';
 import { hashPassword } from '../lib/passwordHash.ts';
 import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';

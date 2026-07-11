@@ -17,7 +17,7 @@ import { QuickAction } from '../admin/QuickAction';
 import { Card, DashboardSkeleton } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
 import BrandName from '../BrandName';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 
 interface ReceptionStats {
   todayCheckIns: number;
@@ -114,7 +114,7 @@ interface ReceptionHomeSummaryProps {
 }
 
 export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSummaryProps) {
-  const isMobile = useMediaQuery('(max-width: 1023px)');
+  const { isMobileShell: isMobile } = useBreakpoint();
   const [stats, setStats] = useState<ReceptionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

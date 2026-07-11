@@ -114,26 +114,26 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                                  |
-| -------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                   |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                      |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                   |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                         |
-| `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él |
+| Variable                         | Obligatoria | Notas                                                                   |
+| -------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                    |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                    |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                          |
+| `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él  |
 | `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in |
-| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias       |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                       |
-| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                 |
-| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                  |
+| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias      |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                        |
+| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                |
+| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                 |
 | `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)         |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                         |
-| `SMTP_PORT`                      | Recomendada | `587`                                                                  |
-| `SMTP_SECURE`                    | Recomendada | `false`                                                                |
-| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                           |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                         |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                    |
+| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                        |
+| `SMTP_PORT`                      | Recomendada | `587`                                                                   |
+| `SMTP_SECURE`                    | Recomendada | `false`                                                                 |
+| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                            |
+| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                          |
+| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                 |
+| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                     |
 
 **Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
 
@@ -378,7 +378,7 @@ Sin `SUPABASE_SERVICE_ROLE_KEY` válida: upload multipart clásico a `uploads/vi
 | Síntoma                          | Causa probable                                                               | Solución                                                                  |
 | -------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | Build `Exited with status 127`   | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build`                    |
-| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` o `PUBLIC_APP_URL` (HTTPS) | Configurar las tres en Render; obligatorias en prod                       |
+| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` o `PUBLIC_APP_URL` (HTTPS)  | Configurar las tres en Render; obligatorias en prod                       |
 | `db: down` en health             | `DATABASE_URL` incorrecta o pooler caído                                     | Verificar credenciales y puerto 6543                                      |
 | Cron externo responde 403        | `CRON_SECRET` incorrecto o no definido en el Cron Job de Render              | Misma variable en Web Service y Cron Job; header `x-cron-secret`          |
 | Login staff pide código extra    | MFA activo para admin/recepcionista/entrenador                               | Usar app TOTP; configurar en `/security`                                  |

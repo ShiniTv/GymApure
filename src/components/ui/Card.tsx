@@ -6,6 +6,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   rounded?: 'xl' | '2xl' | '3xl';
+  variant?: 'default' | 'elevated' | 'interactive' | 'dashed' | 'alert';
   className?: string;
 }
 
@@ -17,21 +18,27 @@ const paddingMap = {
 };
 const roundedMap = { xl: 'rounded-xl', '2xl': 'rounded-2xl', '3xl': 'rounded-3xl' };
 
+const variantMap = {
+  default: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm',
+  elevated: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md',
+  interactive:
+    'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-brand/20',
+  dashed:
+    'bg-white dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 shadow-sm',
+  alert: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm',
+};
+
 export function Card({
   className,
   children,
   padding = 'md',
   rounded = 'xl',
+  variant = 'default',
   ...props
 }: CardProps) {
   return (
     <div
-      className={cn(
-        'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm',
-        roundedMap[rounded],
-        paddingMap[padding],
-        className
-      )}
+      className={cn(variantMap[variant], roundedMap[rounded], paddingMap[padding], className)}
       {...props}
     >
       {children}

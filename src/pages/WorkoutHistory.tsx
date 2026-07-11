@@ -364,7 +364,7 @@ export default function WorkoutHistory() {
         ) : (
           <>
             {/* Mobile card list */}
-            <div className="divide-y divide-zinc-100 md:hidden dark:divide-zinc-800">
+            <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
               {loading ? (
                 <div className="flex justify-center p-8">
                   <Spinner />
@@ -438,7 +438,7 @@ export default function WorkoutHistory() {
               )}
             </div>
 
-            <div className="hidden overflow-x-auto md:block">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
                 <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
                   <tr>
@@ -574,7 +574,7 @@ export default function WorkoutHistory() {
               </Badge>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
                 <p className="text-lg font-bold text-zinc-900 dark:text-white">
                   {sessionDetail.summary.sets_logged}

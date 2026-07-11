@@ -20,7 +20,7 @@ import {
 import { Button, Modal, Label, Input, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { clientLogger } from '../lib/clientLogger';
-import { useIsMobile } from '../hooks/useIsMobile';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
 import { formatWorkoutTime } from './activeWorkout/utils';
@@ -120,7 +120,7 @@ export default function ActiveWorkout() {
   const [showVideo, setShowVideo] = useState<Record<number, boolean>>({});
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
-  const isMobileFocus = useIsMobile();
+  const { isMobileShell: isMobileFocus } = useBreakpoint();
   const isStartingRef = useRef(false);
   const routineId = id ? Number(id) : null;
   const completedTodayIds = memberStatsCtx?.stats?.completedRoutineIdsToday ?? [];

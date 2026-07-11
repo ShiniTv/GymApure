@@ -2,6 +2,7 @@ import { useEffect, useRef, useId, useCallback, useState, type ReactNode } from 
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface ModalProps {
   open: boolean;
@@ -35,6 +36,8 @@ export function Modal({
   onCloseRef.current = onClose;
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [visible, setVisible] = useState(false);
+
+  useScrollLock(open);
 
   useEffect(() => {
     setPortalTarget(document.body);
@@ -84,13 +87,11 @@ export function Modal({
 
   useEffect(() => {
     if (!open) {
-      document.body.style.overflow = '';
       previousFocusRef.current?.focus();
       return;
     }
 
     previousFocusRef.current = document.activeElement as HTMLElement;
-    document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', handleKeyDown);
 
     requestAnimationFrame(() => {
@@ -112,7 +113,6 @@ export function Modal({
     });
 
     return () => {
-      document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [open, handleKeyDown, initialFocus]);
@@ -122,11 +122,17 @@ export function Modal({
   return createPortal(
     <div
       className={cn(
-        'fixed inset-0 z-[80] overflow-y-auto bg-black/50 backdrop-blur-sm transition-opacity duration-150',
+        'fixed inset-0 z-[80] overflow-y-auto transition-opacity duration-150',
         visible ? 'opacity-100' : 'opacity-0'
       )}
     >
-      <div className="flex min-h-full items-center justify-center p-4 py-6 sm:py-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        aria-label="Cerrar diálogo"
+        onClick={onClose}
+      />
+      <div className="relative flex min-h-full items-center justify-center p-4 py-6 sm:py-4">
         <div
           ref={dialogRef}
           role="dialog"
@@ -154,7 +160,7 @@ export function Modal({
           >
             <h2
               id={titleId}
-              className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
+              className="font-display text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
             >
               {title}
             </h2>

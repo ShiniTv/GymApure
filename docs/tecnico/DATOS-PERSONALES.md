@@ -6,16 +6,16 @@ Guía para el tratamiento de datos personales en GymApure (Caribean Gym): qué s
 
 ## Datos que almacena la aplicación
 
-| Categoría | Campos típicos | Tabla / ubicación |
-| --------- | -------------- | ----------------- |
-| Identidad | Nombre, email, cédula, teléfono | `users` |
-| Autenticación | Hash bcrypt de contraseña, `token_version`, MFA (staff) | `users`, `user_mfa` |
-| Membresía | Plan, fechas, estado de suscripción | `subscriptions`, `memberships` |
-| Pagos | Montos, referencia, comprobante (archivo) | `payments`, bucket `payment-proofs` |
-| Asistencia | Check-in/out, duración | `attendance` |
-| Salud / progreso | Medidas corporales, rutinas, entrenamientos | `user_measurements`, `user_routines`, `workouts` |
-| Chat | Mensajes in-app entre staff y miembros | `chat_messages`, `chat_conversations` |
-| Auditoría | Acciones administrativas (sin contraseñas) | `audit_logs` |
+| Categoría        | Campos típicos                                          | Tabla / ubicación                                |
+| ---------------- | ------------------------------------------------------- | ------------------------------------------------ |
+| Identidad        | Nombre, email, cédula, teléfono                         | `users`                                          |
+| Autenticación    | Hash bcrypt de contraseña, `token_version`, MFA (staff) | `users`, `user_mfa`                              |
+| Membresía        | Plan, fechas, estado de suscripción                     | `subscriptions`, `memberships`                   |
+| Pagos            | Montos, referencia, comprobante (archivo)               | `payments`, bucket `payment-proofs`              |
+| Asistencia       | Check-in/out, duración                                  | `attendance`                                     |
+| Salud / progreso | Medidas corporales, rutinas, entrenamientos             | `user_measurements`, `user_routines`, `workouts` |
+| Chat             | Mensajes in-app entre staff y miembros                  | `chat_messages`, `chat_conversations`            |
+| Auditoría        | Acciones administrativas (sin contraseñas)              | `audit_logs`                                     |
 
 Los comprobantes de pago, avatares, videos y fotos de equipamiento viven en **Supabase Storage** (buckets privados); el acceso es solo vía API autenticada.
 
@@ -32,12 +32,12 @@ Los comprobantes de pago, avatares, videos y fotos de equipamiento viven en **Su
 
 ## Acceso por rol
 
-| Rol | Acceso a datos personales |
-| --- | ------------------------- |
-| `member` | Solo su perfil, pagos, rutinas, chat y asistencia propia |
-| `trainer` | Miembros asignados + rutinas propias |
-| `receptionist` | Listados operativos (check-in, pagos, walk-in) |
-| `admin` | Acceso completo; auditoría de acciones sensibles |
+| Rol            | Acceso a datos personales                                |
+| -------------- | -------------------------------------------------------- |
+| `member`       | Solo su perfil, pagos, rutinas, chat y asistencia propia |
+| `trainer`      | Miembros asignados + rutinas propias                     |
+| `receptionist` | Listados operativos (check-in, pagos, walk-in)           |
+| `admin`        | Acceso completo; auditoría de acciones sensibles         |
 
 El endpoint público `GET /api/health` **no** expone configuración interna. `GET /api/health/ops` (solo admin) muestra estado operativo (SMTP, registro público).
 
@@ -45,13 +45,13 @@ El endpoint público `GET /api/health` **no** expone configuración interna. `GE
 
 ## Retención y borrado
 
-| Dato | Retención por defecto | Cómo reducir / purgar |
-| ---- | --------------------- | --------------------- |
-| Logs de auditoría | `AUDIT_LOG_RETENTION_DAYS` (90) | Cron diario del servidor |
-| Logs avisos vencimiento | `EXPIRY_NOTIF_LOG_RETENTION_DAYS` (180) | Idem |
-| Cuenta de usuario | Hasta baja manual | `DELETE` admin en Miembros o script controlado |
-| Comprobantes de pago | Mientras exista el pago | Borrado en cascada al eliminar pago (según implementación) |
-| Sesiones JWT | Cookie httpOnly; invalidación por `token_version` | Logout, cambio de contraseña, suspensión |
+| Dato                    | Retención por defecto                             | Cómo reducir / purgar                                      |
+| ----------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| Logs de auditoría       | `AUDIT_LOG_RETENTION_DAYS` (90)                   | Cron diario del servidor                                   |
+| Logs avisos vencimiento | `EXPIRY_NOTIF_LOG_RETENTION_DAYS` (180)           | Idem                                                       |
+| Cuenta de usuario       | Hasta baja manual                                 | `DELETE` admin en Miembros o script controlado             |
+| Comprobantes de pago    | Mientras exista el pago                           | Borrado en cascada al eliminar pago (según implementación) |
+| Sesiones JWT            | Cookie httpOnly; invalidación por `token_version` | Logout, cambio de contraseña, suspensión                   |
 
 Para solicitudes de **derecho al olvido** en producción: exportar lo necesario, anonimizar o eliminar filas en `users` y archivos en Storage; documentar en `audit_logs` la acción (sin datos sensibles en el detalle).
 

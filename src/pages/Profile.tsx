@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, FormEvent, ChangeEvent, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse, resolveAvatarUrl } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import {
   User,
@@ -77,6 +78,7 @@ import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 export default function Profile() {
   const { user, logoutLocal } = useAuth();
   usePageTitle('Perfil');
+  const { theme, setTheme } = useTheme();
   const memberStats = useMemberStatsOptional();
   const invalidateProfile = useInvalidateProfile();
   const isMember = user?.role === 'member';
@@ -88,7 +90,8 @@ export default function Profile() {
     user?.id,
     isMember
   );
-  const loading = profileLoading || measLoading || (isMember && histLoading);
+  const loading = profileLoading;
+  const progressLoading = measLoading || (isMember && histLoading);
   const [profileTab, setProfileTab] = useState<
     'datos' | 'salud' | 'progreso' | 'seguridad' | 'apariencia' | 'carne'
   >('datos');
@@ -648,178 +651,236 @@ export default function Profile() {
 
       {profileTab === 'progreso' && (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4">
-            <StatMini
-              label="Peso actual"
-              value={latestWeight != null ? `${latestWeight} kg` : '—'}
-              sub={
-                weightDelta != null
-                  ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
-                  : undefined
-              }
-            />
-            <StatMini
-              label="IMC"
-              value={bmi != null ? bmi.toString() : '—'}
-              sub={profile.height ? `${profile.height} cm` : undefined}
-            />
-            <StatMini label="Mediciones" value={String(measurements.length)} />
-            <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              size="sm"
-              className="h-9 min-h-9 sm:h-11 sm:min-h-11"
-              onClick={() => {
-                setIsAddingMeasurement(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Nueva medición
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
-            <Card padding="sm" rounded="xl" className="lg:col-span-2">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="section-title flex items-center gap-1.5">
-                  <Scale className="text-brand h-3.5 w-3.5" />
-                  Evolución de peso
-                </h2>
-                {weightDelta != null && (
-                  <span
-                    className={`flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${
-                      weightDelta < 0
-                        ? 'bg-emerald-500/10 text-emerald-600'
-                        : weightDelta > 0
-                          ? 'text-brand bg-brand/10'
-                          : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-                    }`}
-                  >
-                    {weightDelta < 0 ? (
-                      <TrendingDown className="h-3.5 w-3.5" />
-                    ) : weightDelta > 0 ? (
-                      <TrendingUp className="h-3.5 w-3.5" />
-                    ) : (
-                      <Minus className="h-3.5 w-3.5" />
-                    )}
-                    {weightDelta > 0 ? '+' : ''}
-                    {weightDelta} kg
-                  </span>
-                )}
-              </div>
-
-              {chartData.length >= 2 ? (
-                <Suspense
-                  fallback={
-                    <div className="flex h-64 items-center justify-center">
-                      <Spinner />
-                    </div>
-                  }
-                >
-                  <ProfileWeightChart data={chartData} />
-                </Suspense>
-              ) : chartData.length === 1 ? (
-                <div className="flex h-48 flex-col items-center justify-center text-center sm:h-56">
-                  <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
-                  <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-300">
-                    {chartData[0].date} · Registra otra medición para ver la gráfica
-                  </p>
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Scale}
-                  title="Sin mediciones de peso"
-                  description="Registra tu primera medición para ver tu evolución."
-                />
-              )}
-            </Card>
-          </div>
-
-          <Card padding="sm" rounded="xl">
-            <div className="mb-3">
-              <h2 className="section-title flex min-w-0 items-center gap-1.5">
-                <Scale className="text-brand h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">Historial de mediciones</span>
-              </h2>
+          {progressLoading ? (
+            <div className="flex justify-center py-12">
+              <Spinner />
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4">
+                <StatMini
+                  label="Peso actual"
+                  value={latestWeight != null ? `${latestWeight} kg` : '—'}
+                  sub={
+                    weightDelta != null
+                      ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
+                      : undefined
+                  }
+                />
+                <StatMini
+                  label="IMC"
+                  value={bmi != null ? bmi.toString() : '—'}
+                  sub={profile.height ? `${profile.height} cm` : undefined}
+                />
+                <StatMini label="Mediciones" value={String(measurements.length)} />
+                <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
+              </div>
 
-            {measurements.length > 0 ? (
-              <div className="-mx-1 overflow-x-auto px-1">
-                <table className="w-full min-w-[28rem] text-left">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                      <th className="pr-3 pb-2">Fecha</th>
-                      <th className="pr-3 pb-2">Peso</th>
-                      <th className="pr-3 pb-2">Grasa</th>
-                      <th className="pr-3 pb-2">Cintura</th>
-                      <th className="pr-3 pb-2">Brazo</th>
-                      <th className="pb-2">Pierna</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {measurements.map((m) => (
-                      <tr
-                        key={m.id}
-                        className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 min-h-9 sm:h-11 sm:min-h-11"
+                  onClick={() => {
+                    setIsAddingMeasurement(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Nueva medición
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
+                <Card padding="sm" rounded="xl" className="lg:col-span-2">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="section-title flex items-center gap-1.5">
+                      <Scale className="text-brand h-3.5 w-3.5" />
+                      Evolución de peso
+                    </h2>
+                    {weightDelta != null && (
+                      <span
+                        className={`flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${
+                          weightDelta < 0
+                            ? 'bg-emerald-500/10 text-emerald-600'
+                            : weightDelta > 0
+                              ? 'text-brand bg-brand/10'
+                              : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}
                       >
-                        <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
-                          {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                        </td>
-                        <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
-                          {m.weight != null ? `${m.weight} kg` : '—'}
-                        </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                          {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                        </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                          {m.waist != null ? `${m.waist} cm` : '—'}
-                        </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                          {m.arm != null ? `${m.arm} cm` : '—'}
-                        </td>
-                        <td className="py-2 text-zinc-500 dark:text-zinc-400">
-                          {m.leg != null ? `${m.leg} cm` : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <EmptyState
-                icon={Scale}
-                title="Sin mediciones registradas"
-                description="Tu historial aparecerá aquí después del primer registro."
-              />
-            )}
-          </Card>
-
-          {/* Últimos entrenamientos */}
-          {workouts.length > 0 && (
-            <Card padding="sm" rounded="xl">
-              <h2 className="section-title mb-2.5 flex items-center gap-1.5">
-                <Dumbbell className="text-brand h-3.5 w-3.5" />
-                Actividad reciente
-              </h2>
-              <div className="space-y-0.5">
-                {workouts.slice(0, 5).map((w) => (
-                  <div
-                    key={w.id}
-                    className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 last:border-0 dark:border-zinc-800"
-                  >
-                    <p className="truncate text-xs font-semibold text-zinc-800 sm:text-sm dark:text-zinc-200">
-                      {w.routine_name}
-                    </p>
-                    <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-300">
-                      {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
-                    </p>
+                        {weightDelta < 0 ? (
+                          <TrendingDown className="h-3.5 w-3.5" />
+                        ) : weightDelta > 0 ? (
+                          <TrendingUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <Minus className="h-3.5 w-3.5" />
+                        )}
+                        {weightDelta > 0 ? '+' : ''}
+                        {weightDelta} kg
+                      </span>
+                    )}
                   </div>
-                ))}
+
+                  {chartData.length >= 2 ? (
+                    <Suspense
+                      fallback={
+                        <div className="flex h-64 items-center justify-center">
+                          <Spinner />
+                        </div>
+                      }
+                    >
+                      <ProfileWeightChart data={chartData} />
+                    </Suspense>
+                  ) : chartData.length === 1 ? (
+                    <div className="flex h-48 flex-col items-center justify-center text-center sm:h-56">
+                      <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
+                      <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-300">
+                        {chartData[0].date} · Registra otra medición para ver la gráfica
+                      </p>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      icon={Scale}
+                      title="Sin mediciones de peso"
+                      description="Registra tu primera medición para ver tu evolución."
+                    />
+                  )}
+                </Card>
               </div>
-            </Card>
+
+              <Card padding="sm" rounded="xl">
+                <div className="mb-3">
+                  <h2 className="section-title flex min-w-0 items-center gap-1.5">
+                    <Scale className="text-brand h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Historial de mediciones</span>
+                  </h2>
+                </div>
+
+                {measLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner />
+                  </div>
+                ) : measurements.length > 0 ? (
+                  <>
+                    <div className="space-y-2 lg:hidden">
+                      {measurements.map((m) => (
+                        <div
+                          key={m.id}
+                          className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-800/30"
+                        >
+                          <p className="text-xs font-semibold text-zinc-900 dark:text-white">
+                            {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                          </p>
+                          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <span>
+                              Peso:{' '}
+                              <strong className="text-zinc-800 dark:text-zinc-200">
+                                {m.weight != null ? `${m.weight} kg` : '—'}
+                              </strong>
+                            </span>
+                            <span>
+                              Grasa:{' '}
+                              <strong className="text-zinc-800 dark:text-zinc-200">
+                                {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
+                              </strong>
+                            </span>
+                            <span>
+                              Cintura:{' '}
+                              <strong className="text-zinc-800 dark:text-zinc-200">
+                                {m.waist != null ? `${m.waist} cm` : '—'}
+                              </strong>
+                            </span>
+                            <span>
+                              Brazo:{' '}
+                              <strong className="text-zinc-800 dark:text-zinc-200">
+                                {m.arm != null ? `${m.arm} cm` : '—'}
+                              </strong>
+                            </span>
+                            <span className="col-span-2">
+                              Pierna:{' '}
+                              <strong className="text-zinc-800 dark:text-zinc-200">
+                                {m.leg != null ? `${m.leg} cm` : '—'}
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="-mx-1 hidden overflow-x-auto px-1 lg:block">
+                      <table className="w-full min-w-[28rem] text-left">
+                        <thead>
+                          <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                            <th className="pr-3 pb-2">Fecha</th>
+                            <th className="pr-3 pb-2">Peso</th>
+                            <th className="pr-3 pb-2">Grasa</th>
+                            <th className="pr-3 pb-2">Cintura</th>
+                            <th className="pr-3 pb-2">Brazo</th>
+                            <th className="pb-2">Pierna</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {measurements.map((m) => (
+                            <tr
+                              key={m.id}
+                              className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
+                            >
+                              <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
+                                {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                              </td>
+                              <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
+                                {m.weight != null ? `${m.weight} kg` : '—'}
+                              </td>
+                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
+                              </td>
+                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                {m.waist != null ? `${m.waist} cm` : '—'}
+                              </td>
+                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                {m.arm != null ? `${m.arm} cm` : '—'}
+                              </td>
+                              <td className="py-2 text-zinc-500 dark:text-zinc-400">
+                                {m.leg != null ? `${m.leg} cm` : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <EmptyState
+                    icon={Scale}
+                    title="Sin mediciones registradas"
+                    description="Tu historial aparecerá aquí después del primer registro."
+                  />
+                )}
+              </Card>
+
+              {/* Últimos entrenamientos */}
+              {workouts.length > 0 && (
+                <Card padding="sm" rounded="xl">
+                  <h2 className="section-title mb-2.5 flex items-center gap-1.5">
+                    <Dumbbell className="text-brand h-3.5 w-3.5" />
+                    Actividad reciente
+                  </h2>
+                  <div className="space-y-0.5">
+                    {workouts.slice(0, 5).map((w) => (
+                      <div
+                        key={w.id}
+                        className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 last:border-0 dark:border-zinc-800"
+                      >
+                        <p className="truncate text-xs font-semibold text-zinc-800 sm:text-sm dark:text-zinc-200">
+                          {w.routine_name}
+                        </p>
+                        <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-300">
+                          {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </>
       )}
@@ -881,13 +942,32 @@ export default function Profile() {
               <Sun className="text-brand h-3.5 w-3.5 shrink-0" />
               Modo claro u oscuro
             </h3>
-            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Usa <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo claro</span>{' '}
-              <Sun className="-mt-0.5 inline h-3 w-3" aria-hidden /> o{' '}
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300">Modo oscuro</span>{' '}
-              <Moon className="-mt-0.5 inline h-3 w-3" aria-hidden /> en el menú lateral para
-              cambiar el fondo de la interfaz.
+            <p className="mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Elige cómo se ve el fondo de la interfaz. También puedes cambiarlo desde el icono en
+              la barra superior.
             </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={theme === 'light' ? 'primary' : 'secondary'}
+                onClick={() => setTheme('light')}
+                className="flex-1"
+              >
+                <Sun className="h-4 w-4" />
+                Claro
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={theme === 'dark' ? 'primary' : 'secondary'}
+                onClick={() => setTheme('dark')}
+                className="flex-1"
+              >
+                <Moon className="h-4 w-4" />
+                Oscuro
+              </Button>
+            </div>
           </Card>
         </div>
       )}

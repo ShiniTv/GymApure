@@ -14,6 +14,7 @@ import {
   PasswordInput,
   passwordStrength,
   CedulaInput,
+  Alert,
 } from '../components/ui';
 import { cn } from '../lib/utils';
 
@@ -154,14 +155,7 @@ export default function Register() {
                 }
           }
         >
-          {error && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
-            >
-              {error}
-            </div>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
 
           {step === 0 ? (
             <div className="form-stack">

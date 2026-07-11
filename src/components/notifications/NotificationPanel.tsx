@@ -1,11 +1,9 @@
-import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CheckCircle2, X } from 'lucide-react';
-import clsx from 'clsx';
+import { CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { NotificationItem } from '../../lib/notifications/types';
-import { Modal } from '../ui';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { Modal, Sheet } from '../ui';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
@@ -124,8 +122,7 @@ export function NotificationPanel({
   liveItems,
   isLoading,
 }: NotificationPanelProps) {
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const { isDesktop } = useBreakpoint();
   const navigate = useNavigate();
   const markRead = useMarkNotificationReadMutation();
   const markAllRead = useMarkAllNotificationsReadMutation();
@@ -144,26 +141,6 @@ export function NotificationPanel({
   const handleMarkAll = () => {
     void markAllRead.mutateAsync();
   };
-
-  useEffect(() => {
-    if (!open || isDesktop) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, isDesktop, onClose]);
-
-  useEffect(() => {
-    if (!open || isDesktop) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (sheetRef.current && !sheetRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open, isDesktop, onClose]);
 
   const body = (
     <PanelBody
@@ -187,37 +164,9 @@ export function NotificationPanel({
   }
 
   return (
-    <>
-      {open && (
-        <div className="fixed inset-0 z-[55] bg-black/40 lg:hidden" aria-hidden onClick={onClose} />
-      )}
-      <div
-        ref={sheetRef}
-        className={clsx(
-          'fixed top-14 right-0 left-0 z-[56] px-3 transition-all duration-200 ease-out lg:hidden',
-          open ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-2 opacity-0'
-        )}
-        role="dialog"
-        aria-modal={open}
-        aria-label="Notificaciones"
-        aria-hidden={!open}
-      >
-        <div className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="mb-2 flex items-center justify-between px-1 py-1">
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Notificaciones</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-label="Cerrar notificaciones"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          {body}
-        </div>
-      </div>
-    </>
+    <Sheet open={open} onClose={onClose} title="Notificaciones" side="top" zIndex={56}>
+      {body}
+    </Sheet>
   );
 }
 

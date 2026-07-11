@@ -57,12 +57,12 @@ export function QuickAction({
       aria-label={`${title}: ${description}`}
       title={title}
       className={cn(
-        'group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 touch-manipulation',
+        'group hover:border-brand/20 relative touch-manipulation rounded-xl border border-zinc-200 bg-white transition-shadow duration-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900',
         iconOnlyMobile
-          ? 'flex max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:min-h-[56px] max-sm:py-2 max-sm:px-1 sm:flex-row sm:items-center sm:gap-2.5 sm:p-3 sm:min-h-[56px]'
+          ? 'flex max-sm:min-h-[56px] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:px-1 max-sm:py-2 sm:min-h-[56px] sm:flex-row sm:items-center sm:gap-2.5 sm:p-3'
           : cn(
               'flex items-center gap-2.5',
-              compact ? 'p-3 min-h-[56px]' : 'items-start gap-4 p-5 min-h-[72px]'
+              compact ? 'min-h-[56px] p-3' : 'min-h-[72px] items-start gap-4 p-5'
             )
       )}
     >
@@ -79,16 +79,16 @@ export function QuickAction({
         {showCount && iconOnlyMobile && (
           <span
             className={cn(
-              'absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 flex items-center justify-center rounded-full text-[8px] font-bold sm:hidden',
+              'absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[8px] font-bold sm:hidden',
               toneBadgeMap[tone]
             )}
           >
-            {count! > 99 ? '99+' : count}
+            {count > 99 ? '99+' : count}
           </span>
         )}
       </div>
       {iconOnlyMobile && (
-        <span className="sm:hidden text-[9px] font-semibold text-zinc-600 dark:text-zinc-400 leading-none mt-1 truncate max-w-full text-center">
+        <span className="mt-1 max-w-full truncate text-center text-[9px] leading-none font-semibold text-zinc-600 sm:hidden dark:text-zinc-400">
           {title}
         </span>
       )}
@@ -96,7 +96,7 @@ export function QuickAction({
         <div className="flex items-center gap-1.5">
           <p
             className={cn(
-              'font-semibold text-zinc-900 dark:text-white truncate',
+              'truncate font-semibold text-zinc-900 dark:text-white',
               compact || iconOnlyMobile ? 'text-xs sm:text-sm' : 'text-sm'
             )}
           >
@@ -105,12 +105,12 @@ export function QuickAction({
           {showCount && (
             <span
               className={cn(
-                'min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center rounded-full text-[10px] font-semibold shrink-0',
+                'flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold',
                 toneBadgeMap[tone],
                 iconOnlyMobile && 'hidden sm:flex'
               )}
             >
-              {count! > 99 ? '99+' : count}
+              {count > 99 ? '99+' : count}
             </span>
           )}
         </div>
@@ -118,8 +118,8 @@ export function QuickAction({
           className={cn(
             'text-zinc-500 dark:text-zinc-400',
             compact || iconOnlyMobile
-              ? cn(descriptionFromClass, 'text-[11px] mt-0.5 line-clamp-1')
-              : 'text-xs mt-1'
+              ? cn(descriptionFromClass, 'mt-0.5 line-clamp-1 text-[11px]')
+              : 'mt-1 text-xs'
           )}
         >
           {description}

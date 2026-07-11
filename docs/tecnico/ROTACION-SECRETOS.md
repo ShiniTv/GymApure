@@ -17,13 +17,13 @@ Procedimiento para rotar credenciales críticas de GymApure sin tiempo de inacti
 
 **Impacto:** invalida todas las sesiones activas (cookies `token`).
 
-| Paso | Acción |
-| ---- | ------ |
-| 1 | Generar nuevo secreto: `openssl rand -base64 48` |
-| 2 | En Render → Environment → actualizar `JWT_SECRET` |
-| 3 | Redeploy del servicio web |
-| 4 | Comunicar al staff que deben re-login |
-| 5 | Verificar login admin y cron jobs |
+| Paso | Acción                                            |
+| ---- | ------------------------------------------------- |
+| 1    | Generar nuevo secreto: `openssl rand -base64 48`  |
+| 2    | En Render → Environment → actualizar `JWT_SECRET` |
+| 3    | Redeploy del servicio web                         |
+| 4    | Comunicar al staff que deben re-login             |
+| 5    | Verificar login admin y cron jobs                 |
 
 No es necesario tocar la base de datos: los tokens antiguos fallan la verificación de firma.
 
@@ -33,13 +33,13 @@ No es necesario tocar la base de datos: los tokens antiguos fallan la verificaci
 
 **Impacto:** los Cron Jobs de Render (`POST /api/settings/expiry/run`, `POST /api/exchange-rate/refresh`) dejan de autenticarse hasta actualizar el header.
 
-| Paso | Acción |
-| ---- | ------ |
-| 1 | `openssl rand -base64 32` |
-| 2 | Actualizar `CRON_SECRET` en Render (web + cada Cron Job que use `x-cron-secret`) |
-| 3 | En cada Cron Job de Render, actualizar el header `x-cron-secret` al mismo valor |
-| 4 | Ejecutar manualmente un cron y confirmar HTTP 200 |
-| 5 | `npm run test:security` o `POST` manual con el nuevo secret |
+| Paso | Acción                                                                           |
+| ---- | -------------------------------------------------------------------------------- |
+| 1    | `openssl rand -base64 32`                                                        |
+| 2    | Actualizar `CRON_SECRET` en Render (web + cada Cron Job que use `x-cron-secret`) |
+| 3    | En cada Cron Job de Render, actualizar el header `x-cron-secret` al mismo valor  |
+| 4    | Ejecutar manualmente un cron y confirmar HTTP 200                                |
+| 5    | `npm run test:security` o `POST` manual con el nuevo secret                      |
 
 En producción `CRON_SECRET` es **obligatorio** (mín. 16 caracteres); el servidor no arranca sin él.
 
@@ -49,13 +49,13 @@ En producción `CRON_SECRET` es **obligatorio** (mín. 16 caracteres); el servid
 
 **Impacto:** emails de bienvenida, recuperación de contraseña y notificaciones de pago.
 
-| Paso | Acción |
-| ---- | ------ |
-| 1 | Crear nueva contraseña de aplicación en Google (o rotar credencial del proveedor) |
-| 2 | Actualizar `SMTP_PASS` en Render |
-| 3 | Redeploy |
-| 4 | Probar: forgot-password con cuenta de prueba |
-| 5 | Revisar `GET /api/health/ops` (admin): `email.configured` debe ser `true` |
+| Paso | Acción                                                                            |
+| ---- | --------------------------------------------------------------------------------- |
+| 1    | Crear nueva contraseña de aplicación en Google (o rotar credencial del proveedor) |
+| 2    | Actualizar `SMTP_PASS` en Render                                                  |
+| 3    | Redeploy                                                                          |
+| 4    | Probar: forgot-password con cuenta de prueba                                      |
+| 5    | Revisar `GET /api/health/ops` (admin): `email.configured` debe ser `true`         |
 
 Revocar la contraseña antigua en Google tras confirmar el envío.
 
@@ -65,12 +65,12 @@ Revocar la contraseña antigua en Google tras confirmar el envío.
 
 **Impacto:** uploads (comprobantes, avatares, videos), acceso Storage desde el backend.
 
-| Paso | Acción |
-| ---- | ------ |
-| 1 | Supabase Dashboard → Settings → API → rotar **service_role** (si el proyecto lo permite) o crear nuevo proyecto solo en emergencia |
-| 2 | Actualizar `SUPABASE_SERVICE_ROLE_KEY` en Render |
-| 3 | Redeploy |
-| 4 | Subir comprobante de prueba y descargar vía API |
+| Paso | Acción                                                                                                                             |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Supabase Dashboard → Settings → API → rotar **service_role** (si el proyecto lo permite) o crear nuevo proyecto solo en emergencia |
+| 2    | Actualizar `SUPABASE_SERVICE_ROLE_KEY` en Render                                                                                   |
+| 3    | Redeploy                                                                                                                           |
+| 4    | Subir comprobante de prueba y descargar vía API                                                                                    |
 
 **Nunca** exponer esta clave en el frontend ni en logs.
 
@@ -80,12 +80,12 @@ Revocar la contraseña antigua en Google tras confirmar el envío.
 
 **Impacto:** contadores de rate limit y bloqueo de login se reinician al cambiar instancia; breve ventana sin estado distribuido.
 
-| Paso | Acción |
-| ---- | ------ |
-| 1 | Rotar credencial en el proveedor Redis (Upstash, etc.) |
-| 2 | Actualizar `REDIS_URL` en Render |
-| 3 | Redeploy |
-| 4 | Verificar que login lockout sigue funcionando tras varios intentos fallidos |
+| Paso | Acción                                                                      |
+| ---- | --------------------------------------------------------------------------- |
+| 1    | Rotar credencial en el proveedor Redis (Upstash, etc.)                      |
+| 2    | Actualizar `REDIS_URL` en Render                                            |
+| 3    | Redeploy                                                                    |
+| 4    | Verificar que login lockout sigue funcionando tras varios intentos fallidos |
 
 Si Redis no está configurado, el servidor usa memoria local (aceptable en instancia única).
 

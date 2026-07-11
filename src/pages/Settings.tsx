@@ -19,7 +19,7 @@ import {
   Label,
   PageHeader,
   Badge,
-  Spinner,
+  Skeleton,
   BackToDashboardLink,
 } from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
@@ -333,14 +333,6 @@ export default function Settings() {
       ]
     : [];
 
-  if (settingsLoading) {
-    return (
-      <div className="page-state-center">
-        <Spinner />
-      </div>
-    );
-  }
-
   return (
     <div className="page-stack-tight">
       <PageHeader
@@ -373,6 +365,15 @@ export default function Settings() {
           <p className="text-sm font-semibold text-red-600 dark:text-red-400">
             No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
           </p>
+        </Card>
+      )}
+
+      {settingsLoading && !expirySettings && !settingsLoadError && (
+        <Card padding="sm" rounded="xl" className="panel-wide">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-10 w-full" />
+          </div>
         </Card>
       )}
 

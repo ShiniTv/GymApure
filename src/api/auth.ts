@@ -33,17 +33,8 @@ import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
 import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
-import {
-  getUserMfaState,
-  isMfaStaffRole,
-  signMfaChallengeToken,
-  verifyMfaToken,
-} from '../lib/mfa.ts';
-import {
-  hashPassword,
-  passwordHashNeedsRehash,
-  verifyPassword,
-} from '../lib/passwordHash.ts';
+import { isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
+import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import mfaRoutes from './mfa.ts';
 

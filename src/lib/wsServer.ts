@@ -23,25 +23,29 @@ export function initWebSocket(httpServer: HttpServer) {
     pingTimeout: 20_000,
   });
 
-  io.use(async (socket, next) => {
-    try {
-      const cookies = cookie.parse(socket.handshake.headers.cookie || '');
-      const token = cookies.token;
-      if (!token || typeof token !== 'string') {
-        return next(new Error('Token requerido'));
-      }
+  io.use((socket, next) => {
+    void (async () => {
+      try {
+        const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+        const token = cookies.token;
+        if (!token || typeof token !== 'string') {
+          next(new Error('Token requerido'));
+          return;
+        }
 
-      const result = await verifySessionToken(token);
-      if (result.type !== 'success') {
-        return next(new Error('Autenticación fallida'));
-      }
+        const result = await verifySessionToken(token);
+        if (result.type !== 'success') {
+          next(new Error('Autenticación fallida'));
+          return;
+        }
 
-      (socket as { userId?: number }).userId = result.user.id;
-      (socket as { userRole?: string }).userRole = result.user.role;
-      next();
-    } catch {
-      next(new Error('Autenticación fallida'));
-    }
+        (socket as { userId?: number }).userId = result.user.id;
+        (socket as { userRole?: string }).userRole = result.user.role;
+        next();
+      } catch {
+        next(new Error('Autenticación fallida'));
+      }
+    })();
   });
 
   io.on('connection', (socket) => {

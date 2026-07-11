@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCircle2 } from 'lucide-react';
-import { PageHeader, FilterChips, Button, PaginationBar, EmptyState } from '../components/ui';
+import {
+  PageHeader,
+  FilterChips,
+  Button,
+  PaginationBar,
+  EmptyState,
+  Skeleton,
+} from '../components/ui';
 import { useNotificationItems } from '../hooks/useNotificationItems';
 import {
   useNotificationsQuery,
@@ -19,7 +26,13 @@ export default function Notifications() {
   const [page, setPage] = useState(1);
   const unreadOnly = filter === 'unread';
 
-  const { liveItems, unreadPersisted, isLoading: itemsLoading } = useNotificationItems();
+  const {
+    liveItems,
+    unreadPersisted,
+    isLoading: itemsLoading,
+  } = useNotificationItems({
+    skipPanel: true,
+  });
   const { data, isLoading: listLoading } = useNotificationsQuery(page, unreadOnly);
   const markRead = useMarkNotificationReadMutation();
   const markAllRead = useMarkAllNotificationsReadMutation();
@@ -79,8 +92,10 @@ export default function Notifications() {
       />
 
       {isLoading && isEmpty ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          Cargando notificaciones…
+        <div className="space-y-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
         </div>
       ) : isEmpty ? (
         <EmptyState

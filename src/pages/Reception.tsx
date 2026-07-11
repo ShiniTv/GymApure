@@ -36,7 +36,7 @@ import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 interface LookupResult {
   found: boolean;
@@ -110,7 +110,7 @@ export default function Reception() {
   );
   const [checkingOutCedula, setCheckingOutCedula] = useState<string | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
-  const isMobileShell = useMediaQuery('(max-width: 1023px)');
+  const { isMobileShell } = useBreakpoint();
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
