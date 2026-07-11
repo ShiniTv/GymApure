@@ -97,6 +97,26 @@ function toMetricsCsv(
 }
 
 router.get('/health', async (_req, res) => {
+  const dbStart = process.hrtime.bigint();
+
+  try {
+    await query('SELECT 1');
+    const dbLatencyMs = Number(process.hrtime.bigint() - dbStart) / 1_000_000;
+    res.json({
+      status: 'ok',
+      db: 'up',
+      db_latency_ms: Number(dbLatencyMs.toFixed(2)),
+    });
+  } catch {
+    res.status(503).json({
+      status: 'degraded',
+      db: 'down',
+      db_latency_ms: null,
+    });
+  }
+});
+
+router.get('/health/ops', authenticate, authorize(['admin']), async (_req, res) => {
   const uptimeSeconds = Math.floor((Date.now() - startedAt) / 1000);
   const dbStart = process.hrtime.bigint();
 

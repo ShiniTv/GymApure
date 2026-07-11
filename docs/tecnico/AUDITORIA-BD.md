@@ -176,6 +176,7 @@ Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 
 ### Pendiente manual
 
+- Ejecutar `npm run db:migrate:prod` para aplicar `storage_objects_rls` (requiere owner de `storage.objects`; el MCP no puede aplicarla)
 - Ejecutar `npm run db:audit-storage:prod` con credenciales locales para auditar buckets Storage
-- Revisar storage huérfanos antes de `db:storage-cleanup --apply` en prod
-- Mergear [PR #5](https://github.com/ShiniTv/caribean-gym/pull/5) y desplegar en Render
+- Revisar storage huérfanos antes de `db:storage-cleanup --apply` en prod (prod tiene **76** referencias de video en DB)
+- Desplegar en Render tras merge del PR #5

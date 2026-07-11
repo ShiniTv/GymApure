@@ -36,6 +36,8 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
+  REDIS_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -64,7 +66,17 @@ function parseEnv(): Env {
     logger.error('Configuración inválida (.env)', { details });
     process.exit(1);
   }
-  return result.data;
+
+  const data = result.data;
+  if (data.NODE_ENV === 'production') {
+    const cronSecret = data.CRON_SECRET?.trim() ?? '';
+    if (cronSecret.length < 16) {
+      logger.error('CRON_SECRET es obligatorio en producción (mínimo 16 caracteres)', {});
+      process.exit(1);
+    }
+  }
+
+  return data;
 }
 
 /** Validated environment; call once at process startup before serving. */

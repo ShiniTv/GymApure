@@ -35,7 +35,7 @@ interface WalkInSuccess {
   user: { id: number; full_name: string; email: string; cedula: string };
   membership_name: string;
   email_sent: boolean;
-  temporary_password?: string;
+  password_setup_url?: string;
   checked_in: boolean;
   check_in_message?: string;
   subscription: { startDate: string; endDate: string };
@@ -202,10 +202,10 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     }
   };
 
-  const copyPassword = async () => {
-    if (!success?.temporary_password) return;
+  const copySetupLink = async () => {
+    if (!success?.password_setup_url) return;
     try {
-      await navigator.clipboard.writeText(success.temporary_password);
+      await navigator.clipboard.writeText(success.password_setup_url);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -311,22 +311,26 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           <>
             <div className="flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>No se pudo enviar el correo. Entregue la contraseña temporal al cliente.</p>
+              <p>
+                No se pudo enviar el correo. Entregue al cliente el enlace para crear su contraseña
+                (válido 48 horas).
+              </p>
             </div>
-            {success.temporary_password && (
+            {success.password_setup_url && (
               <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
-                <p className="label-caps text-brand mb-2">Contraseña temporal</p>
+                <p className="label-caps text-brand mb-2">Enlace para crear contraseña</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-lg font-bold break-all text-zinc-900 dark:text-white">
-                    {success.temporary_password}
+                  <code className="flex-1 font-mono text-xs font-bold break-all text-zinc-900 dark:text-white">
+                    {success.password_setup_url}
                   </code>
-                  <Button variant="secondary" size="sm" onClick={() => void copyPassword()}>
+                  <Button variant="secondary" size="sm" onClick={() => void copySetupLink()}>
                     <Copy className="h-4 w-4" />
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
                 <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Entréguela al cliente para que pueda usar la app.
+                  Puede mostrarlo en pantalla o enviarlo por WhatsApp. No comparta contraseñas en
+                  texto plano.
                 </p>
               </div>
             )}

@@ -31,59 +31,20 @@ import {
 } from '../lib/passwordSetupToken.ts';
 import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
+import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
+import { isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
+import mfaRoutes from './mfa.ts';
 
 const router = asyncRouter();
 
-interface LoginAttemptEntry {
-  count: number;
-  windowExpires: number;
-  lockedUntil?: number;
-}
+router.get(
+  '/config',
+  asyncHandler(async (_req, res) => {
+    res.json({ allowPublicRegister });
+  })
+);
 
-const loginAttempts = new Map<string, LoginAttemptEntry>();
-
-const MAX_LOGIN_ATTEMPTS = 3;
-const LOGIN_BLOCK_MINUTES = 15;
-const LOGIN_WINDOW_MINUTES = 15;
-
-function checkLoginBlock(email: string): boolean {
-  const entry = loginAttempts.get(email);
-  if (!entry) return false;
-
-  const now = Date.now();
-  if (entry.lockedUntil != null && now < entry.lockedUntil) {
-    return true;
-  }
-
-  if (now >= entry.windowExpires) {
-    loginAttempts.delete(email);
-  }
-  return false;
-}
-
-function recordLoginAttempt(email: string, success: boolean) {
-  const normalizedEmail = email.toLowerCase();
-  if (success) {
-    loginAttempts.delete(normalizedEmail);
-    return;
-  }
-
-  const now = Date.now();
-  const entry = loginAttempts.get(normalizedEmail);
-
-  if (!entry || now >= entry.windowExpires) {
-    loginAttempts.set(normalizedEmail, {
-      count: 1,
-      windowExpires: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
-    });
-    return;
-  }
-
-  entry.count += 1;
-  if (entry.count >= MAX_LOGIN_ATTEMPTS) {
-    entry.lockedUntil = now + LOGIN_BLOCK_MINUTES * 60 * 1000;
-  }
-}
+router.use('/mfa', mfaRoutes);
 
 router.post(
   '/login',
@@ -98,7 +59,7 @@ router.post(
     const normalizedEmail = email.toLowerCase();
     const clientIp = req.ip ?? req.socket.remoteAddress ?? 'unknown';
 
-    if (checkLoginBlock(normalizedEmail)) {
+    if (await checkLoginBlock(normalizedEmail)) {
       res.status(429).json({
         error: `Demasiados intentos. Cuenta bloqueada por ${LOGIN_BLOCK_MINUTES} minutos.`,
       });
@@ -113,14 +74,16 @@ router.post(
       full_name: string;
       status: string;
       token_version: number | string;
+      mfa_enabled: boolean;
+      mfa_secret: string | null;
     }>(
-      'SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1',
+      'SELECT id, email, password, role, full_name, status, token_version, mfa_enabled, mfa_secret FROM users WHERE email = $1',
       [normalizedEmail]
     );
     const user = rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      recordLoginAttempt(normalizedEmail, false);
+      await recordLoginAttempt(normalizedEmail, false);
       await logAudit(null, 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
@@ -131,7 +94,7 @@ router.post(
     }
 
     if (user.status !== 'active') {
-      recordLoginAttempt(normalizedEmail, false);
+      await recordLoginAttempt(normalizedEmail, false);
       await logAudit(Number(user.id), 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
@@ -141,9 +104,19 @@ router.post(
       return;
     }
 
-    recordLoginAttempt(normalizedEmail, true);
+    await recordLoginAttempt(normalizedEmail, true);
 
     const userId = Number(user.id);
+
+    if (user.mfa_enabled && user.mfa_secret && isMfaStaffRole(user.role)) {
+      const mfaChallengeToken = signMfaChallengeToken(userId, normalizedEmail, user.role);
+      res.json({
+        mfa_required: true,
+        mfa_challenge_token: mfaChallengeToken,
+      });
+      return;
+    }
+
     emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });
 
     const session = await createLoginSession(userId);

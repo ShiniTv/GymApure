@@ -1,4 +1,3 @@
-import { type NextFunction, type Response } from 'express';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { authorize, AuthRequest } from './middleware/auth.ts';
@@ -10,8 +9,6 @@ import {
 } from '../lib/exchangeRate.ts';
 import { runExchangeRateRefreshNow } from '../jobs/exchangeRateCron.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
-import { runExpiryJob } from '../lib/chat/expiryChatJob.ts';
-import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { logAudit } from '../lib/audit.ts';
 
 const router = asyncRouter();
@@ -25,22 +22,6 @@ const exchangeRateSettingsSchema = z.object({
   override_note: z.string().trim().max(200).optional().nullable(),
   clear_override: z.boolean().optional(),
 });
-
-function authorizeCronOrAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  const cronSecret = process.env.CRON_SECRET?.trim();
-  const headerSecret =
-    (typeof req.headers['x-cron-secret'] === 'string' ? req.headers['x-cron-secret'] : null) ??
-    (typeof req.headers.authorization === 'string'
-      ? req.headers.authorization.replace(/^Bearer\s+/i, '')
-      : null);
-
-  if (cronSecret && headerSecret === cronSecret) {
-    next();
-    return;
-  }
-
-  return authorize(['admin'])(req, res, next);
-}
 
 router.get('/expiry', authorize(['admin']), async (_req, res) => {
   try {
@@ -63,21 +44,6 @@ router.put('/expiry', authorize(['admin']), async (req: AuthRequest, res) => {
     invalidateAdminStatsCache();
     await logAudit(req.user!.id, 'settings.expiry.update', parsed.data);
     res.json(settings);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
-  }
-});
-
-router.post('/expiry/run', authorizeCronOrAdmin, async (req: AuthRequest, res) => {
-  try {
-    const maintenance = await runDbMaintenanceIfDue();
-    const result = await runExpiryJob();
-    invalidateAdminStatsCache();
-    if (req.user) {
-      await logAudit(req.user.id, 'settings.expiry.run', { ...result, maintenance });
-    }
-    res.json({ success: true, result, maintenance });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

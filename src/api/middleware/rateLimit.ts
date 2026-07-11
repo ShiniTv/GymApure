@@ -1,38 +1,76 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, {
+  type Options,
+  type RateLimitRequestHandler,
+  type Store,
+} from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import { env } from '../../config/env.ts';
+import { getRedisClient } from '../../lib/redis.ts';
 
 const isProduction = env.NODE_ENV === 'production';
 const isCI = process.env.CI === 'true';
 const strictLimits = isProduction && !isCI;
 
+function createLimiter(options: Partial<Options>, store?: Store): RateLimitRequestHandler {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store,
+    ...options,
+  });
+}
+
+async function buildStore(): Promise<Store | undefined> {
+  const client = await getRedisClient();
+  if (!client) return undefined;
+  return new RedisStore({
+    sendCommand: (...args: string[]) => client.sendCommand(args),
+    prefix: 'rl:',
+  });
+}
+
 /** Login / register: limit brute-force attempts per IP. */
-export const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export let authRateLimiter = createLimiter({
   max: strictLimits ? 20 : 500,
-  standardHeaders: true,
-  legacyHeaders: false,
   message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
 });
 
 /** General API traffic per IP (authenticated routes). */
-export const apiRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export let apiRateLimiter = createLimiter({
   max: strictLimits ? 300 : 5000,
-  standardHeaders: true,
-  legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
 });
 
 /** File uploads and heavy mutations. */
-export const uploadRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export let uploadRateLimiter = createLimiter({
   max: strictLimits ? 30 : 500,
-  standardHeaders: true,
-  legacyHeaders: false,
   message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
 });
 
-/**
- * Optional distributed rate limiting: set REDIS_URL and add `redis` + `rate-limit-redis`
- * (requires express-rate-limit v8+) when running multiple server instances.
- */
+export async function initRateLimiters(): Promise<void> {
+  const store = await buildStore();
+  if (!store) return;
+
+  authRateLimiter = createLimiter(
+    {
+      max: strictLimits ? 20 : 500,
+      message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
+    },
+    store
+  );
+  apiRateLimiter = createLimiter(
+    {
+      max: strictLimits ? 300 : 5000,
+      message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
+    },
+    store
+  );
+  uploadRateLimiter = createLimiter(
+    {
+      max: strictLimits ? 30 : 500,
+      message: { error: 'Demasiadas subidas. Espera un momento e inténtalo de nuevo.' },
+    },
+    store
+  );
+}

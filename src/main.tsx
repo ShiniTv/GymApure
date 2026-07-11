@@ -19,7 +19,13 @@ if (SENTRY_DSN) {
     Sentry.init({
       dsn: SENTRY_DSN,
       environment: import.meta.env.MODE,
-      integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration({
+          maskAllText: true,
+          blockAllMedia: true,
+        }),
+      ],
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.01,
       replaysOnErrorSampleRate: 0.1,

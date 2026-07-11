@@ -8,6 +8,7 @@ import fs from 'fs';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import apiRouter from './src/api/index.ts';
+import { initRateLimiters } from './src/api/middleware/rateLimit.ts';
 import { initDb, pool } from './src/db/index.ts';
 import { env } from './src/config/env.ts';
 import { errorHandler, notFoundHandler } from './src/api/middleware/errorHandler.ts';
@@ -38,6 +39,7 @@ async function initSentry() {
 
 async function startServer() {
   await initDb();
+  await initRateLimiters();
 
   const app = express();
   const PORT = env.PORT;
@@ -185,7 +187,7 @@ async function startServer() {
       logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     }
     initWebSocket(server);
-    void ensureExchangeRateOnStartup();
+    ensureExchangeRateOnStartup();
     startExpiryCron();
     startExchangeRateCron();
   });

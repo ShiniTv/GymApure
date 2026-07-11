@@ -33,8 +33,9 @@ export const walkInSchema = z.object({
   training_shift: z.enum(['diurno', 'vespertino', 'nocturno']).optional().nullable(),
 });
 
-function generateTempPassword(): string {
-  return crypto.randomBytes(9).toString('base64url');
+function generateUnusablePasswordHash(): Promise<string> {
+  const randomSecret = crypto.randomBytes(32).toString('hex');
+  return bcrypt.hash(randomSecret, 10);
 }
 
 export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {
@@ -52,8 +53,7 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
   }
 
   const normalizedEmail = data.email.toLowerCase().trim();
-  const tempPassword = generateTempPassword();
-  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  const hashedPassword = await generateUnusablePasswordHash();
 
   try {
     const result = await withTransaction(async (client) => {
@@ -138,13 +138,14 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
     }
 
     let emailSent = false;
+    let passwordSetupUrl: string | undefined;
     try {
       const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
-      const setupUrl = buildPasswordSetupUrl(rawToken);
+      passwordSetupUrl = buildPasswordSetupUrl(rawToken);
       emailSent = await sendEmail({
         to: normalizedEmail,
         subject: 'Bienvenido a GymApure — crea tu contraseña',
-        html: walkInWelcomeEmail(data.full_name, setupUrl, result.membershipName),
+        html: walkInWelcomeEmail(data.full_name, passwordSetupUrl, result.membershipName),
       });
       if (!emailSent) {
         logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
@@ -190,7 +191,7 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       membership_name: result.membershipName,
       subscription: result.subscription,
       email_sent: emailSent,
-      ...(emailSent ? {} : { temporary_password: tempPassword }),
+      ...(emailSent || !passwordSetupUrl ? {} : { password_setup_url: passwordSetupUrl }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,
     });

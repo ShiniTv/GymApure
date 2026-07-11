@@ -62,6 +62,7 @@ export async function syncEquipmentInspectionAlerts(): Promise<number> {
       emitToUser(userId, 'notification:new', {
         unreadCount: unreadCounts.get(userId) ?? 0,
       });
+      return Promise.resolve();
     },
     NOTIFY_CONCURRENCY
   );
