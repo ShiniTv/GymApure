@@ -176,9 +176,10 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
     }
 
     let emailSent = false;
+    let setupUrl: string | null = null;
     try {
       const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
-      const setupUrl = buildPasswordSetupUrl(rawToken);
+      setupUrl = buildPasswordSetupUrl(rawToken);
       emailSent = await sendEmail({
         to: normalizedEmail,
         subject: 'Bienvenido a GymApure — crea tu contraseña',
@@ -228,6 +229,7 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       membership_name: result.membershipName,
       subscription: result.subscription,
       email_sent: emailSent,
+      ...(setupUrl && !emailSent ? { password_setup_url: setupUrl } : {}),
       ...(emailSent ? {} : { temporary_password: tempPassword }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,

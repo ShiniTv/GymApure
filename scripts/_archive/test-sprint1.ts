@@ -4,8 +4,8 @@
  */
 import 'dotenv/config';
 import { loginReceptionStaff, receptionCheckIn } from '../lib/test-reception-auth.ts';
+import { createApiSession } from '../test/lib/legacy-api-session.ts';
 
-const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
 
 if (!DEMO_PASSWORD) {
@@ -13,7 +13,7 @@ if (!DEMO_PASSWORD) {
   process.exit(1);
 }
 
-let cookie = '';
+const { api, formPost, loginAs, clearSession } = createApiSession();
 let passed = 0;
 let failed = 0;
 
@@ -27,39 +27,6 @@ function ok(name: string, cond: boolean, detail?: string) {
   }
 }
 
-async function api(method: string, path: string, body?: unknown, headers?: Record<string, string>) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-      ...headers,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const text = await res.text();
-  let data: unknown = text;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    /* text */
-  }
-  return { res, data };
-}
-
-function saveCookie(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) {
-    cookie = fromArr.split(';')[0];
-    return;
-  }
-  const raw = res.headers.get('set-cookie');
-  const m = raw?.match(/token=[^;]+/);
-  if (m) cookie = m[0];
-}
-
 async function main() {
   console.log('=== Sprint 1 — Prueba automatizada ===\n');
 
@@ -68,12 +35,7 @@ async function main() {
   ok('Health check', health.res.status === 200);
 
   // 2. Login admin
-  const login = await api('POST', '/api/auth/login', {
-    email: 'admin@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  ok('Login admin', login.res.status === 200);
-  saveCookie(login.res);
+  ok('Login admin', await loginAs('admin@gym.com'));
 
   // 3. Listar planes
   const plans = await api('GET', '/api/memberships');
@@ -111,8 +73,8 @@ async function main() {
 
   // 7. Check-in recepción (miembro con suscripción)
   try {
-    const receptionCookie = await loginReceptionStaff();
-    const checkIn = await receptionCheckIn(receptionCookie, 'V-11223344');
+    const receptionSession = await loginReceptionStaff();
+    const checkIn = await receptionCheckIn(receptionSession, 'V-11223344');
     const checkInData = await checkIn.json().catch(() => ({}));
     ok(
       'Check-in con suscripción',
@@ -124,13 +86,8 @@ async function main() {
   }
 
   // 8. Miembro reporta pago
-  cookie = '';
-  const memberLogin = await api('POST', '/api/auth/login', {
-    email: 'member@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  ok('Login miembro', memberLogin.res.status === 200);
-  saveCookie(memberLogin.res);
+  clearSession();
+  ok('Login miembro', await loginAs('member@gym.com'));
 
   const form = new FormData();
   form.append('amount_usd', '30');
@@ -139,22 +96,14 @@ async function main() {
   form.append('method', 'pago_movil');
   form.append('reference', `SPRINT1-${Date.now()}`);
 
-  const payRes = await fetch(`${BASE}/api/payments`, {
-    method: 'POST',
-    headers: cookie ? { Cookie: cookie } : {},
-    body: form,
-  });
-  const payData = await payRes.json();
-  ok('Miembro reporta pago', payRes.status === 200 && payData.id);
+  const payRes = await formPost('/api/payments', form);
+  const payData = payRes.data as { id?: number };
+  ok('Miembro reporta pago', payRes.res.status === 200 && payData.id);
   const paymentId = payData.id as number;
 
   // 9. Admin aprueba pago
-  cookie = '';
-  const adminAgain = await api('POST', '/api/auth/login', {
-    email: 'admin@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  saveCookie(adminAgain.res);
+  clearSession();
+  ok('Login admin (aprobación)', await loginAs('admin@gym.com'));
 
   const approve = await api('POST', `/api/payments/${paymentId}/approve`, {
     membership_id: planId,
@@ -162,12 +111,8 @@ async function main() {
   ok('Admin aprueba pago', approve.res.status === 200, JSON.stringify(approve.data));
 
   // 10. Segundo pago para rechazar
-  cookie = '';
-  const ml = await api('POST', '/api/auth/login', {
-    email: 'member@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  saveCookie(ml.res);
+  clearSession();
+  ok('Login miembro (segundo pago)', await loginAs('member@gym.com'));
 
   const form2 = new FormData();
   form2.append('amount_usd', '5');
@@ -176,19 +121,11 @@ async function main() {
   form2.append('method', 'transferencia');
   form2.append('reference', `REJECT-${Date.now()}`);
 
-  const pay2 = await fetch(`${BASE}/api/payments`, {
-    method: 'POST',
-    headers: cookie ? { Cookie: cookie } : {},
-    body: form2,
-  });
-  const pay2Data = await pay2.json();
+  const pay2 = await formPost('/api/payments', form2);
+  const pay2Data = pay2.data as { id?: number };
 
-  cookie = '';
-  const admin3 = await api('POST', '/api/auth/login', {
-    email: 'admin@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  saveCookie(admin3.res);
+  clearSession();
+  ok('Login admin (rechazo)', await loginAs('admin@gym.com'));
 
   const reject = await api('POST', `/api/payments/${pay2Data.id}/reject`);
   ok('Admin rechaza pago', reject.res.status === 200);

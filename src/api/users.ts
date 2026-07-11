@@ -35,7 +35,8 @@ import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
-import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
+import { bumpUserTokenVersion } from '../lib/sessionAuth.ts';
+import { emitToUser } from '../lib/wsServer.ts';
 import { assignRoutineSchema } from '../lib/routineSchemas.ts';
 import { isActiveMember, trainerOwnsRoutine } from '../lib/trainerAccess.ts';
 
@@ -964,11 +965,13 @@ router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) 
   }
 
   try {
-    await query('UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2', [
-      status,
-      targetId,
-    ]);
-    invalidateSessionUserCache(targetId);
+    await query('UPDATE users SET status = $1 WHERE id = $2', [status, targetId]);
+    await bumpUserTokenVersion(targetId);
+
+    if (status !== 'active') {
+      emitToUser(targetId, 'session:revoked', { reason: 'account_inactive' });
+    }
+
     await logAudit(req.user!.id, 'user.status_change', {
       target_id: targetId,
       status,

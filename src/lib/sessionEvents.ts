@@ -1,7 +1,14 @@
 export const SESSION_REVOKED_EVENT = 'gymapure:session-revoked';
 
+export const SESSION_MESSAGES = {
+  loginElsewhere: 'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.',
+  accountInactive: 'Tu cuenta fue desactivada. Contacta al administrador.',
+  expired: 'Tu sesión expiró. Inicia sesión de nuevo.',
+} as const;
+
 export interface SessionRevokedDetail {
   message?: string;
+  reason?: 'login_elsewhere' | 'account_inactive' | 'expired';
 }
 
 export function dispatchSessionRevoked(detail?: SessionRevokedDetail) {

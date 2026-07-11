@@ -3,8 +3,8 @@
  * Requiere servidor en marcha y DEMO_PASSWORD en .env.
  */
 import 'dotenv/config';
+import { createApiSession } from '../test/lib/legacy-api-session.ts';
 
-const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
 
 if (!DEMO_PASSWORD) {
@@ -12,7 +12,7 @@ if (!DEMO_PASSWORD) {
   process.exit(1);
 }
 
-let cookie = '';
+const { api, loginAs } = createApiSession();
 let passed = 0;
 let failed = 0;
 
@@ -26,36 +26,10 @@ function ok(name: string, cond: boolean, detail?: string) {
   }
 }
 
-async function api(method: string, path: string, body?: unknown) {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  return { res, data };
-}
-
-function saveCookie(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
-}
-
 async function main() {
   console.log('=== Sprint 2 — Miembro ===\n');
 
-  cookie = '';
-  const login = await api('POST', '/api/auth/login', {
-    email: 'member@gym.com',
-    password: DEMO_PASSWORD,
-  });
-  ok('Login miembro', login.res.status === 200);
-  saveCookie(login.res);
+  ok('Login miembro', await loginAs('member@gym.com'));
 
   const me = await api('GET', '/api/auth/me');
   const memberId = (me.data as { user?: { id?: number } }).user?.id;
