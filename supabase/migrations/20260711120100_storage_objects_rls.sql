@@ -1,6 +1,7 @@
 -- Deny direct Storage API access for anon/authenticated roles (defense in depth)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage.objects FORCE ROW LEVEL SECURITY;
+-- Hosted Supabase already enables RLS on storage.objects; ALTER requires supabase_storage_admin.
+-- ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE storage.objects FORCE ROW LEVEL SECURITY;
 
 REVOKE ALL ON storage.objects FROM anon, authenticated;
 

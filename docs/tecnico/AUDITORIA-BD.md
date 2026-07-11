@@ -158,7 +158,7 @@ Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 
 | Check                           | Dev     | Prod    |
 | ------------------------------- | ------- | ------- |
-| Migraciones al día              | 39/39   | 39/39   |
+| Migraciones al día              | 41/41   | 41/41   |
 | Subscriptions activas expiradas | 0       | 0       |
 | Supabase security advisors      | 0 lints | 0 lints |
 | `demo_requests` existe          | No      | No      |
@@ -174,9 +174,11 @@ Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 | subscriptions | 187   | 136 kB |
 | payments      | 128   | 112 kB |
 
+### Storage RLS (`20260711120100_storage_objects_rls.sql`)
+
+Aplicada en **prod** y **dev** (2026-07-11). En Supabase hospedado, `ALTER TABLE storage.objects` requiere `supabase_storage_admin`; la política `backend_only_storage_objects` (deny-all para `anon`/`authenticated`) es el control efectivo con RLS ya habilitado por la plataforma.
+
 ### Pendiente manual
 
-- Ejecutar `npm run db:migrate:prod` para aplicar `storage_objects_rls` (requiere owner de `storage.objects`; el MCP no puede aplicarla)
 - Ejecutar `npm run db:audit-storage:prod` con credenciales locales para auditar buckets Storage
 - Revisar storage huérfanos antes de `db:storage-cleanup --apply` en prod (prod tiene **76** referencias de video en DB)
-- Desplegar en Render tras merge del PR #5

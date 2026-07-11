@@ -110,6 +110,19 @@ try {
     detail: grants[0].count === '0' ? 'sin grants anon/authenticated' : `${grants[0].count} grants`,
   });
 
+  const storageRls = await q<{ ok: boolean }>(`
+    SELECT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'storage' AND tablename = 'objects'
+        AND policyname = 'backend_only_storage_objects'
+    ) AS ok
+  `);
+  checks.push({
+    name: 'Storage objects RLS',
+    ok: storageRls[0]?.ok === true,
+    detail: storageRls[0]?.ok ? 'policy deny-all activa' : 'falta backend_only_storage_objects',
+  });
+
   for (const integrity of INTEGRITY_CHECKS) {
     const rows = await q<{ count: string }>(integrity.sql);
     const count = parseInt(rows[0]?.count ?? '0', 10);
