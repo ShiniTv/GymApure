@@ -8,10 +8,7 @@ import { assignSubscription, getActiveSubscriptionByUserId } from '../lib/subscr
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
-import {
-  getExpiringSubscriptions,
-  getLastDoorAlert,
-} from '../lib/expiringSubscriptions.ts';
+import { getExpiringSubscriptions, getLastDoorAlert } from '../lib/expiringSubscriptions.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 
@@ -25,7 +22,10 @@ const membershipSchema = z.object({
 
 router.get('/expiring', authorize(['admin']), async (req, res) => {
   const defaultDays = await getExpiryAlertDays();
-  const days = Math.min(90, Math.max(1, parseInt(String(req.query.days ?? defaultDays), 10) || defaultDays));
+  const days = Math.min(
+    90,
+    Math.max(1, parseInt(String(req.query.days ?? defaultDays), 10) || defaultDays)
+  );
 
   try {
     const [expiring, lastDoorAlert] = await Promise.all([
@@ -49,7 +49,7 @@ router.get('/', authorize(['admin', 'trainer', 'member', 'receptionist']), async
   }
 });
 
-router.post('/', authorize(['admin']), async (req, res) => {
+router.post('/', authorize(['admin']), async (req: AuthRequest, res) => {
   const parsed = membershipSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
@@ -64,6 +64,12 @@ router.post('/', authorize(['admin']), async (req, res) => {
        RETURNING *`,
       [name, duration_days, price_usd]
     );
+    await logAudit(req.user!.id, 'membership.create', {
+      membership_id: rows[0].id,
+      name,
+      duration_days,
+      price_usd,
+    });
     res.status(201).json(rows[0]);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
@@ -71,7 +77,7 @@ router.post('/', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.put('/:id', authorize(['admin']), async (req, res) => {
+router.put('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
   const parsed = membershipSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
@@ -87,6 +93,12 @@ router.put('/:id', authorize(['admin']), async (req, res) => {
       [name, duration_days, price_usd, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Plan no encontrado' });
+    await logAudit(req.user!.id, 'membership.update', {
+      membership_id: parseInt(req.params.id, 10),
+      name,
+      duration_days,
+      price_usd,
+    });
     res.json(rows[0]);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
@@ -116,7 +128,8 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     );
     if (parseInt(active.rows[0].count, 10) > 0) {
       return res.status(400).json({
-        error: 'No se puede eliminar un plan con suscripciones activas. Espera a que venzan o reasigna a los miembros.',
+        error:
+          'No se puede eliminar un plan con suscripciones activas. Espera a que venzan o reasigna a los miembros.',
       });
     }
 
@@ -144,15 +157,19 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/user/:userId', requireMemberAccess('userId', 'admin'), asyncHandler(async (req, res) => {
-  const userId = Number(req.params.userId);
-  if (Number.isNaN(userId)) {
-    res.status(400).json({ error: 'userId inválido' });
-    return;
-  }
-  const sub = await getActiveSubscriptionByUserId({ query }, userId);
-  res.json(sub ?? null);
-}));
+router.get(
+  '/user/:userId',
+  requireMemberAccess('userId', 'admin'),
+  asyncHandler(async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (Number.isNaN(userId)) {
+      res.status(400).json({ error: 'userId inválido' });
+      return;
+    }
+    const sub = await getActiveSubscriptionByUserId({ query }, userId);
+    res.json(sub ?? null);
+  })
+);
 
 const assignSchema = z.object({
   membership_id: z.coerce.number().int().positive(),
@@ -171,10 +188,9 @@ router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res)
   }
 
   try {
-    const memberCheck = await query<{ role: string }>(
-      "SELECT role FROM users WHERE id = $1",
-      [userId]
-    );
+    const memberCheck = await query<{ role: string }>('SELECT role FROM users WHERE id = $1', [
+      userId,
+    ]);
     if (!memberCheck.rows[0]) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }

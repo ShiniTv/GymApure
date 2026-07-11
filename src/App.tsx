@@ -489,7 +489,7 @@ function AppRoutes() {
             <Route
               path="members/:id/nutrition"
               element={
-                <ProtectedRoute allowedRoles={['trainer']}>
+                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);

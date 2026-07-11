@@ -34,6 +34,14 @@ export interface AdminStats {
   equipmentMaintenance?: number;
   equipmentOutOfService?: number;
   equipmentInspectionsDue?: number;
+  recentActivity?: {
+    id: number;
+    action: string;
+    details: string | null;
+    created_at: string;
+    user_name: string | null;
+    user_email: string | null;
+  }[];
 }
 
 interface AdminStatsContextValue {

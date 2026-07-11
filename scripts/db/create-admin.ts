@@ -8,6 +8,7 @@ import readline from 'readline';
 import { query } from '../../src/db/index.ts';
 import { passwordSchema } from '../../src/lib/passwordPolicy.ts';
 import { hashPassword } from '../../src/lib/passwordHash.ts';
+import { logAudit } from '../../src/lib/audit.ts';
 
 function ask(question: string, hidden = false): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -82,12 +83,22 @@ async function main() {
     [parsedEmail]
   );
 
+  const { rows: priorAdmins } = await query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM users WHERE role = 'admin'`
+  );
+  const hadPriorAdmin = parseInt(priorAdmins[0]?.count ?? '0', 10) > 0;
+
   if (existing.rows[0]) {
     await query(
       `UPDATE users SET password = $1, full_name = $2, role = 'admin', status = 'active'
        WHERE id = $3`,
       [hashedPassword, full_name, existing.rows[0].id]
     );
+    await logAudit(null, 'admin.bootstrap', {
+      email: parsedEmail,
+      promoted: existing.rows[0].role !== 'admin',
+      prior_admin_count: parseInt(priorAdmins[0]?.count ?? '0', 10),
+    });
     console.log(`✓ Admin actualizado: ${parsedEmail}`);
   } else {
     await query(
@@ -95,7 +106,16 @@ async function main() {
        VALUES ($1, $2, $3, 'admin', 'active')`,
       [full_name, parsedEmail, hashedPassword]
     );
+    await logAudit(null, 'admin.bootstrap', {
+      email: parsedEmail,
+      promoted: false,
+      prior_admin_count: parseInt(priorAdmins[0]?.count ?? '0', 10),
+    });
     console.log(`✓ Admin creado: ${parsedEmail}`);
+  }
+
+  if (hadPriorAdmin && existing.rows[0]?.role !== 'admin') {
+    console.warn('⚠ Se promovió un usuario existente a administrador.');
   }
 
   console.log('\nInicia sesión en /login con ese correo y contraseña.');

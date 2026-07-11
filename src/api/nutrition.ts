@@ -130,7 +130,7 @@ function totalsFromRow(row: Record<string, unknown>): MacroTotals {
 }
 
 function trainerCanEditPlan(user: AuthRequest['user']): boolean {
-  return user?.role === 'admin' || user?.role === 'trainer';
+  return user?.role === 'trainer';
 }
 
 router.get(

@@ -22,6 +22,7 @@ Guía de uso diario para el rol **admin** en GymApure.
 - Compartir credenciales de admin o `SUPABASE_SERVICE_ROLE_KEY`
 - Editar SQL directo en Supabase sin migración versionada
 - Compartir la misma cuenta entre varias personas (solo una sesión activa; nuevo login cierra la anterior)
+- Crear usuarios de staff (`admin`, `trainer`, `receptionist`) sin tener **MFA activo** en tu cuenta
 
 ---
 
@@ -29,7 +30,9 @@ Guía de uso diario para el rol **admin** en GymApure.
 
 1. Abre `/login`.
 2. Ingresa email y contraseña de admin.
-3. Redirige al **Panel** (`/`).
+3. Redirige al **Panel** (`/panel`).
+4. En **producción**, los administradores deben tener **MFA activo** antes de poder iniciar sesión.
+5. Activa **MFA** en **Seguridad** antes de crear otros administradores o staff.
 
 [captura: dashboard admin]
 
@@ -41,9 +44,16 @@ Guía de uso diario para el rol **admin** en GymApure.
 
 1. **Miembros** → **Nuevo usuario**.
 2. Completa nombre, email, cédula, rol (`admin`, `receptionist`, `trainer`, `member`).
-3. Contraseña inicial (el usuario puede cambiarla en Perfil).
-4. Si es miembro: asigna plan y entrenador opcional.
-5. Guardar.
+3. **MFA obligatorio** si el rol es staff (admin, entrenador o recepcionista).
+4. Contraseña inicial (el usuario puede cambiarla en Perfil).
+5. Si es miembro: asigna plan y entrenador opcional.
+6. Guardar.
+
+### Cambiar rol de un usuario
+
+1. Solo disponible vía API: `PATCH /api/users/:id/role` con `{ "role": "..." }`.
+2. Requiere MFA activo en la cuenta del administrador.
+3. No se puede degradar al último administrador activo ni cambiar el propio rol.
 
 ### Gestionar membresías
 
@@ -94,7 +104,7 @@ Ver [ENTRENADORES-Y-TURNOS.md](../modulos/ENTRENADORES-Y-TURNOS.md).
 
 ### Nutrición (overview)
 
-**Nutrición overview** (`/nutrition-overview`): vista global de planes nutricionales por miembro.
+**Nutrición overview** (`/nutrition-overview`): vista global de planes nutricionales por miembro. Desde ahí puedes abrir el detalle de cada miembro en **solo lectura** (`/members/:id/nutrition`).
 
 Ver [NUTRICION.md](../modulos/NUTRICION.md).
 
@@ -102,20 +112,22 @@ Ver [NUTRICION.md](../modulos/NUTRICION.md).
 
 ## Navegación
 
-| Sección        | Ruta             |
-| -------------- | ---------------- |
-| Panel          | `/`              |
-| Miembros       | `/members`       |
-| Membresías     | `/memberships`   |
-| Pagos          | `/payments`      |
-| Entrenadores   | `/trainers`      |
-| Equipamiento   | `/equipment`     |
-| Asistencia     | `/attendance`    |
-| Reportes       | `/reports`       |
-| Auditoría      | `/audit-logs`    |
-| Configuración  | `/settings`      |
-| Mensajes       | `/messages`      |
-| Notificaciones | `/notifications` |
+| Sección        | Ruta                  |
+| -------------- | --------------------- |
+| Panel          | `/panel`              |
+| Miembros       | `/members`            |
+| Membresías     | `/memberships`        |
+| Pagos          | `/payments`           |
+| Entrenadores   | `/trainers`           |
+| Equipamiento   | `/equipment`          |
+| Asistencia     | `/attendance`         |
+| Nutrición      | `/nutrition-overview` |
+| Reportes       | `/reports`            |
+| Auditoría      | `/audit-logs`         |
+| Configuración  | `/settings`           |
+| Seguridad MFA  | `/security`           |
+| Mensajes       | `/messages`           |
+| Notificaciones | `/notifications`      |
 
 ---
 

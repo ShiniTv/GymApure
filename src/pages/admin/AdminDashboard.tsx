@@ -22,6 +22,7 @@ import {
   FileSpreadsheet,
   BarChart2,
   Wrench,
+  Shield,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { format } from 'date-fns';
@@ -38,6 +39,7 @@ import {
 import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { auditActionLabel } from '../../lib/auditLabels';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -79,6 +81,7 @@ export default function AdminDashboard() {
   const equipmentOutOfService = stats?.equipmentOutOfService ?? 0;
   const equipmentInspectionsDue = stats?.equipmentInspectionsDue ?? 0;
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
+  const recentActivity = stats?.recentActivity ?? [];
 
   useEffect(() => {
     if (!stats) return;
@@ -368,6 +371,46 @@ export default function AdminDashboard() {
           )}
         </Card>
       ) : null}
+
+      {recentActivity.length > 0 && (
+        <Card padding="sm" rounded="xl">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h3 className="flex items-center gap-1.5 text-sm font-bold text-zinc-900 dark:text-white">
+              <Shield className="text-brand h-4 w-4" />
+              Actividad reciente
+            </h3>
+            <Link
+              to="/audit-logs"
+              className="text-brand hover:text-brand text-[11px] font-semibold"
+            >
+              Ver todo
+            </Link>
+          </div>
+          <ul className="space-y-2">
+            {recentActivity.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex items-start justify-between gap-2 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                    {auditActionLabel(entry.action)}
+                  </p>
+                  <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                    {entry.user_name ?? 'Sistema'}
+                  </p>
+                </div>
+                <time
+                  className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500"
+                  dateTime={entry.created_at}
+                >
+                  {format(new Date(entry.created_at), 'dd MMM HH:mm', { locale: es })}
+                </time>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card padding="sm" rounded="xl">
         <div className="mb-2 flex items-center justify-between gap-2">

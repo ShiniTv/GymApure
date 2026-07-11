@@ -90,3 +90,12 @@ export async function enableMfa(userId: number, secret: string): Promise<void> {
 export async function disableMfa(userId: number): Promise<void> {
   await query('UPDATE users SET mfa_secret = NULL, mfa_enabled = false WHERE id = $1', [userId]);
 }
+
+/** Returns an error message when MFA is required but not enabled for the actor. */
+export async function mfaRequiredError(userId: number): Promise<string | null> {
+  const state = await getUserMfaState(userId);
+  if (!state.mfa_enabled) {
+    return 'Debes activar MFA en Seguridad antes de realizar esta acción';
+  }
+  return null;
+}
