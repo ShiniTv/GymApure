@@ -3,7 +3,7 @@ import { cn } from './utils';
 /** Shared typography class names — titles stay bold; body/forms stay readable. */
 export const typography = {
   pageTitle:
-    'text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight',
+    'font-display text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight leading-tight',
   pageTitleAccent: 'text-brand font-bold',
   pageSubtitle: 'text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium mt-0.5 sm:mt-1',
   sectionTitle: 'text-sm font-semibold text-zinc-500 dark:text-zinc-400',

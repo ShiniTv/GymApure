@@ -1,6 +1,8 @@
 export { Button } from './Button';
 export { Card } from './Card';
 export { Modal } from './Modal';
+export { Sheet } from './Sheet';
+export { Alert } from './Alert';
 export { Input, Label } from './Input';
 export { CedulaInput } from './CedulaInput';
 export { SearchInput } from './SearchInput';

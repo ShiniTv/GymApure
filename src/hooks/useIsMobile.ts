@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { MEDIA_QUERIES } from './useBreakpoint';
 
-const MOBILE_QUERY = '(max-width: 767px)';
-
+/** True when viewport width ≤ 767px (phone). For shell/table layouts use useBreakpoint().isMobileShell. */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(MOBILE_QUERY).matches : false
+    typeof window !== 'undefined' ? window.matchMedia(MEDIA_QUERIES.mobile).matches : false
   );
 
   useEffect(() => {
-    const mq = window.matchMedia(MOBILE_QUERY);
+    const mq = window.matchMedia(MEDIA_QUERIES.mobile);
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener('change', handler);
     setIsMobile(mq.matches);

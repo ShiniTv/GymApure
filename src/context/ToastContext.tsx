@@ -46,7 +46,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     <div
       role="alert"
       className={cn(
-        'animate-in fade-in slide-in-from-top-2 flex max-w-sm min-w-[280px] items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-md',
+        'animate-in fade-in slide-in-from-top-2 flex w-full max-w-sm min-w-0 items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-md',
         style.container
       )}
     >

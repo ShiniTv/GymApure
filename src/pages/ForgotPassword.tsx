@@ -4,7 +4,7 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, Spinner } from '../components/ui';
+import { Button, Card, Input, Label, Spinner, Alert } from '../components/ui';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -38,27 +38,17 @@ export default function ForgotPassword() {
         <AuthBrandHeader subtitle="Recuperar contraseña" />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
-          {error && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
-            >
-              {error}
-            </div>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
           {success && (
-            <div
-              role="status"
-              className="space-y-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400"
-            >
+            <Alert variant="success">
               <p>{success}</p>
               {import.meta.env.DEV && (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-2 text-xs opacity-80">
                   En desarrollo: si no llega el correo, mira la{' '}
                   <strong>terminal del servidor</strong> — ahí se imprime el enlace de recuperación.
                 </p>
               )}
-            </div>
+            </Alert>
           )}
 
           <div>

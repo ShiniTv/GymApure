@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { Link, useLocation } from 'react-router-dom';
 import { Dumbbell, X, LogOut } from 'lucide-react';
 import clsx from 'clsx';
@@ -20,6 +21,7 @@ export function MemberBottomNav() {
   const memberStats = useMemberStatsOptional();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const [moreOpen, setMoreOpen] = useState(false);
+  useScrollLock(moreOpen);
   const sheetRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
 

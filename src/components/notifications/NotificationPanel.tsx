@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { format } from 'date-fns';
 import type { NotificationItem } from '../../lib/notifications/types';
 import { Modal } from '../ui';
-import { useMediaQuery } from '../../lib/useMediaQuery';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
@@ -124,7 +124,7 @@ export function NotificationPanel({
   liveItems,
   isLoading,
 }: NotificationPanelProps) {
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const { isDesktop } = useBreakpoint();
   const sheetRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const markRead = useMarkNotificationReadMutation();

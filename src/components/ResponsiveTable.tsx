@@ -12,6 +12,8 @@ interface ResponsiveTableProps<T> {
   emptyState?: ReactNode;
   mobileClassName?: string;
   desktopClassName?: string;
+  /** Breakpoint for table vs cards — default lg to match Members/Payments */
+  breakpoint?: 'md' | 'lg';
 }
 
 export function ResponsiveTable<T>({
@@ -25,7 +27,11 @@ export function ResponsiveTable<T>({
   emptyState,
   mobileClassName,
   desktopClassName,
+  breakpoint = 'lg',
 }: ResponsiveTableProps<T>) {
+  const mobileHidden = breakpoint === 'lg' ? 'lg:hidden' : 'md:hidden';
+  const desktopHidden = breakpoint === 'lg' ? 'hidden lg:block' : 'hidden md:block';
+
   if (loading && loadingSkeleton) {
     return <>{loadingSkeleton}</>;
   }
@@ -36,16 +42,22 @@ export function ResponsiveTable<T>({
 
   return (
     <>
-      <div className={cn('md:hidden divide-y divide-zinc-100 dark:divide-zinc-800', mobileClassName)}>
+      <div
+        className={cn(
+          mobileHidden,
+          'divide-y divide-zinc-100 dark:divide-zinc-800',
+          mobileClassName
+        )}
+      >
         {items.map((item, index) => (
           <div key={keyExtractor(item)}>{mobile(item, index)}</div>
         ))}
       </div>
 
-      <div className={cn('hidden md:block overflow-x-auto', desktopClassName)}>
-        <table className="w-full text-left text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+      <div className={cn(desktopHidden, 'overflow-x-auto', desktopClassName)}>
+        <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
           {header && (
-            <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
               {header}
             </thead>
           )}

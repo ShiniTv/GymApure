@@ -383,7 +383,7 @@ export default function Equipment() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void Promise.all([loadMeta(), loadInventory()])
+    void loadMeta()
       .catch(() => {
         if (!cancelled) {
           setAllItems([]);
@@ -395,7 +395,7 @@ export default function Equipment() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadMeta]);
 
   useEffect(() => {
     if (loading) return;

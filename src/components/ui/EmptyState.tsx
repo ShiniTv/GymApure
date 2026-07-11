@@ -16,7 +16,7 @@ function MotivationalIllustration() {
   return (
     <svg
       viewBox="0 0 120 80"
-      className="h-16 w-24 mx-auto mb-3 text-brand/40"
+      className="text-brand/40 mx-auto mb-3 h-16 w-24"
       aria-hidden
       fill="none"
     >
@@ -49,19 +49,21 @@ export function EmptyState({
       padding="md"
       rounded="xl"
       className={cn(
-        'text-center border-dashed',
-        isMotivational && 'bg-gradient-to-b from-brand/5 to-transparent border-brand/20',
+        'border-dashed text-center',
+        isMotivational && 'from-brand/5 border-brand/20 bg-gradient-to-b to-transparent',
         className
       )}
     >
       {isMotivational ? (
         <MotivationalIllustration />
       ) : (
-        <Icon className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
+        <Icon className="mx-auto mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-600" />
       )}
       <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{title}</p>
       {description && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 max-w-sm mx-auto">{description}</p>
+        <p className="mx-auto mt-1.5 max-w-sm text-xs text-zinc-500 dark:text-zinc-400">
+          {description}
+        </p>
       )}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
     </Card>

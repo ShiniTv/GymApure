@@ -167,7 +167,8 @@ function buildLiveItems(
   return result;
 }
 
-export function useNotificationItems() {
+export function useNotificationItems(options?: { skipPanel?: boolean }) {
+  const skipPanel = options?.skipPanel ?? false;
   const { user } = useAuth();
   const role = user?.role ?? 'member';
 
@@ -176,7 +177,9 @@ export function useNotificationItems() {
   const { data: chatUnread = 0, isLoading: chatLoading } = useChatUnreadQuery(showChatNav);
   const { data: unreadPersisted = 0, isLoading: unreadLoading } =
     useNotificationUnreadQuery(!!user);
-  const { data: panelData, isLoading: panelLoading } = useNotificationsPanelQuery(!!user);
+  const { data: panelData, isLoading: panelLoading } = useNotificationsPanelQuery(
+    !!user && !skipPanel
+  );
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const { data: trainerStats, isLoading: trainerLoading } = useTrainerStatsQuery(

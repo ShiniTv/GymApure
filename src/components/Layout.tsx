@@ -25,7 +25,8 @@ import { TrainerBottomNav } from './trainer/TrainerBottomNav';
 import { shouldHideMemberBottomNav } from '../config/navigation/memberBottomNav';
 import { ThemeOnboarding } from './member/ThemeOnboarding';
 import { THEME_ONBOARDING_KEY } from '../config/themes';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { useBreakpoint } from '../hooks/useBreakpoint';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { LogoutConfirmModal, useLogoutConfirm } from './LogoutConfirmModal';
 import { NotificationBell } from './notifications/NotificationBell';
 import { useAppFonts } from '../hooks/useAppFonts';
@@ -64,10 +65,11 @@ export default function Layout() {
   const isReceptionist = user?.role === 'receptionist';
   const isTrainer = user?.role === 'trainer';
   const isAdmin = user?.role === 'admin';
-  const isMemberMobileShell = isMember && useMediaQuery('(max-width: 1023px)');
-  const isReceptionMobileShell = isReceptionist && useMediaQuery('(max-width: 1023px)');
-  const isTrainerMobileShell = isTrainer && useMediaQuery('(max-width: 1023px)');
-  const isAdminMobile = isAdmin && useMediaQuery('(max-width: 1023px)');
+  const { isMobileShell: isBelowDesktopShell } = useBreakpoint();
+  const isMemberMobileShell = isMember && isBelowDesktopShell;
+  const isReceptionMobileShell = isReceptionist && isBelowDesktopShell;
+  const isTrainerMobileShell = isTrainer && isBelowDesktopShell;
+  const isAdminMobile = isAdmin && isBelowDesktopShell;
   const isMobileShell = isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell;
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
   const showMemberBottomNav = isMemberMobileShell && !hideMemberBottomNav;
@@ -127,16 +129,7 @@ export default function Layout() {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (isSidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isSidebarOpen]);
+  useScrollLock(isSidebarOpen);
 
   const brandMark = <BrandName variant="split" />;
   const mobileHeaderTitle = currentPage ?? BRAND.name;

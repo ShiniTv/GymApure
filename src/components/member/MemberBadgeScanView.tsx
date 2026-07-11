@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import QRCode from 'react-qr-code';
 import { X } from 'lucide-react';
 import { buildBadgeQrValue } from '../../lib/badgeQr';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { Button } from '../ui';
 import type { MemberBadgeData } from './MemberBadgeCard';
 
@@ -21,13 +22,10 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
     setPortalTarget(document.body);
   }, []);
 
-  useEffect(() => {
-    if (!open) {
-      document.body.style.overflow = '';
-      return;
-    }
+  useScrollLock(open);
 
-    document.body.style.overflow = 'hidden';
+  useEffect(() => {
+    if (!open) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCloseRef.current();
@@ -35,7 +33,6 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
     document.addEventListener('keydown', onKeyDown);
 
     return () => {
-      document.body.style.overflow = '';
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);

@@ -11,7 +11,7 @@ import BrandName from '../components/BrandName';
 import Logo from '../components/Logo';
 import { Button, Card, SegmentedControl, Spinner, CedulaInput } from '../components/ui';
 import { parseBadgeScan } from '../lib/badgeQr';
-import { useMediaQuery } from '../lib/useMediaQuery';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 
 const QrScannerPanel = lazy(() =>
@@ -22,7 +22,7 @@ type KioskMode = 'check-in' | 'check-out';
 export default function CheckIn() {
   const [searchParams] = useSearchParams();
   const isKioskMode = searchParams.get('kiosk') === '1';
-  const isLargeKioskLayout = useMediaQuery('(min-width: 1024px)');
+  const { isDesktop: isLargeKioskLayout } = useBreakpoint();
   const isMobileKiosk = isKioskMode && !isLargeKioskLayout;
 
   const [mode, setMode] = useState<KioskMode>('check-in');

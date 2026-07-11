@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Label, PasswordInput, Spinner } from '../components/ui';
+import { Button, Card, Label, PasswordInput, Spinner, Alert } from '../components/ui';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -54,22 +54,8 @@ export default function ResetPassword() {
         <AuthBrandHeader subtitle="Nueva contraseña" />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
-          {error && (
-            <div
-              role="alert"
-              className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500"
-            >
-              {error}
-            </div>
-          )}
-          {success && (
-            <div
-              role="status"
-              className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400"
-            >
-              {success}
-            </div>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
+          {success && <Alert variant="success">{success}</Alert>}
 
           <div>
             <Label htmlFor="password">Nueva contraseña</Label>
