@@ -1,7 +1,11 @@
 import { query } from '../db/index.ts';
-import { insertNotification } from './notifications/repository.ts';
+import { insertNotificationsBulk, getUnreadCounts } from './notifications/repository.ts';
 import { getEquipmentInspectionAlertDays } from './equipmentSettings.ts';
 import { equipmentDisplayName } from './equipment/constants.ts';
+import { mapWithConcurrency } from './runInBatches.ts';
+import { emitToUser } from './wsServer.ts';
+
+const NOTIFY_CONCURRENCY = 5;
 
 export async function syncEquipmentInspectionAlerts(): Promise<number> {
   const alertDays = await getEquipmentInspectionAlertDays();
@@ -28,26 +32,41 @@ export async function syncEquipmentInspectionAlerts(): Promise<number> {
     `SELECT id FROM users WHERE role = 'admin' AND status = 'active'`
   );
 
-  let created = 0;
-  for (const admin of admins) {
-    for (const item of dueRows) {
+  if (admins.length === 0) return 0;
+
+  const notifications = admins.flatMap((admin) =>
+    dueRows.map((item) => {
       const name = equipmentDisplayName(item);
-      const dedupeKey = `equipment-inspection:${item.id}:${item.next_inspection_at}`;
-      const inserted = await insertNotification({
+      return {
         userId: admin.id,
         type: 'equipment_inspection',
         title: 'Inspección de equipo pendiente',
         body: `${name} requiere revisión antes del ${item.next_inspection_at}`,
         href: `/equipment?detail=${item.id}`,
-        severity: 'warning',
-        dedupeKey,
+        severity: 'warning' as const,
+        dedupeKey: `equipment-inspection:${item.id}:${item.next_inspection_at}`,
         metadata: { equipment_id: item.id },
-      });
-      if (inserted) created++;
-    }
-  }
+      };
+    })
+  );
 
-  return created;
+  const inserted = await insertNotificationsBulk(notifications);
+  if (inserted.length === 0) return 0;
+
+  const adminIds = [...new Set(inserted.map((r) => r.user_id))];
+  const unreadCounts = await getUnreadCounts(adminIds);
+
+  await mapWithConcurrency(
+    adminIds,
+    (userId) => {
+      emitToUser(userId, 'notification:new', {
+        unreadCount: unreadCounts.get(userId) ?? 0,
+      });
+    },
+    NOTIFY_CONCURRENCY
+  );
+
+  return inserted.length;
 }
 
 export async function getEquipmentStatsSummary(): Promise<{

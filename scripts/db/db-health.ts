@@ -1,9 +1,10 @@
 /**
- * Verifica hardening de Supabase/Postgres (RLS, FK indexes, índices redundantes).
+ * Verifica hardening de Supabase/Postgres (RLS, FK indexes, migraciones, integridad).
  * Uso: npm run db:health
  */
 import 'dotenv/config';
 import pg from 'pg';
+import { INTEGRITY_CHECKS, LEGACY_GYM_SETTINGS_KEYS, listMigrationFiles } from './audit-shared.ts';
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -22,6 +23,27 @@ async function q<T extends pg.QueryResultRow>(sql: string, params?: unknown[]) {
 }
 
 try {
+  const dbUrl = process.env.DATABASE_URL ?? '';
+  const usesPooler = dbUrl.includes(':6543/');
+  checks.push({
+    name: 'Pooler Supabase (6543)',
+    ok: !dbUrl.includes('supabase') || usesPooler,
+    detail: usesPooler ? 'puerto 6543' : 'sin pooler — usar Transaction mode en prod',
+  });
+
+  const migrationFiles = listMigrationFiles();
+  const applied = await q<{ filename: string }>(`SELECT filename FROM schema_migrations ORDER BY filename`);
+  const appliedSet = new Set(applied.map((r) => r.filename));
+  const pending = migrationFiles.filter((f) => !appliedSet.has(f));
+  checks.push({
+    name: 'Migraciones pendientes',
+    ok: pending.length === 0,
+    detail:
+      pending.length === 0
+        ? `${applied.length}/${migrationFiles.length} al día`
+        : `${pending.length} pendiente(s)`,
+  });
+
   const noRls = await q<{ count: string }>(`
     SELECT COUNT(*)::text AS count
     FROM pg_class c
@@ -86,6 +108,27 @@ try {
     name: 'API pública bloqueada',
     ok: parseInt(grants[0].count, 10) === 0,
     detail: grants[0].count === '0' ? 'sin grants anon/authenticated' : `${grants[0].count} grants`,
+  });
+
+  for (const integrity of INTEGRITY_CHECKS) {
+    const rows = await q<{ count: string }>(integrity.sql);
+    const count = parseInt(rows[0]?.count ?? '0', 10);
+    checks.push({
+      name: `Integridad: ${integrity.name}`,
+      ok: count === 0,
+      detail: count === 0 ? '0' : `${count} filas`,
+    });
+  }
+
+  const legacySettings = await q<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM gym_settings WHERE key = ANY($1::text[])`,
+    [LEGACY_GYM_SETTINGS_KEYS]
+  );
+  const legacyCount = parseInt(legacySettings[0]?.count ?? '0', 10);
+  checks.push({
+    name: 'gym_settings sin keys legacy',
+    ok: legacyCount === 0,
+    detail: legacyCount === 0 ? 'ok' : `${legacyCount} keys obsoletas`,
   });
 } finally {
   await pool.end();

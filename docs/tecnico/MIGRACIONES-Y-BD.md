@@ -43,6 +43,23 @@ Antes de migrar prod: `npm run deploy:preflight` + `npm run db:verify-isolation`
 | `20260708120200_equipment_photos_bucket`     | Bucket Storage equipment-photos                           |
 | `20260708130000_exchange_rates`              | Tabla tasas BCV + override manual                         |
 | `20260709120000_gym_equipment_unique`        | Deduplicación y unique indexes en equipamiento            |
+| `20260711000000_cleanup_legacy_settings`     | Elimina gym_settings legacy y columna `image_url` sin uso |
+
+---
+
+## Retención de datos (mantenimiento diario)
+
+El job en `src/lib/dbMaintenance.ts` purga automáticamente:
+
+| Tabla                         | Default  | Variable de entorno                 |
+| ----------------------------- | -------- | ----------------------------------- |
+| `audit_logs`                  | 90 días  | `AUDIT_LOG_RETENTION_DAYS`          |
+| `chat_system_log`             | 180 días | `EXPIRY_NOTIF_LOG_RETENTION_DAYS`   |
+| `user_notifications` (leídas) | 90 días  | `READ_NOTIFICATIONS_RETENTION_DAYS` |
+| `password_reset_tokens`       | 7 días   | `RESET_TOKEN_RETENTION_DAYS`        |
+| `push_subscriptions`          | 90 días  | `PUSH_SUBSCRIPTION_RETENTION_DAYS`  |
+
+Ver [AUDITORIA-BD.md](./AUDITORIA-BD.md) para checklist completo.
 
 ---
 
