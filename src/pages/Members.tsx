@@ -28,6 +28,7 @@ import {
 import { clientLogger } from '../lib/clientLogger';
 import { roleBadgeClass } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
+import { ResponsiveTable } from '../components/ResponsiveTable';
 import { MemberCardMobile } from './members/MemberCardMobile';
 import { MemberTableRow } from './members/MemberTableRow';
 import { StaggerContainer, StaggerItem } from '../components/animations';
@@ -395,6 +396,32 @@ export default function Members() {
 
   const showTrainerAssignCta = isTrainer && !search && !expiringFilter;
 
+  const membersEmptyAction = showTrainerAssignCta ? (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
+        <Dumbbell className="h-4 w-4" /> Ir a asignaciones
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => {
+          setIsAdding(true);
+        }}
+      >
+        <Plus className="h-4 w-4" /> Nuevo miembro
+      </Button>
+    </div>
+  ) : isTrainer ? (
+    <Button
+      size="sm"
+      onClick={() => {
+        setIsAdding(true);
+      }}
+    >
+      <Plus className="h-4 w-4" /> Nuevo miembro
+    </Button>
+  ) : undefined;
+
   const mobileIconBtnClass =
     'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-brand hover:bg-brand/10 transition-colors';
 
@@ -605,161 +632,105 @@ export default function Members() {
           </div>
         </Modal>
 
-        <div className="space-y-2 lg:hidden">
-          {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                >
-                  <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <ResponsiveTable
+          items={filteredMembers}
+          keyExtractor={(member) => member.id}
+          breakpoint="lg"
+          desktopInCard
+          loading={loading}
+          loadingSkeleton={
+            <>
+              <div className="space-y-2 lg:hidden">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                  >
+                    <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                  </div>
+                ))}
+              </div>
+              <Card
+                padding="none"
+                rounded="xl"
+                className="table-shell hidden overflow-hidden lg:block"
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      <TableRowSkeleton cols={colCount} />
+                      <TableRowSkeleton cols={colCount} />
+                      <TableRowSkeleton cols={colCount} />
+                      <TableRowSkeleton cols={colCount} />
+                      <TableRowSkeleton cols={colCount} />
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </div>
-          ) : filteredMembers.length === 0 ? (
+              </Card>
+            </>
+          }
+          emptyState={
             <EmptyState
               icon={showTrainerAssignCta ? Dumbbell : Search}
               title={membersEmptyState.title}
               description={membersEmptyState.description}
-              action={
-                showTrainerAssignCta ? (
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
-                      <Dumbbell className="h-4 w-4" /> Ir a asignaciones
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsAdding(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" /> Nuevo miembro
-                    </Button>
-                  </div>
-                ) : isTrainer ? (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setIsAdding(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" /> Nuevo miembro
-                  </Button>
-                ) : undefined
-              }
+              action={membersEmptyAction}
             />
-          ) : (
-            <StaggerContainer>
-              {filteredMembers.map((member) => (
-                <StaggerItem key={member.id}>
-                  <MemberCardMobile
-                    member={member}
-                    userRole={user?.role ?? 'member'}
-                    currentUserId={user?.id}
-                    isStaffMember={isStaffMember}
-                    alertDays={alertDays}
-                    roleBadgeClass={roleBadgeClass}
-                    mobileIconBtnClass={mobileIconBtnClass}
-                    onAssignSubscription={openAssignSubscription}
-                    onToggleStatus={handleToggleClick}
-                    onDelete={handleDeleteClick}
-                    onShowBadge={openMemberBadge}
-                    onEditShift={openEditShift}
-                  />
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
+          }
+          mobileClassName="space-y-2"
+          mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
+          mobile={(member) => (
+            <StaggerItem>
+              <MemberCardMobile
+                member={member}
+                userRole={user?.role ?? 'member'}
+                currentUserId={user?.id}
+                isStaffMember={isStaffMember}
+                alertDays={alertDays}
+                roleBadgeClass={roleBadgeClass}
+                mobileIconBtnClass={mobileIconBtnClass}
+                onAssignSubscription={openAssignSubscription}
+                onToggleStatus={handleToggleClick}
+                onDelete={handleDeleteClick}
+                onShowBadge={openMemberBadge}
+                onEditShift={openEditShift}
+              />
+            </StaggerItem>
           )}
-          <PaginationBar
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            label="usuarios"
-          />
-        </div>
-
-        <Card padding="none" rounded="xl" className="table-shell hidden overflow-hidden lg:block">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-              <thead className="bg-zinc-50 text-xs font-semibold text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
-                <tr>
-                  <th className="px-4 py-2.5 lg:px-5">Nombre</th>
-                  {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
-                  <th className="px-4 py-2.5 lg:px-5">Identificación</th>
-                  <th className="px-4 py-2.5 lg:px-5">Membresía</th>
-                  <th className="px-4 py-2.5 lg:px-5">Estado</th>
-                  <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {loading ? (
-                  <>
-                    <TableRowSkeleton cols={colCount} />
-                    <TableRowSkeleton cols={colCount} />
-                    <TableRowSkeleton cols={colCount} />
-                    <TableRowSkeleton cols={colCount} />
-                    <TableRowSkeleton cols={colCount} />
-                  </>
-                ) : filteredMembers.length === 0 ? (
-                  <tr>
-                    <td colSpan={colCount} className="px-8 py-12 text-center">
-                      <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
-                        {membersEmptyState.title}
-                      </p>
-                      <p className="mx-auto mt-1 max-w-md text-sm text-zinc-400 dark:text-zinc-300">
-                        {membersEmptyState.description}
-                      </p>
-                      {showTrainerAssignCta && (
-                        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                          <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
-                            <Dumbbell className="h-4 w-4" /> Ir a asignaciones
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setIsAdding(true);
-                            }}
-                          >
-                            <Plus className="h-4 w-4" /> Nuevo miembro
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMembers.map((member) => (
-                    <MemberTableRow
-                      key={member.id}
-                      member={member}
-                      userRole={user?.role ?? 'member'}
-                      currentUserId={user?.id}
-                      isStaffMember={isStaffMember}
-                      alertDays={alertDays}
-                      roleBadgeClass={roleBadgeClass}
-                      onAssignSubscription={openAssignSubscription}
-                      onToggleStatus={handleToggleClick}
-                      onDelete={handleDeleteClick}
-                      onShowBadge={openMemberBadge}
-                      onEditShift={openEditShift}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <PaginationBar
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            label="usuarios"
-          />
-        </Card>
+          header={
+            <tr>
+              <th className="px-4 py-2.5 lg:px-5">Nombre</th>
+              {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
+              <th className="px-4 py-2.5 lg:px-5">Identificación</th>
+              <th className="px-4 py-2.5 lg:px-5">Membresía</th>
+              <th className="px-4 py-2.5 lg:px-5">Estado</th>
+              <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
+            </tr>
+          }
+          desktop={(member) => (
+            <MemberTableRow
+              member={member}
+              userRole={user?.role ?? 'member'}
+              currentUserId={user?.id}
+              isStaffMember={isStaffMember}
+              alertDays={alertDays}
+              roleBadgeClass={roleBadgeClass}
+              onAssignSubscription={openAssignSubscription}
+              onToggleStatus={handleToggleClick}
+              onDelete={handleDeleteClick}
+              onShowBadge={openMemberBadge}
+              onEditShift={openEditShift}
+            />
+          )}
+        />
+        <PaginationBar
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          label="usuarios"
+        />
 
         <Modal
           open={!!assignTarget}

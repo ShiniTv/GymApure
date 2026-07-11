@@ -19,8 +19,10 @@ import {
   EmptyState,
   BackToDashboardLink,
   Textarea,
+  TableRowSkeleton,
 } from '../components/ui';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
+import { ResponsiveTable } from '../components/ResponsiveTable';
 import {
   TRAINER_LEVELS,
   LEVEL_LABELS,
@@ -100,7 +102,8 @@ export default function Trainers() {
     }
     if (!form.cedula.trim()) next.cedula = 'Cédula requerida';
     if (form.password.length < 8) next.password = 'Mínimo 8 caracteres';
-    if (form.password !== form.confirm_password) next.confirm_password = 'Las contraseñas no coinciden';
+    if (form.password !== form.confirm_password)
+      next.confirm_password = 'Las contraseñas no coinciden';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -173,7 +176,11 @@ export default function Trainers() {
     <div className="page-stack">
       <PageHeader
         compact
-        title={<>Gestión de <span className="text-brand">entrenadores</span></>}
+        title={
+          <>
+            Gestión de <span className="text-brand">entrenadores</span>
+          </>
+        }
         subtitle="Administra nivel, especialidad y turno exclusivo de cada entrenador."
         action={<BackToDashboardLink />}
       />
@@ -184,12 +191,16 @@ export default function Trainers() {
             containerClassName="flex-1 min-w-0"
             placeholder="Buscar por nombre o especialidad..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
           />
           <Button
             size="sm"
             className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4"
-            onClick={() => { setIsCreating(true); }}
+            onClick={() => {
+              setIsCreating(true);
+            }}
             aria-label="Nuevo entrenador"
           >
             <Plus className="h-4 w-4" />
@@ -198,19 +209,21 @@ export default function Trainers() {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[11px] uppercase tracking-wider text-zinc-500">Turno</Label>
+          <Label className="text-[11px] tracking-wider text-zinc-500 uppercase">Turno</Label>
           <ShiftFilter value={shiftFilter} onChange={setShiftFilter} />
         </div>
 
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
-            onClick={() => { setLevelFilter(''); }}
+            onClick={() => {
+              setLevelFilter('');
+            }}
             className={cn(
               'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
               levelFilter === ''
                 ? 'border-brand bg-brand/10 text-brand'
-                : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                : 'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
             )}
           >
             Todos los niveles
@@ -219,12 +232,14 @@ export default function Trainers() {
             <button
               key={level}
               type="button"
-              onClick={() => { setLevelFilter(level); }}
+              onClick={() => {
+                setLevelFilter(level);
+              }}
               className={cn(
                 'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
                 levelFilter === level
                   ? 'border-brand bg-brand/10 text-brand'
-                  : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                  : 'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
               )}
             >
               {LEVEL_LABELS[level]}
@@ -233,64 +248,163 @@ export default function Trainers() {
         </div>
       </div>
 
-      {loading ? (
-        <Card padding="lg" className="text-center text-sm text-zinc-500">
-          Cargando entrenadores...
-        </Card>
-      ) : trainers.length === 0 ? (
-        <EmptyState
-          icon={Dumbbell}
-          title="Sin entrenadores"
-          description="Crea el primer entrenador con turno y nivel asignados."
-          action={
-            <Button size="sm" onClick={() => { setIsCreating(true); }}>
-              Nuevo entrenador
-            </Button>
-          }
-        />
-      ) : (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {trainers.map((trainer) => (
-            <Card key={trainer.id} padding="sm" rounded="xl" className="relative">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-bold text-zinc-900 dark:text-white truncate">{trainer.full_name}</p>
-                  <p className="text-xs text-zinc-500 truncate">{trainer.email}</p>
-                  {trainer.specialty && (
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 truncate">{trainer.specialty}</p>
-                  )}
-                </div>
+      <ResponsiveTable
+        items={trainers}
+        keyExtractor={(trainer) => trainer.id}
+        breakpoint="lg"
+        desktopInCard
+        loading={loading}
+        loadingSkeleton={
+          <>
+            <div className="grid gap-2 sm:grid-cols-2 lg:hidden">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} padding="sm" rounded="xl">
+                  <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                  <div className="mt-2 h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                </Card>
+              ))}
+            </div>
+            <Card
+              padding="none"
+              rounded="xl"
+              className="table-shell hidden overflow-hidden lg:block"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <TableRowSkeleton cols={6} />
+                    <TableRowSkeleton cols={6} />
+                    <TableRowSkeleton cols={6} />
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </>
+        }
+        emptyState={
+          <EmptyState
+            icon={Dumbbell}
+            title="Sin entrenadores"
+            description="Crea el primer entrenador con turno y nivel asignados."
+            action={
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsCreating(true);
+                }}
+              >
+                Nuevo entrenador
+              </Button>
+            }
+          />
+        }
+        mobileClassName="grid gap-2 sm:grid-cols-2"
+        mobile={(trainer) => (
+          <Card padding="sm" rounded="xl" className="relative">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-bold text-zinc-900 dark:text-white">
+                  {trainer.full_name}
+                </p>
+                <p className="truncate text-xs text-zinc-500">{trainer.email}</p>
+                {trainer.specialty && (
+                  <p className="mt-1 truncate text-xs text-zinc-600 dark:text-zinc-400">
+                    {trainer.specialty}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  openEdit(trainer);
+                }}
+                className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
+                title="Editar perfil"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Badge className={SHIFT_BADGE_CLASSES[trainer.shift]}>
+                {SHIFT_SHORT_LABELS[trainer.shift]}
+              </Badge>
+              <Badge variant="default">{LEVEL_LABELS[trainer.level]}</Badge>
+              <Badge variant={trainer.status === 'active' ? 'success' : 'danger'}>
+                {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
+              </Badge>
+            </div>
+          </Card>
+        )}
+        header={
+          <tr>
+            <th className="px-4 py-2.5 lg:px-5">Nombre</th>
+            <th className="px-4 py-2.5 lg:px-5">Email</th>
+            <th className="px-4 py-2.5 lg:px-5">Especialidad</th>
+            <th className="px-4 py-2.5 lg:px-5">Turno</th>
+            <th className="px-4 py-2.5 lg:px-5">Nivel</th>
+            <th className="px-4 py-2.5 text-right lg:px-5">Estado</th>
+          </tr>
+        }
+        desktop={(trainer) => (
+          <tr className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+            <td className="px-4 py-2.5 font-medium text-zinc-900 lg:px-5 dark:text-white">
+              {trainer.full_name}
+            </td>
+            <td className="max-w-[12rem] truncate px-4 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
+              {trainer.email}
+            </td>
+            <td className="max-w-[10rem] truncate px-4 py-2.5 text-zinc-600 lg:px-5 dark:text-zinc-300">
+              {trainer.specialty || '—'}
+            </td>
+            <td className="px-4 py-2.5 lg:px-5">
+              <Badge className={SHIFT_BADGE_CLASSES[trainer.shift]}>
+                {SHIFT_SHORT_LABELS[trainer.shift]}
+              </Badge>
+            </td>
+            <td className="px-4 py-2.5 lg:px-5">
+              <Badge variant="default">{LEVEL_LABELS[trainer.level]}</Badge>
+            </td>
+            <td className="px-4 py-2.5 text-right lg:px-5">
+              <div className="inline-flex items-center gap-2">
+                <Badge variant={trainer.status === 'active' ? 'success' : 'danger'}>
+                  {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
+                </Badge>
                 <button
                   type="button"
-                  onClick={() => { openEdit(trainer); }}
-                  className="p-1.5 text-zinc-400 hover:text-brand hover:bg-brand/10 rounded-lg shrink-0"
+                  onClick={() => {
+                    openEdit(trainer);
+                  }}
+                  className="hover:bg-brand/10 hover:text-brand rounded-lg p-1.5 text-zinc-400"
                   title="Editar perfil"
+                  aria-label={`Editar ${trainer.full_name}`}
                 >
                   <Edit className="h-4 w-4" />
                 </button>
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                <Badge className={SHIFT_BADGE_CLASSES[trainer.shift]}>
-                  {SHIFT_SHORT_LABELS[trainer.shift]}
-                </Badge>
-                <Badge variant="default">{LEVEL_LABELS[trainer.level]}</Badge>
-                <Badge variant={trainer.status === 'active' ? 'success' : 'danger'}>
-                  {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
-                </Badge>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+            </td>
+          </tr>
+        )}
+      />
 
-      <Modal open={isCreating} onClose={resetCreate} title={<>Nuevo <span className="text-brand">entrenador</span></>} scrollable>
+      <Modal
+        open={isCreating}
+        onClose={resetCreate}
+        title={
+          <>
+            Nuevo <span className="text-brand">entrenador</span>
+          </>
+        }
+        scrollable
+      >
         <div className="form-stack">
           <div>
             <Label>Nombre completo</Label>
             <Input
               value={form.full_name}
               error={errors.full_name}
-              onChange={(e) => { setForm({ ...form, full_name: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, full_name: e.target.value });
+              }}
               placeholder="Ej: Alexis Rodríguez"
             />
           </div>
@@ -300,7 +414,9 @@ export default function Trainers() {
               type="email"
               value={form.email}
               error={errors.email}
-              onChange={(e) => { setForm({ ...form, email: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, email: e.target.value });
+              }}
             />
           </div>
           <div>
@@ -308,22 +424,36 @@ export default function Trainers() {
             <Input
               value={form.cedula}
               error={errors.cedula}
-              onChange={(e) => { setForm({ ...form, cedula: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, cedula: e.target.value });
+              }}
               placeholder="V-12345678"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Nivel</Label>
-              <Select value={form.level} onChange={(e) => { setForm({ ...form, level: e.target.value as TrainerLevel }); }}>
+              <Select
+                value={form.level}
+                onChange={(e) => {
+                  setForm({ ...form, level: e.target.value as TrainerLevel });
+                }}
+              >
                 {TRAINER_LEVELS.map((level) => (
-                  <option key={level} value={level}>{LEVEL_LABELS[level]}</option>
+                  <option key={level} value={level}>
+                    {LEVEL_LABELS[level]}
+                  </option>
                 ))}
               </Select>
             </div>
             <div>
               <Label>Turno exclusivo</Label>
-              <Select value={form.shift} onChange={(e) => { setForm({ ...form, shift: e.target.value as TrainingShift }); }}>
+              <Select
+                value={form.shift}
+                onChange={(e) => {
+                  setForm({ ...form, shift: e.target.value as TrainingShift });
+                }}
+              >
                 <option value="diurno">Diurno / Mañana</option>
                 <option value="vespertino">Vespertino / Tarde</option>
                 <option value="nocturno">Nocturno / Noche</option>
@@ -334,7 +464,9 @@ export default function Trainers() {
             <Label>Especialidad</Label>
             <Input
               value={form.specialty}
-              onChange={(e) => { setForm({ ...form, specialty: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, specialty: e.target.value });
+              }}
               placeholder="Ej: Fuerza, HIIT, Nutrición deportiva"
             />
           </div>
@@ -342,7 +474,9 @@ export default function Trainers() {
             <Label>Bio (opcional)</Label>
             <Textarea
               value={form.bio}
-              onChange={(e) => { setForm({ ...form, bio: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, bio: e.target.value });
+              }}
               rows={3}
             />
           </div>
@@ -352,7 +486,9 @@ export default function Trainers() {
               type="password"
               value={form.password}
               error={errors.password}
-              onChange={(e) => { setForm({ ...form, password: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, password: e.target.value });
+              }}
             />
           </div>
           <div>
@@ -361,10 +497,12 @@ export default function Trainers() {
               type="password"
               value={form.confirm_password}
               error={errors.confirm_password}
-              onChange={(e) => { setForm({ ...form, confirm_password: e.target.value }); }}
+              onChange={(e) => {
+                setForm({ ...form, confirm_password: e.target.value });
+              }}
             />
           </div>
-          {errors.submit && <p className="text-xs text-red-500 text-center">{errors.submit}</p>}
+          {errors.submit && <p className="text-center text-xs text-red-500">{errors.submit}</p>}
           <Button className="w-full" size="lg" onClick={handleCreate} disabled={saving}>
             {saving ? 'Creando...' : 'Crear entrenador'}
           </Button>
@@ -373,22 +511,34 @@ export default function Trainers() {
 
       <Modal
         open={!!editTarget}
-        onClose={() => { setEditTarget(null); }}
-        title={<>Editar <span className="text-brand">perfil</span></>}
+        onClose={() => {
+          setEditTarget(null);
+        }}
+        title={
+          <>
+            Editar <span className="text-brand">perfil</span>
+          </>
+        }
         scrollable
       >
         {editTarget && (
           <div className="form-stack">
-            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{editTarget.full_name}</p>
+            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+              {editTarget.full_name}
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Nivel</Label>
                 <Select
                   value={editForm.level}
-                  onChange={(e) => { setEditForm({ ...editForm, level: e.target.value as TrainerLevel }); }}
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, level: e.target.value as TrainerLevel });
+                  }}
                 >
                   {TRAINER_LEVELS.map((level) => (
-                    <option key={level} value={level}>{LEVEL_LABELS[level]}</option>
+                    <option key={level} value={level}>
+                      {LEVEL_LABELS[level]}
+                    </option>
                   ))}
                 </Select>
               </div>
@@ -396,7 +546,9 @@ export default function Trainers() {
                 <Label>Turno exclusivo</Label>
                 <Select
                   value={editForm.shift}
-                  onChange={(e) => { setEditForm({ ...editForm, shift: e.target.value as TrainingShift }); }}
+                  onChange={(e) => {
+                    setEditForm({ ...editForm, shift: e.target.value as TrainingShift });
+                  }}
                 >
                   <option value="diurno">Diurno / Mañana</option>
                   <option value="vespertino">Vespertino / Tarde</option>
@@ -408,18 +560,22 @@ export default function Trainers() {
               <Label>Especialidad</Label>
               <Input
                 value={editForm.specialty}
-                onChange={(e) => { setEditForm({ ...editForm, specialty: e.target.value }); }}
+                onChange={(e) => {
+                  setEditForm({ ...editForm, specialty: e.target.value });
+                }}
               />
             </div>
             <div>
               <Label>Bio</Label>
               <Textarea
                 value={editForm.bio}
-                onChange={(e) => { setEditForm({ ...editForm, bio: e.target.value }); }}
+                onChange={(e) => {
+                  setEditForm({ ...editForm, bio: e.target.value });
+                }}
                 rows={3}
               />
             </div>
-            {errors.submit && <p className="text-xs text-red-500 text-center">{errors.submit}</p>}
+            {errors.submit && <p className="text-center text-xs text-red-500">{errors.submit}</p>}
             <Button className="w-full" onClick={handleUpdate} disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>

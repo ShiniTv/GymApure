@@ -1,4 +1,4 @@
-import { useEffect, useRef, useId, useCallback, type ReactNode } from 'react';
+import { useEffect, useRef, useId, useCallback, type ReactNode, type CSSProperties } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -10,8 +10,11 @@ interface SheetProps {
   title?: ReactNode;
   side?: 'bottom' | 'top';
   className?: string;
+  panelStyle?: CSSProperties;
   /** z-index layer — default 56 (above nav, below modal) */
   zIndex?: number;
+  /** Hide on desktop breakpoints */
+  hideFrom?: 'lg';
 }
 
 export function Sheet({
@@ -21,7 +24,9 @@ export function Sheet({
   title,
   side = 'bottom',
   className,
+  panelStyle,
   zIndex = 56,
+  hideFrom = 'lg',
 }: SheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -37,15 +42,23 @@ export function Sheet({
   useEffect(() => {
     if (!open) return;
     document.addEventListener('keydown', handleKeyDown);
+
+    const sheet = sheetRef.current;
+    if (sheet) {
+      const focusables = sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+      requestAnimationFrame(() => focusables[0]?.focus());
+    }
+
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, handleKeyDown]);
 
   if (!open) return null;
 
   const backdropZ = zIndex - 1;
+  const hideClass = hideFrom === 'lg' ? 'lg:hidden' : '';
 
   return (
-    <>
+    <div className={hideClass}>
       <div
         className="fixed inset-0 bg-black/40 transition-opacity"
         style={{ zIndex: backdropZ }}
@@ -59,11 +72,11 @@ export function Sheet({
         aria-labelledby={title ? titleId : undefined}
         className={cn(
           'fixed right-0 left-0 px-3 transition-transform duration-200 ease-out',
-          side === 'bottom' && 'bottom-0 pb-[calc(var(--mobile-nav-height,0px)+0.75rem)]',
+          side === 'bottom' && 'bottom-0',
           side === 'top' && 'top-14',
           className
         )}
-        style={{ zIndex }}
+        style={{ zIndex, ...panelStyle }}
       >
         <div className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
           {title && (
@@ -84,6 +97,6 @@ export function Sheet({
           {children}
         </div>
       </div>
-    </>
+    </div>
   );
 }
