@@ -6,6 +6,16 @@
 **Metodología:** Revisión estática de código + validación cruzada con tests Playwright existentes  
 **Entregable:** Informe de hallazgos y recomendaciones (sin cambios de código)
 
+### Checklist de validación (todos del plan)
+
+| Todo | Estado | Sección |
+|------|--------|---------|
+| Documentar breakpoints 767px vs 1023px | Completado | §1 |
+| Confirmar doble fetch Equipment y Notifications | Completado | §2 |
+| Probar gaps responsive (Profile, WorkoutHistory, AdminDashboard) | Completado | §3 |
+| Auditar z-index y scroll lock en modales | Completado | §4 |
+| Inventariar duplicaciones Alert/Card inline | Completado | §6 |
+
 ---
 
 ## Resumen ejecutivo
@@ -172,6 +182,23 @@ queryFn: () => fetchNotifications(page, 20, unreadOnly),
 | [`Profile.tsx`](../src/pages/Profile.tsx) | 3 queries paralelas bloquean toda la página | UX lenta en tab "Datos" |
 | [`Settings.tsx`](../src/pages/Settings.tsx) | Spinner global hasta cargar expiry settings | Push y métricas invisibles |
 | [`MemberRoutine.tsx`](../src/pages/MemberRoutine.tsx) | 4 `apiFetch` sin React Query | Sin cache ni deduplicación |
+
+### 2.4 Patrones de fetch inconsistentes (confirmado)
+
+| Página | Patrón | Problema |
+|--------|--------|----------|
+| Members, Payments, Routines | React Query hooks | Cache + invalidación vía Socket |
+| Equipment, Settings, AuditLogs, Reports | `useEffect` + `apiFetch` | Sin cache, refetch manual |
+| MemberRoutine | 4 `apiFetch` paralelos al montar | Sin stale-while-revalidate |
+
+**Recomendación:** Estandarizar listados en React Query; reservar `useEffect` para polling y side-effects.
+
+### 2.5 Efectos con dependencias incompletas (confirmado)
+
+| Archivo | Issue | Riesgo |
+|---------|-------|--------|
+| [`ActiveWorkout.tsx`](../src/pages/ActiveWorkout.tsx) ~190 | `startSession` ausente en deps del auto-start | Mitigado por `isStartingRef`, frágil ante refactors |
+| [`Messages.tsx`](../src/pages/Messages.tsx) ~507 | `markRead` re-ejecuta al cambiar `messagesData?.messages.length` | PATCH redundantes durante polling/streaming |
 
 ---
 
@@ -409,6 +436,45 @@ En [`src/index.css`](../src/index.css) `@theme`:
 - `font-display` infrautilizado
 - Sin escala de shadows documentada
 - QuickAction sin shadow vs StatCard con borde — dashboards admin se sienten planos
+
+---
+
+## 6.1 Formularios y validación UX (auditado)
+
+| Patrón | Mejor ejemplo | Peor ejemplo |
+|--------|---------------|--------------|
+| Errores por campo | [`Members.tsx`](../src/pages/Members.tsx) | [`Register.tsx`](../src/pages/Register.tsx) — banner global |
+| Validación blur | [`CedulaInput.tsx`](../src/components/ui/CedulaInput.tsx) | — |
+| Select sin `error` prop | — | [`Select.tsx`](../src/components/ui/Select.tsx) |
+| Password strength | Register (3 barras) | — |
+
+**Hallazgos:**
+- Inputs (`Input`, `Textarea`, `PasswordInput`, `CedulaInput`) soportan `error`, `aria-invalid` y `role="alert"` — buena base
+- Register valida por pasos con un solo `setError()` en banner superior, sin foco en campo
+- No hay `react-hook-form` ni Zod en cliente (Zod solo en API)
+- Formularios usan `noValidate` — validación 100% manual
+
+**Recomendación:** Extender patrón Members a Register/Settings/Equipment modals; agregar `error` a `Select`.
+
+---
+
+## 6.2 Estados de carga, error y vacío (auditado)
+
+| Componente | Existe | Adopción real |
+|------------|--------|---------------|
+| `Skeleton` / `DashboardSkeleton` | Sí | Dashboard, Members — parcial |
+| `EmptyState` | Sí | ~22 archivos |
+| `PageState` | Sí | ~8 archivos — subutilizado |
+| `Spinner` solo | Sí | Settings, Messages, NutritionOverview |
+| Texto "Cargando…" inline | — | [`Notifications.tsx`](../src/pages/Notifications.tsx) |
+
+**Inconsistencias confirmadas:**
+- Dashboard: doble skeleton (wrapper + Suspense fallback)
+- Settings: spinner global vs skeleton estructurado en otras páginas
+- Errores: banner inline (auth), toast (mutations), texto plano (`errors.submit` en Members)
+- Sin componente `Alert` compartido — cada página reinventa el patrón
+
+**Recomendación:** Ladder de loading — skeleton para listas/dashboards, spinner para acciones, nunca texto plano.
 
 ---
 
