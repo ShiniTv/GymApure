@@ -27,6 +27,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gym_test
       JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-long
+      CRON_SECRET: ci-test-cron-secret-min-16-chars
       DEMO_PASSWORD: Ci-demo-pass-12!
       ALLOW_PUBLIC_REGISTER: 'true'
 
@@ -46,6 +47,9 @@ jobs:
       - run: npm run lint
 
       - run: npm run build
+
+      - name: Dependency audit
+        run: npm audit --audit-level=critical
 
       - name: Lighthouse performance budgets (login)
         run: npm run lighthouse:ci

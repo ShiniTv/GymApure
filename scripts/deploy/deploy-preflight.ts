@@ -42,7 +42,7 @@ function main() {
   );
 
   const cron = process.env.CRON_SECRET?.trim() ?? '';
-  ok('CRON_SECRET definido (recomendado)', cron.length >= 16, 'openssl rand -base64 32');
+  ok('CRON_SECRET definido (obligatorio en producción)', cron.length >= 16, 'openssl rand -base64 32');
 
   console.log('');
   if (failed === 0) {

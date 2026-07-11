@@ -227,6 +227,43 @@ async function main() {
     );
   }
 
+  // --- Fase 4: hardening adicional ---
+  {
+    const publicHealth = await api('GET', '/api/health');
+    const healthPayload = publicHealth.data as {
+      status?: string;
+      allowPublicRegister?: boolean;
+      email?: unknown;
+    };
+    ok('GET /api/health público → 200', publicHealth.res.status === 200);
+    ok(
+      'Health público no expone allowPublicRegister',
+      healthPayload.allowPublicRegister === undefined
+    );
+    ok('Health público no expone email config', healthPayload.email === undefined);
+
+    const authConfig = await api('GET', '/api/auth/config');
+    ok('GET /api/auth/config → 200', authConfig.res.status === 200);
+
+    const cronNoSecret = await api('POST', '/api/settings/expiry/run');
+    ok('Cron sin secret ni sesión → 403', cronNoSecret.res.status === 403);
+
+    const cronBadSecret = await api(
+      'POST',
+      '/api/settings/expiry/run',
+      undefined,
+      { 'x-cron-secret': 'definitely-wrong-cron-secret-value' }
+    );
+    ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
+
+    if (process.env.CRON_SECRET) {
+      const cronOk = await api('POST', '/api/settings/expiry/run', undefined, {
+        'x-cron-secret': process.env.CRON_SECRET,
+      });
+      ok('Cron con CRON_SECRET válido → 200', cronOk.res.status === 200);
+    }
+  }
+
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);
 }
