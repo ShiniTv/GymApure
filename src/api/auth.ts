@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import crypto from 'crypto';
 import { query } from '../db/index.ts';
@@ -176,15 +175,15 @@ router.post(
     const normalizedEmail = email.toLowerCase();
     const normalizedCedula = cedula.trim();
 
-    const existingEmail = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    const [existingEmail, existingCedula] = await Promise.all([
+      query('SELECT id FROM users WHERE email = $1', [normalizedEmail]),
+      query('SELECT id FROM users WHERE cedula = $1', [normalizedCedula]),
+    ]);
     if (existingEmail.rows.length > 0) {
       res.status(400).json({ error: 'Este correo ya está registrado' });
       return;
     }
 
-    const existingCedula = await query('SELECT id FROM users WHERE cedula = $1', [
-      normalizedCedula,
-    ]);
     if (existingCedula.rows.length > 0) {
       res.status(400).json({ error: 'Esta cédula ya está registrada' });
       return;

@@ -7,6 +7,8 @@ import { getPgSslConfig } from '../lib/dbSsl.ts';
 // BIGINT (OID 20) → number — ids del gym caben en Number.MAX_SAFE_INTEGER
 pg.types.setTypeParser(20, (value) => parseInt(value, 10));
 
+const SLOW_QUERY_MS = parseInt(process.env.SLOW_QUERY_MS ?? '2000', 10);
+
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
   max: 20,
@@ -20,11 +22,77 @@ pool.on('connect', (client) => {
   void client.query('SET statement_timeout = 30000');
 });
 
+let lastPoolWaitLogAt = 0;
+
+export function getPoolMetrics(): {
+  totalCount: number;
+  idleCount: number;
+  waitingCount: number;
+} {
+  return {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
+}
+
+async function reportSlowQuery(durationMs: number, text: string): Promise<void> {
+  const preview = text.replace(/\s+/g, ' ').trim().slice(0, 120);
+  logger.warn('Consulta lenta', { durationMs: Math.round(durationMs), query: preview });
+
+  if (env.SENTRY_DSN) {
+    try {
+      const Sentry = await import('@sentry/node');
+      Sentry.captureMessage('Slow database query', {
+        level: 'warning',
+        extra: { durationMs: Math.round(durationMs), query: preview },
+      });
+    } catch {
+      /* Sentry no disponible */
+    }
+  }
+}
+
+async function reportPoolPressure(): Promise<void> {
+  const { waitingCount, totalCount } = getPoolMetrics();
+  if (waitingCount <= 0) return;
+
+  const now = Date.now();
+  if (now - lastPoolWaitLogAt < 30_000) return;
+  lastPoolWaitLogAt = now;
+
+  logger.warn('Pool de BD bajo presión', { waitingCount, totalCount });
+
+  if (env.SENTRY_DSN) {
+    try {
+      const Sentry = await import('@sentry/node');
+      Sentry.captureMessage('Database pool waiting', {
+        level: 'warning',
+        extra: { waitingCount, totalCount },
+      });
+    } catch {
+      /* Sentry no disponible */
+    }
+  }
+}
+
 export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   text: string,
   params?: unknown[]
 ) {
-  return pool.query<T>(text, params);
+  if (pool.waitingCount > 0) {
+    void reportPoolPressure();
+  }
+
+  const start = performance.now();
+  try {
+    return await pool.query<T>(text, params);
+  } finally {
+    const durationMs = performance.now() - start;
+    if (durationMs >= SLOW_QUERY_MS) {
+      void reportSlowQuery(durationMs, text);
+    }
+  }
 }
 
 export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {

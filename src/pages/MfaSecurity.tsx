@@ -155,7 +155,9 @@ export default function MfaSecurity() {
                   alt="Código QR MFA"
                   className="mx-auto h-48 w-48 rounded-xl border border-zinc-200 bg-white p-2 dark:border-zinc-700"
                 />
-                <p className="text-center font-mono text-xs text-zinc-500">{setup.manual_entry_key}</p>
+                <p className="text-center font-mono text-xs text-zinc-500">
+                  {setup.manual_entry_key}
+                </p>
                 <div>
                   <Label htmlFor="enable-code">Código de verificación</Label>
                   <Input

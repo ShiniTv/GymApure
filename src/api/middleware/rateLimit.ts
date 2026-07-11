@@ -1,4 +1,8 @@
-import rateLimit, { type Options, type RateLimitRequestHandler, type Store } from 'express-rate-limit';
+import rateLimit, {
+  type Options,
+  type RateLimitRequestHandler,
+  type Store,
+} from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { env } from '../../config/env.ts';
 import { getRedisClient } from '../../lib/redis.ts';

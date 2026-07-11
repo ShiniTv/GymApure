@@ -60,9 +60,9 @@ npm run db:health
 
 Migraciones de seguridad recientes (aplicar en cada release que las incluya):
 
-| Archivo | Qué hace |
-| ------- | -------- |
-| `20260711120000_user_mfa.sql` | Columnas `mfa_secret`, `mfa_enabled` en `users` |
+| Archivo                                  | Qué hace                                          |
+| ---------------------------------------- | ------------------------------------------------- |
+| `20260711120000_user_mfa.sql`            | Columnas `mfa_secret`, `mfa_enabled` en `users`   |
 | `20260711120100_storage_objects_rls.sql` | Deny-all RLS en `storage.objects` (solo Supabase) |
 
 ### 4. Crear administrador inicial
@@ -110,26 +110,26 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                                 |
-| -------------------------------- | ----------- | --------------------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                  |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                     |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                  |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                      |
+| Variable                         | Obligatoria | Notas                                                                  |
+| -------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                   |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                      |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                   |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                         |
 | `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él |
 | `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in |
-| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias    |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                      |
-| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)              |
-| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL               |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)       |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                      |
-| `SMTP_PORT`                      | Recomendada | `587`                                                                 |
-| `SMTP_SECURE`                    | Recomendada | `false`                                                               |
-| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                          |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                        |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                               |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                   |
+| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias       |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                       |
+| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                 |
+| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                  |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)         |
+| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                         |
+| `SMTP_PORT`                      | Recomendada | `587`                                                                  |
+| `SMTP_SECURE`                    | Recomendada | `false`                                                                |
+| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                           |
+| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                         |
+| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                |
+| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                    |
 
 **Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
 
@@ -245,12 +245,12 @@ Si el BCV no responde, el admin puede ingresar un override manual en **Configura
 
 API relacionada (referencia):
 
-| Método | Ruta | Auth |
-| ------ | ---- | ---- |
-| `GET` | `/api/auth/mfa/status` | Sesión staff |
-| `POST` | `/api/auth/mfa/setup` | Sesión staff |
-| `POST` | `/api/auth/mfa/enable` | Sesión staff |
-| `POST` | `/api/auth/mfa/disable` | Sesión staff + contraseña + código |
+| Método | Ruta                         | Auth                                           |
+| ------ | ---------------------------- | ---------------------------------------------- |
+| `GET`  | `/api/auth/mfa/status`       | Sesión staff                                   |
+| `POST` | `/api/auth/mfa/setup`        | Sesión staff                                   |
+| `POST` | `/api/auth/mfa/enable`       | Sesión staff                                   |
+| `POST` | `/api/auth/mfa/disable`      | Sesión staff + contraseña + código             |
 | `POST` | `/api/auth/mfa/verify-login` | Público (tras login con `mfa_challenge_token`) |
 
 ### Walk-in sin contraseñas en API
@@ -259,11 +259,11 @@ Si el correo de bienvenida falla en recepción, la API devuelve `password_setup_
 
 ### Endpoints de salud
 
-| Ruta | Acceso | Contenido |
-| ---- | ------ | --------- |
-| `GET /api/health` | Público | `status`, `db`, `db_latency_ms` |
-| `GET /api/health/ops` | Admin | Uptime, SMTP, `allowPublicRegister` |
-| `GET /api/health/metrics` | Admin | Métricas de rendimiento |
+| Ruta                      | Acceso  | Contenido                           |
+| ------------------------- | ------- | ----------------------------------- |
+| `GET /api/health`         | Público | `status`, `db`, `db_latency_ms`     |
+| `GET /api/health/ops`     | Admin   | Uptime, SMTP, `allowPublicRegister` |
+| `GET /api/health/metrics` | Admin   | Métricas de rendimiento             |
 
 ---
 
@@ -371,20 +371,20 @@ Sin `SUPABASE_SERVICE_ROLE_KEY` válida: upload multipart clásico a `uploads/vi
 
 ## Solución de problemas
 
-| Síntoma                          | Causa probable                                                               | Solución                                                               |
-| -------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Build `Exited with status 127`   | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build`                 |
-| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` o `PUBLIC_APP_URL` (HTTPS) | Configurar las tres en Render; obligatorias en prod                    |
-| `db: down` en health             | `DATABASE_URL` incorrecta o pooler caído                                     | Verificar credenciales y puerto 6543                                   |
-| Cron externo responde 403         | `CRON_SECRET` incorrecto o no definido en el Cron Job de Render              | Misma variable en Web Service y Cron Job; header `x-cron-secret`       |
-| Login staff pide código extra     | MFA activo para admin/recepcionista                                          | Usar app TOTP; configurar en `/security`                               |
+| Síntoma                          | Causa probable                                                               | Solución                                                                  |
+| -------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Build `Exited with status 127`   | `NODE_ENV=production` hace que `npm ci` omita devDependencies (vite/esbuild) | Build Command: `npm ci --include=dev && npm run build`                    |
+| Servidor no arranca              | Falta `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` o `PUBLIC_APP_URL` (HTTPS) | Configurar las tres en Render; obligatorias en prod                       |
+| `db: down` en health             | `DATABASE_URL` incorrecta o pooler caído                                     | Verificar credenciales y puerto 6543                                      |
+| Cron externo responde 403        | `CRON_SECRET` incorrecto o no definido en el Cron Job de Render              | Misma variable en Web Service y Cron Job; header `x-cron-secret`          |
+| Login staff pide código extra    | MFA activo para admin/recepcionista/entrenador                               | Usar app TOTP; configurar en `/security`                                  |
 | Walk-in sin correo               | SMTP no configurado o Gmail bloqueó                                          | Verificar `GET /api/health/ops`; entregar `password_setup_url` al cliente |
-| Uploads fallan                   | Clave Supabase mal copiada                                                   | Sin comillas; reiniciar servicio tras corregir                         |
-| App lenta al primer acceso       | Plan Free con sleep                                                          | Usar plan Starter                                                      |
-| Brute-force evade lockout        | Varias instancias sin Redis                                                  | Configurar `REDIS_URL` (Upstash)                                       |
-| Videos no se comprimen           | FFmpeg no disponible en Render                                               | Comprimir localmente (≤ 15 MB) y usar upload directo en la app         |
-| Video falla al guardar en prod   | Archivo > 15 MB o multipart antiguo                                          | Recomprimir; la UI usa upload directo si `directUpload: true`          |
-| `memory_rss_mb` alto tras videos | Proxy antiguo por Render                                                     | Desplegar versión con URLs firmadas; verificar `GET /api/health/media` |
+| Uploads fallan                   | Clave Supabase mal copiada                                                   | Sin comillas; reiniciar servicio tras corregir                            |
+| App lenta al primer acceso       | Plan Free con sleep                                                          | Usar plan Starter                                                         |
+| Brute-force evade lockout        | Varias instancias sin Redis                                                  | Configurar `REDIS_URL` (Upstash)                                          |
+| Videos no se comprimen           | FFmpeg no disponible en Render                                               | Comprimir localmente (≤ 15 MB) y usar upload directo en la app            |
+| Video falla al guardar en prod   | Archivo > 15 MB o multipart antiguo                                          | Recomprimir; la UI usa upload directo si `directUpload: true`             |
+| `memory_rss_mb` alto tras videos | Proxy antiguo por Render                                                     | Desplegar versión con URLs firmadas; verificar `GET /api/health/media`    |
 
 ---
 

@@ -61,6 +61,12 @@ jobs:
       - name: Apply database migrations
         run: npm run db:migrate
 
+      - name: Database health check
+        run: npm run db:health
+
+      - name: Database table audit
+        run: npm run db:audit-tables
+
       - name: Seed demo users
         run: npm run db:restore-demo
 

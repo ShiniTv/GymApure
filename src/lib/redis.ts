@@ -20,7 +20,9 @@ export async function getRedisClient(): Promise<RedisClientType | null> {
       try {
         const nextClient = createClient({ url });
         nextClient.on('error', (err) => {
-          logger.warn('Redis client error', { error: err instanceof Error ? err.message : String(err) });
+          logger.warn('Redis client error', {
+            error: err instanceof Error ? err.message : String(err),
+          });
         });
         await nextClient.connect();
         client = nextClient;
@@ -46,11 +48,7 @@ export async function redisGet(key: string): Promise<string | null> {
   return redis.get(key);
 }
 
-export async function redisSet(
-  key: string,
-  value: string,
-  ttlSeconds?: number
-): Promise<boolean> {
+export async function redisSet(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
   const redis = await getRedisClient();
   if (!redis) return false;
   if (ttlSeconds != null) {
