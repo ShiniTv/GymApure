@@ -17,6 +17,8 @@ import {
   X,
   ArrowLeft,
   Tablet,
+  CreditCard,
+  Pencil,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
@@ -31,12 +33,13 @@ import {
   Modal,
 } from '../components/ui';
 import { cn } from '../lib/utils';
+import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useBreakpoint } from '../hooks/useBreakpoint';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 interface LookupResult {
   found: boolean;
@@ -109,8 +112,12 @@ export default function Reception() {
     null
   );
   const [checkingOutCedula, setCheckingOutCedula] = useState<string | null>(null);
+  const [cedulaEditOpen, setCedulaEditOpen] = useState(false);
+  const [cedulaEditValue, setCedulaEditValue] = useState('');
+  const [cedulaEditError, setCedulaEditError] = useState('');
+  const [cedulaEditSaving, setCedulaEditSaving] = useState(false);
   const cedulaRef = useRef<HTMLInputElement>(null);
-  const { isMobileShell } = useBreakpoint();
+  const isMobileShell = useMediaQuery('(max-width: 1023px)');
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -145,6 +152,57 @@ export default function Reception() {
       // Non-blocking
     }
   }, []);
+
+  const openCedulaEdit = () => {
+    if (!lookup?.user) return;
+    setCedulaEditValue(lookup.user.cedula ?? '');
+    setCedulaEditError('');
+    setCedulaEditOpen(true);
+  };
+
+  const saveCedulaEdit = async () => {
+    if (!lookup?.user) return;
+    const err = validateCedula(cedulaEditValue);
+    if (err) {
+      setCedulaEditError(err);
+      return;
+    }
+    setCedulaEditSaving(true);
+    setCedulaEditError('');
+    try {
+      const res = await apiFetch(`/api/users/${lookup.user.id}/cedula`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cedula: cedulaEditValue }),
+      });
+      const updated = await parseJsonResponse<{ cedula: string }>(res);
+      setLookup((prev) =>
+        prev?.user
+          ? {
+              ...prev,
+              user: { ...prev.user, cedula: updated.cedula },
+            }
+          : prev
+      );
+      setCedulaEditOpen(false);
+      setMessage('Cédula actualizada');
+      setMessageType('success');
+    } catch (e) {
+      setCedulaEditError(e instanceof Error ? e.message : 'No se pudo actualizar la cédula');
+    } finally {
+      setCedulaEditSaving(false);
+    }
+  };
+
+  const walkInHref = (prefillCedula?: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('mode', 'counter');
+    params.set('tab', 'register');
+    if (prefillCedula?.trim()) {
+      params.set('cedula', prefillCedula.trim().toUpperCase());
+    }
+    return `/reception?${params.toString()}`;
+  };
 
   useEffect(() => {
     void loadStats();
@@ -333,6 +391,7 @@ export default function Reception() {
             loading={lookupLoading}
             disabled={!cedula.trim()}
             size="md"
+            aria-label="Buscar"
             className={cn(
               isCounterMode
                 ? cn(COUNTER_SEARCH_BTN, 'min-h-0')
@@ -407,6 +466,15 @@ export default function Reception() {
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{lookup.user.cedula}</p>
               <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">{lookup.user.email}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 h-8 px-2 text-xs"
+                onClick={openCedulaEdit}
+              >
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Corregir cédula
+              </Button>
             </div>
             {accessBadge()}
           </div>
@@ -424,11 +492,37 @@ export default function Reception() {
               </p>
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
-              <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-600" />
-              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-                Sin membresía activa — asigne un plan o apruebe un pago
-              </p>
+            <div className="space-y-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                  Sin membresía activa — registre un pago o asigne un plan vinculado a un pago
+                  aprobado
+                </p>
+              </div>
+              {lookup.user && (
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to={`/payments?register=1&memberId=${lookup.user.id}`}
+                    className="inline-flex"
+                  >
+                    <Button size="sm" variant="secondary">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Registrar pago
+                    </Button>
+                  </Link>
+                  <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
+                    <Button size="sm" variant="ghost">
+                      Asignar plan
+                    </Button>
+                  </Link>
+                  <Link to="/payments?status=pending" className="inline-flex">
+                    <Button size="sm" variant="ghost">
+                      Ver pendientes
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -447,10 +541,15 @@ export default function Reception() {
         <div className="space-y-3 py-8 text-center">
           <XCircle className="mx-auto h-10 w-10 text-red-400" />
           <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
-          <Link to="/members">
+          <Link to={walkInHref(cedula)}>
             <Button variant="secondary" size="sm">
               <UserPlus className="mr-2 h-4 w-4" />
-              Registrar nuevo miembro
+              Iniciar walk-in
+            </Button>
+          </Link>
+          <Link to="/members">
+            <Button variant="ghost" size="sm">
+              Solo crear cuenta
             </Button>
           </Link>
         </div>
@@ -534,6 +633,46 @@ export default function Reception() {
         <Button className="flex-1" onClick={() => void confirmCheckout()} loading={actionLoading}>
           Registrar salida
         </Button>
+      </div>
+    </Modal>
+  );
+
+  const cedulaEditModal = (
+    <Modal
+      open={cedulaEditOpen}
+      onClose={() => setCedulaEditOpen(false)}
+      title={
+        <>
+          Corregir <span className="text-brand">cédula</span>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label>Cédula / ID</Label>
+          <CedulaInput
+            value={cedulaEditValue}
+            onChange={(value) => {
+              setCedulaEditValue(value);
+              if (cedulaEditError) setCedulaEditError('');
+            }}
+          />
+          {cedulaEditError && (
+            <p className="mt-2 text-sm font-medium text-red-500">{cedulaEditError}</p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setCedulaEditOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1"
+            loading={cedulaEditSaving}
+            onClick={() => void saveCedulaEdit()}
+          >
+            Guardar
+          </Button>
+        </div>
       </div>
     </Modal>
   );
@@ -627,11 +766,15 @@ export default function Reception() {
 
           {tab === 'register' && (
             <div className="pb-4">
-              <ReceptionWalkInWizard onComplete={() => void loadStats()} />
+              <ReceptionWalkInWizard
+                initialCedula={searchParams.get('cedula') ?? undefined}
+                onComplete={() => void loadStats()}
+              />
             </div>
           )}
         </div>
         {checkoutConfirmModal}
+        {cedulaEditModal}
       </div>
     );
   }
@@ -671,9 +814,15 @@ export default function Reception() {
 
         {tab === 'inside' && insideList}
 
-        {tab === 'register' && <ReceptionWalkInWizard onComplete={() => void loadStats()} />}
+        {tab === 'register' && (
+          <ReceptionWalkInWizard
+            initialCedula={searchParams.get('cedula') ?? undefined}
+            onComplete={() => void loadStats()}
+          />
+        )}
       </div>
       {checkoutConfirmModal}
+      {cedulaEditModal}
     </div>
   );
 }

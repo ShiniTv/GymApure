@@ -10,6 +10,7 @@ import {
   Mail,
   AlertTriangle,
   LogOut,
+  Upload,
 } from 'lucide-react';
 import {
   apiFetch,
@@ -35,7 +36,7 @@ interface WalkInSuccess {
   user: { id: number; full_name: string; email: string; cedula: string };
   membership_name: string;
   email_sent: boolean;
-  password_setup_url?: string;
+  temporary_password?: string;
   checked_in: boolean;
   check_in_message?: string;
   subscription: { startDate: string; endDate: string };
@@ -43,6 +44,7 @@ interface WalkInSuccess {
 
 interface ReceptionWalkInWizardProps {
   onComplete?: () => void;
+  initialCedula?: string;
 }
 
 const STEPS = ['Datos', 'Plan', 'Pago', 'Confirmar'] as const;
@@ -54,7 +56,10 @@ const PAYMENT_METHODS = [
   { value: 'zelle', label: 'Zelle' },
 ];
 
-export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWizardProps) {
+export default function ReceptionWalkInWizard({
+  onComplete,
+  initialCedula,
+}: ReceptionWalkInWizardProps) {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
@@ -66,10 +71,11 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
   const [checkedOut, setCheckedOut] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     full_name: '',
-    cedula: '',
+    cedula: initialCedula?.trim().toUpperCase() ?? '',
     email: '',
     phone: '',
     membership_id: '',
@@ -140,9 +146,10 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     setCheckedOut(false);
     setCheckoutLoading(false);
     setCheckoutError('');
+    setProofFile(null);
     setForm({
       full_name: '',
-      cedula: '',
+      cedula: initialCedula?.trim().toUpperCase() ?? '',
       email: '',
       phone: '',
       membership_id: '',
@@ -166,21 +173,22 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     setSubmitting(true);
     setError('');
     try {
+      const formData = new FormData();
+      formData.append('full_name', form.full_name.trim());
+      formData.append('cedula', form.cedula.trim().toUpperCase());
+      formData.append('email', form.email.trim());
+      if (form.phone.trim()) formData.append('phone', form.phone.trim());
+      formData.append('membership_id', String(Number(form.membership_id)));
+      if (selectedPlan?.price_usd) formData.append('amount_usd', String(selectedPlan.price_usd));
+      formData.append('method', form.method);
+      if (form.reference.trim()) formData.append('reference', form.reference.trim());
+      formData.append('check_in', form.check_in ? 'true' : 'false');
+      if (form.training_shift) formData.append('training_shift', form.training_shift);
+      if (proofFile) formData.append('proof', proofFile);
+
       const res = await apiFetchWithRetry('/api/reception/walk-in', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: form.full_name.trim(),
-          cedula: form.cedula.trim().toUpperCase(),
-          email: form.email.trim(),
-          phone: form.phone.trim() || null,
-          membership_id: Number(form.membership_id),
-          amount_usd: selectedPlan?.price_usd,
-          method: form.method,
-          reference: form.reference.trim() || null,
-          check_in: form.check_in,
-          training_shift: form.training_shift || null,
-        }),
+        body: formData,
         timeout: 30_000,
         retries: 2,
       });
@@ -202,10 +210,10 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
     }
   };
 
-  const copySetupLink = async () => {
-    if (!success?.password_setup_url) return;
+  const copyPassword = async () => {
+    if (!success?.temporary_password) return;
     try {
-      await navigator.clipboard.writeText(success.password_setup_url);
+      await navigator.clipboard.writeText(success.temporary_password);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
@@ -311,26 +319,22 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
           <>
             <div className="flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                No se pudo enviar el correo. Entregue al cliente el enlace para crear su contraseña
-                (válido 48 horas).
-              </p>
+              <p>No se pudo enviar el correo. Entregue la contraseña temporal al cliente.</p>
             </div>
-            {success.password_setup_url && (
+            {success.temporary_password && (
               <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
-                <p className="label-caps text-brand mb-2">Enlace para crear contraseña</p>
+                <p className="label-caps text-brand mb-2">Contraseña temporal</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-xs font-bold break-all text-zinc-900 dark:text-white">
-                    {success.password_setup_url}
+                  <code className="flex-1 font-mono text-lg font-bold break-all text-zinc-900 dark:text-white">
+                    {success.temporary_password}
                   </code>
-                  <Button variant="secondary" size="sm" onClick={() => void copySetupLink()}>
+                  <Button variant="secondary" size="sm" onClick={() => void copyPassword()}>
                     <Copy className="h-4 w-4" />
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
                 <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Puede mostrarlo en pantalla o enviarlo por WhatsApp. No comparta contraseñas en
-                  texto plano.
+                  Entréguela al cliente para que pueda usar la app.
                 </p>
               </div>
             )}
@@ -545,6 +549,28 @@ export default function ReceptionWalkInWizard({ onComplete }: ReceptionWalkInWiz
               placeholder="Nº de referencia o nota"
               className="min-h-[48px] text-base"
             />
+          </div>
+          <div>
+            <Label>Comprobante (opcional)</Label>
+            <div className="flex w-full items-center justify-center">
+              <label className="hover:bg-brand/5 hover:border-brand/50 group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 transition-all dark:border-zinc-700 dark:bg-zinc-800/10">
+                <Upload className="group-hover:text-brand mb-2 h-7 w-7 text-zinc-400 transition-colors dark:text-zinc-300" />
+                <p className="group-hover:text-brand text-xs font-medium text-zinc-500 transition-colors dark:text-zinc-400">
+                  Adjuntar captura de pago
+                </p>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf"
+                  onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            </div>
+            {proofFile && (
+              <p className="mt-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-500">
+                Seleccionado: {proofFile.name}
+              </p>
+            )}
           </div>
           <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800/50">
             <p className="stat-label">Monto a cobrar</p>

@@ -30,6 +30,10 @@ async function main() {
 
   for (const user of DEMO_USERS) {
     if ('initial_weight' in user) {
+      await query(`UPDATE users SET cedula = NULL WHERE cedula = $1 AND email <> $2`, [
+        user.cedula,
+        user.email,
+      ]);
       await query(
         `INSERT INTO users (email, password, role, full_name, cedula, initial_weight, height, goal, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
@@ -54,6 +58,10 @@ async function main() {
         ]
       );
     } else {
+      await query(`UPDATE users SET cedula = NULL WHERE cedula = $1 AND email <> $2`, [
+        user.cedula,
+        user.email,
+      ]);
       await query(
         `INSERT INTO users (email, password, role, full_name, cedula, status)
          VALUES ($1, $2, $3, $4, $5, 'active')

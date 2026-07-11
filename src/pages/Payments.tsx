@@ -36,6 +36,12 @@ import {
 } from './payments/helpers';
 import { formatBsRateLabel, useExchangeRateQuery } from '../hooks/queries/useExchangeRateQuery';
 
+interface MemberOption {
+  id: number;
+  full_name: string;
+  cedula: string | null;
+}
+
 function PaymentRejectionNote() {
   return (
     <p className="mt-1 text-[10px] leading-snug text-red-500/90">
@@ -89,6 +95,9 @@ export default function Payments() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const pageSize = user?.role === 'member' ? 10 : 20;
+  const [memberOptions, setMemberOptions] = useState<MemberOption[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [loadingMembers, setLoadingMembers] = useState(false);
 
   const { data: paymentsData, isPending: loading } = usePaymentsQuery({
     page,
@@ -121,6 +130,22 @@ export default function Payments() {
   const [searchParams] = useSearchParams();
   const toast = useToastOptional();
 
+  const openRegisterModal = useCallback((memberId?: string) => {
+    setSubmitError('');
+    setSelectedMemberId(memberId ?? '');
+    setShowModal(true);
+  }, []);
+
+  const closeRegisterModal = useCallback(() => {
+    setShowModal(false);
+    setSubmitError('');
+    setSelectedMemberId('');
+    setAmountUsd('');
+    setReference('');
+    setFile(null);
+    setSelectedPlanId('');
+  }, []);
+
   useEffect(() => {
     const status = searchParams.get('status');
     if (status === 'pending' || status === 'approved' || status === 'rejected') {
@@ -128,6 +153,28 @@ export default function Payments() {
       setPage(1);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('register') === '1' && isStaffPayment) {
+      openRegisterModal(searchParams.get('memberId') ?? undefined);
+    }
+  }, [searchParams, isStaffPayment, openRegisterModal]);
+
+  useEffect(() => {
+    if (!showModal || !isStaffPayment) return;
+    setLoadingMembers(true);
+    void apiFetch('/api/users/options?role=member')
+      .then((res) => parseJsonResponse<MemberOption[]>(res))
+      .then((data) => {
+        setMemberOptions(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        setMemberOptions([]);
+      })
+      .finally(() => {
+        setLoadingMembers(false);
+      });
+  }, [showModal, isStaffPayment]);
 
   const apiFetchPayments = () => invalidatePayments();
 
@@ -151,12 +198,16 @@ export default function Payments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+    if (isStaffPayment && !isMember && !selectedMemberId) {
+      setSubmitError('Seleccione un miembro');
+      return;
+    }
     if (needsBsRate && !exchangeRate) {
       setSubmitError('La tasa de cambio no está disponible. Intenta de nuevo en unos minutos.');
       return;
     }
     const formData = new FormData();
-    formData.append('user_id', user!.id.toString());
+    formData.append('user_id', isMember ? user.id.toString() : selectedMemberId);
     formData.append('amount_usd', amountUsd);
     if (needsBsRate && amountBs) formData.append('amount_bs', amountBs);
     formData.append('method', method);
@@ -173,14 +224,15 @@ export default function Payments() {
       });
       await parseJsonResponse(res);
 
-      setShowModal(false);
-      setAmountUsd('');
-      setReference('');
-      setFile(null);
-      setSelectedPlanId('');
+      closeRegisterModal();
       void apiFetchPayments();
+      await adminStats?.refresh();
       await memberStats?.refresh();
-      toast?.success('Pago reportado correctamente');
+      toast?.success(
+        isStaffPayment && !isMember
+          ? 'Pago registrado correctamente'
+          : 'Pago reportado correctamente'
+      );
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'No se pudo enviar el pago');
     }
@@ -244,7 +296,9 @@ export default function Payments() {
             )
           }
           subtitle={
-            isMember ? 'Reporta tu pago para activar la membresía' : 'Aprueba reportes de ingresos'
+            isMember
+              ? 'Reporta tu pago para activar la membresía'
+              : 'Registra pagos en mostrador y aprueba reportes de miembros'
           }
           action={
             isMember ? (
@@ -253,14 +307,24 @@ export default function Payments() {
                 <Button
                   size="sm"
                   className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
-                  onClick={() => {
-                    setSubmitError('');
-                    setShowModal(true);
-                  }}
+                  onClick={() => openRegisterModal()}
                   aria-label="Reportar pago"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Reportar pago</span>
+                </Button>
+              </div>
+            ) : isStaffPayment ? (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <BackToDashboardLink />
+                <Button
+                  size="sm"
+                  className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+                  onClick={() => openRegisterModal()}
+                  aria-label="Registrar pago"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Registrar pago</span>
                 </Button>
               </div>
             ) : (
@@ -627,21 +691,49 @@ export default function Payments() {
 
         <Modal
           open={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSubmitError('');
-          }}
+          onClose={closeRegisterModal}
           title={
-            <>
-              REPORTAR <span className="text-brand">PAGO</span>
-            </>
+            isStaffPayment && !isMember ? (
+              <>
+                REGISTRAR <span className="text-brand">PAGO</span>
+              </>
+            ) : (
+              <>
+                REPORTAR <span className="text-brand">PAGO</span>
+              </>
+            )
           }
           maxWidth="xl"
           scrollable
         >
           <form onSubmit={handleSubmit} className="page-stack">
             {submitError && <p className="text-sm font-bold text-red-500">{submitError}</p>}
-            {isMember && membershipPlans.length > 0 && (
+            {isStaffPayment && !isMember && (
+              <div>
+                <Label>Miembro</Label>
+                {loadingMembers ? (
+                  <div className="flex items-center gap-2 py-2 text-sm text-zinc-500">
+                    <Spinner className="h-4 w-4" />
+                    Cargando miembros…
+                  </div>
+                ) : (
+                  <Select
+                    required
+                    value={selectedMemberId}
+                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                  >
+                    <option value="">Seleccionar miembro…</option>
+                    {memberOptions.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.full_name}
+                        {member.cedula ? ` — ${member.cedula}` : ''}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+            )}
+            {(isMember || isStaffPayment) && membershipPlans.length > 0 && (
               <div>
                 <Label>Plan (referencia de monto)</Label>
                 <Select
@@ -755,7 +847,7 @@ export default function Payments() {
                 variant="ghost"
                 className="flex-1"
                 size="lg"
-                onClick={() => setShowModal(false)}
+                onClick={closeRegisterModal}
               >
                 Cancelar
               </Button>
