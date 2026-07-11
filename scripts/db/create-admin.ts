@@ -4,10 +4,10 @@
  * Uso con variables: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FULL_NAME en .env
  */
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
 import readline from 'readline';
 import { query } from '../../src/db/index.ts';
 import { passwordSchema } from '../../src/lib/passwordPolicy.ts';
+import { hashPassword } from '../../src/lib/passwordHash.ts';
 
 function ask(question: string, hidden = false): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -75,7 +75,7 @@ async function main() {
     process.exit(1);
   }
 
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = await hashPassword(password);
 
   const existing = await query<{ id: number; role: string }>(
     'SELECT id, role FROM users WHERE email = $1',

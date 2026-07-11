@@ -1,10 +1,10 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { query } from '../db/index.ts';
 import { authCookieOptions, clearAuthCookieOptions } from '../config/cookies.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import {
+  assertPasswordNotBreached,
   changePasswordSchema,
   formatZodError,
   forgotPasswordSchema,
@@ -31,59 +31,23 @@ import {
 } from '../lib/passwordSetupToken.ts';
 import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
+import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
+import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
+import { isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
+import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
+import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
+import mfaRoutes from './mfa.ts';
 
 const router = asyncRouter();
 
-interface LoginAttemptEntry {
-  count: number;
-  windowExpires: number;
-  lockedUntil?: number;
-}
+router.get(
+  '/config',
+  asyncHandler(async (_req, res) => {
+    res.json({ allowPublicRegister });
+  })
+);
 
-const loginAttempts = new Map<string, LoginAttemptEntry>();
-
-const MAX_LOGIN_ATTEMPTS = 3;
-const LOGIN_BLOCK_MINUTES = 15;
-const LOGIN_WINDOW_MINUTES = 15;
-
-function checkLoginBlock(email: string): boolean {
-  const entry = loginAttempts.get(email);
-  if (!entry) return false;
-
-  const now = Date.now();
-  if (entry.lockedUntil != null && now < entry.lockedUntil) {
-    return true;
-  }
-
-  if (now >= entry.windowExpires) {
-    loginAttempts.delete(email);
-  }
-  return false;
-}
-
-function recordLoginAttempt(email: string, success: boolean) {
-  const normalizedEmail = email.toLowerCase();
-  if (success) {
-    loginAttempts.delete(normalizedEmail);
-    return;
-  }
-
-  const now = Date.now();
-  const entry = loginAttempts.get(normalizedEmail);
-
-  if (!entry || now >= entry.windowExpires) {
-    loginAttempts.set(normalizedEmail, {
-      count: 1,
-      windowExpires: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
-    });
-    return;
-  }
-
-  entry.count += 1;
-  if (entry.count >= MAX_LOGIN_ATTEMPTS) {
-    entry.lockedUntil = now + LOGIN_BLOCK_MINUTES * 60 * 1000;
-  }
-}
+router.use('/mfa', mfaRoutes);
 
 router.post(
   '/login',
@@ -98,7 +62,7 @@ router.post(
     const normalizedEmail = email.toLowerCase();
     const clientIp = req.ip ?? req.socket.remoteAddress ?? 'unknown';
 
-    if (checkLoginBlock(normalizedEmail)) {
+    if (await checkLoginBlock(normalizedEmail)) {
       res.status(429).json({
         error: `Demasiados intentos. Cuenta bloqueada por ${LOGIN_BLOCK_MINUTES} minutos.`,
       });
@@ -113,14 +77,16 @@ router.post(
       full_name: string;
       status: string;
       token_version: number | string;
+      mfa_enabled: boolean;
+      mfa_secret: string | null;
     }>(
-      'SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1',
+      'SELECT id, email, password, role, full_name, status, token_version, mfa_enabled, mfa_secret FROM users WHERE email = $1',
       [normalizedEmail]
     );
     const user = rows[0];
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      recordLoginAttempt(normalizedEmail, false);
+    if (!user || !(await verifyPassword(password, user.password))) {
+      await recordLoginAttempt(normalizedEmail, false);
       await logAudit(null, 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
@@ -131,7 +97,7 @@ router.post(
     }
 
     if (user.status !== 'active') {
-      recordLoginAttempt(normalizedEmail, false);
+      await recordLoginAttempt(normalizedEmail, false);
       await logAudit(Number(user.id), 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
@@ -141,9 +107,24 @@ router.post(
       return;
     }
 
-    recordLoginAttempt(normalizedEmail, true);
+    await recordLoginAttempt(normalizedEmail, true);
 
     const userId = Number(user.id);
+
+    if (passwordHashNeedsRehash(user.password)) {
+      const upgradedHash = await hashPassword(password);
+      await query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, userId]);
+    }
+
+    if (user.mfa_enabled && user.mfa_secret && isMfaStaffRole(user.role)) {
+      const mfaChallengeToken = signMfaChallengeToken(userId, normalizedEmail, user.role);
+      res.json({
+        mfa_required: true,
+        mfa_challenge_token: mfaChallengeToken,
+      });
+      return;
+    }
+
     emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });
 
     const session = await createLoginSession(userId);
@@ -153,6 +134,7 @@ router.post(
     }
 
     res.cookie('token', session.token, authCookieOptions);
+    setCsrfCookie(res);
     await logAudit(userId, 'auth.login', { ip: clientIp, previous_sessions_invalidated: true });
 
     res.json({
@@ -184,21 +166,27 @@ router.post(
     const normalizedEmail = email.toLowerCase();
     const normalizedCedula = cedula.trim();
 
-    const existingEmail = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    const [existingEmail, existingCedula] = await Promise.all([
+      query('SELECT id FROM users WHERE email = $1', [normalizedEmail]),
+      query('SELECT id FROM users WHERE cedula = $1', [normalizedCedula]),
+    ]);
     if (existingEmail.rows.length > 0) {
       res.status(400).json({ error: 'Este correo ya está registrado' });
       return;
     }
 
-    const existingCedula = await query('SELECT id FROM users WHERE cedula = $1', [
-      normalizedCedula,
-    ]);
     if (existingCedula.rows.length > 0) {
       res.status(400).json({ error: 'Esta cédula ya está registrada' });
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const breachError = await assertPasswordNotBreached(password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(password);
     const insert = await query<{ id: number | string; token_version: number | string }>(
       `INSERT INTO users (full_name, email, password, role, cedula, phone, status)
        VALUES ($1, $2, $3, 'member', $4, $5, 'active')
@@ -216,6 +204,7 @@ router.post(
     });
 
     res.cookie('token', token, authCookieOptions);
+    setCsrfCookie(res);
     await logAudit(id, 'auth.register', { email: normalizedEmail });
     void sendEmail({
       to: normalizedEmail,
@@ -243,6 +232,7 @@ router.post(
     }
 
     res.clearCookie('token', clearAuthCookieOptions);
+    clearCsrfCookie(res);
     res.json({ message: 'Sesión cerrada' });
   })
 );
@@ -299,6 +289,7 @@ router.post(
     });
 
     res.cookie('token', newToken, authCookieOptions);
+    setCsrfCookie(res);
     res.json({
       user: {
         id: result.user.id,
@@ -331,17 +322,23 @@ router.post(
       return;
     }
 
-    if (!(await bcrypt.compare(current_password, rows[0].password))) {
+    if (!(await verifyPassword(current_password, rows[0].password))) {
       res.status(401).json({ error: 'Contraseña actual incorrecta' });
       return;
     }
 
-    if (await bcrypt.compare(new_password, rows[0].password)) {
+    if (await verifyPassword(new_password, rows[0].password)) {
       res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual' });
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const breachError = await assertPasswordNotBreached(new_password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(new_password);
     await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
       hashedPassword,
       userId,
@@ -350,6 +347,7 @@ router.post(
     await logAudit(userId, 'auth.change_password', {});
 
     res.clearCookie('token', clearAuthCookieOptions);
+    clearCsrfCookie(res);
     res.json({
       success: true,
       message: 'Contraseña actualizada. Inicia sesión de nuevo.',
@@ -359,6 +357,7 @@ router.post(
 
 router.post(
   '/forgot-password',
+  forgotPasswordRateLimiter,
   asyncHandler(async (req, res) => {
     const parsed = forgotPasswordSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -384,7 +383,7 @@ router.post(
 
       if (!sent) {
         logger.error('No se pudo enviar email de recuperación', { userId: user.id });
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === 'development' && process.env.DEV_LOG_RESET_LINKS === 'true') {
           // En local, el enlace aparece en la terminal por si Gmail falla
           console.log('\n─── DEV: enlace de recuperación de contraseña ───');
           console.log(resetUrl);
@@ -435,13 +434,21 @@ router.post(
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const breachError = await assertPasswordNotBreached(new_password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
+
+    const hashedPassword = await hashPassword(new_password);
     await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
       hashedPassword,
       record.user_id,
     ]);
     invalidateSessionUserCache(record.user_id);
-    await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1', [record.id]);
+    await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1', [
+      record.user_id,
+    ]);
     await logAudit(record.user_id, 'auth.reset_password', {});
 
     res.json({

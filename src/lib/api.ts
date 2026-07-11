@@ -2,6 +2,30 @@ const DEFAULT_TIMEOUT = 15_000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 1_000;
 
+const CSRF_COOKIE_NAME = 'csrf_token';
+const CSRF_HEADER_NAME = 'x-csrf-token';
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+function readCsrfTokenFromDocument(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = new RegExp(`(?:^|; )${CSRF_COOKIE_NAME}=([^;]*)`).exec(document.cookie);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function withCsrfHeaders(init: RequestInit = {}): RequestInit {
+  const method = (init.method ?? 'GET').toUpperCase();
+  if (!MUTATING_METHODS.has(method)) return init;
+
+  const token = readCsrfTokenFromDocument();
+  if (!token) return init;
+
+  const headers = new Headers(init.headers ?? {});
+  if (!headers.has(CSRF_HEADER_NAME)) {
+    headers.set(CSRF_HEADER_NAME, token);
+  }
+  return { ...init, headers };
+}
+
 let authBootstrapComplete = false;
 let onUnauthorized: (() => void) | null = null;
 
@@ -24,7 +48,7 @@ function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
 }
 
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...init }).then((res) => {
+  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then((res) => {
     if (
       res.status === 401 &&
       authBootstrapComplete &&
@@ -56,7 +80,7 @@ export async function apiFetchWithRetry(
 
     try {
       const res = await fetch(input, {
-        ...init,
+        ...withCsrfHeaders(init),
         signal: combinedSignal,
         credentials: 'include',
       });

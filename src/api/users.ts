@@ -1,6 +1,5 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
@@ -15,7 +14,13 @@ import {
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
 import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
-import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
+import {
+  createUserSchema,
+  formatZodError,
+  assertPasswordNotBreached,
+} from '../lib/passwordPolicy.ts';
+import { hashPassword } from '../lib/passwordHash.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logger } from '../lib/logger.ts';
 import {
@@ -102,11 +107,14 @@ function buildUserListFilters(
   const conditions: string[] = [];
 
   if (search) {
-    params.push(`%${search.toLowerCase()}%`);
-    const idx = params.length;
-    conditions.push(
-      `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(u.cedula, '')) LIKE $${idx} OR LOWER(u.email) LIKE $${idx})`
-    );
+    const pattern = toLikeContainsPattern(search);
+    if (pattern) {
+      params.push(pattern);
+      const idx = params.length;
+      conditions.push(
+        `(LOWER(u.full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(u.email) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+      );
+    }
   }
 
   if (role && ['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
@@ -157,11 +165,14 @@ router.get('/options', authorize(['admin', 'trainer', 'receptionist']), async (r
     }
 
     if (search) {
-      params.push(`%${search.toLowerCase()}%`);
-      const idx = params.length;
-      conditions.push(
-        `(LOWER(full_name) LIKE $${idx} OR LOWER(COALESCE(cedula, '')) LIKE $${idx})`
-      );
+      const pattern = toLikeContainsPattern(search);
+      if (pattern) {
+        params.push(pattern);
+        const idx = params.length;
+        conditions.push(
+          `(LOWER(full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(cedula, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+        );
+      }
     }
 
     const shiftFilter = typeof req.query.shift === 'string' ? req.query.shift.trim() : '';
@@ -699,7 +710,12 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
       return res.status(400).json({ error: 'Esta cédula ya está registrada' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const breachError = await assertPasswordNotBreached(password);
+    if (breachError) {
+      return res.status(400).json({ error: breachError });
+    }
+
+    const hashedPassword = await hashPassword(password);
     const { rows } = await query(
       `INSERT INTO users (full_name, email, cedula, role, password, status, training_shift)
        VALUES ($1, $2, $3, $4, $5, 'active', $6)

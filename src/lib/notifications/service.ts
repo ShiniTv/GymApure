@@ -1,7 +1,14 @@
 import { sendPushToUser } from '../pushNotifications.ts';
 import { emitToUser } from '../wsServer.ts';
 import { logger } from '../logger.ts';
-import { getStaffUserIds, getUnreadCount, insertNotification } from './repository.ts';
+import { mapWithConcurrency } from '../runInBatches.ts';
+import {
+  getStaffUserIds,
+  getUnreadCount,
+  getUnreadCounts,
+  insertNotificationsBulk,
+  type UserNotificationRow,
+} from './repository.ts';
 import type { NotificationSeverity } from './types.ts';
 
 export type { NotificationSeverity };
@@ -27,14 +34,17 @@ export interface CreateStaffNotificationInput {
   dedupeKey?: string | null;
 }
 
+const NOTIFY_CONCURRENCY = 5;
+
 async function notifyUserChannels(
   userId: number,
   title: string,
   body: string,
-  href: string
+  href: string,
+  unreadCount?: number
 ): Promise<void> {
-  const unreadCount = await getUnreadCount(userId);
-  emitToUser(userId, 'notification:new', { unreadCount });
+  const count = unreadCount ?? (await getUnreadCount(userId));
+  emitToUser(userId, 'notification:new', { unreadCount: count });
   void sendPushToUser(userId, title, body, href).catch((err) => {
     logger.error('Push notification failed', {
       userId,
@@ -44,8 +54,8 @@ async function notifyUserChannels(
 }
 
 export async function createUserNotification(input: CreateUserNotificationInput): Promise<boolean> {
-  const row = await insertNotification(input);
-  if (!row) return false;
+  const rows = await insertNotificationsBulk([input]);
+  if (!rows[0]) return false;
 
   await notifyUserChannels(input.userId, input.title, input.body, input.href ?? '/');
   return true;
@@ -55,10 +65,10 @@ export async function createStaffNotification(
   input: CreateStaffNotificationInput
 ): Promise<number> {
   const staffIds = await getStaffUserIds();
-  let created = 0;
+  if (staffIds.length === 0) return 0;
 
-  for (const userId of staffIds) {
-    const row = await insertNotification({
+  const inserted = await insertNotificationsBulk(
+    staffIds.map((userId) => ({
       userId,
       type: input.type,
       title: input.title,
@@ -67,11 +77,24 @@ export async function createStaffNotification(
       severity: input.severity,
       metadata: input.metadata,
       dedupeKey: input.dedupeKey,
-    });
-    if (!row) continue;
-    created += 1;
-    await notifyUserChannels(userId, input.title, input.body, input.href ?? '/');
-  }
+    }))
+  );
 
-  return created;
+  if (inserted.length === 0) return 0;
+
+  const unreadCounts = await getUnreadCounts(inserted.map((r) => r.user_id));
+  await mapWithConcurrency(
+    inserted,
+    (row: UserNotificationRow) =>
+      notifyUserChannels(
+        row.user_id,
+        input.title,
+        input.body,
+        input.href ?? '/',
+        unreadCounts.get(row.user_id)
+      ),
+    NOTIFY_CONCURRENCY
+  );
+
+  return inserted.length;
 }

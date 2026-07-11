@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { enableHibpCheck, env } from '../config/env.ts';
+import { isPasswordBreached } from './hibp.ts';
 
 const COMMON_PASSWORDS = new Set([
   'password',
@@ -94,6 +96,23 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 export function formatZodError(error: z.ZodError): string {
   return error.issues.map((issue) => issue.message).join('. ');
+}
+
+/** Optional HIBP breach check (when ENABLE_HIBP_CHECK=true). Returns user-facing error or null. */
+export async function assertPasswordNotBreached(password: string): Promise<string | null> {
+  if (!enableHibpCheck) return null;
+  try {
+    const breached = await isPasswordBreached(password);
+    if (breached) {
+      return 'Esta contraseña aparece en filtraciones conocidas. Elige otra más segura.';
+    }
+    return null;
+  } catch {
+    if (env.NODE_ENV === 'production') {
+      return 'No se pudo verificar la contraseña en este momento. Inténtalo de nuevo en unos minutos.';
+    }
+    return null;
+  }
 }
 
 /** Validates DEMO_PASSWORD for npm run db:restore-demo */

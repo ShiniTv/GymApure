@@ -36,6 +36,10 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
+  REDIS_URL: z.string().optional(),
+  ENABLE_HIBP_CHECK: z.string().optional(),
+  PUBLIC_APP_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -64,7 +68,30 @@ function parseEnv(): Env {
     logger.error('Configuración inválida (.env)', { details });
     process.exit(1);
   }
-  return result.data;
+
+  const data = result.data;
+  if (data.NODE_ENV === 'production') {
+    const cronSecret = data.CRON_SECRET?.trim() ?? '';
+    if (cronSecret.length < 16) {
+      logger.error('CRON_SECRET es obligatorio en producción (mínimo 16 caracteres)', {});
+      process.exit(1);
+    }
+
+    const publicUrl = data.PUBLIC_APP_URL?.trim() ?? '';
+    if (!publicUrl.startsWith('https://')) {
+      logger.error('PUBLIC_APP_URL es obligatorio en producción (URL HTTPS del sitio)', {});
+      process.exit(1);
+    }
+
+    if (!data.REDIS_URL?.trim()) {
+      logger.warn(
+        'REDIS_URL no configurado en producción — rate limit y bloqueo de login solo en memoria local',
+        { hint: 'Recomendado en Render multi-instancia (Upstash Redis).' }
+      );
+    }
+  }
+
+  return data;
 }
 
 /** Validated environment; call once at process startup before serving. */
@@ -87,5 +114,7 @@ function resolveAllowPublicRegister(): boolean {
   return env.NODE_ENV !== 'production';
 }
 
-/** When false, POST /api/auth/register returns 403 (default: off in production). */
+/** When true, reject passwords found in Have I Been Pwned (requires outbound HTTPS). */
+export const enableHibpCheck = parseEnvBoolean(parsedEnv.ENABLE_HIBP_CHECK, false);
+
 export const allowPublicRegister = resolveAllowPublicRegister();

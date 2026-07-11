@@ -23,6 +23,7 @@ import { sendEmail, paymentApprovedEmail, paymentRejectedEmail } from '../lib/em
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { BS_PAYMENT_METHODS, getActiveUsdRate, roundBsAmount } from '../lib/exchangeRate.ts';
 import { parsePaginationQuery, parseSearchQuery, type PaginatedResult } from '../lib/pagination.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 
@@ -63,11 +64,14 @@ router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: Auth
   }
 
   if (search && (user.role === 'admin' || user.role === 'receptionist')) {
-    params.push(`%${search.toLowerCase()}%`);
-    const idx = params.length;
-    conditions.push(
-      `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(p.reference, '')) LIKE $${idx})`
-    );
+    const pattern = toLikeContainsPattern(search);
+    if (pattern) {
+      params.push(pattern);
+      const idx = params.length;
+      conditions.push(
+        `(LOWER(u.full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(p.reference, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+      );
+    }
   }
 
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

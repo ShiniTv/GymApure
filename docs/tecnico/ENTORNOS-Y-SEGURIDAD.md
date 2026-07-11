@@ -82,6 +82,10 @@ npm run db:create-admin:prod  # solo si no hay admin
 - El frontend recibe aviso vía WebSocket (`session:revoked`) o HTTP 401 y redirige a `/login`.
 - Check-in **solo** con personal autenticado (admin/recepcionista). No existe API pública de kiosk.
 - Entrenadores solo ven miembros **asignados** (protección IDOR).
+- Contraseñas nuevas: bcrypt cost **12**; rehash automático al login si el hash es legacy (cost 10).
+- MFA TOTP para staff (`admin`, `receptionist`, `trainer`) en `/security`.
+- CSRF double-submit en todas las rutas protegidas con mutaciones.
+- Opcional: `ENABLE_HIBP_CHECK=true` rechaza contraseñas conocidas en filtraciones públicas.
 
 ---
 
@@ -123,4 +127,6 @@ No subas archivos directamente al Dashboard sin pasar por la API (permisos y val
 - [Instalación](./INSTALACION-NUEVO-EQUIPO.md)
 - [Variables de entorno](./VARIABLES-ENTORNO.md)
 - [Migraciones](./MIGRACIONES-Y-BD.md)
+- [Datos personales](./DATOS-PERSONALES.md)
+- [Rotación de secretos](./ROTACION-SECRETOS.md)
 - [Despliegue](../DEPLOY.md)

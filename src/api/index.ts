@@ -21,7 +21,9 @@ import pushSubscriptionRoutes from './pushSubscriptions.ts';
 import equipmentRoutes from './equipment.ts';
 import notificationRoutes from './notifications.ts';
 import exchangeRateRoutes from './exchangeRate.ts';
+import cronRoutes from './cronRoutes.ts';
 import { authenticate } from './middleware/auth.ts';
+import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
 const router = asyncRouter();
@@ -32,9 +34,13 @@ router.use(healthRoutes);
 // Public routes (rate-limited)
 router.use('/auth', authRateLimiter, authRoutes);
 
+// Cron jobs (CRON_SECRET or admin session — before global authenticate)
+router.use(apiRateLimiter, cronRoutes);
+
 // Protected routes (require login)
 router.use(apiRateLimiter);
 router.use(authenticate);
+router.use(csrfProtection);
 
 router.use('/users', userRoutes);
 router.use('/trainers', trainerRoutes);

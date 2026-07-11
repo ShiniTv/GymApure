@@ -8,13 +8,17 @@ import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
 import { uploadMediaFile, deleteMediaFile, isMediaStorageRemote } from '../lib/mediaStorage.ts';
 import { localAvatarPathFromUpload } from '../lib/mediaStorage.ts';
+import { assertImageUpload } from '../lib/uploadValidation.ts';
 import {
   EQUIPMENT_STATUSES,
   EQUIPMENT_CATEGORIES,
   EQUIPMENT_EVENT_TYPES,
 } from '../lib/equipment/constants.ts';
 import { STAFF_ROLES } from '../lib/roles.ts';
-import { syncEquipmentInspectionAlerts } from '../lib/equipmentInspectionAlerts.ts';
+import {
+  syncEquipmentInspectionAlerts,
+  getEquipmentStatsSummary,
+} from '../lib/equipmentInspectionAlerts.ts';
 
 const router = asyncRouter();
 
@@ -359,6 +363,33 @@ router.delete(
       return;
     }
     res.json({ success: true });
+  })
+);
+
+router.get(
+  '/bootstrap',
+  staffRead,
+  asyncHandler(async (req: AuthRequest, res) => {
+    void syncEquipmentInspectionAlerts();
+    const isAdmin = req.user?.role === 'admin';
+
+    const [zones, catalog, vendors, stats, inventory] = await Promise.all([
+      query(`SELECT * FROM gym_zones ORDER BY sort_order, name`),
+      query(`SELECT * FROM equipment_catalog ORDER BY category, name`),
+      isAdmin
+        ? query(`SELECT * FROM equipment_vendors ORDER BY name`)
+        : Promise.resolve({ rows: [] }),
+      getEquipmentStatsSummary(),
+      query(`${equipmentSelect} ORDER BY ge.updated_at DESC`),
+    ]);
+
+    res.json({
+      zones: zones.rows,
+      catalog: catalog.rows,
+      vendors: vendors.rows,
+      stats,
+      inventory: inventory.rows.map((row) => mapEquipmentRow(row as Record<string, unknown>)),
+    });
   })
 );
 
@@ -737,6 +768,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res) => {
     if (!req.file) {
       res.status(400).json({ error: 'Archivo de imagen requerido' });
+      return;
+    }
+    try {
+      assertImageUpload(req.file);
+    } catch (err) {
+      res.status(400).json({ error: err instanceof Error ? err.message : 'Imagen inválida' });
       return;
     }
     const { rows } = await query<{ photo_url: string | null }>(

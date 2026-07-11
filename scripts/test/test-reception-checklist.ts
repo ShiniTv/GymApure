@@ -144,7 +144,8 @@ async function main() {
       'POST /api/reception/walk-in',
       walkIn.res.status === 201 &&
         walkIn.data.success === true &&
-        (walkIn.data.email_sent === true || !!walkIn.data.temporary_password),
+        (walkIn.data.email_sent === true || !!walkIn.data.password_setup_url) &&
+        !walkIn.data.temporary_password,
       walkIn.data.error
     );
 

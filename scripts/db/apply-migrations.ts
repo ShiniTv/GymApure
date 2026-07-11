@@ -70,6 +70,23 @@ const MIGRATION_MARKERS: Record<string, string> = {
   '20260708130000_exchange_rates.sql': `
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = 'public' AND table_name = 'exchange_rates' LIMIT 1`,
+  '20260711000000_cleanup_legacy_settings.sql': `
+    SELECT 1 WHERE NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'equipment_catalog' AND column_name = 'image_url'
+    )`,
+  '20260711100000_ensure_rls_lockdown_all_tables.sql': `
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'gym_equipment' AND policyname = 'backend_only'
+    LIMIT 1`,
+  '20260711120000_user_mfa.sql': `
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'mfa_enabled'
+    LIMIT 1`,
+  '20260711120100_storage_objects_rls.sql': `
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'backend_only_storage_objects'
+    LIMIT 1`,
 };
 
 /** ALTER TYPE ... ADD VALUE must commit before the new label is usable. */
@@ -97,6 +114,7 @@ const SUPABASE_ONLY_MIGRATIONS = new Set([
   '20260620000000_media_storage_buckets.sql',
   '20260701100000_exercise_videos_poster_mime.sql',
   '20260708120200_equipment_photos_bucket.sql',
+  '20260711120100_storage_objects_rls.sql',
 ]);
 
 function referencesSupabaseStorage(sql: string): boolean {

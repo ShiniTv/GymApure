@@ -76,6 +76,20 @@ interface Vendor {
   email?: string | null;
 }
 
+interface EquipmentBootstrap {
+  zones: Zone[];
+  catalog: CatalogItem[];
+  vendors: Vendor[];
+  stats: {
+    operational: number;
+    limited: number;
+    maintenance: number;
+    outOfService: number;
+    inspectionsDueThisWeek: number;
+  };
+  inventory: EquipmentItem[];
+}
+
 interface EquipmentItem {
   id: number;
   catalog_id?: number | null;
@@ -356,6 +370,15 @@ export default function Equipment() {
     return names;
   }, [allItems]);
 
+  const loadBootstrap = useCallback(async () => {
+    const res = await apiFetch('/api/equipment/bootstrap');
+    const data = await parseJsonResponse<EquipmentBootstrap>(res);
+    setZones(Array.isArray(data?.zones) ? data.zones : []);
+    setCatalog(Array.isArray(data?.catalog) ? data.catalog : []);
+    setVendors(Array.isArray(data?.vendors) ? data.vendors : []);
+    setAllItems(Array.isArray(data?.inventory) ? data.inventory : []);
+  }, []);
+
   const loadInventory = useCallback(async () => {
     const params = new URLSearchParams();
     if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim());
@@ -383,7 +406,7 @@ export default function Equipment() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void loadMeta()
+    void loadBootstrap()
       .catch(() => {
         if (!cancelled) {
           setAllItems([]);
@@ -395,7 +418,7 @@ export default function Equipment() {
     return () => {
       cancelled = true;
     };
-  }, [loadMeta]);
+  }, [loadBootstrap]);
 
   useEffect(() => {
     if (loading) return;

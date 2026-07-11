@@ -1,6 +1,6 @@
 import type { DbSessionUser } from './sessionAuth.ts';
 
-const TTL_MS = 60_000;
+const TTL_MS = 15_000;
 const MAX_ENTRIES = 500;
 
 interface CacheEntry {

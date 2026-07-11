@@ -1,11 +1,16 @@
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logAudit } from '../lib/audit.ts';
-import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
+import {
+  createUserSchema,
+  formatZodError,
+  assertPasswordNotBreached,
+} from '../lib/passwordPolicy.ts';
+import { hashPassword } from '../lib/passwordHash.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { isTrainerLevel, isTrainingShift } from '../lib/trainingShift.ts';
 
@@ -68,13 +73,16 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req, res
       conditions.push(`tp.level = $${params.length}`);
     }
 
-    const search = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+    const search = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     if (search) {
-      params.push(`%${search}%`);
-      const idx = params.length;
-      conditions.push(
-        `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(tp.specialty, '')) LIKE $${idx})`
-      );
+      const pattern = toLikeContainsPattern(search);
+      if (pattern) {
+        params.push(pattern);
+        const idx = params.length;
+        conditions.push(
+          `(LOWER(u.full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(tp.specialty, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+        );
+      }
     }
 
     const whereExtra = conditions.length > 0 ? ` AND ${conditions.join(' AND ')}` : '';
@@ -92,10 +100,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req, res
 
 router.get('/me', authorize(['trainer']), async (req: AuthRequest, res) => {
   try {
-    const { rows } = await query<TrainerRow>(
-      `${TRAINER_SELECT} AND u.id = $1`,
-      [req.user!.id]
-    );
+    const { rows } = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [req.user!.id]);
     if (!rows[0]) {
       return res.status(404).json({ error: 'Perfil de entrenador no encontrado' });
     }
@@ -105,124 +110,138 @@ router.get('/me', authorize(['trainer']), async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/', authorize(['admin']), asyncHandler(async (req: AuthRequest, res) => {
-  const parsed = createTrainerSchema.safeParse({ ...req.body, role: 'trainer' });
-  if (!parsed.success) {
-    res.status(400).json({ error: formatZodError(parsed.error) });
-    return;
-  }
+router.post(
+  '/',
+  authorize(['admin']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const parsed = createTrainerSchema.safeParse({ ...req.body, role: 'trainer' });
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
 
-  const { full_name, email, password, cedula, level, specialty, shift, bio } = parsed.data;
-  const normalizedEmail = email.toLowerCase();
-  const normalizedCedula = canonicalCedula(cedula.trim());
-  if (!normalizedCedula) {
-    res.status(400).json({ error: 'La cédula es obligatoria' });
-    return;
-  }
+    const { full_name, email, password, cedula, level, specialty, shift, bio } = parsed.data;
+    const normalizedEmail = email.toLowerCase();
+    const normalizedCedula = canonicalCedula(cedula.trim());
+    if (!normalizedCedula) {
+      res.status(400).json({ error: 'La cédula es obligatoria' });
+      return;
+    }
 
-  const emailTaken = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
-  if (emailTaken.rows.length > 0) {
-    res.status(400).json({ error: 'Este correo ya está registrado' });
-    return;
-  }
+    const emailTaken = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    if (emailTaken.rows.length > 0) {
+      res.status(400).json({ error: 'Este correo ya está registrado' });
+      return;
+    }
 
-  const cedulaTaken = await query(
-    `SELECT id FROM users WHERE ${cedulaWhereClause('cedula', 1)}`,
-    [normalizedCedula]
-  );
-  if (cedulaTaken.rows.length > 0) {
-    res.status(400).json({ error: 'Esta cédula ya está registrada' });
-    return;
-  }
+    const cedulaTaken = await query(
+      `SELECT id FROM users WHERE ${cedulaWhereClause('cedula', 1)}`,
+      [normalizedCedula]
+    );
+    if (cedulaTaken.rows.length > 0) {
+      res.status(400).json({ error: 'Esta cédula ya está registrada' });
+      return;
+    }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+    const breachError = await assertPasswordNotBreached(password);
+    if (breachError) {
+      res.status(400).json({ error: breachError });
+      return;
+    }
 
-  const userResult = await query<{ id: number }>(
-    `INSERT INTO users (full_name, email, cedula, role, password, status)
+    const hashedPassword = await hashPassword(password);
+
+    const userResult = await query<{ id: number }>(
+      `INSERT INTO users (full_name, email, cedula, role, password, status)
      VALUES ($1, $2, $3, 'trainer', $4, 'active')
      RETURNING id`,
-    [full_name, normalizedEmail, normalizedCedula, hashedPassword]
-  );
+      [full_name, normalizedEmail, normalizedCedula, hashedPassword]
+    );
 
-  const userId = userResult.rows[0].id;
+    const userId = userResult.rows[0].id;
 
-  await query(
-    `INSERT INTO trainer_profiles (user_id, level, specialty, shift, bio)
+    await query(
+      `INSERT INTO trainer_profiles (user_id, level, specialty, shift, bio)
      VALUES ($1, $2, $3, $4, $5)`,
-    [userId, level, specialty?.trim() || null, shift, bio?.trim() || null]
-  );
+      [userId, level, specialty?.trim() || null, shift, bio?.trim() || null]
+    );
 
-  await logAudit(req.user!.id, 'trainer.create', { target_id: userId, shift, level });
+    await logAudit(req.user!.id, 'trainer.create', { target_id: userId, shift, level });
 
-  const { rows } = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [userId]);
-  res.status(201).json(rows[0]);
-}));
+    const { rows } = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [userId]);
+    res.status(201).json(rows[0]);
+  })
+);
 
-router.put('/:id/profile', authorize(['admin', 'trainer']), asyncHandler(async (req: AuthRequest, res) => {
-  const targetId = parseInt(req.params.id, 10);
-  if (Number.isNaN(targetId)) {
-    res.status(400).json({ error: 'ID inválido' });
-    return;
-  }
+router.put(
+  '/:id/profile',
+  authorize(['admin', 'trainer']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
 
-  if (req.user!.role === 'trainer' && req.user!.id !== targetId) {
-    res.status(403).json({ error: 'No autorizado' });
-    return;
-  }
+    if (req.user!.role === 'trainer' && req.user!.id !== targetId) {
+      res.status(403).json({ error: 'No autorizado' });
+      return;
+    }
 
-  const parsed = trainerProfileSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: formatZodError(parsed.error) });
-    return;
-  }
+    const parsed = trainerProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
 
-  const isAdmin = req.user!.role === 'admin';
-  const data = parsed.data;
-  const sets: string[] = [];
-  const params: unknown[] = [];
+    const isAdmin = req.user!.role === 'admin';
+    const data = parsed.data;
+    const sets: string[] = [];
+    const params: unknown[] = [];
 
-  if (isAdmin && data.level !== undefined) {
-    params.push(data.level);
-    sets.push(`level = $${params.length}`);
-  }
-  if (isAdmin && data.shift !== undefined) {
-    params.push(data.shift);
-    sets.push(`shift = $${params.length}`);
-  }
-  if (data.specialty !== undefined) {
-    params.push(data.specialty);
-    sets.push(`specialty = $${params.length}`);
-  }
-  if (data.bio !== undefined) {
-    params.push(data.bio);
-    sets.push(`bio = $${params.length}`);
-  }
+    if (isAdmin && data.level !== undefined) {
+      params.push(data.level);
+      sets.push(`level = $${params.length}`);
+    }
+    if (isAdmin && data.shift !== undefined) {
+      params.push(data.shift);
+      sets.push(`shift = $${params.length}`);
+    }
+    if (data.specialty !== undefined) {
+      params.push(data.specialty);
+      sets.push(`specialty = $${params.length}`);
+    }
+    if (data.bio !== undefined) {
+      params.push(data.bio);
+      sets.push(`bio = $${params.length}`);
+    }
 
-  if (sets.length === 0) {
-    res.status(400).json({ error: 'No hay campos para actualizar' });
-    return;
-  }
+    if (sets.length === 0) {
+      res.status(400).json({ error: 'No hay campos para actualizar' });
+      return;
+    }
 
-  sets.push('updated_at = NOW()');
-  params.push(targetId);
+    sets.push('updated_at = NOW()');
+    params.push(targetId);
 
-  const { rows } = await query(
-    `UPDATE trainer_profiles SET ${sets.join(', ')} WHERE user_id = $${params.length}
+    const { rows } = await query(
+      `UPDATE trainer_profiles SET ${sets.join(', ')} WHERE user_id = $${params.length}
      RETURNING user_id`,
-    params
-  );
+      params
+    );
 
-  if (!rows[0]) {
-    res.status(404).json({ error: 'Perfil de entrenador no encontrado' });
-    return;
-  }
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Perfil de entrenador no encontrado' });
+      return;
+    }
 
-  if (isAdmin) {
-    await logAudit(req.user!.id, 'trainer.profile_update', { target_id: targetId });
-  }
+    if (isAdmin) {
+      await logAudit(req.user!.id, 'trainer.profile_update', { target_id: targetId });
+    }
 
-  const result = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [targetId]);
-  res.json(result.rows[0]);
-}));
+    const result = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [targetId]);
+    res.json(result.rows[0]);
+  })
+);
 
 export default router;
