@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { query } from '../../db/index.ts';
 import type { AuthRequest } from './authTypes.ts';
 import { asyncHandler } from './asyncHandler.ts';
-import { trainerHasMemberAccess } from '../../lib/trainerAccess.ts';
+import { trainerCanCoachMember, trainerHasMemberAccess } from '../../lib/trainerAccess.ts';
 
 /**
  * Staff roles bypass the check; members may only access their own user id (route param).
@@ -30,7 +30,7 @@ export function requireSelfOrRoles(paramName: string, ...staffRoles: string[]) {
 
 /**
  * Members: self only. Full-access roles (admin, receptionist): any member.
- * Trainers: only members assigned to one of their routines.
+ * Trainers: active members (including before first routine assignment).
  */
 export function requireMemberAccess(paramName: string, ...fullAccessRoles: string[]) {
   return asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -57,7 +57,7 @@ export function requireMemberAccess(paramName: string, ...fullAccessRoles: strin
     }
 
     if (user.role === 'trainer') {
-      const allowed = await trainerHasMemberAccess(user.id, targetId);
+      const allowed = await trainerCanCoachMember(user.id, targetId);
       if (allowed) {
         next();
         return;

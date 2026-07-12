@@ -7,6 +7,7 @@ import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { Button, Badge, Input, Label, Modal, PageHeader, PaginationBar, DataCard, Avatar, FilterChips, EmptyState, TableRowSkeleton, SearchInput, Card, BackToDashboardLink } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { useMembersQuery, useInvalidateMembers, type Member } from '../hooks/queries/useMembersQuery';
+import { useInvalidateMemberOptions } from '../hooks/queries/useRoutinesQuery';
 import { clientLogger } from '../lib/clientLogger';
 import {
   getExpiryBadgeInfo,
@@ -25,6 +26,7 @@ export default function Members() {
   const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
   const invalidateMembers = useInvalidateMembers();
+  const invalidateMemberOptions = useInvalidateMemberOptions();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -145,6 +147,7 @@ export default function Members() {
           role: 'member',
         });
         invalidateMembers();
+        invalidateMemberOptions();
       } else {
         const data = await parseJsonResponse<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear usuario' });
@@ -258,7 +261,7 @@ export default function Members() {
         }
         subtitle={
           isTrainer
-            ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
+            ? 'Consulta los miembros activos y gestiona sus rutinas de entrenamiento'
             : isReceptionist
               ? 'Registra personas nuevas en mostrador. La cédula es obligatoria para el check-in.'
               : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
@@ -277,12 +280,12 @@ export default function Members() {
           {canAddUser && (
             <Button
               size="sm"
-              className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
+              className="h-11 min-h-11 shrink-0 rounded-xl px-3 sm:px-4 whitespace-nowrap gap-1.5"
               onClick={() => setIsAdding(true)}
               aria-label={addUserLabel}
             >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{addUserLabel}</span>
+              <Plus className="h-4 w-4 shrink-0" />
+              <span className="text-xs sm:text-sm font-semibold">{addUserLabel}</span>
             </Button>
           )}
         </div>

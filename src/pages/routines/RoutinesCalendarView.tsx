@@ -111,12 +111,13 @@ export function RoutinesCalendarView({
           </div>
           <Button
             size="sm"
-            className="h-9 w-9 shrink-0 p-0"
+            className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
             onClick={onAssignDirect}
-            aria-label="Asignar directo"
-            title="Asignar directo"
+            aria-label="Asignar rutina"
+            title="Asignar rutina"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="text-xs font-semibold">Asignar rutina</span>
           </Button>
         </div>
 
@@ -294,12 +295,13 @@ export function RoutinesCalendarView({
             </div>
             <Button
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
               onClick={() => onAssignOnDay(format(selectedDay, 'yyyy-MM-dd'))}
               aria-label="Asignar en este día"
-              title="Asignar"
+              title="Asignar rutina"
             >
-              <UserPlus className="h-4 w-4" />
+              <UserPlus className="h-4 w-4 shrink-0" />
+              <span className="text-xs font-semibold">Asignar rutina</span>
             </Button>
           </div>
 

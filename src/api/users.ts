@@ -87,7 +87,7 @@ const USER_LIST_FROM = `
 function buildUserListFilters(
   query: Record<string, unknown>,
   alertDays: number,
-  options?: { trainerId?: number; membersOnly?: boolean }
+  options?: { trainerId?: number; membersOnly?: boolean; activeOnly?: boolean }
 ): { whereSql: string; params: unknown[] } {
   const search = parseSearchQuery(query);
   const role = typeof query.role === 'string' ? query.role.trim() : '';
@@ -110,6 +110,10 @@ function buildUserListFilters(
 
   if (options?.membersOnly) {
     conditions.push(`u.role = 'member'`);
+  }
+
+  if (options?.activeOnly) {
+    conditions.push(`u.status = 'active'`);
   }
 
   if (options?.trainerId) {
@@ -144,19 +148,21 @@ router.get('/options', authorize(['admin', 'trainer', 'receptionist']), async (r
       conditions.push(`role = $${params.length}`);
     }
 
+    conditions.push(`status = 'active'`);
+
     if (search) {
       params.push(`%${search.toLowerCase()}%`);
       const idx = params.length;
       conditions.push(
-        `(LOWER(full_name) LIKE $${idx} OR LOWER(COALESCE(cedula, '')) LIKE $${idx})`
+        `(LOWER(full_name) LIKE $${idx} OR LOWER(COALESCE(cedula, '')) LIKE $${idx} OR LOWER(email) LIKE $${idx})`
       );
     }
 
     const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     params.push(200);
 
-    const { rows } = await query<{ id: number; full_name: string; cedula: string | null; role: string }>(
-      `SELECT id, full_name, cedula, role
+    const { rows } = await query<{ id: number; full_name: string; cedula: string | null; email: string; role: string }>(
+      `SELECT id, full_name, cedula, email, role
        FROM users
        ${whereSql}
        ORDER BY full_name ASC
@@ -176,7 +182,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
     const alertDays = await getExpiryAlertDays();
     const listOptions =
       req.user!.role === 'trainer'
-        ? { trainerId: req.user!.id }
+        ? { membersOnly: true, activeOnly: true }
         : req.user!.role === 'receptionist'
           ? { membersOnly: true }
           : undefined;
@@ -562,16 +568,50 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
 router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
   const { routine_id, start_date, end_date } = req.body;
   const assigned_by = req.user!.id;
+  const memberId = parseInt(req.params.id, 10);
+  const routineId = parseInt(String(routine_id), 10);
+
+  if (Number.isNaN(memberId) || Number.isNaN(routineId)) {
+    return res.status(400).json({ error: 'ID de miembro o rutina inválido' });
+  }
+
   try {
+    const { rows: memberRows } = await query<{ role: string; status: string }>(
+      `SELECT role, status FROM users WHERE id = $1`,
+      [memberId]
+    );
+    const member = memberRows[0];
+    if (!member) {
+      return res.status(404).json({ error: 'Miembro no encontrado' });
+    }
+    if (member.role !== 'member') {
+      return res.status(400).json({ error: 'Solo se pueden asignar rutinas a miembros' });
+    }
+    if (member.status !== 'active') {
+      return res.status(400).json({ error: 'El miembro no está activo' });
+    }
+
+    const { rows: routineRows } = await query<{ trainer_id: number }>(
+      `SELECT trainer_id FROM routines WHERE id = $1`,
+      [routineId]
+    );
+    const routine = routineRows[0];
+    if (!routine) {
+      return res.status(404).json({ error: 'Rutina no encontrada' });
+    }
+    if (req.user!.role === 'trainer' && routine.trainer_id !== req.user!.id) {
+      return res.status(403).json({ error: 'No puedes asignar rutinas de otro entrenador' });
+    }
+
     const { rows } = await query(
       `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [req.params.id, routine_id, assigned_by, start_date, end_date]
+      [memberId, routineId, assigned_by, start_date, end_date]
     );
     res.json({ id: rows[0].id, success: true });
 
-    void notifyRoutineAssigned(Number(req.params.id), Number(routine_id)).catch((err: unknown) =>
+    void notifyRoutineAssigned(memberId, routineId).catch((err: unknown) =>
       logger.error('Error enviando notificacion de rutina asignada', {
         error: getErrorMessage(err),
       })

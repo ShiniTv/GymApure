@@ -5,13 +5,15 @@ import {
   useMemberRoutinesQuery,
   useMemberOptionsQuery,
   useRoutineAssignmentsQuery,
-  useInvalidateRoutines,
+  useInvalidateAssignmentData,
 } from '../hooks/queries/useRoutinesQuery';
 import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToastOptional } from '../context/ToastContext';
 import { PageHeader, SegmentedControl, BackToDashboardLink } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
+import { toDisplayErrorMessage } from '../lib/api';
 import {
   format,
   addDays,
@@ -72,10 +74,13 @@ export default function Routines() {
   const [deletingRoutine, setDeletingRoutine] = useState(false);
   const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{ routineId: number; exercise: RoutineExercise } | null>(null);
   const [deletingExercise, setDeletingExercise] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState(false);
 
   const navigate = useNavigate();
   const { user } = useAuth();
-  const invalidateRoutines = useInvalidateRoutines();
+  const toast = useToastOptional();
+  const invalidateAssignmentData = useInvalidateAssignmentData();
   const isMember = user?.role === 'member';
   const isStaffRoutines = user?.role === 'admin' || user?.role === 'trainer';
   const { data: libraryRoutines, isPending: libraryLoading } = useRoutinesLibraryQuery(!isMember && !!user);
@@ -83,7 +88,8 @@ export default function Routines() {
     user?.id,
     isMember && !!user
   );
-  const { data: members = [] } = useMemberOptionsQuery(!isMember && !!user);
+  const { data: members = [], isPending: membersLoading, isError: membersError, error: membersQueryError } =
+    useMemberOptionsQuery(!isMember && !!user);
   const { data: exercisesCatalog = [] } = useExercisesQuery(isStaffRoutines);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
@@ -111,6 +117,9 @@ export default function Routines() {
     } else if (!param) {
       setView('library');
     }
+    if (searchParams.get('assign') === '1') {
+      setIsAssigningFromCalendar(true);
+    }
   }, [searchParams]);
 
   const refreshRoutineExercises = async (routineId: number) => {
@@ -121,7 +130,7 @@ export default function Routines() {
     );
   };
 
-  const refreshRoutines = () => invalidateRoutines();
+  const refreshRoutines = () => invalidateAssignmentData();
 
   const handleInlineUpdate = async (routineId: number, exercise: RoutineExercise, field: 'sets' | 'reps', value: number) => {
     if (value === exercise[field]) return;
@@ -281,8 +290,15 @@ export default function Routines() {
     }
   };
 
+  const openAssignModal = () => {
+    setAssignError(null);
+    setIsAssigningFromCalendar(true);
+  };
+
   const handleQuickAssign = async () => {
     if (!assignForm.user_id || !assignForm.routine_id || !user) return;
+    setAssigning(true);
+    setAssignError(null);
     try {
       const res = await apiFetch(`/api/users/${assignForm.user_id}/routines`, {
         method: 'POST',
@@ -297,9 +313,15 @@ export default function Routines() {
       await parseJsonResponse(res);
       setIsAssigningFromCalendar(false);
       setAssignForm((prev) => ({ ...prev, user_id: '', routine_id: '' }));
-      invalidateRoutines();
+      invalidateAssignmentData();
+      toast?.success('Rutina asignada correctamente');
     } catch (err) {
+      const message = toDisplayErrorMessage(err, 'Error al asignar la rutina');
+      setAssignError(message);
+      toast?.error(message);
       clientLogger.error('Failed to assign routine', err);
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -400,6 +422,14 @@ export default function Routines() {
         assignForm={assignForm}
         setAssignForm={setAssignForm}
         members={members}
+        membersLoading={membersLoading}
+        membersError={membersError ? membersQueryError : undefined}
+        assignError={assignError}
+        assigning={assigning}
+        onCreateMember={() => {
+          setIsAssigningFromCalendar(false);
+          navigate('/members');
+        }}
         routines={routines}
         handleQuickAssign={handleQuickAssign}
         isCreating={isCreating}
@@ -462,10 +492,10 @@ export default function Routines() {
           setSelectedDay={setSelectedDay}
           calendarDays={calendarDays}
           assignmentsByDay={assignmentsByDay}
-          onAssignDirect={() => setIsAssigningFromCalendar(true)}
+          onAssignDirect={openAssignModal}
           onAssignOnDay={(dateStr) => {
             setAssignForm((prev) => ({ ...prev, start_date: dateStr }));
-            setIsAssigningFromCalendar(true);
+            openAssignModal();
           }}
           onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
         />
@@ -474,6 +504,7 @@ export default function Routines() {
           loadingAssignments={loadingAssignments}
           assignments={assignments}
           onChangeView={changeView}
+          onAssign={openAssignModal}
           onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
         />
       )}

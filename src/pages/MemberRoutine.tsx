@@ -441,7 +441,7 @@ export default function MemberRoutine() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
               onClick={() => {
                 setIsAssigning(true);
                 apiFetchAvailableRoutines();
@@ -449,7 +449,8 @@ export default function MemberRoutine() {
               aria-label="Asignar rutina existente"
               title="Asignar existente"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
+              <span className="text-xs font-semibold">Asignar existente</span>
             </Button>
           </div>
         }

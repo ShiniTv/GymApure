@@ -48,6 +48,7 @@ interface TrainerExpiringMember {
 }
 
 interface TrainerDashboardStats {
+  totalMembers: number;
   assignedMembers: number;
   activeNow: number;
   todayWorkouts: number;
@@ -414,7 +415,7 @@ export default function Dashboard() {
       <PageHeader
         compact
         title={<>Control de <span className="text-brand">entrenamiento</span></>}
-        subtitle="Actividad con tus miembros asignados"
+        subtitle="Actividad con tus miembros"
         badge={stats?.activeNow ? `${stats.activeNow} en el gym` : undefined}
       />
 
@@ -427,7 +428,7 @@ export default function Dashboard() {
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {withoutRoutines > 0 && (
                   <Link
-                    to="/members"
+                    to="/routines?view=calendar&assign=1"
                     className="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold bg-brand/10 text-brand dark:text-brand hover:bg-brand/15"
                   >
                     {withoutRoutines} sin rutina
@@ -456,10 +457,11 @@ export default function Dashboard() {
         </div>
       </DashboardSection>
 
-      <div className="grid grid-cols-4 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-        <QuickAction compact iconOnlyMobile to="/members" icon={Users} title="Mis miembros" description="Ver lista y asignar rutinas" count={stats?.assignedMembers || 0} tone="blue" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+        <QuickAction compact iconOnlyMobile to="/members" icon={Users} title="Miembros" description="Ver todos los miembros activos" count={stats?.totalMembers || 0} tone="blue" />
+        <QuickAction compact iconOnlyMobile to="/routines?view=calendar&assign=1" icon={CalendarClock} title="Asignar" description="Asignar rutina a un miembro" tone="emerald" />
         <QuickAction compact iconOnlyMobile to="/routines" icon={Dumbbell} title="Plantillas" description="Crear y editar rutinas" count={stats?.routinesCreated || 0} tone="orange" />
-        <QuickAction compact iconOnlyMobile to="/routines?view=assignments" icon={CalendarClock} title="Asignaciones" description="Rutinas activas por miembro" tone="emerald" />
+        <QuickAction compact iconOnlyMobile to="/routines?view=assignments" icon={CalendarClock} title="Asignaciones" description="Rutinas activas por miembro" count={stats?.assignedMembers || 0} tone="blue" />
         <QuickAction compact iconOnlyMobile to="/exercises" icon={BookOpen} title="Ejercicios" description="Catálogo de movimientos" tone="blue" />
       </div>
 
@@ -510,7 +512,7 @@ export default function Dashboard() {
         <div className="space-y-2">
           {(trainerStats?.membersWithoutRoutines ?? 0) > 0 && (
             <Link
-              to="/members"
+              to="/routines?view=calendar&assign=1"
               className="flex items-center justify-between p-3 rounded-xl bg-brand/5 border border-brand/20 hover:bg-brand/10 transition-colors"
             >
               <div className="flex items-center gap-2.5 min-w-0">

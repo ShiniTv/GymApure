@@ -1,7 +1,16 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { Routine, RoutineAssignmentMember } from '../../pages/routines/types';
-import type { Member } from './useMembersQuery';
+
+export interface MemberOption {
+  id: number;
+  full_name: string;
+  cedula: string | null;
+  email: string;
+  role: string;
+}
+
+export const memberOptionsQueryKey = ['users', 'options', 'member'] as const;
 
 export function useRoutinesLibraryQuery(enabled = true) {
   return useQuery({
@@ -31,10 +40,10 @@ export function useMemberRoutinesQuery(userId: number | undefined, enabled = tru
 
 export function useMemberOptionsQuery(enabled = true) {
   return useQuery({
-    queryKey: ['users', 'options', 'member'],
+    queryKey: memberOptionsQueryKey,
     queryFn: async () => {
       const res = await apiFetch('/api/users/options?role=member');
-      const data = await parseJsonResponse<Member[]>(res);
+      const data = await parseJsonResponse<MemberOption[]>(res);
       return Array.isArray(data) ? data : [];
     },
     enabled,
@@ -56,4 +65,18 @@ export function useRoutineAssignmentsQuery(enabled = true) {
 export function useInvalidateRoutines() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries({ queryKey: ['routines'] });
+}
+
+export function useInvalidateMemberOptions() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: memberOptionsQueryKey });
+}
+
+export function useInvalidateAssignmentData() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ['routines'] });
+    qc.invalidateQueries({ queryKey: memberOptionsQueryKey });
+    qc.invalidateQueries({ queryKey: ['members'] });
+  };
 }

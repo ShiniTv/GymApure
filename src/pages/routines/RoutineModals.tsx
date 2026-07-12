@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { UserPlus } from 'lucide-react';
-import { Button, Modal, Label, Input, Select, DifficultySelect } from '../../components/ui';
+import { Button, Modal, Label, Input, Select, DifficultySelect, Spinner } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
+import { toDisplayErrorMessage } from '../../lib/api';
 import type {
   Routine,
   RoutineExercise,
@@ -27,6 +28,11 @@ export interface RoutineModalsProps {
     }>
   >;
   members: Member[];
+  membersLoading?: boolean;
+  membersError?: unknown;
+  assignError?: string | null;
+  assigning?: boolean;
+  onCreateMember?: () => void;
   routines: Routine[];
   handleQuickAssign: () => void;
   isCreating: boolean;
@@ -81,6 +87,11 @@ export function RoutineModals({
   assignForm,
   setAssignForm,
   members,
+  membersLoading = false,
+  membersError,
+  assignError,
+  assigning = false,
+  onCreateMember,
   routines,
   handleQuickAssign,
   isCreating,
@@ -112,6 +123,26 @@ export function RoutineModals({
   deletingExercise,
   confirmDeleteExercise,
 }: RoutineModalsProps) {
+  const [memberSearch, setMemberSearch] = useState('');
+
+  const filteredMembers = useMemo(() => {
+    const q = memberSearch.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter(
+      (m) =>
+        m.full_name.toLowerCase().includes(q) ||
+        (m.cedula?.toLowerCase().includes(q) ?? false) ||
+        (m.email?.toLowerCase().includes(q) ?? false)
+    );
+  }, [members, memberSearch]);
+
+  const memberLabel = (m: Member) => {
+    const parts = [m.full_name];
+    if (m.cedula) parts.push(m.cedula);
+    else if (m.email) parts.push(m.email);
+    return parts.join(' · ');
+  };
+
   return (
     <>
       <Modal
@@ -122,15 +153,49 @@ export function RoutineModals({
         <div className="space-y-4">
           <div>
             <Label>Seleccionar Miembro</Label>
-            <Select
-              value={assignForm.user_id}
-              onChange={(e) => setAssignForm({ ...assignForm, user_id: e.target.value })}
-            >
-              <option value="">Selección...</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.full_name}</option>
-              ))}
-            </Select>
+            {membersLoading ? (
+              <div className="flex items-center gap-2 py-3 text-sm text-zinc-500">
+                <Spinner className="h-4 w-4" />
+                Cargando miembros…
+              </div>
+            ) : membersError ? (
+              <p className="text-sm text-red-500 py-2">
+                {toDisplayErrorMessage(membersError, 'No se pudieron cargar los miembros')}
+              </p>
+            ) : members.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 p-4 text-center space-y-3">
+                <p className="text-sm text-zinc-500">No hay miembros registrados.</p>
+                {onCreateMember && (
+                  <Button variant="secondary" size="sm" onClick={onCreateMember}>
+                    Crear miembro
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <Input
+                  type="search"
+                  placeholder="Buscar por nombre, cédula o email…"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  className="mb-2"
+                />
+                <Select
+                  value={assignForm.user_id}
+                  onChange={(e) => setAssignForm({ ...assignForm, user_id: e.target.value })}
+                >
+                  <option value="">Selección...</option>
+                  {filteredMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {memberLabel(m)}
+                    </option>
+                  ))}
+                </Select>
+                {filteredMembers.length === 0 && (
+                  <p className="text-xs text-zinc-500 mt-1">Sin coincidencias para &quot;{memberSearch}&quot;</p>
+                )}
+              </>
+            )}
           </div>
           <div>
             <Label>Seleccionar Rutina</Label>
@@ -163,15 +228,16 @@ export function RoutineModals({
               />
             </div>
           </div>
+          {assignError && <p className="text-sm text-red-500">{assignError}</p>}
           <Button
             variant="secondary"
             className="w-full"
             size="lg"
             onClick={handleQuickAssign}
-            disabled={!assignForm.user_id || !assignForm.routine_id}
+            disabled={!assignForm.user_id || !assignForm.routine_id || assigning || membersLoading}
           >
             <UserPlus className="h-5 w-5" />
-            Asignar Rutina
+            {assigning ? 'Asignando…' : 'Asignar Rutina'}
           </Button>
         </div>
       </Modal>

@@ -22,6 +22,8 @@ export interface Member {
   role: string;
   full_name: string;
   profile_image?: string | null;
+  email?: string;
+  cedula?: string | null;
 }
 
 export interface AssignedRoutine {

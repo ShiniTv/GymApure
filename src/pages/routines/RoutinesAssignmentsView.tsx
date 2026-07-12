@@ -1,4 +1,4 @@
-import { Users, Calendar, ChevronRight, Dumbbell } from 'lucide-react';
+import { Users, Calendar, ChevronRight, Dumbbell, UserPlus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Button, Spinner, EmptyState, Avatar, PageState, Card, Badge } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
@@ -8,6 +8,7 @@ export interface RoutinesAssignmentsViewProps {
   loadingAssignments: boolean;
   assignments: RoutineAssignmentMember[];
   onChangeView: (view: RoutinesView) => void;
+  onAssign?: () => void;
   onNavigateToMemberRoutines: (memberId: number) => void;
 }
 
@@ -30,6 +31,7 @@ export function RoutinesAssignmentsView({
   loadingAssignments,
   assignments,
   onChangeView,
+  onAssign,
   onNavigateToMemberRoutines,
 }: RoutinesAssignmentsViewProps) {
   const activeMembers = assignments.filter((m) => m.routines && m.routines.length > 0);
@@ -51,9 +53,16 @@ export function RoutinesAssignmentsView({
         title="Sin asignaciones activas"
         description="Asigna rutinas desde el calendario o desde el perfil del miembro."
         action={
-          <Button variant="secondary" size="sm" onClick={() => onChangeView('calendar')}>
-            Ir al calendario
-          </Button>
+          onAssign ? (
+            <Button variant="secondary" size="sm" onClick={onAssign}>
+              <UserPlus className="h-4 w-4" />
+              Asignar rutina
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm" onClick={() => onChangeView('calendar')}>
+              Ir al calendario
+            </Button>
+          )
         }
       />
     );
@@ -61,10 +70,18 @@ export function RoutinesAssignmentsView({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-zinc-500 px-0.5">
-        {activeMembers.length} miembro{activeMembers.length !== 1 ? 's' : ''} · {totalRoutines} rutina
-        {totalRoutines !== 1 ? 's' : ''} activa{totalRoutines !== 1 ? 's' : ''}
-      </p>
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <p className="text-[11px] text-zinc-500">
+          {activeMembers.length} miembro{activeMembers.length !== 1 ? 's' : ''} · {totalRoutines} rutina
+          {totalRoutines !== 1 ? 's' : ''} activa{totalRoutines !== 1 ? 's' : ''}
+        </p>
+        {onAssign && (
+          <Button size="sm" className="h-9 shrink-0 gap-1.5" onClick={onAssign}>
+            <UserPlus className="h-4 w-4" />
+            <span className="text-xs font-semibold">Asignar rutina</span>
+          </Button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3">
         {activeMembers.map((member) => (
