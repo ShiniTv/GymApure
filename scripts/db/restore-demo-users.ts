@@ -1,12 +1,16 @@
 /**
  * Restaura cuentas demo ficticias para CI y scripts test:sprint*.
  * No usar para el flujo normal de la app — usa npm run db:create-admin y /register.
+ * Bloqueado en producción (DATABASE_URL con ref de prod).
  * Uso: npm run db:restore-demo
  */
 import 'dotenv/config';
 import { query } from '../../src/db/index.ts';
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 import { hashPassword } from '../../src/lib/passwordHash.ts';
+import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
+
+assertNotProductionDatabase({ scriptName: 'db:restore-demo' });
 
 const DEMO_PASSWORD = resolveDemoPassword();
 

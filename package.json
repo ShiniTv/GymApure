@@ -67,6 +67,8 @@
     "db:reset-data": "tsx scripts/db/reset-database-data.ts",
     "db:migrate-from-sqlite": "tsx scripts/_archive/migrate-sqlite-to-pg.ts",
     "db:restore-demo": "tsx scripts/db/restore-demo-users.ts",
+    "db:purge-demo": "tsx scripts/db/purge-demo-data.ts",
+    "db:purge-demo:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/purge-demo-data.ts",
     "db:seed-system-exercises": "tsx scripts/db/seed-system-exercises.ts",
     "db:seed-system-exercises:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/seed-system-exercises.ts",
     "db:generate-system-exercises-csv": "tsx scripts/db/generate-system-exercises-csv.ts",
