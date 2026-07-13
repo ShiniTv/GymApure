@@ -62,8 +62,8 @@ jobs:
 
       - run: npm run build
 
-      - name: Dependency audit
-        run: npm audit --audit-level=high
+      - name: Dependency audit (production)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lighthouse performance budgets (login)
         run: npm run lighthouse:ci

@@ -11,6 +11,7 @@ seed-*-log.txt
 !.env.example
 !.env.dev.example
 !.env.prod.example
+!.env.staging.example
 gym.db
 sqlite.db
 uploads/

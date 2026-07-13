@@ -5,10 +5,11 @@ useDefault = true
 
 [allowlist]
 description = "Plantillas de entorno, CI y documentación (sin secretos reales)"
-paths = [
+  paths = [
   '''\.env\.example$''',
   '''\.env\.dev\.example$''',
   '''\.env\.prod\.example$''',
+  '''\.env\.staging\.example$''',
   '''scripts/deploy/render-.*\.env\.example$''',
   '''\.github/workflows/ci\.yml$''',
   '''docs/''',

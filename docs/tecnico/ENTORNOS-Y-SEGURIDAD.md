@@ -144,6 +144,22 @@ El historial de git conserva commits antiguos; la rotación invalida secretos au
 
 Ver [CHECKLIST-SEGURIDAD-REPO.md](./CHECKLIST-SEGURIDAD-REPO.md).
 
+### Staging
+
+Ver [STAGING.md](./STAGING.md) — tercer entorno para validar migraciones antes de prod.
+
+### MFA obligatorio (producción)
+
+Con `REQUIRE_MFA_FOR_STAFF=true` (recomendado en Render), el staff sin MFA no puede usar APIs protegidas; el frontend redirige a `/security`.
+
+Antes de activar en prod:
+
+```powershell
+npm run security:audit-mfa:prod -- --allow-prod
+```
+
+Cada admin, recepcionista y entrenador debe activar MFA en **Seguridad MFA**.
+
 ---
 
 ## Checklist antes de operar en equipo nuevo

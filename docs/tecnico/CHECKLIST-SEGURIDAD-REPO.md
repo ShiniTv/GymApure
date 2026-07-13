@@ -28,6 +28,18 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 - [ ] No existe `.env.backup` (o se eliminó tras confirmar `.env.dev` / `.env.prod`)
 - [ ] `gym.db` y otros artefactos locales no están en git
 
+## MFA y endurecimiento en producción
+
+- [ ] `REQUIRE_MFA_FOR_STAFF=true` en Render (tras activar MFA en cada cuenta staff)
+- [ ] `ENABLE_HIBP_CHECK=true` en Render
+- [ ] `npm run security:audit-mfa:prod -- --allow-prod` sin hallazgos
+
+## Staging (recomendado)
+
+- [ ] Proyecto Supabase staging creado
+- [ ] `.env.staging` configurado (no commitear)
+- [ ] `npm run db:migrate:staging` y smoke tests antes de cada release prod
+
 ## Rotación (si hubo exposición)
 
 - [ ] Secretos que estuvieron en plantillas o en git fueron rotados — ver [ROTACION-SECRETOS.md](./ROTACION-SECRETOS.md)
@@ -35,5 +47,6 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 ## Enlaces
 
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
+- [Staging](./STAGING.md)
 - [Variables de entorno](./VARIABLES-ENTORNO.md)
 - [Rotación de secretos](./ROTACION-SECRETOS.md)

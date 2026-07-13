@@ -19,7 +19,7 @@ Procedimiento para rotar credenciales críticas de GymApure sin tiempo de inacti
 
 | Paso | Acción                                            |
 | ---- | ------------------------------------------------- |
-| 1    | Generar nuevo secreto: `openssl rand -base64 48`  |
+| 1    | `npm run secrets:rotate-jwt` (genera valor nuevo) |
 | 2    | En Render → Environment → actualizar `JWT_SECRET` |
 | 3    | Redeploy del servicio web                         |
 | 4    | Comunicar al staff que deben re-login             |

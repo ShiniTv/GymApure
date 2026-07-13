@@ -42,6 +42,7 @@ const envSchema = z.object({
   CRON_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
   ENABLE_HIBP_CHECK: z.string().optional(),
+  REQUIRE_MFA_FOR_STAFF: z.string().optional(),
   PUBLIC_APP_URL: z.string().url().optional(),
 });
 
@@ -131,5 +132,8 @@ function resolveAllowPublicRegister(): boolean {
 
 /** When true, reject passwords found in Have I Been Pwned (requires outbound HTTPS). */
 export const enableHibpCheck = parseEnvBoolean(parsedEnv.ENABLE_HIBP_CHECK, false);
+
+/** When true, staff (admin/reception/trainer) must enable MFA before using protected APIs. */
+export const requireMfaForStaff = parseEnvBoolean(parsedEnv.REQUIRE_MFA_FOR_STAFF, false);
 
 export const allowPublicRegister = resolveAllowPublicRegister();

@@ -9,9 +9,16 @@ import {
   type ReactNode,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
+import {
+  apiFetch,
+  registerMfaSetupRequiredHandler,
+  registerUnauthorizedHandler,
+  setAuthBootstrapComplete,
+} from '../lib/api';
 import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
 import type { UserRole } from '../lib/roles';
+
+const MFA_STAFF_ROLES: UserRole[] = ['admin', 'receptionist', 'trainer'];
 
 interface User {
   id: number;
@@ -79,6 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       controller.abort();
     };
   }, []);
+
+  useEffect(() => {
+    registerMfaSetupRequiredHandler(() => {
+      if (!userRef.current) return;
+      if (!MFA_STAFF_ROLES.includes(userRef.current.role)) return;
+      navigate('/security', { replace: true });
+    });
+    return () => registerMfaSetupRequiredHandler(null);
+  }, [navigate]);
 
   useEffect(() => {
     registerUnauthorizedHandler(() => {

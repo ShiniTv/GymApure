@@ -56,7 +56,7 @@ function labelText(label: EnvLabel): string {
 function main() {
   console.log('\n=== Verificación de entornos ===\n');
 
-  const files = ['.env.dev', '.env.prod', '.env', '.env.backup'];
+  const files = ['.env.dev', '.env.staging', '.env.prod', '.env', '.env.backup'];
   for (const file of files) {
     const status = readEnvFile(file);
     if (!status.exists && file === '.env.backup') continue;
