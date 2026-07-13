@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
   useRoutinesLibraryQuery,
@@ -7,13 +7,23 @@ import {
   useRoutineAssignmentsQuery,
   useInvalidateAssignmentData,
 } from '../hooks/queries/useRoutinesQuery';
+import { useTrainersQuery } from '../hooks/queries/useTrainersQuery';
 import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useToastOptional } from '../context/ToastContext';
-import { PageHeader, SegmentedControl, BackToDashboardLink } from '../components/ui';
+import {
+  PageHeader,
+  SegmentedControl,
+  BackToDashboardLink,
+  Card,
+  Badge,
+  EmptyState,
+  Button,
+} from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
-import { toDisplayErrorMessage } from '../lib/api';
 import {
   format,
   addDays,
@@ -23,12 +33,14 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isWithinInterval,
-  parseISO,
+  isAfter,
+  isBefore,
+  startOfDay,
 } from 'date-fns';
+import { parseDateOnly } from '../lib/dates';
 import type {
   Routine,
   RoutineExercise,
-  RoutineAssignmentMember,
   ExerciseOption,
   CalendarAssignment,
   RoutinesView,
@@ -37,6 +49,35 @@ import { RoutineModals } from './routines/RoutineModals';
 import { RoutinesLibraryView } from './routines/RoutinesLibraryView';
 import { RoutinesAssignmentsView } from './routines/RoutinesAssignmentsView';
 import { RoutinesCalendarView } from './routines/RoutinesCalendarView';
+import { dateLocale as es } from '../lib/dateLocale';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { PullToRefreshContainer } from '../components/PullToRefresh';
+import {
+  buildRoutineExercisePayload,
+  buildRoutineExerciseUpdatePayload,
+  defaultRoutineExerciseForm,
+} from '../lib/routineExercisePayload';
+import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
+
+type MemberRoutineRow = Routine & { start_date?: string | null; end_date?: string | null };
+
+function getMemberRoutineStatus(
+  startDate?: string | null,
+  endDate?: string | null
+): 'upcoming' | 'ending' | 'active' | null {
+  const today = startOfDay(new Date());
+  if (startDate) {
+    const start = startOfDay(parseDateOnly(startDate));
+    if (isAfter(start, today)) return 'upcoming';
+  }
+  if (endDate) {
+    const end = startOfDay(parseDateOnly(endDate));
+    if (isBefore(end, today)) return null;
+    if (!isAfter(end, addDays(today, 7))) return 'ending';
+  }
+  return 'active';
+}
 
 export default function Routines() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,6 +91,7 @@ export default function Routines() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isAssigningFromCalendar, setIsAssigningFromCalendar] = useState(false);
+  const [assignSingleDay, setAssignSingleDay] = useState(false);
   const [assignForm, setAssignForm] = useState({
     user_id: '',
     routine_id: '',
@@ -62,43 +104,107 @@ export default function Routines() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<RoutineExercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [newExercise, setNewExercise] = useState({
-    exercise_id: '',
-    sets: 3,
-    reps: 10,
-    rest_seconds: 60,
-    weight_suggestion: '',
-  });
+  const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [deleteRoutineTarget, setDeleteRoutineTarget] = useState<Routine | null>(null);
   const [deleteRoutineError, setDeleteRoutineError] = useState<string | null>(null);
   const [deletingRoutine, setDeletingRoutine] = useState(false);
-  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{ routineId: number; exercise: RoutineExercise } | null>(null);
+  const [deleteExerciseTarget, setDeleteExerciseTarget] = useState<{
+    routineId: number;
+    exercise: RoutineExercise;
+  } | null>(null);
   const [deletingExercise, setDeletingExercise] = useState(false);
-  const [assignError, setAssignError] = useState<string | null>(null);
-  const [assigning, setAssigning] = useState(false);
+  const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
+  const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
+  const memberStatsCtx = useMemberStatsOptional();
   const invalidateAssignmentData = useInvalidateAssignmentData();
   const isMember = user?.role === 'member';
-  const isStaffRoutines = user?.role === 'admin' || user?.role === 'trainer';
-  const { data: libraryRoutines, isPending: libraryLoading } = useRoutinesLibraryQuery(!isMember && !!user);
-  const { data: memberRoutines, isPending: memberLoading } = useMemberRoutinesQuery(
-    user?.id,
-    isMember && !!user
-  );
-  const { data: members = [], isPending: membersLoading, isError: membersError, error: membersQueryError } =
-    useMemberOptionsQuery(!isMember && !!user);
+  const isStaffRoutines = user?.role === 'trainer';
+  const {
+    data: libraryRoutines,
+    isPending: libraryLoading,
+    isError: libraryError,
+  } = useRoutinesLibraryQuery(!isMember && !!user);
+  const {
+    data: memberRoutines,
+    isPending: memberLoading,
+    isError: memberError,
+    refetch: refetchMember,
+  } = useMemberRoutinesQuery(user?.id, isMember && !!user);
+  const {
+    data: members = [],
+    isPending: membersLoading,
+    isError: membersError,
+    error: membersQueryError,
+  } = useMemberOptionsQuery(!isMember && !!user);
   const { data: exercisesCatalog = [] } = useExercisesQuery(isStaffRoutines);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
+  const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);
   const loadingRoutines = isMember ? memberLoading : libraryLoading;
+  const routinesLoadError = isMember ? memberError : libraryError;
   const availableExercises = exercisesCatalog as ExerciseOption[];
+
+  const onRefreshMemberRoutines = useCallback(async () => {
+    if (isMember) await refetchMember();
+  }, [isMember, refetchMember]);
+
+  const {
+    pullDistance: memberPullDistance,
+    isRefreshing: memberRefreshing,
+    handlers: memberPtrHandlers,
+  } = usePullToRefresh({
+    onRefresh: onRefreshMemberRoutines,
+    threshold: 80,
+  });
+
+  const selectedMember = useMemo(
+    () => members.find((m) => String(m.id) === assignForm.user_id),
+    [members, assignForm.user_id]
+  );
+
+  const selectedMemberShift = selectedMember?.training_shift ?? null;
+
+  const availableTrainersForShift = useMemo(() => {
+    if (!selectedMemberShift) return allTrainers;
+    return allTrainers.filter((t) => t.shift === selectedMemberShift);
+  }, [allTrainers, selectedMemberShift]);
+
+  const filteredRoutinesForAssign = useMemo(() => {
+    if (!selectedMemberShift) return routines;
+    const trainerIds = new Set(availableTrainersForShift.map((t) => t.id));
+    return routines.filter((r) => r.trainer_id != null && trainerIds.has(r.trainer_id));
+  }, [routines, selectedMemberShift, availableTrainersForShift]);
+
+  usePageTitle(isMember ? 'Rutinas' : 'Gestión de rutinas');
+
+  const memberRoutineHighlights = useMemo(() => {
+    if (!isMember) return { upcoming: [] as MemberRoutineRow[], ending: [] as MemberRoutineRow[] };
+    const rows = (memberRoutines ?? []) as MemberRoutineRow[];
+    const upcoming = rows.filter(
+      (r) => getMemberRoutineStatus(r.start_date, r.end_date) === 'upcoming'
+    );
+    const ending = rows.filter(
+      (r) => getMemberRoutineStatus(r.start_date, r.end_date) === 'ending'
+    );
+    return { upcoming, ending };
+  }, [isMember, memberRoutines]);
 
   useEffect(() => {
     const next = isMember ? (memberRoutines ?? []) : (libraryRoutines ?? []);
-    setRoutines(next);
+    setRoutines((prev) => {
+      const prevById = new Map(prev.map((r) => [r.id, r]));
+      return next.map((r) => {
+        const existing = prevById.get(r.id);
+        if (existing?.exercises !== undefined) {
+          return { ...r, exercises: existing.exercises };
+        }
+        return r;
+      });
+    });
   }, [isMember, memberRoutines, libraryRoutines]);
 
   const changeView = (next: RoutinesView) => {
@@ -125,32 +231,58 @@ export default function Routines() {
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
     const data = await parseJsonResponse<{ exercises: RoutineExercise[] }>(res);
+    const exercises = (Array.isArray(data.exercises) ? data.exercises : []).map((exercise) => ({
+      ...exercise,
+      set_prescription:
+        parseSetPrescriptionFromApi(exercise.set_prescription) ??
+        deriveSetPrescription(exercise.sets, exercise.reps),
+    }));
     setRoutines((prev) =>
-      prev.map((r) => (r.id === routineId ? { ...r, exercises: data.exercises } : r))
+      prev.map((r) =>
+        r.id === routineId ? { ...r, exercises, exercise_count: exercises.length } : r
+      )
     );
   };
 
+  const openAssignModal = useCallback(() => {
+    setAssignSingleDay(false);
+    setIsAssigningFromCalendar(true);
+  }, []);
+
   const refreshRoutines = () => invalidateAssignmentData();
 
-  const handleInlineUpdate = async (routineId: number, exercise: RoutineExercise, field: 'sets' | 'reps', value: number) => {
+  const handleInlineUpdate = async (
+    routineId: number,
+    exercise: RoutineExercise,
+    field: 'sets' | 'reps',
+    value: number
+  ) => {
     if (value === exercise[field]) return;
     try {
       const updatedExercise = { ...exercise, [field]: value };
-      const res = await apiFetch(`/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sets: updatedExercise.sets,
-          reps: updatedExercise.reps,
-          rest_seconds: updatedExercise.rest_seconds,
-          weight_suggestion: updatedExercise.weight_suggestion,
-        }),
-      });
+      const res = await apiFetch(
+        `/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sets: updatedExercise.sets,
+            reps: updatedExercise.reps,
+            rest_seconds: updatedExercise.rest_seconds,
+            weight_suggestion: updatedExercise.weight_suggestion,
+          }),
+        }
+      );
       await parseJsonResponse(res);
       setRoutines((prev) =>
         prev.map((r) =>
           r.id === routineId
-            ? { ...r, exercises: r.exercises?.map((e) => (e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e)) }
+            ? {
+                ...r,
+                exercises: r.exercises?.map((e) =>
+                  e.routine_exercise_id === exercise.routine_exercise_id ? updatedExercise : e
+                ),
+              }
             : r
         )
       );
@@ -214,11 +346,13 @@ export default function Routines() {
     setDeletingExercise(true);
     try {
       const { routineId, exercise } = deleteExerciseTarget;
-      const res = await apiFetch(`/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`, { method: 'DELETE' });
+      const res = await apiFetch(
+        `/api/routines/${routineId}/exercises/${exercise.routine_exercise_id}`,
+        { method: 'DELETE' }
+      );
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
-      refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
     } finally {
@@ -229,12 +363,16 @@ export default function Routines() {
   const handleRoutineCardClick = (routineId: number) => {
     if (expandedRoutineId === routineId) return;
     if (user?.role === 'member') {
-      navigate(`/workout/${routineId}`);
+      void toggleExpandRoutine(routineId);
       return;
     }
-    if (user?.role === 'trainer' || user?.role === 'admin') {
+    if (user?.role === 'trainer') {
       void toggleExpandRoutine(routineId);
     }
+  };
+
+  const handleStartWorkout = (routineId: number) => {
+    navigate(`/workout/${routineId}`);
   };
 
   const toggleExpandRoutine = async (routineId: number) => {
@@ -242,63 +380,62 @@ export default function Routines() {
       setExpandedRoutineId(null);
       return;
     }
+    setExpandedRoutineId(routineId);
     try {
       await refreshRoutineExercises(routineId);
-      setExpandedRoutineId(routineId);
     } catch (err) {
       clientLogger.error('Failed to fetch routine exercises', err);
+      toast?.error(
+        err instanceof Error ? err.message : 'No se pudieron cargar los ejercicios de la rutina'
+      );
     }
   };
 
   const handleUpdateExercise = async () => {
     if (!editingExercise || !expandedRoutineId) return;
+    setEditExerciseError(null);
     try {
-      const res = await apiFetch(`/api/routines/${expandedRoutineId}/exercises/${editingExercise.routine_exercise_id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sets: editingExercise.sets,
-          reps: editingExercise.reps,
-          rest_seconds: editingExercise.rest_seconds,
-          weight_suggestion: editingExercise.weight_suggestion,
-        }),
-      });
+      const res = await apiFetch(
+        `/api/routines/${expandedRoutineId}/exercises/${editingExercise.routine_exercise_id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildRoutineExerciseUpdatePayload(editingExercise)),
+        }
+      );
       await parseJsonResponse(res);
       setIsEditingExercise(false);
       setEditingExercise(null);
       await refreshRoutineExercises(expandedRoutineId);
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo actualizar el ejercicio';
+      setEditExerciseError(message);
       clientLogger.error('Failed to update routine exercise', err);
     }
   };
 
   const handleAddWorkoutExercise = async () => {
     if (!newExercise.exercise_id || !expandedRoutineId) return;
+    setAddExerciseError(null);
     try {
       const res = await apiFetch(`/api/routines/${expandedRoutineId}/exercises`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newExercise, exercise_id: parseInt(newExercise.exercise_id) }),
+        body: JSON.stringify(buildRoutineExercisePayload(newExercise)),
       });
       await parseJsonResponse(res);
       setIsAddingExercise(false);
-      setNewExercise({ exercise_id: '', sets: 3, reps: 10, rest_seconds: 60, weight_suggestion: '' });
+      setNewExercise(defaultRoutineExerciseForm());
       await refreshRoutineExercises(expandedRoutineId);
-      refreshRoutines();
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
+      setAddExerciseError(message);
       clientLogger.error('Failed to add exercise to routine', err);
     }
   };
 
-  const openAssignModal = () => {
-    setAssignError(null);
-    setIsAssigningFromCalendar(true);
-  };
-
   const handleQuickAssign = async () => {
     if (!assignForm.user_id || !assignForm.routine_id || !user) return;
-    setAssigning(true);
-    setAssignError(null);
     try {
       const res = await apiFetch(`/api/users/${assignForm.user_id}/routines`, {
         method: 'POST',
@@ -310,18 +447,14 @@ export default function Routines() {
           end_date: assignForm.end_date,
         }),
       });
-      await parseJsonResponse(res);
+      const data = await parseJsonResponse<{ updated?: boolean }>(res);
       setIsAssigningFromCalendar(false);
       setAssignForm((prev) => ({ ...prev, user_id: '', routine_id: '' }));
       invalidateAssignmentData();
-      toast?.success('Rutina asignada correctamente');
+      toast?.success(data.updated ? 'Fechas actualizadas' : 'Rutina asignada');
     } catch (err) {
-      const message = toDisplayErrorMessage(err, 'Error al asignar la rutina');
-      setAssignError(message);
-      toast?.error(message);
       clientLogger.error('Failed to assign routine', err);
-    } finally {
-      setAssigning(false);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo asignar la rutina');
     }
   };
 
@@ -341,11 +474,12 @@ export default function Routines() {
       member.routines.forEach((routine) => {
         if (!routine.start_date || !routine.end_date) return;
         try {
-          const start = parseISO(routine.start_date);
-          const end = parseISO(routine.end_date);
+          const start = startOfDay(parseDateOnly(routine.start_date));
+          const end = startOfDay(parseDateOnly(routine.end_date));
           if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return;
           calendarDays.forEach((day) => {
-            if (isWithinInterval(day, { start, end })) {
+            const dayStart = startOfDay(day);
+            if (isWithinInterval(dayStart, { start, end })) {
               const dateStr = format(day, 'yyyy-MM-dd');
               if (!map[dateStr]) map[dateStr] = [];
               map[dateStr].push({
@@ -364,150 +498,271 @@ export default function Routines() {
     return map;
   }, [assignments, calendarDays]);
 
-  const calendarAutoSelected = useRef(false);
-
   useEffect(() => {
-    if (view !== 'calendar') {
-      calendarAutoSelected.current = false;
+    if (view === 'calendar' && selectedDay === null) {
+      setSelectedDay(new Date());
     }
-  }, [view]);
+  }, [view, selectedDay]);
 
-  useEffect(() => {
-    if (view !== 'calendar' || loadingAssignments || calendarAutoSelected.current) return;
-    const today = new Date();
-    const todayStr = format(today, 'yyyy-MM-dd');
-    if (assignmentsByDay[todayStr]?.length) {
-      setSelectedDay(today);
-      calendarAutoSelected.current = true;
-    }
-  }, [view, loadingAssignments, assignmentsByDay]);
-
-  return (
+  const routinesPage = (
     <div className="page-stack-tight">
-      <PageHeader
-        compact
-        title={
-          user?.role === 'member' ? (
-            <>Mis <span className="text-brand">rutinas</span></>
-          ) : (
-            <>Gestión de <span className="text-brand">rutinas</span></>
-          )
-        }
-        subtitle={
-          user?.role === 'member'
-            ? 'Rutinas asignadas por tu entrenador'
-            : 'Plantillas y calendario'
-        }
-        action={<BackToDashboardLink />}
-      />
-
-      {user?.role !== 'member' && (
-        <SegmentedControl
-          variant="compact"
-          fullWidth
-          className="w-full sm:w-auto"
-          value={view}
-          onChange={changeView}
-          options={[
-            { value: 'library', label: 'Biblioteca' },
-            { value: 'assignments', label: 'Asignaciones' },
-            { value: 'calendar', label: 'Calendario' },
-          ]}
+      {isMember && routinesLoadError && (
+        <EmptyState
+          icon={Dumbbell}
+          title="Error al cargar rutinas"
+          description="No pudimos obtener tus rutinas. Comprueba tu conexión e inténtalo de nuevo."
+          action={
+            <Button size="sm" onClick={() => void refetchMember()}>
+              Reintentar
+            </Button>
+          }
         />
       )}
 
-      <RoutineModals
-        isAssigningFromCalendar={isAssigningFromCalendar}
-        setIsAssigningFromCalendar={setIsAssigningFromCalendar}
-        assignForm={assignForm}
-        setAssignForm={setAssignForm}
-        members={members}
-        membersLoading={membersLoading}
-        membersError={membersError ? membersQueryError : undefined}
-        assignError={assignError}
-        assigning={assigning}
-        onCreateMember={() => {
-          setIsAssigningFromCalendar(false);
-          navigate('/members');
-        }}
-        routines={routines}
-        handleQuickAssign={handleQuickAssign}
-        isCreating={isCreating}
-        setIsCreating={setIsCreating}
-        newRoutine={newRoutine}
-        setNewRoutine={setNewRoutine}
-        handleCreateRoutine={handleCreateRoutine}
-        editingRoutine={editingRoutine}
-        setEditingRoutine={setEditingRoutine}
-        handleUpdateRoutine={handleUpdateRoutine}
-        isAddingExercise={isAddingExercise}
-        setIsAddingExercise={setIsAddingExercise}
-        availableExercises={availableExercises}
-        newExercise={newExercise}
-        setNewExercise={setNewExercise}
-        handleAddWorkoutExercise={handleAddWorkoutExercise}
-        isEditingExercise={isEditingExercise}
-        setIsEditingExercise={setIsEditingExercise}
-        editingExercise={editingExercise}
-        setEditingExercise={setEditingExercise}
-        handleUpdateExercise={handleUpdateExercise}
-        deleteRoutineTarget={deleteRoutineTarget}
-        setDeleteRoutineTarget={setDeleteRoutineTarget}
-        deleteRoutineError={deleteRoutineError}
-        deletingRoutine={deletingRoutine}
-        confirmDeleteRoutine={confirmDeleteRoutine}
-        deleteExerciseTarget={deleteExerciseTarget}
-        setDeleteExerciseTarget={setDeleteExerciseTarget}
-        deletingExercise={deletingExercise}
-        confirmDeleteExercise={confirmDeleteExercise}
-      />
+      {!(isMember && routinesLoadError) && (
+        <>
+          <PageHeader
+            compact
+            title={
+              user?.role === 'member' ? (
+                <>
+                  Mis <span className="text-brand">rutinas</span>
+                </>
+              ) : (
+                <>
+                  Gestión de <span className="text-brand">rutinas</span>
+                </>
+              )
+            }
+            subtitle={
+              user?.role === 'member'
+                ? 'Rutinas asignadas por tu entrenador'
+                : 'Plantillas y calendario'
+            }
+            action={<BackToDashboardLink />}
+          />
 
-      {view === 'library' ? (
-        <RoutinesLibraryView
-          loadingRoutines={loadingRoutines}
-          routines={routines}
-          userRole={user?.role}
-          expandedRoutineId={expandedRoutineId}
-          onRoutineCardClick={handleRoutineCardClick}
-          onToggleExpandRoutine={toggleExpandRoutine}
-          onEditRoutine={setEditingRoutine}
-          onDeleteRoutine={(routine) => {
-            setDeleteRoutineError(null);
-            setDeleteRoutineTarget(routine);
-          }}
-          onCreateRoutine={() => setIsCreating(true)}
-          onAddExercise={() => setIsAddingExercise(true)}
-          onInlineUpdate={handleInlineUpdate}
-          onEditExercise={(exercise) => {
-            setEditingExercise(exercise);
-            setIsEditingExercise(true);
-          }}
-          onDeleteExercise={(routineId, exercise) => setDeleteExerciseTarget({ routineId, exercise })}
-        />
-      ) : view === 'calendar' ? (
-        <RoutinesCalendarView
-          currentDate={currentDate}
-          setCurrentDate={setCurrentDate}
-          selectedDay={selectedDay}
-          setSelectedDay={setSelectedDay}
-          calendarDays={calendarDays}
-          assignmentsByDay={assignmentsByDay}
-          onAssignDirect={openAssignModal}
-          onAssignOnDay={(dateStr) => {
-            setAssignForm((prev) => ({ ...prev, start_date: dateStr }));
-            openAssignModal();
-          }}
-          onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
-        />
-      ) : (
-        <RoutinesAssignmentsView
-          loadingAssignments={loadingAssignments}
-          assignments={assignments}
-          onChangeView={changeView}
-          onAssign={openAssignModal}
-          onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
-        />
+          {isMember &&
+            (memberRoutineHighlights.upcoming.length > 0 ||
+              memberRoutineHighlights.ending.length > 0) && (
+              <Card padding="sm" rounded="xl" className="space-y-3">
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Asignaciones</h3>
+                {memberRoutineHighlights.upcoming.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
+                      Próximas
+                    </p>
+                    {memberRoutineHighlights.upcoming.map((routine) => (
+                      <div
+                        key={routine.id}
+                        className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {routine.name}
+                          </p>
+                          {routine.start_date && (
+                            <p className="text-[11px] text-zinc-500">
+                              Inicia{' '}
+                              {format(parseDateOnly(routine.start_date), 'dd MMM yyyy', {
+                                locale: es,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="default">Próxima</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {memberRoutineHighlights.ending.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
+                      Por vencer
+                    </p>
+                    {memberRoutineHighlights.ending.map((routine) => (
+                      <div
+                        key={routine.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {routine.name}
+                          </p>
+                          {routine.end_date && (
+                            <p className="text-[11px] text-zinc-500">
+                              Hasta{' '}
+                              {format(parseDateOnly(routine.end_date), 'dd MMM yyyy', {
+                                locale: es,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="warning">Por vencer</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )}
+
+          {user?.role !== 'member' && (
+            <SegmentedControl
+              variant="compact"
+              fullWidth
+              className="w-full sm:w-auto"
+              value={view}
+              onChange={changeView}
+              options={[
+                { value: 'library', label: 'Biblioteca' },
+                { value: 'assignments', label: 'Asignaciones' },
+                { value: 'calendar', label: 'Calendario' },
+              ]}
+            />
+          )}
+
+          <RoutineModals
+            isAssigningFromCalendar={isAssigningFromCalendar}
+            setIsAssigningFromCalendar={(open) => {
+              setIsAssigningFromCalendar(open);
+              if (!open) setAssignSingleDay(false);
+            }}
+            assignSingleDay={assignSingleDay}
+            assignForm={assignForm}
+            setAssignForm={setAssignForm}
+            members={members}
+            membersLoading={membersLoading}
+            membersError={membersError ? membersQueryError : undefined}
+            onCreateMember={() => {
+              setIsAssigningFromCalendar(false);
+              navigate('/members');
+            }}
+            routines={routines}
+            handleQuickAssign={handleQuickAssign}
+            isCreating={isCreating}
+            setIsCreating={setIsCreating}
+            newRoutine={newRoutine}
+            setNewRoutine={setNewRoutine}
+            handleCreateRoutine={handleCreateRoutine}
+            editingRoutine={editingRoutine}
+            setEditingRoutine={setEditingRoutine}
+            handleUpdateRoutine={handleUpdateRoutine}
+            isAddingExercise={isAddingExercise}
+            setIsAddingExercise={setIsAddingExercise}
+            availableExercises={availableExercises}
+            newExercise={newExercise}
+            setNewExercise={setNewExercise}
+            handleAddWorkoutExercise={handleAddWorkoutExercise}
+            addExerciseError={addExerciseError}
+            editExerciseError={editExerciseError}
+            isEditingExercise={isEditingExercise}
+            setIsEditingExercise={setIsEditingExercise}
+            editingExercise={editingExercise}
+            setEditingExercise={setEditingExercise}
+            handleUpdateExercise={handleUpdateExercise}
+            deleteRoutineTarget={deleteRoutineTarget}
+            setDeleteRoutineTarget={setDeleteRoutineTarget}
+            deleteRoutineError={deleteRoutineError}
+            deletingRoutine={deletingRoutine}
+            confirmDeleteRoutine={confirmDeleteRoutine}
+            deleteExerciseTarget={deleteExerciseTarget}
+            setDeleteExerciseTarget={setDeleteExerciseTarget}
+            deletingExercise={deletingExercise}
+            confirmDeleteExercise={confirmDeleteExercise}
+            filteredRoutines={filteredRoutinesForAssign}
+            selectedMemberShift={selectedMemberShift}
+            availableTrainers={availableTrainersForShift.map((t) => ({
+              id: t.id,
+              full_name: t.full_name,
+            }))}
+          />
+
+          {view === 'library' ? (
+            <RoutinesLibraryView
+              loadingRoutines={loadingRoutines}
+              routines={routines}
+              userRole={user?.role}
+              expandedRoutineId={expandedRoutineId}
+              onRoutineCardClick={handleRoutineCardClick}
+              onToggleExpandRoutine={toggleExpandRoutine}
+              onEditRoutine={setEditingRoutine}
+              onDeleteRoutine={(routine) => {
+                setDeleteRoutineError(null);
+                setDeleteRoutineTarget(routine);
+              }}
+              onCreateRoutine={() => {
+                setIsCreating(true);
+              }}
+              onAddExercise={(routineId) => {
+                setExpandedRoutineId(routineId);
+                setAddExerciseError(null);
+                setIsAddingExercise(true);
+              }}
+              onInlineUpdate={handleInlineUpdate}
+              onEditExercise={(exercise) => {
+                setEditExerciseError(null);
+                setEditingExercise(exercise);
+                setIsEditingExercise(true);
+              }}
+              onDeleteExercise={(routineId, exercise) => {
+                setDeleteExerciseTarget({ routineId, exercise });
+              }}
+              onStartWorkout={handleStartWorkout}
+              completedRoutineIdsToday={
+                isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
+              }
+            />
+          ) : view === 'calendar' ? (
+            <RoutinesCalendarView
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              selectedDay={selectedDay}
+              setSelectedDay={setSelectedDay}
+              calendarDays={calendarDays}
+              assignmentsByDay={assignmentsByDay}
+              onAssignDirect={() => {
+                const day = selectedDay ?? new Date();
+                const dateStr = format(day, 'yyyy-MM-dd');
+                setAssignForm((prev) => ({
+                  ...prev,
+                  start_date: dateStr,
+                  end_date: dateStr,
+                }));
+                setAssignSingleDay(true);
+                setIsAssigningFromCalendar(true);
+              }}
+              onAssignOnDay={(dateStr) => {
+                setAssignForm((prev) => ({
+                  ...prev,
+                  start_date: dateStr,
+                  end_date: dateStr,
+                }));
+                setAssignSingleDay(true);
+                setIsAssigningFromCalendar(true);
+              }}
+              onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
+            />
+          ) : (
+            <RoutinesAssignmentsView
+              loadingAssignments={loadingAssignments}
+              assignments={assignments}
+              onChangeView={changeView}
+              onAssign={openAssignModal}
+              onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
+            />
+          )}
+        </>
       )}
     </div>
   );
+
+  if (isMember) {
+    return (
+      <PullToRefreshContainer pullDistance={memberPullDistance} isRefreshing={memberRefreshing}>
+        <div {...memberPtrHandlers}>{routinesPage}</div>
+      </PullToRefreshContainer>
+    );
+  }
+
+  return routinesPage;
 }

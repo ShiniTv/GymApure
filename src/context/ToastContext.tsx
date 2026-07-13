@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -21,6 +14,7 @@ interface ToastContextValue {
   toast: (message: string, variant?: ToastVariant) => void;
   success: (message: string) => void;
   error: (message: string) => void;
+  warning: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -52,16 +46,16 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     <div
       role="alert"
       className={cn(
-        'flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-lg backdrop-blur-md min-w-[280px] max-w-sm animate-in fade-in slide-in-from-top-2',
+        'animate-in fade-in slide-in-from-top-2 flex w-full max-w-sm min-w-0 items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-md',
         style.container
       )}
     >
-      <Icon className="h-5 w-5 shrink-0 mt-0.5" />
-      <p className="text-sm font-bold flex-1">{toast.message}</p>
+      <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+      <p className="flex-1 text-sm font-bold">{toast.message}</p>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="p-1 rounded-lg opacity-70 hover:opacity-100 transition-opacity"
+        className="rounded-lg p-1 opacity-70 transition-opacity hover:opacity-100"
         aria-label="Cerrar"
       >
         <X className="h-4 w-4" />
@@ -77,17 +71,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const addToast = useCallback((message: string, variant: ToastVariant = 'info') => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev, { id, message, variant }]);
-    setTimeout(() => dismiss(id), 4500);
-  }, [dismiss]);
+  const addToast = useCallback(
+    (message: string, variant: ToastVariant = 'info') => {
+      const id = crypto.randomUUID();
+      setToasts((prev) => [...prev, { id, message, variant }]);
+      setTimeout(() => dismiss(id), 4500);
+    },
+    [dismiss]
+  );
 
   const value = useMemo<ToastContextValue>(
     () => ({
       toast: addToast,
       success: (message) => addToast(message, 'success'),
       error: (message) => addToast(message, 'error'),
+      warning: (message) => addToast(message, 'warning'),
     }),
     [addToast]
   );
@@ -96,7 +94,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"
+        className="pointer-events-none fixed top-4 right-4 z-[100] flex flex-col gap-2"
         aria-live="polite"
       >
         {toasts.map((t) => (

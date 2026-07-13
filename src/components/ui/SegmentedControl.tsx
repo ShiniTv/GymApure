@@ -1,4 +1,5 @@
-import { type LucideIcon } from 'lucide-react';
+import { useCallback } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface SegmentedOption<T extends string> {
@@ -21,7 +22,8 @@ interface SegmentedControlProps<T extends string> {
 
 const accentActive: Record<'brand' | 'check-out', string> = {
   brand: 'brand-solid shadow-lg shadow-zinc-900/10',
-  'check-out': 'bg-blue-600 text-white shadow-lg shadow-blue-900/20',
+  'check-out':
+    'bg-[var(--color-check-out)] text-white shadow-lg shadow-[var(--color-check-out)]/20',
 };
 
 export function SegmentedControl<T extends string>({
@@ -35,20 +37,41 @@ export function SegmentedControl<T extends string>({
   const isKiosk = variant === 'kiosk';
   const isCompact = variant === 'compact';
 
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent, currentIndex: number) => {
+      let nextIndex: number | null = null;
+
+      if (e.key === 'ArrowRight') {
+        nextIndex = (currentIndex + 1) % options.length;
+      } else if (e.key === 'ArrowLeft') {
+        nextIndex = (currentIndex - 1 + options.length) % options.length;
+      }
+
+      if (nextIndex !== null) {
+        e.preventDefault();
+        const nextOption = options[nextIndex];
+        if (nextOption) {
+          onChange(nextOption.value);
+        }
+      }
+    },
+    [options, onChange]
+  );
+
   return (
     <div
       className={cn(
         isKiosk
-          ? 'flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800'
+          ? 'flex gap-2 rounded-2xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-900'
           : cn(
-              'inline-flex flex-wrap gap-0.5 p-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700',
+              'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
               fullWidth ? 'w-full' : 'w-fit max-w-full'
             ),
         className
       )}
       role="tablist"
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const active = value === option.value;
         const accent = option.accent ?? 'brand';
         const Icon = option.icon;
@@ -60,23 +83,24 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}
+            onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'flex items-center justify-center gap-2 transition-all',
+              'focus-visible:ring-brand/50 flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
               fullWidth && 'flex-1',
               isKiosk
                 ? cn(
-                    'py-3 rounded-xl text-xs font-semibold',
+                    'rounded-xl py-3 text-xs font-semibold',
                     active
                       ? accentActive[accent]
-                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                      : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                   )
                 : cn(
                     isCompact
-                      ? 'px-2.5 py-1.5 rounded-md text-[11px] font-semibold min-h-9'
-                      : 'px-3 py-1.5 rounded-md text-xs font-bold min-h-[var(--touch-min)]',
+                      ? 'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
+                      : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
                     active
-                      ? 'bg-white dark:bg-zinc-700 text-brand dark:text-brand shadow-sm'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
+                      : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
                   )
             )}
           >
@@ -85,7 +109,7 @@ export function SegmentedControl<T extends string>({
             {option.count != null && option.count > 0 && (
               <span
                 className={cn(
-                  'min-w-[1.25rem] px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums leading-none',
+                  'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
                   active
                     ? 'bg-brand/15 text-brand dark:text-brand'
                     : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'

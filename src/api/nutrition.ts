@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { query } from '../db/index.ts';
-import { AuthRequest } from './middleware/auth.ts';
+import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import {
@@ -20,28 +20,46 @@ const router = asyncRouter();
 
 const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
 
-const planSchema = z.object({
-  title: z.string().min(1).max(120).optional(),
-  calories_target: z.number().int().positive().max(10000),
-  protein_target_g: z.number().int().min(0).max(1000),
-  carbs_target_g: z.number().int().min(0).max(2000),
-  fat_target_g: z.number().int().min(0).max(500),
-  calories_margin: z.number().int().min(0).max(3000).optional(),
-  protein_margin_g: z.number().int().min(0).max(200).optional(),
-  carbs_margin_g: z.number().int().min(0).max(200).optional(),
-  fat_margin_g: z.number().int().min(0).max(200).optional(),
-  notes: z.string().max(2000).nullable().optional(),
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-}).superRefine((data, ctx) => {
-  const maxMargin = (target: number) => Math.max(1, Math.floor(target * 0.3));
-  if ((data.calories_margin ?? 150) > maxMargin(data.calories_target)) {
-    ctx.addIssue({ code: 'custom', message: 'Margen de kcal demasiado alto', path: ['calories_margin'] });
-  }
-  if ((data.protein_margin_g ?? 15) > maxMargin(data.protein_target_g)) {
-    ctx.addIssue({ code: 'custom', message: 'Margen de proteína demasiado alto', path: ['protein_margin_g'] });
-  }
-});
+const planSchema = z
+  .object({
+    title: z.string().min(1).max(120).optional(),
+    calories_target: z.number().int().positive().max(10000),
+    protein_target_g: z.number().int().min(0).max(1000),
+    carbs_target_g: z.number().int().min(0).max(2000),
+    fat_target_g: z.number().int().min(0).max(500),
+    calories_margin: z.number().int().min(0).max(3000).optional(),
+    protein_margin_g: z.number().int().min(0).max(200).optional(),
+    carbs_margin_g: z.number().int().min(0).max(200).optional(),
+    fat_margin_g: z.number().int().min(0).max(200).optional(),
+    notes: z.string().max(2000).nullable().optional(),
+    start_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const maxMargin = (target: number) => Math.max(1, Math.floor(target * 0.3));
+    if ((data.calories_margin ?? 150) > maxMargin(data.calories_target)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Margen de kcal demasiado alto',
+        path: ['calories_margin'],
+      });
+    }
+    if ((data.protein_margin_g ?? 15) > maxMargin(data.protein_target_g)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Margen de proteína demasiado alto',
+        path: ['protein_margin_g'],
+      });
+    }
+  });
 
 const logSchema = z.object({
   meal_type: mealTypeSchema,
@@ -117,7 +135,7 @@ function trainerCanEditPlan(user: AuthRequest['user']): boolean {
 
 router.get(
   '/users/:id/nutrition/plan',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -135,13 +153,13 @@ router.get(
       return;
     }
 
-    res.json(rowToPlan(rows[0] as Record<string, unknown>));
+    res.json(rowToPlan(rows[0]));
   })
 );
 
 router.put(
   '/users/:id/nutrition/plan',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req: AuthRequest, res) => {
     if (!trainerCanEditPlan(req.user)) {
       res.status(403).json({ error: 'Solo el entrenador puede definir el plan' });
@@ -207,13 +225,13 @@ router.put(
       ]
     );
 
-    res.json(rowToPlan(rows[0] as Record<string, unknown>));
+    res.json(rowToPlan(rows[0]));
   })
 );
 
 router.get(
   '/users/:id/nutrition/logs',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -221,7 +239,8 @@ router.get(
       return;
     }
 
-    const dateParam = typeof req.query.date === 'string' ? req.query.date : formatLocalDate(new Date());
+    const dateParam =
+      typeof req.query.date === 'string' ? req.query.date : formatLocalDate(new Date());
     if (!isValidDateParam(dateParam)) {
       res.status(400).json({ error: 'Fecha inválida' });
       return;
@@ -243,7 +262,7 @@ router.get(
 
 router.post(
   '/users/:id/nutrition/logs',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -280,13 +299,13 @@ router.post(
       ]
     );
 
-    res.status(201).json(rowToLog(rows[0] as Record<string, unknown>));
+    res.status(201).json(rowToLog(rows[0]));
   })
 );
 
 router.get(
   '/users/:id/nutrition/summary',
-  requireMemberAccess('id', 'admin'),
+  requireMemberAccess('id'),
   asyncHandler(async (req, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
@@ -306,7 +325,7 @@ router.get(
       return;
     }
 
-    const plan = rowToPlan(planRows[0] as Record<string, unknown>);
+    const plan = rowToPlan(planRows[0]);
     const endDate = formatLocalDate(new Date());
     const start = new Date();
     start.setDate(start.getDate() - (days - 1));
@@ -331,7 +350,7 @@ router.get(
     const byDate = new Map<string, MacroTotals>();
     for (const row of aggRows) {
       const d = String((row as Record<string, unknown>).day).slice(0, 10);
-      byDate.set(d, totalsFromRow(row as Record<string, unknown>));
+      byDate.set(d, totalsFromRow(row));
     }
 
     const summaries: DailyNutritionSummary[] = [];
@@ -344,7 +363,11 @@ router.get(
         date,
         totals,
         adherence_percent: adherencePercent(plan, totals),
-        calories_status: getMacroStatus(totals.calories, plan.calories_target, plan.calories_margin),
+        calories_status: getMacroStatus(
+          totals.calories,
+          plan.calories_target,
+          plan.calories_margin
+        ),
       });
       cursor.setDate(cursor.getDate() + 1);
     }
@@ -407,7 +430,7 @@ router.patch(
       ]
     );
 
-    res.json(rowToLog(rows[0] as Record<string, unknown>));
+    res.json(rowToLog(rows[0]));
   })
 );
 
@@ -437,6 +460,139 @@ router.delete(
 
     await query(`DELETE FROM nutrition_log_entries WHERE id = $1`, [logId]);
     res.json({ ok: true });
+  })
+);
+
+router.get(
+  '/admin/overview',
+  authorize(['admin']),
+  asyncHandler(async (_req, res) => {
+    const days = 7;
+    const endDate = formatLocalDate(new Date());
+    const start = new Date();
+    start.setDate(start.getDate() - (days - 1));
+    const startDate = formatLocalDate(start);
+
+    const { rows: members } = await query<{
+      user_id: number;
+      full_name: string;
+      plan_title: string;
+      calories_target: number;
+      calories_margin: number;
+      protein_target_g: number;
+      protein_margin_g: number;
+      carbs_target_g: number;
+      carbs_margin_g: number;
+      fat_target_g: number;
+      fat_margin_g: number;
+    }>(
+      `SELECT u.id AS user_id, u.full_name, np.title AS plan_title,
+              np.calories_target, np.calories_margin,
+              np.protein_target_g, np.protein_margin_g,
+              np.carbs_target_g, np.carbs_margin_g,
+              np.fat_target_g, np.fat_margin_g
+       FROM users u
+       INNER JOIN nutrition_plans np ON np.user_id = u.id AND np.is_active = true
+       WHERE u.role = 'member' AND u.status = 'active'
+       ORDER BY u.full_name ASC`
+    );
+
+    if (members.length === 0) {
+      res.json({
+        period_days: days,
+        start_date: startDate,
+        end_date: endDate,
+        members: [],
+        with_plan: 0,
+        logging_active: 0,
+      });
+      return;
+    }
+
+    const memberIds = members.map((m) => m.user_id);
+    const { rows: aggRows } = await query<{
+      user_id: number;
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+      logged_days: number;
+    }>(
+      `SELECT user_id,
+              COALESCE(SUM(calories), 0)::int AS calories,
+              COALESCE(SUM(protein_g), 0)::float AS protein,
+              COALESCE(SUM(carbs_g), 0)::float AS carbs,
+              COALESCE(SUM(fat_g), 0)::float AS fat,
+              COUNT(DISTINCT (logged_at AT TIME ZONE 'UTC')::date)::int AS logged_days
+       FROM nutrition_log_entries
+       WHERE user_id = ANY($1::int[])
+         AND (logged_at AT TIME ZONE 'UTC')::date >= $2::date
+         AND (logged_at AT TIME ZONE 'UTC')::date <= $3::date
+       GROUP BY user_id`,
+      [memberIds, startDate, endDate]
+    );
+
+    const aggByUser = new Map(aggRows.map((row) => [row.user_id, row]));
+
+    const overview = members.map((member) => {
+      const agg = aggByUser.get(member.user_id);
+      const totals = totalsFromRow(agg ?? {});
+      const loggedDays = agg?.logged_days ?? 0;
+      const plan: NutritionPlan = {
+        id: 0,
+        user_id: member.user_id,
+        trainer_id: 0,
+        title: member.plan_title,
+        calories_target: member.calories_target,
+        protein_target_g: member.protein_target_g,
+        carbs_target_g: member.carbs_target_g,
+        fat_target_g: member.fat_target_g,
+        calories_margin: member.calories_margin,
+        protein_margin_g: member.protein_margin_g,
+        carbs_margin_g: member.carbs_margin_g,
+        fat_margin_g: member.fat_margin_g,
+        notes: null,
+        start_date: null,
+        end_date: null,
+        is_active: true,
+        created_at: '',
+        updated_at: '',
+      };
+
+      const dailyAdherence =
+        loggedDays > 0
+          ? Math.round(
+              adherencePercent(plan, {
+                calories: Math.round(totals.calories / loggedDays),
+                protein: totals.protein / loggedDays,
+                carbs: totals.carbs / loggedDays,
+                fat: totals.fat / loggedDays,
+              })
+            )
+          : 0;
+
+      return {
+        user_id: member.user_id,
+        full_name: member.full_name,
+        plan_title: member.plan_title,
+        logged_days: loggedDays,
+        adherence_percent: dailyAdherence,
+        calories_status: getMacroStatus(
+          totals.calories,
+          plan.calories_target * Math.max(loggedDays, 1),
+          plan.calories_margin * Math.max(loggedDays, 1)
+        ),
+      };
+    });
+
+    res.json({
+      period_days: days,
+      start_date: startDate,
+      end_date: endDate,
+      members: overview,
+      with_plan: overview.length,
+      logging_active: overview.filter((m) => m.logged_days > 0).length,
+    });
   })
 );
 

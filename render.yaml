@@ -1,14 +1,34 @@
+# GymApure — Render Blueprint
+# Docs: docs/DEPLOY.md
+#
+# Antes del primer deploy:
+#   1. Crear proyecto Supabase de producción (separado de dev)
+#   2. npm run db:migrate  (con DATABASE_URL de prod en .env local)
+#   3. npm run db:create-admin
+#   4. Configurar secretos en Render Dashboard (sync: false)
+#
+# Tras cambios en este archivo:
+#   Render Dashboard → Blueprint → Sync (crea/actualiza Key Value y env vars)
+
 services:
   - type: web
     name: caribean-gym
     runtime: node
     plan: starter
-    buildCommand: npm ci && npm run build
+    nodeVersion: 20
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PUBLIC_APP_URL
+        value: https://caribean-gym.onrender.com
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: caribean-gym-kv
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: DATABASE_URL
@@ -17,3 +37,35 @@ services:
         sync: false
       - key: CRON_SECRET
         sync: false
+      - key: ENABLE_HIBP_CHECK
+        sync: false
+      - key: DATABASE_SSL_CA
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: VITE_SENTRY_DSN
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: ADMIN_NOTIFY_EMAILS
+        sync: false
+
+  - type: keyvalue
+    name: caribean-gym-kv
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

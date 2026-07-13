@@ -12,6 +12,11 @@ export interface Member {
   membership_name?: string | null;
   subscription_end?: string | null;
   days_remaining?: number | null;
+  training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
+  profile_image?: string | null;
+  phone?: string | null;
+  dob?: string | null;
+  created_at?: string | null;
 }
 
 interface PaginatedUsers {
@@ -26,6 +31,7 @@ export interface MembersQueryParams {
   pageSize: number;
   search: string;
   expiringFilter: boolean;
+  shiftFilter?: string;
   isTrainer: boolean;
 }
 
@@ -40,6 +46,7 @@ async function fetchMembers(params: MembersQueryParams): Promise<PaginatedUsers>
   });
   if (params.search) qs.set('q', params.search);
   if (params.expiringFilter) qs.set('expiring', 'true');
+  if (params.shiftFilter) qs.set('shift', params.shiftFilter);
   if (params.isTrainer) qs.set('role', 'member');
 
   const res = await apiFetch(`/api/users?${qs.toString()}`);
@@ -50,6 +57,7 @@ export function useMembersQuery(params: MembersQueryParams) {
   return useQuery({
     queryKey: membersQueryKey(params),
     queryFn: () => fetchMembers(params),
+    refetchOnWindowFocus: false,
   });
 }
 

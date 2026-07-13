@@ -1,8 +1,11 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
-import { query } from '../db/index.ts';
+import { query, getPoolMetrics } from '../db/index.ts';
 import { allowPublicRegister } from '../config/env.ts';
 import { getRequestMetricsSnapshot } from './middleware/requestMetrics.ts';
 import { authenticate, authorize } from './middleware/auth.ts';
+import { getExerciseMediaCapabilities } from '../lib/exerciseVideoStorage.ts';
+import { isMediaStorageRemote } from '../lib/mediaStorage.ts';
+import { isEmailConfigured } from '../lib/email.ts';
 
 const router = asyncRouter();
 const startedAt = Date.now();
@@ -30,6 +33,7 @@ async function buildMetricsSnapshot() {
         db: {
           status: 'up' as const,
           latency_ms: Number(dbLatencyMs.toFixed(2)),
+          pool: getPoolMetrics(),
         },
       },
     };
@@ -47,13 +51,16 @@ async function buildMetricsSnapshot() {
         db: {
           status: 'down' as const,
           latency_ms: null,
+          pool: getPoolMetrics(),
         },
       },
     };
   }
 }
 
-function toMetricsCsv(snapshot: Awaited<ReturnType<typeof buildMetricsSnapshot>>['payload']): string {
+function toMetricsCsv(
+  snapshot: Awaited<ReturnType<typeof buildMetricsSnapshot>>['payload']
+): string {
   const lines: string[] = [];
   lines.push('section,key,value');
   lines.push(`summary,status,${snapshot.status}`);
@@ -69,7 +76,9 @@ function toMetricsCsv(snapshot: Awaited<ReturnType<typeof buildMetricsSnapshot>>
   lines.push(`summary,memory_heap_used_mb,${snapshot.memory.heap_used_mb}`);
 
   lines.push('');
-  lines.push('top_slow_routes,method,path,avg_ms,max_ms,count,slow_rate_percent,error_rate_percent');
+  lines.push(
+    'top_slow_routes,method,path,avg_ms,max_ms,count,slow_rate_percent,error_rate_percent'
+  );
   snapshot.request_metrics.topSlowRoutes.forEach((route) => {
     lines.push(
       `top_slow_routes,${route.method},${route.path},${route.avgDurationMs},${route.maxDurationMs},${route.count},${route.slowRatePercent},${route.errorRatePercent}`
@@ -88,6 +97,26 @@ function toMetricsCsv(snapshot: Awaited<ReturnType<typeof buildMetricsSnapshot>>
 }
 
 router.get('/health', async (_req, res) => {
+  const dbStart = process.hrtime.bigint();
+
+  try {
+    await query('SELECT 1');
+    const dbLatencyMs = Number(process.hrtime.bigint() - dbStart) / 1_000_000;
+    res.json({
+      status: 'ok',
+      db: 'up',
+      db_latency_ms: Number(dbLatencyMs.toFixed(2)),
+    });
+  } catch {
+    res.status(503).json({
+      status: 'degraded',
+      db: 'down',
+      db_latency_ms: null,
+    });
+  }
+});
+
+router.get('/health/ops', authenticate, authorize(['admin']), async (_req, res) => {
   const uptimeSeconds = Math.floor((Date.now() - startedAt) / 1000);
   const dbStart = process.hrtime.bigint();
 
@@ -98,8 +127,10 @@ router.get('/health', async (_req, res) => {
       status: 'ok',
       db: 'up',
       db_latency_ms: Number(dbLatencyMs.toFixed(2)),
+      db_pool: getPoolMetrics(),
       uptime_seconds: uptimeSeconds,
       allowPublicRegister,
+      email: { configured: isEmailConfigured() },
     });
   } catch {
     res.status(503).json({
@@ -108,6 +139,7 @@ router.get('/health', async (_req, res) => {
       db_latency_ms: null,
       uptime_seconds: uptimeSeconds,
       allowPublicRegister,
+      email: { configured: isEmailConfigured() },
     });
   }
 });
@@ -133,6 +165,25 @@ router.get('/health/metrics/export', authenticate, authorize(['admin']), async (
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="metrics-${stamp}.json"`);
   res.status(snapshot.httpStatus).json(snapshot.payload);
+});
+
+/** Diagnóstico de videos (admin): modo storage, FFmpeg, límites. */
+router.get('/health/media', authenticate, authorize(['admin']), async (_req, res) => {
+  try {
+    const capabilities = await getExerciseMediaCapabilities();
+    const rssMb = Number((process.memoryUsage().rss / (1024 * 1024)).toFixed(2));
+    res.json({
+      ...capabilities,
+      storageRemote: isMediaStorageRemote(),
+      memory_rss_mb: rssMb,
+      notes: capabilities.directUpload
+        ? 'Upload directo a Supabase; reproducción con URL firmada (sin proxy Render).'
+        : 'Desarrollo local: multipart + FFmpeg opcional.',
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
 });
 
 export default router;

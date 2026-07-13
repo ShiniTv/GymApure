@@ -4,8 +4,17 @@ dist/
 coverage/
 .DS_Store
 *.log
+*-prod-log.txt
+seed-*-log.txt
+*.tsbuildinfo
 .env*
 !.env.example
+!.env.dev.example
 gym.db
 sqlite.db
 uploads/
+test-results/
+playwright-report/
+playwright/.cache/
+.lighthouse/
+supabase/.temp/

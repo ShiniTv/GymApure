@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { query } from '../db/index.ts';
 import { JWT_EXPIRES_IN, JWT_SECRET, type JwtUserPayload } from '../config/jwt.ts';
+import {
+  getCachedSessionUser,
+  invalidateSessionUserCache,
+  setCachedSessionUser,
+} from './sessionUserCache.ts';
 
 export const VALID_USER_ROLES = ['admin', 'trainer', 'member', 'receptionist'] as const;
 export type ValidUserRole = (typeof VALID_USER_ROLES)[number];
@@ -39,10 +44,7 @@ export async function loadSessionUserById(userId: number): Promise<DbSessionUser
     email: string;
     status: string;
     token_version: number | string;
-  }>(
-    `SELECT id, role, full_name, email, status, token_version FROM users WHERE id = $1`,
-    [userId]
-  );
+  }>(`SELECT id, role, full_name, email, status, token_version FROM users WHERE id = $1`, [userId]);
 
   const row = rows[0];
   if (!row) return null;
@@ -86,7 +88,14 @@ export async function verifySessionToken(token: string): Promise<SessionVerifyRe
     return sessionFailure('invalid');
   }
 
-  const dbUser = await loadSessionUserById(userId);
+  let dbUser = getCachedSessionUser(userId);
+  if (!dbUser) {
+    dbUser = await loadSessionUserById(userId);
+    if (dbUser) {
+      setCachedSessionUser(dbUser);
+    }
+  }
+
   if (!dbUser) {
     return sessionFailure('invalid');
   }
@@ -116,6 +125,67 @@ export async function verifySessionToken(token: string): Promise<SessionVerifyRe
   };
 }
 
-export async function bumpUserTokenVersion(userId: number): Promise<void> {
-  await query('UPDATE users SET token_version = token_version + 1 WHERE id = $1', [userId]);
+export async function bumpUserTokenVersion(userId: number): Promise<number | null> {
+  invalidateSessionUserCache(userId);
+
+  const { rows } = await query<{ token_version: number | string }>(
+    'UPDATE users SET token_version = token_version + 1 WHERE id = $1 RETURNING token_version',
+    [userId]
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return Number(row.token_version ?? 0);
+}
+
+export type CreateLoginSessionResult =
+  | { type: 'success'; token: string; user: DbSessionUser }
+  | { type: 'failure'; reason: 'not_found' | 'inactive' | 'invalid_role' };
+
+/** Bumps token_version and signs a fresh JWT (single active session policy). */
+export async function createLoginSession(userId: number): Promise<CreateLoginSessionResult> {
+  invalidateSessionUserCache(userId);
+
+  const { rows } = await query<{
+    id: number | string;
+    role: string;
+    full_name: string;
+    email: string;
+    status: string;
+    token_version: number | string;
+  }>(
+    `UPDATE users SET token_version = token_version + 1
+     WHERE id = $1
+     RETURNING id, role, full_name, email, status, token_version`,
+    [userId]
+  );
+
+  const row = rows[0];
+  if (!row) {
+    return { type: 'failure', reason: 'not_found' };
+  }
+
+  const dbUser: DbSessionUser = {
+    id: Number(row.id),
+    role: row.role,
+    full_name: row.full_name,
+    email: row.email,
+    status: row.status,
+    token_version: Number(row.token_version ?? 0),
+  };
+
+  if (dbUser.status !== 'active') {
+    return { type: 'failure', reason: 'inactive' };
+  }
+
+  if (!isValidUserRole(dbUser.role)) {
+    return { type: 'failure', reason: 'invalid_role' };
+  }
+
+  setCachedSessionUser(dbUser);
+
+  return {
+    type: 'success',
+    token: signSessionToken(dbUser),
+    user: dbUser,
+  };
 }

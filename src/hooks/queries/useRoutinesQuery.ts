@@ -8,6 +8,7 @@ export interface MemberOption {
   cedula: string | null;
   email: string;
   role: string;
+  training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
 }
 
 export const memberOptionsQueryKey = ['users', 'options', 'member'] as const;

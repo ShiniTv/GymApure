@@ -8,6 +8,7 @@ import {
   supabaseStorageDownload,
   supabaseStorageUpload,
 } from './supabaseAdmin.ts';
+import { optimizeProof } from './imageOptimizer.ts';
 import { proofApiPath, resolveFilePath } from './uploadStorage.ts';
 
 export function isProofStorageRemote(): boolean {
@@ -40,21 +41,37 @@ function extensionFromMime(mime: string): string {
   }
 }
 
-export async function uploadPaymentProof(
-  file: Express.Multer.File,
-  userId: number,
-  paymentId: number
-): Promise<string> {
-  const ext = path.extname(file.originalname) || extensionFromMime(file.mimetype);
-  const objectKey = `${userId}/${paymentId}-${Date.now()}${ext}`;
-
+async function prepareProofPayload(
+  file: Express.Multer.File
+): Promise<{ body: Buffer; mime: string; ext: string }> {
   const body = file.buffer ?? (file.path ? fs.readFileSync(file.path) : null);
   if (!body) {
     throw new Error('No se pudo leer el comprobante subido');
   }
 
+  if (file.mimetype.startsWith('image/')) {
+    const optimized = await optimizeProof(body);
+    return {
+      body: optimized.buffer,
+      mime: optimized.mime,
+      ext: optimized.mime === 'image/webp' ? '.webp' : '.jpg',
+    };
+  }
+
+  const ext = path.extname(file.originalname) || extensionFromMime(file.mimetype);
+  return { body, mime: file.mimetype, ext };
+}
+
+export async function uploadPaymentProof(
+  file: Express.Multer.File,
+  userId: number,
+  paymentId: number
+): Promise<string> {
+  const { body, mime, ext } = await prepareProofPayload(file);
+  const objectKey = `${userId}/${paymentId}-${Date.now()}${ext}`;
+
   try {
-    await supabaseStorageUpload(PAYMENT_PROOFS_BUCKET, objectKey, body, file.mimetype);
+    await supabaseStorageUpload(PAYMENT_PROOFS_BUCKET, objectKey, body, mime);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido';
     if (/invalid compact jws|invalid jwt/i.test(message)) {
@@ -112,4 +129,26 @@ export async function streamPaymentProof(proofUrl: string, res: Response): Promi
 
 export function localProofPathFromUpload(file: Express.Multer.File): string {
   return proofApiPath(file.filename);
+}
+
+/** Optimizes image proofs on disk and returns the canonical API path. */
+export async function finalizeLocalProof(file: Express.Multer.File): Promise<string> {
+  if (!file.path || !file.mimetype.startsWith('image/')) {
+    return localProofPathFromUpload(file);
+  }
+
+  const { body, ext } = await prepareProofPayload(file);
+  const parsed = path.parse(file.path);
+  const optimizedPath = path.join(parsed.dir, `${parsed.name}${ext}`);
+
+  fs.writeFileSync(optimizedPath, body);
+  if (optimizedPath !== file.path) {
+    try {
+      fs.unlinkSync(file.path);
+    } catch {
+      /* ignore cleanup errors */
+    }
+  }
+
+  return proofApiPath(path.basename(optimizedPath));
 }

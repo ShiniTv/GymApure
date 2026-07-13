@@ -1,6 +1,5 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
@@ -14,7 +13,14 @@ import {
   deleteMediaFile,
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
-import { createUserSchema, formatZodError } from '../lib/passwordPolicy.ts';
+import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
+import {
+  createUserSchema,
+  formatZodError,
+  assertPasswordNotBreached,
+} from '../lib/passwordPolicy.ts';
+import { hashPassword } from '../lib/passwordHash.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { logger } from '../lib/logger.ts';
 import {
@@ -27,6 +33,11 @@ import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
+import { isTrainingShift } from '../lib/trainingShift.ts';
+import { mountHealthProfileRoutes } from './healthProfile.ts';
+import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
+import { assignRoutineSchema } from '../lib/routineSchemas.ts';
+import { isActiveMember, trainerOwnsRoutine } from '../lib/trainerAccess.ts';
 
 const router = asyncRouter();
 
@@ -62,6 +73,16 @@ async function findUserMeasurement(userId: number, measurementId: number) {
   return rows[0] ?? null;
 }
 
+const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
+  FROM (
+    SELECT e.name
+    FROM routine_exercises re
+    JOIN exercises e ON e.id = re.exercise_id
+    WHERE re.routine_id = r.id
+    ORDER BY re.id
+    LIMIT 3
+  ) preview_names)`;
+
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
 }
@@ -73,15 +94,7 @@ const USER_LIST_FROM = `
     FROM workout_sessions
     GROUP BY user_id
   ) lw ON lw.user_id = u.id
-  LEFT JOIN LATERAL (
-    SELECT m.name AS membership_name, s.end_date,
-           GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
-    FROM subscriptions s
-    JOIN memberships m ON m.id = s.membership_id
-    WHERE s.user_id = u.id AND s.status = 'active' AND s.end_date >= CURRENT_DATE
-    ORDER BY s.end_date DESC
-    LIMIT 1
-  ) sub ON true
+  ${activeSubscriptionLateralSql()}
 `;
 
 function buildUserListFilters(
@@ -96,11 +109,14 @@ function buildUserListFilters(
   const conditions: string[] = [];
 
   if (search) {
-    params.push(`%${search.toLowerCase()}%`);
-    const idx = params.length;
-    conditions.push(
-      `(LOWER(u.full_name) LIKE $${idx} OR LOWER(COALESCE(u.cedula, '')) LIKE $${idx} OR LOWER(u.email) LIKE $${idx})`
-    );
+    const pattern = toLikeContainsPattern(search);
+    if (pattern) {
+      params.push(pattern);
+      const idx = params.length;
+      conditions.push(
+        `(LOWER(u.full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(u.email) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+      );
+    }
   }
 
   if (role && ['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
@@ -132,49 +148,75 @@ function buildUserListFilters(
     );
   }
 
+  const shiftFilter = typeof query.shift === 'string' ? query.shift.trim() : '';
+  if (shiftFilter && isTrainingShift(shiftFilter)) {
+    params.push(shiftFilter);
+    conditions.push(`u.training_shift = $${params.length}`);
+  }
+
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   return { whereSql, params };
 }
 
-router.get('/options', authorize(['admin', 'trainer', 'receptionist']), async (req, res) => {
-  try {
-    const search = parseSearchQuery(req.query);
-    const role = typeof req.query.role === 'string' ? req.query.role.trim() : 'member';
-    const params: unknown[] = [];
-    const conditions: string[] = [];
+router.get(
+  '/options',
+  authorize(['admin', 'trainer', 'receptionist']),
+  async (req: AuthRequest, res) => {
+    try {
+      const search = parseSearchQuery(req.query);
+      const role = typeof req.query.role === 'string' ? req.query.role.trim() : 'member';
+      const params: unknown[] = [];
+      const conditions: string[] = [];
 
-    if (['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
-      params.push(role);
-      conditions.push(`role = $${params.length}`);
-    }
+      if (['admin', 'trainer', 'member', 'receptionist'].includes(role)) {
+        params.push(role);
+        conditions.push(`role = $${params.length}`);
+      }
 
-    conditions.push(`status = 'active'`);
+      conditions.push(`status = 'active'`);
 
-    if (search) {
-      params.push(`%${search.toLowerCase()}%`);
-      const idx = params.length;
-      conditions.push(
-        `(LOWER(full_name) LIKE $${idx} OR LOWER(COALESCE(cedula, '')) LIKE $${idx} OR LOWER(email) LIKE $${idx})`
-      );
-    }
+      if (search) {
+        const pattern = toLikeContainsPattern(search);
+        if (pattern) {
+          params.push(pattern);
+          const idx = params.length;
+          conditions.push(
+            `(LOWER(full_name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(cedula, '')) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(email) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+          );
+        }
+      }
 
-    const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    params.push(200);
+      const shiftFilter = typeof req.query.shift === 'string' ? req.query.shift.trim() : '';
+      if (shiftFilter && isTrainingShift(shiftFilter)) {
+        params.push(shiftFilter);
+        conditions.push(`training_shift = $${params.length}`);
+      }
 
-    const { rows } = await query<{ id: number; full_name: string; cedula: string | null; email: string; role: string }>(
-      `SELECT id, full_name, cedula, email, role
+      const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      params.push(200);
+
+      const { rows } = await query<{
+        id: number;
+        full_name: string;
+        cedula: string | null;
+        email: string;
+        role: string;
+        training_shift: string | null;
+      }>(
+        `SELECT id, full_name, cedula, email, role, training_shift
        FROM users
        ${whereSql}
        ORDER BY full_name ASC
        LIMIT $${params.length}`,
-      params
-    );
+        params
+      );
 
-    res.json(rows);
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
+      res.json(rows);
+    } catch (err: unknown) {
+      res.status(500).json({ error: getErrorMessage(err) });
+    }
   }
-});
+);
 
 router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: AuthRequest, res) => {
   try {
@@ -198,6 +240,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
       ),
       query(
         `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
+                u.profile_image, u.dob, u.training_shift, u.created_at,
                 lw.last_workout,
                 sub.membership_name,
                 sub.end_date AS subscription_end,
@@ -228,7 +271,8 @@ router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (re
   try {
     const { rows } = await query(
       `SELECT id, email, role, full_name, cedula, phone, status,
-              initial_weight, height, goal, profile_image, dob
+              initial_weight, height, goal, profile_image, dob, training_shift,
+              weekly_training_goal, created_at
        FROM users WHERE id = $1`,
       [req.params.id]
     );
@@ -316,7 +360,7 @@ router.post(
 
     const profileImage = isMediaStorageRemote()
       ? await uploadMediaFile('avatars', req.file, String(targetId))
-      : localAvatarPathFromUpload(req.file);
+      : await localAvatarPathFromUpload(req.file);
 
     const { rows } = await query(
       `UPDATE users SET profile_image = $1 WHERE id = $2
@@ -377,11 +421,15 @@ router.delete(
   })
 );
 
-router.get('/:id/routines', requireMemberAccess('id', 'admin'), async (req, res) => {
+router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, res) => {
   try {
+    const trainerScope = req.user!.role === 'trainer' ? ' AND r.trainer_id = $2' : '';
+    const params = req.user!.role === 'trainer' ? [req.params.id, req.user!.id] : [req.params.id];
+
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
-              COALESCE(ec.exercise_count, 0)::int AS exercise_count
+              COALESCE(ec.exercise_count, 0)::int AS exercise_count,
+              ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
        FROM routines r
        JOIN user_routines ur ON r.id = ur.routine_id
        LEFT JOIN (
@@ -389,9 +437,9 @@ router.get('/:id/routines', requireMemberAccess('id', 'admin'), async (req, res)
          FROM routine_exercises
          GROUP BY routine_id
        ) ec ON ec.routine_id = r.id
-       WHERE ur.user_id = $1
+       WHERE ur.user_id = $1${trainerScope}
        ORDER BY ur.assigned_at DESC`,
-      [req.params.id]
+      params
     );
     res.json(rows);
   } catch (err: unknown) {
@@ -520,22 +568,42 @@ router.delete(
   })
 );
 
-router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) => {
+router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, res) => {
   const userId = parseInt(req.params.id, 10);
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'ID inválido' });
   }
 
   const { page, pageSize, offset } = parsePaginationQuery(req.query, { pageSize: 20 });
+  const trainerScope = req.user!.role === 'trainer' ? ' AND r.trainer_id = $2' : '';
+  const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
 
   try {
-    const [countResult, listResult] = await Promise.all([
+    const countParams = trainerId ? [userId, trainerId] : [userId];
+    const listParams = trainerId
+      ? [userId, trainerId, pageSize, offset]
+      : [userId, pageSize, offset];
+
+    const [countResult, weekResult, listResult] = await Promise.all([
       query<{ count: string }>(
-        'SELECT COUNT(*)::text AS count FROM workout_sessions WHERE user_id = $1',
-        [userId]
+        `SELECT COUNT(*)::text AS count
+         FROM workout_sessions ws
+         JOIN routines r ON ws.routine_id = r.id
+         WHERE ws.user_id = $1${trainerScope}`,
+        countParams
+      ),
+      query<{ count: string }>(
+        `SELECT COUNT(DISTINCT DATE(ws.start_time))::text AS count
+         FROM workout_sessions ws
+         JOIN routines r ON ws.routine_id = r.id
+         WHERE ws.user_id = $1
+           AND ws.end_time IS NOT NULL
+           AND ws.start_time >= DATE_TRUNC('week', CURRENT_DATE)${trainerScope}`,
+        countParams
       ),
       query(
-        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, r.name AS routine_name,
+        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, ws.routine_id,
+                r.name AS routine_name,
                 COALESCE(wl.sets_completed, 0)::int AS sets_completed
          FROM workout_sessions ws
          JOIN routines r ON ws.routine_id = r.id
@@ -544,19 +612,21 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
            FROM workout_logs
            GROUP BY session_id
          ) wl ON wl.session_id = ws.id
-         WHERE ws.user_id = $1
+         WHERE ws.user_id = $1${trainerScope}
          ORDER BY ws.start_time DESC
-         LIMIT $2 OFFSET $3`,
-        [userId, pageSize, offset]
+         LIMIT $${trainerId ? 3 : 2} OFFSET $${trainerId ? 4 : 3}`,
+        listParams
       ),
     ]);
 
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
-    const payload: PaginatedResult<unknown> = {
+    const workoutsThisWeek = parseInt(weekResult.rows[0]?.count || '0', 10);
+    const payload: PaginatedResult<unknown> & { workoutsThisWeek: number } = {
       items: listResult.rows,
       total,
       page,
       pageSize,
+      workoutsThisWeek,
     };
 
     res.json(payload);
@@ -565,73 +635,114 @@ router.get('/:id/history', requireMemberAccess('id', 'admin'), async (req, res) 
   }
 });
 
-router.post('/:id/routines', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const { routine_id, start_date, end_date } = req.body;
-  const assigned_by = req.user!.id;
-  const memberId = parseInt(req.params.id, 10);
-  const routineId = parseInt(String(routine_id), 10);
+router.post(
+  '/:id/routines',
+  authorize(['trainer']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const memberId = parseInt(req.params.id, 10);
+    if (Number.isNaN(memberId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
 
-  if (Number.isNaN(memberId) || Number.isNaN(routineId)) {
-    return res.status(400).json({ error: 'ID de miembro o rutina inválido' });
-  }
+    const parsed = assignRoutineSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
 
-  try {
-    const { rows: memberRows } = await query<{ role: string; status: string }>(
-      `SELECT role, status FROM users WHERE id = $1`,
-      [memberId]
+    const { routine_id, start_date, end_date } = parsed.data;
+    if (start_date > end_date) {
+      res.status(400).json({
+        error: 'La fecha de inicio debe ser anterior o igual a la de fin',
+      });
+      return;
+    }
+
+    const trainerId = req.user!.id;
+    const ownsRoutine = await trainerOwnsRoutine(trainerId, routine_id);
+    if (!ownsRoutine) {
+      res.status(403).json({ error: 'No puedes asignar una rutina que no te pertenece' });
+      return;
+    }
+
+    const memberOk = await isActiveMember(memberId);
+    if (!memberOk) {
+      res.status(404).json({ error: 'Miembro no encontrado o inactivo' });
+      return;
+    }
+
+    const assigned_by = trainerId;
+    const existing = await query<{ id: number }>(
+      `SELECT id FROM user_routines WHERE user_id = $1 AND routine_id = $2 LIMIT 1`,
+      [memberId, routine_id]
     );
-    const member = memberRows[0];
-    if (!member) {
-      return res.status(404).json({ error: 'Miembro no encontrado' });
-    }
-    if (member.role !== 'member') {
-      return res.status(400).json({ error: 'Solo se pueden asignar rutinas a miembros' });
-    }
-    if (member.status !== 'active') {
-      return res.status(400).json({ error: 'El miembro no está activo' });
+
+    if (existing.rows.length > 0) {
+      const { rows } = await query<{ id: number }>(
+        `UPDATE user_routines
+         SET start_date = $1, end_date = $2, assigned_by = $3, assigned_at = NOW()
+         WHERE user_id = $4 AND routine_id = $5
+         RETURNING id`,
+        [start_date, end_date, assigned_by, memberId, routine_id]
+      );
+      res.json({ id: rows[0].id, success: true, updated: true });
+
+      void notifyRoutineAssigned(memberId, routine_id).catch((err: unknown) => {
+        logger.error('Error enviando notificacion de rutina asignada', {
+          error: getErrorMessage(err),
+        });
+      });
+      return;
     }
 
-    const { rows: routineRows } = await query<{ trainer_id: number }>(
-      `SELECT trainer_id FROM routines WHERE id = $1`,
-      [routineId]
-    );
-    const routine = routineRows[0];
-    if (!routine) {
-      return res.status(404).json({ error: 'Rutina no encontrada' });
-    }
-    if (req.user!.role === 'trainer' && routine.trainer_id !== req.user!.id) {
-      return res.status(403).json({ error: 'No puedes asignar rutinas de otro entrenador' });
-    }
-
-    const { rows } = await query(
+    const { rows } = await query<{ id: number }>(
       `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [memberId, routineId, assigned_by, start_date, end_date]
+      [memberId, routine_id, assigned_by, start_date, end_date]
     );
-    res.json({ id: rows[0].id, success: true });
+    res.json({ id: rows[0].id, success: true, updated: false });
 
-    void notifyRoutineAssigned(memberId, routineId).catch((err: unknown) =>
+    void notifyRoutineAssigned(memberId, routine_id).catch((err: unknown) => {
       logger.error('Error enviando notificacion de rutina asignada', {
         error: getErrorMessage(err),
-      })
-    );
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
+      });
+    });
+  })
+);
 
-router.delete('/:id/routines/:routineId', authorize(['admin', 'trainer']), async (req, res) => {
-  try {
-    await query('DELETE FROM user_routines WHERE user_id = $1 AND routine_id = $2', [
-      req.params.id,
-      req.params.routineId,
-    ]);
+router.delete(
+  '/:id/routines/:routineId',
+  authorize(['trainer']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const memberId = parseInt(req.params.id, 10);
+    const routineId = parseInt(req.params.routineId, 10);
+    if (Number.isNaN(memberId) || Number.isNaN(routineId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const trainerId = req.user!.id;
+    const ownsRoutine = await trainerOwnsRoutine(trainerId, routineId);
+    if (!ownsRoutine) {
+      res.status(403).json({ error: 'No puedes modificar una rutina que no te pertenece' });
+      return;
+    }
+
+    const { rowCount } = await query(
+      'DELETE FROM user_routines WHERE user_id = $1 AND routine_id = $2',
+      [memberId, routineId]
+    );
+
+    if (!rowCount) {
+      res.status(404).json({ error: 'Asignación no encontrada' });
+      return;
+    }
+
     res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
+  })
+);
 
 router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: AuthRequest, res) => {
   const parsed = createUserSchema.safeParse(req.body);
@@ -641,18 +752,20 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
   const { full_name, email, password, cedula, role: requestedRole } = parsed.data;
   const normalizedEmail = email.toLowerCase();
+  const rawShift =
+    typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
+  const trainingShift = isTrainingShift(rawShift) ? rawShift : null;
 
-  const assignedRole =
-    req.user!.role === 'admin'
-      ? requestedRole ?? 'member'
-      : 'member';
+  const assignedRole = req.user!.role === 'admin' ? (requestedRole ?? 'member') : 'member';
 
   if (!['admin', 'trainer', 'member', 'receptionist'].includes(assignedRole)) {
     return res.status(403).json({ error: 'Rol no permitido' });
   }
 
   if (req.user!.role !== 'admin' && assignedRole !== 'member') {
-    return res.status(403).json({ error: 'Solo el administrador puede crear otros roles de staff' });
+    return res
+      .status(403)
+      .json({ error: 'Solo el administrador puede crear otros roles de staff' });
   }
 
   const normalizedCedula = cedula?.trim() ? canonicalCedula(cedula.trim()) : null;
@@ -674,24 +787,132 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
       return res.status(400).json({ error: 'Esta cédula ya está registrada' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const breachError = await assertPasswordNotBreached(password);
+    if (breachError) {
+      return res.status(400).json({ error: breachError });
+    }
+
+    const hashedPassword = await hashPassword(password);
     const { rows } = await query(
-      `INSERT INTO users (full_name, email, cedula, role, password, status)
-       VALUES ($1, $2, $3, $4, $5, 'active')
+      `INSERT INTO users (full_name, email, cedula, role, password, status, training_shift)
+       VALUES ($1, $2, $3, $4, $5, 'active', $6)
        RETURNING id`,
-      [full_name, normalizedEmail, normalizedCedula, assignedRole, hashedPassword]
+      [
+        full_name,
+        normalizedEmail,
+        normalizedCedula,
+        assignedRole,
+        hashedPassword,
+        assignedRole === 'member' ? trainingShift : null,
+      ]
     );
 
+    const newUserId = rows[0].id;
+
+    if (assignedRole === 'trainer') {
+      const level =
+        typeof req.body?.level === 'string' &&
+        ['basico', 'avanzado', 'especialista'].includes(req.body.level)
+          ? req.body.level
+          : 'basico';
+      const shift =
+        typeof req.body?.shift === 'string' && isTrainingShift(req.body.shift)
+          ? req.body.shift
+          : 'diurno';
+      const specialty =
+        typeof req.body?.specialty === 'string' ? req.body.specialty.trim() || null : null;
+      await query(
+        `INSERT INTO trainer_profiles (user_id, level, specialty, shift)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [newUserId, level, specialty, shift]
+      );
+    }
+
     await logAudit(req.user!.id, 'user.create', {
-      target_id: rows[0].id,
+      target_id: newUserId,
       role: assignedRole,
     });
 
-    res.status(201).json({ id: rows[0].id, success: true });
+    res.status(201).json({ id: newUserId, success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.patch(
+  '/:id/weekly-training-goal',
+  requireMemberAccess('id', 'admin', 'trainer'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const raw = Number(req.body?.weekly_training_goal);
+    if (!Number.isInteger(raw) || raw < 1 || raw > 7) {
+      res.status(400).json({ error: 'La meta semanal debe ser un número entre 1 y 7' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE users SET weekly_training_goal = $1
+       WHERE id = $2 AND role = 'member'
+       RETURNING id, full_name, weekly_training_goal`,
+      [raw, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Miembro no encontrado' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'user.weekly_training_goal_update', {
+      target_id: targetId,
+      weekly_training_goal: raw,
+    });
+
+    res.json(rows[0]);
+  })
+);
+
+router.patch(
+  '/:id/training-shift',
+  authorize(['admin', 'receptionist']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const targetId = parseInt(req.params.id, 10);
+    if (Number.isNaN(targetId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const raw = typeof req.body?.training_shift === 'string' ? req.body.training_shift.trim() : '';
+    if (!isTrainingShift(raw)) {
+      res.status(400).json({ error: 'Turno inválido. Use diurno, vespertino o nocturno.' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE users SET training_shift = $1
+       WHERE id = $2 AND role = 'member'
+       RETURNING id, full_name, training_shift`,
+      [raw, targetId]
+    );
+
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Miembro no encontrado' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'user.training_shift_update', {
+      target_id: targetId,
+      training_shift: raw,
+    });
+
+    res.json(rows[0]);
+  })
+);
 
 router.patch(
   '/:id/cedula',
@@ -741,13 +962,19 @@ router.patch(
 
 router.patch('/:id/status', authorize(['admin']), async (req: AuthRequest, res) => {
   const { status } = req.body;
+  const targetId = parseInt(String(req.params.id), 10);
+  if (Number.isNaN(targetId)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
   try {
-    await query(
-      'UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2',
-      [status, req.params.id]
-    );
+    await query('UPDATE users SET status = $1, token_version = token_version + 1 WHERE id = $2', [
+      status,
+      targetId,
+    ]);
+    invalidateSessionUserCache(targetId);
     await logAudit(req.user!.id, 'user.status_change', {
-      target_id: req.params.id,
+      target_id: targetId,
       status,
     });
     res.json({ success: true });
@@ -789,5 +1016,7 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+mountHealthProfileRoutes(router);
 
 export default router;

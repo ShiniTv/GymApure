@@ -7,6 +7,7 @@ export interface RoutineExercise {
   reps: number;
   rest_seconds: number;
   weight_suggestion: string;
+  set_prescription?: import('../../lib/setPrescription').SetPrescriptionRow[] | null;
 }
 
 export interface Routine {
@@ -14,6 +15,10 @@ export interface Routine {
   name: string;
   difficulty: string;
   exercise_count: number;
+  exercise_preview?: string | null;
+  trainer_id?: number;
+  trainer_name?: string;
+  trainer_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
   exercises?: RoutineExercise[];
 }
 
@@ -24,6 +29,7 @@ export interface Member {
   profile_image?: string | null;
   email?: string;
   cedula?: string | null;
+  training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
 }
 
 export interface AssignedRoutine {

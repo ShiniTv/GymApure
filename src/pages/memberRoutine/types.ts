@@ -5,6 +5,8 @@ export interface Routine {
   assigned_at: string;
   start_date?: string;
   end_date?: string;
+  exercise_count?: number;
+  exercise_preview?: string | null;
   exercises?: Exercise[];
 }
 
@@ -17,6 +19,7 @@ export interface Exercise {
   reps: number;
   rest_seconds: number;
   weight_suggestion: string;
+  set_prescription?: import('../../lib/setPrescription').SetPrescriptionRow[] | null;
 }
 
 export interface MemberUser {
@@ -26,6 +29,7 @@ export interface MemberUser {
   initial_weight?: number | null;
   height?: number | null;
   goal?: string | null;
+  weekly_training_goal?: number;
 }
 
 export interface Subscription {

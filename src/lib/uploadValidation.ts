@@ -1,5 +1,6 @@
 import fs from 'fs';
 import type { Express } from 'express';
+import { VIDEO_MAX_UPLOAD_BYTES } from './videoConfig.ts';
 
 const VIDEO_MIMES = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -35,7 +36,9 @@ export function matchesFileMagic(mime: string, head: Buffer): boolean {
     return startsWith(head, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   }
   if (mime === 'image/webp') {
-    return startsWith(head, 'RIFF') && head.length >= 12 && head.subarray(8, 12).toString() === 'WEBP';
+    return (
+      startsWith(head, 'RIFF') && head.length >= 12 && head.subarray(8, 12).toString() === 'WEBP'
+    );
   }
   if (mime === 'application/pdf') {
     return startsWith(head, '%PDF');
@@ -65,6 +68,14 @@ export function assertAllowedUpload(
 
 export function assertVideoUpload(file: Express.Multer.File): void {
   assertAllowedUpload(file, VIDEO_MIMES, 'video');
+  assertVideoUploadSize(file);
+}
+
+export function assertVideoUploadSize(file: Express.Multer.File): void {
+  if (file.size > VIDEO_MAX_UPLOAD_BYTES) {
+    const maxMb = (VIDEO_MAX_UPLOAD_BYTES / (1024 * 1024)).toFixed(0);
+    throw new Error(`El video supera el límite de ${maxMb} MB.`);
+  }
 }
 
 export function assertImageUpload(file: Express.Multer.File): void {

@@ -15,14 +15,31 @@ import {
   Monitor,
   RefreshCw,
   X,
-  LayoutDashboard,
+  ArrowLeft,
+  Tablet,
+  CreditCard,
+  Pencil,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Button, Card, Input, PageHeader, Badge, Spinner, SegmentedControl } from '../components/ui';
+import {
+  Button,
+  Card,
+  PageHeader,
+  Badge,
+  Spinner,
+  SegmentedControl,
+  CedulaInput,
+  Label,
+  Modal,
+} from '../components/ui';
 import { cn } from '../lib/utils';
+import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
+import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 interface LookupResult {
   found: boolean;
@@ -59,17 +76,27 @@ interface InsideMember {
 
 type Tab = 'access' | 'inside' | 'register';
 
-/** Touch-friendly but not oversized — counter / kiosk inputs */
-const COUNTER_FIELD = 'min-h-[52px] h-[52px] text-lg font-semibold tracking-wide';
-const COUNTER_ACTION = 'min-h-[52px]';
-const COUNTER_SEARCH_BTN = 'h-[52px] w-[52px] shrink-0 p-0';
+interface AttendanceActionResult {
+  error?: string;
+  user_name?: string;
+  message?: string;
+  already_checked_in?: boolean;
+  already_checked_out?: boolean;
+  duration_label?: string;
+}
+
+/** Touch-friendly counter inputs — compact on mobile */
+const COUNTER_FIELD =
+  'min-h-12 h-12 text-base font-semibold tracking-wide sm:min-h-[52px] sm:h-[52px] sm:text-lg';
+const COUNTER_ACTION = 'min-h-11 sm:min-h-[52px]';
+const COUNTER_SEARCH_BTN = 'h-12 w-12 shrink-0 p-0 sm:h-[52px] sm:w-[52px]';
 
 export default function Reception() {
+  usePageTitle('Recepción');
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
-  const initialTab: Tab =
-    tabParam === 'inside' || tabParam === 'register' ? tabParam : 'access';
+  const initialTab: Tab = tabParam === 'inside' || tabParam === 'register' ? tabParam : 'access';
 
   const [tab, setTab] = useState<Tab>(initialTab);
   const [cedula, setCedula] = useState('');
@@ -81,7 +108,16 @@ export default function Reception() {
   const [inside, setInside] = useState<InsideMember[]>([]);
   const [insideCount, setInsideCount] = useState(0);
   const [feedRefresh, setFeedRefresh] = useState(0);
+  const [checkoutConfirm, setCheckoutConfirm] = useState<{ cedula: string; name: string } | null>(
+    null
+  );
+  const [checkingOutCedula, setCheckingOutCedula] = useState<string | null>(null);
+  const [cedulaEditOpen, setCedulaEditOpen] = useState(false);
+  const [cedulaEditValue, setCedulaEditValue] = useState('');
+  const [cedulaEditError, setCedulaEditError] = useState('');
+  const [cedulaEditSaving, setCedulaEditSaving] = useState(false);
   const cedulaRef = useRef<HTMLInputElement>(null);
+  const isMobileShell = useMediaQuery('(max-width: 1023px)');
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -117,86 +153,174 @@ export default function Reception() {
     }
   }, []);
 
+  const openCedulaEdit = () => {
+    if (!lookup?.user) return;
+    setCedulaEditValue(lookup.user.cedula ?? '');
+    setCedulaEditError('');
+    setCedulaEditOpen(true);
+  };
+
+  const saveCedulaEdit = async () => {
+    if (!lookup?.user) return;
+    const err = validateCedula(cedulaEditValue);
+    if (err) {
+      setCedulaEditError(err);
+      return;
+    }
+    setCedulaEditSaving(true);
+    setCedulaEditError('');
+    try {
+      const res = await apiFetch(`/api/users/${lookup.user.id}/cedula`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cedula: cedulaEditValue }),
+      });
+      const updated = await parseJsonResponse<{ cedula: string }>(res);
+      setLookup((prev) =>
+        prev?.user
+          ? {
+              ...prev,
+              user: { ...prev.user, cedula: updated.cedula },
+            }
+          : prev
+      );
+      setCedulaEditOpen(false);
+      setMessage('Cédula actualizada');
+      setMessageType('success');
+    } catch (e) {
+      setCedulaEditError(e instanceof Error ? e.message : 'No se pudo actualizar la cédula');
+    } finally {
+      setCedulaEditSaving(false);
+    }
+  };
+
+  const walkInHref = (prefillCedula?: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('mode', 'counter');
+    params.set('tab', 'register');
+    if (prefillCedula?.trim()) {
+      params.set('cedula', prefillCedula.trim().toUpperCase());
+    }
+    return `/reception?${params.toString()}`;
+  };
+
   useEffect(() => {
     void loadStats();
   }, [loadStats]);
 
-  useEffect(() => {
-    if (tab === 'access') {
-      cedulaRef.current?.focus();
-    }
-  }, [tab]);
+  const doLookup = useCallback(
+    async (value?: string, options?: { preserveMessage?: boolean }) => {
+      const q = (value ?? cedula).trim();
+      if (!q) return;
 
-  const doLookup = useCallback(async (value?: string) => {
-    const q = (value ?? cedula).trim();
-    if (!q) return;
-
-    setLookupLoading(true);
-    setMessage('');
-    setMessageType('');
-    try {
-      const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
-      const data = await parseJsonResponse<LookupResult>(res);
-      if (res.ok && data?.found) {
-        setLookup(data);
-      } else {
-        setLookup({ found: false, error: data?.error || 'Usuario no encontrado' });
+      setLookupLoading(true);
+      if (!options?.preserveMessage) {
+        setMessage('');
+        setMessageType('');
       }
-    } catch {
-      setLookup({ found: false, error: 'Error de conexión' });
-    } finally {
-      setLookupLoading(false);
-    }
-  }, [cedula]);
+      try {
+        const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
+        const data = await parseJsonResponse<LookupResult>(res);
+        if (res.ok && data?.found) {
+          setLookup(data);
+        } else {
+          setLookup({ found: false, error: data?.error || 'Usuario no encontrado' });
+        }
+      } catch {
+        setLookup({ found: false, error: 'Error de conexión' });
+      } finally {
+        setLookupLoading(false);
+      }
+    },
+    [cedula]
+  );
 
-  const handleAction = useCallback(async (action: 'check-in' | 'check-out') => {
-    const q = cedula.trim();
-    if (!q) return;
+  const formatAttendanceMessage = useCallback(
+    (action: 'check-in' | 'check-out', data: AttendanceActionResult) => {
+      if (data.message) return data.message;
+      if (action === 'check-in') {
+        return data.already_checked_in
+          ? `${data.user_name}: ya tiene ingreso activo`
+          : `Entrada autorizada: ${data.user_name}`;
+      }
+      return data.already_checked_out
+        ? `${data.user_name}: ya registró salida`
+        : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`;
+    },
+    []
+  );
 
-    setActionLoading(true);
-    setMessage('');
-    try {
-      const res = await apiFetch(`/api/reception/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cedula: q }),
-      });
-      const data = await parseJsonResponse<{
-        error?: string;
-        user_name?: string;
-        message?: string;
-        already_checked_in?: boolean;
-        already_checked_out?: boolean;
-        duration_label?: string;
-      }>(res);
+  const runAttendanceAction = useCallback(
+    async (
+      action: 'check-in' | 'check-out',
+      memberCedula: string,
+      options?: { clearInput?: boolean }
+    ) => {
+      const q = memberCedula.trim();
+      if (!q) return false;
 
-      if (res.ok) {
-        setMessageType('success');
-        setMessage(
-          data.message ||
-            (action === 'check-in'
-              ? data.already_checked_in
-                ? `${data.user_name}: ya tiene ingreso activo`
-                : `Entrada autorizada: ${data.user_name}`
-              : data.already_checked_out
-                ? `${data.user_name}: ya registró salida`
-                : `Salida registrada: ${data.user_name}${data.duration_label ? ` (${data.duration_label})` : ''}`)
-        );
-        setCedula('');
-        setLookup(null);
-        void loadStats();
-        setTimeout(() => cedulaRef.current?.focus(), 100);
-      } else {
+      setActionLoading(true);
+      if (action === 'check-out') setCheckingOutCedula(q);
+      setMessage('');
+      try {
+        const res = await apiFetch(`/api/reception/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cedula: q }),
+        });
+        const data = await parseJsonResponse<AttendanceActionResult>(res);
+
+        if (res.ok) {
+          setMessageType('success');
+          setMessage(formatAttendanceMessage(action, data));
+          if (options?.clearInput) {
+            setCedula('');
+            setLookup(null);
+            if (!isMobileShell) {
+              setTimeout(() => cedulaRef.current?.focus(), 100);
+            }
+          } else if (q.toUpperCase() === lookup?.user?.cedula?.toUpperCase()) {
+            void doLookup(q, { preserveMessage: true });
+          }
+          void loadStats();
+          return true;
+        }
+
         setMessageType('error');
         setMessage(data.error || 'Operación fallida');
+        return false;
+      } catch {
+        setMessageType('error');
+        setMessage('Error de red');
+        return false;
+      } finally {
+        setActionLoading(false);
+        setCheckingOutCedula(null);
       }
-    } catch {
-      setMessageType('error');
-      setMessage('Error de red');
-    } finally {
-      setActionLoading(false);
-    }
-  }, [cedula, loadStats]);
+    },
+    [formatAttendanceMessage, loadStats, isMobileShell, lookup?.user?.cedula, doLookup]
+  );
+
+  const handleAction = useCallback(
+    (action: 'check-in' | 'check-out') => {
+      const q = cedula.trim();
+      if (!q) return;
+      void runAttendanceAction(action, q, { clearInput: true });
+    },
+    [cedula, runAttendanceAction]
+  );
+
+  const requestCheckout = useCallback((member: InsideMember) => {
+    if (!member.cedula?.trim()) return;
+    setCheckoutConfirm({ cedula: member.cedula.trim(), name: member.full_name });
+  }, []);
+
+  const confirmCheckout = useCallback(() => {
+    if (!checkoutConfirm) return;
+    const { cedula: memberCedula } = checkoutConfirm;
+    setCheckoutConfirm(null);
+    void runAttendanceAction('check-out', memberCedula);
+  }, [checkoutConfirm, runAttendanceAction]);
 
   useReceptionShortcuts({
     enabled: isCounterMode && tab === 'access',
@@ -221,61 +345,87 @@ export default function Reception() {
     return <Badge variant="accent">Puede ingresar</Badge>;
   };
 
+  const actionMessageBanner =
+    message &&
+    (messageType === 'success' ? (
+      <div
+        className={cn(
+          'flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400',
+          isCounterMode && 'px-3 py-2.5'
+        )}
+      >
+        <CheckCircle className="h-5 w-5 shrink-0" />
+        {message}
+      </div>
+    ) : (
+      <div
+        className={cn(
+          'flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-400',
+          isCounterMode && 'px-3 py-2.5'
+        )}
+      >
+        <XCircle className="h-5 w-5 shrink-0" />
+        {message}
+      </div>
+    ));
+
   const lookupPanel = (
     <Card padding="md" rounded="xl" className="space-y-3">
       <div className="space-y-2">
-        <label className="label-caps">Cédula del visitante</label>
-        <div className="flex gap-2 items-stretch">
-          <div className="flex-1 min-w-0">
-            <Input
+        <Label htmlFor="reception-cedula" className="label-caps">
+          Cédula del visitante
+        </Label>
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
+            <CedulaInput
+              id="reception-cedula"
               ref={cedulaRef}
               value={cedula}
-              onChange={(e) => setCedula(e.target.value.toUpperCase())}
+              onChange={setCedula}
               onKeyDown={(e) => e.key === 'Enter' && void doLookup()}
-              placeholder="V-12345678"
               className={cn(isCounterMode && COUNTER_FIELD)}
-              autoComplete="off"
-              autoCapitalize="characters"
             />
           </div>
           <Button
             onClick={() => void doLookup()}
-            disabled={lookupLoading || !cedula.trim()}
+            loading={lookupLoading}
+            disabled={!cedula.trim()}
             size="md"
+            aria-label="Buscar"
             className={cn(
-              isCounterMode ? cn(COUNTER_SEARCH_BTN, 'min-h-0') : 'self-stretch aspect-square px-0 shrink-0'
+              isCounterMode
+                ? cn(COUNTER_SEARCH_BTN, 'min-h-0')
+                : 'aspect-square shrink-0 self-stretch px-0'
             )}
           >
-            {lookupLoading ? <Spinner className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            <Search className="h-4 w-4" />
           </Button>
         </div>
         {isCounterMode && (
-          <p className="text-xs text-zinc-400">
-            Atajos: <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">Enter</kbd> buscar ·{' '}
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F1</kbd> entrada ·{' '}
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[10px]">F2</kbd> salida
+          <p className="hidden text-xs text-zinc-400 sm:block dark:text-zinc-300">
+            Atajos:{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              Enter
+            </kbd>{' '}
+            buscar ·{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              F1
+            </kbd>{' '}
+            entrada ·{' '}
+            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+              F2
+            </kbd>{' '}
+            salida
           </p>
         )}
       </div>
 
-      {message && (
-        <div
-          className={cn(
-            'rounded-xl px-4 py-3 text-sm font-medium flex items-center gap-2',
-            messageType === 'success'
-              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
-              : 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20'
-          )}
-        >
-          {messageType === 'success' ? <CheckCircle className="h-5 w-5 shrink-0" /> : <XCircle className="h-5 w-5 shrink-0" />}
-          {message}
-        </div>
-      )}
+      {message && actionMessageBanner}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
-          size={isCounterMode ? 'md' : 'sm'}
-          className={cn(isCounterMode && COUNTER_ACTION)}
+          size={isCounterMode ? 'sm' : 'sm'}
+          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
         >
@@ -283,9 +433,9 @@ export default function Reception() {
           <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
         </Button>
         <Button
-          size={isCounterMode ? 'md' : 'sm'}
+          size={isCounterMode ? 'sm' : 'sm'}
           variant="secondary"
-          className={cn(isCounterMode && COUNTER_ACTION)}
+          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
         >
@@ -306,58 +456,107 @@ export default function Reception() {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className={cn('font-bold text-zinc-900 dark:text-white', isCounterMode ? 'text-base' : 'text-lg')}>
+              <h3
+                className={cn(
+                  'font-bold text-zinc-900 dark:text-white',
+                  isCounterMode ? 'text-base' : 'text-lg'
+                )}
+              >
                 {lookup.user.full_name}
               </h3>
-              <p className="text-sm text-zinc-500 mt-1">{lookup.user.cedula}</p>
-              <p className="text-xs text-zinc-400 mt-1">{lookup.user.email}</p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{lookup.user.cedula}</p>
+              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">{lookup.user.email}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 h-8 px-2 text-xs"
+                onClick={openCedulaEdit}
+              >
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Corregir cédula
+              </Button>
             </div>
             {accessBadge()}
           </div>
 
           {lookup.subscription ? (
-            <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-4">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {lookup.subscription.membership_name}
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Vence {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
-                {' · '}{lookup.subscription.days_remaining} días restantes
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Vence{' '}
+                {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                {' · '}
+                {lookup.subscription.days_remaining} días restantes
               </p>
             </div>
           ) : (
-            <div className="rounded-xl bg-yellow-500/5 border border-yellow-500/20 p-4 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
-              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-                Sin membresía activa — asigne un plan o apruebe un pago
-              </p>
+            <div className="space-y-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+                <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                  Sin membresía activa — registre un pago o asigne un plan vinculado a un pago
+                  aprobado
+                </p>
+              </div>
+              {lookup.user && (
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to={`/payments?register=1&memberId=${lookup.user.id}`}
+                    className="inline-flex"
+                  >
+                    <Button size="sm" variant="secondary">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Registrar pago
+                    </Button>
+                  </Link>
+                  <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
+                    <Button size="sm" variant="ghost">
+                      Asignar plan
+                    </Button>
+                  </Link>
+                  <Link to="/payments?status=pending" className="inline-flex">
+                    <Button size="sm" variant="ghost">
+                      Ver pendientes
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
           {lookup.attendance?.today_session && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Ingreso hoy:{' '}
-              {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', { locale: es })}
+              {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', {
+                locale: es,
+              })}
               {lookup.attendance.today_session.check_out_time &&
                 ` · Salida: ${format(new Date(lookup.attendance.today_session.check_out_time), 'HH:mm', { locale: es })}`}
             </p>
           )}
         </div>
       ) : lookup && !lookup.found ? (
-        <div className="text-center py-8 space-y-3">
-          <XCircle className="h-10 w-10 text-red-400 mx-auto" />
-          <p className="font-medium text-sm text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
-          <Link to="/members">
+        <div className="space-y-3 py-8 text-center">
+          <XCircle className="mx-auto h-10 w-10 text-red-400" />
+          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
+          <Link to={walkInHref(cedula)}>
             <Button variant="secondary" size="sm">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Registrar nuevo miembro
+              <UserPlus className="mr-2 h-4 w-4" />
+              Iniciar walk-in
+            </Button>
+          </Link>
+          <Link to="/members">
+            <Button variant="ghost" size="sm">
+              Solo crear cuenta
             </Button>
           </Link>
         </div>
       ) : (
-        <div className="text-center py-5 text-zinc-400">
-          <Fingerprint className="h-7 w-7 mx-auto mb-1.5 opacity-30" />
-          <p className="font-medium text-[11px] label-caps">Ingrese una cédula para consultar</p>
+        <div className="py-4 text-center text-zinc-400 sm:py-5 dark:text-zinc-300">
+          <Fingerprint className="mx-auto mb-1.5 h-6 w-6 opacity-30 sm:h-7 sm:w-7" />
+          <p className="label-caps text-[11px] font-medium">Ingrese una cédula para consultar</p>
         </div>
       )}
     </Card>
@@ -365,7 +564,7 @@ export default function Reception() {
 
   const insideList = (
     <Card padding="md" rounded="xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h3 className="section-title">Dentro del gym ({insideCount})</h3>
         <Button
           variant="ghost"
@@ -377,26 +576,105 @@ export default function Reception() {
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
+      {tab === 'inside' && message && <div className="mb-3">{actionMessageBanner}</div>}
       <div className={cn('scroll-area space-y-2', isCounterMode ? 'max-h-56' : 'max-h-72')}>
         {inside.map((m) => (
           <div
             key={m.id}
-            className="flex items-center justify-between p-3 rounded-xl border border-zinc-200 dark:border-zinc-800"
+            className="flex items-center gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
           >
-            <div className="min-w-0">
-              <p className="font-semibold text-sm text-zinc-900 dark:text-white truncate">{m.full_name}</p>
-              <p className="text-xs text-zinc-500">{m.cedula || 'Sin cédula'}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                {m.full_name}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{m.cedula || 'Sin cédula'}</p>
             </div>
-            <p className="text-xs font-medium text-emerald-600 shrink-0 ml-2">
+            <p className="shrink-0 text-xs font-medium text-emerald-600">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
             </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 shrink-0 px-2.5 text-xs"
+              disabled={!m.cedula || actionLoading}
+              loading={checkingOutCedula === m.cedula?.trim()}
+              onClick={() => requestCheckout(m)}
+              title={m.cedula ? 'Registrar salida' : 'Sin cédula registrada'}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Salida</span>
+            </Button>
           </div>
         ))}
         {inside.length === 0 && (
-          <p className="text-center text-zinc-400 py-6 text-sm">Nadie dentro en este momento</p>
+          <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-300">
+            Nadie dentro en este momento
+          </p>
         )}
       </div>
     </Card>
+  );
+
+  const checkoutConfirmModal = (
+    <Modal
+      open={checkoutConfirm != null}
+      onClose={() => setCheckoutConfirm(null)}
+      title="¿Registrar salida?"
+      maxWidth="sm"
+    >
+      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        Se registrará la salida de{' '}
+        <strong className="text-zinc-900 dark:text-white">{checkoutConfirm?.name}</strong> del gym.
+      </p>
+      <div className="flex gap-3">
+        <Button variant="ghost" className="flex-1" onClick={() => setCheckoutConfirm(null)}>
+          Cancelar
+        </Button>
+        <Button className="flex-1" onClick={() => void confirmCheckout()} loading={actionLoading}>
+          Registrar salida
+        </Button>
+      </div>
+    </Modal>
+  );
+
+  const cedulaEditModal = (
+    <Modal
+      open={cedulaEditOpen}
+      onClose={() => setCedulaEditOpen(false)}
+      title={
+        <>
+          Corregir <span className="text-brand">cédula</span>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label>Cédula / ID</Label>
+          <CedulaInput
+            value={cedulaEditValue}
+            onChange={(value) => {
+              setCedulaEditValue(value);
+              if (cedulaEditError) setCedulaEditError('');
+            }}
+          />
+          {cedulaEditError && (
+            <p className="mt-2 text-sm font-medium text-red-500">{cedulaEditError}</p>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={() => setCedulaEditOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1"
+            loading={cedulaEditSaving}
+            onClick={() => void saveCedulaEdit()}
+          >
+            Guardar
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 
   if (isCounterMode) {
@@ -405,23 +683,42 @@ export default function Reception() {
     return (
       <div className="page-stack">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="p-1.5 rounded-lg bg-brand/10 text-brand shrink-0">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="bg-brand/10 text-brand shrink-0 rounded-lg p-1.5">
               <Monitor className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate">
+              <h1 className="truncate text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
                 Modo mostrador
               </h1>
-              <p className="text-[11px] text-zinc-500 truncate">
-                {insideCount} dentro · F1 entrada · F2 salida
+              <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span className="lg:hidden">{insideCount} dentro</span>
+                <span className="hidden lg:inline">
+                  {insideCount} dentro · F1 entrada · F2 salida
+                </span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Link to="/">
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0" title="Ir al dashboard">
-                <LayoutDashboard className="h-4 w-4" />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={() => setCounterMode(false)}
+              title="Volver al resumen"
+              aria-label="Volver al resumen"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0"
+                title="Modo tablet"
+                aria-label="Modo tablet"
+              >
+                <Tablet className="h-4 w-4" />
               </Button>
             </Link>
             <Button
@@ -432,7 +729,7 @@ export default function Reception() {
               title="Salir del modo mostrador"
             >
               <X className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs">Salir</span>
+              <span className="hidden text-xs sm:inline">Salir</span>
             </Button>
           </div>
         </div>
@@ -441,7 +738,7 @@ export default function Reception() {
           <SegmentedControl
             variant="compact"
             value={tab}
-            onChange={(v) => changeTab(v as Tab)}
+            onChange={(v) => changeTab(v)}
             options={[
               { value: 'access', label: 'Acceso', icon: Fingerprint },
               { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
@@ -450,16 +747,12 @@ export default function Reception() {
           />
 
           {tab === 'access' && (
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-3 space-y-4">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
+              <div className="space-y-3 lg:col-span-3 lg:space-y-4">
                 {lookupPanel}
-                {showMemberPanel ? memberPanel : (
-                  <p className="text-center text-[11px] text-zinc-400 label-caps py-1">
-                    Ingrese una cédula para ver el visitante
-                  </p>
-                )}
+                {showMemberPanel && memberPanel}
               </div>
-              <aside className="lg:col-span-2 space-y-4">
+              <aside className="hidden space-y-4 lg:col-span-2 lg:block">
                 {insideList}
                 <Card padding="md" rounded="xl">
                   <h3 className="section-title mb-2">Actividad reciente</h3>
@@ -472,37 +765,39 @@ export default function Reception() {
           {tab === 'inside' && insideList}
 
           {tab === 'register' && (
-            <ReceptionWalkInWizard onComplete={() => void loadStats()} />
+            <div className="pb-4">
+              <ReceptionWalkInWizard
+                initialCedula={searchParams.get('cedula') ?? undefined}
+                onComplete={() => void loadStats()}
+              />
+            </div>
           )}
         </div>
+        {checkoutConfirmModal}
+        {cedulaEditModal}
       </div>
     );
   }
 
   return (
     <div className="page-stack">
-      <PageHeader
-        compact
-        title={<>Control de <span className="text-brand">acceso</span></>}
-        subtitle="Busque por cédula para autorizar entrada y salida"
-        action={
-          <Button
-            size="sm"
-            className="h-11 w-11 px-0"
-            onClick={() => setCounterMode(true)}
-            aria-label="Modo mostrador"
-            title="Modo mostrador"
-          >
-            <Monitor className="h-5 w-5" />
-          </Button>
-        }
-      />
+      <ReceptionHomeSummary onOpenCounter={() => setCounterMode(true)} />
 
-      <div className="panel-wide space-y-4">
+      <div className="panel-wide hidden space-y-4 lg:block">
+        <PageHeader
+          compact
+          title={
+            <>
+              Control de <span className="text-brand">acceso</span>
+            </>
+          }
+          subtitle="Busque por cédula para autorizar entrada y salida"
+        />
+
         <SegmentedControl
           variant="compact"
           value={tab}
-          onChange={(v) => changeTab(v as Tab)}
+          onChange={(v) => changeTab(v)}
           options={[
             { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
             { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
@@ -511,7 +806,7 @@ export default function Reception() {
         />
 
         {tab === 'access' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {lookupPanel}
             {memberPanel}
           </div>
@@ -520,9 +815,14 @@ export default function Reception() {
         {tab === 'inside' && insideList}
 
         {tab === 'register' && (
-          <ReceptionWalkInWizard onComplete={() => void loadStats()} />
+          <ReceptionWalkInWizard
+            initialCedula={searchParams.get('cedula') ?? undefined}
+            onComplete={() => void loadStats()}
+          />
         )}
       </div>
+      {checkoutConfirmModal}
+      {cedulaEditModal}
     </div>
   );
 }

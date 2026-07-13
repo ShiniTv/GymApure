@@ -1,8 +1,8 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize } from './middleware/auth.ts';
-import { sqlTodayRange } from '../lib/sqlDateRanges.ts';
-import { RECEPTION_STAFF } from '../lib/roles.ts';
+import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
+import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -20,11 +20,11 @@ function parseInactiveDays(raw: unknown): number {
   return Math.min(90, Math.max(7, n));
 }
 
-router.get('/stats', authorize(RECEPTION_STAFF), async (req, res) => {
+router.get('/stats', authorize(RECEPTION_OPERATORS), async (req, res) => {
   try {
     const { rows } = await query(`
       SELECT COUNT(*)::int AS count FROM attendance
-      WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+      WHERE ${sqlRecentRange('check_in_time', 2)}
         AND check_out_time IS NULL
     `);
     res.json({ current_capacity: rows[0].count });
@@ -34,7 +34,7 @@ router.get('/stats', authorize(RECEPTION_STAFF), async (req, res) => {
   }
 });
 
-router.get('/inside', authorize(RECEPTION_STAFF), async (_req, res) => {
+router.get('/inside', authorize(RECEPTION_OPERATORS), async (_req, res) => {
   try {
     const { rows } = await query<{
       id: number;
@@ -55,7 +55,7 @@ router.get('/inside', authorize(RECEPTION_STAFF), async (_req, res) => {
   }
 });
 
-router.get('/today', authorize(RECEPTION_STAFF), async (req, res) => {
+router.get('/today', authorize(RECEPTION_OPERATORS), async (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
 
   try {
@@ -76,11 +76,7 @@ router.get('/today', authorize(RECEPTION_STAFF), async (req, res) => {
       is_inside: boolean;
     }>(
       `SELECT a.id, u.full_name, u.cedula, a.check_in_time, a.check_out_time,
-              CASE
-                WHEN a.check_out_time IS NOT NULL THEN
-                  GREATEST(1, ROUND(EXTRACT(EPOCH FROM (a.check_out_time - a.check_in_time)) / 60))::int
-                ELSE NULL
-              END AS duration_minutes,
+              ${sqlDurationMinutes('a.check_out_time', 'a.check_in_time')} AS duration_minutes,
               (a.check_out_time IS NULL) AS is_inside
        FROM attendance a
        JOIN users u ON u.id = a.user_id

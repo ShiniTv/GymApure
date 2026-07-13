@@ -15,23 +15,23 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
     <nav aria-label="Breadcrumb" className={cn('mb-4', className)}>
-      <ol className="flex flex-wrap items-center gap-1 text-xs font-medium text-zinc-500">
+      <ol className="flex flex-wrap items-center gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
         {items.map((item, i) => {
           const isLast = i === items.length - 1;
           return (
             <li key={`${item.label}-${i}`} className="flex items-center gap-1">
-              {i > 0 && <ChevronRight className="h-3 w-3 text-zinc-400 shrink-0" aria-hidden />}
+              {i > 0 && (
+                <ChevronRight
+                  className="h-3 w-3 shrink-0 text-zinc-400 dark:text-zinc-300"
+                  aria-hidden
+                />
+              )}
               {item.href && !isLast ? (
-                <Link
-                  to={item.href}
-                  className="hover:text-brand transition-colors"
-                >
+                <Link to={item.href} className="hover:text-brand transition-colors">
                   {item.label}
                 </Link>
               ) : (
-                <span className={cn(isLast && 'text-brand dark:text-brand')}>
-                  {item.label}
-                </span>
+                <span className={cn(isLast && 'text-brand dark:text-brand')}>{item.label}</span>
               )}
             </li>
           );

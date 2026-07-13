@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { logger } from '../../lib/logger.ts';
+import type { AuthRequest } from './authTypes.ts';
+import { getSessionCacheStats } from '../../lib/sessionUserCache.ts';
 
 const SLOW_REQUEST_MS = 1000;
 const WARN_ERROR_RATE_PERCENT = 5;
@@ -130,7 +132,9 @@ function computeRates() {
   const errorRatePercent =
     metrics.completed > 0 ? Number(((totalErrors / metrics.completed) * 100).toFixed(2)) : 0;
   const slowRatePercent =
-    metrics.completed > 0 ? Number(((metrics.slowRequests / metrics.completed) * 100).toFixed(2)) : 0;
+    metrics.completed > 0
+      ? Number(((metrics.slowRequests / metrics.completed) * 100).toFixed(2))
+      : 0;
   return { errorRatePercent, slowRatePercent };
 }
 
@@ -179,6 +183,7 @@ export function requestMetricsMiddleware(req: Request, res: Response, next: Next
     updateRouteMetrics(req, res.statusCode, elapsedMs);
     captureTimelineIfDue();
 
+    const authUser = (req as AuthRequest).user;
     const logMeta = {
       requestId,
       method: req.method,
@@ -186,6 +191,7 @@ export function requestMetricsMiddleware(req: Request, res: Response, next: Next
       statusCode: res.statusCode,
       durationMs: Number(elapsedMs.toFixed(1)),
       ip: getClientIp(req),
+      userId: authUser?.id ?? null,
     };
 
     if (res.statusCode >= 500) {
@@ -235,14 +241,13 @@ export function getRequestMetricsSnapshot() {
     errorRatePercent,
     slowRatePercent,
     thresholdStatus: {
-      errorRate:
-        errorRatePercent >= thresholds.warnErrorRatePercent ? 'warn' : 'ok',
-      slowRate:
-        slowRatePercent >= thresholds.warnSlowRatePercent ? 'warn' : 'ok',
+      errorRate: errorRatePercent >= thresholds.warnErrorRatePercent ? 'warn' : 'ok',
+      slowRate: slowRatePercent >= thresholds.warnSlowRatePercent ? 'warn' : 'ok',
     },
     thresholds,
     topSlowRoutes,
     recentTimeline: timeline,
+    sessionCache: getSessionCacheStats(),
     status: {
       '1xx': metrics.status1xx,
       '2xx': metrics.status2xx,

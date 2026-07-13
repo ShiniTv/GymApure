@@ -1,12 +1,4 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export type RevenueChartMode = 'day' | 'month';
 
@@ -55,7 +47,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           <XAxis
             dataKey="period"
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -65,7 +57,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           />
           <YAxis
             stroke="currentColor"
-            className="text-zinc-400"
+            className="text-zinc-400 dark:text-zinc-300"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -79,16 +71,25 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
               if (active && payload && payload.length) {
                 const point = payload[0].payload as RevenueChartPoint & { income: number };
                 return (
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl shadow-xl">
-                    <p className="text-zinc-500 text-[10px] mb-0.5">{formatPeriodTitle(point.period, mode)}</p>
-                    <p className="text-base font-semibold text-brand tabular-nums">${point.income}</p>
+                  <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+                    <p className="mb-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                      {formatPeriodTitle(point.period, mode)}
+                    </p>
+                    <p className="text-brand text-base font-semibold tabular-nums">
+                      ${point.income}
+                    </p>
                   </div>
                 );
               }
               return null;
             }}
           />
-          <Bar dataKey="income" fill="var(--chart-accent)" radius={[4, 4, 0, 0]} maxBarSize={mode === 'day' ? 18 : 32} />
+          <Bar
+            dataKey="income"
+            fill="var(--chart-accent)"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={mode === 'day' ? 18 : 32}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>

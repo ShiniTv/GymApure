@@ -46,6 +46,47 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
 }
 
+function isMissingColumnError(err: unknown, column: string): boolean {
+  const msg = getErrorMessage(err).toLowerCase();
+  const columnName = column.toLowerCase();
+  return (
+    msg.includes(columnName) && (msg.includes('does not exist') || msg.includes('undefined_column'))
+  );
+}
+
+const ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION = `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.set_prescription,
+              re.id as routine_exercise_id
+       FROM routine_exercises re
+       JOIN exercises e ON re.exercise_id = e.id
+       WHERE re.routine_id = $1`;
+
+const ROUTINE_EXERCISES_SELECT_LEGACY = `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion,
+              re.id as routine_exercise_id
+       FROM routine_exercises re
+       JOIN exercises e ON re.exercise_id = e.id
+       WHERE re.routine_id = $1`;
+
+async function fetchRoutineExercisesRows(routineId: string | number) {
+  try {
+    return await query(ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION, [routineId]);
+  } catch (err) {
+    if (isMissingColumnError(err, 'set_prescription')) {
+      return await query(ROUTINE_EXERCISES_SELECT_LEGACY, [routineId]);
+    }
+    throw err;
+  }
+}
+
+const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
+       FROM (
+         SELECT e.name
+         FROM routine_exercises re
+         JOIN exercises e ON e.id = re.exercise_id
+         WHERE re.routine_id = r.id
+         ORDER BY re.id
+         LIMIT 3
+       ) preview_names)`;
+
 async function getRoutineTrainerId(routineId: string | number): Promise<number | null> {
   const { rows } = await query<{ trainer_id: number }>(
     'SELECT trainer_id FROM routines WHERE id = $1',
@@ -85,10 +126,12 @@ router.get('/', async (req: AuthRequest, res) => {
     }
 
     const { rows } = await query(
-      `SELECT r.*, u.full_name as trainer_name,
-      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
+      `SELECT r.*, u.full_name as trainer_name, tp.shift as trainer_shift,
+      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count,
+      ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
       FROM routines r
       JOIN users u ON r.trainer_id = u.id
+      LEFT JOIN trainer_profiles tp ON tp.user_id = r.trainer_id
       ${where}
       ORDER BY r.name ASC`,
       params
@@ -100,7 +143,7 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/assignments/all', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.get('/assignments/all', authorize(['trainer']), async (req: AuthRequest, res) => {
   const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
 
   try {
@@ -170,13 +213,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
       }
     }
 
-    const exercisesResult = await query(
-      `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.id as routine_exercise_id
-       FROM routine_exercises re
-       JOIN exercises e ON re.exercise_id = e.id
-       WHERE re.routine_id = $1`,
-      [req.params.id]
-    );
+    const exercisesResult = await fetchRoutineExercisesRows(req.params.id);
 
     res.json({ ...routine, exercises: exercisesResult.rows });
   } catch (err: unknown) {
@@ -184,15 +221,14 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
   const { name, difficulty } = parsed.data;
-  const trainerId =
-    req.user!.role === 'trainer' ? req.user!.id : parsed.data.trainer_id;
+  const trainerId = req.user!.role === 'trainer' ? req.user!.id : parsed.data.trainer_id;
 
   if (!trainerId) {
     return res.status(400).json({ error: 'trainer_id es obligatorio' });
@@ -217,7 +253,7 @@ router.post('/', authorize(['admin', 'trainer']), async (req: AuthRequest, res) 
   }
 });
 
-router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.put('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -241,7 +277,7 @@ router.put('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res
   }
 });
 
-router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.delete('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   const routineId = parseInt(req.params.id, 10);
   if (isNaN(routineId)) return res.status(400).json({ error: 'ID de rutina inválido' });
 
@@ -275,13 +311,14 @@ router.delete('/:id', authorize(['admin', 'trainer']), async (req: AuthRequest, 
   }
 });
 
-router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
+router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, res) => {
   const parsed = routineExerciseSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
-  const { exercise_id, sets, reps, rest_seconds, weight_suggestion } = parsed.data;
+  const { exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription } =
+    parsed.data;
   const routineId = req.params.id;
 
   const trainerId = await getRoutineTrainerId(routineId);
@@ -291,12 +328,25 @@ router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthR
   }
 
   try {
-    const { rows } = await query(
-      `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id`,
-      [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion]
-    );
+    const prescriptionJson = set_prescription ? JSON.stringify(set_prescription) : null;
+    let rows: { id: number }[];
+
+    try {
+      ({ rows } = await query<{ id: number }>(
+        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id`,
+        [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion, prescriptionJson]
+      ));
+    } catch (err) {
+      if (!isMissingColumnError(err, 'set_prescription')) throw err;
+      ({ rows } = await query<{ id: number }>(
+        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion]
+      ));
+    }
 
     res.json({ id: rows[0].id, success: true });
   } catch (err: unknown) {
@@ -304,48 +354,73 @@ router.post('/:id/exercises', authorize(['admin', 'trainer']), async (req: AuthR
   }
 });
 
-router.put('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const parsed = routineExerciseSchema
-    .omit({ exercise_id: true })
-    .safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
-  }
+router.put(
+  '/:id/exercises/:routineExerciseId',
+  authorize(['trainer']),
+  async (req: AuthRequest, res) => {
+    const parsed = routineExerciseSchema.omit({ exercise_id: true }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: formatZodError(parsed.error) });
+    }
 
-  const { sets, reps, rest_seconds, weight_suggestion } = parsed.data;
-  const trainerId = await getRoutineTrainerId(req.params.id);
-  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
-  if (!assertTrainerOwnsRoutine(req, trainerId)) {
-    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    const { sets, reps, rest_seconds, weight_suggestion, set_prescription } = parsed.data;
+    const trainerId = await getRoutineTrainerId(req.params.id);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+    try {
+      const prescriptionJson = set_prescription ? JSON.stringify(set_prescription) : null;
+      try {
+        await query(
+          `UPDATE routine_exercises
+         SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4, set_prescription = $5
+         WHERE id = $6 AND routine_id = $7`,
+          [
+            sets,
+            reps,
+            rest_seconds,
+            weight_suggestion,
+            prescriptionJson,
+            req.params.routineExerciseId,
+            req.params.id,
+          ]
+        );
+      } catch (err) {
+        if (!isMissingColumnError(err, 'set_prescription')) throw err;
+        await query(
+          `UPDATE routine_exercises
+         SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4
+         WHERE id = $5 AND routine_id = $6`,
+          [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
+        );
+      }
+      res.json({ success: true });
+    } catch (err: unknown) {
+      res.status(500).json({ error: getErrorMessage(err) });
+    }
   }
-  try {
-    await query(
-      `UPDATE routine_exercises
-       SET sets = $1, reps = $2, rest_seconds = $3, weight_suggestion = $4
-       WHERE id = $5 AND routine_id = $6`,
-      [sets, reps, rest_seconds, weight_suggestion, req.params.routineExerciseId, req.params.id]
-    );
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
+);
 
-router.delete('/:id/exercises/:routineExerciseId', authorize(['admin', 'trainer']), async (req: AuthRequest, res) => {
-  const trainerId = await getRoutineTrainerId(req.params.id);
-  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
-  if (!assertTrainerOwnsRoutine(req, trainerId)) {
-    return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+router.delete(
+  '/:id/exercises/:routineExerciseId',
+  authorize(['trainer']),
+  async (req: AuthRequest, res) => {
+    const trainerId = await getRoutineTrainerId(req.params.id);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+    try {
+      await query('DELETE FROM routine_exercises WHERE id = $1 AND routine_id = $2', [
+        req.params.routineExerciseId,
+        req.params.id,
+      ]);
+      res.json({ success: true });
+    } catch (err: unknown) {
+      res.status(500).json({ error: getErrorMessage(err) });
+    }
   }
-  try {
-    await query('DELETE FROM routine_exercises WHERE id = $1 AND routine_id = $2', [
-      req.params.routineExerciseId,
-      req.params.id,
-    ]);
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
+);
 
 export default router;

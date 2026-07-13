@@ -1,5 +1,16 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { apiFetch } from '../lib/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
+import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
 import type { UserRole } from '../lib/roles';
 
 interface User {
@@ -13,25 +24,78 @@ interface AuthContextType {
   user: User | null;
   login: (user: User) => void;
   logout: () => void;
+  logoutLocal: (message?: string) => void;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEFAULT_SESSION_REVOKED_MESSAGE =
+  'Tu sesión se cerró porque iniciaste sesión en otro dispositivo.';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const userRef = useRef<User | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    apiFetch('/api/auth/me')
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error('Not authenticated');
+    userRef.current = user;
+  }, [user]);
+
+  const logoutLocal = useCallback(
+    (message?: string) => {
+      setUser(null);
+      if (message) {
+        sessionStorage.setItem('auth:session-message', message);
+      }
+      navigate('/login', { replace: true });
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 2500);
+
+    apiFetch('/api/auth/me', { signal: controller.signal })
+      .then(async (res) => {
+        const contentType = res.headers.get('content-type') ?? '';
+        if (!res.ok || !contentType.includes('application/json')) {
+          throw new Error('Not authenticated');
+        }
+        return res.json() as Promise<{ user: User }>;
       })
       .then((data) => setUser(data.user))
       .catch(() => setUser(null))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        window.clearTimeout(timeout);
+        setIsLoading(false);
+        setAuthBootstrapComplete(true);
+      });
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
+
+  useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      if (userRef.current) {
+        dispatchSessionRevoked({ message: DEFAULT_SESSION_REVOKED_MESSAGE });
+        logoutLocal(DEFAULT_SESSION_REVOKED_MESSAGE);
+      }
+    });
+    return () => registerUnauthorizedHandler(null);
+  }, [logoutLocal]);
+
+  useEffect(() => {
+    return onSessionRevoked((detail) => {
+      if (!userRef.current) return;
+      logoutLocal(detail.message ?? DEFAULT_SESSION_REVOKED_MESSAGE);
+    });
+  }, [logoutLocal]);
 
   const login = useCallback((userData: User) => {
     setUser(userData);
@@ -39,20 +103,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     apiFetch('/api/auth/logout', { method: 'POST' })
-      .then(() => setUser(null))
-      .catch(() => setUser(null));
-  }, []);
+      .then(() => logoutLocal())
+      .catch(() => logoutLocal());
+  }, [logoutLocal]);
 
   const value = useMemo(
-    () => ({ user, login, logout, isLoading }),
-    [user, login, logout, isLoading]
+    () => ({ user, login, logout, logoutLocal, isLoading }),
+    [user, login, logout, logoutLocal, isLoading]
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

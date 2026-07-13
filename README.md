@@ -1,10 +1,33 @@
 # GymApure
 
-Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas y entrenamientos.
+Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas, equipamiento y entrenamientos.
 
 **Stack:** React 19 + Vite + Tailwind · Express · PostgreSQL (Supabase)
 
-> **Guía de desarrollo (instalación, comandos, estructura, flujo diario):** **[docs/DESARROLLO.md](docs/DESARROLLO.md)**
+> **Documentación completa:** **[docs/README.md](docs/README.md)** — índice maestro con manuales por rol, módulos y guías técnicas.
+
+## Manuales de uso por rol
+
+| Rol           | Manual                                                               |
+| ------------- | -------------------------------------------------------------------- |
+| Administrador | [docs/manual/MANUAL-ADMIN.md](docs/manual/MANUAL-ADMIN.md)           |
+| Recepcionista | [docs/manual/MANUAL-RECEPCION.md](docs/manual/MANUAL-RECEPCION.md)   |
+| Entrenador    | [docs/manual/MANUAL-ENTRENADOR.md](docs/manual/MANUAL-ENTRENADOR.md) |
+| Cliente       | [docs/manual/MANUAL-CLIENTE.md](docs/manual/MANUAL-CLIENTE.md)       |
+
+## Instalación en otro equipo
+
+1. [Inicio rápido](docs/INICIO-RAPIDO.md) — 15 pasos para operar el gym
+2. [Instalación detallada](docs/tecnico/INSTALACION-NUEVO-EQUIPO.md)
+3. [Reglas de seguridad](docs/tecnico/ENTORNOS-Y-SEGURIDAD.md) — **leer antes de tocar la base de datos**
+
+## Guías técnicas
+
+| Documento                                | Contenido                                |
+| ---------------------------------------- | ---------------------------------------- |
+| [docs/DESARROLLO.md](docs/DESARROLLO.md) | Desarrollo local, comandos, convenciones |
+| [docs/DEPLOY.md](docs/DEPLOY.md)         | Despliegue Render + Supabase             |
+| [docs/TESTING.md](docs/TESTING.md)       | Tests automatizados y CI                 |
 
 ## Requisitos
 
@@ -17,9 +40,9 @@ Instalación paso a paso, comandos y estructura del código: **[docs/DESARROLLO.
 
 Resumen rápido:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 2. Copiar variables de entorno:
 
@@ -64,22 +87,24 @@ Resumen rápido:
 
 ## Scripts
 
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | Servidor Express + Vite en modo desarrollo |
-| `npm run build` | Build frontend + bundle del servidor |
-| `npm start` | Servidor en producción (tras `build`) |
-| `npm run lint` | Comprobación TypeScript strict (`tsc --noEmit`) |
-| `npm run test:smoke` | Pruebas smoke de la API (servidor en marcha) |
-| `npm run test:e2e` | Suite completa: integración + seguridad + auth + recepción |
-| `npm run verify:local-e2e` | Levanta dev, espera healthcheck y ejecuta `test:e2e` |
-| `npm run dev:clean` | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
-| `npm run db:migrate` | Aplica migraciones SQL pendientes en Supabase/Postgres |
-| `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy |
-| `npm run db:create-admin` | Crea o actualiza la cuenta administrador inicial |
-| `npm run db:restore-demo` | Solo CI/tests automáticos — cuentas demo ficticias |
+| Comando                          | Descripción                                                     |
+| -------------------------------- | --------------------------------------------------------------- |
+| `npm run dev`                    | Servidor Express + Vite en modo desarrollo                      |
+| `npm run build`                  | Build frontend + bundle del servidor                            |
+| `npm start`                      | Servidor en producción (tras `build`)                           |
+| `npm run lint`                   | Comprobación TypeScript strict (`tsc --noEmit`)                 |
+| `npm run test:smoke`             | Pruebas smoke de la API (servidor en marcha)                    |
+| `npm run test:e2e`               | Suite completa: integración + seguridad + auth + recepción      |
+| `npm run verify:local-e2e`       | Levanta dev, espera healthcheck y ejecuta `test:e2e`            |
+| `npm run dev:clean`              | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
+| `npm run db:migrate`             | Aplica migraciones SQL pendientes en Supabase/Postgres          |
+| `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy                           |
+| `npm run db:create-admin`        | Crea o actualiza la cuenta administrador inicial                |
+| `npm run db:restore-demo`        | Solo CI/tests automáticos — cuentas demo ficticias              |
+| `npm run deploy:preflight`       | Valida `.env` antes de migrar/desplegar a producción            |
 
-> Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**
+> Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**  
+> **Despliegue a producción (Render + Supabase):** **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
 ## Cuentas y acceso
 

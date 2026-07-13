@@ -1,5 +1,6 @@
 export const THEME_STORAGE_KEY = 'theme';
 export const PALETTE_STORAGE_KEY = 'gymapure-palette';
+export const THEME_ONBOARDING_KEY = 'gymapure-theme-onboarding-done';
 
 export const PALETTES = {
   monochrome: {
@@ -73,8 +74,22 @@ export type Appearance = 'light' | 'dark';
 
 export const PALETTE_IDS = Object.keys(PALETTES) as PaletteId[];
 export const PALETTE_LIST = Object.values(PALETTES);
-export const DEFAULT_PALETTE: PaletteId = 'monochrome';
+export const DEFAULT_PALETTE: PaletteId = 'ember';
 export const DEFAULT_APPEARANCE: Appearance = 'dark';
+
+function getStorage() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+export function getSystemAppearance(): Appearance {
+  if (typeof window === 'undefined') return DEFAULT_APPEARANCE;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
 
 export function isPaletteId(value: string | null): value is PaletteId {
   return value !== null && value in PALETTES;
@@ -82,6 +97,27 @@ export function isPaletteId(value: string | null): value is PaletteId {
 
 export function isAppearance(value: string | null): value is Appearance {
   return value === 'light' || value === 'dark';
+}
+
+export function getStoredTheme(): Appearance {
+  const stored = getStorage()?.getItem(THEME_STORAGE_KEY) ?? null;
+  return isAppearance(stored) ? stored : getSystemAppearance();
+}
+
+export function getStoredPalette(): PaletteId {
+  const stored = getStorage()?.getItem(PALETTE_STORAGE_KEY) ?? null;
+  return isPaletteId(stored) ? stored : DEFAULT_PALETTE;
+}
+
+export function persistTheme(theme: Appearance, palette: PaletteId) {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(THEME_STORAGE_KEY, theme);
+    storage.setItem(PALETTE_STORAGE_KEY, palette);
+  } catch {
+    // Ignore storage write failures so theme init cannot block app boot.
+  }
 }
 
 export function getPaletteCssVars(appearance: Appearance, palette: PaletteId) {

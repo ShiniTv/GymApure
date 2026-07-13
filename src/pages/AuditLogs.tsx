@@ -1,9 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Shield, RefreshCw, CreditCard, UserX, UserCheck, Trash2, Fingerprint, UserPlus, LogIn, LogOut } from 'lucide-react';
+import {
+  Shield,
+  RefreshCw,
+  CreditCard,
+  UserX,
+  UserCheck,
+  Trash2,
+  Fingerprint,
+  UserPlus,
+  LogIn,
+  LogOut,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { Badge, Button, Card, PageHeader, Spinner, EmptyState, FilterChips } from '../components/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  PageHeader,
+  Spinner,
+  EmptyState,
+  FilterChips,
+  BackToDashboardLink,
+} from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
 
@@ -66,7 +86,8 @@ function actionLabel(action: string): string {
 }
 
 function actionBadgeVariant(action: string): 'success' | 'danger' | 'default' | 'accent' {
-  if (action.startsWith('payment.approve') || action.startsWith('reception.check_in')) return 'success';
+  if (action.startsWith('payment.approve') || action.startsWith('reception.check_in'))
+    return 'success';
   if (action.startsWith('payment.reject') || action.startsWith('user.delete')) return 'danger';
   if (action.startsWith('reception.')) return 'accent';
   return 'default';
@@ -111,30 +132,34 @@ export default function AuditLogs() {
   return (
     <div className="page-stack">
       <PageHeader
-        title={<>Registro de <span className="text-brand">auditoría</span></>}
+        title={
+          <>
+            Registro de <span className="text-brand">auditoría</span>
+          </>
+        }
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 px-0"
-            onClick={loadLogs}
-            aria-label="Actualizar"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <BackToDashboardLink iconOnly className="sm:hidden" />
+            <BackToDashboardLink className="hidden sm:inline-flex" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 px-0"
+              onClick={loadLogs}
+              aria-label="Actualizar"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         }
       />
 
-      <FilterChips
-        options={ACTION_FILTERS}
-        value={actionFilter}
-        onChange={setActionFilter}
-      />
+      <FilterChips options={ACTION_FILTERS} value={actionFilter} onChange={setActionFilter} />
 
       <Card padding="lg" rounded="2xl">
         {loading ? (
-          <div className="py-12 flex justify-center">
+          <div className="flex justify-center py-12">
             <Spinner />
           </div>
         ) : logs.length === 0 ? (
@@ -154,7 +179,7 @@ export default function AuditLogs() {
                 <li key={log.id} className="relative flex gap-4 pb-8">
                   {!isLast && (
                     <span
-                      className="absolute left-5 top-10 bottom-0 w-px bg-zinc-200 dark:bg-zinc-800"
+                      className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"
                       aria-hidden
                     />
                   )}
@@ -164,30 +189,31 @@ export default function AuditLogs() {
                       variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
                       variant === 'danger' && 'bg-red-500/10 text-red-600',
                       variant === 'accent' && 'bg-brand/10 text-brand',
-                      variant === 'default' && 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                      variant === 'default' &&
+                        'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                     )}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
                       <Badge variant={variant}>{actionLabel(log.action)}</Badge>
                       <time
-                        className="text-xs text-zinc-400"
+                        className="text-xs text-zinc-400 dark:text-zinc-300"
                         dateTime={log.created_at}
                       >
-                        {format(new Date(log.created_at), "dd MMM yyyy · HH:mm", { locale: es })}
+                        {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
                       </time>
                     </div>
                     <p className="text-sm font-semibold text-zinc-900 dark:text-white">
                       {log.user_name ?? 'Sistema'}
                       {log.user_email && (
-                        <span className="text-zinc-500 font-normal ml-2 text-xs">
+                        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
                           {log.user_email}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 break-words">
+                    <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
                       {formatDetails(log.details)}
                     </p>
                   </div>

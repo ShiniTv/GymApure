@@ -3,7 +3,12 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { AuthRequest } from './middleware/auth.ts';
 import { streamPaymentProof } from '../lib/proofStorage.ts';
-import { streamMediaFile, parseStorageMediaRef } from '../lib/mediaStorage.ts';
+import {
+  streamMediaFile,
+  parseStorageMediaRef,
+  isMediaStorageRemote,
+} from '../lib/mediaStorage.ts';
+import { createSignedExerciseMediaUrl } from '../lib/exerciseVideoStorage.ts';
 import {
   resolveFilePath,
   proofStoredPaths,
@@ -39,9 +44,7 @@ router.get('/proofs/:filename', async (req: AuthRequest, res) => {
 
     const ownerId = Number(rows[0].user_id);
     const canView =
-      req.user!.role === 'admin' ||
-      req.user!.role === 'receptionist' ||
-      req.user!.id === ownerId;
+      req.user!.role === 'admin' || req.user!.role === 'receptionist' || req.user!.id === ownerId;
     if (!canView) {
       return res.status(403).json({ error: 'Permisos insuficientes' });
     }
@@ -85,7 +88,7 @@ router.get('/media/avatars', async (req: AuthRequest, res) => {
   const ref = `sbmedia:avatars:${key}`;
   const allowed = await authorizeAvatarAccess(req, res, ref);
   if (!allowed) return;
-  await streamMediaFile(ref, res);
+  await streamMediaFile(ref, res, req);
 });
 
 /** Profile avatar — owner, reception/admin, or assigned trainer. */
@@ -109,7 +112,7 @@ router.get('/avatars/:filename', async (req: AuthRequest, res) => {
     }
 
     if (parseStorageMediaRef(rows[0].profile_image)) {
-      await streamMediaFile(rows[0].profile_image, res);
+      await streamMediaFile(rows[0].profile_image, res, req);
       return;
     }
 
@@ -129,9 +132,50 @@ router.get('/media/videos', async (req: AuthRequest, res) => {
   }
   const ref = `sbmedia:videos:${key}`;
   try {
-    const { rows } = await query(`SELECT id FROM exercises WHERE video_url = $1`, [ref]);
+    const { rows } = await query(
+      `SELECT id FROM exercises WHERE video_url = $1 OR video_poster_url = $1`,
+      [ref]
+    );
     if (!rows[0]) return res.status(404).json({ error: 'Video no encontrado' });
-    await streamMediaFile(ref, res);
+
+    if (isMediaStorageRemote()) {
+      const signed = await createSignedExerciseMediaUrl(ref);
+      res.redirect(302, signed.url);
+      return;
+    }
+
+    await streamMediaFile(ref, res, req);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+/** Short-lived signed URL for exercise video/poster (avoids proxying through app server). */
+router.get('/videos/signed-url', async (req: AuthRequest, res) => {
+  const ref = req.query.ref;
+  if (!ref || typeof ref !== 'string') {
+    return res.status(400).json({ error: 'Referencia inválida' });
+  }
+
+  try {
+    const { rows } = await query(
+      `SELECT id FROM exercises WHERE video_url = $1 OR video_poster_url = $1`,
+      [ref]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Video no encontrado' });
+
+    if (!isMediaStorageRemote()) {
+      return res.json({
+        url: ref.startsWith('sbmedia:')
+          ? `/api/files/media/videos?key=${encodeURIComponent(ref.slice('sbmedia:videos:'.length))}`
+          : ref,
+        expiresIn: 0,
+      });
+    }
+
+    const signed = await createSignedExerciseMediaUrl(ref);
+    res.json(signed);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -144,22 +188,44 @@ router.get('/videos/:filename', async (req: AuthRequest, res) => {
   const paths = videoStoredPaths(filename);
 
   try {
-    const { rows } = await query<{ video_url: string | null }>(
-      `SELECT video_url FROM exercises
-       WHERE video_url = ANY($1::text[])`,
+    const { rows } = await query<{ video_url: string | null; video_poster_url: string | null }>(
+      `SELECT video_url, video_poster_url FROM exercises
+       WHERE video_url = ANY($1::text[]) OR video_poster_url = ANY($1::text[])`,
       [paths]
     );
 
-    if (!rows[0]?.video_url) return res.status(404).json({ error: 'Video no encontrado' });
+    const storedRef = rows[0]?.video_url ?? rows[0]?.video_poster_url;
+    if (!storedRef) return res.status(404).json({ error: 'Video no encontrado' });
 
-    if (parseStorageMediaRef(rows[0].video_url)) {
-      await streamMediaFile(rows[0].video_url, res);
+    if (parseStorageMediaRef(storedRef)) {
+      if (isMediaStorageRemote()) {
+        const signed = await createSignedExerciseMediaUrl(storedRef);
+        res.redirect(302, signed.url);
+        return;
+      }
+      await streamMediaFile(storedRef, res, req);
       return;
     }
 
     const filePath = resolveFilePath('videos', filename);
     if (!filePath) return res.status(404).json({ error: 'Archivo no encontrado' });
     res.sendFile(filePath);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/media/equipment', async (req: AuthRequest, res) => {
+  const key = req.query.key;
+  if (!key || typeof key !== 'string' || key.includes('..')) {
+    return res.status(400).json({ error: 'Clave inválida' });
+  }
+  const ref = `sbmedia:equipment:${key}`;
+  try {
+    const { rows } = await query(`SELECT id FROM gym_equipment WHERE photo_url = $1`, [ref]);
+    if (!rows[0]) return res.status(404).json({ error: 'Foto no encontrada' });
+    await streamMediaFile(ref, res, req);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

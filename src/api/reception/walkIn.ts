@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import type { RequestHandler } from 'express';
-import { withTransaction } from '../../db/index.ts';
+import type { Response } from 'express';
+import { query, withTransaction } from '../../db/index.ts';
 import { logAudit } from '../../lib/audit.ts';
 import { canonicalCedula, cedulaWhereClause } from '../../lib/cedulaUtils.ts';
 import { assignSubscription } from '../../lib/subscriptions.ts';
@@ -10,7 +10,21 @@ import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
+import { isTrainingShift } from '../../lib/trainingShift.ts';
 import type { AuthRequest } from '../middleware/auth.ts';
+import { sendEmail, walkInWelcomeEmail } from '../../lib/email.ts';
+import {
+  buildPasswordSetupUrl,
+  createPasswordSetupToken,
+  WALK_IN_SETUP_EXPIRY_HOURS,
+} from '../../lib/passwordSetupToken.ts';
+import { logger } from '../../lib/logger.ts';
+import { assertProofUpload } from '../../lib/uploadValidation.ts';
+import {
+  finalizeLocalProof,
+  isProofStorageRemote,
+  uploadPaymentProof,
+} from '../../lib/proofStorage.ts';
 
 export const walkInSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
@@ -21,31 +35,49 @@ export const walkInSchema = z.object({
   amount_usd: z.coerce.number().positive('Monto inválido').optional(),
   method: z.string().trim().min(1, 'Método requerido').max(50).default('efectivo'),
   reference: z.string().trim().max(200).optional().nullable(),
-  check_in: z.boolean().optional().default(true),
+  check_in: z
+    .union([z.boolean(), z.string()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) return true;
+      if (typeof value === 'boolean') return value;
+      return value === 'true' || value === '1';
+    }),
+  training_shift: z.enum(['diurno', 'vespertino', 'nocturno']).optional().nullable(),
 });
 
 function generateTempPassword(): string {
   return crypto.randomBytes(9).toString('base64url');
 }
 
-export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
+export async function walkInHandler(req: AuthRequest, res: Response): Promise<void> {
   const parsed = walkInSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
+    res.status(400).json({ error: formatZodError(parsed.error) });
+    return;
   }
 
   const data = parsed.data;
   const normalizedCedula = canonicalCedula(data.cedula);
   if (!normalizedCedula) {
-    return res.status(400).json({ error: 'Cédula inválida' });
+    res.status(400).json({ error: 'Cédula inválida' });
+    return;
   }
 
   const normalizedEmail = data.email.toLowerCase().trim();
   const tempPassword = generateTempPassword();
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  const proofFile = req.file ?? null;
 
   try {
+    if (proofFile) {
+      assertProofUpload(proofFile);
+    }
+
     const result = await withTransaction(async (client) => {
-      const existingEmail = await client.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+      const existingEmail = await client.query('SELECT id FROM users WHERE email = $1', [
+        normalizedEmail,
+      ]);
       if (existingEmail.rows[0]) {
         throw Object.assign(new Error('Este correo ya está registrado'), { statusCode: 400 });
       }
@@ -68,13 +100,21 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       }
 
       const amountUsd = data.amount_usd ?? Number(membership.price_usd);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      const memberShift =
+        data.training_shift && isTrainingShift(data.training_shift) ? data.training_shift : null;
 
       const userResult = await client.query<{ id: number }>(
-        `INSERT INTO users (full_name, email, cedula, phone, role, password, status)
-         VALUES ($1, $2, $3, $4, 'member', $5, 'active')
+        `INSERT INTO users (full_name, email, cedula, phone, role, password, status, training_shift)
+         VALUES ($1, $2, $3, $4, 'member', $5, 'active', $6)
          RETURNING id`,
-        [data.full_name, normalizedEmail, normalizedCedula, data.phone?.trim() || null, hashedPassword]
+        [
+          data.full_name,
+          normalizedEmail,
+          normalizedCedula,
+          data.phone?.trim() || null,
+          hashedPassword,
+          memberShift,
+        ]
       );
       const userId = userResult.rows[0].id;
 
@@ -96,6 +136,26 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       };
     });
 
+    if (proofFile) {
+      try {
+        let proof_url: string;
+        if (isProofStorageRemote()) {
+          proof_url = await uploadPaymentProof(proofFile, result.userId, result.paymentId);
+        } else {
+          proof_url = await finalizeLocalProof(proofFile);
+        }
+        await query('UPDATE payments SET proof_url = $1 WHERE id = $2', [
+          proof_url,
+          result.paymentId,
+        ]);
+      } catch (uploadErr) {
+        logger.error('Walk-in: error subiendo comprobante', {
+          paymentId: result.paymentId,
+          error: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
+        });
+      }
+    }
+
     let checkedIn = false;
     let checkInMessage: string | undefined;
 
@@ -115,11 +175,34 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       }
     }
 
+    let emailSent = false;
+    try {
+      const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
+      const setupUrl = buildPasswordSetupUrl(rawToken);
+      emailSent = await sendEmail({
+        to: normalizedEmail,
+        subject: 'Bienvenido a GymApure — crea tu contraseña',
+        html: walkInWelcomeEmail(data.full_name, setupUrl, result.membershipName),
+      });
+      if (!emailSent) {
+        logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
+          userId: result.userId,
+        });
+      }
+    } catch (err) {
+      logger.error('Walk-in: error enviando correo de bienvenida', {
+        userId: result.userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     await logAudit(req.user!.id, 'reception.walk_in', {
       user_id: result.userId,
       payment_id: result.paymentId,
       membership_id: data.membership_id,
       check_in: data.check_in && checkedIn,
+      email_sent: emailSent,
+      setup_email: true,
     });
 
     invalidateAdminStatsCache();
@@ -129,7 +212,9 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       result.amountUsd,
       result.membershipName,
       result.paymentId
-    ).catch((err) => console.error('[notify] walk-in payment', err));
+    ).catch((err) => {
+      console.error('[notify] walk-in payment', err);
+    });
 
     res.status(201).json({
       success: true,
@@ -142,7 +227,8 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
       payment_id: result.paymentId,
       membership_name: result.membershipName,
       subscription: result.subscription,
-      temporary_password: tempPassword,
+      email_sent: emailSent,
+      ...(emailSent ? {} : { temporary_password: tempPassword }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,
     });
@@ -154,4 +240,4 @@ export const walkInHandler: RequestHandler = async (req: AuthRequest, res) => {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(statusCode).json({ error: message });
   }
-};
+}

@@ -1,12 +1,10 @@
 import { query } from '../../db/index.ts';
 import { getExpirySettings } from '../gymSettings.ts';
-import {
-  getExpiringSubscriptions,
-  markExpiredSubscriptions,
-  type ExpiringSubscription,
-} from '../expiringSubscriptions.ts';
+import { markExpiredSubscriptions, type ExpiringSubscription } from '../expiringSubscriptions.ts';
 import { postSystemMessage } from './systemMessages.ts';
 import { BRAND } from '../../config/brand.ts';
+import { notifyMembershipExpiry } from './eventMessages.ts';
+import { mapWithConcurrency } from '../runInBatches.ts';
 
 export interface ExpiryJobResult {
   markedExpired: number;
@@ -17,6 +15,8 @@ export interface ExpiryJobResult {
 interface NotifyTarget extends ExpiringSubscription {
   subscription_id: number;
 }
+
+const NOTIFY_CONCURRENCY = 5;
 
 function expiryMessage(fullName: string, membershipName: string, daysRemaining: number): string {
   if (daysRemaining <= 0) {
@@ -74,6 +74,63 @@ async function getRecentlyExpiredTargets(): Promise<NotifyTarget[]> {
   return rows;
 }
 
+async function notifyExpiringSoon(
+  target: NotifyTarget,
+  alertDays: number
+): Promise<'sent' | 'skipped'> {
+  const sent = await postSystemMessage({
+    memberId: target.user_id,
+    eventType: 'expiring_soon',
+    body: expiryMessage(target.full_name, target.membership_name, target.days_remaining),
+    subscriptionId: target.subscription_id,
+    daysRemaining: target.days_remaining,
+    metadata: {
+      subscription_id: target.subscription_id,
+      membership_name: target.membership_name,
+      end_date: target.end_date,
+      days_remaining: target.days_remaining,
+    },
+  });
+
+  if (!sent) return 'skipped';
+
+  void notifyMembershipExpiry(target.user_id, 'expiring_soon', {
+    membershipName: target.membership_name,
+    daysRemaining: target.days_remaining,
+    subscriptionId: target.subscription_id,
+    endDate: target.end_date,
+    alertDays,
+  });
+  return 'sent';
+}
+
+async function notifyExpired(target: NotifyTarget, alertDays: number): Promise<'sent' | 'skipped'> {
+  const body = `Hola ${target.full_name}, tu membresía "${target.membership_name}" en ${BRAND.name} ha vencido. Renueva para recuperar el acceso.`;
+  const sent = await postSystemMessage({
+    memberId: target.user_id,
+    eventType: 'expired',
+    body,
+    subscriptionId: target.subscription_id,
+    daysRemaining: 0,
+    metadata: {
+      subscription_id: target.subscription_id,
+      membership_name: target.membership_name,
+      end_date: target.end_date,
+    },
+  });
+
+  if (!sent) return 'skipped';
+
+  void notifyMembershipExpiry(target.user_id, 'expired', {
+    membershipName: target.membership_name,
+    daysRemaining: 0,
+    subscriptionId: target.subscription_id,
+    endDate: target.end_date,
+    alertDays,
+  });
+  return 'sent';
+}
+
 export async function runExpiryJob(): Promise<ExpiryJobResult> {
   const result: ExpiryJobResult = {
     markedExpired: 0,
@@ -87,39 +144,19 @@ export async function runExpiryJob(): Promise<ExpiryJobResult> {
   const targets = await getNotifyTargets(settings.expiry_alert_days);
   const expiredTargets = await getRecentlyExpiredTargets();
 
-  for (const target of targets) {
-    const sent = await postSystemMessage({
-      memberId: target.user_id,
-      eventType: 'expiring_soon',
-      body: expiryMessage(target.full_name, target.membership_name, target.days_remaining),
-      subscriptionId: target.subscription_id,
-      daysRemaining: target.days_remaining,
-      metadata: {
-        subscription_id: target.subscription_id,
-        membership_name: target.membership_name,
-        end_date: target.end_date,
-        days_remaining: target.days_remaining,
-      },
-    });
-    if (sent) result.messagesSent += 1;
-    else result.skipped += 1;
-  }
+  const expiringResults = await mapWithConcurrency(
+    targets,
+    (target) => notifyExpiringSoon(target, settings.expiry_alert_days),
+    NOTIFY_CONCURRENCY
+  );
+  const expiredResults = await mapWithConcurrency(
+    expiredTargets,
+    (target) => notifyExpired(target, settings.expiry_alert_days),
+    NOTIFY_CONCURRENCY
+  );
 
-  for (const target of expiredTargets) {
-    const body = `Hola ${target.full_name}, tu membresía "${target.membership_name}" en ${BRAND.name} ha vencido. Renueva para recuperar el acceso.`;
-    const sent = await postSystemMessage({
-      memberId: target.user_id,
-      eventType: 'expired',
-      body,
-      subscriptionId: target.subscription_id,
-      daysRemaining: 0,
-      metadata: {
-        subscription_id: target.subscription_id,
-        membership_name: target.membership_name,
-        end_date: target.end_date,
-      },
-    });
-    if (sent) result.messagesSent += 1;
+  for (const status of [...expiringResults, ...expiredResults]) {
+    if (status === 'sent') result.messagesSent += 1;
     else result.skipped += 1;
   }
 

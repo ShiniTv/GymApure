@@ -1,7 +1,18 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
-import { Button, Card, Input, Label, Modal, PageHeader, Spinner, Badge, EmptyState } from '../components/ui';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  Modal,
+  PageHeader,
+  Spinner,
+  Badge,
+  EmptyState,
+  BackToDashboardLink,
+} from '../components/ui';
 
 interface Membership {
   id: number;
@@ -100,21 +111,27 @@ export default function Memberships() {
     <div className="page-stack">
       <PageHeader
         compact
-        title={<>Planes de <span className="text-brand">membresía</span></>}
+        title={
+          <>
+            Planes de <span className="text-brand">membresía</span>
+          </>
+        }
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
+        action={
+          <div className="flex shrink-0 items-center gap-2">
+            <BackToDashboardLink />
+            <Button
+              size="sm"
+              className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+              onClick={openCreate}
+              aria-label="Nuevo plan"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="hidden sm:inline">Nuevo plan</span>
+            </Button>
+          </div>
+        }
       />
-
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4 whitespace-nowrap"
-          onClick={openCreate}
-          aria-label="Nuevo plan"
-        >
-          <Plus className="h-5 w-5" />
-          <span className="hidden sm:inline">Nuevo plan</span>
-        </Button>
-      </div>
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -133,27 +150,29 @@ export default function Memberships() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
           {plans.map((plan) => {
             const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
             return (
               <Card key={plan.id} padding="md" rounded="xl" className="flex flex-col">
-                <div className="flex items-start justify-between gap-2 min-w-0">
+                <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white truncate leading-tight">
+                    <h3 className="truncate text-base leading-tight font-bold text-zinc-900 sm:text-lg dark:text-white">
                       {plan.name}
                     </h3>
                     <Badge variant="default" className="mt-1.5">
                       {plan.duration_days} días
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-9 w-9 px-0 rounded-xl"
-                      onClick={() => openEdit(plan)}
+                      className="h-9 w-9 rounded-xl px-0"
+                      onClick={() => {
+                        openEdit(plan);
+                      }}
                       aria-label="Editar plan"
                     >
                       <Pencil className="h-4 w-4" />
@@ -162,8 +181,10 @@ export default function Memberships() {
                       type="button"
                       variant="danger"
                       size="sm"
-                      className="h-9 w-9 px-0 rounded-xl"
-                      onClick={() => setDeleteTarget(plan)}
+                      className="h-9 w-9 rounded-xl px-0"
+                      onClick={() => {
+                        setDeleteTarget(plan);
+                      }}
                       aria-label="Eliminar plan"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -171,12 +192,14 @@ export default function Memberships() {
                   </div>
                 </div>
 
-                <p className="mt-3 text-2xl sm:text-3xl font-bold text-brand dark:text-brand tracking-tight tabular-nums">
+                <p className="text-brand dark:text-brand mt-3 text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
                   ${plan.price_usd}
-                  <span className="text-xs sm:text-sm font-semibold text-zinc-400 ml-1">USD</span>
+                  <span className="ml-1 text-xs font-semibold text-zinc-400 sm:text-sm dark:text-zinc-300">
+                    USD
+                  </span>
                 </p>
 
-                <p className="mt-1.5 text-[11px] sm:text-xs text-zinc-500 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400">
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
                   <span>{plan.duration_days} días calendario</span>
                   <span className="text-zinc-300 dark:text-zinc-600">·</span>
@@ -190,8 +213,14 @@ export default function Memberships() {
 
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={<>{editingId ? 'Editar' : 'Nuevo'} <span className="text-brand">plan</span></>}
+        onClose={() => {
+          setModalOpen(false);
+        }}
+        title={
+          <>
+            {editingId ? 'Editar' : 'Nuevo'} <span className="text-brand">plan</span>
+          </>
+        }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -199,7 +228,9 @@ export default function Memberships() {
             <Input
               required
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, name: e.target.value });
+              }}
               placeholder="Ej: Mensual"
             />
           </div>
@@ -210,7 +241,9 @@ export default function Memberships() {
               required
               min={1}
               value={form.duration_days}
-              onChange={(e) => setForm({ ...form, duration_days: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, duration_days: e.target.value });
+              }}
             />
           </div>
           <div>
@@ -221,10 +254,12 @@ export default function Memberships() {
               min={0.01}
               step={0.01}
               value={form.price_usd}
-              onChange={(e) => setForm({ ...form, price_usd: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, price_usd: e.target.value });
+              }}
             />
           </div>
-          {error && <p className="text-xs font-bold text-red-500 text-center">{error}</p>}
+          {error && <p className="text-center text-xs font-bold text-red-500">{error}</p>}
           <Button type="submit" className="w-full" size="lg">
             Guardar
           </Button>
@@ -233,17 +268,32 @@ export default function Memberships() {
 
       <Modal
         open={!!deleteTarget}
-        onClose={() => { setDeleteTarget(null); setDeleteError(''); }}
-        title={<>Eliminar <span className="text-red-500">plan</span></>}
+        onClose={() => {
+          setDeleteTarget(null);
+          setDeleteError('');
+        }}
+        title={
+          <>
+            Eliminar <span className="text-red-500">plan</span>
+          </>
+        }
       >
         {deleteTarget && (
           <>
-            <p className="text-sm text-zinc-500 mb-4">
-              ¿Eliminar el plan <strong>{deleteTarget.name}</strong>? Solo es posible si no tiene suscripciones activas.
+            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+              ¿Eliminar el plan <strong>{deleteTarget.name}</strong>? Solo es posible si no tiene
+              suscripciones activas.
             </p>
-            {deleteError && <p className="text-sm font-bold text-red-500 mb-4">{deleteError}</p>}
+            {deleteError && <p className="mb-4 text-sm font-bold text-red-500">{deleteError}</p>}
             <div className="flex gap-4">
-              <Button type="button" variant="ghost" className="flex-1" onClick={() => setDeleteTarget(null)}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex-1"
+                onClick={() => {
+                  setDeleteTarget(null);
+                }}
+              >
                 Cancelar
               </Button>
               <Button type="button" variant="danger" className="flex-1" onClick={handleDelete}>

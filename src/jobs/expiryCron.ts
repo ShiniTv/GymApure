@@ -3,6 +3,7 @@ import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { logger } from '../lib/logger.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
+const STARTUP_DEFER_MS = 30_000;
 
 function resolveIntervalMs(): number {
   const raw = parseInt(process.env.EXPIRY_CRON_INTERVAL_MS ?? String(DEFAULT_INTERVAL_MS), 10);
@@ -31,6 +32,6 @@ export function startExpiryCron(): void {
 
   const intervalMs = resolveIntervalMs();
   logger.info('Cron de vencimientos activo', { intervalMinutes: Math.round(intervalMs / 60_000) });
-  void tick();
+  setTimeout(() => void tick(), STARTUP_DEFER_MS);
   setInterval(() => void tick(), intervalMs);
 }

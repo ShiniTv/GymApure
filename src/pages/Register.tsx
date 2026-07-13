@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { APP_HOME } from '../lib/roles';
 import { User, Mail, CreditCard, Phone } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, PasswordInput, passwordStrength, Spinner } from '../components/ui';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  PasswordInput,
+  passwordStrength,
+  CedulaInput,
+  Alert,
+} from '../components/ui';
 import { cn } from '../lib/utils';
 
 const STEPS = ['Datos personales', 'Credenciales'] as const;
@@ -72,9 +82,11 @@ export default function Register() {
         body: JSON.stringify(payload),
       });
 
-      const data = await parseJsonResponse<{ user: Parameters<typeof login>[0]; message?: string }>(res);
+      const data = await parseJsonResponse<{ user: Parameters<typeof login>[0]; message?: string }>(
+        res
+      );
       login(data.user);
-      navigate('/');
+      void navigate(APP_HOME);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'No se pudo completar el registro');
     } finally {
@@ -84,12 +96,15 @@ export default function Register() {
 
   return (
     <AuthShell backLink={{ to: '/login', label: 'Volver al login' }}>
-      <Card className="w-full page-stack shadow-xl mt-8 sm:mt-10 rounded-2xl" padding="md">
+      <Card className="page-stack mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
         <AuthBrandHeader subtitle="Crea tu cuenta de miembro" />
 
-      <ol className="flex items-center gap-1 text-xs font-semibold mb-6" role="list" aria-label="Pasos del registro">
+        <ol
+          className="mb-6 flex items-center gap-1 text-xs font-semibold"
+          aria-label="Pasos del registro"
+        >
           {STEPS.map((label, i) => (
-            <li key={label} className="flex items-center gap-2 flex-1 last:flex-none" role="listitem">
+            <li key={label} className="flex flex-1 items-center gap-2 last:flex-none">
               <div
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
@@ -97,7 +112,7 @@ export default function Register() {
                     ? 'bg-emerald-500 text-white'
                     : i === step
                       ? 'brand-solid'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+                      : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-300'
                 )}
                 aria-hidden
               >
@@ -105,7 +120,7 @@ export default function Register() {
               </div>
               <span
                 className={cn(
-                  'hidden sm:inline truncate',
+                  'hidden truncate sm:inline',
                   i === step ? 'text-brand dark:text-brand' : 'text-zinc-500'
                 )}
                 aria-current={i === step ? 'step' : undefined}
@@ -115,7 +130,7 @@ export default function Register() {
               {i < STEPS.length - 1 && (
                 <div
                   className={cn(
-                    'hidden sm:block flex-1 h-px mx-1',
+                    'mx-1 hidden h-px flex-1 sm:block',
                     i < step ? 'bg-emerald-500/50' : 'bg-zinc-200 dark:bg-zinc-700'
                   )}
                   aria-hidden
@@ -131,16 +146,16 @@ export default function Register() {
 
         <form
           className="form-stack"
-          onSubmit={step === 1 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}
+          onSubmit={
+            step === 1
+              ? handleSubmit
+              : (e) => {
+                  e.preventDefault();
+                  handleNext();
+                }
+          }
         >
-          {error && (
-            <div
-              role="alert"
-              className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-500 border border-red-500/20"
-            >
-              {error}
-            </div>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
 
           {step === 0 ? (
             <div className="form-stack">
@@ -172,30 +187,31 @@ export default function Register() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="cedula">Cédula</Label>
-                  <Input
+                  <CedulaInput
                     id="cedula"
-                    type="text"
                     required
-                    autoComplete="off"
                     leadingIcon={<CreditCard />}
-                    placeholder="V-12345678"
                     value={formData.cedula}
-                    onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                    onChange={(value) => setFormData({ ...formData, cedula: value })}
                   />
-                  <p className="text-[10px] text-zinc-400 mt-1">
+                  <p className="mt-1 text-[10px] text-zinc-400 dark:text-zinc-300">
                     Formato: V-12345678 · Para identificarte en recepción
                   </p>
                 </div>
                 <div>
                   <Label htmlFor="phone">
-                    Teléfono <span className="normal-case tracking-normal font-medium text-zinc-400">(opcional)</span>
+                    Teléfono{' '}
+                    <span className="font-medium tracking-normal text-zinc-400 normal-case">
+                      (opcional)
+                    </span>
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
+                    inputMode="tel"
                     autoComplete="tel"
                     leadingIcon={<Phone />}
                     placeholder="+58 412…"
@@ -224,7 +240,13 @@ export default function Register() {
                 />
                 {formData.password && (
                   <div className="mt-2 space-y-1">
-                    <div className="flex gap-1" role="progressbar" aria-valuenow={strength.score} aria-valuemin={0} aria-valuemax={3}>
+                    <div
+                      className="flex gap-1"
+                      role="progressbar"
+                      aria-valuenow={strength.score}
+                      aria-valuemin={0}
+                      aria-valuemax={3}
+                    >
                       {[1, 2, 3].map((level) => (
                         <div
                           key={level}
@@ -241,9 +263,7 @@ export default function Register() {
                         />
                       ))}
                     </div>
-                    <p className="text-xs font-medium text-zinc-500">
-                      Fortaleza: {strength.label}
-                    </p>
+                    <p className="text-xs font-medium text-zinc-500">Fortaleza: {strength.label}</p>
                   </div>
                 )}
               </div>
@@ -266,19 +286,15 @@ export default function Register() {
                   type="button"
                   variant="ghost"
                   className="flex-1"
-                  onClick={() => { setStep(0); setError(''); }}
+                  onClick={() => {
+                    setStep(0);
+                    setError('');
+                  }}
                 >
                   Atrás
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1" size="lg">
-                  {loading ? (
-                    <>
-                      <Spinner className="h-4 w-4" />
-                      Registrando…
-                    </>
-                  ) : (
-                    'Crear cuenta'
-                  )}
+                <Button type="submit" loading={loading} className="flex-1" size="lg">
+                  Crear cuenta
                 </Button>
               </div>
             </div>
@@ -286,7 +302,7 @@ export default function Register() {
 
           <p className="text-center text-xs text-zinc-500">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-semibold text-brand hover:text-brand">
+            <Link to="/login" className="text-brand hover:text-brand font-semibold">
               Inicia sesión
             </Link>
           </p>

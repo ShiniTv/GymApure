@@ -1,4 +1,12 @@
 (function () {
+  function safeGetItem(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
   var PALETTES = {
     monochrome: {
       light: { b: '#18181b', bh: '#27272a', c: '#18181b' },
@@ -34,9 +42,16 @@
     },
   };
 
-  var theme = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
-  var palette = localStorage.getItem('gymapure-palette');
-  if (!PALETTES[palette]) palette = 'monochrome';
+  var savedTheme = safeGetItem('theme');
+  var theme =
+    savedTheme === 'light' || savedTheme === 'dark'
+      ? savedTheme
+      : window.matchMedia('(prefers-color-scheme: light)').matches
+        ? 'light'
+        : 'dark';
+
+  var palette = safeGetItem('gymapure-palette');
+  if (!PALETTES[palette]) palette = 'ember';
 
   var root = document.documentElement;
   root.classList.add(theme);

@@ -4,6 +4,7 @@ import { env } from '../config/env.ts';
 export const PAYMENT_PROOFS_BUCKET = 'payment-proofs';
 export const AVATARS_BUCKET = 'avatars';
 export const VIDEOS_BUCKET = 'exercise-videos';
+export const EQUIPMENT_PHOTOS_BUCKET = 'equipment-photos';
 export const STORAGE_PROOF_PREFIX = 'sb:';
 export const STORAGE_MEDIA_PREFIX = 'sbmedia:';
 
@@ -137,6 +138,88 @@ export async function supabaseStorageDownload(bucket: string, objectKey: string)
   }
 
   return Buffer.from(await response.arrayBuffer());
+}
+
+/** Stream a storage object with optional HTTP Range support (required for efficient video playback). */
+export async function supabaseStorageStream(
+  bucket: string,
+  objectKey: string,
+  rangeHeader?: string
+): Promise<{
+  status: number;
+  body: Buffer;
+  contentType: string | null;
+  contentRange: string | null;
+  contentLength: string | null;
+}> {
+  const baseUrl = env.SUPABASE_URL;
+  const key = getSupabaseServiceKey();
+  if (!baseUrl || !key) {
+    throw new Error('Supabase Storage no configurado');
+  }
+
+  const encodedPath = objectKey.split('/').map(encodeURIComponent).join('/');
+  const url = `${baseUrl}/storage/v1/object/${bucket}/${encodedPath}`;
+
+  const headers = buildSupabaseStorageHeaders(key);
+  if (rangeHeader) headers.Range = rangeHeader;
+
+  const response = await fetch(url, { method: 'GET', headers });
+
+  if (!response.ok) {
+    throw new Error('Archivo no encontrado en Storage');
+  }
+
+  return {
+    status: response.status,
+    body: Buffer.from(await response.arrayBuffer()),
+    contentType: response.headers.get('content-type'),
+    contentRange: response.headers.get('content-range'),
+    contentLength: response.headers.get('content-length'),
+  };
+}
+
+export interface SignedUploadUrlResult {
+  signedUrl: string;
+  token: string;
+  objectKey: string;
+}
+
+/** Signed PUT URL — browser uploads direct to Storage without passing through Render RAM. */
+export async function supabaseCreateSignedUploadUrl(
+  bucket: string,
+  objectKey: string
+): Promise<SignedUploadUrlResult> {
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUploadUrl(objectKey);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? 'No se pudo crear URL de subida firmada');
+  }
+
+  return {
+    signedUrl: data.signedUrl,
+    token: data.token,
+    objectKey: data.path ?? objectKey,
+  };
+}
+
+/** Signed GET URL — short-lived playback without proxying through the app server. */
+export async function supabaseCreateSignedDownloadUrl(
+  bucket: string,
+  objectKey: string,
+  expiresInSeconds: number
+): Promise<string> {
+  const { data, error } = await getSupabaseAdmin()
+    .storage.from(bucket)
+    .createSignedUrl(objectKey, expiresInSeconds);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? 'No se pudo crear URL de lectura firmada');
+  }
+
+  return data.signedUrl;
 }
 
 export async function supabaseStorageRemove(bucket: string, objectKey: string): Promise<void> {

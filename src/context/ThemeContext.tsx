@@ -1,44 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   applyThemeToDocument,
-  DEFAULT_APPEARANCE,
-  DEFAULT_PALETTE,
-  isAppearance,
-  isPaletteId,
-  PALETTE_STORAGE_KEY,
+  getStoredPalette,
+  getStoredTheme,
+  persistTheme,
   type Appearance,
   type PaletteId,
-  THEME_STORAGE_KEY,
 } from '../config/themes';
 
 interface ThemeContextType {
   theme: Appearance;
   palette: PaletteId;
   toggleTheme: () => void;
+  setTheme: (theme: Appearance) => void;
   setPalette: (palette: PaletteId) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Appearance>(() => {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    return isAppearance(saved) ? saved : DEFAULT_APPEARANCE;
-  });
+  const [theme, setTheme] = useState<Appearance>(() => getStoredTheme());
 
-  const [palette, setPaletteState] = useState<PaletteId>(() => {
-    const saved = localStorage.getItem(PALETTE_STORAGE_KEY);
-    return isPaletteId(saved) ? saved : DEFAULT_PALETTE;
-  });
+  const [palette, setPaletteState] = useState<PaletteId>(() => getStoredPalette());
 
   useEffect(() => {
     applyThemeToDocument(theme, palette);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
-    localStorage.setItem(PALETTE_STORAGE_KEY, palette);
+    persistTheme(theme, palette);
   }, [theme, palette]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const setThemeExplicit = (next: Appearance) => {
+    setTheme(next);
   };
 
   const setPalette = (next: PaletteId) => {
@@ -46,7 +41,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, palette, toggleTheme, setPalette }}>
+    <ThemeContext.Provider
+      value={{ theme, palette, toggleTheme, setTheme: setThemeExplicit, setPalette }}
+    >
       {children}
     </ThemeContext.Provider>
   );

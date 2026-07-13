@@ -69,3 +69,45 @@ export function formatExpiryLabel(days: number): string {
   if (days === 1) return '1d';
   return `${days}d`;
 }
+
+export function formatRemainingDaysShort(days: number): string {
+  if (days === 0) return 'Vence hoy';
+  if (days === 1) return '1 día restante';
+  return `${days} días restantes`;
+}
+
+export function computeSubscriptionRemainingPercent(
+  daysRemaining: number,
+  startDate: string,
+  endDate: string
+): number {
+  const startMs = new Date(startDate).getTime();
+  const endMs = new Date(endDate).getTime();
+  const totalDays = Math.max(1, Math.round((endMs - startMs) / 86_400_000));
+  return Math.min(100, Math.round((Math.max(0, daysRemaining) / totalDays) * 100));
+}
+
+export function getSubscriptionBarStyle(remainingPercent: number): {
+  widthPercent: number;
+  backgroundColor: string;
+} {
+  const widthPercent = Math.max(0, Math.min(100, remainingPercent));
+  const ratio = widthPercent / 100;
+  const hue = ratio * 142;
+  const saturation = 70 + ratio * 2;
+  const lightness = 42 + ratio * 8;
+  return {
+    widthPercent,
+    backgroundColor: `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`,
+  };
+}
+
+export function subscriptionPlanNameClass(
+  daysRemaining: number,
+  alertDays = MEMBER_UI_ALERT_DAYS
+): string {
+  const severity = getExpirySeverity(daysRemaining, alertDays);
+  if (severity === 'critical') return 'text-red-600 dark:text-red-500';
+  if (severity === 'warning') return 'text-orange-600 dark:text-orange-500';
+  return 'text-emerald-600 dark:text-emerald-500';
+}

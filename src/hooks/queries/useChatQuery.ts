@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { useSocket } from '../../context/SocketContext';
+
+const CHAT_POLL_CONNECTED_MS = 30_000;
+const CHAT_POLL_DISCONNECTED_MS = 5_000;
+
+function chatPollInterval(isConnected: boolean): number {
+  return isConnected ? CHAT_POLL_CONNECTED_MS : CHAT_POLL_DISCONNECTED_MS;
+}
 
 export interface ChatConversationListItem {
   id: number;
@@ -33,7 +41,8 @@ export interface ChatMessage {
 export const chatUnreadKey = ['chat', 'unread'] as const;
 export const chatConversationsKey = (search?: string, expiringOnly?: boolean) =>
   ['chat', 'conversations', search ?? '', expiringOnly ?? false] as const;
-export const chatMessagesKey = (conversationId: number) => ['chat', 'messages', conversationId] as const;
+export const chatMessagesKey = (conversationId: number) =>
+  ['chat', 'messages', conversationId] as const;
 export const chatMineKey = ['chat', 'mine'] as const;
 
 async function fetchUnreadCount(): Promise<number> {
@@ -42,7 +51,10 @@ async function fetchUnreadCount(): Promise<number> {
   return data.count;
 }
 
-async function fetchConversations(search?: string, expiringOnly?: boolean): Promise<ChatConversationListItem[]> {
+async function fetchConversations(
+  search?: string,
+  expiringOnly?: boolean
+): Promise<ChatConversationListItem[]> {
   const qs = new URLSearchParams();
   if (search?.trim()) qs.set('q', search.trim());
   if (expiringOnly) qs.set('expiring', 'true');
@@ -57,7 +69,9 @@ async function fetchMemberConversation(): Promise<ChatConversationListItem> {
   return parseJsonResponse<ChatConversationListItem>(res);
 }
 
-async function fetchMessages(conversationId: number): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
+async function fetchMessages(
+  conversationId: number
+): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
   const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`);
   return parseJsonResponse<{ messages: ChatMessage[]; hasMore: boolean }>(res);
 }
@@ -68,38 +82,46 @@ async function openConversationWithMember(memberId: number): Promise<ChatConvers
 }
 
 export function useChatUnreadQuery(enabled = true) {
+  const { isConnected } = useSocket();
+
   return useQuery({
     queryKey: chatUnreadKey,
     queryFn: fetchUnreadCount,
     enabled,
-    refetchInterval: 5000,
+    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
   });
 }
 
 export function useChatConversationsQuery(search?: string, expiringOnly?: boolean, enabled = true) {
+  const { isConnected } = useSocket();
+
   return useQuery({
     queryKey: chatConversationsKey(search, expiringOnly),
     queryFn: () => fetchConversations(search, expiringOnly),
     enabled,
-    refetchInterval: 5000,
+    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
   });
 }
 
 export function useMemberChatQuery(enabled = true) {
+  const { isConnected } = useSocket();
+
   return useQuery({
     queryKey: chatMineKey,
     queryFn: fetchMemberConversation,
     enabled,
-    refetchInterval: 5000,
+    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
   });
 }
 
 export function useChatMessagesQuery(conversationId: number | null, enabled = true) {
+  const { isConnected } = useSocket();
+
   return useQuery({
     queryKey: chatMessagesKey(conversationId ?? 0),
     queryFn: () => fetchMessages(conversationId!),
     enabled: enabled && conversationId != null,
-    refetchInterval: 5000,
+    refetchInterval: enabled && conversationId != null ? chatPollInterval(isConnected) : false,
   });
 }
 
@@ -127,7 +149,9 @@ export function useMarkChatRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (conversationId: number) => {
-      const res = await apiFetch(`/api/chat/conversations/${conversationId}/read`, { method: 'POST' });
+      const res = await apiFetch(`/api/chat/conversations/${conversationId}/read`, {
+        method: 'POST',
+      });
       return parseJsonResponse<{ marked: number }>(res);
     },
     onSuccess: (_data, conversationId) => {
@@ -151,11 +175,14 @@ export function useEditChatMessage() {
       messageId: number;
       body: string;
     }) => {
-      const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages/${messageId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body }),
-      });
+      const res = await apiFetch(
+        `/api/chat/conversations/${conversationId}/messages/${messageId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body }),
+        }
+      );
       return parseJsonResponse<ChatMessage>(res);
     },
     onSuccess: (_data, variables) => {
@@ -176,9 +203,12 @@ export function useDeleteChatMessage() {
       conversationId: number;
       messageId: number;
     }) => {
-      const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages/${messageId}`, {
-        method: 'DELETE',
-      });
+      const res = await apiFetch(
+        `/api/chat/conversations/${conversationId}/messages/${messageId}`,
+        {
+          method: 'DELETE',
+        }
+      );
       return parseJsonResponse<{ ok: boolean }>(res);
     },
     onSuccess: (_data, variables) => {

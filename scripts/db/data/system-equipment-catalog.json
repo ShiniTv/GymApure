@@ -1,0 +1,374 @@
+[
+  {
+    "name": "Cinta de correr",
+    "category": "cardio",
+    "description": "Cinta motorizada para carrera o caminata en interiores",
+    "typical_brands": "Life Fitness Technogym"
+  },
+  {
+    "name": "Elíptica",
+    "category": "cardio",
+    "description": "Máquina elíptica de bajo impacto para cardio general",
+    "typical_brands": "Precor Matrix"
+  },
+  {
+    "name": "Bicicleta estática",
+    "category": "cardio",
+    "description": "Bici indoor para entrenamiento cardiovascular",
+    "typical_brands": "Schwinn Keiser"
+  },
+  {
+    "name": "Bicicleta spinning",
+    "category": "cardio",
+    "description": "Bici de ciclismo indoor para clases o uso libre",
+    "typical_brands": "Keiser Stages"
+  },
+  {
+    "name": "Remo ergómetro",
+    "category": "cardio",
+    "description": "Máquina de remo para cardio de cuerpo completo",
+    "typical_brands": "Concept2 WaterRower"
+  },
+  {
+    "name": "Escaladora",
+    "category": "cardio",
+    "description": "Máquina de escaleras para cardio intenso",
+    "typical_brands": "StairMaster Matrix"
+  },
+  {
+    "name": "Stepper",
+    "category": "cardio",
+    "description": "Máquina de subida de escalones independiente",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Arc trainer",
+    "category": "cardio",
+    "description": "Máquina de arco para cardio con movimiento natural",
+    "typical_brands": "Cybex"
+  },
+  {
+    "name": "Air bike",
+    "category": "cardio",
+    "description": "Bicicleta de aire con resistencia por paletas",
+    "typical_brands": "Assault Concept2"
+  },
+  {
+    "name": "Máquina de esquí indoor",
+    "category": "cardio",
+    "description": "Simulador de esquí para entrenamiento cardiovascular",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Prensa de piernas 45°",
+    "category": "strength",
+    "description": "Prensa inclinada para cuádriceps y glúteos",
+    "typical_brands": "Hammer Strength Life Fitness"
+  },
+  {
+    "name": "Prensa de piernas horizontal",
+    "category": "strength",
+    "description": "Prensa horizontal para piernas con espalda apoyada",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Hack squat",
+    "category": "strength",
+    "description": "Máquina guiada de sentadilla con énfasis en cuádriceps",
+    "typical_brands": "Atlantis"
+  },
+  {
+    "name": "Sentadilla péndulo",
+    "category": "strength",
+    "description": "Máquina de sentadilla con trayectoria de péndulo",
+    "typical_brands": "Pendulum"
+  },
+  {
+    "name": "Smith machine",
+    "category": "strength",
+    "description": "Multipower con barra guiada en rieles verticales",
+    "typical_brands": "Hammer Strength Matrix"
+  },
+  {
+    "name": "Rack de sentadillas",
+    "category": "strength",
+    "description": "Jaula de potencia para sentadillas y press con barra libre",
+    "typical_brands": "Rogue Titan"
+  },
+  {
+    "name": "Press de pecho en máquina",
+    "category": "strength",
+    "description": "Máquina selectorizada para press de pecho",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Jalón al pecho en máquina",
+    "category": "strength",
+    "description": "Máquina de jalón para dorsales",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Remo en máquina",
+    "category": "strength",
+    "description": "Máquina de remo sentado con apoyo de pecho",
+    "typical_brands": "Hammer Strength"
+  },
+  {
+    "name": "Extensión de piernas",
+    "category": "strength",
+    "description": "Máquina de extensión de cuádriceps",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Curl femoral sentado",
+    "category": "strength",
+    "description": "Máquina de flexión de isquiotibiales sentado",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Curl femoral tumbado",
+    "category": "strength",
+    "description": "Máquina de flexión de isquiotibiales en prono",
+    "typical_brands": "Matrix"
+  },
+  {
+    "name": "Abducción de cadera en máquina",
+    "category": "strength",
+    "description": "Máquina para glúteo medio y abductores",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Aducción de cadera en máquina",
+    "category": "strength",
+    "description": "Máquina para aductores de cadera",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Glute drive",
+    "category": "strength",
+    "description": "Máquina guiada de empuje de cadera",
+    "typical_brands": "Nautilus"
+  },
+  {
+    "name": "Pec deck",
+    "category": "strength",
+    "description": "Máquina de aperturas para pecho",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Pec deck inverso",
+    "category": "strength",
+    "description": "Máquina de aperturas inversas para deltoides posterior",
+    "typical_brands": "Matrix"
+  },
+  {
+    "name": "Elevación lateral en máquina",
+    "category": "strength",
+    "description": "Máquina para deltoides lateral",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Curl predicador en máquina",
+    "category": "strength",
+    "description": "Máquina de curl de bíceps con apoyo",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Extensión de tríceps en polea",
+    "category": "strength",
+    "description": "Estación de polea alta para tríceps",
+    "typical_brands": "Cybex"
+  },
+  {
+    "name": "Estación de poleas doble",
+    "category": "strength",
+    "description": "Torre de poleas con ajuste alto y bajo",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Fondos asistidos en máquina",
+    "category": "strength",
+    "description": "Máquina de fondos con contrapeso asistido",
+    "typical_brands": "Gravitron"
+  },
+  {
+    "name": "Rack de barras olímpicas",
+    "category": "strength",
+    "description": "Almacenamiento y organización de barras olímpicas",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Rack de mancuernas",
+    "category": "strength",
+    "description": "Soporte para juego de mancuernas fijas o ajustables",
+    "typical_brands": "Hammer Strength"
+  },
+  {
+    "name": "Banco plano",
+    "category": "strength",
+    "description": "Banco horizontal para press y trabajo con mancuernas",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Banco inclinado",
+    "category": "strength",
+    "description": "Banco ajustable inclinado para press superior",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Banco declinado",
+    "category": "strength",
+    "description": "Banco declinado para press inferior",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Banco predicador",
+    "category": "strength",
+    "description": "Banco Scott para curl de bíceps",
+    "typical_brands": "Body-Solid"
+  },
+  {
+    "name": "Almacén de discos",
+    "category": "strength",
+    "description": "Árbol o rack para discos olímpicos",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Sistema TRX o anillas",
+    "category": "functional",
+    "description": "Entrenamiento en suspensión con correas o anillas",
+    "typical_brands": "TRX"
+  },
+  {
+    "name": "Cuerdas de batalla",
+    "category": "functional",
+    "description": "Cuerdas pesadas para acondicionamiento metabólico",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Cajones pliométricos",
+    "category": "functional",
+    "description": "Set de cajones para saltos y trabajo pliométrico",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Zona de kettlebells",
+    "category": "functional",
+    "description": "Juego de kettlebells de distintos pesos",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Sled de empuje",
+    "category": "functional",
+    "description": "Trineo para empujes y arrastres en pista",
+    "typical_brands": "Rogue"
+  },
+  {
+    "name": "Rueda abdominal y accesorios core",
+    "category": "functional",
+    "description": "Kit de accesorios para trabajo de core",
+    "typical_brands": "Abmat"
+  },
+  {
+    "name": "Sistema de aire acondicionado",
+    "category": "infrastructure",
+    "description": "Climatización del área de entrenamiento",
+    "typical_brands": "Carrier Trane"
+  },
+  {
+    "name": "Ventilación y extractores",
+    "category": "infrastructure",
+    "description": "Sistema de renovación de aire del local",
+    "typical_brands": "Greenheck"
+  },
+  {
+    "name": "Espejos de pared",
+    "category": "infrastructure",
+    "description": "Espejos de seguridad en zona de entrenamiento",
+    "typical_brands": "Gym Mirror"
+  },
+  {
+    "name": "Sistema de sonido",
+    "category": "infrastructure",
+    "description": "Audio ambiente para el gym",
+    "typical_brands": "Sonos Bose"
+  },
+  {
+    "name": "Cámaras de seguridad",
+    "category": "infrastructure",
+    "description": "Sistema CCTV del local",
+    "typical_brands": "Hikvision"
+  },
+  {
+    "name": "Iluminación LED del salón",
+    "category": "infrastructure",
+    "description": "Luminarias principales del área de entrenamiento",
+    "typical_brands": "Philips"
+  },
+  {
+    "name": "Piso de goma o caucho",
+    "category": "infrastructure",
+    "description": "Revestimiento de suelo para zonas de peso libre",
+    "typical_brands": "Regupol"
+  },
+  {
+    "name": "Bebedero o fuente de agua",
+    "category": "infrastructure",
+    "description": "Punto de hidratación para miembros",
+    "typical_brands": "Oasis"
+  },
+  {
+    "name": "Press de hombro en máquina",
+    "category": "strength",
+    "description": "Máquina selectorizada para press militar o de hombros",
+    "typical_brands": "Life Fitness Technogym"
+  },
+  {
+    "name": "Crossover de poleas",
+    "category": "strength",
+    "description": "Estación de poleas cruzadas para pecho, brazos y core",
+    "typical_brands": "Cybex Matrix"
+  },
+  {
+    "name": "Máquina de gemelos sentado",
+    "category": "strength",
+    "description": "Máquina para elevación de gemelos en posición sentada",
+    "typical_brands": "Technogym"
+  },
+  {
+    "name": "Máquina de gemelos de pie",
+    "category": "strength",
+    "description": "Máquina para elevación de gemelos de pie con hombros",
+    "typical_brands": "Life Fitness"
+  },
+  {
+    "name": "Hip thrust en máquina",
+    "category": "strength",
+    "description": "Máquina guiada para empuje de cadera y glúteos",
+    "typical_brands": "Nautilus Booty Builder"
+  },
+  {
+    "name": "Estación de dominadas y fondos",
+    "category": "strength",
+    "description": "Estructura para dominadas, fondos y trabajo de tracción",
+    "typical_brands": "Rogue Titan"
+  },
+  {
+    "name": "Multipress guiado",
+    "category": "strength",
+    "description": "Máquina multipress para press de pecho, hombro e inclinado",
+    "typical_brands": "Hammer Strength"
+  },
+  {
+    "name": "Balones medicinales",
+    "category": "functional",
+    "description": "Juego de balones medicinales de distintos pesos",
+    "typical_brands": "Rogue Dynamax"
+  },
+  {
+    "name": "Colchonetas y esterillas",
+    "category": "functional",
+    "description": "Área de colchonetas para calentamiento, movilidad y core",
+    "typical_brands": "Harbinger"
+  }
+]
