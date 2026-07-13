@@ -27,15 +27,15 @@ Confirma que el `DATABASE_URL` activo corresponde al entorno que intentas modifi
 
 ## Reglas de oro — NUNCA en producción
 
-| Acción                                             | Riesgo                                     | Alternativa segura                               |
-| -------------------------------------------------- | ------------------------------------------ | ------------------------------------------------ |
-| `npm run db:restore-demo`                          | Sobrescribe usuarios con cuentas ficticias | `db:create-admin` + crear staff en Miembros      |
-| `npm run db:reset-data` sin backup                 | Borra usuarios, pagos, rutinas, asistencia | Exportar reportes; solo en dev con confirmación  |
-| Migrar con `.env.dev` apuntando a prod             | Corrupción cruzada de datos                | `db:verify-isolation` + revisar `DATABASE_URL`   |
-| Editar tablas en Supabase SQL Editor sin migración | Drift entre código y esquema               | Archivo en `supabase/migrations/` + `db:migrate` |
-| Commitear `.env`, `.env.prod`, `.env.dev`          | Fuga de secretos JWT, DB, SMTP             | Solo `.env.example` en el repo                   |
-| `git push --force` a `main`                        | Pérdida de historial compartido            | PR con CI verde                                  |
-| Compartir `SUPABASE_SERVICE_ROLE_KEY`              | Acceso total a Storage y BD                | Solo en servidor/backend                         |
+| Acción                                                   | Riesgo                                     | Alternativa segura                                |
+| -------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------- |
+| `npm run db:restore-demo`                                | Sobrescribe usuarios con cuentas ficticias | `db:create-admin` + crear staff en Miembros       |
+| `npm run db:reset-data` sin backup                       | Borra usuarios, pagos, rutinas, asistencia | Exportar reportes; solo en dev con confirmación   |
+| Migrar con `.env.dev` apuntando a prod                   | Corrupción cruzada de datos                | `db:verify-isolation` + revisar `DATABASE_URL`    |
+| Editar tablas en Supabase SQL Editor sin migración       | Drift entre código y esquema               | Archivo en `supabase/migrations/` + `db:migrate`  |
+| Commitear `.env`, `.env.prod`, `.env.dev`, `.env.backup` | Fuga de secretos JWT, DB, SMTP             | Solo `.env.*.example` con placeholders `CHANGEME` |
+| `git push --force` a `main`                              | Pérdida de historial compartido            | PR con CI verde                                   |
+| Compartir `SUPABASE_SERVICE_ROLE_KEY`                    | Acceso total a Storage y BD                | Solo en servidor/backend                          |
 
 ---
 
@@ -102,6 +102,47 @@ Buckets privados — acceso solo vía backend con `SUPABASE_SERVICE_ROLE_KEY`:
 - `equipment-photos` — fotos de equipamiento
 
 No subas archivos directamente al Dashboard sin pasar por la API (permisos y validación de tipo).
+
+---
+
+## Controles de repositorio
+
+### Qué puede estar en Git
+
+| Archivo                                        | En git | Contenido permitido                                                 |
+| ---------------------------------------------- | ------ | ------------------------------------------------------------------- |
+| `.env.example`                                 | Sí     | Placeholders o vacío                                                |
+| `.env.dev.example`                             | Sí     | Solo `CHANGEME_*` — nunca JWT, passwords ni service role reales     |
+| `.env.prod.example`                            | Sí     | Solo `CHANGEME_*` y datos semi-públicos (email soporte, URL Render) |
+| `.env`, `.env.dev`, `.env.prod`, `.env.backup` | **No** | Secretos reales — ignorados por `.gitignore`                        |
+
+### Detección automática
+
+- **CI:** job `secrets` con [gitleaks](https://github.com/gitleaks/gitleaks) en cada push/PR (`.gitleaks.toml`).
+- **Local (opcional):** `npm run secrets:scan` — requiere `gitleaks` en PATH (`choco install gitleaks` en Windows).
+- **Pre-commit opcional:** si tienes gitleaks instalado, puedes añadir `gitleaks protect --staged` a `.husky/pre-commit`.
+
+### Verificación manual
+
+```powershell
+git ls-files | Select-String env          # solo *.example
+npm run env:check                         # dev ≠ prod; alerta .env.backup
+npm run secrets:scan                      # 0 hallazgos (con gitleaks local)
+```
+
+### Rotación tras exposición en plantillas
+
+Si un valor de `.env.*.example` se copió alguna vez a un entorno real, rota de inmediato siguiendo [ROTACION-SECRETOS.md](./ROTACION-SECRETOS.md):
+
+1. `JWT_SECRET` → `openssl rand -base64 48` → Render Dashboard / `.env.dev`
+2. `DEMO_PASSWORD` → nuevo valor ≥12 caracteres en dev
+3. `SUPABASE_SERVICE_ROLE_KEY` → regenerar en Supabase Dashboard si se filtró
+
+El historial de git conserva commits antiguos; la rotación invalida secretos aunque sigan en el historial.
+
+### Checklist de auditoría
+
+Ver [CHECKLIST-SEGURIDAD-REPO.md](./CHECKLIST-SEGURIDAD-REPO.md).
 
 ---
 

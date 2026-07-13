@@ -95,6 +95,12 @@ function main() {
     console.log('  ⚠ .env detectado — deprecado. Ejecuta npm run env:init para reorganizar.');
   }
 
+  if (fs.existsSync('.env.backup')) {
+    console.log('  ⚠ .env.backup detectado — copia temporal de env:init.');
+    console.log('    Confirma que .env.dev y .env.prod están completos, luego elimínalo:');
+    console.log('    Remove-Item .env.backup   (PowerShell)');
+  }
+
   console.log('');
 }
 

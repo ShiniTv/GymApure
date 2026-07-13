@@ -1,0 +1,15 @@
+title = "GymApure secret scanning"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Plantillas de entorno, CI y documentación (sin secretos reales)"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.dev\.example$''',
+  '''\.env\.prod\.example$''',
+  '''scripts/deploy/render-.*\.env\.example$''',
+  '''\.github/workflows/ci\.yml$''',
+  '''docs/''',
+]

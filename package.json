@@ -46,6 +46,7 @@
     "db:verify-isolation": "tsx scripts/db/verify-env-isolation.ts",
     "env:init": "tsx scripts/db/init-local-env.ts",
     "env:check": "tsx scripts/db/env-check.ts",
+    "secrets:scan": "tsx scripts/deploy/scan-secrets.ts",
     "env:use-dev": "tsx scripts/db/activate-dev-env.ts",
     "env:configure-dev": "tsx scripts/db/configure-dev-env.ts",
     "db:create-admin:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/create-admin.ts -- --allow-prod",
