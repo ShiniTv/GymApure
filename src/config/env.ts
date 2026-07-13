@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { logger } from '../lib/logger.ts';
 
+/** Debe coincidir con scripts/lib/supabase-refs.ts PROD_REF */
+const PROD_SUPABASE_REF = 'ffjwvlcwhyskddqqojnp';
+
 const WEAK_JWT_SECRETS = new Set([
   'supersecretkey',
   'change-me',
@@ -60,6 +63,18 @@ function parseEnvBoolean(raw: string | undefined, defaultValue: boolean): boolea
 }
 
 function parseEnv(): Env {
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
+  const databaseUrl = process.env.DATABASE_URL?.trim() ?? '';
+  const allowDevOnProd = process.env.ALLOW_DEV_ON_PROD_DB?.trim().toLowerCase() === 'true';
+
+  if (nodeEnv !== 'production' && databaseUrl.includes(PROD_SUPABASE_REF) && !allowDevOnProd) {
+    logger.error(
+      'Modo desarrollo conectado a la base de PRODUCCIÓN. Usa npm run dev (.env.dev) o ALLOW_DEV_ON_PROD_DB=true solo en emergencias.',
+      { ref: PROD_SUPABASE_REF }
+    );
+    process.exit(1);
+  }
+
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
     const details = result.error.issues

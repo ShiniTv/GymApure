@@ -8,6 +8,7 @@ import readline from 'readline';
 import { query } from '../../src/db/index.ts';
 import { passwordSchema } from '../../src/lib/passwordPolicy.ts';
 import { hashPassword } from '../../src/lib/passwordHash.ts';
+import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
 
 function ask(question: string, hidden = false): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -55,6 +56,8 @@ async function resolveCredentials(): Promise<{
 }
 
 async function main() {
+  assertNotProductionDatabase({ scriptName: 'db:create-admin' });
+
   if (process.env.CI !== 'true' && !process.env.ADMIN_EMAIL) {
     console.warn(
       'Tip: usa npm run db:create-admin:dev o db:create-admin:prod para apuntar al entorno correcto.\n'

@@ -18,34 +18,34 @@ npm install
 
 ### 2. Variables de entorno
 
-**Opción A — Desarrollo con proyecto Supabase dev existente:**
-
 ```powershell
-copy .env.dev.example .env.dev
-# Editar .env.dev con DATABASE_URL y SUPABASE_SERVICE_ROLE_KEY del proyecto DEV
-npm run env:use-dev
+npm run env:init
+npm run env:configure-dev -- <password-supabase-dev>
+npm run db:setup:dev
+npm run env:check
 ```
 
-**Opción B — Configuración manual:**
+Archivos:
 
-```powershell
-copy .env.example .env
-# Editar .env (ver VARIABLES-ENTORNO.md)
-```
+| Archivo     | Uso                                     |
+| ----------- | --------------------------------------- |
+| `.env.dev`  | Desarrollo local (`npm run dev`)        |
+| `.env.prod` | Operaciones prod desde PC (`db:*:prod`) |
+| `.env`      | **Deprecado** — no usar tras `env:init` |
 
-Variables mínimas obligatorias:
+Variables mínimas en `.env.dev`:
 
-| Variable                    | Cómo obtenerla                                             |
-| --------------------------- | ---------------------------------------------------------- |
-| `JWT_SECRET`                | `openssl rand -base64 48`                                  |
-| `DATABASE_URL`              | Supabase → Database → Transaction pooler (puerto **6543**) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → API → service_role                              |
+| Variable                    | Cómo obtenerla                            |
+| --------------------------- | ----------------------------------------- |
+| `JWT_SECRET`                | `openssl rand -base64 48`                 |
+| `DATABASE_URL`              | Supabase **dev** → pooler puerto **6543** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase dev → API → service_role         |
 
 ### 3. Base de datos
 
 ```powershell
-npm run db:migrate
-npm run db:health
+npm run db:migrate:dev
+npm run db:health:dev
 ```
 
 Debe mostrar conexión OK y RLS sin errores críticos.
@@ -53,7 +53,7 @@ Debe mostrar conexión OK y RLS sin errores críticos.
 ### 4. Administrador inicial
 
 ```powershell
-npm run db:create-admin
+npm run db:create-admin:dev
 ```
 
 O modo no interactivo en `.env`:
@@ -87,11 +87,11 @@ npm run test:smoke
 git clone https://github.com/ShiniTv/caribean-gym.git
 cd caribean-gym
 npm install
-cp .env.example .env
-# editar .env
-npm run db:migrate
-npm run db:health
-npm run db:create-admin
+npm run env:init
+npm run env:configure-dev -- <password>
+npm run db:setup:dev
+npm run db:health:dev
+npm run db:create-admin:dev
 npm run dev
 ```
 
@@ -99,19 +99,19 @@ npm run dev
 
 ## Copiar configuración desde otro equipo
 
-Si ya tienes un `.env` funcionando en otra máquina:
+Si ya tienes un `.env.dev` o `.env.prod` funcionando en otra máquina:
 
-1. Copia el archivo `.env` o `.env.dev` por canal seguro (no por chat público).
-2. **Nunca** commitees `.env` al repositorio.
-3. Verifica que apunta al entorno correcto (dev, no prod) con `npm run db:verify-isolation`.
+1. Copia el archivo por canal seguro (no por chat público).
+2. **Nunca** commitees `.env.dev` ni `.env.prod` al repositorio.
+3. Verifica el entorno con `npm run env:check`.
 
 ---
 
 ## Después de `git pull` (actualizar código)
 
 ```powershell
-npm install                  # si cambió package.json
-npm run db:migrate           # si hay migraciones nuevas
+npm install
+npm run db:migrate:dev
 npm run dev
 ```
 
@@ -120,10 +120,12 @@ npm run dev
 ## Checklist de primer arranque (10 pasos)
 
 - [ ] `npm install` sin errores
-- [ ] `.env` con `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- [ ] `npm run db:migrate` — todas las migraciones aplicadas
-- [ ] `npm run db:health` — conexión y RLS OK
-- [ ] `npm run db:create-admin` — cuenta admin creada
+- [ ] `npm run env:init` — `.env.dev` y `.env.prod` separados
+- [ ] `.env.dev` con `JWT_SECRET`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- [ ] `npm run env:check` — dev ≠ prod
+- [ ] `npm run db:migrate:dev` — migraciones aplicadas
+- [ ] `npm run db:health:dev` — conexión OK
+- [ ] `npm run db:create-admin:dev` — cuenta admin creada
 - [ ] `npm run dev` — servidor en puerto 3000
 - [ ] `GET /api/health` → `status: ok`
 - [ ] Login admin en `/login` funciona

@@ -2,7 +2,9 @@
  * Checklist de auth con cuentas reales (no demo).
  * Requiere servidor en marcha: npm run dev
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';

@@ -2,7 +2,9 @@
  * Verificación local end-to-end en un solo comando.
  * Levanta el servidor, espera healthcheck y ejecuta test:e2e.
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { spawn } from 'child_process';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';

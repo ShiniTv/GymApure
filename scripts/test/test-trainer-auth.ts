@@ -2,7 +2,9 @@
  * Autorización del rol trainer: asignación de rutinas, options scoping, aislamiento cross-trainer.
  * Requiere servidor en marcha, DEMO_PASSWORD y npm run db:restore-demo.
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;

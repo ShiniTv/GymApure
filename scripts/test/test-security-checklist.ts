@@ -2,7 +2,9 @@
  * Checklist de seguridad (Fases 1–3): kiosk eliminado, sesiones, IDOR trainers, rutinas.
  * Requiere servidor en marcha, DEMO_PASSWORD y npm run db:restore-demo.
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;

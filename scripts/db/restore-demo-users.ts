@@ -8,9 +8,9 @@ import 'dotenv/config';
 import { query } from '../../src/db/index.ts';
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 import { hashPassword } from '../../src/lib/passwordHash.ts';
-import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
+import { assertDevDatabase } from '../lib/db-env-guard.ts';
 
-assertNotProductionDatabase({ scriptName: 'db:restore-demo' });
+assertDevDatabase({ scriptName: 'db:restore-demo' });
 
 const DEMO_PASSWORD = resolveDemoPassword();
 

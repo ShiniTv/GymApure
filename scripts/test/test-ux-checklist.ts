@@ -2,7 +2,9 @@
  * Checklist UX — API: forgot/reset password, historial semanal, RBAC dead ends.
  * Requiere servidor en marcha, DEMO_PASSWORD y npm run db:restore-demo.
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import crypto from 'crypto';
 import { query, pool } from '../../src/db/index.ts';
 import { hashPassword } from '../../src/lib/passwordHash.ts';

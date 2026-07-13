@@ -2,7 +2,9 @@
  * Checklist: membresías + check-in recepción.
  * Requiere servidor en marcha y admin de checklist (npm run test:auth-checklist primero).
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { loginReceptionStaff, receptionCheckIn, receptionCheckOut } from '../lib/test-reception-auth.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';

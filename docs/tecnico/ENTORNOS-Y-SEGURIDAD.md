@@ -17,6 +17,7 @@ Reglas para operar GymApure sin dañar datos de producción ni corromper la base
 **Antes de migrar o resetear**, ejecuta:
 
 ```powershell
+npm run env:check
 npm run db:verify-isolation
 ```
 
@@ -44,7 +45,9 @@ Confirma que el `DATABASE_URL` activo corresponde al entorno que intentas modifi
 
 | Comando                   | Qué hace                                     |
 | ------------------------- | -------------------------------------------- |
-| `npm run dev`             | Servidor local                               |
+| `npm run env:check`       | Muestra qué ref usa cada archivo `.env.*`    |
+| `npm run env:init`        | Separa `.env.dev` y `.env.prod` en bootstrap |
+| `npm run dev`             | Servidor local (carga `.env.dev`)            |
 | `npm run lint`            | Verificación TypeScript                      |
 | `npm run build`           | Build sin tocar BD                           |
 | `npm run db:migrate`      | Aplica migraciones pendientes (idempotente)  |

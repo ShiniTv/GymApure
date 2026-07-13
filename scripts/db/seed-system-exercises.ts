@@ -15,6 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import { readFileSync } from 'node:fs';
 import { query } from '../../src/db/index.ts';
+import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
 import { MUSCLE_GROUPS } from '../../src/lib/exerciseMuscleGroups.ts';
 import { optimizeExerciseVideo, isFfmpegAvailable, VideoValidationError } from '../../src/lib/videoOptimizer.ts';
 import {
@@ -106,6 +107,8 @@ async function exerciseExistsByName(name: string): Promise<boolean> {
 }
 
 async function main() {
+  assertNotProductionDatabase({ scriptName: 'db:seed-system-exercises' });
+
   const args = parseArgs(process.argv);
   const csvPath =
     (args.csv as string) ?? path.join(process.cwd(), 'scripts/db/data/system-exercises.csv');

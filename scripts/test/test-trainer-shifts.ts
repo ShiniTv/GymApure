@@ -2,7 +2,9 @@
  * Prueba turnos de entrenadores, filtrado dinámico y carné (API).
  * Requiere servidor en marcha, migración aplicada y npm run db:restore-demo.
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { buildBadgeQrValue, parseBadgeScan } from '../../src/lib/badgeQr';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';

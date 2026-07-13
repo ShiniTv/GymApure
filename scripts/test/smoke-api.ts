@@ -2,7 +2,9 @@
  * Smoke tests against a running server.
  * Uso: npm run dev (otra terminal) && npm run test:smoke
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;

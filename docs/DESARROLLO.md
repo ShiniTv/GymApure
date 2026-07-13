@@ -25,7 +25,7 @@ Opcional: [GitHub CLI](https://cli.github.com/) (`gh`) para PRs desde terminal.
 
 ### Windows (PowerShell)
 
-```powershell
+````powershell
 # 1. Clonar
 git clone https://github.com/ShiniTv/caribean-gym.git
 cd caribean-gym
@@ -33,19 +33,18 @@ cd caribean-gym
 # 2. Dependencias
 npm install
 
-# 3. Variables de entorno
-copy .env.example .env
-# Editar .env con un editor (ver sección 3)
+```powershell
+# 3. Entornos (dev y prod separados)
+npm run env:init
+npm run env:configure-dev -- <password>
+npm run db:setup:dev
 
-# 4. Base de datos
-npm run db:migrate
+# 4. Admin local
+npm run db:create-admin:dev
 
-# 5. Admin inicial (flujo normal de la app)
-npm run db:create-admin
-
-# 6. Arrancar
+# 5. Arrancar
 npm run dev
-```
+````
 
 Abrir: **http://localhost:3000**
 
@@ -55,18 +54,34 @@ Abrir: **http://localhost:3000**
 git clone https://github.com/ShiniTv/caribean-gym.git
 cd caribean-gym
 npm install
-cp .env.example .env
-# editar .env
-npm run db:migrate
-npm run db:create-admin
+npm run env:init
+npm run env:configure-dev -- <password>
+npm run db:setup:dev
+npm run db:create-admin:dev
 npm run dev
 ```
 
-> Otra PC: copiá el archivo `.env` completo o usá `.env.example` como plantilla.
+### Cheat sheet — día a día
+
+```powershell
+# Desarrollo
+npm run env:check
+npm run dev
+npm run db:restore-demo      # solo .env.dev
+npm run test:smoke:dev
+
+# Producción (desde PC, con cuidado)
+npm run deploy:preflight:prod
+npm run db:migrate:prod
+npm run db:health:prod
+git push origin main
+```
+
+> **No uses `.env`** para trabajo diario. Desarrollo = `.env.dev`. CLI prod = `.env.prod`.
 
 ---
 
-## 3. Configuración `.env` (mínimo)
+## 3. Configuración `.env.dev` (mínimo)
 
 | Variable                    | Obligatorio | Cómo obtenerla                                                      |
 | --------------------------- | ----------- | ------------------------------------------------------------------- |

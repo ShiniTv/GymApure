@@ -6,6 +6,7 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
+import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
 
 const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase', 'migrations');
 
@@ -192,6 +193,8 @@ async function syncFromSupabaseMigrations(pool: pg.Pool, files: string[]): Promi
 }
 
 async function main() {
+  assertNotProductionDatabase({ scriptName: 'db:migrate' });
+
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (!databaseUrl) {
     console.error('Falta DATABASE_URL en .env');

@@ -1,8 +1,10 @@
 /**
  * Login as reception staff for integration tests (check-in via /api/reception).
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const RECEPTION_EMAIL = process.env.SMOKE_RECEPTION_EMAIL ?? 'receptionist@gym.com';

@@ -6,18 +6,18 @@ Guía de 15 pasos para pasar de instalación vacía a un gimnasio listo para ope
 
 ## Parte A — Instalación (técnico)
 
-| #   | Paso                      | Comando / acción                                                 |
-| --- | ------------------------- | ---------------------------------------------------------------- |
-| 1   | Clonar el repositorio     | `git clone https://github.com/ShiniTv/caribean-gym.git`          |
-| 2   | Instalar dependencias     | `npm install`                                                    |
-| 3   | Configurar entorno        | Copiar `.env.example` → `.env` (o `.env.dev` para desarrollo)    |
-| 4   | Generar `JWT_SECRET`      | `openssl rand -base64 48`                                        |
-| 5   | Configurar `DATABASE_URL` | Supabase → Database → Connection string (pooler puerto **6543**) |
-| 6   | Aplicar migraciones       | `npm run db:migrate`                                             |
-| 7   | Verificar base de datos   | `npm run db:health` → debe reportar conexión OK                  |
-| 8   | Crear administrador       | `npm run db:create-admin`                                        |
-| 9   | Arrancar servidor         | `npm run dev` → abrir `http://localhost:3000`                    |
-| 10  | Verificar API             | `GET /api/health` → `{ "status": "ok" }`                         |
+| #   | Paso                      | Comando / acción                                        |
+| --- | ------------------------- | ------------------------------------------------------- |
+| 1   | Clonar el repositorio     | `git clone https://github.com/ShiniTv/caribean-gym.git` |
+| 2   | Instalar dependencias     | `npm install`                                           |
+| 3   | Separar entornos          | `npm run env:init`                                      |
+| 4   | Configurar dev            | `npm run env:configure-dev -- <password>`               |
+| 5   | Setup base dev            | `npm run db:setup:dev`                                  |
+| 6   | Verificar entornos        | `npm run env:check`                                     |
+| 7   | Crear administrador local | `npm run db:create-admin:dev`                           |
+| 8   | Arrancar servidor         | `npm run dev` → `http://localhost:3000`                 |
+| 9   | Verificar API             | `GET /api/health` → `{ "status": "ok" }`                |
+| 10  | Smoke tests (opcional)    | `npm run test:smoke:dev`                                |
 
 **Resultado esperado:** puedes iniciar sesión como admin en `/login`.
 

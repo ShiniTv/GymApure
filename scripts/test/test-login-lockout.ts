@@ -2,7 +2,9 @@
  * Verifica bloqueo de login tras 3 intentos fallidos (sin otras dependencias).
  * Requiere servidor: npm run dev
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 

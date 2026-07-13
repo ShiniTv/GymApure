@@ -1,17 +1,16 @@
 /**
- * Copia DATABASE_URL y SUPABASE_SERVICE_ROLE_KEY de .env.dev al .env activo.
+ * Valida .env.dev y recuerda usar npm run dev (ya no escribe en .env).
  * Uso: npm run env:use-dev
  */
 import { config } from 'dotenv';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PROD_REF } from '../lib/supabase-refs.ts';
+import { DEV_REF, PROD_REF } from '../lib/supabase-refs.ts';
 
 const devPath = path.resolve('.env.dev');
-const envPath = path.resolve('.env');
 
 if (!fs.existsSync(devPath)) {
-  console.error('✗ Falta .env.dev — ejecuta npm run db:setup:dev');
+  console.error('✗ Falta .env.dev — ejecuta npm run env:init && npm run db:setup:dev');
   process.exit(1);
 }
 
@@ -21,6 +20,7 @@ const devKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
 if (!devDb || devDb.includes(PROD_REF) || devDb.includes('CHANGEME')) {
   console.error('✗ .env.dev no tiene DATABASE_URL de desarrollo válida');
+  console.error(`  Debe usar el proyecto ${DEV_REF}`);
   process.exit(1);
 }
 if (!devKey || devKey.includes('CHANGEME')) {
@@ -28,21 +28,7 @@ if (!devKey || devKey.includes('CHANGEME')) {
   process.exit(1);
 }
 
-let envText = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
-
-function upsert(key: string, value: string): void {
-  const line = `${key}=${value}`;
-  const re = new RegExp(`^${key}=.*$`, 'm');
-  if (re.test(envText)) {
-    envText = envText.replace(re, line);
-  } else {
-    envText = `${envText.trimEnd()}\n${line}\n`;
-  }
-}
-
-upsert('DATABASE_URL', devDb);
-upsert('SUPABASE_SERVICE_ROLE_KEY', devKey);
-
-fs.writeFileSync(envPath, envText);
-console.log('✓ .env actualizado con credenciales de desarrollo (.env.dev)');
+console.log('✓ .env.dev válido para desarrollo');
 console.log(`  ref: ${devDb.match(/postgres\.([^:]+)/)?.[1] ?? '?'}`);
+console.log('\n  Usa npm run dev (carga .env.dev automáticamente).');
+console.log('  No uses .env — está deprecado. Ver npm run env:check.\n');

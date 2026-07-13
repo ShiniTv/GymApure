@@ -2,7 +2,9 @@
  * Verifica biblioteca de ejercicios por entrenador (ocultar sistema no afecta a otros).
  * Requiere servidor: npm run dev + db:restore-demo + migración system_exercises
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { query } from '../../src/db/index.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';

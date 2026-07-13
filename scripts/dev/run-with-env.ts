@@ -22,7 +22,6 @@ if (!fs.existsSync(resolvedEnv)) {
   process.exit(1);
 }
 
-config({ path: path.resolve('.env') });
 config({ path: resolvedEnv, override: true });
 
 const resolvedScript = path.resolve(scriptPath);

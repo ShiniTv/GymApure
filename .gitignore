@@ -10,6 +10,7 @@ seed-*-log.txt
 .env*
 !.env.example
 !.env.dev.example
+!.env.prod.example
 gym.db
 sqlite.db
 uploads/

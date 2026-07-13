@@ -2,7 +2,9 @@
  * Verifica el flujo de asignación de rutinas (entrenador → miembro).
  * Uso: npm run dev && tsx scripts/verify-routine-assign.ts
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from './dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const PASS = process.env.DEMO_PASSWORD ?? 'DemoPassword123!';

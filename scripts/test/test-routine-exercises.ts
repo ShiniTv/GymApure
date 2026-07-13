@@ -2,7 +2,9 @@
  * Verifica POST/PUT de ejercicios en rutinas con weight_suggestion textual.
  * Requiere: npm run dev + db:restore-demo (o SMOKE_BASE_URL apuntando a un entorno con cuentas demo).
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD?.trim() || 'DemoGym2024!';

@@ -2,7 +2,9 @@
  * Verifica que el panel de alertas responde bien (API).
  * Uso: npm run dev && npm run test:alerts
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD;

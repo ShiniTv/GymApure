@@ -2,7 +2,9 @@
  * Checklist del rol recepcionista y panel de acceso por cédula.
  * Requiere: npm run dev + npm run db:restore-demo (o usuario receptionist@gym.com)
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';

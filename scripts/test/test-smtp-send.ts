@@ -2,7 +2,9 @@
  * Verifica SMTP con las variables de .env cargadas.
  * Uso: npx tsx scripts/test/test-smtp-send.ts [email-destino]
  */
-import 'dotenv/config';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
+
+loadEnvForScripts();
 import { configureEmail, sendEmail, passwordResetEmail } from '../../src/lib/email.ts';
 
 const to = process.argv[2]?.trim() || process.env.SMTP_USER?.trim();
