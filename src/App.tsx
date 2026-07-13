@@ -53,7 +53,6 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Messages = lazy(() => import('./pages/Messages'));
 const Equipment = lazy(() => import('./pages/Equipment'));
 const Settings = lazy(() => import('./pages/Settings'));
-const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
 const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
@@ -316,20 +315,6 @@ function AppRoutes() {
                     }}
                   >
                     <Settings />
-                  </ErrorBoundary>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="security"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
-                  <ErrorBoundary
-                    onError={(error) => {
-                      reportBoundaryError(error);
-                    }}
-                  >
-                    <MfaSecurity />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

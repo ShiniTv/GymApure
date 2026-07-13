@@ -33,7 +33,6 @@ import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
 import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
-import { isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
 import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import mfaRoutes from './mfa.ts';
@@ -47,6 +46,7 @@ router.get(
   })
 );
 
+/** MFA endpoints retained for a future re-enable; login no longer requires TOTP. */
 router.use('/mfa', mfaRoutes);
 
 router.post(
@@ -77,10 +77,8 @@ router.post(
       full_name: string;
       status: string;
       token_version: number | string;
-      mfa_enabled: boolean;
-      mfa_secret: string | null;
     }>(
-      'SELECT id, email, password, role, full_name, status, token_version, mfa_enabled, mfa_secret FROM users WHERE email = $1',
+      'SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1',
       [normalizedEmail]
     );
     const user = rows[0];
@@ -114,15 +112,6 @@ router.post(
     if (passwordHashNeedsRehash(user.password)) {
       const upgradedHash = await hashPassword(password);
       await query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, userId]);
-    }
-
-    if (user.mfa_enabled && user.mfa_secret && isMfaStaffRole(user.role)) {
-      const mfaChallengeToken = signMfaChallengeToken(userId, normalizedEmail, user.role);
-      res.json({
-        mfa_required: true,
-        mfa_challenge_token: mfaChallengeToken,
-      });
-      return;
     }
 
     emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });

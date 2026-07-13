@@ -11,7 +11,6 @@ import {
   UserCircle,
   UtensilsCrossed,
   Wrench,
-  ShieldCheck,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -47,7 +46,6 @@ export const ADMIN_NAV: NavSection[] = [
     name: 'Cuenta',
     items: [
       { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
-      { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
       { name: 'Configuración', href: '/settings', icon: Settings2 },
     ],
   },

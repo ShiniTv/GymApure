@@ -28,7 +28,6 @@ function withCsrfHeaders(init: RequestInit = {}): RequestInit {
 
 let authBootstrapComplete = false;
 let onUnauthorized: (() => void) | null = null;
-let onMfaSetupRequired: (() => void) | null = null;
 
 export function setAuthBootstrapComplete(complete: boolean) {
   authBootstrapComplete = complete;
@@ -36,10 +35,6 @@ export function setAuthBootstrapComplete(complete: boolean) {
 
 export function registerUnauthorizedHandler(handler: (() => void) | null) {
   onUnauthorized = handler;
-}
-
-export function registerMfaSetupRequiredHandler(handler: (() => void) | null) {
-  onMfaSetupRequired = handler;
 }
 
 function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
@@ -53,21 +48,7 @@ function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
 }
 
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then(async (res) => {
-    if (
-      res.status === 403 &&
-      authBootstrapComplete &&
-      onMfaSetupRequired &&
-      shouldHandleUnauthorized(input)
-    ) {
-      const data = (await res
-        .clone()
-        .json()
-        .catch(() => ({}))) as { mfa_setup_required?: boolean };
-      if (data.mfa_setup_required) {
-        onMfaSetupRequired();
-      }
-    }
+  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then((res) => {
     if (
       res.status === 401 &&
       authBootstrapComplete &&

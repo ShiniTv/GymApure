@@ -23,7 +23,6 @@ import notificationRoutes from './notifications.ts';
 import exchangeRateRoutes from './exchangeRate.ts';
 import cronRoutes from './cronRoutes.ts';
 import { authenticate } from './middleware/auth.ts';
-import { enforceMfaForStaff } from './middleware/enforceMfa.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
@@ -41,7 +40,6 @@ router.use(apiRateLimiter, cronRoutes);
 // Protected routes (require login)
 router.use(apiRateLimiter);
 router.use(authenticate);
-router.use(enforceMfaForStaff);
 router.use(csrfProtection);
 
 router.use('/users', userRoutes);
