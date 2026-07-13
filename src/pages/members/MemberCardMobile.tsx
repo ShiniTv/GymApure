@@ -9,6 +9,7 @@ import {
   Trash2,
   IdCard,
   UtensilsCrossed,
+  Clock,
 } from 'lucide-react';
 import { Badge, Avatar, DataCard } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -49,6 +50,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
   const isAdmin = userRole === 'admin';
+  const canEditShift = member.role === 'member' && (isAdmin || userRole === 'receptionist');
   const expiryBadge =
     member.role === 'member' && member.membership_name
       ? getExpiryBadgeInfo(member.days_remaining, alertDays)
@@ -99,18 +101,27 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               )}
             </div>
           )}
-          {member.role === 'member' && member.training_shift && (
-            <button
-              type="button"
-              onClick={() => (isAdmin || userRole === 'receptionist') && onEditShift(member)}
-              className={cn(
-                'mt-1.5 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold',
-                SHIFT_BADGE_CLASSES[member.training_shift]
-              )}
-            >
-              {SHIFT_SHORT_LABELS[member.training_shift]}
-            </button>
-          )}
+          {canEditShift &&
+            (member.training_shift ? (
+              <button
+                type="button"
+                onClick={() => onEditShift(member)}
+                className={cn(
+                  'mt-1.5 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold transition-opacity hover:opacity-80',
+                  SHIFT_BADGE_CLASSES[member.training_shift]
+                )}
+              >
+                {SHIFT_SHORT_LABELS[member.training_shift]}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onEditShift(member)}
+                className="text-brand mt-1.5 text-[11px] font-semibold hover:underline"
+              >
+                Asignar turno
+              </button>
+            ))}
         </div>
       </div>
 
@@ -163,6 +174,14 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 aria-label="Ver carné"
               >
                 <IdCard className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onEditShift(member)}
+                className={mobileIconBtnClass}
+                aria-label={member.training_shift ? 'Editar turno' : 'Asignar turno'}
+              >
+                <Clock className="h-4 w-4" />
               </button>
               <button
                 type="button"
