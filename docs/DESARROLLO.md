@@ -153,7 +153,8 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 | `npm run db:migrate:prod`          | Migrar contra `.env.prod`                                                         |
 | `npm run db:setup:dev`             | Migrar + health + activar `.env.dev`                                              |
 | `npm run db:seed-system-exercises` | Sembrar catálogo de ejercicios del sistema                                        |
-| `npm run env:configure-dev`        | Reconfigurar `.env.dev` tras cambio de contraseña Supabase                        |
+| `npm run env:configure-dev`        | Reconfigurar `.env.dev` tras cambio de contraseña (GymApure – Desarrollo)         |
+| `npm run env:configure-prod`       | Reconfigurar `.env.prod` y obtener `DATABASE_URL` para Render                     |
 | `npm run db:verify-isolation`      | Verificar que dev y prod no están cruzados                                        |
 | `npm run deploy:preflight`         | Validar `.env` antes de migrar/desplegar producción                               |
 
@@ -276,7 +277,7 @@ caribean-gym/
 └── docs/                  # Documentación (índice: docs/README.md)
 ```
 
-**Dev vs prod:** ver [docs/README.md](./README.md#entorno-dev-vs-producción). Desarrollo usa `.env.dev` (ref `sqjyxmbtgmiorckigrrg`); Render usa producción (`ffjwvlcwhyskddqqojnp`).
+**Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`, ref `sqjyxmbtgmiorckigrrg`); producción = **GymApure – Producción** (Render + `.env.prod`, ref `ffjwvlcwhyskddqqojnp`).
 
 ### Mapa módulo → archivos clave
 

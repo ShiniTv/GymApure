@@ -136,12 +136,13 @@ Se incluyen en el bundle frontend en tiempo de build. Si cambias `VITE_*` en Ren
 
 ## Archivos de entorno por entorno
 
-| Archivo        | Uso                                             |
-| -------------- | ----------------------------------------------- |
-| `.env`         | Activo local (puede ser symlink a `.env.dev`)   |
-| `.env.dev`     | Proyecto Supabase desarrollo                    |
-| `.env.prod`    | Producción local (migraciones prod desde tu PC) |
-| `.env.example` | Plantilla sin secretos (sí en git)              |
+| Archivo        | Uso                                            |
+| -------------- | ---------------------------------------------- |
+| `.env.dev`     | **GymApure – Desarrollo** (`sqjyx…`)           |
+| `.env.prod`    | **GymApure – Producción** (`ffjw…`) — CLI prod |
+| `.env.example` | Plantilla sin secretos (sí en git)             |
+
+Tras rotar contraseña de BD: `npm run env:configure-dev` o `npm run env:configure-prod`. Ver [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
 
 **Nunca** commitees `.env`, `.env.dev` ni `.env.prod`.
 
@@ -151,4 +152,5 @@ Se incluyen en el bundle frontend en tiempo de build. Si cambias `VITE_*` en Ren
 
 - [Instalación](./INSTALACION-NUEVO-EQUIPO.md)
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
+- [Proyectos Supabase](./SUPABASE-PROYECTOS.md)
 - [Despliegue](../DEPLOY.md)

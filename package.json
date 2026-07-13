@@ -61,6 +61,7 @@
     "db:backup-check": "tsx scripts/db/verify-backup-readiness.ts",
     "env:use-dev": "tsx scripts/db/activate-dev-env.ts",
     "env:configure-dev": "tsx scripts/db/configure-dev-env.ts",
+    "env:configure-prod": "tsx scripts/db/configure-prod-env.ts",
     "db:create-admin:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/create-admin.ts -- --allow-prod",
     "db:create-admin:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/create-admin.ts",
     "db:reset-data:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/reset-database-data.ts -- --yes",

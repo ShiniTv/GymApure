@@ -53,6 +53,7 @@
 | [INICIO-RAPIDO.md](./INICIO-RAPIDO.md)                                       | 15 pasos para poner el gym operativo               |
 | [tecnico/INSTALACION-NUEVO-EQUIPO.md](./tecnico/INSTALACION-NUEVO-EQUIPO.md) | Instalación completa en Windows/Mac                |
 | [tecnico/ENTORNOS-Y-SEGURIDAD.md](./tecnico/ENTORNOS-Y-SEGURIDAD.md)         | Dev vs prod, comandos destructivos, reglas de oro  |
+| [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md)             | Nombres y refs de proyectos Supabase (mapa)        |
 | [tecnico/VARIABLES-ENTORNO.md](./tecnico/VARIABLES-ENTORNO.md)               | Tabla completa de variables `.env`                 |
 | [tecnico/ARQUITECTURA.md](./tecnico/ARQUITECTURA.md)                         | Stack, flujo de datos, auth, crons, Storage        |
 | [tecnico/MIGRACIONES-Y-BD.md](./tecnico/MIGRACIONES-Y-BD.md)                 | Política de migraciones y resumen reciente         |
@@ -80,16 +81,19 @@
 
 ## Entorno dev vs producción
 
-| Entorno             | Supabase ref           | Archivo env                    |
-| ------------------- | ---------------------- | ------------------------------ |
-| Desarrollo local    | `sqjyxmbtgmiorckigrrg` | `.env.dev`                     |
-| Producción (Render) | `ffjwvlcwhyskddqqojnp` | `.env.prod` / variables Render |
+Mapa detallado: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
+
+| Entorno             | Nombre Supabase       | Ref                    | Archivo env                    |
+| ------------------- | --------------------- | ---------------------- | ------------------------------ |
+| Desarrollo local    | GymApure – Desarrollo | `sqjyxmbtgmiorckigrrg` | `.env.dev`                     |
+| Producción (Render) | GymApure – Producción | `ffjwvlcwhyskddqqojnp` | `.env.prod` / variables Render |
 
 ```powershell
-npm run env:configure-dev -- <password>   # tras reset de contraseña en Dashboard dev
-npm run db:setup:dev                      # migrar + health + activar .env
+npm run env:configure-dev -- <password>   # tras reset password en GymApure – Desarrollo
+npm run env:configure-prod -- <password>  # tras reset password en GymApure – Producción
+npm run db:setup:dev                      # migrar + health + activar .env.dev
 npm run db:create-admin:dev               # admin solo en dev
-npm run db:verify-isolation               # confirmar que reset local no toca prod
+npm run db:verify-isolation               # confirmar que dev y prod no están cruzados
 npm run dev                               # servidor local con .env.dev
 ```
 

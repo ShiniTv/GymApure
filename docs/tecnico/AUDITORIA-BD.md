@@ -141,10 +141,14 @@ npm run db:audit:prod
 
 Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 
-| Proyecto                         | Ref                    | Usuarios | Pagos | Suscripciones |
-| -------------------------------- | ---------------------- | -------- | ----- | ------------- |
-| CARIBEAN GYM Project (dev local) | `ffjwvlcwhyskddqqojnp` | 4        | 1     | 1             |
-| CARIBEAN GYM Producción (Render) | `sqjyxmbtgmiorckigrrg` | 187      | 128   | 187           |
+> **Corrección (2026-07-13):** la tabla original usaba nombres viejos del dashboard invertidos. Mapa actual: [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
+
+| Proyecto (nombre actual) | Ref                    | Rol       | Usuarios (snapshot) | Pagos | Suscripciones |
+| ------------------------ | ---------------------- | --------- | ------------------- | ----- | ------------- |
+| GymApure – Desarrollo    | `sqjyxmbtgmiorckigrrg` | Dev local | —                   | —     | —             |
+| GymApure – Producción    | `ffjwvlcwhyskddqqojnp` | Render    | 187                 | 128   | 187           |
+
+_Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producción; pueden variar._
 
 ### Acciones aplicadas
 
@@ -158,7 +162,7 @@ Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 
 | Check                           | Dev     | Prod    |
 | ------------------------------- | ------- | ------- |
-| Migraciones al día              | 39/39   | 39/39   |
+| Migraciones al día              | 42/42   | 42/42   |
 | Subscriptions activas expiradas | 0       | 0       |
 | Supabase security advisors      | 0 lints | 0 lints |
 | `demo_requests` existe          | No      | No      |

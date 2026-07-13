@@ -2,7 +2,7 @@
 
 Guía paso a paso para instalar GymApure en otra computadora sin afectar producción.
 
-**Prerrequisitos:** Node.js 20+, npm 10+, Git, cuenta Supabase (proyecto dev separado de prod).
+**Prerrequisitos:** Node.js 20+, npm 10+, Git, cuenta Supabase con dos proyectos: **GymApure – Desarrollo** y **GymApure – Producción** (ver [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md)).
 
 ---
 
@@ -25,12 +25,12 @@ npm run db:setup:dev
 npm run env:check
 ```
 
-Archivos:
+Archivos (mapa Supabase: [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md)):
 
-| Archivo     | Uso                                     |
-| ----------- | --------------------------------------- |
-| `.env.dev`  | Desarrollo local (`npm run dev`)        |
-| `.env.prod` | Operaciones prod desde PC (`db:*:prod`) |
+| Archivo     | Proyecto Supabase                       | Uso                                     |
+| ----------- | --------------------------------------- | --------------------------------------- |
+| `.env.dev`  | GymApure – Desarrollo                   | Desarrollo local (`npm run dev`)        |
+| `.env.prod` | GymApure – Producción                   | Operaciones prod desde PC (`db:*:prod`) |
 | `.env`      | **Deprecado** — no usar tras `env:init` |
 
 Variables mínimas en `.env.dev`:

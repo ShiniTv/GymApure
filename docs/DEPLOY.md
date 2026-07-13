@@ -1,6 +1,8 @@
 # Despliegue a producción (Render + Supabase)
 
-Guía paso a paso para llevar GymApure a producción. Requiere un **proyecto Supabase nuevo** (no reutilizar el de desarrollo).
+Guía para GymApure en producción. El proyecto Supabase de producción actual es **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`), enlazado a Render. Mapa de entornos: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
+
+> **Instalación nueva desde cero:** la Parte 1 describe crear un proyecto Supabase de producción. Si ya tienes **GymApure – Producción**, salta a migraciones y variables en Render.
 
 ## Prerrequisitos
 

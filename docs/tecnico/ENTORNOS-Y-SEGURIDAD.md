@@ -6,8 +6,11 @@ Reglas para operar GymApure sin dañar datos de producción ni corromper la base
 
 ## Separación dev vs producción
 
+Ver mapa completo: [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
+
 | Aspecto          | Desarrollo                              | Producción                     |
 | ---------------- | --------------------------------------- | ------------------------------ |
+| Nombre Supabase  | **GymApure – Desarrollo**               | **GymApure – Producción**      |
 | Supabase ref     | `sqjyxmbtgmiorckigrrg`                  | `ffjwvlcwhyskddqqojnp`         |
 | Archivo env      | `.env.dev`                              | `.env.prod` / Render Dashboard |
 | `NODE_ENV`       | `development`                           | `production`                   |
@@ -189,4 +192,5 @@ Cada admin, recepcionista y entrenador debe activar MFA en **Seguridad MFA**.
 - [Migraciones](./MIGRACIONES-Y-BD.md)
 - [Datos personales](./DATOS-PERSONALES.md)
 - [Rotación de secretos](./ROTACION-SECRETOS.md)
+- [Proyectos Supabase](./SUPABASE-PROYECTOS.md)
 - [Despliegue](../DEPLOY.md)

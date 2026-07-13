@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEV_REF } from '../lib/supabase-refs.ts';
+import { DEV_REF, DEV_DASHBOARD_URL } from '../lib/supabase-refs.ts';
 
 const DEV_ENV = path.resolve('.env.dev');
 
@@ -17,8 +17,8 @@ function main() {
 
   if (!password || password === 'CHANGEME') {
     console.error('\n✗ Falta la contraseña de la base de datos de desarrollo.');
-    console.error('  Dashboard → Settings → Database → Reset database password');
-    console.error(`  https://supabase.com/dashboard/project/${DEV_REF}/settings/database`);
+    console.error('  Supabase → GymApure – Desarrollo → Settings → Database → Reset password');
+    console.error(`  ${DEV_DASHBOARD_URL}/settings/database`);
     console.error('\n  Luego: npm run env:configure-dev -- <tu-contraseña>\n');
     process.exit(1);
   }

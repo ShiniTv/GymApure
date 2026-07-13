@@ -18,8 +18,8 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 
 ## Separación de entornos
 
-- [ ] `npm run env:check` confirma que `.env.dev` apunta a desarrollo (`sqjyxmbtgmiorckigrrg`)
-- [ ] `npm run env:check` confirma que `.env.prod` apunta a producción (`ffjwvlcwhyskddqqojnp`)
+- [ ] `npm run env:check` confirma `.env.dev` → **GymApure – Desarrollo** (`sqjyxmbtgmiorckigrrg`)
+- [ ] `npm run env:check` confirma `.env.prod` → **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`)
 - [ ] `npm run db:verify-isolation` pasa antes de operaciones destructivas
 - [ ] `db:restore-demo` bloqueado en producción (`db-env-guard.ts`)
 
@@ -47,6 +47,7 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 ## Enlaces
 
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
+- [Proyectos Supabase](./SUPABASE-PROYECTOS.md)
 - [Staging](./STAGING.md)
 - [Variables de entorno](./VARIABLES-ENTORNO.md)
 - [Rotación de secretos](./ROTACION-SECRETOS.md)

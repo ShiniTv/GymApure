@@ -29,6 +29,22 @@ No es necesario tocar la base de datos: los tokens antiguos fallan la verificaci
 
 ---
 
+## Contraseña de base de datos (DATABASE_URL)
+
+**Impacto:** la app y los scripts CLI dejan de conectar hasta actualizar la URL en todos los sitios.
+
+| Paso | Acción                                                                                   |
+| ---- | ---------------------------------------------------------------------------------------- |
+| 1    | Supabase → **GymApure – Producción** → Settings → Database → Reset database password     |
+| 2    | `npm run env:configure-prod -- <nueva-contraseña>` (actualiza `.env.prod` e imprime URL) |
+| 3    | Render → Environment → pegar `DATABASE_URL`                                              |
+| 4    | Manual Deploy                                                                            |
+| 5    | `npm run db:health:prod` → debe decir **OK**                                             |
+
+Desarrollo: mismo flujo con **GymApure – Desarrollo** y `npm run env:configure-dev`.
+
+---
+
 ## CRON_SECRET
 
 **Impacto:** los Cron Jobs de Render (`POST /api/settings/expiry/run`, `POST /api/exchange-rate/refresh`) dejan de autenticarse hasta actualizar el header.

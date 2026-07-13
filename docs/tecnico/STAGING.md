@@ -6,11 +6,11 @@ Staging es un **tercer entorno** entre desarrollo y producción. Sirve para vali
 
 ## Cuándo usar cada entorno
 
-| Entorno | Supabase ref                         | Uso                                        |
-| ------- | ------------------------------------ | ------------------------------------------ |
-| Dev     | `sqjyxmbtgmiorckigrrg`               | Desarrollo diario, demo, `db:restore-demo` |
-| Staging | Proyecto propio (crear en Dashboard) | QA pre-prod, migraciones, smoke tests      |
-| Prod    | `ffjwvlcwhyskddqqojnp`               | Usuarios reales del gym                    |
+| Entorno | Nombre Supabase          | Supabase ref           | Uso                                        |
+| ------- | ------------------------ | ---------------------- | ------------------------------------------ |
+| Dev     | GymApure – Desarrollo    | `sqjyxmbtgmiorckigrrg` | Desarrollo diario, demo, `db:restore-demo` |
+| Staging | _(crear proyecto nuevo)_ | `CHANGEME`             | QA pre-prod, migraciones, smoke tests      |
+| Prod    | GymApure – Producción    | `ffjwvlcwhyskddqqojnp` | Usuarios reales del gym (Render)           |
 
 ---
 
