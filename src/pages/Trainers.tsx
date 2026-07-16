@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit, Dumbbell } from 'lucide-react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
   useTrainersQuery,
   useInvalidateTrainers,
@@ -20,6 +20,7 @@ import {
   BackToDashboardLink,
   Textarea,
   TableRowSkeleton,
+  PasswordInput,
 } from '../components/ui';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { ResponsiveTable } from '../components/ResponsiveTable';
@@ -31,6 +32,7 @@ import {
   type TrainerLevel,
   type TrainingShift,
 } from '../lib/trainingShift';
+import { passwordSchema } from '../lib/passwordPolicy';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { cn } from '../lib/utils';
@@ -101,7 +103,10 @@ export default function Trainers() {
       next.email = 'Email inválido';
     }
     if (!form.cedula.trim()) next.cedula = 'Cédula requerida';
-    if (form.password.length < 8) next.password = 'Mínimo 8 caracteres';
+    const passwordResult = passwordSchema.safeParse(form.password);
+    if (!passwordResult.success) {
+      next.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';
+    }
     if (form.password !== form.confirm_password)
       next.confirm_password = 'Las contraseñas no coinciden';
     setErrors(next);
@@ -127,7 +132,7 @@ export default function Trainers() {
         }),
       });
       if (!res.ok) {
-        const data = await parseJsonResponse<{ error?: string }>(res);
+        const data = await parseJsonSafe<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear entrenador' });
         return;
       }
@@ -136,7 +141,7 @@ export default function Trainers() {
       toast?.success('Entrenador creado');
     } catch (err) {
       clientLogger.error('Failed to create trainer', err);
-      setErrors({ submit: 'Error de conexión' });
+      setErrors({ submit: connectionOrApiError(err, 'Error al crear entrenador') });
     } finally {
       setSaving(false);
     }
@@ -157,7 +162,7 @@ export default function Trainers() {
         }),
       });
       if (!res.ok) {
-        const data = await parseJsonResponse<{ error?: string }>(res);
+        const data = await parseJsonSafe<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al actualizar' });
         return;
       }
@@ -166,7 +171,7 @@ export default function Trainers() {
       toast?.success('Perfil actualizado');
     } catch (err) {
       clientLogger.error('Failed to update trainer', err);
-      setErrors({ submit: 'Error de conexión' });
+      setErrors({ submit: connectionOrApiError(err, 'Error al actualizar') });
     } finally {
       setSaving(false);
     }
@@ -482,29 +487,36 @@ export default function Trainers() {
           </div>
           <div>
             <Label>Contraseña inicial</Label>
-            <Input
-              type="password"
+            <PasswordInput
               value={form.password}
               error={errors.password}
+              autoComplete="new-password"
               onChange={(e) => {
                 setForm({ ...form, password: e.target.value });
               }}
             />
+            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
+            </p>
           </div>
           <div>
             <Label>Confirmar contraseña</Label>
-            <Input
-              type="password"
+            <PasswordInput
               value={form.confirm_password}
               error={errors.confirm_password}
+              autoComplete="new-password"
               onChange={(e) => {
                 setForm({ ...form, confirm_password: e.target.value });
               }}
             />
           </div>
-          {errors.submit && <p className="text-center text-xs text-red-500">{errors.submit}</p>}
-          <Button className="w-full" size="lg" onClick={handleCreate} disabled={saving}>
-            {saving ? 'Creando...' : 'Crear entrenador'}
+          {errors.submit && (
+            <p className="text-center text-xs text-red-500" role="alert">
+              {errors.submit}
+            </p>
+          )}
+          <Button className="w-full" size="lg" onClick={handleCreate} loading={saving}>
+            Crear entrenador
           </Button>
         </div>
       </Modal>

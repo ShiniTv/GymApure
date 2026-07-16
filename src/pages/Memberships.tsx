@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Plus, Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { apiFetch, parseJsonResponse, connectionOrApiError } from '../lib/api';
+import { Plus, Pencil, Trash2, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
 import {
   Button,
   Card,
@@ -26,27 +26,33 @@ const emptyForm = { name: '', duration_days: '30', price_usd: '' };
 export default function Memberships() {
   const [plans, setPlans] = useState<Membership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Membership | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const loadPlans = async () => {
+    setLoading(true);
+    setLoadError('');
     try {
       const res = await apiFetch('/api/memberships');
       const data = await parseJsonResponse<Membership[]>(res);
       setPlans(Array.isArray(data) ? data : []);
-    } catch {
+    } catch (err) {
       setPlans([]);
+      setLoadError(connectionOrApiError(err, 'No se pudieron cargar los planes'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPlans();
+    void loadPlans();
   }, []);
 
   const openCreate = () => {
@@ -70,6 +76,7 @@ export default function Memberships() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setSaving(true);
 
     const payload = {
       name: form.name.trim(),
@@ -88,22 +95,27 @@ export default function Memberships() {
       });
       await parseJsonResponse(res);
       setModalOpen(false);
-      loadPlans();
+      void loadPlans();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
+      setError(connectionOrApiError(err, 'Error al guardar'));
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteError('');
+    setDeleting(true);
     try {
       const res = await apiFetch(`/api/memberships/${deleteTarget.id}`, { method: 'DELETE' });
       await parseJsonResponse(res);
       setDeleteTarget(null);
-      loadPlans();
+      void loadPlans();
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'No se pudo eliminar');
+      setDeleteError(connectionOrApiError(err, 'No se pudo eliminar'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -137,6 +149,13 @@ export default function Memberships() {
         <div className="flex justify-center py-16">
           <Spinner />
         </div>
+      ) : loadError ? (
+        <EmptyState
+          icon={AlertTriangle}
+          title="No se pudieron cargar los planes"
+          description={loadError}
+          action={<Button onClick={() => void loadPlans()}>Reintentar</Button>}
+        />
       ) : plans.length === 0 ? (
         <EmptyState
           icon={DollarSign}
@@ -214,7 +233,7 @@ export default function Memberships() {
       <Modal
         open={modalOpen}
         onClose={() => {
-          setModalOpen(false);
+          if (!saving) setModalOpen(false);
         }}
         title={
           <>
@@ -259,8 +278,12 @@ export default function Memberships() {
               }}
             />
           </div>
-          {error && <p className="text-center text-xs font-bold text-red-500">{error}</p>}
-          <Button type="submit" className="w-full" size="lg">
+          {error && (
+            <p className="text-center text-xs font-bold text-red-500" role="alert">
+              {error}
+            </p>
+          )}
+          <Button type="submit" className="w-full" size="lg" loading={saving}>
             Guardar
           </Button>
         </form>
@@ -269,6 +292,7 @@ export default function Memberships() {
       <Modal
         open={!!deleteTarget}
         onClose={() => {
+          if (deleting) return;
           setDeleteTarget(null);
           setDeleteError('');
         }}
@@ -284,19 +308,30 @@ export default function Memberships() {
               ¿Eliminar el plan <strong>{deleteTarget.name}</strong>? Solo es posible si no tiene
               suscripciones activas.
             </p>
-            {deleteError && <p className="mb-4 text-sm font-bold text-red-500">{deleteError}</p>}
+            {deleteError && (
+              <p className="mb-4 text-sm font-bold text-red-500" role="alert">
+                {deleteError}
+              </p>
+            )}
             <div className="flex gap-4">
               <Button
                 type="button"
                 variant="ghost"
                 className="flex-1"
+                disabled={deleting}
                 onClick={() => {
                   setDeleteTarget(null);
                 }}
               >
                 Cancelar
               </Button>
-              <Button type="button" variant="danger" className="flex-1" onClick={handleDelete}>
+              <Button
+                type="button"
+                variant="danger"
+                className="flex-1"
+                loading={deleting}
+                onClick={handleDelete}
+              >
                 Eliminar
               </Button>
             </div>

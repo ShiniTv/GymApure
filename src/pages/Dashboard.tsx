@@ -17,7 +17,11 @@ export default function Dashboard() {
   const adminStats = useAdminStatsOptional();
   const memberStatsCtx = useMemberStatsOptional();
   const isTrainer = user?.role === 'trainer';
-  const { refetch: refetchTrainer } = useTrainerStatsQuery(isTrainer);
+  const {
+    data: trainerStats,
+    isPending: trainerLoading,
+    refetch: refetchTrainer,
+  } = useTrainerStatsQuery(isTrainer);
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
@@ -42,7 +46,9 @@ export default function Dashboard() {
     ? Boolean(adminStats?.loading && !adminStats?.stats)
     : isMember
       ? memberStatsCtx?.loading && !memberStats
-      : false;
+      : isTrainer
+        ? trainerLoading && !trainerStats
+        : false;
 
   if (user?.role === 'receptionist') {
     return <Navigate to="/reception" replace />;

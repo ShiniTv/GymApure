@@ -11,6 +11,8 @@ import {
   UserCircle,
   UtensilsCrossed,
   Wrench,
+  BadgeDollarSign,
+  CalendarDays,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -23,8 +25,9 @@ export const ADMIN_NAV: NavSection[] = [
     name: 'Gestión',
     items: [
       { name: 'Miembros', href: '/members', icon: Users },
-      { name: 'Membresías', href: '/memberships', icon: CreditCard },
+      { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
       { name: 'Entrenadores', href: '/trainers', icon: UserCog },
+      { name: 'Clases', href: '/clases', icon: CalendarDays },
       { name: 'Equipamiento', href: '/equipment', icon: Wrench },
     ],
   },

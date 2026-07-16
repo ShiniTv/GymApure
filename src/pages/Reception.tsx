@@ -20,7 +20,7 @@ import {
   CreditCard,
   Pencil,
 } from 'lucide-react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
   Button,
   Card,
@@ -220,14 +220,17 @@ export default function Reception() {
       }
       try {
         const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
-        const data = await parseJsonResponse<LookupResult>(res);
+        const data = await parseJsonSafe<LookupResult>(res);
         if (res.ok && data?.found) {
           setLookup(data);
         } else {
-          setLookup({ found: false, error: data?.error || 'Usuario no encontrado' });
+          setLookup({
+            found: false,
+            error: data?.error || (res.ok ? 'Usuario no encontrado' : `Error HTTP ${res.status}`),
+          });
         }
-      } catch {
-        setLookup({ found: false, error: 'Error de conexión' });
+      } catch (err) {
+        setLookup({ found: false, error: connectionOrApiError(err, 'Error al buscar') });
       } finally {
         setLookupLoading(false);
       }

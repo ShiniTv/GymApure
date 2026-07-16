@@ -7,6 +7,7 @@ import {
   CreditCard,
   MessageSquare,
   UserCircle,
+  CalendarDays,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -16,6 +17,7 @@ export const MEMBER_NAV: NavSection[] = [
     items: [
       { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
       { name: 'Rutinas', href: '/routines', icon: Dumbbell },
+      { name: 'Reservas', href: '/reservas', icon: CalendarDays },
       { name: 'Biblioteca', href: '/exercises', icon: BookOpen },
       { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
       { name: 'Historial', href: '/history', icon: History },

@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
   BookOpen,
   UserCircle,
   Wrench,
@@ -23,9 +24,10 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
 
 /** Sheet items — synced with secondary items in trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Nutrición', href: '/members', icon: UtensilsCrossed },
-  { name: 'Asignaciones', href: '/routines?view=assignments', icon: CalendarClock },
-  { name: 'Calendario', href: '/routines?view=calendar', icon: CalendarDays },
+  { name: 'Planes nutricionales', href: '/members?focus=nutrition', icon: UtensilsCrossed },
+  { name: 'Asignaciones de rutinas', href: '/routines?view=assignments', icon: CalendarClock },
+  { name: 'Calendario de rutinas', href: '/routines?view=calendar', icon: CalendarDays },
+  { name: 'Clases grupales', href: '/clases', icon: CalendarRange },
   { name: 'Ejercicios', href: '/exercises', icon: BookOpen },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
@@ -43,7 +45,14 @@ export function isTrainerBottomNavActive(pathname: string, _search: string, href
 export function isTrainerMoreItemActive(pathname: string, search: string, href: string): boolean {
   const [path, query = ''] = href.split('?');
   if (pathname !== path && !pathname.startsWith(`${path}/`)) return false;
-  if (!query) return true;
+  if (!query) {
+    // Bare /members should not match /members?focus=nutrition
+    if (path === '/members') {
+      const current = new URLSearchParams(search);
+      return !current.get('focus');
+    }
+    return true;
+  }
   const expected = new URLSearchParams(query);
   const current = new URLSearchParams(search);
   for (const [key, value] of expected.entries()) {

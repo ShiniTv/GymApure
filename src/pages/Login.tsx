@@ -19,6 +19,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [registerAllowed, setRegisterAllowed] = useState(true);
   const { login, user, isLoading } = useAuth();
@@ -56,6 +57,13 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const next: Record<string, string> = {};
+    if (!email.trim()) next.email = 'El correo es obligatorio';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'Email inválido';
+    if (!password) next.password = 'La contraseña es obligatoria';
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
+
     setLoading(true);
 
     try {
@@ -106,7 +114,11 @@ export default function Login() {
               leadingIcon={<Mail />}
               placeholder="correo@ejemplo.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              error={fieldErrors.email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+              }}
             />
           </div>
           <div>
@@ -118,7 +130,11 @@ export default function Login() {
               required
               placeholder="Tu contraseña"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              error={fieldErrors.password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+              }}
             />
           </div>
 

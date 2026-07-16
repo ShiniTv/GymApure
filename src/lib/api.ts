@@ -177,6 +177,27 @@ export function toDisplayErrorMessage(err: unknown, fallback = 'Error inesperado
   return fallback;
 }
 
+/** True only for real network failures (offline, DNS, aborted fetch), not HTTP error responses. */
+export function isNetworkError(err: unknown): boolean {
+  if (err instanceof ApiError) return false;
+  if (err instanceof TypeError) return true;
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    return (
+      msg.includes('failed to fetch') ||
+      msg.includes('networkerror') ||
+      msg.includes('network request failed') ||
+      msg.includes('load failed')
+    );
+  }
+  return false;
+}
+
+export function connectionOrApiError(err: unknown, fallback = 'Error inesperado'): string {
+  if (isNetworkError(err)) return 'Error de conexión';
+  return toDisplayErrorMessage(err, fallback);
+}
+
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return '';
   if (url.startsWith('sbmedia:videos:')) {

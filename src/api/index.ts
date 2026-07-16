@@ -22,6 +22,7 @@ import equipmentRoutes from './equipment.ts';
 import notificationRoutes from './notifications.ts';
 import exchangeRateRoutes from './exchangeRate.ts';
 import cronRoutes from './cronRoutes.ts';
+import classRoutes from './classes.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
@@ -62,6 +63,7 @@ router.use('/files', fileRoutes);
 router.use('/push', pushSubscriptionRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/equipment', equipmentRoutes);
+router.use('/classes', classRoutes);
 
 router.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

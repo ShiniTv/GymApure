@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { APP_HOME } from '../lib/roles';
@@ -17,6 +17,7 @@ import {
   Alert,
 } from '../components/ui';
 import { cn } from '../lib/utils';
+import { passwordSchema } from '../lib/passwordPolicy';
 
 const STEPS = ['Datos personales', 'Credenciales'] as const;
 
@@ -31,6 +32,7 @@ export default function Register() {
     phone: '',
   });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -38,20 +40,16 @@ export default function Register() {
   const strength = passwordStrength(formData.password);
 
   const validateStep1 = () => {
-    if (!formData.full_name.trim()) {
-      setError('El nombre es obligatorio');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      setError('El correo es obligatorio');
-      return false;
-    }
-    if (!formData.cedula.trim()) {
-      setError('La cédula es obligatoria para el check-in en el gym');
-      return false;
-    }
-    setError('');
-    return true;
+    const next: Record<string, string> = {};
+    if (!formData.full_name.trim()) next.full_name = 'El nombre es obligatorio';
+    if (!formData.email.trim()) next.email = 'El correo es obligatorio';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
+      next.email = 'Email inválido';
+    if (!formData.cedula.trim())
+      next.cedula = 'La cédula es obligatoria para el check-in en el gym';
+    setFieldErrors(next);
+    setError(Object.values(next)[0] || '');
+    return Object.keys(next).length === 0;
   };
 
   const handleNext = () => {
@@ -61,14 +59,17 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (formData.password !== formData.confirm_password) {
-      setError('Las contraseñas no coinciden');
-      return;
+    const next: Record<string, string> = {};
+    const passwordResult = passwordSchema.safeParse(formData.password);
+    if (!passwordResult.success) {
+      next.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';
     }
-
-    if (formData.password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres');
+    if (formData.password !== formData.confirm_password) {
+      next.confirm_password = 'Las contraseñas no coinciden';
+    }
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) {
+      setError(Object.values(next)[0] || '');
       return;
     }
 
@@ -82,13 +83,21 @@ export default function Register() {
         body: JSON.stringify(payload),
       });
 
-      const data = await parseJsonResponse<{ user: Parameters<typeof login>[0]; message?: string }>(
-        res
-      );
+      const data = await parseJsonSafe<{
+        user: Parameters<typeof login>[0];
+        message?: string;
+        error?: string;
+      }>(res);
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo completar el registro');
+      }
+      if (!data.user) {
+        throw new Error('Respuesta de registro inválida');
+      }
       login(data.user);
       void navigate(APP_HOME);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar el registro');
+      setError(connectionOrApiError(err, 'No se pudo completar el registro'));
     } finally {
       setLoading(false);
     }
@@ -169,7 +178,12 @@ export default function Register() {
                   leadingIcon={<User />}
                   placeholder="Juan Pérez"
                   value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  error={fieldErrors.full_name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, full_name: e.target.value });
+                    if (fieldErrors.full_name)
+                      setFieldErrors((prev) => ({ ...prev, full_name: '' }));
+                  }}
                 />
               </div>
 
@@ -183,7 +197,11 @@ export default function Register() {
                   leadingIcon={<Mail />}
                   placeholder="correo@ejemplo.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  error={fieldErrors.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                  }}
                 />
               </div>
 
@@ -195,7 +213,11 @@ export default function Register() {
                     required
                     leadingIcon={<CreditCard />}
                     value={formData.cedula}
-                    onChange={(value) => setFormData({ ...formData, cedula: value })}
+                    error={fieldErrors.cedula}
+                    onChange={(value) => {
+                      setFormData({ ...formData, cedula: value });
+                      if (fieldErrors.cedula) setFieldErrors((prev) => ({ ...prev, cedula: '' }));
+                    }}
                   />
                   <p className="mt-1 text-[10px] text-zinc-400 dark:text-zinc-300">
                     Formato: V-12345678 · Para identificarte en recepción
@@ -234,10 +256,17 @@ export default function Register() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Ej: Gym2024!"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  error={fieldErrors.password}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                  }}
                 />
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
+                </p>
                 {formData.password && (
                   <div className="mt-2 space-y-1">
                     <div
@@ -277,7 +306,12 @@ export default function Register() {
                   autoComplete="new-password"
                   placeholder="Repite tu contraseña"
                   value={formData.confirm_password}
-                  onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                  error={fieldErrors.confirm_password}
+                  onChange={(e) => {
+                    setFormData({ ...formData, confirm_password: e.target.value });
+                    if (fieldErrors.confirm_password)
+                      setFieldErrors((prev) => ({ ...prev, confirm_password: '' }));
+                  }}
                 />
               </div>
 

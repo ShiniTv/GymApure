@@ -22,6 +22,7 @@ import { Avatar } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
 import { ReceptionBottomNav } from './reception/ReceptionBottomNav';
 import { TrainerBottomNav } from './trainer/TrainerBottomNav';
+import { AdminBottomNav } from './admin/AdminBottomNav';
 import { shouldHideMemberBottomNav } from '../config/navigation/memberBottomNav';
 import { ThemeOnboarding } from './member/ThemeOnboarding';
 import { THEME_ONBOARDING_KEY } from '../config/themes';
@@ -69,14 +70,16 @@ export default function Layout() {
   const isMemberMobileShell = isMember && isBelowDesktopShell;
   const isReceptionMobileShell = isReceptionist && isBelowDesktopShell;
   const isTrainerMobileShell = isTrainer && isBelowDesktopShell;
-  const isAdminMobile = isAdmin && isBelowDesktopShell;
-  const isMobileShell = isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell;
+  const isAdminMobileShell = isAdmin && isBelowDesktopShell;
+  const isMobileShell =
+    isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell || isAdminMobileShell;
   const hideMemberBottomNav = shouldHideMemberBottomNav(location.pathname);
   const showMemberBottomNav = isMemberMobileShell && !hideMemberBottomNav;
   const showReceptionBottomNav = isReceptionMobileShell && !isSidebarOpen;
   const showTrainerBottomNav = isTrainerMobileShell && !isSidebarOpen;
-  const showMobileHamburger = !isMemberMobileShell && !isTrainerMobileShell;
-  const useMobileNavLinks = isMobileShell || isAdminMobile;
+  const showAdminBottomNav = isAdminMobileShell && !isSidebarOpen;
+  const showMobileHamburger = !isMemberMobileShell && !isTrainerMobileShell && !isAdminMobileShell;
+  const useMobileNavLinks = isMobileShell;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
 
   useEffect(() => {
@@ -90,6 +93,7 @@ export default function Layout() {
     if (location.pathname !== path) return false;
     if (!search) {
       if (path === '/routines' && location.search.includes('view=')) return false;
+      if (path === '/members' && location.search.includes('focus=')) return false;
       return true;
     }
     const expected = new URLSearchParams(search);
@@ -135,7 +139,7 @@ export default function Layout() {
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
   const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,17.5rem)] lg:w-60';
-  const hideBackToDashboard = showMemberBottomNav || showTrainerBottomNav;
+  const hideBackToDashboard = showMemberBottomNav || showTrainerBottomNav || showAdminBottomNav;
 
   return (
     <MobileShellProvider hideBackToDashboard={hideBackToDashboard}>
@@ -290,6 +294,7 @@ export default function Layout() {
                             sidebarCollapsed && 'justify-center px-0'
                           )}
                           title={sidebarCollapsed ? item.name : undefined}
+                          aria-label={sidebarCollapsed ? item.name : undefined}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
                           {!sidebarCollapsed && (
@@ -341,6 +346,10 @@ export default function Layout() {
                     (isSidebarOpen
                       ? 'pb-[env(safe-area-inset-bottom)]'
                       : 'pb-[calc(var(--trainer-nav-stack)+env(safe-area-inset-bottom))]'),
+                  isAdminMobileShell &&
+                    (isSidebarOpen
+                      ? 'pb-[env(safe-area-inset-bottom)]'
+                      : 'pb-[calc(var(--admin-nav-stack)+env(safe-area-inset-bottom))]'),
                   isMemberMobileShell &&
                     (isSidebarOpen
                       ? 'pb-[env(safe-area-inset-bottom)]'
@@ -436,7 +445,8 @@ export default function Layout() {
               'h-dvh min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
-              isTrainerMobileShell && 'trainer-main-pad'
+              isTrainerMobileShell && 'trainer-main-pad',
+              isAdminMobileShell && 'admin-main-pad'
             )}
           >
             <div key={location.pathname} className="animate-page-enter mx-auto max-w-7xl min-w-0">
@@ -446,13 +456,19 @@ export default function Layout() {
         </div>
 
         <OfflineBanner
-          aboveBottomNav={isMemberMobileShell || isReceptionMobileShell || isTrainerMobileShell}
+          aboveBottomNav={
+            isMemberMobileShell ||
+            isReceptionMobileShell ||
+            isTrainerMobileShell ||
+            isAdminMobileShell
+          }
         />
         <ScrollToTop />
 
         {showMemberBottomNav && <MemberBottomNav />}
         {showReceptionBottomNav && <ReceptionBottomNav />}
         {showTrainerBottomNav && <TrainerBottomNav />}
+        {showAdminBottomNav && <AdminBottomNav />}
 
         <LogoutConfirmModal {...logoutConfirmProps} />
 

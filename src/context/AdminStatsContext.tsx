@@ -39,6 +39,7 @@ export interface AdminStats {
 interface AdminStatsContextValue {
   stats: AdminStats | null;
   loading: boolean;
+  error: boolean;
   expiringSoon: number;
   refresh: () => Promise<void>;
 }
@@ -62,6 +63,7 @@ export function AdminStatsProvider({ children }: { children: ReactNode }) {
   const {
     data: stats,
     isLoading,
+    isError,
     refetch,
   } = useQuery({
     queryKey: ['admin-stats'],
@@ -81,10 +83,11 @@ export function AdminStatsProvider({ children }: { children: ReactNode }) {
     () => ({
       stats: stats ?? null,
       loading: isLoading,
+      error: isError,
       expiringSoon: stats?.expiringSoon ?? 0,
       refresh,
     }),
-    [stats, isLoading, refresh]
+    [stats, isLoading, isError, refresh]
   );
 
   return <AdminStatsContext.Provider value={value}>{children}</AdminStatsContext.Provider>;

@@ -34,6 +34,7 @@ import {
   Button,
   Skeleton,
   SegmentedControl,
+  EmptyState,
 } from '../../components/ui';
 import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
@@ -51,6 +52,32 @@ export default function AdminDashboard() {
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
 
   const stats = adminStats.stats;
+
+  if (adminStats.error && !stats) {
+    return (
+      <div className="space-y-2.5 sm:space-y-3">
+        <PageHeader
+          compact
+          title={
+            <>
+              Administración <span className="text-brand">general</span>
+            </>
+          }
+        />
+        <EmptyState
+          icon={AlertTriangle}
+          title="No se pudo cargar el panel"
+          description="Revisa tu conexión e inténtalo de nuevo."
+          action={
+            <Button variant="secondary" size="sm" onClick={() => void adminStats.refresh()}>
+              Reintentar
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
   const alertDays = stats?.expiryAlertDays ?? 7;
   const pendingPayments = stats?.pendingPayments ?? 0;
   const expiringSoon = stats?.expiringSoon ?? 0;

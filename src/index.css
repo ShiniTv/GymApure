@@ -469,6 +469,8 @@ body,
   --reception-nav-stack: calc(0.5rem + var(--reception-nav-pill-height));
   --trainer-nav-pill-height: 3.75rem;
   --trainer-nav-stack: calc(0.5rem + var(--trainer-nav-pill-height));
+  --admin-nav-pill-height: 3.75rem;
+  --admin-nav-stack: calc(0.5rem + var(--admin-nav-pill-height));
   --member-nav-pill-height: 3.75rem;
   --member-nav-stack: calc(0.5rem + var(--member-nav-pill-height));
 }
@@ -528,6 +530,10 @@ body,
 
 .trainer-main-pad {
   padding-bottom: calc(var(--trainer-nav-stack) + env(safe-area-inset-bottom, 0px));
+}
+
+.admin-main-pad {
+  padding-bottom: calc(var(--admin-nav-stack) + env(safe-area-inset-bottom, 0px));
 }
 
 .member-main-pad {

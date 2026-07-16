@@ -9,6 +9,7 @@ import {
   Dumbbell,
   BookOpen,
   UtensilsCrossed,
+  CalendarDays,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
@@ -93,17 +94,43 @@ export default function MemberDashboard() {
       />
 
       {pending > 0 && (
-        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-4 sm:flex-row sm:items-center">
-          <p className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
-            Tienes {pending} pago(s) pendiente(s) de revisión.
-          </p>
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-6 py-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+              Tienes {pending} pago(s) pendiente(s) de revisión.
+            </p>
+            <p className="mt-1 text-[11px] text-amber-800/80 dark:text-amber-300/80">
+              Paso 3 de 3: espera la aprobación del staff para activar o renovar tu membresía.
+            </p>
+          </div>
           <Link
-            to="/payments"
-            className="text-xs font-bold text-yellow-800 hover:underline dark:text-yellow-300"
+            to="/payments?status=pending"
+            className="text-xs font-bold text-amber-900 underline hover:no-underline dark:text-amber-200"
           >
             Ver pagos
           </Link>
         </div>
+      )}
+
+      {!sub && pending === 0 && (
+        <Card padding="md" rounded="xl" className="border-brand/20 bg-brand/5">
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Activa tu membresía</h3>
+          <ol className="mt-3 space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <li>
+              <span className="text-brand font-semibold">1.</span> Elige un plan al reportar el pago
+            </li>
+            <li>
+              <span className="text-brand font-semibold">2.</span> Sube el comprobante con
+              referencia
+            </li>
+            <li>
+              <span className="text-brand font-semibold">3.</span> Espera la aprobación del gym
+            </li>
+          </ol>
+          <Button size="sm" className="mt-4" onClick={() => navigate('/payments?register=1')}>
+            Empezar renovación
+          </Button>
+        </Card>
       )}
 
       {sub &&
@@ -124,14 +151,17 @@ export default function MemberDashboard() {
               <p className={`text-sm font-bold ${classes.text}`}>
                 {formatExpiryCountdown(sub.days_remaining) + suffix}
               </p>
-              <Link to="/payments" className={`text-xs font-bold hover:underline ${classes.link}`}>
+              <Link
+                to="/payments?register=1"
+                className={`text-xs font-bold hover:underline ${classes.link}`}
+              >
                 Renovar
               </Link>
             </div>
           );
         })()}
 
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
         <QuickAction
           compact
           iconOnlyMobile
@@ -140,6 +170,15 @@ export default function MemberDashboard() {
           title="Rutinas"
           description="Asignaciones activas"
           tone="blue"
+        />
+        <QuickAction
+          compact
+          iconOnlyMobile
+          to="/reservas"
+          icon={CalendarDays}
+          title="Reservas"
+          description="Clases grupales"
+          tone="orange"
         />
         <QuickAction
           compact

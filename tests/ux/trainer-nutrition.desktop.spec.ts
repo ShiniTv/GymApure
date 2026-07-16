@@ -19,14 +19,14 @@ test.describe('Trainer nutrición quick action', () => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
   });
 
-  test('quick action Nutrición lleva a la lista de miembros', async ({ page }) => {
+  test('quick action Planes nutricionales lleva a miembros con focus', async ({ page }) => {
     await page.goto('/panel');
     await waitForTrainerDashboard(page);
-    const nutritionLink = page.getByRole('link', { name: /nutrición:/i });
+    const nutritionLink = page.getByRole('link', { name: /planes nutricionales|nutrición/i });
     await nutritionLink.scrollIntoViewIfNeeded();
     await expect(nutritionLink).toBeVisible({ timeout: 15_000 });
 
     const href = await nutritionLink.getAttribute('href');
-    expect(href).toBe('/members');
+    expect(href).toBe('/members?focus=nutrition');
   });
 });

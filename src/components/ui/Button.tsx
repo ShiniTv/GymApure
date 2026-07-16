@@ -30,6 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={cn(
         'inline-flex touch-manipulation items-center justify-center gap-2 transition-all active:scale-95',
         'focus-visible:ring-brand/50 focus:outline-none focus-visible:ring-2',
@@ -40,7 +41,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       )}
       {...props}
     >
-      {loading ? <Spinner size="sm" /> : children}
+      {loading && <Spinner size="sm" className="shrink-0" />}
+      {children}
     </button>
   )
 );

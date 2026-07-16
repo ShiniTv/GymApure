@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { apiFetch, parseJsonResponse, parseJsonSafe } from '../../lib/api';
 import type { NotificationsListResponse } from '../../lib/notifications/types';
 
 export const notificationsUnreadKey = ['notifications', 'unread'] as const;
@@ -60,7 +60,7 @@ export function useMarkNotificationReadMutation() {
     mutationFn: async (notificationId: number) => {
       const res = await apiFetch(`/api/notifications/${notificationId}/read`, { method: 'PATCH' });
       if (!res.ok) {
-        const data = await parseJsonResponse<{ error?: string }>(res);
+        const data = await parseJsonSafe<{ error?: string }>(res);
         throw new Error(data.error ?? 'No se pudo marcar la notificación');
       }
     },
@@ -77,7 +77,7 @@ export function useMarkAllNotificationsReadMutation() {
     mutationFn: async () => {
       const res = await apiFetch('/api/notifications/read-all', { method: 'PATCH' });
       if (!res.ok) {
-        const data = await parseJsonResponse<{ error?: string }>(res);
+        const data = await parseJsonSafe<{ error?: string }>(res);
         throw new Error(data.error ?? 'No se pudieron marcar las notificaciones');
       }
     },

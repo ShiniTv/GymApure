@@ -20,12 +20,37 @@ import { usePageTitle } from '../../hooks/usePageTitle';
 export default function TrainerDashboard() {
   usePageTitle('Panel');
   const navigate = useNavigate();
-  const { data: trainerStats } = useTrainerStatsQuery();
+  const { data: trainerStats, isError, refetch } = useTrainerStatsQuery();
 
   const stats = trainerStats;
   const withoutRoutines = trainerStats?.membersWithoutRoutines ?? 0;
   const expiringMembers = trainerStats?.expiringMembers ?? [];
   const trainerHasAlerts = withoutRoutines > 0 || expiringMembers.length > 0;
+
+  if (isError) {
+    return (
+      <div className="page-stack-tight">
+        <PageHeader
+          compact
+          title={
+            <>
+              Control de <span className="text-brand">entrenamiento</span>
+            </>
+          }
+        />
+        <EmptyState
+          icon={AlertTriangle}
+          title="No se pudo cargar el panel"
+          description="Revisa tu conexión e inténtalo de nuevo."
+          action={
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+              Reintentar
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="page-stack-tight">
@@ -156,10 +181,10 @@ export default function TrainerDashboard() {
         <QuickAction
           compact
           iconOnlyMobile
-          to="/members"
+          to="/members?focus=nutrition"
           icon={UtensilsCrossed}
-          title="Nutrición"
-          description="Selecciona un miembro"
+          title="Planes nutricionales"
+          description="Elige un miembro para editar su plan"
           tone="emerald"
         />
       </div>

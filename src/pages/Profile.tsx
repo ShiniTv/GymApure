@@ -214,8 +214,10 @@ export default function Profile() {
     if (isMember && profile?.cedula) {
       options.push({ value: 'carne', label: 'Carné' });
     }
+    if (isMember) {
+      options.push({ value: 'progreso', label: 'Progreso' });
+    }
     options.push(
-      { value: 'progreso', label: 'Progreso' },
       { value: 'apariencia', label: 'Apariencia' },
       { value: 'seguridad', label: 'Seguridad' }
     );
@@ -649,7 +651,7 @@ export default function Profile() {
         />
       )}
 
-      {profileTab === 'progreso' && (
+      {profileTab === 'progreso' && isMember && (
         <>
           {progressLoading ? (
             <div className="flex justify-center py-12">

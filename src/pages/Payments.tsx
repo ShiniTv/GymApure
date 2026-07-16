@@ -126,11 +126,16 @@ export default function Payments() {
   const [proofPreview, setProofPreview] = useState<Payment | null>(null);
   const [actionError, setActionError] = useState('');
   const [submitError, setSubmitError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [searchParams] = useSearchParams();
   const toast = useToastOptional();
 
   const openRegisterModal = useCallback((memberId?: string) => {
     setSubmitError('');
+    setFieldErrors({});
     setSelectedMemberId(memberId ?? '');
     setShowModal(true);
   }, []);
@@ -138,6 +143,7 @@ export default function Payments() {
   const closeRegisterModal = useCallback(() => {
     setShowModal(false);
     setSubmitError('');
+    setFieldErrors({});
     setSelectedMemberId('');
     setAmountUsd('');
     setReference('');
@@ -154,10 +160,12 @@ export default function Payments() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (searchParams.get('register') === '1' && isStaffPayment) {
-      openRegisterModal(searchParams.get('memberId') ?? undefined);
+    if (searchParams.get('register') === '1') {
+      if (isStaffPayment || isMember) {
+        openRegisterModal(searchParams.get('memberId') ?? undefined);
+      }
     }
-  }, [searchParams, isStaffPayment, openRegisterModal]);
+  }, [searchParams, isStaffPayment, isMember, openRegisterModal]);
 
   useEffect(() => {
     if (!showModal || !isStaffPayment) return;
@@ -197,12 +205,23 @@ export default function Payments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+    const nextErrors: Record<string, string> = {};
     if (isStaffPayment && !selectedMemberId) {
-      setSubmitError('Seleccione un miembro');
-      return;
+      nextErrors.member = 'Seleccione un miembro';
+    }
+    if (!amountUsd || Number.isNaN(parseFloat(amountUsd)) || parseFloat(amountUsd) <= 0) {
+      nextErrors.amount = 'Ingresa un monto válido en USD';
+    }
+    if (!reference.trim()) {
+      nextErrors.reference = 'La referencia es obligatoria';
     }
     if (needsBsRate && !exchangeRate) {
-      setSubmitError('La tasa de cambio no está disponible. Intenta de nuevo en unos minutos.');
+      nextErrors.exchange =
+        'La tasa de cambio no está disponible. Intenta de nuevo en unos minutos.';
+    }
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmitError(Object.values(nextErrors)[0] || 'Revisa el formulario');
       return;
     }
     const formData = new FormData();
@@ -216,6 +235,7 @@ export default function Payments() {
     }
     if (file) formData.append('proof', file);
 
+    setSubmitting(true);
     try {
       const res = await apiFetch('/api/payments', {
         method: 'POST',
@@ -232,6 +252,8 @@ export default function Payments() {
       );
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'No se pudo enviar el pago');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -241,8 +263,9 @@ export default function Payments() {
   };
 
   const handleApprove = async () => {
-    if (!approveTarget) return;
+    if (!approveTarget || approving) return;
 
+    setApproving(true);
     try {
       const body = selectedPlanId ? { membership_id: Number(selectedPlanId) } : {};
       const res = await apiFetch(`/api/payments/${approveTarget.id}/approve`, {
@@ -258,12 +281,15 @@ export default function Payments() {
       toast?.success('Pago aprobado');
     } catch (err) {
       toast?.error(err instanceof Error ? err.message : 'No se pudo aprobar');
+    } finally {
+      setApproving(false);
     }
   };
 
   const handleReject = async () => {
-    if (!rejectTarget) return;
+    if (!rejectTarget || rejecting) return;
 
+    setRejecting(true);
     try {
       const res = await apiFetch(`/api/payments/${rejectTarget.id}/reject`, { method: 'POST' });
       await parseJsonResponse(res);
@@ -273,6 +299,8 @@ export default function Payments() {
       toast?.success('Pago rechazado');
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'No se pudo rechazar');
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -737,7 +765,11 @@ export default function Payments() {
           scrollable
         >
           <form onSubmit={handleSubmit} className="page-stack">
-            {submitError && <p className="text-sm font-bold text-red-500">{submitError}</p>}
+            {submitError && (
+              <p className="text-sm font-bold text-red-500" role="alert">
+                {submitError}
+              </p>
+            )}
             {isStaffPayment && !isMember && (
               <div>
                 <Label>Miembro</Label>
@@ -750,7 +782,11 @@ export default function Payments() {
                   <Select
                     required
                     value={selectedMemberId}
-                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                    error={fieldErrors.member}
+                    onChange={(e) => {
+                      setSelectedMemberId(e.target.value);
+                      if (fieldErrors.member) setFieldErrors((prev) => ({ ...prev, member: '' }));
+                    }}
                   >
                     <option value="">Seleccionar miembro…</option>
                     {memberOptions.map((member) => (
@@ -790,7 +826,11 @@ export default function Payments() {
                 required
                 className="text-xl font-semibold"
                 value={amountUsd}
-                onChange={(e) => setAmountUsd(e.target.value)}
+                error={fieldErrors.amount}
+                onChange={(e) => {
+                  setAmountUsd(e.target.value);
+                  if (fieldErrors.amount) setFieldErrors((prev) => ({ ...prev, amount: '' }));
+                }}
                 placeholder="0.00"
               />
             </div>
@@ -816,7 +856,7 @@ export default function Payments() {
                 ) : exchangeRateError || !exchangeRate ? (
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-red-500">
-                      No se pudo cargar la tasa de cambio oficial.
+                      {fieldErrors.exchange || 'No se pudo cargar la tasa de cambio oficial.'}
                     </p>
                     <Button
                       type="button"
@@ -843,7 +883,11 @@ export default function Payments() {
                 type="text"
                 required
                 value={reference}
-                onChange={(e) => setReference(e.target.value)}
+                error={fieldErrors.reference}
+                onChange={(e) => {
+                  setReference(e.target.value);
+                  if (fieldErrors.reference) setFieldErrors((prev) => ({ ...prev, reference: '' }));
+                }}
                 placeholder="Referencia bancaria"
               />
             </div>
@@ -877,6 +921,7 @@ export default function Payments() {
                 variant="ghost"
                 className="flex-1"
                 size="lg"
+                disabled={submitting}
                 onClick={closeRegisterModal}
               >
                 Cancelar
@@ -885,6 +930,7 @@ export default function Payments() {
                 type="submit"
                 className="flex-1"
                 size="lg"
+                loading={submitting}
                 disabled={needsBsRate && (exchangeRateLoading || !exchangeRate)}
               >
                 Enviar
@@ -925,6 +971,7 @@ export default function Payments() {
                   type="button"
                   variant="ghost"
                   className="flex-1"
+                  disabled={approving}
                   onClick={() => setApproveTarget(null)}
                 >
                   Cancelar
@@ -932,6 +979,7 @@ export default function Payments() {
                 <Button
                   type="button"
                   className="flex-1 bg-emerald-600 shadow-emerald-900/20 hover:bg-emerald-500"
+                  loading={approving}
                   onClick={handleApprove}
                 >
                   Aprobar
@@ -965,11 +1013,18 @@ export default function Payments() {
                   type="button"
                   variant="ghost"
                   className="flex-1"
+                  disabled={rejecting}
                   onClick={() => setRejectTarget(null)}
                 >
                   Cancelar
                 </Button>
-                <Button type="button" variant="danger" className="flex-1" onClick={handleReject}>
+                <Button
+                  type="button"
+                  variant="danger"
+                  className="flex-1"
+                  loading={rejecting}
+                  onClick={handleReject}
+                >
                   Rechazar
                 </Button>
               </div>

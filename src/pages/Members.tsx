@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { apiFetch, parseJsonResponse } from '../lib/api';
+import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import { Search, Plus, Dumbbell, AlertTriangle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +38,7 @@ import { PullToRefreshContainer } from '../components/PullToRefresh';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { MemberBadgeModal, type MemberBadgeData } from '../components/member/MemberBadgeModal';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { passwordSchema } from '../lib/passwordPolicy';
 import { type TrainingShift } from '../lib/trainingShift';
 
 interface MembershipPlan {
@@ -103,6 +104,7 @@ export default function Members() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToastOptional();
+  const nutritionFocus = searchParams.get('focus') === 'nutrition';
 
   useEffect(() => {
     if (searchParams.get('expiring') === 'true') {
@@ -228,8 +230,13 @@ export default function Members() {
     const cedulaErr = validateCedula(newMember.cedula);
     if (cedulaErr) newErrors.cedula = cedulaErr;
 
-    if (!newMember.password || newMember.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    if (!newMember.password) {
+      newErrors.password = 'La contraseña es obligatoria';
+    } else {
+      const passwordResult = passwordSchema.safeParse(newMember.password);
+      if (!passwordResult.success) {
+        newErrors.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';
+      }
     }
 
     if (newMember.password !== newMember.confirm_password) {
@@ -286,12 +293,12 @@ export default function Members() {
           }
         }
       } else {
-        const data = await parseJsonResponse<{ error?: string }>(res);
+        const data = await parseJsonSafe<{ error?: string }>(res);
         setErrors({ submit: data.error || 'Error al crear usuario' });
       }
     } catch (err) {
       clientLogger.error('Failed to add member', err);
-      setErrors({ submit: 'Error de conexión' });
+      setErrors({ submit: connectionOrApiError(err, 'Error al crear usuario') });
     }
   };
 
@@ -512,11 +519,13 @@ export default function Members() {
             )
           }
           subtitle={
-            isTrainer
-              ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
-              : isReceptionist
-                ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro walk-in.'
-                : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
+            nutritionFocus && isTrainer
+              ? 'Elige un miembro y abre Nutrición desde las acciones de la fila o tarjeta.'
+              : isTrainer
+                ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
+                : isReceptionist
+                  ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro walk-in.'
+                  : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
           }
           action={<BackToDashboardLink />}
         />
@@ -668,8 +677,11 @@ export default function Members() {
                   setNewMember({ ...newMember, password: e.target.value });
                   if (errors.password) setErrors({ ...errors, password: '' });
                 }}
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Ej: Gym2024!"
               />
+              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
+              </p>
             </div>
             <div>
               <Label>Confirmar contraseña</Label>

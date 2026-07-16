@@ -9,6 +9,7 @@ import {
   History,
   CreditCard,
   UserCircle,
+  CalendarDays,
 } from 'lucide-react';
 
 export interface MemberBottomTab {
@@ -30,12 +31,13 @@ export interface MemberMoreItem {
 export const MEMBER_PRIMARY_TABS: MemberBottomTab[] = [
   { name: 'Inicio', href: '/panel', icon: Home },
   { name: 'Rutinas', href: '/routines', icon: ListChecks },
-  { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
+  { name: 'Reservas', href: '/reservas', icon: CalendarDays },
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];
 
 /** Sheet items — synced with secondary items in memberNav.ts */
 export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
+  { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
   { name: 'Biblioteca', href: '/exercises', icon: BookOpen },
   { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
   { name: 'Historial', href: '/history', icon: History },

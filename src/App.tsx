@@ -60,6 +60,8 @@ const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Reservas = lazy(() => import('./pages/Reservas'));
+const Classes = lazy(() => import('./pages/Classes'));
 
 function PageLoader() {
   return (
@@ -371,6 +373,34 @@ function AppRoutes() {
                     }}
                   >
                     <Payments />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reservas"
+              element={
+                <ProtectedRoute allowedRoles={['member']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <Reservas />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="clases"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <Classes />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }
