@@ -38,7 +38,7 @@ import { PullToRefreshContainer } from '../components/PullToRefresh';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { MemberBadgeModal, type MemberBadgeData } from '../components/member/MemberBadgeModal';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { passwordSchema } from '../lib/passwordPolicy';
+import { passwordSchema } from '../lib/passwordSchema';
 import { type TrainingShift } from '../lib/trainingShift';
 
 interface MembershipPlan {

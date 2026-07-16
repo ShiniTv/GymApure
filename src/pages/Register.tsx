@@ -17,7 +17,7 @@ import {
   Alert,
 } from '../components/ui';
 import { cn } from '../lib/utils';
-import { passwordSchema } from '../lib/passwordPolicy';
+import { passwordSchema } from '../lib/passwordSchema';
 
 const STEPS = ['Datos personales', 'Credenciales'] as const;
 

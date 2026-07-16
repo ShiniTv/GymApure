@@ -52,6 +52,20 @@ export default function AdminDashboard() {
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
 
   const stats = adminStats.stats;
+  const alertDays = stats?.expiryAlertDays ?? 7;
+  const expiringList = stats?.expiringList ?? [];
+
+  useEffect(() => {
+    if (!stats) return;
+    const critical = expiringList.filter(
+      (item) => getExpirySeverity(item.days_remaining, alertDays) === 'critical'
+    ).length;
+    if (critical === 0) return;
+    const key = `cg-dashboard-expiring-${format(new Date(), 'yyyy-MM-dd')}`;
+    if (sessionStorage.getItem(key)) return;
+    setShowExpiringList(true);
+    sessionStorage.setItem(key, '1');
+  }, [stats, expiringList, alertDays]);
 
   if (adminStats.error && !stats) {
     return (
@@ -78,10 +92,8 @@ export default function AdminDashboard() {
     );
   }
 
-  const alertDays = stats?.expiryAlertDays ?? 7;
   const pendingPayments = stats?.pendingPayments ?? 0;
   const expiringSoon = stats?.expiringSoon ?? 0;
-  const expiringList = stats?.expiringList ?? [];
   const criticalExpiring = expiringList.filter(
     (item) => getExpirySeverity(item.days_remaining, alertDays) === 'critical'
   ).length;
@@ -106,18 +118,6 @@ export default function AdminDashboard() {
   const equipmentOutOfService = stats?.equipmentOutOfService ?? 0;
   const equipmentInspectionsDue = stats?.equipmentInspectionsDue ?? 0;
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
-
-  useEffect(() => {
-    if (!stats) return;
-    const critical = expiringList.filter(
-      (item) => getExpirySeverity(item.days_remaining, alertDays) === 'critical'
-    ).length;
-    if (critical === 0) return;
-    const key = `cg-dashboard-expiring-${format(new Date(), 'yyyy-MM-dd')}`;
-    if (sessionStorage.getItem(key)) return;
-    setShowExpiringList(true);
-    sessionStorage.setItem(key, '1');
-  }, [stats, expiringList, alertDays]);
 
   return (
     <div className="space-y-2.5 sm:space-y-3">

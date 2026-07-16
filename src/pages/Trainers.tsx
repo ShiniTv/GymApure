@@ -32,7 +32,7 @@ import {
   type TrainerLevel,
   type TrainingShift,
 } from '../lib/trainingShift';
-import { passwordSchema } from '../lib/passwordPolicy';
+import { passwordSchema } from '../lib/passwordSchema';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { cn } from '../lib/utils';
