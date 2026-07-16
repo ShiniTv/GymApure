@@ -320,6 +320,16 @@ export default function ActiveWorkout() {
   };
 
   const handleAddSet = (exerciseId: number) => {
+    const exercise = routine?.exercises.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    const nextSetNum = exercise.sets + 1;
+    const prescribedReps =
+      exercise.set_prescription?.find((row) => row.set_number === nextSetNum)?.reps ??
+      exercise.reps;
+    const prescribedWeight = exercise.set_prescription?.find(
+      (row) => row.set_number === nextSetNum
+    )?.weight_kg;
+
     setRoutine((prev) => {
       if (!prev) return null;
       return {
@@ -329,6 +339,18 @@ export default function ActiveWorkout() {
         ),
       };
     });
+
+    const key = `${exerciseId}-${nextSetNum}`;
+    setLogs((prev) => ({
+      ...prev,
+      [key]: {
+        exercise_id: exerciseId,
+        set_number: nextSetNum,
+        weight: prescribedWeight != null ? String(prescribedWeight) : '0',
+        reps: String(prescribedReps),
+        completed: false,
+      },
+    }));
   };
 
   const startSession = async (routineId: number) => {
@@ -444,8 +466,11 @@ export default function ActiveWorkout() {
   const toggleSetComplete = async (exerciseId: number, setNum: number) => {
     const key = `${exerciseId}-${setNum}`;
     const entry = logs[key];
+    const weight = Number.parseFloat(entry?.weight ?? '');
+    const reps = Number.parseInt(entry?.reps ?? '', 10);
 
-    if (!entry?.weight || !entry.reps) {
+    // Peso 0 es válido (peso corporal / rutina estática sin kg prescrito).
+    if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) {
       setSetValidationError('Ingresa peso y repeticiones antes de marcar la serie.');
       return;
     }
@@ -466,8 +491,8 @@ export default function ActiveWorkout() {
           session_id: sessionId,
           exercise_id: exerciseId,
           set_number: setNum,
-          weight: parseFloat(entry.weight),
-          reps: parseInt(entry.reps),
+          weight,
+          reps,
         }),
       });
 

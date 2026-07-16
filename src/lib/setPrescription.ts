@@ -115,7 +115,8 @@ export function buildPrescriptionLogSeeds(
       seeded[key] = {
         exercise_id: exercise.id,
         set_number: row.set_number,
-        weight: row.weight_kg != null ? String(row.weight_kg) : '',
+        // Sin peso prescrito: 0 kg (peso corporal / rutina simple) para poder confirmar la serie.
+        weight: row.weight_kg != null ? String(row.weight_kg) : '0',
         reps: String(row.reps),
         completed: false,
       };
