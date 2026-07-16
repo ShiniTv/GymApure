@@ -54,14 +54,25 @@ function StatCardContent({
 
   return (
     <>
-      <div className="flex flex-1 items-start justify-between gap-2">
+      <div className="flex flex-1 items-start justify-between gap-1.5 sm:gap-2">
         <div className="min-w-0 flex-1">
-          <p className={cn('stat-label mb-1 leading-snug', compact && 'text-[10px] leading-tight')}>
+          <p
+            className={cn(
+              'stat-label mb-1 leading-snug break-words',
+              compact && 'text-[10px] leading-tight tracking-normal sm:tracking-wide'
+            )}
+          >
             {title}
           </p>
           <p className={cn('stat-value tabular-nums', compact && 'text-lg sm:text-2xl')}>{value}</p>
         </div>
-        <div className={cn('shrink-0 rounded-lg', compact ? 'p-2' : 'p-2.5', colorMap[color])}>
+        <div
+          className={cn(
+            'shrink-0 rounded-lg',
+            compact ? 'hidden p-2 sm:flex' : 'p-2.5',
+            colorMap[color]
+          )}
+        >
           <Icon className={cn(compact ? 'h-4 w-4' : 'h-5 w-5')} />
         </div>
       </div>

@@ -91,6 +91,8 @@ export default function Members() {
   >([]);
   const [assignError, setAssignError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<Member | null>(null);
   const [toggling, setToggling] = useState(false);
@@ -304,20 +306,46 @@ export default function Members() {
 
   const confirmDeleteUser = async () => {
     if (!deleteTarget) return;
+    const isTrainer = deleteTarget.role === 'trainer';
+    if (
+      isTrainer &&
+      deleteConfirmName.trim().toLowerCase() !== deleteTarget.full_name.trim().toLowerCase()
+    ) {
+      setDeleteError('Escribe el nombre exacto del entrenador para confirmar');
+      return;
+    }
     setDeleting(true);
+    setDeleteError('');
     try {
-      const res = await apiFetch(`/api/users/${deleteTarget.id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setDeleteTarget(null);
-        invalidateMembers();
-        toast?.success('Usuario eliminado');
+      const res = await apiFetch(`/api/users/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: isTrainer ? { 'Content-Type': 'application/json' } : undefined,
+        body: isTrainer ? JSON.stringify({ confirm_name: deleteConfirmName.trim() }) : undefined,
+      });
+      const data = await parseJsonSafe<{ success?: boolean; error?: string }>(res);
+      if (!res.ok) {
+        setDeleteError(data.error ?? 'No se pudo eliminar el usuario');
+        return;
       }
+      setDeleteTarget(null);
+      setDeleteConfirmName('');
+      setDeleteError('');
+      invalidateMembers();
+      toast?.success(isTrainer ? 'Entrenador eliminado' : 'Usuario eliminado');
     } catch (err) {
       clientLogger.error('Failed to delete user', err);
+      setDeleteError(connectionOrApiError(err, 'No se pudo eliminar el usuario'));
     } finally {
       setDeleting(false);
     }
   };
+
+  const closeDeleteModal = useCallback(() => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteConfirmName('');
+    setDeleteError('');
+  }, [deleting]);
 
   const confirmToggleStatus = useCallback(async () => {
     if (!toggleTarget) return;
@@ -348,6 +376,8 @@ export default function Members() {
 
   const handleDeleteClick = useCallback((member: Member) => {
     setDeleteTarget(member);
+    setDeleteConfirmName('');
+    setDeleteError('');
   }, []);
 
   const openMemberBadge = useCallback((member: Member) => {
@@ -525,7 +555,7 @@ export default function Members() {
                 ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
                 : isReceptionist
                   ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro walk-in.'
-                  : 'Administra usuarios del gym. Solo puedes eliminar miembros (atletas), no entrenadores ni administradores.'
+                  : 'Administra usuarios del gym. Puedes eliminar miembros y entrenadores; los administradores no se eliminan desde aquí.'
           }
           action={<BackToDashboardLink />}
         />
@@ -956,20 +986,48 @@ export default function Members() {
 
         <Modal
           open={!!deleteTarget}
-          onClose={() => !deleting && setDeleteTarget(null)}
-          title="Eliminar usuario"
+          onClose={closeDeleteModal}
+          title={deleteTarget?.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar usuario'}
         >
-          <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-            ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
-            deshacer.
-          </p>
+          {deleteTarget?.role === 'trainer' ? (
+            <div className="mb-6 space-y-3">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
+                los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
+                deberás desactivarlo o reasignarlas antes.
+              </p>
+              <div>
+                <Label htmlFor="delete-trainer-confirm">
+                  Escribe el nombre exacto: <strong>{deleteTarget.full_name}</strong>
+                </Label>
+                <Input
+                  id="delete-trainer-confirm"
+                  value={deleteConfirmName}
+                  onChange={(e) => {
+                    setDeleteConfirmName(e.target.value);
+                    if (deleteError) setDeleteError('');
+                  }}
+                  placeholder={deleteTarget.full_name}
+                  autoComplete="off"
+                  disabled={deleting}
+                />
+              </div>
+              {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            </div>
+          ) : (
+            <div className="mb-6 space-y-2">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
+                deshacer.
+              </p>
+              {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            </div>
+          )}
           <div className="flex gap-3">
             <Button
               variant="ghost"
               className="flex-1"
-              onClick={() => {
-                setDeleteTarget(null);
-              }}
+              onClick={closeDeleteModal}
               disabled={deleting}
             >
               Cancelar
@@ -978,7 +1036,12 @@ export default function Members() {
               variant="danger"
               className="flex-1"
               onClick={confirmDeleteUser}
-              disabled={deleting}
+              disabled={
+                deleting ||
+                (deleteTarget?.role === 'trainer' &&
+                  deleteConfirmName.trim().toLowerCase() !==
+                    deleteTarget.full_name.trim().toLowerCase())
+              }
             >
               {deleting ? 'Eliminando...' : 'Eliminar'}
             </Button>

@@ -85,14 +85,8 @@ export default function Attendance() {
       />
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
-        <StatCard
-          compact
-          title="Ingresos 7d"
-          value={totalEntries}
-          icon={Fingerprint}
-          color="orange"
-        />
-        <StatCard compact title="Promedio/día" value={avgEntries} icon={TrendingUp} color="blue" />
+        <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />
+        <StatCard compact title="Promedio" value={avgEntries} icon={TrendingUp} color="blue" />
         <StatCard
           compact
           title="Pico"

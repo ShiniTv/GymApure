@@ -180,29 +180,29 @@ export const MemberTableRow = memo(function MemberTableRow({
             </>
           )}
           {isAdmin && member.role === 'member' && (
-            <>
+            <button
+              onClick={() => {
+                onToggleStatus(member);
+              }}
+              className={`rounded-lg p-1.5 transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:bg-amber-500/10 hover:text-amber-500 dark:text-zinc-300' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+              title={member.status === 'active' ? 'Desactivar' : 'Activar'}
+            >
+              <Power className="h-4 w-4" />
+            </button>
+          )}
+          {isAdmin &&
+            (member.role === 'member' || member.role === 'trainer') &&
+            member.id !== currentUserId && (
               <button
                 onClick={() => {
-                  onToggleStatus(member);
+                  onDelete(member);
                 }}
-                className={`rounded-lg p-1.5 transition-colors ${member.status === 'active' ? 'text-zinc-400 hover:bg-amber-500/10 hover:text-amber-500 dark:text-zinc-300' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
-                title={member.status === 'active' ? 'Desactivar' : 'Activar'}
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                title={member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro'}
               >
-                <Power className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
-              {member.role === 'member' && member.id !== currentUserId && (
-                <button
-                  onClick={() => {
-                    onDelete(member);
-                  }}
-                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                  title="Eliminar miembro"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </>
-          )}
+            )}
         </div>
       </td>
     </tr>

@@ -205,14 +205,19 @@ export default function AuditLogs() {
                         {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
                       </time>
                     </div>
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                      {log.user_name ?? 'Sistema'}
-                      {log.user_email && (
-                        <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                        {log.user_name ?? 'Sistema'}
+                      </p>
+                      {log.user_email ? (
+                        <p
+                          className="mt-0.5 truncate text-xs font-normal text-zinc-500 dark:text-zinc-400"
+                          title={log.user_email}
+                        >
                           {log.user_email}
-                        </span>
-                      )}
-                    </p>
+                        </p>
+                      ) : null}
+                    </div>
                     <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
                       {formatDetails(log.details)}
                     </p>

@@ -204,31 +204,31 @@ export const MemberCardMobile = memo(function MemberCardMobile({
             </>
           )}
           {isAdmin && member.role === 'member' && (
-            <>
+            <button
+              type="button"
+              onClick={() => {
+                onToggleStatus(member);
+              }}
+              className={cn(mobileIconBtnClass, member.status !== 'active' && 'text-emerald-500')}
+              aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
+            >
+              <Power className="h-4 w-4" />
+            </button>
+          )}
+          {isAdmin &&
+            (member.role === 'member' || member.role === 'trainer') &&
+            member.id !== currentUserId && (
               <button
                 type="button"
                 onClick={() => {
-                  onToggleStatus(member);
+                  onDelete(member);
                 }}
-                className={cn(mobileIconBtnClass, member.status !== 'active' && 'text-emerald-500')}
-                aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
+                className={cn(mobileIconBtnClass, 'hover:bg-red-500/10 hover:text-red-500')}
+                aria-label={member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro'}
               >
-                <Power className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
-              {member.role === 'member' && member.id !== currentUserId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onDelete(member);
-                  }}
-                  className={cn(mobileIconBtnClass, 'hover:bg-red-500/10 hover:text-red-500')}
-                  aria-label="Eliminar miembro"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </>
-          )}
+            )}
         </div>
       )}
     </DataCard>

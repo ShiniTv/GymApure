@@ -1,6 +1,6 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
-import { query } from '../db/index.ts';
+import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
@@ -993,20 +993,63 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
     return res.status(403).json({ error: 'No puedes eliminar tu propia cuenta' });
   }
 
+  const rawConfirmName = req.body?.confirm_name;
+  const confirmName = typeof rawConfirmName === 'string' ? rawConfirmName.trim() : '';
+
   try {
-    const { rows } = await query<{ role: string }>('SELECT role FROM users WHERE id = $1', [
-      targetId,
-    ]);
+    const { rows } = await query<{ role: string; full_name: string }>(
+      'SELECT role, full_name FROM users WHERE id = $1',
+      [targetId]
+    );
     if (!rows[0]) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
     if (rows[0].role === 'admin') {
       return res.status(403).json({ error: 'No se puede eliminar un administrador' });
     }
+
     if (rows[0].role === 'trainer') {
-      return res.status(403).json({
-        error: 'No se puede eliminar un entrenador desde aquí. Desactívalo o contacta soporte.',
+      if (confirmName?.toLowerCase() !== rows[0].full_name.trim().toLowerCase()) {
+        return res.status(400).json({
+          error: 'Escribe el nombre exacto del entrenador para confirmar la eliminación',
+        });
+      }
+
+      const result = await withTransaction(async (client) => {
+        const assigned = await client.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count
+           FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id
+           WHERE r.trainer_id = $1`,
+          [targetId]
+        );
+        if (Number(assigned.rows[0]?.count ?? 0) > 0) {
+          return {
+            error:
+              'Este entrenador tiene rutinas asignadas a miembros. Desactívalo o reasigna esas rutinas antes de eliminarlo.',
+            status: 409 as const,
+          };
+        }
+
+        await client.query(`UPDATE nutrition_plans SET trainer_id = $1 WHERE trainer_id = $2`, [
+          req.user!.id,
+          targetId,
+        ]);
+        await client.query(`DELETE FROM routines WHERE trainer_id = $1`, [targetId]);
+        await client.query(`DELETE FROM users WHERE id = $1`, [targetId]);
+        return { ok: true as const };
       });
+
+      if ('error' in result) {
+        return res.status(result.status).json({ error: result.error });
+      }
+
+      await logAudit(req.user!.id, 'user.delete', {
+        target_id: targetId,
+        role: 'trainer',
+        full_name: rows[0].full_name,
+      });
+      return res.json({ success: true });
     }
 
     await query('DELETE FROM users WHERE id = $1', [targetId]);

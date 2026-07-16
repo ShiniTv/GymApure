@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit, Dumbbell } from 'lucide-react';
+import { Plus, Edit, Dumbbell, Trash2 } from 'lucide-react';
 import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
   useTrainersQuery,
@@ -35,6 +35,7 @@ import {
 import { passwordSchema } from '../lib/passwordSchema';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
 
@@ -53,6 +54,7 @@ const EMPTY_FORM = {
 export default function Trainers() {
   usePageTitle('Entrenadores');
   const toast = useToastOptional();
+  const { user } = useAuth();
   const invalidateTrainers = useInvalidateTrainers();
 
   const [search, setSearch] = useState('');
@@ -67,6 +69,10 @@ export default function Trainers() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editTarget, setEditTarget] = useState<Trainer | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Trainer | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editForm, setEditForm] = useState({
     level: 'basico' as TrainerLevel,
@@ -174,6 +180,51 @@ export default function Trainers() {
       setErrors({ submit: connectionOrApiError(err, 'Error al actualizar') });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openDelete = (trainer: Trainer) => {
+    setDeleteTarget(trainer);
+    setDeleteConfirmName('');
+    setDeleteError('');
+  };
+
+  const closeDelete = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteConfirmName('');
+    setDeleteError('');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    if (deleteConfirmName.trim().toLowerCase() !== deleteTarget.full_name.trim().toLowerCase()) {
+      setDeleteError('Escribe el nombre exacto del entrenador para confirmar');
+      return;
+    }
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await apiFetch(`/api/users/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm_name: deleteConfirmName.trim() }),
+      });
+      const data = await parseJsonSafe<{ success?: boolean; error?: string }>(res);
+      if (!res.ok) {
+        setDeleteError(data.error ?? 'No se pudo eliminar el entrenador');
+        return;
+      }
+      setDeleteTarget(null);
+      setDeleteConfirmName('');
+      setDeleteError('');
+      invalidateTrainers();
+      toast?.success('Entrenador eliminado');
+    } catch (err) {
+      clientLogger.error('Failed to delete trainer', err);
+      setDeleteError(connectionOrApiError(err, 'No se pudo eliminar el entrenador'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -318,16 +369,31 @@ export default function Trainers() {
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  openEdit(trainer);
-                }}
-                className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
-                title="Editar perfil"
-              >
-                <Edit className="h-4 w-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    openEdit(trainer);
+                  }}
+                  className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
+                  title="Editar perfil"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                {trainer.id !== user?.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openDelete(trainer);
+                    }}
+                    className="shrink-0 rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
+                    title="Eliminar entrenador"
+                    aria-label={`Eliminar ${trainer.full_name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               <Badge className={SHIFT_BADGE_CLASSES[trainer.shift]}>
@@ -385,6 +451,19 @@ export default function Trainers() {
                 >
                   <Edit className="h-4 w-4" />
                 </button>
+                {trainer.id !== user?.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openDelete(trainer);
+                    }}
+                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
+                    title="Eliminar entrenador"
+                    aria-label={`Eliminar ${trainer.full_name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </td>
           </tr>
@@ -591,6 +670,52 @@ export default function Trainers() {
             <Button className="w-full" onClick={handleUpdate} disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={!!deleteTarget} onClose={closeDelete} title="Eliminar entrenador">
+        {deleteTarget && (
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
+              los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
+              deberás desactivarlo o reasignarlas antes.
+            </p>
+            <div>
+              <Label htmlFor="trainers-delete-confirm">
+                Escribe el nombre exacto: <strong>{deleteTarget.full_name}</strong>
+              </Label>
+              <Input
+                id="trainers-delete-confirm"
+                value={deleteConfirmName}
+                onChange={(e) => {
+                  setDeleteConfirmName(e.target.value);
+                  if (deleteError) setDeleteError('');
+                }}
+                placeholder={deleteTarget.full_name}
+                autoComplete="off"
+                disabled={deleting}
+              />
+            </div>
+            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={closeDelete} disabled={deleting}>
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1"
+                onClick={handleDelete}
+                disabled={
+                  deleting ||
+                  deleteConfirmName.trim().toLowerCase() !==
+                    deleteTarget.full_name.trim().toLowerCase()
+                }
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </Button>
+            </div>
           </div>
         )}
       </Modal>
