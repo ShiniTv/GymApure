@@ -3,7 +3,15 @@ import { useState, useEffect } from 'react';
 import { downloadReport, apiFetch, parseJsonResponse } from '../lib/api';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 
-import { FileSpreadsheet, Download, Calendar, DollarSign, Users, Fingerprint } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Download,
+  Calendar,
+  DollarSign,
+  Users,
+  Fingerprint,
+  FileText,
+} from 'lucide-react';
 
 import { format, subDays, startOfMonth } from 'date-fns';
 
@@ -18,109 +26,81 @@ import {
 } from '../components/ui';
 
 type ReportType = 'payments' | 'attendance' | 'members';
+type ReportFormat = 'csv' | 'pdf';
 
 interface ReportPreview {
   payments: number;
-
   attendance: number;
-
   members: number;
 }
 
 const REPORTS: {
   type: ReportType;
-
   title: string;
-
   description: string;
-
   icon: typeof DollarSign;
-
   hasDateRange: boolean;
-
   previewKey: keyof ReportPreview;
 }[] = [
   {
     type: 'payments',
-
     title: 'Pagos',
-
     description: 'Montos, método y estado aprobado.',
-
     icon: DollarSign,
-
     hasDateRange: true,
-
     previewKey: 'payments',
   },
-
   {
     type: 'attendance',
-
     title: 'Asistencias',
-
     description: 'Entradas, salidas y duración.',
-
     icon: Fingerprint,
-
     hasDateRange: true,
-
     previewKey: 'attendance',
   },
-
   {
     type: 'members',
-
     title: 'Miembros',
-
     description: 'Activos con días restantes.',
-
     icon: Users,
-
     hasDateRange: false,
-
     previewKey: 'members',
   },
 ];
 
 export default function Reports() {
   const today = format(new Date(), 'yyyy-MM-dd');
-
   const monthAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
 
   const [from, setFrom] = useState(monthAgo);
-
   const [to, setTo] = useState(today);
 
   const debouncedFrom = useDebouncedValue(from, 400);
   const debouncedTo = useDebouncedValue(to, 400);
 
-  const [downloading, setDownloading] = useState<ReportType | null>(null);
+  const [downloading, setDownloading] = useState<{
+    type: ReportType;
+    format: ReportFormat;
+  } | null>(null);
 
   const [error, setError] = useState('');
-
   const [preview, setPreview] = useState<ReportPreview | null>(null);
-
   const [previewLoading, setPreviewLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-
     setPreviewLoading(true);
 
     const params = new URLSearchParams({ from: debouncedFrom, to: debouncedTo });
 
     apiFetch(`/api/reports/preview?${params}`)
       .then((res) => parseJsonResponse<ReportPreview>(res))
-
       .then((data) => {
         if (!cancelled) setPreview(data);
       })
-
       .catch(() => {
         if (!cancelled) setPreview(null);
       })
-
       .finally(() => {
         if (!cancelled) setPreviewLoading(false);
       });
@@ -140,13 +120,19 @@ export default function Reports() {
     setTo(today);
   };
 
-  const handleDownload = async (type: ReportType, hasDateRange: boolean) => {
-    setDownloading(type);
-
+  const handleDownload = async (
+    type: ReportType,
+    hasDateRange: boolean,
+    reportFormat: ReportFormat
+  ) => {
+    setDownloading({ type, format: reportFormat });
     setError('');
 
     try {
-      await downloadReport(type, hasDateRange ? { from, to } : undefined);
+      await downloadReport(type, {
+        ...(hasDateRange ? { from, to } : {}),
+        format: reportFormat,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al descargar');
     } finally {
@@ -163,7 +149,7 @@ export default function Reports() {
             Reportes <span className="text-brand">exportables</span>
           </>
         }
-        subtitle="CSV para contabilidad, cierre mensual y análisis."
+        subtitle="PDF con formato GymApure o CSV para contabilidad."
         action={<BackToDashboardLink />}
       />
 
@@ -229,8 +215,10 @@ export default function Reports() {
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
         {REPORTS.map((report) => {
           const Icon = report.icon;
-          const isLoading = downloading === report.type;
           const count = preview?.[report.previewKey];
+          const pdfLoading = downloading?.type === report.type && downloading.format === 'pdf';
+          const csvLoading = downloading?.type === report.type && downloading.format === 'csv';
+          const busy = downloading?.type === report.type;
 
           return (
             <Card key={report.type} padding="sm" rounded="xl" className="flex flex-col">
@@ -264,16 +252,29 @@ export default function Reports() {
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                loading={isLoading}
-                aria-label={`Descargar CSV de ${report.title}`}
-                onClick={() => handleDownload(report.type, report.hasDateRange)}
-              >
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Descargar CSV</span>
-              </Button>
+              <div className="mt-auto flex flex-col gap-1.5">
+                <Button
+                  size="sm"
+                  loading={pdfLoading}
+                  disabled={busy && !pdfLoading}
+                  aria-label={`Descargar PDF de ${report.title}`}
+                  onClick={() => handleDownload(report.type, report.hasDateRange, 'pdf')}
+                >
+                  <FileText className="h-4 w-4" />
+                  Descargar PDF
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={csvLoading}
+                  disabled={busy && !csvLoading}
+                  aria-label={`Descargar CSV de ${report.title}`}
+                  onClick={() => handleDownload(report.type, report.hasDateRange, 'csv')}
+                >
+                  <Download className="h-4 w-4" />
+                  CSV
+                </Button>
+              </div>
             </Card>
           );
         })}
@@ -281,7 +282,8 @@ export default function Reports() {
 
       <p className="flex items-start gap-2 px-0.5 text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400">
         <FileSpreadsheet className="text-brand mt-0.5 h-3.5 w-3.5 shrink-0" />
-        UTF-8 compatible con Excel. Se generan en el servidor al descargar.
+        PDF con marca GymApure para compartir; CSV UTF-8 para Excel y contabilidad. Se generan en el
+        servidor al descargar.
       </p>
     </div>
   );

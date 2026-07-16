@@ -243,11 +243,13 @@ export function paymentProofUrl(paymentId: number): string {
 
 export async function downloadReport(
   type: 'payments' | 'attendance' | 'members',
-  options?: { from?: string; to?: string }
+  options?: { from?: string; to?: string; format?: 'csv' | 'pdf' }
 ): Promise<void> {
+  const format = options?.format ?? 'csv';
   const params = new URLSearchParams();
   if (options?.from) params.set('from', options.from);
   if (options?.to) params.set('to', options.to);
+  if (format === 'pdf') params.set('format', 'pdf');
   const qs = params.toString();
   const res = await apiFetch(`/api/reports/${type}${qs ? `?${qs}` : ''}`);
   if (!res.ok) {
@@ -257,7 +259,7 @@ export async function downloadReport(
   const blob = await res.blob();
   const disposition = res.headers.get('Content-Disposition') ?? '';
   const match = /filename="([^"]+)"/.exec(disposition);
-  const filename = match?.[1] ?? `${type}.csv`;
+  const filename = match?.[1] ?? `${type}.${format}`;
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;

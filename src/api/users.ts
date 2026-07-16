@@ -1041,7 +1041,7 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
       });
 
       if ('error' in result) {
-        return res.status(result.status).json({ error: result.error });
+        return res.status(result.status ?? 409).json({ error: result.error });
       }
 
       await logAudit(req.user!.id, 'user.delete', {
