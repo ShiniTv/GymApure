@@ -143,9 +143,15 @@ export default function Settings() {
         /* optional */
       });
 
-    apiFetch('/api/health')
+    apiFetch('/api/health/ops')
       .then((res) => parseJsonSafe<{ email?: { configured?: boolean } }>(res))
-      .then((data) => setEmailConfigured(Boolean(data.email?.configured)))
+      .then((data) => {
+        if (typeof data.email?.configured === 'boolean') {
+          setEmailConfigured(data.email.configured);
+        } else {
+          setEmailConfigured(null);
+        }
+      })
       .catch(() => setEmailConfigured(null));
 
     apiFetch('/api/settings/exchange-rate')

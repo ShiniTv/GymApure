@@ -61,10 +61,14 @@ export default function AdminDashboard() {
   const expiringList = stats?.expiringList ?? [];
 
   useEffect(() => {
-    apiFetch('/api/health')
+    apiFetch('/api/health/ops')
       .then((res) => parseJsonSafe<{ email?: { configured?: boolean } }>(res))
       .then((data) => {
-        setEmailConfigured(Boolean(data.email?.configured));
+        if (typeof data.email?.configured === 'boolean') {
+          setEmailConfigured(data.email.configured);
+        } else {
+          setEmailConfigured(null);
+        }
       })
       .catch(() => {
         setEmailConfigured(null);
