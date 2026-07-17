@@ -30,7 +30,7 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 
 ## MFA y endurecimiento en producción
 
-- [ ] `REQUIRE_MFA_FOR_STAFF=true` en Render (tras activar MFA en cada cuenta staff)
+- [ ] MFA disponible en `/security` (opcional; no exigir `REQUIRE_MFA_FOR_STAFF` salvo política explícita)
 - [ ] `ENABLE_HIBP_CHECK=true` en Render
 - [ ] `npm run security:audit-mfa:prod -- --allow-prod` sin hallazgos
 

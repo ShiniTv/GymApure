@@ -28,7 +28,6 @@ import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
-import { enforceMfaForStaff } from './middleware/enforceMfa.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
 const router = asyncRouter();
@@ -47,8 +46,7 @@ router.use(apiRateLimiter, cronRoutes);
 router.use(apiRateLimiter);
 router.use(authenticate);
 router.use(csrfProtection);
-// MFA setup stays under /api/auth/mfa/* (before this middleware).
-router.use(enforceMfaForStaff);
+// MFA is optional for staff (available at /security). Do not mount enforceMfaForStaff.
 
 router.use('/users', userRoutes);
 router.use('/trainers', trainerRoutes);

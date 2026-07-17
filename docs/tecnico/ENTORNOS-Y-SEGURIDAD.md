@@ -153,7 +153,7 @@ Ver [STAGING.md](./STAGING.md) — tercer entorno para validar migraciones antes
 
 ### MFA obligatorio (producción)
 
-Con `REQUIRE_MFA_FOR_STAFF=true` (recomendado en Render), el staff sin MFA no puede usar APIs protegidas; el frontend redirige a `/security`.
+MFA es **opcional**: el staff puede activarlo en `/security`. Solo si se define `REQUIRE_MFA_FOR_STAFF=true` (y se monta `enforceMfaForStaff`) se bloquean APIs al staff sin MFA.
 
 Antes de activar en prod:
 

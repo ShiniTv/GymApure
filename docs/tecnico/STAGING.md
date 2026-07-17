@@ -51,7 +51,7 @@ Si todo pasa → `npm run db:migrate:prod` y deploy a Render prod.
 
 - **Nunca** copiar dump de prod con PII a staging sin anonimizar.
 - **Nunca** usar `db:restore-demo` en staging si ese entorno se usa para QA realista (usa datos sintéticos).
-- `REQUIRE_MFA_FOR_STAFF=true` y `ENABLE_HIBP_CHECK=true` en staging igual que prod.
+- `ENABLE_HIBP_CHECK=true` en staging igual que prod. MFA permanece opcional (`REQUIRE_MFA_FOR_STAFF=false`).
 
 ---
 
