@@ -19,6 +19,7 @@ const ROUTE_PREFETCH: Record<string, () => Promise<unknown>> = {
   '/exercises': () => import('../pages/Exercises'),
   '/nutrition': () => import('../pages/member/MemberNutrition'),
   '/history': () => import('../pages/WorkoutHistory'),
+  '/history/records': () => import('../pages/ExerciseRecords'),
   '/check-in': () => import('../pages/CheckIn'),
 };
 

@@ -36,6 +36,7 @@
     "test:trainer-shifts": "tsx scripts/test/test-trainer-shifts.ts",
     "test:trainer-auth": "tsx scripts/test/test-trainer-auth.ts",
     "test:routine-exercises": "tsx scripts/test/test-routine-exercises.ts",
+    "test:exercise-records": "tsx scripts/test/test-exercise-records.ts",
     "db:migrate": "tsx scripts/db/apply-migrations.ts",
     "db:migrate:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/apply-migrations.ts",
     "db:migrate:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/apply-migrations.ts -- --allow-prod",

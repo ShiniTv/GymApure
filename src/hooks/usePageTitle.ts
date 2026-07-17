@@ -5,6 +5,7 @@ const TITLES: Record<string, string> = {
   '/routines': 'Rutinas',
   '/nutrition': 'Nutrición',
   '/history': 'Historial',
+  '/history/records': 'Marcas',
   '/profile': 'Perfil',
   '/payments': 'Pagos',
   '/messages': 'Mensajes',

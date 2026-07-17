@@ -15,6 +15,7 @@ import {
   MoreHorizontal,
   ChevronDown,
   ChevronRight,
+  Trophy,
 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -555,6 +556,15 @@ export default function MemberRoutine() {
               Historial
             </Button>
             <Button
+              variant="secondary"
+              size="sm"
+              className="hidden h-9 gap-1.5 px-2.5 text-xs sm:inline-flex"
+              onClick={() => navigate(`/members/${id}/records`)}
+            >
+              <Trophy className="h-3.5 w-3.5" />
+              Marcas
+            </Button>
+            <Button
               ref={moreMenuAnchorRef}
               variant="ghost"
               size="sm"
@@ -587,6 +597,18 @@ export default function MemberRoutine() {
         >
           <History className="h-4 w-4" />
           Historial
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 sm:hidden dark:text-zinc-200 dark:hover:bg-zinc-800"
+          onClick={() => {
+            setMoreMenuOpen(false);
+            void navigate(`/members/${id}/records`);
+          }}
+        >
+          <Trophy className="h-4 w-4" />
+          Marcas
         </button>
         <button
           type="button"

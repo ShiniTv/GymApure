@@ -38,6 +38,7 @@ import { RECEPTION_STAFF } from '../lib/roles.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
+import { mountExerciseRecordRoutes } from './exerciseRecords.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { assignRoutineSchema } from '../lib/routineSchemas.ts';
 import {
@@ -1120,5 +1121,6 @@ router.delete('/:id', authorize(['admin']), async (req: AuthRequest, res) => {
 });
 
 mountHealthProfileRoutes(router);
+mountExerciseRecordRoutes(router);
 
 export default router;

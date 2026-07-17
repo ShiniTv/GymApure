@@ -11,6 +11,7 @@ import {
   finishWorkoutSchema,
   cancelWorkoutSchema,
 } from './workoutSchemas.ts';
+import { isBetterSet, pickBestSet } from '../lib/exerciseRecords.ts';
 
 const router = asyncRouter();
 
@@ -445,7 +446,7 @@ router.get(
       return;
     }
 
-    const [plannedResult, logsResult] = await Promise.all([
+    const [plannedResult, logsResult, priorBestResult] = await Promise.all([
       query<{
         exercise_id: number;
         name: string;
@@ -473,7 +474,65 @@ router.get(
        ORDER BY exercise_id, set_number`,
         [sessionId]
       ),
+      query<{
+        exercise_id: number;
+        weight: number;
+        reps: number;
+      }>(
+        `SELECT DISTINCT ON (wl.exercise_id)
+                wl.exercise_id, wl.weight::float8 AS weight, wl.reps::int AS reps
+         FROM workout_logs wl
+         JOIN workout_sessions ws ON ws.id = wl.session_id
+         WHERE ws.user_id = $1
+           AND ws.id <> $2
+           AND ws.end_time IS NOT NULL
+           AND ws.success = 1
+           AND ws.start_time < $3
+           AND wl.weight IS NOT NULL
+           AND wl.reps IS NOT NULL
+           AND wl.reps > 0
+         ORDER BY wl.exercise_id, wl.weight DESC, wl.reps DESC`,
+        [session.user_id, sessionId, session.start_time]
+      ),
     ]);
+
+    const priorBestByExercise = new Map<number, { weight: number; reps: number }>();
+    for (const row of priorBestResult.rows) {
+      priorBestByExercise.set(Number(row.exercise_id), {
+        weight: Number(row.weight),
+        reps: Number(row.reps),
+      });
+    }
+
+    // Also consider manual RM tests dated before this session.
+    try {
+      const sessionDate = session.start_time.slice(0, 10);
+      const { rows: manualPrior } = await query<{
+        exercise_id: number;
+        weight: number;
+        reps: number;
+      }>(
+        `SELECT DISTINCT ON (exercise_id)
+                exercise_id, weight::float8 AS weight, reps::int AS reps
+         FROM exercise_rm_tests
+         WHERE user_id = $1 AND test_date < $2
+         ORDER BY exercise_id, weight DESC, reps DESC`,
+        [session.user_id, sessionDate]
+      );
+      for (const row of manualPrior) {
+        const exerciseId = Number(row.exercise_id);
+        const candidate = { weight: Number(row.weight), reps: Number(row.reps) };
+        const existing = priorBestByExercise.get(exerciseId);
+        if (isBetterSet(candidate, existing)) {
+          priorBestByExercise.set(exerciseId, candidate);
+        }
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/exercise_rm_tests|does not exist|undefined_table/i.test(message)) {
+        throw err;
+      }
+    }
 
     const logsByExercise = new Map<
       number,
@@ -493,37 +552,49 @@ router.get(
     let setsPlanned = 0;
     let totalVolumeKg = 0;
 
-    const exercises = plannedResult.rows.map((row) => {
-      const logs = logsByExercise.get(row.exercise_id) ?? [];
+    const mapExercise = (
+      exerciseId: number,
+      name: string,
+      muscleGroup: string,
+      plannedSets: number,
+      plannedReps: number,
+      logs: { set_number: number; weight: number; reps: number }[]
+    ) => {
       setsLogged += logs.length;
-      setsPlanned += row.planned_sets;
+      setsPlanned += plannedSets;
       for (const log of logs) {
         totalVolumeKg += log.weight * log.reps;
       }
-      logsByExercise.delete(row.exercise_id);
+      const sessionBest = pickBestSet(logs);
+      const priorBest = priorBestByExercise.get(exerciseId) ?? null;
+      const isAllTimePr = sessionBest != null && isBetterSet(sessionBest, priorBest);
       return {
-        exercise_id: row.exercise_id,
-        name: row.name,
-        muscle_group: row.muscle_group,
-        planned_sets: row.planned_sets,
-        planned_reps: row.planned_reps,
+        exercise_id: exerciseId,
+        name,
+        muscle_group: muscleGroup,
+        planned_sets: plannedSets,
+        planned_reps: plannedReps,
         logs,
+        session_best: sessionBest,
+        is_all_time_pr: isAllTimePr,
       };
+    };
+
+    const exercises = plannedResult.rows.map((row) => {
+      const logs = logsByExercise.get(row.exercise_id) ?? [];
+      logsByExercise.delete(row.exercise_id);
+      return mapExercise(
+        row.exercise_id,
+        row.name,
+        row.muscle_group,
+        row.planned_sets,
+        row.planned_reps,
+        logs
+      );
     });
 
     for (const [exerciseId, logs] of logsByExercise) {
-      setsLogged += logs.length;
-      for (const log of logs) {
-        totalVolumeKg += log.weight * log.reps;
-      }
-      exercises.push({
-        exercise_id: exerciseId,
-        name: 'Ejercicio',
-        muscle_group: '',
-        planned_sets: 0,
-        planned_reps: 0,
-        logs,
-      });
+      exercises.push(mapExercise(exerciseId, 'Ejercicio', '', 0, 0, logs));
     }
 
     res.json({

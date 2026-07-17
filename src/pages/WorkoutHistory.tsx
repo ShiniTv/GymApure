@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Clock, Dumbbell, ArrowLeft, Play, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ArrowLeft, Play, Trash2, Trophy } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
@@ -63,6 +63,8 @@ interface SessionExercise {
   planned_sets: number;
   planned_reps: number;
   logs: SessionLog[];
+  session_best?: { weight: number; reps: number } | null;
+  is_all_time_pr?: boolean;
 }
 
 interface SessionDetail {
@@ -387,16 +389,38 @@ export default function WorkoutHistory() {
         }
         action={
           id ? (
-            <button
-              type="button"
-              onClick={() => navigate(`/members/${id}/routines`)}
-              className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 lg:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
-              aria-label="Volver al miembro"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-9 gap-1.5 px-2.5 text-xs"
+                onClick={() => navigate(`/members/${id}/records`)}
+              >
+                <Trophy className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Marcas</span>
+              </Button>
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${id}/routines`)}
+                className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 lg:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+                aria-label="Volver al miembro"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
-            <BackToDashboardLink />
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-9 gap-1.5 px-2.5 text-xs"
+                onClick={() => navigate('/history/records')}
+              >
+                <Trophy className="h-3.5 w-3.5" />
+                Marcas
+              </Button>
+              <BackToDashboardLink />
+            </div>
           )
         }
       />
@@ -866,12 +890,27 @@ export default function WorkoutHistory() {
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                          {exercise.name}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                            {exercise.name}
+                          </p>
+                          {exercise.is_all_time_pr && (
+                            <Badge variant="success" className="px-1.5 py-0 text-[9px]">
+                              Nueva marca
+                            </Badge>
+                          )}
+                        </div>
                         {exercise.muscle_group && (
                           <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
                             {exercise.muscle_group}
+                          </p>
+                        )}
+                        {exercise.session_best && (
+                          <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-300">
+                            Mejor serie:{' '}
+                            <span className="font-semibold tabular-nums">
+                              {exercise.session_best.weight} kg × {exercise.session_best.reps}
+                            </span>
                           </p>
                         )}
                       </div>

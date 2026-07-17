@@ -44,6 +44,7 @@ const Trainers = lazy(() => import('./pages/Trainers'));
 const MemberRoutine = lazy(() => import('./pages/MemberRoutine'));
 const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
 const WorkoutHistory = lazy(() => import('./pages/WorkoutHistory'));
+const ExerciseRecords = lazy(() => import('./pages/ExerciseRecords'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Nutrition = lazy(() => import('./pages/Nutrition'));
 const MemberNutrition = lazy(() => import('./pages/member/MemberNutrition'));
@@ -479,6 +480,20 @@ function AppRoutes() {
               }
             />
             <Route
+              path="history/records"
+              element={
+                <ProtectedRoute allowedRoles={['member']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <ExerciseRecords />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="history"
               element={
                 <ProtectedRoute allowedRoles={['member']}>
@@ -556,6 +571,20 @@ function AppRoutes() {
                     }}
                   >
                     <WorkoutHistory />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="members/:id/records"
+              element={
+                <ProtectedRoute allowedRoles={['trainer']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <ExerciseRecords />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }
