@@ -19,6 +19,7 @@ import {
   Tablet,
   CreditCard,
   Pencil,
+  Ticket,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
@@ -37,6 +38,8 @@ import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
+import ReceptionRenewPayWizard from '../components/reception/ReceptionRenewPayWizard';
+import { ReceptionGuestPasses } from '../components/reception/ReceptionGuestPasses';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useMediaQuery } from '../lib/useMediaQuery';
@@ -76,7 +79,7 @@ interface InsideMember {
   check_in_time: string;
 }
 
-type Tab = 'access' | 'inside' | 'register';
+type Tab = 'access' | 'inside' | 'register' | 'renew' | 'guests';
 
 interface AttendanceActionResult {
   error?: string;
@@ -98,7 +101,13 @@ export default function Reception() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
-  const initialTab: Tab = tabParam === 'inside' || tabParam === 'register' ? tabParam : 'access';
+  const initialTab: Tab =
+    tabParam === 'inside' ||
+    tabParam === 'register' ||
+    tabParam === 'renew' ||
+    tabParam === 'guests'
+      ? tabParam
+      : 'access';
 
   const [tab, setTab] = useState<Tab>(initialTab);
   const [cedula, setCedula] = useState('');
@@ -750,6 +759,8 @@ export default function Reception() {
               { value: 'access', label: 'Acceso', icon: Fingerprint },
               { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
               { value: 'register', label: 'Registro', icon: UserPlus },
+              { value: 'renew', label: 'Renovar', icon: CreditCard },
+              { value: 'guests', label: 'Invitados', icon: Ticket },
             ]}
           />
 
@@ -779,6 +790,8 @@ export default function Reception() {
               />
             </div>
           )}
+          {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
+          {tab === 'guests' && <ReceptionGuestPasses />}
         </div>
         {checkoutConfirmModal}
         {cedulaEditModal}
@@ -809,6 +822,8 @@ export default function Reception() {
             { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
             { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
             { value: 'register', label: 'Registro', icon: UserPlus },
+            { value: 'renew', label: 'Renovar y cobrar', icon: CreditCard },
+            { value: 'guests', label: 'Invitados', icon: Ticket },
           ]}
         />
 
@@ -827,6 +842,8 @@ export default function Reception() {
             onComplete={() => void loadStats()}
           />
         )}
+        {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
+        {tab === 'guests' && <ReceptionGuestPasses />}
       </div>
       {checkoutConfirmModal}
       {cedulaEditModal}

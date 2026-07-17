@@ -114,5 +114,6 @@ jobs:
           done
           npm run test:e2e
           npm run test:ux
+          npm run test:ux:browser
           LIGHTHOUSE_AUTH_PANEL=1 DEMO_PASSWORD="${{ env.DEMO_PASSWORD }}" npm run lighthouse:ci
           kill "$SERVER_PID" 2>/dev/null || true

@@ -17,7 +17,18 @@ export interface TrainerStatsResponse {
     id: number;
     full_name: string;
     days_remaining: number;
-    membership_name: string;
+    membership_name?: string;
+  }[];
+  inactiveMembers?: {
+    id: number;
+    full_name: string;
+    last_workout: string | null;
+    days_since: number;
+  }[];
+  trainingToday?: {
+    id: number;
+    full_name: string;
+    check_in_time: string;
   }[];
   expiryAlertDays?: number;
 }

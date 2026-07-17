@@ -17,7 +17,7 @@ Comportamiento de la interfaz móvil, navegación inferior y aplicación instala
 
 ### Bottom nav pill
 
-Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**.
+Tabs: **Inicio**, **Rutinas**, **Reservas**, **Más**.
 
 Oculta en `/workout/:id` (entrenamiento inmersivo).
 
@@ -29,7 +29,7 @@ Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### Sheet "Más"
 
-Biblioteca, Mensajes, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
+Biblioteca, Nutrición, Mensajes, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
 
 ### Drawer sidebar
 
@@ -49,7 +49,9 @@ Disponible en Inicio, Rutinas e Historial.
 
 ## Recepción
 
-Bottom nav: Inicio, Miembros, Pagos, Mensajes. Drawer con Check-in y Equipamiento.
+Bottom nav: Inicio, Miembros, Pagos, Mensajes. Drawer / Más con Kiosk, Equipamiento, Clases.
+
+Admin también puede abrir `/reception` y `/check-in` (cubre mostrador).
 
 ---
 
@@ -61,7 +63,7 @@ Bottom nav con drawer. Al abrir drawer: bottom nav oculta; footer sin hueco infe
 
 ## Admin móvil
 
-Sin bottom nav. Hamburger para drawer. Footer del sidebar pegado al fondo.
+Bottom nav: Panel, Miembros, Pagos, Mensajes, Más (incluye Mostrador, Kiosk, Solicitudes demo, etc.).
 
 ---
 

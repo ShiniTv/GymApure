@@ -21,7 +21,9 @@ const router = asyncRouter();
 export interface AdminStatsPayload {
   totalRevenue: number;
   pendingPayments: number;
+  pendingPaymentsOlderThan2Days: number;
   activeSubscriptions: number;
+  pausedSubscriptions: number;
   todayCheckIns: number;
   yesterdayCheckIns: number;
   revenueThisMonth: number;
@@ -38,6 +40,11 @@ export interface AdminStatsPayload {
   equipmentMaintenance: number;
   equipmentOutOfService: number;
   equipmentInspectionsDue: number;
+  classSessionsToday: number;
+  classBookingsToday: number;
+  classCapacityToday: number;
+  classFillPercentToday: number;
+  demoLeadsPending: number;
 }
 
 async function buildAdminStats(): Promise<AdminStatsPayload> {
@@ -113,10 +120,44 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     getEquipmentStatsSummary(),
   ]);
 
+  const [pendingOld, pausedSubs, classToday, demoPending] = await Promise.all([
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM payments
+       WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days'`
+    ),
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM subscriptions WHERE status = 'paused'`
+    ),
+    query<{ sessions: string; bookings: string; capacity: string }>(
+      `SELECT
+         COUNT(cs.id)::text AS sessions,
+         COALESCE(SUM(b.booked_count), 0)::text AS bookings,
+         COALESCE(SUM(cs.capacity), 0)::text AS capacity
+       FROM class_sessions cs
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*)::int AS booked_count
+         FROM class_bookings cb
+         WHERE cb.session_id = cs.id AND cb.status IN ('booked', 'attended', 'waitlisted')
+       ) b ON true
+       WHERE cs.status = 'scheduled' AND cs.starts_at::date = CURRENT_DATE`
+    ),
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM demo_requests WHERE status = 'pending'`
+    ),
+  ]);
+
+  const classSessionsToday = parseInt(classToday.rows[0]?.sessions || '0', 10);
+  const classBookingsToday = parseInt(classToday.rows[0]?.bookings || '0', 10);
+  const classCapacityToday = parseInt(classToday.rows[0]?.capacity || '0', 10);
+  const classFillPercentToday =
+    classCapacityToday > 0 ? Math.round((classBookingsToday / classCapacityToday) * 100) : 0;
+
   return {
     totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),
     pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
+    pendingPaymentsOlderThan2Days: parseInt(pendingOld.rows[0]?.count || '0', 10),
     activeSubscriptions: parseInt(activeSubscriptions.rows[0]?.count || '0', 10),
+    pausedSubscriptions: parseInt(pausedSubs.rows[0]?.count || '0', 10),
     todayCheckIns: parseInt(todayCheckIns.rows[0]?.count || '0', 10),
     yesterdayCheckIns: parseInt(yesterdayCheckIns.rows[0]?.count || '0', 10),
     revenueThisMonth: parseFloat(revenueThisMonth.rows[0]?.total || '0'),
@@ -133,6 +174,11 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     equipmentMaintenance: equipmentStats.maintenance,
     equipmentOutOfService: equipmentStats.outOfService,
     equipmentInspectionsDue: equipmentStats.inspectionsDueThisWeek,
+    classSessionsToday,
+    classBookingsToday,
+    classCapacityToday,
+    classFillPercentToday,
+    demoLeadsPending: parseInt(demoPending.rows[0]?.count || '0', 10),
   };
 }
 
@@ -293,6 +339,13 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
 
     let membersWithoutRoutines = 0;
     let expiringMembers: { id: number; full_name: string; days_remaining: number }[] = [];
+    let inactiveMembers: {
+      id: number;
+      full_name: string;
+      last_workout: string | null;
+      days_since: number;
+    }[] = [];
+    let trainingToday: { id: number; full_name: string; check_in_time: string }[] = [];
 
     if (trainerId && membersWithoutRoutinesSql) {
       const noRoutineResult = await query<{ count: string }>(membersWithoutRoutinesSql, [
@@ -307,6 +360,56 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
         [trainerId, alertDays]
       );
       expiringMembers = expiringResult.rows;
+    }
+
+    if (trainerId) {
+      const [inactiveResult, todayResult] = await Promise.all([
+        query<{
+          id: number;
+          full_name: string;
+          last_workout: string | null;
+          days_since: number;
+        }>(
+          `SELECT u.id, u.full_name,
+                  MAX(ws.start_time)::text AS last_workout,
+                  COALESCE((CURRENT_DATE - MAX(ws.start_time)::date), 999)::int AS days_since
+           FROM users u
+           LEFT JOIN workout_sessions ws ON ws.user_id = u.id
+           WHERE u.role = 'member' AND u.status = 'active'
+             AND (
+               u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+               OR u.id IN (
+                 SELECT ur.user_id FROM user_routines ur
+                 JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+               )
+             )
+           GROUP BY u.id, u.full_name
+           HAVING COALESCE(MAX(ws.start_time)::date, DATE '1970-01-01')
+                  < CURRENT_DATE - INTERVAL '2 days'
+           ORDER BY days_since DESC
+           LIMIT 8`,
+          [trainerId]
+        ),
+        query<{ id: number; full_name: string; check_in_time: string }>(
+          `SELECT u.id, u.full_name, a.check_in_time::text
+           FROM attendance a
+           JOIN users u ON u.id = a.user_id
+           WHERE ${sqlTodayRange('a.check_in_time')}
+             AND a.check_out_time IS NULL
+             AND (
+               u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+               OR u.id IN (
+                 SELECT ur.user_id FROM user_routines ur
+                 JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+               )
+             )
+           ORDER BY a.check_in_time DESC
+           LIMIT 12`,
+          [trainerId]
+        ),
+      ]);
+      inactiveMembers = inactiveResult.rows;
+      trainingToday = todayResult.rows;
     }
 
     const [
@@ -327,6 +430,8 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       recentActivities: recentActivities.rows,
       membersWithoutRoutines,
       expiringMembers,
+      inactiveMembers,
+      trainingToday,
       expiryAlertDays: alertDays,
     });
   } catch (err: unknown) {

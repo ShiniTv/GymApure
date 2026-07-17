@@ -15,6 +15,9 @@ import {
   ScrollText,
   UtensilsCrossed,
   ShieldCheck,
+  Fingerprint,
+  LogIn,
+  Inbox,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -27,6 +30,9 @@ export const ADMIN_PRIMARY_TABS: StaffBottomNavTab[] = [
 ];
 
 export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
+  { name: 'Mostrador', href: '/reception', icon: Fingerprint },
+  { name: 'Kiosk', href: '/check-in?kiosk=1', icon: LogIn },
+  { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox },
   { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
   { name: 'Entrenadores', href: '/trainers', icon: UserCog },
   { name: 'Clases', href: '/clases', icon: CalendarDays },
@@ -42,10 +48,16 @@ export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
 
 export function isAdminBottomNavActive(pathname: string, _search: string, href: string): boolean {
   if (href === '/panel') return pathname === '/panel';
+  if (href.includes('?')) {
+    return pathname === href.split('?')[0];
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function isAdminMoreItemActive(pathname: string, _search: string, href: string): boolean {
+  if (href.includes('?')) {
+    return pathname === href.split('?')[0];
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

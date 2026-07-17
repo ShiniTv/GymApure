@@ -354,6 +354,18 @@ router.post(
       res.status(400).json({ error: 'Completa tu cédula en el perfil para marcar entrada' });
       return;
     }
+    const pin =
+      typeof req.body?.pin === 'string'
+        ? req.body.pin
+        : typeof req.body?.check_in_pin === 'string'
+          ? req.body.check_in_pin
+          : undefined;
+    const { validateSelfCheckInPin } = await import('../lib/checkInPin.ts');
+    const pinError = await validateSelfCheckInPin(pin);
+    if (pinError) {
+      res.status(403).json({ error: pinError, pin_required: true });
+      return;
+    }
     const result = await performCheckIn(cedula);
     if (result.ok) {
       await logAudit(req.user!.id, 'member.self_check_in', result.body);

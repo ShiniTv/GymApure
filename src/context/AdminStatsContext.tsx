@@ -6,7 +6,9 @@ import { useAuth } from './AuthContext';
 export interface AdminStats {
   totalRevenue: number;
   pendingPayments: number;
+  pendingPaymentsOlderThan2Days?: number;
   activeSubscriptions: number;
+  pausedSubscriptions?: number;
   todayCheckIns: number;
   yesterdayCheckIns: number;
   revenueThisMonth: number;
@@ -34,6 +36,11 @@ export interface AdminStats {
   equipmentMaintenance?: number;
   equipmentOutOfService?: number;
   equipmentInspectionsDue?: number;
+  classSessionsToday?: number;
+  classBookingsToday?: number;
+  classCapacityToday?: number;
+  classFillPercentToday?: number;
+  demoLeadsPending?: number;
 }
 
 interface AdminStatsContextValue {

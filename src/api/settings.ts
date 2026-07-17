@@ -2,6 +2,7 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { authorize, AuthRequest } from './middleware/auth.ts';
 import { getExpirySettings, updateExpirySettings } from '../lib/gymSettings.ts';
+import { getCheckInPinSettings, updateCheckInPinSettings } from '../lib/checkInPin.ts';
 import {
   clearManualUsdOverride,
   getExchangeRateAdminView,
@@ -10,6 +11,7 @@ import {
 import { runExchangeRateRefreshNow } from '../jobs/exchangeRateCron.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { logAudit } from '../lib/audit.ts';
+import { RECEPTION_STAFF } from '../lib/roles.ts';
 
 const router = asyncRouter();
 
@@ -21,6 +23,11 @@ const exchangeRateSettingsSchema = z.object({
   override_rate: z.coerce.number().positive().max(10_000).optional().nullable(),
   override_note: z.string().trim().max(200).optional().nullable(),
   clear_override: z.boolean().optional(),
+});
+
+const checkInPinSchema = z.object({
+  check_in_pin: z.string().trim().max(12).optional(),
+  require_self_check_in_pin: z.boolean().optional(),
 });
 
 router.get('/expiry', authorize(['admin']), async (_req, res) => {
@@ -44,6 +51,57 @@ router.put('/expiry', authorize(['admin']), async (req: AuthRequest, res) => {
     invalidateAdminStatsCache();
     await logAudit(req.user!.id, 'settings.expiry.update', parsed.data);
     res.json(settings);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/check-in-pin', authorize(RECEPTION_STAFF), async (_req, res) => {
+  try {
+    const settings = await getCheckInPinSettings();
+    res.json({
+      require_self_check_in_pin: settings.require_self_check_in_pin,
+      check_in_pin: settings.check_in_pin,
+      pin_configured: Boolean(settings.check_in_pin),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.put('/check-in-pin', authorize(['admin']), async (req: AuthRequest, res) => {
+  const parsed = checkInPinSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const settings = await updateCheckInPinSettings(parsed.data);
+    await logAudit(req.user!.id, 'settings.check_in_pin.update', {
+      require_self_check_in_pin: settings.require_self_check_in_pin,
+      pin_configured: Boolean(settings.check_in_pin),
+    });
+    res.json({
+      require_self_check_in_pin: settings.require_self_check_in_pin,
+      check_in_pin: settings.check_in_pin,
+      pin_configured: Boolean(settings.check_in_pin),
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+/** Members only need to know if a PIN is required (not the value). */
+router.get('/check-in-pin/required', authorize(['member']), async (_req, res) => {
+  try {
+    const settings = await getCheckInPinSettings();
+    res.json({
+      require_self_check_in_pin: settings.require_self_check_in_pin,
+      pin_configured: Boolean(settings.check_in_pin),
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

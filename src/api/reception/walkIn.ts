@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import type { Response } from 'express';
 import { query, withTransaction } from '../../db/index.ts';
@@ -8,6 +7,7 @@ import { canonicalCedula, cedulaWhereClause } from '../../lib/cedulaUtils.ts';
 import { assignSubscription } from '../../lib/subscriptions.ts';
 import { invalidateAdminStatsCache } from '../../lib/adminStatsCache.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
+import { hashPassword } from '../../lib/passwordHash.ts';
 import { performCheckIn } from '../attendance/attendanceCore.ts';
 import { notifyPaymentApproved } from '../../lib/chat/eventMessages.ts';
 import { isTrainingShift } from '../../lib/trainingShift.ts';
@@ -65,8 +65,8 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
   }
 
   const normalizedEmail = data.email.toLowerCase().trim();
-  const tempPassword = generateTempPassword();
-  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  // Random unusable password — member sets their own via password_setup_url / email.
+  const hashedPassword = await hashPassword(generateTempPassword());
   const proofFile = req.file ?? null;
 
   try {
@@ -176,13 +176,28 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
     }
 
     let emailSent = false;
+    let passwordSetupUrl: string;
     try {
       const rawToken = await createPasswordSetupToken(result.userId, WALK_IN_SETUP_EXPIRY_HOURS);
-      const setupUrl = buildPasswordSetupUrl(rawToken);
+      passwordSetupUrl = buildPasswordSetupUrl(rawToken);
+    } catch (err) {
+      logger.error('Walk-in: no se pudo crear enlace de contraseña', {
+        userId: result.userId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      res.status(500).json({
+        error:
+          'Cuenta creada pero no se pudo generar el enlace de contraseña. Contacte al administrador.',
+        user_id: result.userId,
+      });
+      return;
+    }
+
+    try {
       emailSent = await sendEmail({
         to: normalizedEmail,
         subject: 'Bienvenido a GymApure — crea tu contraseña',
-        html: walkInWelcomeEmail(data.full_name, setupUrl, result.membershipName),
+        html: walkInWelcomeEmail(data.full_name, passwordSetupUrl, result.membershipName),
       });
       if (!emailSent) {
         logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
@@ -228,7 +243,8 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
       membership_name: result.membershipName,
       subscription: result.subscription,
       email_sent: emailSent,
-      ...(emailSent ? {} : { temporary_password: tempPassword }),
+      // Never return temporary_password — deliver one-time setup link if email failed.
+      ...(emailSent ? {} : { password_setup_url: passwordSetupUrl }),
       checked_in: checkedIn,
       check_in_message: checkInMessage,
     });

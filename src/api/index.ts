@@ -24,8 +24,11 @@ import exchangeRateRoutes from './exchangeRate.ts';
 import cronRoutes from './cronRoutes.ts';
 import classRoutes from './classes.ts';
 import demoRequestRoutes from './demoRequests.ts';
+import guestPassRoutes from './guestPasses.ts';
+import demoLeadsRoutes from './demoLeads.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
+import { enforceMfaForStaff } from './middleware/enforceMfa.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
 
 const router = asyncRouter();
@@ -44,6 +47,8 @@ router.use(apiRateLimiter, cronRoutes);
 router.use(apiRateLimiter);
 router.use(authenticate);
 router.use(csrfProtection);
+// MFA setup stays under /api/auth/mfa/* (before this middleware).
+router.use(enforceMfaForStaff);
 
 router.use('/users', userRoutes);
 router.use('/trainers', trainerRoutes);
@@ -59,6 +64,7 @@ router.use('/settings', settingsRoutes);
 router.use('/audit-logs', auditLogsRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/reception', receptionRoutes);
+router.use('/guest-passes', guestPassRoutes);
 router.use('/chat', chatRoutes);
 router.use(nutritionRoutes);
 router.use('/files', fileRoutes);
@@ -66,6 +72,7 @@ router.use('/push', pushSubscriptionRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/equipment', equipmentRoutes);
 router.use('/classes', classRoutes);
+router.use('/demo-leads', demoLeadsRoutes);
 
 router.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

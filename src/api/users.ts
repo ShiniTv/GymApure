@@ -13,7 +13,10 @@ import {
   deleteMediaFile,
 } from '../lib/mediaStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
-import { activeSubscriptionLateralSql } from '../lib/subscriptions.ts';
+import {
+  activeSubscriptionLateralSql,
+  pausedSubscriptionLateralSql,
+} from '../lib/subscriptions.ts';
 import {
   createUserSchema,
   formatZodError,
@@ -99,6 +102,7 @@ const USER_LIST_FROM = `
     GROUP BY user_id
   ) lw ON lw.user_id = u.id
   ${activeSubscriptionLateralSql()}
+  ${pausedSubscriptionLateralSql()}
 `;
 
 function buildUserListFilters(
@@ -248,9 +252,14 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
         `SELECT u.id, u.email, u.role, u.full_name, u.cedula, u.phone, u.status,
                 u.profile_image, u.dob, u.training_shift, u.created_at,
                 lw.last_workout,
-                sub.membership_name,
-                sub.end_date AS subscription_end,
-                sub.days_remaining,
+                COALESCE(sub.membership_name, paused_sub.membership_name) AS membership_name,
+                COALESCE(sub.end_date, paused_sub.end_date) AS subscription_end,
+                COALESCE(sub.days_remaining, paused_sub.pause_days_remaining) AS days_remaining,
+                CASE
+                  WHEN sub.membership_name IS NOT NULL THEN 'active'
+                  WHEN paused_sub.membership_name IS NOT NULL THEN 'paused'
+                  ELSE NULL
+                END AS subscription_status,
                 CASE WHEN u.role = 'member' THEN json_build_object(
                   'has_trainer_assignment',
                   EXISTS (

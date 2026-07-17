@@ -102,6 +102,7 @@ export default function Members() {
   const [editShiftTarget, setEditShiftTarget] = useState<Member | null>(null);
   const [editShiftValue, setEditShiftValue] = useState<TrainingShift | ''>('');
   const [savingShift, setSavingShift] = useState(false);
+  const [membershipOperationId, setMembershipOperationId] = useState<number | null>(null);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -455,6 +456,30 @@ export default function Members() {
       setAssignError(err instanceof Error ? err.message : 'Error al asignar');
     }
   };
+
+  const handleMembershipOperation = useCallback(
+    async (member: Member) => {
+      const operation = member.subscription_status === 'paused' ? 'resume' : 'pause';
+      setMembershipOperationId(member.id);
+      try {
+        await parseJsonResponse(
+          await apiFetch(`/api/memberships/${operation}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: member.id }),
+          })
+        );
+        invalidateMembers();
+        await adminStats?.refresh();
+        toast?.success(operation === 'pause' ? 'Membresía pausada' : 'Membresía reanudada');
+      } catch (err) {
+        toast?.error(err instanceof Error ? err.message : 'No se pudo actualizar la membresía');
+      } finally {
+        setMembershipOperationId(null);
+      }
+    },
+    [adminStats, invalidateMembers, toast]
+  );
 
   const filteredMembers = members;
   const canAddUser =
@@ -835,6 +860,8 @@ export default function Members() {
                 onDelete={handleDeleteClick}
                 onShowBadge={openMemberBadge}
                 onEditShift={openEditShift}
+                onMembershipOperation={handleMembershipOperation}
+                membershipOperationLoading={membershipOperationId === member.id}
               />
             </StaggerItem>
           )}
@@ -861,6 +888,8 @@ export default function Members() {
               onDelete={handleDeleteClick}
               onShowBadge={openMemberBadge}
               onEditShift={openEditShift}
+              onMembershipOperation={handleMembershipOperation}
+              membershipOperationLoading={membershipOperationId === member.id}
             />
           )}
         />

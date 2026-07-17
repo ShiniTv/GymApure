@@ -189,6 +189,63 @@ export default function TrainerDashboard() {
         />
       </div>
 
+      <DashboardSection title="Hoy">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Card padding="sm" rounded="xl">
+            <p className="mb-2 text-xs font-bold text-zinc-900 dark:text-white">
+              Entrenando ahora ({stats?.trainingToday?.length ?? 0})
+            </p>
+            {(stats?.trainingToday?.length ?? 0) === 0 ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Ningún miembro asignado dentro del gym.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {(stats?.trainingToday ?? []).map((m) => (
+                  <li key={m.id}>
+                    <Link
+                      to={`/members/${m.id}/routines`}
+                      className="hover:text-brand flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="truncate font-medium text-zinc-800 dark:text-zinc-200">
+                        {m.full_name}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card padding="sm" rounded="xl">
+            <p className="mb-2 text-xs font-bold text-zinc-900 dark:text-white">
+              Sin entrenar (≥3 días)
+            </p>
+            {(stats?.inactiveMembers?.length ?? 0) === 0 ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Todos tus miembros han entrenado recientemente.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {(stats?.inactiveMembers ?? []).map((m) => (
+                  <li key={m.id}>
+                    <Link
+                      to={`/members/${m.id}/history`}
+                      className="hover:text-brand flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="truncate font-medium text-zinc-800 dark:text-zinc-200">
+                        {m.full_name}
+                      </span>
+                      <Badge variant="warning">{m.days_since}d</Badge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      </DashboardSection>
+
       <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
         <Card padding="sm" rounded="xl">
           <h3 className="mb-3 text-sm font-bold text-zinc-900 dark:text-white">

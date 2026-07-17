@@ -10,6 +10,8 @@ import {
   IdCard,
   UtensilsCrossed,
   Clock,
+  Pause,
+  Play,
 } from 'lucide-react';
 import { Badge, Avatar, DataCard } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -32,6 +34,8 @@ interface MemberCardMobileProps {
   onDelete: (member: Member) => void;
   onShowBadge: (member: Member) => void;
   onEditShift: (member: Member) => void;
+  onMembershipOperation: (member: Member) => void;
+  membershipOperationLoading: boolean;
 }
 
 export const MemberCardMobile = memo(function MemberCardMobile({
@@ -47,6 +51,8 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   onDelete,
   onShowBadge,
   onEditShift,
+  onMembershipOperation,
+  membershipOperationLoading,
 }: MemberCardMobileProps) {
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
@@ -95,6 +101,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               <p className="truncate text-[11px] font-medium text-emerald-600 dark:text-emerald-500">
                 {member.membership_name} · {member.days_remaining ?? 0}d
               </p>
+              {member.subscription_status === 'paused' && <Badge variant="warning">Pausada</Badge>}
               {expiryBadge && (
                 <Badge className={cn('shrink-0 text-[10px]', expiryBadge.className)}>
                   {expiryBadge.label}
@@ -205,6 +212,25 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               >
                 <CreditCard className="h-4 w-4" />
               </button>
+              {member.subscription_status && (
+                <button
+                  type="button"
+                  onClick={() => onMembershipOperation(member)}
+                  disabled={membershipOperationLoading}
+                  className={mobileIconBtnClass}
+                  aria-label={
+                    member.subscription_status === 'paused'
+                      ? 'Reanudar membresía'
+                      : 'Pausar membresía'
+                  }
+                >
+                  {member.subscription_status === 'paused' ? (
+                    <Play className="h-4 w-4" />
+                  ) : (
+                    <Pause className="h-4 w-4" />
+                  )}
+                </button>
+              )}
             </>
           )}
           {isAdmin && member.role === 'member' && (

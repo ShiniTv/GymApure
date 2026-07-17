@@ -48,7 +48,7 @@ function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
 }
 
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then((res) => {
+  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then(async (res) => {
     if (
       res.status === 401 &&
       authBootstrapComplete &&
@@ -56,6 +56,17 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
       shouldHandleUnauthorized(input)
     ) {
       onUnauthorized();
+    }
+    if (res.status === 403 && typeof window !== 'undefined') {
+      try {
+        const clone = res.clone();
+        const body = (await clone.json()) as { mfa_setup_required?: boolean };
+        if (body.mfa_setup_required && !window.location.pathname.startsWith('/security')) {
+          window.location.assign('/security');
+        }
+      } catch {
+        // ignore non-JSON bodies
+      }
     }
     return res;
   });
@@ -242,7 +253,7 @@ export function paymentProofUrl(paymentId: number): string {
 }
 
 export async function downloadReport(
-  type: 'payments' | 'attendance' | 'members',
+  type: 'payments' | 'attendance' | 'members' | 'retention',
   options?: { from?: string; to?: string; format?: 'csv' | 'pdf' }
 ): Promise<void> {
   const format = options?.format ?? 'csv';

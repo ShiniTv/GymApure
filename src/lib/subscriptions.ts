@@ -9,6 +9,11 @@ export interface ActiveSubscription {
   price_usd?: number;
 }
 
+export interface PausedSubscription extends ActiveSubscription {
+  paused_at: string;
+  pause_days_remaining: number;
+}
+
 interface Queryable {
   query: <T extends import('pg').QueryResultRow = import('pg').QueryResultRow>(
     text: string,
@@ -56,6 +61,18 @@ export function activeSubscriptionLateralSql(): string {
     ORDER BY s.end_date DESC
     LIMIT 1
   ) sub ON true`;
+}
+
+/** SQL fragment for a paused subscription. It is deliberately separate from active membership. */
+export function pausedSubscriptionLateralSql(): string {
+  return `LEFT JOIN LATERAL (
+    SELECT m.name AS membership_name, s.end_date, s.pause_days_remaining, s.paused_at
+    FROM subscriptions s
+    JOIN memberships m ON m.id = s.membership_id
+    WHERE s.user_id = u.id AND s.status = 'paused'
+    ORDER BY s.paused_at DESC NULLS LAST, s.id DESC
+    LIMIT 1
+  ) paused_sub ON true`;
 }
 
 export function computeSubscriptionDates(
@@ -117,7 +134,11 @@ export async function assignSubscription(
 
   await client.query(
     `UPDATE subscriptions SET status = 'expired'
-     WHERE user_id = $1 AND status = 'active' AND end_date >= CURRENT_DATE`,
+     WHERE user_id = $1
+       AND (
+         (status = 'active' AND end_date >= CURRENT_DATE)
+         OR status = 'paused'
+       )`,
     [userId]
   );
 
@@ -128,4 +149,55 @@ export async function assignSubscription(
   );
 
   return { startDate, endDate, membershipId };
+}
+
+/** Pause a current subscription while preserving its unused days. */
+export async function pauseSubscription(
+  client: Queryable,
+  userId: number
+): Promise<PausedSubscription> {
+  const { rows } = await client.query<PausedSubscription>(
+    `UPDATE subscriptions s
+     SET status = 'paused',
+         paused_at = NOW(),
+         pause_days_remaining = GREATEST(0, s.end_date - CURRENT_DATE),
+         resume_at = NULL
+     FROM memberships m
+     WHERE s.user_id = $1
+       AND s.membership_id = m.id
+       AND s.status = 'active'
+       AND s.end_date >= CURRENT_DATE
+     RETURNING s.id, m.name AS membership_name, s.end_date,
+               GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining,
+               s.start_date, s.status, m.duration_days, m.price_usd,
+               s.paused_at, s.pause_days_remaining`,
+    [userId]
+  );
+  if (!rows[0]) throw new Error('No hay una membresía activa para pausar');
+  return rows[0];
+}
+
+/** Resume a paused subscription, restarting its remaining days today. */
+export async function resumeSubscription(
+  client: Queryable,
+  userId: number
+): Promise<ActiveSubscription> {
+  const { rows } = await client.query<ActiveSubscription>(
+    `UPDATE subscriptions s
+     SET status = 'active',
+         end_date = CURRENT_DATE + COALESCE(s.pause_days_remaining, 0),
+         resume_at = NOW(),
+         paused_at = NULL,
+         pause_days_remaining = NULL
+     FROM memberships m
+     WHERE s.user_id = $1
+       AND s.membership_id = m.id
+       AND s.status = 'paused'
+     RETURNING s.id, m.name AS membership_name, s.end_date,
+               GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining,
+               s.start_date, s.status, m.duration_days, m.price_usd`,
+    [userId]
+  );
+  if (!rows[0]) throw new Error('No hay una membresía pausada para reanudar');
+  return rows[0];
 }

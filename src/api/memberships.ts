@@ -4,7 +4,12 @@ import { z } from 'zod';
 import { query } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
-import { assignSubscription, getActiveSubscriptionByUserId } from '../lib/subscriptions.ts';
+import {
+  assignSubscription,
+  getActiveSubscriptionByUserId,
+  pauseSubscription,
+  resumeSubscription,
+} from '../lib/subscriptions.ts';
 import { withTransaction } from '../db/index.ts';
 import { logAudit } from '../lib/audit.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
@@ -163,6 +168,56 @@ const assignSchema = z.object({
   membership_id: z.coerce.number().int().positive(),
   start_date: z.string().optional(),
   payment_id: z.coerce.number().int().positive().optional(),
+});
+
+const membershipOperationSchema = z.object({
+  user_id: z.coerce.number().int().positive('user_id inválido'),
+});
+
+router.post('/pause', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
+  const parsed = membershipOperationSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const subscription = await withTransaction((client) =>
+      pauseSubscription(client, parsed.data.user_id)
+    );
+    await logAudit(req.user!.id, 'membership.pause', {
+      user_id: parsed.data.user_id,
+      subscription_id: subscription.id,
+      days_remaining: subscription.pause_days_remaining,
+    });
+    invalidateAdminStatsCache();
+    res.json({ success: true, subscription });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(message.startsWith('No hay una membresía') ? 404 : 500).json({ error: message });
+  }
+});
+
+router.post('/resume', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
+  const parsed = membershipOperationSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const subscription = await withTransaction((client) =>
+      resumeSubscription(client, parsed.data.user_id)
+    );
+    await logAudit(req.user!.id, 'membership.resume', {
+      user_id: parsed.data.user_id,
+      subscription_id: subscription.id,
+      days_remaining: subscription.days_remaining,
+    });
+    invalidateAdminStatsCache();
+    res.json({ success: true, subscription });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(message.startsWith('No hay una membresía') ? 404 : 500).json({ error: message });
+  }
 });
 
 router.post('/assign', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {

@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   DollarSign,
   RefreshCw,
+  Fingerprint,
 } from 'lucide-react';
 import {
   Button,
@@ -92,6 +93,11 @@ export default function Settings() {
   usePageTitle('Configuración');
   const adminStats = useAdminStats();
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
+  const [checkInPinForm, setCheckInPinForm] = useState({
+    check_in_pin: '',
+    require_self_check_in_pin: false,
+  });
+  const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
   const [exchangeRateView, setExchangeRateView] = useState<ExchangeRateAdminView | null>(null);
   const [exchangeRateForm, setExchangeRateForm] = useState<ExchangeRateForm>({
     override_rate: '',
@@ -122,6 +128,25 @@ export default function Settings() {
         setSettingsLoadError(true);
       })
       .finally(() => setSettingsLoading(false));
+
+    apiFetch('/api/settings/check-in-pin')
+      .then((res) =>
+        parseJsonResponse<{ check_in_pin?: string; require_self_check_in_pin?: boolean }>(res)
+      )
+      .then((data) => {
+        setCheckInPinForm({
+          check_in_pin: data.check_in_pin ?? '',
+          require_self_check_in_pin: Boolean(data.require_self_check_in_pin),
+        });
+      })
+      .catch(() => {
+        /* optional */
+      });
+
+    apiFetch('/api/health')
+      .then((res) => parseJsonSafe<{ email?: { configured?: boolean } }>(res))
+      .then((data) => setEmailConfigured(Boolean(data.email?.configured)))
+      .catch(() => setEmailConfigured(null));
 
     apiFetch('/api/settings/exchange-rate')
       .then((res) => parseJsonResponse<ExchangeRateAdminView>(res))
@@ -185,6 +210,35 @@ export default function Settings() {
     } catch (err) {
       setSettingsMessageTone('error');
       setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar'));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const saveCheckInPin = async () => {
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      const res = await apiFetch('/api/settings/check-in-pin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkInPinForm),
+      });
+      const data = await parseJsonResponse<{
+        check_in_pin?: string;
+        require_self_check_in_pin?: boolean;
+        error?: string;
+      }>(res);
+      if (!res.ok) throw new Error(data.error || 'Error al guardar PIN');
+      setCheckInPinForm({
+        check_in_pin: data.check_in_pin ?? '',
+        require_self_check_in_pin: Boolean(data.require_self_check_in_pin),
+      });
+      setSettingsMessageTone('success');
+      setSettingsMessage('PIN de presencia actualizado');
+    } catch (err) {
+      setSettingsMessageTone('error');
+      setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar PIN'));
     } finally {
       setSettingsSaving(false);
     }
@@ -346,6 +400,18 @@ export default function Settings() {
         action={<BackToDashboardLink />}
       />
 
+      {emailConfigured === false && (
+        <Card padding="sm" rounded="xl" className="panel-wide border-amber-500/30 bg-amber-500/10">
+          <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+            SMTP no configurado
+          </p>
+          <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80">
+            Configure las variables SMTP del servidor para enviar bienvenidas, resets y avisos. Sin
+            correo, recepción entregará el enlace de creación de contraseña en mostrador.
+          </p>
+        </Card>
+      )}
+
       <Card padding="sm" rounded="xl" className="panel-wide">
         <div className="mb-2.5 flex items-center justify-between gap-2">
           <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
@@ -449,6 +515,56 @@ export default function Settings() {
           )}
         </Card>
       )}
+
+      <Card padding="sm" rounded="xl" className="panel-wide">
+        <div className="mb-2.5 flex items-center justify-between gap-2">
+          <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+            <Fingerprint className="text-brand h-4 w-4 shrink-0" />
+            <span className="truncate">PIN de presencia (self check-in)</span>
+          </h2>
+          <Button
+            type="button"
+            size="sm"
+            className="h-9 w-9 px-0"
+            onClick={() => void saveCheckInPin()}
+            disabled={settingsSaving}
+            aria-label="Guardar PIN"
+            title="Guardar PIN"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
+          Si está activo, el miembro debe ingresar el PIN del día (visible en recepción) para marcar
+          entrada desde la app.
+        </p>
+        <label className="mb-3 flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={checkInPinForm.require_self_check_in_pin}
+            onChange={(e) =>
+              setCheckInPinForm((f) => ({
+                ...f,
+                require_self_check_in_pin: e.target.checked,
+              }))
+            }
+          />
+          Exigir PIN en self check-in
+        </label>
+        <div className="max-w-[10rem]">
+          <Label htmlFor="check_in_pin" className="text-[11px]">
+            PIN del día
+          </Label>
+          <Input
+            id="check_in_pin"
+            value={checkInPinForm.check_in_pin}
+            onChange={(e) =>
+              setCheckInPinForm((f) => ({ ...f, check_in_pin: e.target.value.slice(0, 12) }))
+            }
+            placeholder="Ej. 4821"
+          />
+        </div>
+      </Card>
 
       {exchangeRateView && (
         <Card padding="sm" rounded="xl" className="panel-wide">

@@ -45,7 +45,7 @@ export function canOperateExercises(role: UserRole | string): boolean {
 }
 
 export function canOperateReception(role: UserRole | string): boolean {
-  return role === 'receptionist';
+  return role === 'receptionist' || role === 'admin';
 }
 
 export function canViewExerciseLibrary(role: UserRole | string): boolean {

@@ -22,6 +22,9 @@ import {
   FileSpreadsheet,
   BarChart2,
   Wrench,
+  Mail,
+  Inbox,
+  CalendarDays,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { format } from 'date-fns';
@@ -39,6 +42,7 @@ import {
 import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { apiFetch, parseJsonSafe } from '../../lib/api';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -50,10 +54,22 @@ export default function AdminDashboard() {
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
+  const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
 
   const stats = adminStats.stats;
   const alertDays = stats?.expiryAlertDays ?? 7;
   const expiringList = stats?.expiringList ?? [];
+
+  useEffect(() => {
+    apiFetch('/api/health')
+      .then((res) => parseJsonSafe<{ email?: { configured?: boolean } }>(res))
+      .then((data) => {
+        setEmailConfigured(Boolean(data.email?.configured));
+      })
+      .catch(() => {
+        setEmailConfigured(null);
+      });
+  }, []);
 
   useEffect(() => {
     if (!stats) return;
@@ -118,6 +134,10 @@ export default function AdminDashboard() {
   const equipmentOutOfService = stats?.equipmentOutOfService ?? 0;
   const equipmentInspectionsDue = stats?.equipmentInspectionsDue ?? 0;
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
+  const pendingOld = stats?.pendingPaymentsOlderThan2Days ?? 0;
+  const classFill = stats?.classFillPercentToday ?? 0;
+  const demoPending = stats?.demoLeadsPending ?? 0;
+  const pausedSubs = stats?.pausedSubscriptions ?? 0;
 
   return (
     <div className="space-y-2.5 sm:space-y-3">
@@ -130,6 +150,25 @@ export default function AdminDashboard() {
         }
         subtitle="Supervisión y gestión del gym"
       />
+
+      {emailConfigured === false && (
+        <Link
+          to="/settings"
+          className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 transition-colors hover:bg-amber-500/15"
+        >
+          <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+              Correo SMTP no configurado
+            </p>
+            <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
+              Bienvenidas, resets y avisos no se enviarán. Configure SMTP en el servidor o revise
+              Configuración.
+            </p>
+          </div>
+          <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-amber-600" />
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:hidden">
         {pendingPayments > 0 && (
@@ -266,6 +305,50 @@ export default function AdminDashboard() {
           description="Avisos y salud"
           tone="emerald"
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Card padding="sm" rounded="xl" className="space-y-1">
+          <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+            Pagos &gt;2 días
+          </p>
+          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+            {pendingOld}
+          </p>
+        </Card>
+        <Card padding="sm" rounded="xl" className="space-y-1">
+          <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+            <CalendarDays className="h-3 w-3" />
+            Clases hoy
+          </p>
+          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+            {classFill}%
+            <span className="ml-1 text-xs font-normal text-zinc-500">
+              ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
+            </span>
+          </p>
+        </Card>
+        <Card padding="sm" rounded="xl" className="space-y-1">
+          <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">Pausadas</p>
+          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+            {pausedSubs}
+          </p>
+        </Card>
+        <Link to="/demo-leads">
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="hover:border-brand/40 space-y-1 transition-colors"
+          >
+            <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              <Inbox className="h-3 w-3" />
+              Demos
+            </p>
+            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              {demoPending}
+            </p>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-3 gap-1.5 sm:gap-3">

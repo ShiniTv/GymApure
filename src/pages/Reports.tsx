@@ -25,13 +25,14 @@ import {
   BackToDashboardLink,
 } from '../components/ui';
 
-type ReportType = 'payments' | 'attendance' | 'members';
+type ReportType = 'payments' | 'attendance' | 'members' | 'retention';
 type ReportFormat = 'csv' | 'pdf';
 
 interface ReportPreview {
   payments: number;
   attendance: number;
   members: number;
+  retention?: number;
 }
 
 const REPORTS: {
@@ -65,6 +66,14 @@ const REPORTS: {
     icon: Users,
     hasDateRange: false,
     previewKey: 'members',
+  },
+  {
+    type: 'retention',
+    title: 'Retención',
+    description: 'Renovaciones, vencidas, no-shows y asistencia.',
+    icon: FileText,
+    hasDateRange: true,
+    previewKey: 'retention',
   },
 ];
 

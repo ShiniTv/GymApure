@@ -185,7 +185,7 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
   const attendanceFilter = buildDateFilter('a.check_in_time', from, to);
 
   try {
-    const [payments, attendance, members] = await Promise.all([
+    const [payments, attendance, members, retention] = await Promise.all([
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM payments p WHERE 1=1${paymentsFilter.sql}`,
         paymentsFilter.params
@@ -198,12 +198,20 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
         `SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'`,
         []
       ),
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM subscriptions
+         WHERE status IN ('expired', 'inactive')
+           AND end_date >= COALESCE($1::date, CURRENT_DATE - 30)
+           AND end_date <= COALESCE($2::date, CURRENT_DATE)`,
+        [from, to]
+      ),
     ]);
 
     res.json({
       payments: parseInt(payments.rows[0]?.count || '0', 10),
       attendance: parseInt(attendance.rows[0]?.count || '0', 10),
       members: parseInt(members.rows[0]?.count || '0', 10),
+      retention: parseInt(retention.rows[0]?.count || '0', 10),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
@@ -438,6 +446,121 @@ router.get('/members', authorize(['admin']), async (req, res) => {
         'Días restantes',
       ],
       csvRows
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/retention', authorize(['admin']), async (req, res) => {
+  const from = parseDateParam(req.query.from);
+  const to = parseDateParam(req.query.to);
+  const rangeError = validateExportDateRange(from, to);
+  if (rangeError) {
+    return res.status(400).json({ error: rangeError });
+  }
+  const format = parseExportFormat(req.query.format);
+
+  try {
+    const fromDate =
+      from ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const toDate = to ?? new Date().toISOString().slice(0, 10);
+
+    const { rows } = await query<{
+      metric: string;
+      value: string;
+      detail: string;
+    }>(
+      `WITH bounds AS (
+         SELECT $1::date AS d_from, $2::date AS d_to
+       ),
+       expired AS (
+         SELECT COUNT(DISTINCT s.user_id)::text AS v
+         FROM subscriptions s, bounds b
+         WHERE s.status IN ('expired', 'inactive')
+           AND s.end_date BETWEEN b.d_from AND b.d_to
+       ),
+       renewed AS (
+         SELECT COUNT(DISTINCT s.user_id)::text AS v
+         FROM subscriptions s
+         JOIN payments p ON p.user_id = s.user_id AND p.status = 'approved'
+         , bounds b
+         WHERE s.status = 'active'
+           AND s.start_date BETWEEN b.d_from AND b.d_to
+           AND EXISTS (
+             SELECT 1 FROM subscriptions prev
+             WHERE prev.user_id = s.user_id
+               AND prev.id <> s.id
+               AND prev.end_date < s.start_date
+           )
+       ),
+       no_shows AS (
+         SELECT COUNT(*)::text AS v
+         FROM class_bookings cb
+         JOIN class_sessions cs ON cs.id = cb.session_id
+         , bounds b
+         WHERE cb.status = 'no_show'
+           AND cs.starts_at::date BETWEEN b.d_from AND b.d_to
+       ),
+       checkins AS (
+         SELECT COUNT(DISTINCT a.user_id)::text AS v
+         FROM attendance a, bounds b
+         WHERE a.check_in_time::date BETWEEN b.d_from AND b.d_to
+       ),
+       active_members AS (
+         SELECT COUNT(DISTINCT s.user_id)::text AS v
+         FROM subscriptions s
+         WHERE s.status = 'active' AND s.end_date >= CURRENT_DATE
+       )
+       SELECT * FROM (
+         SELECT 'Miembros activos' AS metric, (SELECT v FROM active_members) AS value,
+                'Con membresía vigente hoy' AS detail
+         UNION ALL
+         SELECT 'Vencidas en periodo', (SELECT v FROM expired),
+                'Suscripciones que vencieron en el rango'
+         UNION ALL
+         SELECT 'Renovaciones', (SELECT v FROM renewed),
+                'Nuevas activas tras una suscripción previa'
+         UNION ALL
+         SELECT 'Miembros con check-in', (SELECT v FROM checkins),
+                'Únicos que asistieron en el rango'
+         UNION ALL
+         SELECT 'No-shows de clases', (SELECT v FROM no_shows),
+                'Reservas marcadas como no asistió'
+       ) t`,
+      [fromDate, toDate]
+    );
+
+    if (format === 'pdf') {
+      const buffer = await buildReportPdf({
+        title: 'Retención y asistencia',
+        subtitle: formatDateRangeSubtitle(fromDate, toDate),
+        summary: [
+          { label: 'Métricas', value: String(rows.length) },
+          { label: 'Desde', value: fromDate },
+          { label: 'Hasta', value: toDate },
+        ],
+        columns: [
+          { key: 'metric', label: 'Métrica', width: 1.6 },
+          { key: 'value', label: 'Valor', width: 0.8, align: 'right' },
+          { key: 'detail', label: 'Detalle', width: 2.2 },
+        ],
+        rows: rows.map((r) => ({
+          metric: r.metric,
+          value: r.value,
+          detail: r.detail,
+        })),
+      });
+      sendPdf(res, `retencion-${fromDate}-${toDate}.pdf`, buffer);
+      return;
+    }
+
+    sendCsv(
+      res,
+      `retencion-${fromDate}-${toDate}.csv`,
+      ['Métrica', 'Valor', 'Detalle'],
+      rows.map((r) => [r.metric, r.value, r.detail])
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

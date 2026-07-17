@@ -64,6 +64,7 @@ const Reservas = lazy(() => import('./pages/Reservas'));
 const Classes = lazy(() => import('./pages/Classes'));
 const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
 const SolicitarDemo = lazy(() => import('./pages/SolicitarDemo'));
+const DemoLeads = lazy(() => import('./pages/DemoLeads'));
 
 function PageLoader() {
   return (
@@ -146,7 +147,7 @@ function AppRoutes() {
           <Route
             path="/check-in"
             element={
-              <ProtectedRoute allowedRoles={['receptionist']}>
+              <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
                 <SocketProvider>
                   <ErrorBoundary
                     onError={(error) => {
@@ -214,7 +215,7 @@ function AppRoutes() {
             <Route
               path="reception"
               element={
-                <ProtectedRoute allowedRoles={['receptionist']}>
+                <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -277,6 +278,20 @@ function AppRoutes() {
                     }}
                   >
                     <AuditLogs />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="demo-leads"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <DemoLeads />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

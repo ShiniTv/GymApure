@@ -13,6 +13,7 @@ export interface Member {
   membership_name?: string | null;
   subscription_end?: string | null;
   days_remaining?: number | null;
+  subscription_status?: 'active' | 'paused' | null;
   training_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
   profile_image?: string | null;
   phone?: string | null;

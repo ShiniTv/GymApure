@@ -1,5 +1,5 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
-import { query } from '../db/index.ts';
+import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { logAudit } from '../lib/audit.ts';
 import { cedulaWhereClause, normalizeCedulaInput } from '../lib/cedulaUtils.ts';
@@ -11,6 +11,14 @@ import { asyncHandler } from './middleware/asyncHandler.ts';
 import { proofUpload } from '../lib/uploadStorage.ts';
 import { uploadRateLimiter } from './middleware/rateLimit.ts';
 import { z } from 'zod';
+import { assignSubscription } from '../lib/subscriptions.ts';
+import { assertProofUpload } from '../lib/uploadValidation.ts';
+import {
+  finalizeLocalProof,
+  isProofStorageRemote,
+  uploadPaymentProof,
+} from '../lib/proofStorage.ts';
+import { BS_PAYMENT_METHODS, getActiveUsdRate, roundBsAmount } from '../lib/exchangeRate.ts';
 
 const router = asyncRouter();
 
@@ -22,6 +30,14 @@ const lookupQuerySchema = z.object({
 
 const checkBodySchema = z.object({
   cedula: z.string().min(1, 'Cédula requerida'),
+});
+
+const renewSchema = z.object({
+  user_id: z.coerce.number().int().positive('Miembro inválido'),
+  membership_id: z.coerce.number().int().positive('Plan inválido'),
+  amount_usd: z.coerce.number().positive('Monto inválido'),
+  method: z.string().trim().min(1, 'Método requerido').max(50),
+  reference: z.string().trim().max(200).optional().nullable(),
 });
 
 router.get(
@@ -168,6 +184,89 @@ router.post(
   uploadRateLimiter,
   proofUpload.single('proof'),
   asyncHandler(walkInHandler)
+);
+
+router.post(
+  '/renew',
+  uploadRateLimiter,
+  proofUpload.single('proof'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const parsed = renewSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+      return;
+    }
+
+    const data = parsed.data;
+    const userResult = await query<{ id: number; role: string }>(
+      'SELECT id, role FROM users WHERE id = $1',
+      [data.user_id]
+    );
+    if (!userResult.rows[0]) {
+      res.status(404).json({ error: 'Miembro no encontrado' });
+      return;
+    }
+    if (userResult.rows[0].role !== 'member') {
+      res.status(400).json({ error: 'Solo se puede renovar la membresía de un socio' });
+      return;
+    }
+
+    let amountBs: number | null = null;
+    let exchangeRate: number | null = null;
+    if (BS_PAYMENT_METHODS.has(data.method)) {
+      const rate = await getActiveUsdRate();
+      if (!rate) {
+        res.status(503).json({ error: 'Tasa de cambio no disponible. Contacta al gimnasio.' });
+        return;
+      }
+      exchangeRate = rate.rate;
+      amountBs = roundBsAmount(data.amount_usd, rate.rate);
+    }
+
+    let result: { paymentId: number; subscription: Awaited<ReturnType<typeof assignSubscription>> };
+    try {
+      result = await withTransaction(async (client) => {
+        const paymentResult = await client.query<{ id: number }>(
+          `INSERT INTO payments
+            (user_id, amount_usd, amount_bs, exchange_rate, method, reference, status, proof_url)
+           VALUES ($1, $2, $3, $4, $5, $6, 'approved', NULL)
+           RETURNING id`,
+          [
+            data.user_id,
+            data.amount_usd,
+            amountBs,
+            exchangeRate,
+            data.method,
+            data.reference || null,
+          ]
+        );
+        const paymentId = Number(paymentResult.rows[0].id);
+        if (req.file) {
+          assertProofUpload(req.file);
+          const proofUrl = isProofStorageRemote()
+            ? await uploadPaymentProof(req.file, data.user_id, paymentId)
+            : await finalizeLocalProof(req.file);
+          await client.query('UPDATE payments SET proof_url = $1 WHERE id = $2', [
+            proofUrl,
+            paymentId,
+          ]);
+        }
+        const subscription = await assignSubscription(client, data.user_id, data.membership_id);
+        return { paymentId, subscription };
+      });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : 'No se pudo renovar' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'reception.renew', {
+      user_id: data.user_id,
+      membership_id: data.membership_id,
+      payment_id: result.paymentId,
+      amount_usd: data.amount_usd,
+    });
+    res.status(201).json({ success: true, payment_id: result.paymentId, ...result.subscription });
+  })
 );
 
 router.post(
