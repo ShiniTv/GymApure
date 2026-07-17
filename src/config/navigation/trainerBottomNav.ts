@@ -11,6 +11,7 @@ import {
   UserCircle,
   Wrench,
   UtensilsCrossed,
+  ShieldCheck,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -30,6 +31,7 @@ export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Clases grupales', href: '/clases', icon: CalendarRange },
   { name: 'Ejercicios', href: '/exercises', icon: BookOpen },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench },
+  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 

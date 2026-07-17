@@ -37,7 +37,11 @@ import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { assignRoutineSchema } from '../lib/routineSchemas.ts';
-import { isActiveMember, trainerOwnsRoutine } from '../lib/trainerAccess.ts';
+import {
+  isActiveMember,
+  trainerOwnsRoutine,
+  ensureTrainerMemberAssignment,
+} from '../lib/trainerAccess.ts';
 
 const router = asyncRouter();
 
@@ -135,6 +139,8 @@ function buildUserListFilters(
   if (options?.trainerId) {
     params.push(options.trainerId);
     conditions.push(`u.id IN (
+      SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $${params.length}
+      UNION
       SELECT DISTINCT ur.user_id FROM user_routines ur
       JOIN routines r ON r.id = ur.routine_id
       WHERE r.trainer_id = $${params.length}
@@ -244,7 +250,30 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
                 lw.last_workout,
                 sub.membership_name,
                 sub.end_date AS subscription_end,
-                sub.days_remaining
+                sub.days_remaining,
+                CASE WHEN u.role = 'member' THEN json_build_object(
+                  'has_trainer_assignment',
+                  EXISTS (
+                    SELECT 1 FROM trainer_member_assignments tma
+                    WHERE tma.member_id = u.id
+                  ) OR EXISTS (
+                    SELECT 1 FROM user_routines ur
+                    WHERE ur.user_id = u.id
+                  ),
+                  'has_active_routine',
+                  EXISTS (
+                    SELECT 1 FROM user_routines ur
+                    WHERE ur.user_id = u.id
+                      AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
+                      AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
+                  ),
+                  'has_class_booking',
+                  EXISTS (
+                    SELECT 1 FROM class_bookings cb
+                    WHERE cb.user_id = u.id
+                      AND cb.status IN ('booked', 'attended')
+                  )
+                ) ELSE NULL END AS onboarding
          ${USER_LIST_FROM}
          ${whereSql}
          ORDER BY u.full_name ASC
@@ -671,6 +700,8 @@ router.post(
       res.status(404).json({ error: 'Miembro no encontrado o inactivo' });
       return;
     }
+
+    await ensureTrainerMemberAssignment(trainerId, memberId, trainerId);
 
     const assigned_by = trainerId;
     const existing = await query<{ id: number }>(

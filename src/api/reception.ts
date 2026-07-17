@@ -51,10 +51,33 @@ router.get(
       att_id: number | null;
       check_in_time: Date | string | null;
       check_out_time: Date | string | null;
+      has_trainer_assignment: boolean;
+      has_active_routine: boolean;
+      has_class_booking: boolean;
     }>(
       `SELECT u.id, u.full_name, u.email, u.cedula, u.phone, u.status, u.role, u.profile_image,
               sub.id AS sub_id, sub.membership_name, sub.end_date, sub.days_remaining,
-              att.id AS att_id, att.check_in_time, att.check_out_time
+              att.id AS att_id, att.check_in_time, att.check_out_time,
+              (
+                EXISTS (
+                  SELECT 1 FROM trainer_member_assignments tma
+                  WHERE tma.member_id = u.id
+                ) OR EXISTS (
+                  SELECT 1 FROM user_routines ur
+                  WHERE ur.user_id = u.id
+                )
+              ) AS has_trainer_assignment,
+              EXISTS (
+                SELECT 1 FROM user_routines ur
+                WHERE ur.user_id = u.id
+                  AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
+                  AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
+              ) AS has_active_routine,
+              EXISTS (
+                SELECT 1 FROM class_bookings cb
+                WHERE cb.user_id = u.id
+                  AND cb.status IN ('booked', 'attended')
+              ) AS has_class_booking
        FROM users u
        LEFT JOIN LATERAL (
          SELECT s.id, m.name AS membership_name, s.end_date,
@@ -125,6 +148,14 @@ router.get(
         is_inside: isInside,
         today_session: todaySession,
       },
+      onboarding:
+        row.role === 'member'
+          ? {
+              has_trainer_assignment: row.has_trainer_assignment,
+              has_active_routine: row.has_active_routine,
+              has_class_booking: row.has_class_booking,
+            }
+          : null,
       access_status: accessStatus,
       can_check_in: accessStatus === 'allowed' && !isInside,
       can_check_out: accessStatus === 'allowed' && isInside,

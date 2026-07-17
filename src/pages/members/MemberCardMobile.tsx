@@ -17,6 +17,7 @@ import { ROLE_LABELS, type UserRole } from '../../lib/roles';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
 import { SHIFT_SHORT_LABELS, SHIFT_BADGE_CLASSES } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
+import { OnboardingStatus } from '../../components/members/OnboardingStatus';
 
 interface MemberCardMobileProps {
   member: Member;
@@ -122,6 +123,9 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 Asignar turno
               </button>
             ))}
+          <div className="mt-1.5">
+            <OnboardingStatus onboarding={member.onboarding} compact />
+          </div>
         </div>
       </div>
 

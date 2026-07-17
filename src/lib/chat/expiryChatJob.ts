@@ -92,16 +92,14 @@ async function notifyExpiringSoon(
     },
   });
 
-  if (!sent) return 'skipped';
-
-  void notifyMembershipExpiry(target.user_id, 'expiring_soon', {
+  const notificationSent = await notifyMembershipExpiry(target.user_id, 'expiring_soon', {
     membershipName: target.membership_name,
     daysRemaining: target.days_remaining,
     subscriptionId: target.subscription_id,
     endDate: target.end_date,
     alertDays,
   });
-  return 'sent';
+  return sent || notificationSent ? 'sent' : 'skipped';
 }
 
 async function notifyExpired(target: NotifyTarget, alertDays: number): Promise<'sent' | 'skipped'> {
@@ -119,16 +117,14 @@ async function notifyExpired(target: NotifyTarget, alertDays: number): Promise<'
     },
   });
 
-  if (!sent) return 'skipped';
-
-  void notifyMembershipExpiry(target.user_id, 'expired', {
+  const notificationSent = await notifyMembershipExpiry(target.user_id, 'expired', {
     membershipName: target.membership_name,
     daysRemaining: 0,
     subscriptionId: target.subscription_id,
     endDate: target.end_date,
     alertDays,
   });
-  return 'sent';
+  return sent || notificationSent ? 'sent' : 'skipped';
 }
 
 export async function runExpiryJob(): Promise<ExpiryJobResult> {

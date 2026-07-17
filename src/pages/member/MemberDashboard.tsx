@@ -26,6 +26,7 @@ import {
 import { formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { MemberHero } from '../../components/member/MemberHero';
+import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
 import { Button, Card, EmptyState, PageHeader, Badge } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
 
@@ -93,6 +94,8 @@ export default function MemberDashboard() {
         routineCompletedToday={primaryRoutineCompletedToday}
       />
 
+      <MemberSelfCheckInCard />
+
       {pending > 0 && (
         <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-6 py-4 sm:flex-row sm:items-center">
           <div>
@@ -148,18 +151,56 @@ export default function MemberDashboard() {
             <div
               className={`flex flex-col justify-between gap-3 rounded-2xl border px-6 py-4 sm:flex-row sm:items-center ${classes.container}`}
             >
-              <p className={`text-sm font-bold ${classes.text}`}>
-                {formatExpiryCountdown(sub.days_remaining) + suffix}
-              </p>
-              <Link
-                to="/payments?register=1"
-                className={`text-xs font-bold hover:underline ${classes.link}`}
-              >
-                Renovar
-              </Link>
+              <div>
+                <p className={`text-sm font-bold ${classes.text}`}>
+                  {formatExpiryCountdown(sub.days_remaining) + suffix}
+                </p>
+                <p className={`mt-1 text-[11px] opacity-80 ${classes.text}`}>
+                  Plan {sub.membership_name}
+                  {sub.end_date
+                    ? ` · vence ${format(parseDateOnly(sub.end_date), 'dd MMM yyyy', { locale: es })}`
+                    : ''}
+                  {pending > 0 ? ' · ya tienes un comprobante en revisión' : ''}
+                </p>
+              </div>
+              {pending > 0 ? (
+                <Link
+                  to="/payments?status=pending"
+                  className={`text-xs font-bold hover:underline ${classes.link}`}
+                >
+                  Ver comprobante
+                </Link>
+              ) : (
+                <Button size="sm" onClick={() => navigate('/payments?register=1')}>
+                  Reportar pago
+                </Button>
+              )}
             </div>
           );
         })()}
+
+      {sub && !shouldShowExpiryAlert(sub.days_remaining, alertDays) && (
+        <Card
+          padding="sm"
+          rounded="xl"
+          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+              {sub.membership_name}
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {formatRemainingDaysShort(sub.days_remaining)}
+              {sub.end_date
+                ? ` · hasta ${format(parseDateOnly(sub.end_date), 'dd MMM yyyy', { locale: es })}`
+                : ''}
+            </p>
+          </div>
+          <Link to="/payments" className="text-brand text-xs font-bold hover:underline">
+            Historial de pagos
+          </Link>
+        </Card>
+      )}
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
         <QuickAction

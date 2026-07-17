@@ -39,21 +39,21 @@ Guía para el rol **receptionist** (recepcionista / mostrador).
 
 ### Escritorio (sidebar)
 
-| Sección     | Ítems                                   |
-| ----------- | --------------------------------------- |
-| Mostrador   | Inicio, Check-in (modo mostrador)       |
-| Operaciones | Miembros, Equipamiento, Pagos, Mensajes |
-| Cuenta      | Mi Perfil                               |
+| Sección     | Ítems                                     |
+| ----------- | ----------------------------------------- |
+| Mostrador   | Inicio, Check-in (modo mostrador), Clases |
+| Operaciones | Miembros, Equipamiento, Pagos, Mensajes   |
+| Cuenta      | Mi Perfil, Seguridad MFA                  |
 
 ### Móvil (bottom nav)
 
-| Tab      | Destino                      |
-| -------- | ---------------------------- |
-| Inicio   | `/reception`                 |
-| Miembros | `/members`                   |
-| Pagos    | `/payments`                  |
-| Mensajes | `/messages`                  |
-| Más      | Tablet, Equipamiento, Perfil |
+| Tab      | Destino                                   |
+| -------- | ----------------------------------------- |
+| Inicio   | `/reception`                              |
+| Miembros | `/members`                                |
+| Pagos    | `/payments`                               |
+| Mensajes | `/messages`                               |
+| Más      | Tablet, Clases, Equipamiento, MFA, Perfil |
 
 ---
 
@@ -117,6 +117,17 @@ Ver [PAGOS-Y-TIPO-DE-CAMBIO.md](../modulos/PAGOS-Y-TIPO-DE-CAMBIO.md).
 
 1. **Equipamiento** → localiza máquina.
 2. **Nuevo evento** de tipo reporte de mantenimiento.
+
+### Clases del día
+
+1. **Clases del día** (`/clases`) desde sidebar o **Más** en móvil.
+2. Revisa cupos y lista de inscritos de las sesiones de hoy.
+3. Coordina con entrenadores si hay overbooking o cancelaciones.
+
+### Seguridad MFA
+
+1. **Más** → **Seguridad MFA** (`/security`) o desde Perfil.
+2. Activa verificación en dos pasos con app TOTP.
 
 ---
 

@@ -8,6 +8,7 @@ import {
   UserCircle,
   Wrench,
   CalendarDays,
+  ShieldCheck,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -27,6 +28,7 @@ export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
   { name: 'Kiosk / tablet', href: '/check-in?kiosk=1', icon: LogIn },
   { name: 'Clases del día', href: '/clases', icon: CalendarDays },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench },
+  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 

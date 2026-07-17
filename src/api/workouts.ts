@@ -1,6 +1,6 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
-import { AuthRequest } from './middleware/auth.ts';
+import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireWorkoutSessionAccess } from './middleware/access.ts';
 import { trainerHasMemberRoutineAccess } from '../lib/trainerAccess.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
@@ -13,6 +13,69 @@ import {
 } from './workoutSchemas.ts';
 
 const router = asyncRouter();
+
+router.get(
+  '/progress',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const { rows: weeklyRows } = await query<{
+      week_start: string;
+      volume_kg: string;
+      max_weight_kg: string;
+      workouts: number;
+    }>(
+      `WITH weeks AS (
+         SELECT generate_series(
+           DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 weeks',
+           DATE_TRUNC('week', CURRENT_DATE),
+           INTERVAL '1 week'
+         )::date AS week_start
+       ),
+       workout_totals AS (
+         SELECT DATE_TRUNC('week', ws.start_time)::date AS week_start,
+                COALESCE(SUM(wl.weight * wl.reps), 0)::numeric AS volume_kg,
+                COALESCE(MAX(wl.weight), 0)::numeric AS max_weight_kg,
+                COUNT(DISTINCT DATE(ws.start_time))::int AS workouts
+         FROM workout_sessions ws
+         LEFT JOIN workout_logs wl ON wl.session_id = ws.id
+         WHERE ws.user_id = $1
+           AND ws.end_time IS NOT NULL
+           AND ws.success = 1
+           AND ws.start_time >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '7 weeks'
+         GROUP BY DATE_TRUNC('week', ws.start_time)::date
+       )
+       SELECT weeks.week_start::text, COALESCE(workout_totals.volume_kg, 0)::text AS volume_kg,
+              COALESCE(workout_totals.max_weight_kg, 0)::text AS max_weight_kg,
+              COALESCE(workout_totals.workouts, 0)::int AS workouts
+       FROM weeks
+       LEFT JOIN workout_totals ON workout_totals.week_start = weeks.week_start
+       ORDER BY weeks.week_start`,
+      [userId]
+    );
+    const { rows: goalRows } = await query<{ weekly_training_goal: number }>(
+      'SELECT weekly_training_goal FROM users WHERE id = $1',
+      [userId]
+    );
+    const weeklyGoal = goalRows[0]?.weekly_training_goal ?? 5;
+    const currentWeek = weeklyRows.at(-1);
+
+    res.json({
+      weekly_goal: weeklyGoal,
+      workouts_this_week: currentWeek?.workouts ?? 0,
+      goal_completion_percent: Math.min(
+        100,
+        Math.round(((currentWeek?.workouts ?? 0) / Math.max(weeklyGoal, 1)) * 100)
+      ),
+      weeks: weeklyRows.map((row) => ({
+        week_start: row.week_start,
+        volume_kg: Math.round(Number(row.volume_kg)),
+        max_weight_kg: Math.round(Number(row.max_weight_kg)),
+        workouts: row.workouts,
+      })),
+    });
+  })
+);
 
 router.post(
   '/start',

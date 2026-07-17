@@ -33,16 +33,18 @@
 
 ## Guías por módulo
 
-| Módulo                     | Documento                                                                  |
-| -------------------------- | -------------------------------------------------------------------------- |
-| Equipamiento (CMMS)        | [modulos/EQUIPAMIENTO.md](./modulos/EQUIPAMIENTO.md)                       |
-| Pagos y tipo de cambio BCV | [modulos/PAGOS-Y-TIPO-DE-CAMBIO.md](./modulos/PAGOS-Y-TIPO-DE-CAMBIO.md)   |
-| Rutinas y entrenamiento    | [modulos/RUTINAS-Y-ENTRENAMIENTO.md](./modulos/RUTINAS-Y-ENTRENAMIENTO.md) |
-| Chat y notificaciones      | [modulos/CHAT-Y-NOTIFICACIONES.md](./modulos/CHAT-Y-NOTIFICACIONES.md)     |
-| Nutrición                  | [modulos/NUTRICION.md](./modulos/NUTRICION.md)                             |
-| Entrenadores y turnos      | [modulos/ENTRENADORES-Y-TURNOS.md](./modulos/ENTRENADORES-Y-TURNOS.md)     |
-| Móvil y PWA                | [modulos/MOVIL-Y-PWA.md](./modulos/MOVIL-Y-PWA.md)                         |
-| Membresías y asistencia    | [modulos/MEMBRESIAS-Y-ASISTENCIA.md](./modulos/MEMBRESIAS-Y-ASISTENCIA.md) |
+| Módulo                      | Documento                                                                  |
+| --------------------------- | -------------------------------------------------------------------------- |
+| Clases y reservas           | [modulos/CLASES-Y-RESERVAS.md](./modulos/CLASES-Y-RESERVAS.md)             |
+| Escalabilidad diferida (P3) | [ROADMAP-P3-ESCALABILIDAD.md](./ROADMAP-P3-ESCALABILIDAD.md)               |
+| Equipamiento (CMMS)         | [modulos/EQUIPAMIENTO.md](./modulos/EQUIPAMIENTO.md)                       |
+| Pagos y tipo de cambio BCV  | [modulos/PAGOS-Y-TIPO-DE-CAMBIO.md](./modulos/PAGOS-Y-TIPO-DE-CAMBIO.md)   |
+| Rutinas y entrenamiento     | [modulos/RUTINAS-Y-ENTRENAMIENTO.md](./modulos/RUTINAS-Y-ENTRENAMIENTO.md) |
+| Chat y notificaciones       | [modulos/CHAT-Y-NOTIFICACIONES.md](./modulos/CHAT-Y-NOTIFICACIONES.md)     |
+| Nutrición                   | [modulos/NUTRICION.md](./modulos/NUTRICION.md)                             |
+| Entrenadores y turnos       | [modulos/ENTRENADORES-Y-TURNOS.md](./modulos/ENTRENADORES-Y-TURNOS.md)     |
+| Móvil y PWA                 | [modulos/MOVIL-Y-PWA.md](./modulos/MOVIL-Y-PWA.md)                         |
+| Membresías y asistencia     | [modulos/MEMBRESIAS-Y-ASISTENCIA.md](./modulos/MEMBRESIAS-Y-ASISTENCIA.md) |
 
 ---
 

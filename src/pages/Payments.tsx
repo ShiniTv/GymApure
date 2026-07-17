@@ -92,7 +92,9 @@ export default function Payments() {
 
   const [showModal, setShowModal] = useState(false);
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(() =>
+    user?.role === 'admin' || user?.role === 'receptionist' ? 'pending' : ''
+  );
   const pageSize = user?.role === 'member' ? 10 : 20;
   const [memberOptions, setMemberOptions] = useState<MemberOption[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -156,8 +158,26 @@ export default function Payments() {
     if (status === 'pending' || status === 'approved' || status === 'rejected') {
       setStatusFilter(status);
       setPage(1);
+    } else if (
+      !status &&
+      (user?.role === 'admin' || user?.role === 'receptionist') &&
+      !searchParams.get('register')
+    ) {
+      setStatusFilter('pending');
     }
-  }, [searchParams]);
+  }, [searchParams, user?.role]);
+
+  useEffect(() => {
+    if (!isStaffPayment) return;
+    const paymentIdRaw = searchParams.get('paymentId');
+    if (!paymentIdRaw) return;
+    const paymentId = parseInt(paymentIdRaw, 10);
+    if (Number.isNaN(paymentId) || payments.length === 0) return;
+    const target = payments.find((p) => p.id === paymentId && p.status === 'pending');
+    if (target) {
+      openApproveModal(target);
+    }
+  }, [searchParams, payments, isStaffPayment]);
 
   useEffect(() => {
     if (searchParams.get('register') === '1') {

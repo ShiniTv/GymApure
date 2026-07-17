@@ -83,9 +83,21 @@ Ver [EQUIPAMIENTO.md](../modulos/EQUIPAMIENTO.md).
 ### Gestionar entrenadores
 
 1. **Entrenadores** → perfiles, niveles, turnos.
-2. Asignar miembros a cada entrenador.
+2. Asignar miembros a cada entrenador (vinculación explícita; no hace falta crear rutina primero).
 
 Ver [ENTRENADORES-Y-TURNOS.md](../modulos/ENTRENADORES-Y-TURNOS.md).
+
+### Clases grupales
+
+1. **Clases** (`/clases`) → crear sesiones (horario, cupo, entrenador).
+2. Los miembros reservan desde **Reservas** (`/reservas`).
+3. Recepción y admin ven la lista del día para control de cupos.
+
+### Seguridad MFA
+
+1. **Seguridad MFA** (`/security`) o **Perfil → Seguridad → Configurar MFA**.
+2. Escanea el QR con una app TOTP y activa con el código de 6 dígitos.
+3. En el próximo login se pedirá el código.
 
 ### Reportes y auditoría
 
@@ -102,20 +114,23 @@ Ver [NUTRICION.md](../modulos/NUTRICION.md).
 
 ## Navegación
 
-| Sección        | Ruta             |
-| -------------- | ---------------- |
-| Panel          | `/`              |
-| Miembros       | `/members`       |
-| Membresías     | `/memberships`   |
-| Pagos          | `/payments`      |
-| Entrenadores   | `/trainers`      |
-| Equipamiento   | `/equipment`     |
-| Asistencia     | `/attendance`    |
-| Reportes       | `/reports`       |
-| Auditoría      | `/audit-logs`    |
-| Configuración  | `/settings`      |
-| Mensajes       | `/messages`      |
-| Notificaciones | `/notifications` |
+| Sección        | Ruta                  |
+| -------------- | --------------------- |
+| Panel          | `/panel`              |
+| Miembros       | `/members`            |
+| Membresías     | `/memberships`        |
+| Pagos          | `/payments`           |
+| Entrenadores   | `/trainers`           |
+| Clases         | `/clases`             |
+| Equipamiento   | `/equipment`          |
+| Asistencia     | `/attendance`         |
+| Reportes       | `/reports`            |
+| Auditoría      | `/audit-logs`         |
+| Nutrición      | `/nutrition-overview` |
+| Configuración  | `/settings`           |
+| Seguridad MFA  | `/security`           |
+| Mensajes       | `/messages`           |
+| Notificaciones | `/notifications`      |
 
 ---
 

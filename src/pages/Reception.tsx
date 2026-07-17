@@ -40,6 +40,7 @@ import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { OnboardingStatus, type MemberOnboarding } from '../components/members/OnboardingStatus';
 
 interface LookupResult {
   found: boolean;
@@ -64,6 +65,7 @@ interface LookupResult {
   access_status?: 'allowed' | 'inactive' | 'no_subscription';
   can_check_in?: boolean;
   can_check_out?: boolean;
+  onboarding?: MemberOnboarding | null;
   error?: string;
 }
 
@@ -528,6 +530,8 @@ export default function Reception() {
               )}
             </div>
           )}
+
+          <OnboardingStatus onboarding={lookup.onboarding} />
 
           {lookup.attendance?.today_session && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">

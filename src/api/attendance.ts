@@ -1,8 +1,11 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
-import { authorize } from './middleware/auth.ts';
+import { authorize, type AuthRequest } from './middleware/auth.ts';
 import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
 import { RECEPTION_OPERATORS } from '../lib/roles.ts';
+import { asyncHandler } from './middleware/asyncHandler.ts';
+import { performCheckIn, performCheckOut } from './attendance/attendanceCore.ts';
+import { logAudit } from '../lib/audit.ts';
 
 const router = asyncRouter();
 
@@ -308,5 +311,72 @@ router.get('/week-comparison', authorize(['admin']), async (_req, res) => {
     res.status(500).json({ error: message });
   }
 });
+
+async function resolveMemberCedula(userId: number): Promise<string | null> {
+  const { rows } = await query<{ cedula: string | null }>(
+    `SELECT cedula FROM users WHERE id = $1 AND role = 'member' AND status = 'active' LIMIT 1`,
+    [userId]
+  );
+  return rows[0]?.cedula ?? null;
+}
+
+router.get(
+  '/me',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { rows } = await query<{
+      id: number;
+      check_in_time: Date | string;
+      is_inside: boolean;
+    }>(
+      `SELECT id, check_in_time, (check_out_time IS NULL) AS is_inside
+       FROM attendance
+       WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')}
+       ORDER BY check_in_time DESC
+       LIMIT 1`,
+      [req.user!.id]
+    );
+    const latest = rows[0] ?? null;
+    res.json({
+      is_inside: Boolean(latest?.is_inside),
+      check_in_time: latest?.check_in_time ?? null,
+      attendance_id: latest?.id ?? null,
+    });
+  })
+);
+
+router.post(
+  '/self-check-in',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const cedula = await resolveMemberCedula(req.user!.id);
+    if (!cedula) {
+      res.status(400).json({ error: 'Completa tu cédula en el perfil para marcar entrada' });
+      return;
+    }
+    const result = await performCheckIn(cedula);
+    if (result.ok) {
+      await logAudit(req.user!.id, 'member.self_check_in', result.body);
+    }
+    res.status(result.status).json(result.body);
+  })
+);
+
+router.post(
+  '/self-check-out',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const cedula = await resolveMemberCedula(req.user!.id);
+    if (!cedula) {
+      res.status(400).json({ error: 'Completa tu cédula en el perfil para marcar salida' });
+      return;
+    }
+    const result = await performCheckOut(cedula);
+    if (result.ok) {
+      await logAudit(req.user!.id, 'member.self_check_out', result.body);
+    }
+    res.status(result.status).json(result.body);
+  })
+);
 
 export default router;

@@ -15,6 +15,7 @@ import { cn } from '../../lib/utils';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
 import { SHIFT_SHORT_LABELS, SHIFT_BADGE_CLASSES } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
+import { OnboardingStatus } from '../../components/members/OnboardingStatus';
 
 interface MemberTableRowProps {
   member: Member;
@@ -106,6 +107,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                 Asignar turno
               </button>
             ) : null}
+            <OnboardingStatus onboarding={member.onboarding} compact />
           </div>
         ) : (
           <span className="text-zinc-400 dark:text-zinc-300">—</span>

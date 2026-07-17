@@ -26,6 +26,18 @@ import { toDisplayErrorMessage } from '../lib/api';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 interface WorkoutSession {
   id: number;
@@ -81,6 +93,18 @@ interface PaginatedHistory {
   workoutsThisWeek?: number;
 }
 
+interface WorkoutProgress {
+  weekly_goal: number;
+  workouts_this_week: number;
+  goal_completion_percent: number;
+  weeks: {
+    week_start: string;
+    volume_kg: number;
+    max_weight_kg: number;
+    workouts: number;
+  }[];
+}
+
 export default function WorkoutHistory() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -99,9 +123,11 @@ export default function WorkoutHistory() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [progress, setProgress] = useState<WorkoutProgress | null>(null);
   const pageSize = 20;
 
   const userIdToFetch = id ? parseInt(id, 10) : user?.id;
+  const isMemberSelf = !id && user?.role === 'member';
 
   useEffect(() => {
     setPage(1);
@@ -188,7 +214,22 @@ export default function WorkoutHistory() {
     void fetchHistory();
   }, [fetchHistory]);
 
-  const isMemberSelf = !id && user?.role === 'member';
+  useEffect(() => {
+    if (!isMemberSelf) return;
+    let cancelled = false;
+    void apiFetch('/api/workouts/progress')
+      .then((res) => parseJsonResponse<WorkoutProgress>(res))
+      .then((data) => {
+        if (!cancelled) setProgress(data);
+      })
+      .catch(() => {
+        if (!cancelled) setProgress(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMemberSelf]);
+
   const {
     pullDistance: historyPullDistance,
     isRefreshing: historyRefreshing,
@@ -329,6 +370,100 @@ export default function WorkoutHistory() {
             <Card padding="sm" rounded="xl">
               <h3 className="section-title mb-2">Volumen semanal</h3>
               <WorkoutWeeklyChart history={history} />
+            </Card>
+          )}
+          {progress && (
+            <Card padding="md" rounded="xl">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="section-title">Progreso de fuerza</h3>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    Últimas 8 semanas de entrenamientos completados.
+                  </p>
+                </div>
+                <div className="bg-brand/10 rounded-lg px-3 py-2 text-right">
+                  <p className="text-brand text-lg font-bold tabular-nums">
+                    {progress.workouts_this_week}/{progress.weekly_goal}
+                  </p>
+                  <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                    Meta semanal · {progress.goal_completion_percent}%
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <div className="h-44">
+                  <p className="mb-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
+                    Volumen levantado (kg)
+                  </p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={progress.weeks}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        className="text-zinc-100 dark:text-zinc-800"
+                      />
+                      <XAxis
+                        dataKey="week_start"
+                        tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
+                        tick={{ fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis tick={{ fontSize: 10 }} width={42} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        formatter={(value) => [
+                          `${Number(value).toLocaleString('es-VE')} kg`,
+                          'Volumen',
+                        ]}
+                        labelFormatter={(value) =>
+                          `Semana del ${format(parseISO(value), 'dd MMM', { locale: es })}`
+                        }
+                      />
+                      <Bar dataKey="volume_kg" fill="var(--chart-accent)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="h-44">
+                  <p className="mb-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
+                    Mayor peso por semana (kg)
+                  </p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={progress.weeks}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        className="text-zinc-100 dark:text-zinc-800"
+                      />
+                      <XAxis
+                        dataKey="week_start"
+                        tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
+                        tick={{ fontSize: 10 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis tick={{ fontSize: 10 }} width={32} axisLine={false} tickLine={false} />
+                      <Tooltip
+                        formatter={(value) => [
+                          `${Number(value).toLocaleString('es-VE')} kg`,
+                          'Mayor peso',
+                        ]}
+                        labelFormatter={(value) =>
+                          `Semana del ${format(parseISO(value), 'dd MMM', { locale: es })}`
+                        }
+                      />
+                      <Legend wrapperStyle={{ fontSize: 10 }} />
+                      <Line
+                        type="monotone"
+                        dataKey="max_weight_kg"
+                        name="Peso"
+                        stroke="var(--color-brand)"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </Card>
           )}
         </>

@@ -992,6 +992,19 @@ export default function Profile() {
               <Lock className="text-brand h-3.5 w-3.5" />
               Seguridad
             </h2>
+            {user.role !== 'member' && (
+              <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+                <p className="mb-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  Protege tu cuenta de staff con verificación en dos pasos (TOTP).
+                </p>
+                <Link
+                  to="/security"
+                  className="text-brand inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+                >
+                  Configurar MFA →
+                </Link>
+              </div>
+            )}
             {passwordMsg && (
               <p className="mb-3 text-xs font-medium text-emerald-600">{passwordMsg}</p>
             )}

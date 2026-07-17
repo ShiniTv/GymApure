@@ -39,7 +39,7 @@ export async function notifyPaymentReported(
     type: 'payment_reported',
     title: 'Nuevo pago reportado',
     body: `${fullName} reportó $${amountUsd} USD`,
-    href: '/payments?status=pending',
+    href: `/payments?status=pending&paymentId=${paymentId}`,
     severity: 'warning',
     metadata: { payment_id: paymentId, amount_usd: amountUsd, member_id: userId },
     dedupeKey: `payment_reported:${paymentId}`,
@@ -161,7 +161,7 @@ export async function notifyRoutineAssigned(userId: number, routineId: number): 
   });
 }
 
-export function notifyMembershipExpiry(
+export async function notifyMembershipExpiry(
   userId: number,
   eventType: 'expiring_soon' | 'expired',
   options: {
@@ -171,41 +171,44 @@ export function notifyMembershipExpiry(
     endDate: string;
     alertDays?: number;
   }
-): void {
+): Promise<boolean> {
   const { membershipName, daysRemaining, subscriptionId, endDate, alertDays = 7 } = options;
 
   const title = eventType === 'expired' ? 'Membresía vencida' : 'Membresía por vencer';
   let body: string;
   if (eventType === 'expired') {
-    body = `Tu membresía "${membershipName}" ha vencido. Renueva para recuperar el acceso.`;
+    body = `Tu membresía "${membershipName}" ha vencido. Reporta tu pago para recuperar el acceso.`;
   } else if (daysRemaining === 0) {
-    body = `Tu membresía "${membershipName}" vence hoy.`;
+    body = `Tu membresía "${membershipName}" vence hoy. Reporta tu pago para evitar interrupciones.`;
   } else if (daysRemaining === 1) {
-    body = `Tu membresía "${membershipName}" vence mañana.`;
+    body = `Tu membresía "${membershipName}" vence mañana. Renueva desde Pagos para mantener tu acceso.`;
   } else {
-    body = `Tu membresía "${membershipName}" vence en ${daysRemaining} días.`;
+    body = `Tu membresía "${membershipName}" vence en ${daysRemaining} días. Planifica tu renovación desde Pagos.`;
   }
 
   const dedupeKey =
     eventType === 'expiring_soon'
-      ? `expiry:sub:${subscriptionId}:${endDate}`
+      ? `expiry:sub:${subscriptionId}:${endDate}:${daysRemaining}`
       : `expired:sub:${subscriptionId}`;
 
-  void createUserNotification({
-    userId,
-    type: eventType,
-    title,
-    body,
-    href: '/payments',
-    severity: expiryNotificationSeverity(daysRemaining, alertDays),
-    metadata: {
-      subscription_id: subscriptionId,
-      membership_name: membershipName,
-      end_date: endDate,
-      days_remaining: daysRemaining,
-    },
-    dedupeKey,
-  }).catch((err) => {
+  try {
+    return await createUserNotification({
+      userId,
+      type: eventType,
+      title,
+      body,
+      href: '/payments',
+      severity: expiryNotificationSeverity(daysRemaining, alertDays),
+      metadata: {
+        subscription_id: subscriptionId,
+        membership_name: membershipName,
+        end_date: endDate,
+        days_remaining: daysRemaining,
+      },
+      dedupeKey,
+    });
+  } catch (err) {
     console.error('[notify] membership expiry in-app', err);
-  });
+    return false;
+  }
 }

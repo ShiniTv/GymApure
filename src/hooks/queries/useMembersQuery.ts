@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
+import type { MemberOnboarding } from '../../components/members/OnboardingStatus';
 
 export interface Member {
   id: number;
@@ -17,6 +18,7 @@ export interface Member {
   phone?: string | null;
   dob?: string | null;
   created_at?: string | null;
+  onboarding?: MemberOnboarding | null;
 }
 
 interface PaginatedUsers {

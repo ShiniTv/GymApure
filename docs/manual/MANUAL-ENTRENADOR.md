@@ -90,6 +90,17 @@ El miembro completa y actualiza estos datos en su **Perfil → Salud**. Son esti
 2. Crear ejercicio propio con video opcional.
 3. Ejercicios del sistema incluyen pasos y video guía.
 
+### Clases grupales
+
+1. **Clases grupales** (`/clases`) → crea o gestiona sesiones que impartes.
+2. Los miembros reservan cupos desde su app (**Reservas**).
+3. Revisa inscritos antes de la clase.
+
+### Seguridad MFA
+
+1. **Más** → **Seguridad MFA** o **Perfil → Configurar MFA**.
+2. Recomendado para proteger el acceso a datos de miembros.
+
 ---
 
 ## Errores comunes

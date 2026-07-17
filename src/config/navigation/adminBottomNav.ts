@@ -11,6 +11,10 @@ import {
   UserCircle,
   Wrench,
   CalendarDays,
+  FileSpreadsheet,
+  ScrollText,
+  UtensilsCrossed,
+  ShieldCheck,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -27,8 +31,12 @@ export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Entrenadores', href: '/trainers', icon: UserCog },
   { name: 'Clases', href: '/clases', icon: CalendarDays },
   { name: 'Asistencias', href: '/attendance', icon: BarChart2 },
+  { name: 'Reportes', href: '/reports', icon: FileSpreadsheet },
+  { name: 'Auditoría', href: '/audit-logs', icon: ScrollText },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench },
   { name: 'Configuración', href: '/settings', icon: Settings2 },
+  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
 ];
 

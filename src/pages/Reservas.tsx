@@ -27,7 +27,9 @@ export interface ClassSessionRow {
   capacity: number;
   status: 'scheduled' | 'cancelled';
   booked_count: number;
+  waitlisted_count: number;
   has_booked: boolean;
+  has_waitlisted: boolean;
   my_booking_id: number | null;
 }
 
@@ -73,7 +75,8 @@ export default function Reservas() {
         const data = await parseJsonSafe<{ error?: string }>(res);
         throw new Error(data.error || 'No se pudo reservar');
       }
-      toast?.success('Reserva confirmada');
+      const data = await parseJsonSafe<{ waitlisted?: boolean }>(res);
+      toast?.success(data.waitlisted ? 'Te agregamos a la lista de espera' : 'Reserva confirmada');
       await queryClient.invalidateQueries({ queryKey: ['class-sessions'] });
     } catch (err) {
       toast?.error(connectionOrApiError(err, 'No se pudo reservar'));
@@ -149,7 +152,10 @@ export default function Reservas() {
                         {session.class_type_name}
                       </h3>
                       {session.has_booked && <Badge variant="success">Reservada</Badge>}
-                      {full && !session.has_booked && <Badge variant="warning">Sin cupo</Badge>}
+                      {session.has_waitlisted && <Badge variant="warning">En espera</Badge>}
+                      {full && !session.has_booked && !session.has_waitlisted && (
+                        <Badge variant="warning">Sin cupo</Badge>
+                      )}
                     </div>
                     <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                       <span className="inline-flex items-center gap-1">
@@ -163,10 +169,13 @@ export default function Reservas() {
                         <Clock className="h-3.5 w-3.5" />
                         {session.booked_count}/{session.capacity} cupos
                       </span>
+                      {session.waitlisted_count > 0 && (
+                        <span>· {session.waitlisted_count} en espera</span>
+                      )}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    {session.has_booked && session.my_booking_id ? (
+                    {(session.has_booked || session.has_waitlisted) && session.my_booking_id ? (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -178,11 +187,10 @@ export default function Reservas() {
                     ) : (
                       <Button
                         size="sm"
-                        disabled={full}
                         loading={busyId === session.id}
                         onClick={() => void handleBook(session.id)}
                       >
-                        Reservar
+                        {full ? 'Unirme a lista' : 'Reservar'}
                       </Button>
                     )}
                   </div>

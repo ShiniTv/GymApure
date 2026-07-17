@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit, Dumbbell, Trash2 } from 'lucide-react';
+import { Plus, Edit, Dumbbell, Trash2, Users } from 'lucide-react';
 import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
   useTrainersQuery,
@@ -23,6 +23,7 @@ import {
   PasswordInput,
 } from '../components/ui';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
+import { TrainerMembersModal } from '../components/trainers/TrainerMembersModal';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import {
   TRAINER_LEVELS,
@@ -69,6 +70,7 @@ export default function Trainers() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editTarget, setEditTarget] = useState<Trainer | null>(null);
+  const [membersTarget, setMembersTarget] = useState<Trainer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Trainer | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -373,6 +375,17 @@ export default function Trainers() {
                 <button
                   type="button"
                   onClick={() => {
+                    setMembersTarget(trainer);
+                  }}
+                  className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
+                  title="Miembros asignados"
+                  aria-label={`Miembros de ${trainer.full_name}`}
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     openEdit(trainer);
                   }}
                   className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
@@ -440,6 +453,17 @@ export default function Trainers() {
                 <Badge variant={trainer.status === 'active' ? 'success' : 'danger'}>
                   {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
                 </Badge>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMembersTarget(trainer);
+                  }}
+                  className="hover:bg-brand/10 hover:text-brand rounded-lg p-1.5 text-zinc-400"
+                  title="Miembros asignados"
+                  aria-label={`Miembros de ${trainer.full_name}`}
+                >
+                  <Users className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -719,6 +743,16 @@ export default function Trainers() {
           </div>
         )}
       </Modal>
+
+      <TrainerMembersModal
+        trainer={membersTarget}
+        open={Boolean(membersTarget)}
+        onClose={() => setMembersTarget(null)}
+        onToast={(msg, type) => {
+          if (type === 'error') toast?.error(msg);
+          else toast?.success(msg);
+        }}
+      />
     </div>
   );
 }

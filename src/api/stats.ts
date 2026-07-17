@@ -183,10 +183,12 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       : 'SELECT COUNT(*)::text AS count FROM routines';
 
     const assignedMembersSql = trainerId
-      ? `SELECT COUNT(DISTINCT ur.user_id)::text AS count
-         FROM user_routines ur
-         JOIN routines r ON r.id = ur.routine_id
-         WHERE r.trainer_id = $1`
+      ? `SELECT COUNT(DISTINCT member_id)::text AS count FROM (
+           SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+           UNION
+           SELECT ur.user_id AS member_id FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+         ) t`
       : `SELECT COUNT(DISTINCT user_id)::text AS count FROM user_routines`;
 
     const recentSql = trainerId
@@ -207,6 +209,8 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const membersWithoutRoutinesSql = trainerId
       ? `SELECT COUNT(*)::text AS count
          FROM (
+           SELECT member_id AS user_id FROM trainer_member_assignments WHERE trainer_id = $1
+           UNION
            SELECT DISTINCT ur.user_id
            FROM user_routines ur
            JOIN routines r ON r.id = ur.routine_id
@@ -229,6 +233,8 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
          WHERE a.check_in_time >= NOW() - INTERVAL '2 hours'
            AND a.check_out_time IS NULL
            AND u.id IN (
+             SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+             UNION
              SELECT DISTINCT ur.user_id FROM user_routines ur
              JOIN routines r ON r.id = ur.routine_id
              WHERE r.trainer_id = $1
@@ -238,8 +244,6 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const expiringMembersSql = trainerId
       ? `SELECT DISTINCT u.id, u.full_name, sub.days_remaining
          FROM users u
-         JOIN user_routines ur ON ur.user_id = u.id
-         JOIN routines r ON r.id = ur.routine_id AND r.trainer_id = $1
          JOIN LATERAL (
            SELECT GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
            FROM subscriptions s
@@ -247,7 +251,13 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
            ORDER BY s.end_date DESC
            LIMIT 1
          ) sub ON true
-         WHERE sub.days_remaining IS NOT NULL AND sub.days_remaining <= $2
+         WHERE u.id IN (
+           SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+           UNION
+           SELECT ur.user_id FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+         )
+           AND sub.days_remaining IS NOT NULL AND sub.days_remaining <= $2
          ORDER BY sub.days_remaining ASC
          LIMIT 5`
       : null;
@@ -255,10 +265,12 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const baseQueries = await Promise.all([
       query<{ count: string }>(
         trainerId
-          ? `SELECT COUNT(DISTINCT ur.user_id)::text AS count
-             FROM user_routines ur
-             JOIN routines r ON r.id = ur.routine_id
-             WHERE r.trainer_id = $1`
+          ? `SELECT COUNT(DISTINCT member_id)::text AS count FROM (
+               SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+               UNION
+               SELECT ur.user_id AS member_id FROM user_routines ur
+               JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+             ) t`
           : "SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'",
         trainerId ? [trainerId] : []
       ),

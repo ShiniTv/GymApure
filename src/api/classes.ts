@@ -198,7 +198,9 @@ router.get(
       status: string;
       created_at: Date;
       booked_count: number;
+      waitlisted_count: number;
       my_booking_id: number | null;
+      my_booking_status: 'booked' | 'waitlisted' | null;
     }>(
       `SELECT cs.id, cs.class_type_id, ct.name AS class_type_name,
               cs.instructor_id, instructor.full_name AS instructor_name,
@@ -207,11 +209,22 @@ router.get(
                 SELECT COUNT(*)::int FROM class_bookings cb
                 WHERE cb.session_id = cs.id AND cb.status = 'booked'
               ) AS booked_count,
+              (
+                SELECT COUNT(*)::int FROM class_bookings cb
+                WHERE cb.session_id = cs.id AND cb.status = 'waitlisted'
+              ) AS waitlisted_count,
               CASE WHEN $1::boolean THEN (
                 SELECT mine.id FROM class_bookings mine
-                WHERE mine.session_id = cs.id AND mine.user_id = $2 AND mine.status = 'booked'
+                WHERE mine.session_id = cs.id AND mine.user_id = $2
+                  AND mine.status IN ('booked', 'waitlisted')
                 LIMIT 1
-              ) ELSE NULL END AS my_booking_id
+              ) ELSE NULL END AS my_booking_id,
+              CASE WHEN $1::boolean THEN (
+                SELECT mine.status FROM class_bookings mine
+                WHERE mine.session_id = cs.id AND mine.user_id = $2
+                  AND mine.status IN ('booked', 'waitlisted')
+                LIMIT 1
+              ) ELSE NULL END AS my_booking_status
        FROM class_sessions cs
        JOIN class_types ct ON ct.id = cs.class_type_id
        LEFT JOIN users instructor ON instructor.id = cs.instructor_id
@@ -223,7 +236,8 @@ router.get(
     res.json(
       rows.map((row) => ({
         ...row,
-        has_booked: row.my_booking_id != null,
+        has_booked: row.my_booking_status === 'booked',
+        has_waitlisted: row.my_booking_status === 'waitlisted',
       }))
     );
   })
@@ -345,7 +359,7 @@ router.post(
       const { rows: cancelledBookings } = await client.query<{ user_id: number }>(
         `UPDATE class_bookings
          SET status = 'cancelled', cancelled_at = NOW()
-         WHERE session_id = $1 AND status = 'booked'
+         WHERE session_id = $1 AND status IN ('booked', 'waitlisted')
          RETURNING user_id`,
         [sessionId]
       );
@@ -405,6 +419,7 @@ router.post(
         status: string;
         starts_at: Date;
         class_type_name: string;
+        instructor_id: number | null;
       }>(
         `SELECT cs.id, cs.capacity, cs.status, cs.starts_at, ct.name AS class_type_name
          FROM class_sessions cs
@@ -432,7 +447,7 @@ router.post(
 
       const existing = await client.query(
         `SELECT id FROM class_bookings
-         WHERE session_id = $1 AND user_id = $2 AND status = 'booked'`,
+         WHERE session_id = $1 AND user_id = $2 AND status IN ('booked', 'waitlisted')`,
         [sessionId, userId]
       );
       if (existing.rows[0])
@@ -443,17 +458,15 @@ router.post(
          FROM class_bookings WHERE session_id = $1 AND status = 'booked'`,
         [sessionId]
       );
-      if (countRows[0].booked_count >= session.capacity) {
-        return { error: 'La clase no tiene cupos disponibles', status: 409 };
-      }
+      const waitlisted = countRows[0].booked_count >= session.capacity;
 
       const { rows: bookingRows } = await client.query(
-        `INSERT INTO class_bookings (session_id, user_id)
-         VALUES ($1, $2)
+        `INSERT INTO class_bookings (session_id, user_id, status)
+         VALUES ($1, $2, $3)
          RETURNING id, session_id, user_id, status, created_at, cancelled_at`,
-        [sessionId, userId]
+        [sessionId, userId, waitlisted ? 'waitlisted' : 'booked']
       );
-      return { booking: bookingRows[0], session };
+      return { booking: bookingRows[0], session, waitlisted };
     });
 
     if ('error' in result) {
@@ -464,18 +477,22 @@ router.post(
 
     notifyBooking(
       userId,
-      'class_booking_created',
-      'Reserva confirmada',
-      `Tu reserva para ${result.session.class_type_name} fue confirmada.`,
+      result.waitlisted ? 'class_waitlist_joined' : 'class_booking_created',
+      result.waitlisted ? 'En lista de espera' : 'Reserva confirmada',
+      result.waitlisted
+        ? `Te agregamos a la lista de espera de ${result.session.class_type_name}. Te avisaremos si se libera un cupo.`
+        : `Tu reserva para ${result.session.class_type_name} fue confirmada.`,
       sessionId,
-      `class-booking:${result.booking.id}`
+      result.waitlisted
+        ? `class-waitlist:${result.booking.id}`
+        : `class-booking:${result.booking.id}`
     );
     await logAudit(req.user!.id, 'class_booking.create', {
       booking_id: result.booking.id,
       session_id: sessionId,
       user_id: userId,
     });
-    res.status(201).json(result.booking);
+    res.status(201).json({ ...result.booking, waitlisted: result.waitlisted });
   })
 );
 
@@ -497,13 +514,15 @@ router.post(
         status: string;
         starts_at: Date;
         class_type_name: string;
+        instructor_id: number | null;
       }>(
-        `SELECT cb.id, cb.user_id, cb.session_id, cb.status, cs.starts_at, ct.name AS class_type_name
+        `SELECT cb.id, cb.user_id, cb.session_id, cb.status, cs.starts_at, ct.name AS class_type_name,
+                cs.instructor_id
          FROM class_bookings cb
          JOIN class_sessions cs ON cs.id = cb.session_id
          JOIN class_types ct ON ct.id = cs.class_type_id
          WHERE cb.id = $1
-         FOR UPDATE OF cb`,
+         FOR UPDATE OF cb, cs`,
         [bookingId]
       );
       const booking = rows[0];
@@ -513,21 +532,65 @@ router.post(
       if (isMember && booking.user_id !== req.user!.id) {
         return { error: 'No puedes cancelar la reserva de otro miembro', status: 403 };
       }
+      if (req.user!.role === 'trainer' && booking.instructor_id !== req.user!.id) {
+        return { error: 'Solo puedes gestionar las reservas de tus propias clases', status: 403 };
+      }
       if (isMember && booking.starts_at.getTime() <= Date.now() + 2 * 60 * 60 * 1000) {
         return { error: 'Solo puedes cancelar hasta 2 horas antes de la clase', status: 400 };
       }
-      if (booking.status !== 'booked') {
+      if (booking.status !== 'booked' && booking.status !== 'waitlisted') {
         return { error: 'La reserva no se puede cancelar', status: 400 };
       }
 
       const { rows: updatedRows } = await client.query(
         `UPDATE class_bookings
          SET status = 'cancelled', cancelled_at = NOW()
-         WHERE id = $1 AND status = 'booked'
+         WHERE id = $1 AND status IN ('booked', 'waitlisted')
          RETURNING id, session_id, user_id, status, created_at, cancelled_at`,
         [bookingId]
       );
-      return { booking: updatedRows[0], classTypeName: booking.class_type_name };
+      let promotedBooking:
+        | { id: number; user_id: number; session_id: number; status: string; created_at: Date }
+        | undefined;
+      if (booking.status === 'booked') {
+        const { rows: waitlistedRows } = await client.query<{
+          id: number;
+          user_id: number;
+          session_id: number;
+          status: string;
+          created_at: Date;
+        }>(
+          `SELECT id, user_id, session_id, status, created_at
+           FROM class_bookings
+           WHERE session_id = $1 AND status = 'waitlisted'
+           ORDER BY created_at ASC, id ASC
+           LIMIT 1
+           FOR UPDATE SKIP LOCKED`,
+          [booking.session_id]
+        );
+        const next = waitlistedRows[0];
+        if (next) {
+          const { rows: promotedRows } = await client.query<{
+            id: number;
+            user_id: number;
+            session_id: number;
+            status: string;
+            created_at: Date;
+          }>(
+            `UPDATE class_bookings
+             SET status = 'booked'
+             WHERE id = $1 AND status = 'waitlisted'
+             RETURNING id, user_id, session_id, status, created_at`,
+            [next.id]
+          );
+          promotedBooking = promotedRows[0];
+        }
+      }
+      return {
+        booking: updatedRows[0],
+        classTypeName: booking.class_type_name,
+        promotedBooking,
+      };
     });
 
     if ('error' in result) {
@@ -544,6 +607,16 @@ router.post(
       result.booking.session_id,
       `class-booking-cancelled:${result.booking.id}`
     );
+    if (result.promotedBooking) {
+      notifyBooking(
+        result.promotedBooking.user_id,
+        'class_waitlist_promoted',
+        'Cupo confirmado',
+        `Se liberó un cupo para ${result.classTypeName}. Tu reserva ahora está confirmada.`,
+        result.promotedBooking.session_id,
+        `class-waitlist-promoted:${result.promotedBooking.id}`
+      );
+    }
     await logAudit(req.user!.id, 'class_booking.cancel', { booking_id: bookingId });
     res.json(result.booking);
   })
@@ -560,11 +633,15 @@ router.post(
     }
 
     const { rows } = await query(
-      `UPDATE class_bookings
+      `UPDATE class_bookings cb
        SET status = 'attended'
-       WHERE id = $1 AND status = 'booked'
-       RETURNING id, session_id, user_id, status, created_at, cancelled_at`,
-      [bookingId]
+       FROM class_sessions cs
+       WHERE cb.id = $1
+         AND cb.session_id = cs.id
+         AND cb.status = 'booked'
+         AND ($2 <> 'trainer' OR cs.instructor_id = $3)
+       RETURNING cb.id, cb.session_id, cb.user_id, cb.status, cb.created_at, cb.cancelled_at`,
+      [bookingId, req.user!.role, req.user!.id]
     );
     if (!rows[0]) {
       res.status(404).json({ error: 'Reserva no encontrada o no puede marcarse como asistida' });
@@ -572,6 +649,68 @@ router.post(
     }
     await logAudit(req.user!.id, 'class_booking.attend', { booking_id: bookingId });
     res.json(rows[0]);
+  })
+);
+
+router.post(
+  '/bookings/:id/no-show',
+  authorize(STAFF_ROLES),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const bookingId = parseId(req.params.id);
+    if (!bookingId) {
+      res.status(400).json({ error: 'ID de reserva inválido' });
+      return;
+    }
+
+    const { rows } = await query(
+      `UPDATE class_bookings cb
+       SET status = 'no_show'
+       FROM class_sessions cs
+       WHERE cb.id = $1
+         AND cb.session_id = cs.id
+         AND cb.status = 'booked'
+         AND ($2 <> 'trainer' OR cs.instructor_id = $3)
+       RETURNING cb.id, cb.session_id, cb.user_id, cb.status, cb.created_at, cb.cancelled_at`,
+      [bookingId, req.user!.role, req.user!.id]
+    );
+    if (!rows[0]) {
+      res
+        .status(404)
+        .json({ error: 'Reserva no encontrada o no puede marcarse como inasistencia' });
+      return;
+    }
+    await logAudit(req.user!.id, 'class_booking.no_show', { booking_id: bookingId });
+    res.json(rows[0]);
+  })
+);
+
+router.get(
+  '/sessions/:id/bookings',
+  authorize(STAFF_ROLES),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const sessionId = parseId(req.params.id);
+    if (!sessionId) {
+      res.status(400).json({ error: 'ID de sesión inválido' });
+      return;
+    }
+    const { rows } = await query<{
+      id: number;
+      user_id: number;
+      member_name: string;
+      status: string;
+      created_at: Date;
+    }>(
+      `SELECT cb.id, cb.user_id, u.full_name AS member_name, cb.status, cb.created_at
+       FROM class_bookings cb
+       JOIN class_sessions cs ON cs.id = cb.session_id
+       JOIN users u ON u.id = cb.user_id
+       WHERE cb.session_id = $1
+         AND ($2 <> 'trainer' OR cs.instructor_id = $3)
+       ORDER BY CASE cb.status WHEN 'booked' THEN 0 WHEN 'waitlisted' THEN 1 ELSE 2 END,
+                cb.created_at ASC, cb.id ASC`,
+      [sessionId, req.user!.role, req.user!.id]
+    );
+    res.json(rows);
   })
 );
 

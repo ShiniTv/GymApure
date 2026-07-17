@@ -13,6 +13,7 @@ import { hashPassword } from '../lib/passwordHash.ts';
 import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { isTrainerLevel, isTrainingShift } from '../lib/trainingShift.ts';
+import { isActiveMember } from '../lib/trainerAccess.ts';
 
 const router = asyncRouter();
 
@@ -247,6 +248,130 @@ router.put(
 
     const result = await query<TrainerRow>(`${TRAINER_SELECT} AND u.id = $1`, [targetId]);
     res.json(result.rows[0]);
+  })
+);
+
+const assignMemberSchema = z.object({
+  member_id: z.coerce.number().int().positive(),
+  notes: z.string().trim().max(500).optional().nullable(),
+});
+
+router.get(
+  '/:id/members',
+  authorize(['admin', 'receptionist', 'trainer']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const trainerId = parseInt(req.params.id, 10);
+    if (Number.isNaN(trainerId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    if (req.user!.role === 'trainer' && req.user!.id !== trainerId) {
+      res.status(403).json({ error: 'No autorizado' });
+      return;
+    }
+
+    const { rows } = await query<{
+      id: number;
+      full_name: string;
+      email: string;
+      cedula: string | null;
+      assigned_at: string;
+      notes: string | null;
+      has_active_routine: boolean;
+    }>(
+      `SELECT u.id, u.full_name, u.email, u.cedula, tma.assigned_at, tma.notes,
+              EXISTS (
+                SELECT 1 FROM user_routines ur
+                JOIN routines r ON r.id = ur.routine_id
+                WHERE ur.user_id = u.id AND r.trainer_id = $1
+                  AND ur.start_date <= CURRENT_DATE AND ur.end_date >= CURRENT_DATE
+              ) AS has_active_routine
+       FROM trainer_member_assignments tma
+       JOIN users u ON u.id = tma.member_id
+       WHERE tma.trainer_id = $1 AND u.role = 'member'
+       ORDER BY u.full_name ASC`,
+      [trainerId]
+    );
+
+    res.json(rows);
+  })
+);
+
+router.post(
+  '/:id/members',
+  authorize(['admin', 'receptionist']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const trainerId = parseInt(req.params.id, 10);
+    if (Number.isNaN(trainerId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const parsed = assignMemberSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: formatZodError(parsed.error) });
+      return;
+    }
+
+    const trainerOk = await query<{ ok: number }>(
+      `SELECT 1 AS ok FROM users WHERE id = $1 AND role = 'trainer' AND status = 'active' LIMIT 1`,
+      [trainerId]
+    );
+    if (!trainerOk.rows[0]) {
+      res.status(404).json({ error: 'Entrenador no encontrado' });
+      return;
+    }
+
+    const memberOk = await isActiveMember(parsed.data.member_id);
+    if (!memberOk) {
+      res.status(404).json({ error: 'Miembro no encontrado o inactivo' });
+      return;
+    }
+
+    await query(
+      `INSERT INTO trainer_member_assignments (trainer_id, member_id, assigned_by, notes)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (trainer_id, member_id) DO UPDATE SET notes = COALESCE(EXCLUDED.notes, trainer_member_assignments.notes)`,
+      [trainerId, parsed.data.member_id, req.user!.id, parsed.data.notes ?? null]
+    );
+
+    await logAudit(req.user!.id, 'trainer.member_assign', {
+      trainer_id: trainerId,
+      member_id: parsed.data.member_id,
+    });
+
+    res.status(201).json({ success: true });
+  })
+);
+
+router.delete(
+  '/:id/members/:memberId',
+  authorize(['admin', 'receptionist']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const trainerId = parseInt(req.params.id, 10);
+    const memberId = parseInt(req.params.memberId, 10);
+    if (Number.isNaN(trainerId) || Number.isNaN(memberId)) {
+      res.status(400).json({ error: 'ID inválido' });
+      return;
+    }
+
+    const { rowCount } = await query(
+      `DELETE FROM trainer_member_assignments WHERE trainer_id = $1 AND member_id = $2`,
+      [trainerId, memberId]
+    );
+
+    if (!rowCount) {
+      res.status(404).json({ error: 'Asignación no encontrada' });
+      return;
+    }
+
+    await logAudit(req.user!.id, 'trainer.member_unassign', {
+      trainer_id: trainerId,
+      member_id: memberId,
+    });
+
+    res.json({ success: true });
   })
 );
 

@@ -30,6 +30,14 @@ interface ClassType {
   is_active: boolean;
 }
 
+interface ClassBooking {
+  id: number;
+  user_id: number;
+  member_name: string;
+  status: 'booked' | 'waitlisted' | 'cancelled' | 'attended' | 'no_show';
+  created_at: string;
+}
+
 async function fetchTypes(): Promise<ClassType[]> {
   const res = await apiFetch('/api/classes/types');
   return parseJsonResponse<ClassType[]>(res);
@@ -48,11 +56,16 @@ export default function Classes() {
   const queryClient = useQueryClient();
   const isAdmin = user?.role === 'admin';
   const canCreateSession = user?.role === 'admin' || user?.role === 'trainer';
+  const canManageBookings =
+    user?.role === 'admin' || user?.role === 'trainer' || user?.role === 'receptionist';
 
   const [typeModal, setTypeModal] = useState(false);
   const [sessionModal, setSessionModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [bookingSession, setBookingSession] = useState<ClassSessionRow | null>(null);
+  const [bookings, setBookings] = useState<ClassBooking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
   const [typeForm, setTypeForm] = useState({
     name: '',
     duration_minutes: '60',
@@ -160,6 +173,43 @@ export default function Classes() {
       await queryClient.invalidateQueries({ queryKey: ['class-sessions'] });
     } catch (err) {
       toast?.error(connectionOrApiError(err, 'No se pudo cancelar'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openBookings = async (session: ClassSessionRow) => {
+    setBookingSession(session);
+    setBookings([]);
+    setBookingsLoading(true);
+    try {
+      const res = await apiFetch(`/api/classes/sessions/${session.id}/bookings`);
+      setBookings(await parseJsonResponse<ClassBooking[]>(res));
+    } catch (err) {
+      toast?.error(connectionOrApiError(err, 'No se pudieron cargar las reservas'));
+      setBookingSession(null);
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
+
+  const markBooking = async (bookingId: number, action: 'attend' | 'no-show') => {
+    setSaving(true);
+    try {
+      const res = await apiFetch(`/api/classes/bookings/${bookingId}/${action}`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await parseJsonSafe<{ error?: string }>(res);
+        throw new Error(data.error || 'No se pudo actualizar la asistencia');
+      }
+      const status = action === 'attend' ? 'attended' : 'no_show';
+      setBookings((current) =>
+        current.map((booking) => (booking.id === bookingId ? { ...booking, status } : booking))
+      );
+      toast?.success(action === 'attend' ? 'Asistencia registrada' : 'Inasistencia registrada');
+    } catch (err) {
+      toast?.error(connectionOrApiError(err, 'No se pudo actualizar la asistencia'));
     } finally {
       setSaving(false);
     }
@@ -274,16 +324,27 @@ export default function Classes() {
                       {session.instructor_name ? ` · ${session.instructor_name}` : ''}
                     </p>
                   </div>
-                  {!cancelled && (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={saving}
-                      onClick={() => void handleCancelSession(session.id)}
-                    >
-                      Cancelar clase
-                    </Button>
-                  )}
+                  <div className="flex shrink-0 gap-2">
+                    {canManageBookings && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => void openBookings(session)}
+                      >
+                        Reservas
+                      </Button>
+                    )}
+                    {!cancelled && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={saving}
+                        onClick={() => void handleCancelSession(session.id)}
+                      >
+                        Cancelar clase
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </Card>
             );
@@ -400,6 +461,89 @@ export default function Classes() {
             Programar
           </Button>
         </form>
+      </Modal>
+
+      <Modal
+        open={bookingSession !== null}
+        onClose={() => {
+          if (!saving) setBookingSession(null);
+        }}
+        title={
+          bookingSession ? (
+            <>
+              Reservas · <span className="text-brand">{bookingSession.class_type_name}</span>
+            </>
+          ) : (
+            'Reservas'
+          )
+        }
+      >
+        {bookingsLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : bookings.length === 0 ? (
+          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            Aún no hay reservas para esta clase.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {bookings.map((booking) => (
+              <div
+                key={booking.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-100 px-3 py-2 dark:border-zinc-800"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    {booking.member_name}
+                  </p>
+                  <Badge
+                    variant={
+                      booking.status === 'attended'
+                        ? 'success'
+                        : booking.status === 'no_show'
+                          ? 'danger'
+                          : booking.status === 'waitlisted'
+                            ? 'warning'
+                            : 'default'
+                    }
+                    className="mt-1"
+                  >
+                    {booking.status === 'booked'
+                      ? 'Confirmada'
+                      : booking.status === 'waitlisted'
+                        ? 'En espera'
+                        : booking.status === 'attended'
+                          ? 'Asistió'
+                          : booking.status === 'no_show'
+                            ? 'No asistió'
+                            : 'Cancelada'}
+                  </Badge>
+                </div>
+                {booking.status === 'booked' && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={saving}
+                      onClick={() => void markBooking(booking.id, 'attend')}
+                    >
+                      Asistió
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={saving}
+                      onClick={() => void markBooking(booking.id, 'no-show')}
+                    >
+                      No asistió
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -23,6 +23,7 @@ import notificationRoutes from './notifications.ts';
 import exchangeRateRoutes from './exchangeRate.ts';
 import cronRoutes from './cronRoutes.ts';
 import classRoutes from './classes.ts';
+import demoRequestRoutes from './demoRequests.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
@@ -34,6 +35,7 @@ router.use(healthRoutes);
 
 // Public routes (rate-limited)
 router.use('/auth', authRateLimiter, authRoutes);
+router.use('/demo-requests', apiRateLimiter, demoRequestRoutes);
 
 // Cron jobs (CRON_SECRET or admin session — before global authenticate)
 router.use(apiRateLimiter, cronRoutes);

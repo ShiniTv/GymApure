@@ -62,6 +62,8 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Reservas = lazy(() => import('./pages/Reservas'));
 const Classes = lazy(() => import('./pages/Classes'));
+const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
+const SolicitarDemo = lazy(() => import('./pages/SolicitarDemo'));
 
 function PageLoader() {
   return (
@@ -136,7 +138,7 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/solicitar-demo" element={<Navigate to="/login" replace />} />
+          <Route path="/solicitar-demo" element={<SolicitarDemo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -499,6 +501,20 @@ function AppRoutes() {
                 >
                   <Profile />
                 </ErrorBoundary>
+              }
+            />
+            <Route
+              path="security"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'receptionist', 'trainer']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <MfaSecurity />
+                  </ErrorBoundary>
+                </ProtectedRoute>
               }
             />
             <Route

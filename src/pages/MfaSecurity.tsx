@@ -115,8 +115,7 @@ export default function MfaSecurity() {
           Seguridad <span className="text-brand">MFA</span>
         </h1>
         <p className="page-subtitle">
-          Protege tu cuenta de {user.role === 'admin' ? 'administrador' : 'recepción'} con
-          verificación en dos pasos (TOTP).
+          Protege tu cuenta de staff con verificación en dos pasos (TOTP).
         </p>
       </div>
 
