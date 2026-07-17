@@ -27,6 +27,12 @@ export interface MemberStats {
   workoutStreak?: number;
   weeklyTrainingGoal?: number;
   completedRoutineIdsToday?: number[];
+  activeSessions?: {
+    id: number;
+    routine_id: number;
+    routine_name: string;
+    start_time: string;
+  }[];
 }
 
 interface MemberStatsContextValue {

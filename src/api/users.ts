@@ -622,12 +622,12 @@ router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, r
       ? [userId, trainerId, pageSize, offset]
       : [userId, pageSize, offset];
 
-    const [countResult, weekResult, listResult] = await Promise.all([
+    const [countResult, weekResult, activeResult, listResult] = await Promise.all([
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count
          FROM workout_sessions ws
          JOIN routines r ON ws.routine_id = r.id
-         WHERE ws.user_id = $1${trainerScope}`,
+         WHERE ws.user_id = $1 AND ws.end_time IS NOT NULL${trainerScope}`,
         countParams
       ),
       query<{ count: string }>(
@@ -650,7 +650,22 @@ router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, r
            FROM workout_logs
            GROUP BY session_id
          ) wl ON wl.session_id = ws.id
-         WHERE ws.user_id = $1${trainerScope}
+         WHERE ws.user_id = $1 AND ws.end_time IS NULL${trainerScope}
+         ORDER BY ws.start_time DESC`,
+        countParams
+      ),
+      query(
+        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, ws.routine_id,
+                r.name AS routine_name,
+                COALESCE(wl.sets_completed, 0)::int AS sets_completed
+         FROM workout_sessions ws
+         JOIN routines r ON ws.routine_id = r.id
+         LEFT JOIN (
+           SELECT session_id, COUNT(*)::int AS sets_completed
+           FROM workout_logs
+           GROUP BY session_id
+         ) wl ON wl.session_id = ws.id
+         WHERE ws.user_id = $1 AND ws.end_time IS NOT NULL${trainerScope}
          ORDER BY ws.start_time DESC
          LIMIT $${trainerId ? 3 : 2} OFFSET $${trainerId ? 4 : 3}`,
         listParams
@@ -659,8 +674,12 @@ router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, r
 
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
     const workoutsThisWeek = parseInt(weekResult.rows[0]?.count || '0', 10);
-    const payload: PaginatedResult<unknown> & { workoutsThisWeek: number } = {
+    const payload: PaginatedResult<unknown> & {
+      workoutsThisWeek: number;
+      activeSessions: unknown[];
+    } = {
       items: listResult.rows,
+      activeSessions: activeResult.rows,
       total,
       page,
       pageSize,

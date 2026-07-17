@@ -711,6 +711,11 @@ export default function Routines() {
               completedRoutineIdsToday={
                 isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
               }
+              activeRoutineIds={
+                isMember
+                  ? (memberStatsCtx?.stats?.activeSessions?.map((s) => s.routine_id) ?? [])
+                  : undefined
+              }
             />
           ) : view === 'calendar' ? (
             <RoutinesCalendarView

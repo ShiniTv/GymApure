@@ -530,14 +530,17 @@ export default function ActiveWorkout() {
   };
 
   const [isFinishing, setIsFinishing] = useState(false);
+  const [isSubmittingFinish, setIsSubmittingFinish] = useState(false);
 
   const confirmFinish = async (success: boolean) => {
     if (!sessionId) {
       setFinishError('Sesión no iniciada. Recarga la página e intenta de nuevo.');
       return;
     }
+    if (isSubmittingFinish) return;
 
     setFinishError(null);
+    setIsSubmittingFinish(true);
     try {
       const res = await apiFetch('/api/workouts/finish', {
         method: 'POST',
@@ -569,6 +572,8 @@ export default function ActiveWorkout() {
     } catch (err) {
       clientLogger.error('Failed to finish workout', err);
       setFinishError(err instanceof Error ? err.message : 'Error al finalizar el entrenamiento.');
+    } finally {
+      setIsSubmittingFinish(false);
     }
   };
 
@@ -1098,6 +1103,7 @@ export default function ActiveWorkout() {
       <Modal
         open={isFinishing}
         onClose={() => {
+          if (isSubmittingFinish) return;
           setIsFinishing(false);
           setFinishError(null);
         }}
@@ -1123,7 +1129,8 @@ export default function ActiveWorkout() {
           <button
             type="button"
             onClick={() => void confirmFinish(true)}
-            className="group flex w-full items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 p-6 transition-all hover:border-emerald-500 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+            disabled={isSubmittingFinish}
+            className="group flex w-full items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 p-6 transition-all hover:border-emerald-500 disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10"
           >
             <div className="text-left">
               <p className="font-semibold text-emerald-600 dark:text-emerald-500">Sí, la logré</p>
@@ -1139,7 +1146,8 @@ export default function ActiveWorkout() {
           <button
             type="button"
             onClick={() => void confirmFinish(false)}
-            className="group flex w-full items-center justify-between rounded-2xl border border-zinc-100 bg-zinc-50 p-6 transition-all hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-800/50"
+            disabled={isSubmittingFinish}
+            className="group flex w-full items-center justify-between rounded-2xl border border-zinc-100 bg-zinc-50 p-6 transition-all hover:border-zinc-400 disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-800/50"
           >
             <div className="text-left">
               <p className="font-semibold text-zinc-600 dark:text-zinc-400">No completamente</p>
@@ -1153,6 +1161,7 @@ export default function ActiveWorkout() {
             variant="ghost"
             className="mt-4 w-full"
             size="sm"
+            disabled={isSubmittingFinish}
             onClick={() => {
               setIsFinishing(false);
             }}

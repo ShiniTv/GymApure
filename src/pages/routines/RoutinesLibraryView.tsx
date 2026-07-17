@@ -34,6 +34,7 @@ export interface RoutinesLibraryViewProps {
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
   onStartWorkout?: (routineId: number) => void;
   completedRoutineIdsToday?: number[];
+  activeRoutineIds?: number[];
 }
 
 function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
@@ -58,8 +59,10 @@ export function RoutinesLibraryView({
   onDeleteExercise,
   onStartWorkout,
   completedRoutineIdsToday = [],
+  activeRoutineIds = [],
 }: RoutinesLibraryViewProps) {
   const completedTodaySet = new Set(completedRoutineIdsToday);
+  const activeRoutineSet = new Set(activeRoutineIds);
   const isStaff = userRole === 'trainer' || userRole === 'admin';
   const isMember = userRole === 'member';
   const totalExercises = routines.reduce((sum, r) => sum + (r.exercise_count ?? 0), 0);
@@ -121,6 +124,7 @@ export function RoutinesLibraryView({
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
           const completedToday = completedTodaySet.has(routine.id);
+          const inProgress = activeRoutineSet.has(routine.id);
           const exerciseSummary = buildExerciseSummary({
             count: routine.exercise_count ?? 0,
             preview: routine.exercise_preview,
@@ -174,6 +178,11 @@ export function RoutinesLibraryView({
                       >
                         {formatDifficulty(routine.difficulty)}
                       </Badge>
+                      {inProgress && !completedToday && (
+                        <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
+                          En curso
+                        </Badge>
+                      )}
                       {completedToday && (
                         <Badge variant="success" className="shrink-0 px-1.5 py-0 text-[9px]">
                           Hecha hoy
@@ -308,7 +317,11 @@ export function RoutinesLibraryView({
                         onClick={() => onStartWorkout?.(routine.id)}
                       >
                         <Play className="h-4 w-4" />
-                        {completedToday ? 'Completada hoy' : 'Empezar entrenamiento'}
+                        {completedToday
+                          ? 'Completada hoy'
+                          : inProgress
+                            ? 'Continuar entrenamiento'
+                            : 'Empezar entrenamiento'}
                       </Button>
                     </>
                   ) : (

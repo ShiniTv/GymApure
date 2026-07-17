@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Clock, Dumbbell, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, Dumbbell, ArrowLeft, Play, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
@@ -23,6 +23,7 @@ import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
+import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
@@ -87,6 +88,7 @@ interface User {
 
 interface PaginatedHistory {
   items: WorkoutSession[];
+  activeSessions?: WorkoutSession[];
   total: number;
   page: number;
   pageSize: number;
@@ -112,8 +114,10 @@ export default function WorkoutHistory() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToastOptional();
+  const memberStatsCtx = useMemberStatsOptional();
 
   const [history, setHistory] = useState<WorkoutSession[]>([]);
+  const [activeSessions, setActiveSessions] = useState<WorkoutSession[]>([]);
   const [targetUser, setTargetUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -124,6 +128,8 @@ export default function WorkoutHistory() {
   const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [progress, setProgress] = useState<WorkoutProgress | null>(null);
+  const [discardTarget, setDiscardTarget] = useState<WorkoutSession | null>(null);
+  const [isDiscarding, setIsDiscarding] = useState(false);
   const pageSize = 20;
 
   const userIdToFetch = id ? parseInt(id, 10) : user?.id;
@@ -165,6 +171,10 @@ export default function WorkoutHistory() {
     ? history.filter((s) => String(s.routine_id) === routineFilterId)
     : history;
 
+  const filteredActiveSessions = routineFilterId
+    ? activeSessions.filter((s) => String(s.routine_id) === routineFilterId)
+    : activeSessions;
+
   const routineFilterName =
     routineFilterId && filteredHistory[0]
       ? filteredHistory[0].routine_name
@@ -197,11 +207,15 @@ export default function WorkoutHistory() {
       const historyRes = await apiFetch(`/api/users/${userIdToFetch}/history?${params.toString()}`);
       const historyData = await parseJsonResponse<PaginatedHistory>(historyRes);
       setHistory(Array.isArray(historyData.items) ? historyData.items : []);
+      setActiveSessions(
+        Array.isArray(historyData.activeSessions) ? historyData.activeSessions : []
+      );
       setTotal(historyData.total ?? 0);
       setWorkoutsThisWeek(historyData.workoutsThisWeek ?? 0);
     } catch (err) {
       clientLogger.error('Failed to fetch workout history', err);
       setHistory([]);
+      setActiveSessions([]);
       setTotal(0);
       setWorkoutsThisWeek(0);
       setLoadError(toDisplayErrorMessage(err, 'No se pudo cargar el historial'));
@@ -253,6 +267,39 @@ export default function WorkoutHistory() {
     } catch (err) {
       clientLogger.error('Failed to toggle workout success', err);
       toast?.error(toDisplayErrorMessage(err, 'No se pudo actualizar el estado'));
+    }
+  };
+
+  const clearWorkoutLocalStorage = (sessionId: number) => {
+    localStorage.removeItem(`active_workout_logs_${sessionId}`);
+    localStorage.removeItem(`active_workout_sets_${sessionId}`);
+    localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
+  };
+
+  const confirmDiscard = async () => {
+    if (!discardTarget || isDiscarding) return;
+    setIsDiscarding(true);
+    try {
+      await parseJsonResponse(
+        await apiFetch('/api/workouts/discard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: discardTarget.id }),
+        })
+      );
+      clearWorkoutLocalStorage(discardTarget.id);
+      if (selectedSessionId === discardTarget.id) {
+        closeSessionDetail();
+      }
+      setDiscardTarget(null);
+      await memberStatsCtx?.refresh();
+      void fetchHistory();
+      toast?.success('Entrenamiento descartado');
+    } catch (err) {
+      clientLogger.error('Failed to discard workout session', err);
+      toast?.error(toDisplayErrorMessage(err, 'No se pudo descartar el entrenamiento'));
+    } finally {
+      setIsDiscarding(false);
     }
   };
 
@@ -469,8 +516,46 @@ export default function WorkoutHistory() {
         </>
       )}
 
+      {filteredActiveSessions.length > 0 && (
+        <Card padding="md" rounded="xl" className="border-brand/30 bg-brand/5">
+          <h3 className="section-title mb-3">Entrenamientos en curso</h3>
+          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+            Puedes salir y volver cuando quieras. Solo se registrará en tu historial al pulsar
+            Finalizar.
+          </p>
+          <div className="space-y-2">
+            {filteredActiveSessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-100 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="min-w-0">
+                  <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
+                  <p className="mt-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                    Iniciado {formatSessionDate(session.start_time)} ·{' '}
+                    {formatSessionTime(session.start_time)} · {session.sets_completed} series
+                  </p>
+                </div>
+                {!id && (
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <Button size="sm" onClick={() => navigate(`/workout/${session.routine_id}`)}>
+                      <Play className="h-3.5 w-3.5" />
+                      Continuar
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => setDiscardTarget(session)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Descartar
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card padding="none" rounded="xl" className="overflow-hidden">
-        {filteredHistory.length === 0 && !loading ? (
+        {filteredHistory.length === 0 && filteredActiveSessions.length === 0 && !loading ? (
           <EmptyState
             variant="motivational"
             icon={Dumbbell}
@@ -486,7 +571,7 @@ export default function WorkoutHistory() {
                 ? 'Este miembro no tiene sesiones registradas para esta rutina.'
                 : id
                   ? 'Este miembro no tiene sesiones registradas.'
-                  : 'Cuando completes una rutina, tus sesiones aparecerán aquí.'
+                  : 'Cuando finalices una rutina, tus sesiones aparecerán aquí.'
             }
             action={
               !id ? (
@@ -494,6 +579,17 @@ export default function WorkoutHistory() {
                   <Button size="sm">Ver mis rutinas</Button>
                 </Link>
               ) : undefined
+            }
+          />
+        ) : filteredHistory.length === 0 && !loading ? (
+          <EmptyState
+            variant="motivational"
+            icon={Dumbbell}
+            title="Sin sesiones finalizadas"
+            description={
+              routineFilterId
+                ? 'No hay sesiones finalizadas para esta rutina.'
+                : 'Tus entrenamientos en curso aparecen arriba. Al pulsar Finalizar, quedarán registrados aquí.'
             }
           />
         ) : (
@@ -530,11 +626,8 @@ export default function WorkoutHistory() {
                           {formatSessionTime(session.start_time)}
                         </p>
                       </div>
-                      <Badge
-                        variant={session.end_time ? 'default' : 'warning'}
-                        className="shrink-0 px-1.5 py-0 text-[9px]"
-                      >
-                        {session.end_time ? 'Finalizado' : 'En curso'}
+                      <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                        Finalizado
                       </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
@@ -646,11 +739,8 @@ export default function WorkoutHistory() {
                           )}
                         </td>
                         <td className="px-3 py-2.5 lg:px-5">
-                          <Badge
-                            variant={session.end_time ? 'default' : 'warning'}
-                            className="px-1.5 py-0 text-[9px]"
-                          >
-                            {session.end_time ? 'Finalizado' : 'En curso'}
+                          <Badge variant="default" className="px-1.5 py-0 text-[9px]">
+                            Finalizado
                           </Badge>
                         </td>
                       </tr>
@@ -702,12 +792,48 @@ export default function WorkoutHistory() {
               <span>·</span>
               <span>{formatDuration(sessionDetail.start_time, sessionDetail.end_time)}</span>
               <Badge
-                variant={sessionDetail.success ? 'success' : 'danger'}
+                variant={
+                  sessionDetail.end_time
+                    ? sessionDetail.success
+                      ? 'success'
+                      : 'danger'
+                    : 'warning'
+                }
                 className="px-1.5 py-0 text-[9px]"
               >
-                {sessionDetail.success ? 'Exitoso' : 'Fallido'}
+                {sessionDetail.end_time
+                  ? sessionDetail.success
+                    ? 'Exitoso'
+                    : 'Fallido'
+                  : 'En curso'}
               </Badge>
             </div>
+
+            {!sessionDetail.end_time && !id && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    closeSessionDetail();
+                    navigate(`/workout/${sessionDetail.routine_id}`);
+                  }}
+                >
+                  <Play className="h-4 w-4" />
+                  Continuar entrenamiento
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    const active = activeSessions.find((s) => s.id === sessionDetail.id);
+                    if (active) setDiscardTarget(active);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Descartar
+                </Button>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
@@ -783,6 +909,47 @@ export default function WorkoutHistory() {
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        open={discardTarget !== null}
+        onClose={() => {
+          if (isDiscarding) return;
+          setDiscardTarget(null);
+        }}
+        title="Descartar entrenamiento"
+      >
+        {discardTarget && (
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+              ¿Descartar <span className="font-semibold">{discardTarget.routine_name}</span>{' '}
+              iniciado el {formatSessionDate(discardTarget.start_time)} a las{' '}
+              {formatSessionTime(discardTarget.start_time)}?
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Se eliminará el progreso de esta sesión. No aparecerá en tu historial. Podrás empezar
+              de nuevo cuando quieras.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                disabled={isDiscarding}
+                onClick={() => setDiscardTarget(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1"
+                disabled={isDiscarding}
+                onClick={() => void confirmDiscard()}
+              >
+                {isDiscarding ? 'Descartando…' : 'Descartar'}
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

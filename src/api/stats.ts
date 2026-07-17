@@ -455,6 +455,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       workoutDays,
       memberProfile,
       completedTodayRows,
+      activeSessionRows,
     ] = await Promise.all([
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
@@ -515,6 +516,14 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
            AND ${sqlTodayRange('start_time')}`,
         [userId]
       ),
+      query<{ id: number; routine_id: number; routine_name: string; start_time: string }>(
+        `SELECT ws.id, ws.routine_id, r.name AS routine_name, ws.start_time
+         FROM workout_sessions ws
+         JOIN routines r ON ws.routine_id = r.id
+         WHERE ws.user_id = $1 AND ws.end_time IS NULL
+         ORDER BY ws.start_time DESC`,
+        [userId]
+      ),
     ]);
 
     const sub = subscription.rows[0] as
@@ -549,6 +558,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       workoutStreak: computeWorkoutStreak(workoutDays.rows.map((r) => r.d)),
       weeklyTrainingGoal: memberProfile.rows[0]?.weekly_training_goal ?? 5,
       completedRoutineIdsToday: completedTodayRows.rows.map((r) => r.routine_id),
+      activeSessions: activeSessionRows.rows,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

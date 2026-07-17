@@ -15,6 +15,35 @@ import {
 const router = asyncRouter();
 
 router.get(
+  '/active',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const { rows } = await query<{
+      id: number;
+      routine_id: number;
+      routine_name: string;
+      start_time: string;
+      sets_completed: number;
+    }>(
+      `SELECT ws.id, ws.routine_id, r.name AS routine_name, ws.start_time,
+              COALESCE(wl.sets_completed, 0)::int AS sets_completed
+       FROM workout_sessions ws
+       JOIN routines r ON ws.routine_id = r.id
+       LEFT JOIN (
+         SELECT session_id, COUNT(*)::int AS sets_completed
+         FROM workout_logs
+         GROUP BY session_id
+       ) wl ON wl.session_id = ws.id
+       WHERE ws.user_id = $1 AND ws.end_time IS NULL
+       ORDER BY ws.start_time DESC`,
+      [userId]
+    );
+    res.json(rows);
+  })
+);
+
+router.get(
   '/progress',
   authorize(['member']),
   asyncHandler(async (req: AuthRequest, res) => {
@@ -256,14 +285,55 @@ router.post(
 
     const { session_id, success } = parsed.data;
 
-    const { rowCount } = await query(
+    const sessionResult = await query<{ user_id: number; routine_id: number }>(
+      `SELECT user_id, routine_id FROM workout_sessions WHERE id = $1 AND end_time IS NULL`,
+      [session_id]
+    );
+    const session = sessionResult.rows[0];
+    if (!session) {
+      res.status(409).json({ error: 'La sesión ya finalizó' });
+      return;
+    }
+
+    await query(
       `UPDATE workout_sessions
        SET end_time = NOW(), success = $1
        WHERE id = $2 AND end_time IS NULL`,
       [success ? 1 : 0, session_id]
     );
+
+    if (success) {
+      await query(
+        `UPDATE workout_sessions
+         SET end_time = NOW(), success = 0
+         WHERE user_id = $1 AND routine_id = $2
+           AND end_time IS NULL AND id != $3`,
+        [session.user_id, session.routine_id, session_id]
+      );
+    }
+
+    res.json({ success: true });
+  })
+);
+
+router.post(
+  '/discard',
+  requireWorkoutSessionAccess,
+  asyncHandler(async (req, res) => {
+    const parsed = cancelWorkoutSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' });
+      return;
+    }
+
+    const { session_id } = parsed.data;
+
+    const { rowCount } = await query(
+      `DELETE FROM workout_sessions WHERE id = $1 AND end_time IS NULL`,
+      [session_id]
+    );
     if (rowCount === 0) {
-      res.status(409).json({ error: 'La sesión ya finalizó' });
+      res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
       return;
     }
     res.json({ success: true });
@@ -324,12 +394,18 @@ router.patch(
       return;
     }
 
-    if (rows[0].end_time !== null) {
-      res.status(409).json({ error: 'La sesión ya finalizó' });
+    if (rows[0].end_time === null) {
+      res.status(409).json({
+        error:
+          'No puedes cambiar el éxito de una sesión en curso. Finaliza el entrenamiento primero.',
+      });
       return;
     }
 
-    await query(`UPDATE workout_sessions SET success = $1 WHERE id = $2`, [success, sessionId]);
+    await query(`UPDATE workout_sessions SET success = $1 WHERE id = $2`, [
+      success ? 1 : 0,
+      sessionId,
+    ]);
     res.json({ success: true });
   })
 );

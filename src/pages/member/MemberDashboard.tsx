@@ -58,6 +58,9 @@ export default function MemberDashboard() {
   const alertDays = memberStats?.expiryAlertDays ?? 7;
   const completedToday = new Set(memberStats?.completedRoutineIdsToday ?? []);
   const primaryRoutineCompletedToday = routine ? completedToday.has(routine.id) : false;
+  const primaryRoutineInProgress = routine
+    ? (memberStats?.activeSessions?.some((s) => s.routine_id === routine.id) ?? false)
+    : false;
   const subscriptionBarStyle = getSubscriptionBarStyle(memberStats?.remainingPercent ?? 0);
 
   if (statsError && !memberStats) {
@@ -381,8 +384,17 @@ export default function MemberDashboard() {
                 disabled={primaryRoutineCompletedToday}
                 onClick={() => navigate(`/workout/${routine.id}`)}
               >
-                {primaryRoutineCompletedToday ? 'Completada hoy' : 'Empezar entrenamiento'}
+                {primaryRoutineCompletedToday
+                  ? 'Completada hoy'
+                  : primaryRoutineInProgress
+                    ? 'Continuar entrenamiento'
+                    : 'Empezar entrenamiento'}
               </Button>
+              {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
+                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Tienes un entrenamiento en curso. Puedes retomarlo cuando quieras.
+                </p>
+              )}
               {primaryRoutineCompletedToday && (
                 <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
                   Ya entrenaste esta rutina hoy. Vuelve mañana.
