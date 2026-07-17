@@ -110,32 +110,33 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 ### 2. Variables de entorno
 
-**Opción A — Blueprint Sync (recomendado):** tras cada cambio en [`render.yaml`](../render.yaml), en Render Dashboard → **Blueprints** → **Sync**. Eso crea el Key Value `caribean-gym-kv`, inyecta `REDIS_URL` y fija `PUBLIC_APP_URL=https://caribean-gym.onrender.com`.
+**Opción A — Blueprint Sync (recomendado):** tras cada cambio en [`render.yaml`](../render.yaml), en Render Dashboard → **Blueprints** → **Sync**. Eso crea el Key Value `caribean-gym-kv`, inyecta `REDIS_URL`, fija `PUBLIC_APP_URL=https://caribean-gym.onrender.com` y `REQUIRE_MFA_FOR_STAFF=false` (MFA opcional).
 
 **Opción B — Manual:** configura en Render Dashboard → Environment (plantilla en [`scripts/deploy/render-prod.env.example`](../scripts/deploy/render-prod.env.example)):
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                                   |
-| -------------------------------- | ----------- | ----------------------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                    |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                       |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                    |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                          |
-| `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él  |
-| `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in |
-| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias      |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                        |
-| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                |
-| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                 |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)         |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                        |
-| `SMTP_PORT`                      | Recomendada | `587`                                                                   |
-| `SMTP_SECURE`                    | Recomendada | `false`                                                                 |
-| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                            |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                          |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                 |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                     |
+| Variable                         | Obligatoria | Notas                                                                     |
+| -------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                      |
+| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                         |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                      |
+| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                            |
+| `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él    |
+| `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in   |
+| `REQUIRE_MFA_FOR_STAFF`          | No          | `false` en Blueprint — MFA opcional; staff puede activarlo en `/security` |
+| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias        |
+| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                          |
+| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                  |
+| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                   |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)           |
+| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                          |
+| `SMTP_PORT`                      | Recomendada | `587`                                                                     |
+| `SMTP_SECURE`                    | Recomendada | `false`                                                                   |
+| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                              |
+| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                            |
+| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                   |
+| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                       |
 
 **Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
 

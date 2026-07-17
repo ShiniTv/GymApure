@@ -24,6 +24,8 @@ services:
         value: production
       - key: PUBLIC_APP_URL
         value: https://caribean-gym.onrender.com
+      - key: REQUIRE_MFA_FOR_STAFF
+        value: 'false'
       - key: REDIS_URL
         fromService:
           type: keyvalue
