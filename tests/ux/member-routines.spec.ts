@@ -15,7 +15,9 @@ test.describe('Member rutinas preview', () => {
     }
 
     await routineCard.click();
-    await expect(page.getByRole('button', { name: /empezar entrenamiento/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /empezar entrenamiento|continuar entrenamiento/i })
+    ).toBeVisible();
     await expect(page).toHaveURL(/\/routines$/);
   });
 });

@@ -103,7 +103,15 @@ function ProtectedRoute({
     );
   }
 
-  if (!user) return <Navigate to="/login" />;
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: { pathname: location.pathname, search: location.search } }}
+      />
+    );
+  }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/access-denied" replace state={{ from: location.pathname }} />;

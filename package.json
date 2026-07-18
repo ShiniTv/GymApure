@@ -17,7 +17,7 @@
     "test:e2e": "npm run test:integration && npm run test:security-checklist && npm run test:auth-checklist && npm run test:reception-checklist",
     "test:auth-checklist": "tsx scripts/test/test-auth-checklist.ts",
     "test:reception-checklist": "tsx scripts/test/test-reception-checklist.ts",
-    "test:ux": "tsx scripts/test/test-ux-checklist.ts",
+    "test:ux": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-ux-checklist.ts",
     "test:ux:browser": "playwright test",
     "test:ux:browser:ui": "playwright test --ui",
     "test:memberships-checkin": "tsx scripts/test/test-memberships-checkin.ts",

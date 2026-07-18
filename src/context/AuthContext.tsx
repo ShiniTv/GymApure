@@ -55,8 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    let cancelled = false;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 2500);
+    // BD remota lenta: 2.5s abortaba /me y trataba sesión válida como logout.
+    const timeout = window.setTimeout(() => controller.abort(), 10_000);
 
     apiFetch('/api/auth/me', { signal: controller.signal })
       .then(async (res) => {
@@ -66,15 +68,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return res.json() as Promise<{ user: User }>;
       })
-      .then((data) => setUser(data.user))
-      .catch(() => setUser(null))
+      .then((data) => {
+        if (!cancelled) setUser(data.user);
+      })
+      .catch((err: unknown) => {
+        // StrictMode / unmount: no marcar logout ni terminar bootstrap.
+        if (cancelled) return;
+        void err;
+        setUser(null);
+      })
       .finally(() => {
+        if (cancelled) return;
         window.clearTimeout(timeout);
         setIsLoading(false);
         setAuthBootstrapComplete(true);
       });
 
     return () => {
+      cancelled = true;
       window.clearTimeout(timeout);
       controller.abort();
     };

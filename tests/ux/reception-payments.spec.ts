@@ -8,24 +8,26 @@ test.describe('Recepción — pagos en mostrador', () => {
 
   test('muestra botón Registrar pago para staff', async ({ page }) => {
     await page.goto('/payments');
-    await expect(page.getByRole('button', { name: /registrar pago/i })).toBeVisible();
+    await expect(page.getByLabel('Registrar pago')).toBeVisible();
   });
 
   test('abre modal de registro desde query register=1', async ({ page }) => {
     await page.goto('/payments?register=1');
-    await expect(page.getByText(/REGISTRAR/i)).toBeVisible();
-    await expect(page.getByText(/Miembro/i)).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.getByText(/registrar pago/i)).toBeVisible();
+    await expect(dialog.getByText('Miembro', { exact: true })).toBeVisible();
   });
 
   test('lookup sin membresía muestra CTA registrar pago', async ({ page }) => {
     await page.goto('/reception?mode=counter&tab=access');
     const cedulaInput = page.locator('#reception-cedula');
-    await cedulaInput.fill('V-00000001');
+    await expect(cedulaInput).toBeVisible();
+    // Trainer demo sin membresía (V-00000001 no existe → "Usuario no encontrado")
+    await cedulaInput.fill('V-87654321');
     await page.getByRole('button', { name: /buscar/i }).click();
     await expect(page.getByRole('link', { name: /registrar pago/i })).toBeVisible({
-      timeout: 10_000,
-    }).catch(async () => {
-      await expect(page.getByText(/sin membresía activa/i)).toBeVisible();
+      timeout: 15_000,
     });
   });
 });

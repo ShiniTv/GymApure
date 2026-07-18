@@ -22,7 +22,10 @@ test.describe('Trainer nutrición quick action', () => {
   test('quick action Planes nutricionales lleva a miembros con focus', async ({ page }) => {
     await page.goto('/panel');
     await waitForTrainerDashboard(page);
-    const nutritionLink = page.getByRole('link', { name: /planes nutricionales|nutrición/i });
+    // Quick action en el panel (evitar ambigüedad con el mismo link del sidebar)
+    const nutritionLink = page
+      .locator('#main-content')
+      .getByRole('link', { name: /planes nutricionales/i });
     await nutritionLink.scrollIntoViewIfNeeded();
     await expect(nutritionLink).toBeVisible({ timeout: 15_000 });
 

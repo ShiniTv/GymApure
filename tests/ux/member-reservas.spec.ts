@@ -12,7 +12,10 @@ test.describe('Member reservas', () => {
     await expect(page.locator(memberBottomNav).getByRole('link', { name: /reservas/i })).toBeVisible();
 
     await page.goto('/reservas');
-    await expect(page.getByRole('heading', { name: /reservas/i })).toBeVisible({ timeout: 20_000 });
+    // En mobile el H1 del PageHeader está oculto (lg:block); validar copy visible.
+    await expect(
+      page.getByText(/reserva cupo en clases grupales/i)
+    ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/error de conexión/i)).toHaveCount(0);
   });
 });

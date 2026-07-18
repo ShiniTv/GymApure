@@ -27,8 +27,9 @@ test.describe('Admin crear entrenador — errores reales', () => {
     await dialog.getByRole('button', { name: /crear entrenador/i }).click();
 
     await expect(dialog.getByText(/error de conexión/i)).toHaveCount(0);
-    await expect(
-      dialog.getByText(/mayúscula|minúscula|número|especial|contraseña|inválid|requerid/i).first()
-    ).toBeVisible({ timeout: 10_000 });
+    // role=alert evita match con option "Especialista" (regex /especial/)
+    await expect(dialog.getByRole('alert')).toContainText(/mayúscula|minúscula|número|especial|contraseña|común/i, {
+      timeout: 10_000,
+    });
   });
 });

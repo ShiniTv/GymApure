@@ -7,7 +7,7 @@ test.describe('Forgot password', () => {
     await page.locator('#email').fill(MEMBER_EMAIL);
     await page.getByRole('button', { name: /enviar enlace/i }).click();
 
-    await expect(page.getByRole('status')).toContainText(/correo está registrado/i, {
+    await expect(page.getByRole('alert')).toContainText(/correo está registrado/i, {
       timeout: 15_000,
     });
   });

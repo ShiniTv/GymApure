@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDefaultRouteForRole, type UserRole } from '../lib/roles';
 import { Mail } from 'lucide-react';
@@ -15,6 +15,20 @@ interface LoginUser {
   name: string;
 }
 
+interface LoginLocationState {
+  from?: { pathname: string; search?: string } | string;
+}
+
+function safeReturnPath(from: LoginLocationState['from'], role: UserRole): string {
+  const fallback = getDefaultRouteForRole(role);
+  if (!from) return fallback;
+  const path = typeof from === 'string' ? from : `${from.pathname}${from.search ?? ''}`;
+  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/login')) {
+    return fallback;
+  }
+  return path;
+}
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,9 +38,11 @@ export default function Login() {
   const [registerAllowed, setRegisterAllowed] = useState(true);
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as LoginLocationState | null)?.from;
 
   if (!isLoading && user) {
-    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+    return <Navigate to={safeReturnPath(from, user.role)} replace />;
   }
 
   useEffect(() => {
@@ -87,7 +103,7 @@ export default function Login() {
       }
 
       login(data.user);
-      navigate(getDefaultRouteForRole(data.user.role));
+      navigate(safeReturnPath(from, data.user.role));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error de inicio de sesión');
     } finally {

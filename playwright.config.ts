@@ -1,5 +1,16 @@
-import 'dotenv/config';
+import fs from 'node:fs';
+import path from 'node:path';
+import { config as loadDotenv } from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+
+// Prefer .env.dev (proyecto); fallback .env si existe (CI / legacy).
+const envDev = path.resolve('.env.dev');
+const envDefault = path.resolve('.env');
+if (fs.existsSync(envDev)) {
+  loadDotenv({ path: envDev });
+} else if (fs.existsSync(envDefault)) {
+  loadDotenv({ path: envDefault });
+}
 
 const baseURL = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 
