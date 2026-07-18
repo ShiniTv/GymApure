@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch, parseJsonResponse, ApiError } from '../lib/api';
+import { apiFetch, parseJsonResponse, ApiError, isNetworkError } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -46,6 +46,14 @@ import {
   buildPrescriptionLogSeeds,
   mergeWorkoutLogSeeds,
 } from '../lib/setPrescription';
+import {
+  cacheWorkoutRoutine,
+  clearWorkoutLogQueueForSession,
+  enqueueWorkoutLog,
+  flushWorkoutLogQueue,
+  pendingWorkoutLogCount,
+  readCachedWorkoutRoutine,
+} from '../lib/workoutOfflineQueue';
 
 interface Exercise {
   id: number;
@@ -134,6 +142,8 @@ export default function ActiveWorkout() {
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
 
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
   useEffect(() => {
     if (!id) return;
     apiFetch(`/api/routines/${id}`)
@@ -145,17 +155,47 @@ export default function ActiveWorkout() {
             parseSetPrescriptionFromApi(exercise.set_prescription) ??
             deriveSetPrescription(exercise.sets, exercise.reps),
         }));
-        setRoutine({ ...data, exercises });
+        const normalized = { ...data, exercises };
+        setRoutine(normalized);
+        cacheWorkoutRoutine(id, normalized);
         setFetchError(null);
         setLoading(false);
       })
       .catch((err) => {
         clientLogger.error('Failed to fetch routine', err);
+        const cached = readCachedWorkoutRoutine(id);
+        if (cached) {
+          setRoutine(cached as Routine);
+          setFetchError(null);
+          setLoading(false);
+          toast?.success('Sin conexión: usando la última rutina guardada.');
+          return;
+        }
         setRoutine(null);
         setFetchError('No se pudo cargar la rutina. Verifica tu conexión e intenta de nuevo.');
         setLoading(false);
       });
-  }, [id]);
+  }, [id, toast]);
+
+  useEffect(() => {
+    const refreshPending = () => setPendingSyncCount(pendingWorkoutLogCount(sessionId));
+    refreshPending();
+    const onOnline = () => {
+      void flushWorkoutLogQueue(sessionId).then(() => refreshPending());
+    };
+    window.addEventListener('online', onOnline);
+    const interval = window.setInterval(() => {
+      if (navigator.onLine) {
+        void flushWorkoutLogQueue(sessionId).then(() => refreshPending());
+      } else {
+        refreshPending();
+      }
+    }, 15_000);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.clearInterval(interval);
+    };
+  }, [sessionId]);
 
   useEffect(() => {
     if (!isAddingExercise) return;
@@ -524,7 +564,28 @@ export default function ActiveWorkout() {
         }
       }
     } catch (err) {
+      if (isNetworkError(err) && sessionId) {
+        enqueueWorkoutLog({
+          session_id: sessionId,
+          exercise_id: exerciseId,
+          set_number: setNum,
+          weight,
+          reps,
+        });
+        setPendingSyncCount(pendingWorkoutLogCount(sessionId));
+        toast?.success('Serie guardada offline. Se sincronizará al recuperar conexión.');
+        hapticLight();
+        const exercise = routine?.exercises.find((e) => e.id === exerciseId);
+        if (exercise && exercise.rest_seconds > 0) {
+          startRestTimer(exercise.rest_seconds);
+        }
+        return;
+      }
       clientLogger.error('Failed to log workout set', err);
+      setLogs((prev) => ({
+        ...prev,
+        [key]: { ...prev[key], completed: false },
+      }));
       toast?.error(toDisplayErrorMessage(err, 'No se pudo registrar la serie'));
     }
   };
@@ -542,6 +603,16 @@ export default function ActiveWorkout() {
     setFinishError(null);
     setIsSubmittingFinish(true);
     try {
+      if (pendingWorkoutLogCount(sessionId) > 0) {
+        await flushWorkoutLogQueue(sessionId);
+        setPendingSyncCount(pendingWorkoutLogCount(sessionId));
+        if (pendingWorkoutLogCount(sessionId) > 0) {
+          setFinishError(
+            'Hay series pendientes de sincronizar. Conéctate a internet e intenta de nuevo.'
+          );
+          return;
+        }
+      }
       const res = await apiFetch('/api/workouts/finish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -552,6 +623,7 @@ export default function ActiveWorkout() {
       });
 
       await parseJsonResponse(res);
+      clearWorkoutLogQueueForSession(sessionId);
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
@@ -567,7 +639,7 @@ export default function ActiveWorkout() {
           void navigate('/history');
         }, 2200);
       } else {
-        navigate('/routines');
+        void navigate('/routines');
       }
     } catch (err) {
       clientLogger.error('Failed to finish workout', err);
@@ -601,6 +673,7 @@ export default function ActiveWorkout() {
           body: JSON.stringify({ session_id: sessionId }),
         });
         await parseJsonResponse(res);
+        clearWorkoutLogQueueForSession(sessionId);
         localStorage.removeItem(`active_workout_logs_${sessionId}`);
         localStorage.removeItem(`active_workout_sets_${sessionId}`);
         localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
@@ -757,6 +830,16 @@ export default function ActiveWorkout() {
           />
         </div>
       </div>
+
+      {pendingSyncCount > 0 && (
+        <div
+          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-800 dark:text-amber-200"
+          role="status"
+        >
+          {pendingSyncCount} serie{pendingSyncCount === 1 ? '' : 's'} pendiente
+          {pendingSyncCount === 1 ? '' : 's'} de sincronizar. Se enviarán al recuperar conexión.
+        </div>
+      )}
 
       {sessionError && (
         <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">

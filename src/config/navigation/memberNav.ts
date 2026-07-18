@@ -17,6 +17,7 @@ export const MEMBER_NAV: NavSection[] = [
     items: [
       { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
       { name: 'Rutinas', href: '/routines', icon: Dumbbell },
+      { name: 'Mensajes', href: '/messages', icon: MessageSquare },
       { name: 'Reservas', href: '/reservas', icon: CalendarDays },
       { name: 'Biblioteca', href: '/exercises', icon: BookOpen },
       { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
@@ -27,7 +28,6 @@ export const MEMBER_NAV: NavSection[] = [
     name: 'Cuenta',
     items: [
       { name: 'Pagos', href: '/payments', icon: CreditCard },
-      { name: 'Mensajes', href: '/messages', icon: MessageSquare },
       { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
     ],
   },

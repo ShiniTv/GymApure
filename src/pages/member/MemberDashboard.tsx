@@ -27,6 +27,7 @@ import { formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { MemberHero } from '../../components/member/MemberHero';
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
+import { PushOnboardingCard } from '../../components/PushOnboardingCard';
 import { Button, Card, EmptyState, PageHeader, Badge } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
 
@@ -98,6 +99,8 @@ export default function MemberDashboard() {
       />
 
       <MemberSelfCheckInCard />
+
+      <PushOnboardingCard />
 
       {pending > 0 && (
         <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-6 py-4 sm:flex-row sm:items-center">

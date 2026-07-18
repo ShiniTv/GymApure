@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import pg from 'pg';
 import { DEV_REF } from '../lib/supabase-refs.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const password = process.env.DEV_DB_PASSWORD?.trim() || process.env.TEST_DB_PASSWORD?.trim() || '';
 const ref = process.env.DEV_REF?.trim() || DEV_REF;
@@ -12,7 +13,7 @@ const candidates = [
 ];
 
 async function tryUrl(label: string, url: string): Promise<boolean> {
-  const pool = new pg.Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
+  const pool = new pg.Pool({ connectionString: url, max: 1, ssl: getScriptPgSslConfig(url) });
   try {
     await pool.query('SELECT 1');
     console.log(`OK ${label}`);

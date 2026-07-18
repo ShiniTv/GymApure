@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 import { PROD_REF } from '../lib/supabase-refs.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const RENDER_HEALTH = 'https://caribean-gym.onrender.com/api/health';
 
@@ -20,7 +21,7 @@ async function countUsers(connectionString: string): Promise<number> {
   const pool = new pg.Pool({
     connectionString,
     max: 1,
-    ssl: connectionString.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+    ssl: getScriptPgSslConfig(connectionString),
   });
   try {
     const { rows } = await pool.query<{ count: string }>('SELECT COUNT(*)::text AS count FROM users');

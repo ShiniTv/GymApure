@@ -14,6 +14,7 @@ import {
   DEMO_USER_EMAILS,
 } from '../lib/demo-fixtures.ts';
 import { assertProductionExplicit, getDatabaseUrl, isProductionDatabaseUrl } from '../lib/db-env-guard.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const autoYes = process.argv.includes('--yes');
 const databaseUrl = getDatabaseUrl();
@@ -29,7 +30,7 @@ const pool = new pg.Pool({
   connectionString: databaseUrl,
   max: 1,
   connectionTimeoutMillis: 30_000,
-  ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(text: string, params?: unknown[]) {

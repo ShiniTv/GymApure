@@ -178,11 +178,12 @@ router.get('/inactive', authorize(['admin']), async (req, res) => {
       full_name: string;
       cedula: string | null;
       email: string;
+      phone: string | null;
       last_check_in: Date | string | null;
       days_since: number | null;
     }>(
       `
-      SELECT u.id, u.full_name, u.cedula, u.email,
+      SELECT u.id, u.full_name, u.cedula, u.email, u.phone,
              MAX(a.check_in_time) AS last_check_in,
              CASE
                WHEN MAX(a.check_in_time) IS NULL THEN NULL
@@ -191,7 +192,7 @@ router.get('/inactive', authorize(['admin']), async (req, res) => {
       FROM users u
       LEFT JOIN attendance a ON a.user_id = u.id
       WHERE u.role = 'member' AND u.status = 'active'
-      GROUP BY u.id, u.full_name, u.cedula, u.email
+      GROUP BY u.id, u.full_name, u.cedula, u.email, u.phone
       HAVING MAX(a.check_in_time) IS NULL
          OR MAX(a.check_in_time) < CURRENT_DATE - ($1::int - 1) * INTERVAL '1 day'
       ORDER BY days_since DESC NULLS FIRST, u.full_name ASC

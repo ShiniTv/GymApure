@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import pg from 'pg';
 import { DEMO_EXERCISE_NAMES, DEMO_ROUTINE_NAMES, DEMO_USER_EMAILS } from '../lib/demo-fixtures.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 if (!databaseUrl) {
@@ -12,7 +13,7 @@ if (!databaseUrl) {
 const pool = new pg.Pool({
   connectionString: databaseUrl,
   max: 1,
-  ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 async function main() {

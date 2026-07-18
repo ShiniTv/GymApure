@@ -17,7 +17,7 @@ Comportamiento de la interfaz móvil, navegación inferior y aplicación instala
 
 ### Bottom nav pill
 
-Tabs: **Inicio**, **Rutinas**, **Reservas**, **Más**.
+Tabs: **Inicio**, **Rutinas**, **Mensajes**, **Más**.
 
 Oculta en `/workout/:id` (entrenamiento inmersivo).
 
@@ -29,7 +29,7 @@ Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### Sheet "Más"
 
-Biblioteca, Nutrición, Mensajes, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
+Reservas, Nutrición, Biblioteca, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
 
 ### Drawer sidebar
 
@@ -37,19 +37,21 @@ Swipe desde borde izquierdo. Footer (tema, perfil, cerrar sesión) pegado al fon
 
 ### Pull-to-refresh
 
-Disponible en Inicio, Rutinas e Historial.
+Disponible en Inicio, Rutinas e Historial. Recepción: PTR en resumen/KPIs.
 
 ### Offline
 
 - Banner rojo cuando no hay conexión
 - Service Worker cachea assets estáticos
+- Cola offline de series en workout activo (sync al recuperar red)
+- Cache local de la última rutina cargada
 - Botón Reintentar en vistas con error de red
 
 ---
 
 ## Recepción
 
-Bottom nav: Inicio, Miembros, Pagos, Mensajes. Drawer / Más con Kiosk, Equipamiento, Clases.
+Bottom nav: Inicio, Miembros, Pagos, Mensajes. Drawer / Más con Modo tablet, Equipamiento, Clases.
 
 Admin también puede abrir `/reception` y `/check-in` (cubre mostrador).
 
@@ -63,7 +65,7 @@ Bottom nav con drawer. Al abrir drawer: bottom nav oculta; footer sin hueco infe
 
 ## Admin móvil
 
-Bottom nav: Panel, Miembros, Pagos, Mensajes, Más (incluye Mostrador, Kiosk, Solicitudes demo, etc.).
+Bottom nav: Panel, Miembros, Pagos, Mensajes, Más (incluye Mostrador, Modo tablet, Solicitudes demo, etc.).
 
 ---
 
@@ -72,10 +74,11 @@ Bottom nav: Panel, Miembros, Pagos, Mensajes, Más (incluye Mostrador, Kiosk, So
 1. Chrome/Edge móvil → menú → **Instalar app** / **Añadir a inicio**.
 2. Icono en pantalla de inicio.
 3. `InstallPrompt` en sidebar desktop.
+4. En inicio member: tarjeta opcional para activar push tras instalar / primera visita.
 
 ### Push (opcional)
 
-Con VAPID configurado: toggle en Perfil para notificaciones push.
+Con VAPID configurado: toggle en Perfil + onboarding suave en panel member.
 
 ---
 

@@ -6,6 +6,7 @@ import 'dotenv/config';
 import { isSupabaseStorageConfigured } from '../../src/lib/supabaseAdmin.ts';
 
 let failed = 0;
+let warnings = 0;
 
 function ok(name: string, cond: boolean, hint?: string) {
   if (cond) {
@@ -13,6 +14,15 @@ function ok(name: string, cond: boolean, hint?: string) {
   } else {
     console.error(`  FAIL ${name}${hint ? ` — ${hint}` : ''}`);
     failed++;
+  }
+}
+
+function warn(name: string, cond: boolean, hint?: string) {
+  if (cond) {
+    console.log(`  OK  ${name}`);
+  } else {
+    console.warn(`  WARN ${name}${hint ? ` — ${hint}` : ''}`);
+    warnings++;
   }
 }
 
@@ -52,11 +62,30 @@ function main() {
   );
 
   const redisUrl = process.env.REDIS_URL?.trim() ?? '';
+  const sentryDsn = process.env.SENTRY_DSN?.trim() ?? '';
+  const smtpHost = process.env.SMTP_HOST?.trim() ?? '';
+  const sslCa = process.env.DATABASE_SSL_CA?.trim() ?? '';
+
   if (isProd) {
     ok(
-      'REDIS_URL configurado (recomendado en producción)',
+      'REDIS_URL configurado (rate limit / lockout)',
       redisUrl.length > 0,
-      'Render Key Value o Upstash; ver render.yaml'
+      'Render Key Value (caribean-gym-kv) o Upstash; ver render.yaml'
+    );
+    warn(
+      'DATABASE_SSL_CA (TLS verificado a Postgres)',
+      sslCa.length > 0,
+      'Ruta al CA o PEM inline; ver docs/DEPLOY.md'
+    );
+    warn(
+      'SENTRY_DSN (errores en producción)',
+      sentryDsn.length > 0,
+      'Crear proyecto Sentry Node y pegar DSN en Render'
+    );
+    warn(
+      'SMTP_HOST (correos transaccionales)',
+      smtpHost.length > 0,
+      'Sin SMTP no hay reset de contraseña ni bienvenida'
     );
   } else {
     ok('REDIS_URL (opcional en dev)', true);
@@ -64,7 +93,8 @@ function main() {
 
   console.log('');
   if (failed === 0) {
-    console.log('Preflight: OK — puedes ejecutar npm run db:migrate y desplegar.');
+    const warnNote = warnings > 0 ? ` (${warnings} aviso(s) no bloqueantes)` : '';
+    console.log(`Preflight: OK${warnNote} — puedes ejecutar npm run db:migrate y desplegar.`);
     process.exit(0);
   }
   console.error(`Preflight: ${failed} problema(s). Corrige .env antes de continuar.`);

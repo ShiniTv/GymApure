@@ -18,6 +18,8 @@ import { Card, DashboardSkeleton } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
 import BrandName from '../BrandName';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { PullToRefreshContainer } from '../PullToRefresh';
 
 interface ReceptionStats {
   todayCheckIns: number;
@@ -140,6 +142,15 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
       .finally(() => setLoading(false));
   }, []);
 
+  const {
+    pullDistance,
+    isRefreshing: ptrRefreshing,
+    handlers: ptrHandlers,
+  } = usePullToRefresh({
+    onRefresh: refresh,
+    threshold: 80,
+  });
+
   const pendingPayments = stats?.pendingPayments ?? 0;
 
   if (loading) {
@@ -147,177 +158,181 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
   }
 
   return (
-    <div className={cn('space-y-3', compact && 'space-y-2.5')}>
-      {!compact && (
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
-              Resumen del día · <BrandName variant="plain" className="text-brand" />
-            </h2>
-            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-              Toca actualizar arriba para refrescar KPIs
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => void refresh()}
-              disabled={refreshing}
-              className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400"
-              aria-label="Actualizar resumen"
-              title="Actualizar"
-            >
-              <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
-            </button>
-            <span className="relative inline-flex">
+    <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={ptrRefreshing}>
+      <div {...ptrHandlers} className={cn('space-y-3', compact && 'space-y-2.5')}>
+        {!compact && (
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
+                Resumen del día · <BrandName variant="plain" className="text-brand" />
+              </h2>
+              <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                Desliza hacia abajo o toca actualizar para refrescar KPIs
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
-                onClick={onOpenCounter}
-                className="brand-solid brand-solid-hover inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl px-0 py-0 text-sm font-semibold shadow-md shadow-zinc-900/10 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-4 lg:py-2.5"
-                aria-label={
-                  pendingPayments > 0
-                    ? `Modo mostrador (${pendingPayments} pagos pendientes)`
-                    : 'Modo mostrador'
-                }
-                title="Modo mostrador"
+                onClick={() => void refresh()}
+                disabled={refreshing}
+                className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400"
+                aria-label="Actualizar resumen"
+                title="Actualizar"
               >
-                <Monitor className="h-4 w-4 shrink-0" />
-                <span className="hidden whitespace-nowrap lg:inline">Modo mostrador</span>
+                <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
               </button>
-              {pendingPayments > 0 && (
-                <span className="text-brand border-brand/20 dark:border-brand/30 pointer-events-none absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full border bg-white px-1 text-[9px] font-bold shadow-sm dark:bg-zinc-900">
-                  {pendingPayments > 99 ? '99+' : pendingPayments}
-                </span>
-              )}
-            </span>
-            <Link
-              to="/check-in?kiosk=1"
-              className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 px-0 text-zinc-600 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-3 dark:border-zinc-700 dark:text-zinc-400"
-              title="Pantalla de acceso (tablet)"
-              aria-label="Modo tablet"
-            >
-              <Tablet className="h-4 w-4 shrink-0" />
-              <span className="hidden text-xs font-semibold whitespace-nowrap lg:inline">
-                Modo tablet
+              <span className="relative inline-flex">
+                <button
+                  type="button"
+                  onClick={onOpenCounter}
+                  className="brand-solid brand-solid-hover inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl px-0 py-0 text-sm font-semibold shadow-md shadow-zinc-900/10 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-4 lg:py-2.5"
+                  aria-label={
+                    pendingPayments > 0
+                      ? `Modo mostrador (${pendingPayments} pagos pendientes)`
+                      : 'Modo mostrador'
+                  }
+                  title="Modo mostrador"
+                >
+                  <Monitor className="h-4 w-4 shrink-0" />
+                  <span className="hidden whitespace-nowrap lg:inline">Modo mostrador</span>
+                </button>
+                {pendingPayments > 0 && (
+                  <span className="text-brand border-brand/20 dark:border-brand/30 pointer-events-none absolute -top-1 -right-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full border bg-white px-1 text-[9px] font-bold shadow-sm dark:bg-zinc-900">
+                    {pendingPayments > 99 ? '99+' : pendingPayments}
+                  </span>
+                )}
               </span>
-            </Link>
+              <Link
+                to="/check-in?kiosk=1"
+                className="hover:text-brand hover:border-brand/30 inline-flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-zinc-200 px-0 text-zinc-600 transition-colors lg:h-auto lg:min-h-10 lg:w-auto lg:px-3 dark:border-zinc-700 dark:text-zinc-400"
+                title="Pantalla de acceso (tablet)"
+                aria-label="Modo tablet"
+              >
+                <Tablet className="h-4 w-4 shrink-0" />
+                <span className="hidden text-xs font-semibold whitespace-nowrap lg:inline">
+                  Modo tablet
+                </span>
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <PendingPaymentsBanner count={pendingPayments} />
+        <PendingPaymentsBanner count={pendingPayments} />
 
-      <Link
-        to="/reception?mode=counter&tab=access"
-        className="border-brand/25 bg-brand/5 hover:bg-brand/10 active:bg-brand/15 flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl border px-4 py-3 transition-colors lg:hidden"
-        aria-label="Abrir mostrador: check-in y acceso"
-      >
-        <span className="brand-solid inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
-          <Fingerprint className="h-5 w-5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-zinc-900 dark:text-white">Abrir mostrador</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Check-in y acceso de miembros</p>
-        </div>
-      </Link>
-
-      <div className="grid gap-3 md:grid-cols-5 md:items-stretch">
-        <div className="space-y-2.5 md:col-span-2">
-          <ReceptionKpiStrip
-            items={[
-              {
-                title: 'Ingresos hoy',
-                value: stats?.todayCheckIns ?? 0,
-                icon: Fingerprint,
-                tone: 'orange',
-              },
-              {
-                title: 'Dentro ahora',
-                value: stats?.insideNow ?? 0,
-                icon: Users,
-                tone: 'emerald',
-                to: '/reception?mode=counter&tab=inside',
-              },
-              {
-                title: 'Pagos pend.',
-                value: pendingPayments,
-                icon: CreditCard,
-                tone: 'blue',
-                to: '/payments?status=pending',
-              },
-            ]}
-          />
-
-          <div className="hidden grid-cols-3 gap-2 md:grid-cols-1 lg:grid">
-            <QuickAction
-              to="/members"
-              icon={UserPlus}
-              title="Miembros"
-              description="Registrar personas nuevas"
-              tone="blue"
-              compact
-              iconOnlyMobile
-              showDescriptionFrom="lg"
-            />
-            <QuickAction
-              to="/payments?status=pending"
-              icon={CreditCard}
-              title="Pagos"
-              description="Aprobar pagos walk-in"
-              count={pendingPayments}
-              tone="emerald"
-              compact
-              iconOnlyMobile
-              showDescriptionFrom="lg"
-            />
-            <QuickAction
-              to="/reception?mode=counter"
-              icon={Monitor}
-              title="Mostrador"
-              description="Atajos F1/F2"
-              tone="orange"
-              compact
-              iconOnlyMobile
-              showDescriptionFrom="lg"
-            />
-          </div>
-        </div>
-
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="flex min-h-[180px] flex-col md:col-span-3 md:min-h-[240px]"
+        <Link
+          to="/reception?mode=counter&tab=access"
+          className="border-brand/25 bg-brand/5 hover:bg-brand/10 active:bg-brand/15 flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl border px-4 py-3 transition-colors lg:hidden"
+          aria-label="Abrir mostrador: check-in y acceso"
         >
-          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
-            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-zinc-900 dark:text-white">
-              <Clock className="text-brand h-3.5 w-3.5" />
-              Actividad de hoy
-            </h3>
-            <Link
-              to="/reception?mode=counter&tab=inside"
-              className="text-brand hover:text-brand shrink-0 text-[10px] font-semibold sm:text-xs"
-            >
-              {isMobile ? 'Ver todo' : 'Dentro ahora'}
-            </Link>
+          <span className="brand-solid inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
+            <Fingerprint className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-zinc-900 dark:text-white">Abrir mostrador</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Check-in y acceso de miembros
+            </p>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col md:max-h-[280px] md:overflow-y-auto">
-            <ReceptionActivityFeed
-              limit={isMobile ? 3 : 10}
-              refreshKey={refreshKey}
-              compact
-              className="flex flex-1 flex-col"
+        </Link>
+
+        <div className="grid gap-3 md:grid-cols-5 md:items-stretch">
+          <div className="space-y-2.5 md:col-span-2">
+            <ReceptionKpiStrip
+              items={[
+                {
+                  title: 'Ingresos hoy',
+                  value: stats?.todayCheckIns ?? 0,
+                  icon: Fingerprint,
+                  tone: 'orange',
+                },
+                {
+                  title: 'Dentro ahora',
+                  value: stats?.insideNow ?? 0,
+                  icon: Users,
+                  tone: 'emerald',
+                  to: '/reception?mode=counter&tab=inside',
+                },
+                {
+                  title: 'Pagos pend.',
+                  value: pendingPayments,
+                  icon: CreditCard,
+                  tone: 'blue',
+                  to: '/payments?status=pending',
+                },
+              ]}
             />
+
+            <div className="hidden grid-cols-3 gap-2 md:grid-cols-1 lg:grid">
+              <QuickAction
+                to="/members"
+                icon={UserPlus}
+                title="Miembros"
+                description="Registrar personas nuevas"
+                tone="blue"
+                compact
+                iconOnlyMobile
+                showDescriptionFrom="lg"
+              />
+              <QuickAction
+                to="/payments?status=pending"
+                icon={CreditCard}
+                title="Pagos"
+                description="Aprobar pagos walk-in"
+                count={pendingPayments}
+                tone="emerald"
+                compact
+                iconOnlyMobile
+                showDescriptionFrom="lg"
+              />
+              <QuickAction
+                to="/reception?mode=counter"
+                icon={Monitor}
+                title="Mostrador"
+                description="Atajos F1/F2"
+                tone="orange"
+                compact
+                iconOnlyMobile
+                showDescriptionFrom="lg"
+              />
+            </div>
           </div>
-          {isMobile && (
-            <Link
-              to="/reception?mode=counter&tab=inside"
-              className="text-brand hover:text-brand mt-2 block text-center text-xs font-semibold"
-            >
-              Ver actividad completa
-            </Link>
-          )}
-        </Card>
+
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="flex min-h-[180px] flex-col md:col-span-3 md:min-h-[240px]"
+          >
+            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+              <h3 className="flex items-center gap-1.5 text-sm font-semibold text-zinc-900 dark:text-white">
+                <Clock className="text-brand h-3.5 w-3.5" />
+                Actividad de hoy
+              </h3>
+              <Link
+                to="/reception?mode=counter&tab=inside"
+                className="text-brand hover:text-brand shrink-0 text-[10px] font-semibold sm:text-xs"
+              >
+                {isMobile ? 'Ver todo' : 'Dentro ahora'}
+              </Link>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col md:max-h-[280px] md:overflow-y-auto">
+              <ReceptionActivityFeed
+                limit={isMobile ? 3 : 10}
+                refreshKey={refreshKey}
+                compact
+                className="flex flex-1 flex-col"
+              />
+            </div>
+            {isMobile && (
+              <Link
+                to="/reception?mode=counter&tab=inside"
+                className="text-brand hover:text-brand mt-2 block text-center text-xs font-semibold"
+              >
+                Ver actividad completa
+              </Link>
+            )}
+          </Card>
+        </div>
       </div>
-    </div>
+    </PullToRefreshContainer>
   );
 }

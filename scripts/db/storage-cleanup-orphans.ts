@@ -98,10 +98,12 @@ async function collectDbRefs(pool: pg.Pool): Promise<Map<string, Set<string>>> {
   return refs;
 }
 
+const { getScriptPgSslConfig } = await import('../lib/pgSsl.ts');
+
 const pool = new pg.Pool({
   connectionString: databaseUrl,
   max: 2,
-  ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 try {

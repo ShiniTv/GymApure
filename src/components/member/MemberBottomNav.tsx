@@ -236,11 +236,6 @@ export function MemberBottomNav() {
                         >
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
-                        {chatUnread > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
-                            {chatUnread > 9 ? '9+' : chatUnread}
-                          </span>
-                        )}
                       </span>
                     </button>
                   </li>
@@ -259,13 +254,20 @@ export function MemberBottomNav() {
                     aria-label={item.name}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <span
-                      className={clsx(
-                        'member-bottom-nav-tab-icon',
-                        active && 'member-bottom-nav-tab-icon--active'
+                    <span className="relative">
+                      <span
+                        className={clsx(
+                          'member-bottom-nav-tab-icon',
+                          active && 'member-bottom-nav-tab-icon--active'
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" aria-hidden />
+                      </span>
+                      {item.showUnreadBadge && chatUnread > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
+                          {chatUnread > 9 ? '9+' : chatUnread}
+                        </span>
                       )}
-                    >
-                      <item.icon className="h-5 w-5" aria-hidden />
                     </span>
                   </Link>
                 </li>

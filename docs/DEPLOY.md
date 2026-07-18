@@ -54,7 +54,10 @@ Ejecuta:
 
 ```powershell
 npm run deploy:preflight
-npm run db:migrate
+npm run deploy:release -- --run
+# Cuando staging OK:
+npm run db:migrate:prod
+# o: npm run deploy:release -- --run --migrate-prod
 npm run db:health
 ```
 
@@ -116,27 +119,30 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 Configura en Render Dashboard → Environment:
 
-| Variable                         | Obligatoria | Notas                                                                     |
-| -------------------------------- | ----------- | ------------------------------------------------------------------------- |
-| `JWT_SECRET`                     | Sí          | `openssl rand -base64 48` — único, no reutilizar dev                      |
-| `DATABASE_URL`                   | Sí          | Pooler Supabase prod, puerto 6543                                         |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Sí          | Service role de prod                                                      |
-| `NODE_ENV`                       | Sí          | `production` (ya en blueprint)                                            |
-| `CRON_SECRET`                    | **Sí**      | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él    |
-| `PUBLIC_APP_URL`                 | **Sí**      | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in   |
-| `REQUIRE_MFA_FOR_STAFF`          | No          | `false` en Blueprint — MFA opcional; staff puede activarlo en `/security` |
-| `REDIS_URL`                      | Recomendada | Upstash Redis — rate limit y lockout distribuidos entre instancias        |
-| `CORS_ORIGINS`                   | Opcional    | Solo si usas dominio custom aparte del de Render                          |
-| `ENABLE_HIBP_CHECK`              | Opcional    | `true` rechaza contraseñas filtradas (Have I Been Pwned)                  |
-| `DATABASE_SSL_CA`                | Opcional    | Ruta al CA de Supabase para verificar TLS de PostgreSQL                   |
-| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Opcional    | Monitoreo de errores (Replay enmascara texto/media por defecto)           |
-| `SMTP_HOST`                      | Recomendada | `smtp.gmail.com` — sin esto no se envían correos                          |
-| `SMTP_PORT`                      | Recomendada | `587`                                                                     |
-| `SMTP_SECURE`                    | Recomendada | `false`                                                                   |
-| `SMTP_USER`                      | Recomendada | `soporte.gymapure@gmail.com`                                              |
-| `SMTP_PASS`                      | Recomendada | Contraseña de aplicación Google (sin espacios)                            |
-| `SMTP_FROM`                      | Recomendada | `GymApure <soporte.gymapure@gmail.com>`                                   |
-| `VAPID_SUBJECT`                  | Opcional    | `mailto:soporte.gymapure@gmail.com`                                       |
+| Variable                         | Obligatoria  | Notas                                                                                   |
+| -------------------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `JWT_SECRET`                     | Sí           | `openssl rand -base64 48` — único, no reutilizar dev                                    |
+| `DATABASE_URL`                   | Sí           | Pooler Supabase prod, puerto 6543                                                       |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Sí           | Service role de prod                                                                    |
+| `NODE_ENV`                       | Sí           | `production` (ya en blueprint)                                                          |
+| `CRON_SECRET`                    | **Sí**       | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él                  |
+| `PUBLIC_APP_URL`                 | **Sí**       | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in                 |
+| `REQUIRE_MFA_FOR_STAFF`          | No           | `false` en Blueprint — MFA opcional; staff puede activarlo en `/security`               |
+| `REDIS_URL`                      | **Sí (ops)** | Blueprint inyecta Key Value `caribean-gym-kv`; sin Redis el rate limit es por instancia |
+| `CORS_ORIGINS`                   | Opcional     | Solo si usas dominio custom aparte del de Render                                        |
+| `ENABLE_HIBP_CHECK`              | Opcional     | `true` rechaza contraseñas filtradas (Have I Been Pwned)                                |
+| `DATABASE_SSL_CA`                | Recomendada  | Ruta al CA **o PEM inline** de Supabase (verify-full). Sin esto, TLS sin verificar.     |
+| `REDIS_URL`                      | **Sí (ops)** | Blueprint Key Value / Upstash                                                           |
+| `SENTRY_DSN` / `VITE_SENTRY_DSN` | Recomendada  | Errores en prod                                                                         |
+| `SMTP_*`                         | **Sí (ops)** | Correos transaccionales                                                                 |
+| `VITE_SENTRY_DSN` / `SENTRY_DSN` | Recomendada  | Monitoreo de errores (configurar en Dashboard; Clear build cache si añades VITE_*)      |
+| `SMTP_HOST`                      | **Sí (ops)** | `smtp.gmail.com` — sin esto no se envían correos                                        |
+| `SMTP_PORT`                      | Recomendada  | `587`                                                                                   |
+| `SMTP_SECURE`                    | Recomendada  | `false`                                                                                 |
+| `SMTP_USER`                      | Recomendada  | `soporte.gymapure@gmail.com`                                                            |
+| `SMTP_PASS`                      | Recomendada  | Contraseña de aplicación Google (sin espacios)                                          |
+| `SMTP_FROM`                      | Recomendada  | `GymApure <soporte.gymapure@gmail.com>`                                                 |
+| `VAPID_SUBJECT`                  | Opcional     | `mailto:soporte.gymapure@gmail.com`                                                     |
 
 **Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
 
@@ -305,7 +311,7 @@ Seguridad (código)
 
 Supabase producción
 [ ] Proyecto nuevo creado (separado de dev)
-[ ] npm run db:migrate ejecutado (incl. mfa + storage RLS)
+[ ] npm run db:migrate:prod (o deploy:release -- --migrate-prod)
 [ ] npm run db:health → OK
 [ ] npm run db:create-admin → admin creado
 [ ] Buckets Storage privados verificados
@@ -316,12 +322,15 @@ Render
 [ ] SUPABASE_SERVICE_ROLE_KEY configurado
 [ ] CRON_SECRET configurado (obligatorio)
 [ ] PUBLIC_APP_URL = https://<dominio-real> (obligatorio)
-[ ] REDIS_URL configurado (recomendado)
+[ ] REDIS_URL configurado (ops — Blueprint Key Value)
+[ ] SMTP_* configurado (ops)
+[ ] SENTRY_DSN / VITE_SENTRY_DSN (recomendado)
+[ ] DATABASE_SSL_CA (recomendado — PEM o ruta)
 [ ] Plan Starter
 [ ] GET /api/health → 200 + db up
 [ ] GET /api/health/ops (admin) → email configured
 [ ] Login admin funciona
-[ ] MFA activado para cuentas staff
+[ ] MFA disponible (opcional; no forzado)
 [ ] Upload comprobante → visible en Supabase Storage
 [ ] Cron jobs externos responden 200 con x-cron-secret
 ```

@@ -31,7 +31,7 @@ export const ADMIN_PRIMARY_TABS: StaffBottomNavTab[] = [
 
 export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Mostrador', href: '/reception', icon: Fingerprint },
-  { name: 'Kiosk', href: '/check-in?kiosk=1', icon: LogIn },
+  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn },
   { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox },
   { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
   { name: 'Entrenadores', href: '/trainers', icon: UserCog },

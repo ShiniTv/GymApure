@@ -2,7 +2,7 @@ import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
-import { requireMemberAccess, requireSelfOrRoles } from './middleware/access.ts';
+import { requireMemberAccess } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
 import { notifyRoutineAssigned } from '../lib/chat/eventMessages.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
@@ -330,7 +330,7 @@ router.get('/:id', requireMemberAccess('id', 'admin', 'receptionist'), async (re
 
 router.patch(
   '/:id/profile',
-  requireSelfOrRoles('id', 'admin'),
+  requireMemberAccess('id', 'admin', 'receptionist'),
   asyncHandler(async (req: AuthRequest, res) => {
     const parsed = profileSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -379,7 +379,7 @@ router.patch(
 
 router.post(
   '/:id/avatar',
-  requireSelfOrRoles('id', 'admin'),
+  requireMemberAccess('id', 'admin', 'receptionist'),
   uploadRateLimiter,
   avatarUpload.single('avatar'),
   asyncHandler(async (req: AuthRequest, res) => {
@@ -428,7 +428,7 @@ router.post(
 
 router.delete(
   '/:id/avatar',
-  requireSelfOrRoles('id', 'admin'),
+  requireMemberAccess('id', 'admin', 'receptionist'),
   asyncHandler(async (req: AuthRequest, res) => {
     const targetId = parseInt(req.params.id, 10);
 

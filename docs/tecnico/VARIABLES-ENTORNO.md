@@ -84,17 +84,17 @@ La tasa se actualiza automáticamente en el servidor (cron + scraper bcv.org.ve)
 
 ## Correo SMTP (producción recomendado)
 
-| Variable              | Ejemplo                                                                    |
-| --------------------- | -------------------------------------------------------------------------- |
-| `SMTP_HOST`           | `smtp.gmail.com`                                                           |
-| `SMTP_PORT`           | `587`                                                                      |
-| `SMTP_SECURE`         | `false`                                                                    |
-| `SMTP_USER`           | cuenta Gmail                                                               |
-| `SMTP_PASS`           | contraseña de aplicación Google                                            |
-| `SMTP_FROM`           | `GymApure <soporte@...>`                                                   |
-| `PUBLIC_APP_URL`      | URL HTTPS pública del sitio (obligatorio en prod; enlaces de reset)        |
-| `DATABASE_SSL_CA`     | Ruta al CA de Supabase para verificar TLS de PostgreSQL (recomendado prod) |
-| `DEV_LOG_RESET_LINKS` | `true` imprime enlaces de reset en consola (solo desarrollo)               |
+| Variable              | Ejemplo                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| `SMTP_HOST`           | `smtp.gmail.com`                                                                                 |
+| `SMTP_PORT`           | `587`                                                                                            |
+| `SMTP_SECURE`         | `false`                                                                                          |
+| `SMTP_USER`           | cuenta Gmail                                                                                     |
+| `SMTP_PASS`           | contraseña de aplicación Google                                                                  |
+| `SMTP_FROM`           | `GymApure <soporte@...>`                                                                         |
+| `PUBLIC_APP_URL`      | URL HTTPS pública del sitio (obligatorio en prod; enlaces de reset)                              |
+| `DATABASE_SSL_CA`     | Ruta al CA **o PEM inline** (`-----BEGIN CERTIFICATE-----…`) para verify-full (recomendado prod) |
+| `DEV_LOG_RESET_LINKS` | `true` imprime enlaces de reset en consola (solo desarrollo)                                     |
 
 Sin SMTP: no hay correos de bienvenida, recuperar contraseña ni pagos. Los avisos de vencimiento van al **chat in-app**, no por correo.
 

@@ -7,7 +7,7 @@ test.describe('Member sheet Más', () => {
     await page.goto('/panel');
   });
 
-  test('abre sheet con mensajes y cerrar sesión; sin hamburger', async ({ page }) => {
+  test('abre sheet con reservas y cerrar sesión; sin hamburger', async ({ page }) => {
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /cerrar menú/i })).toHaveCount(0);
 
@@ -15,7 +15,7 @@ test.describe('Member sheet Más', () => {
 
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('link', { name: /mensajes/i })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /reservas/i })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
   });
 });

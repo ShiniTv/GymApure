@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { config as loadDotenv } from 'dotenv';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 export type AuditCheck = {
   name: string;
@@ -15,7 +16,7 @@ export function createAuditPool(connectionString: string): pg.Pool {
     connectionString,
     max: 3,
     connectionTimeoutMillis: 30_000,
-    ssl: connectionString.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+    ssl: getScriptPgSslConfig(connectionString),
   });
 }
 

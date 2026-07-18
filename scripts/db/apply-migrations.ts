@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase', 'migrations');
 
@@ -203,7 +204,7 @@ async function main() {
 
   const pool = new pg.Pool({
     connectionString: databaseUrl,
-    ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+    ssl: getScriptPgSslConfig(databaseUrl),
   });
 
   try {

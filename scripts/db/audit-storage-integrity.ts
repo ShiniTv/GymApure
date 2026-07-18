@@ -109,11 +109,13 @@ type BucketAudit = {
   brokenSample: string[];
 };
 
+const { getScriptPgSslConfig } = await import('../lib/pgSsl.ts');
+
 const checks: AuditCheck[] = [];
 const pool = new pg.Pool({
   connectionString: databaseUrl,
   max: 2,
-  ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 try {

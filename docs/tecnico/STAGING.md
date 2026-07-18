@@ -31,6 +31,7 @@ Staging es un **tercer entorno** entre desarrollo y producción. Sirve para vali
    npm run db:create-admin:staging
    ```
 6. (Opcional) Servicio Render `caribean-gym-staging` apuntando al mismo `.env` vía Dashboard.
+7. Añadir el ref de staging en [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md) cuando exista.
 
 ---
 
@@ -38,12 +39,20 @@ Staging es un **tercer entorno** entre desarrollo y producción. Sirve para vali
 
 ```powershell
 npm run env:check
-npm run db:migrate:staging
+npm run deploy:release -- --run
+# Si staging OK y listo para prod:
+npm run deploy:release -- --run --migrate-prod
+# O solo: npm run db:migrate:prod
+```
+
+Smoke contra staging (servidor con `.env.staging`):
+
+```powershell
 npm run test:smoke:staging
 npm run security:audit-mfa:staging
 ```
 
-Si todo pasa → `npm run db:migrate:prod` y deploy a Render prod.
+Si todo pasa → deploy a Render prod.
 
 ---
 

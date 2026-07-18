@@ -21,6 +21,7 @@ import {
   isSupabaseStorageConfigured,
 } from '../../src/lib/supabaseAdmin.ts';
 import { PROD_REF as PROD_SUPABASE_PROJECT_REF } from '../lib/supabase-refs.ts';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const useDevDatabase = process.argv.includes('--dev');
 const databaseUrl = (
@@ -44,7 +45,7 @@ const pool = new pg.Pool({
   connectionString: databaseUrl,
   max: 1,
   connectionTimeoutMillis: 30_000,
-  ssl: databaseUrl.includes('supabase') ? { rejectUnauthorized: false } : undefined,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(

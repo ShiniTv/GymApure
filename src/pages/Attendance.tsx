@@ -1,7 +1,16 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Fingerprint, TrendingUp, Users, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import {
+  Fingerprint,
+  TrendingUp,
+  Users,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  MessageSquare,
+  Phone,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
@@ -44,8 +53,17 @@ interface InactiveMember {
   full_name: string;
   cedula: string | null;
   email: string;
+  phone: string | null;
   last_check_in: string | null;
   days_since: number | null;
+}
+
+function whatsappHref(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 10) return null;
+  const withCountry = digits.length === 10 ? `58${digits}` : digits;
+  return `https://wa.me/${withCountry}`;
 }
 
 export default function Attendance() {
@@ -176,28 +194,55 @@ export default function Attendance() {
                 Nadie inactivo en este periodo.
               </p>
             ) : (
-              inactiveMembers.map((member) => (
-                <Link
-                  key={member.id}
-                  to="/members"
-                  className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                      {member.full_name}
-                    </p>
-                    <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {member.cedula ?? member.email}
-                      {member.last_check_in
-                        ? ` · último ${format(new Date(member.last_check_in), 'dd MMM yyyy', { locale: es })}`
-                        : ' · sin check-ins'}
-                    </p>
+              inactiveMembers.map((member) => {
+                const wa = whatsappHref(member.phone);
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+                  >
+                    <Link
+                      to={`/members?q=${encodeURIComponent(member.full_name)}`}
+                      className="min-w-0 flex-1"
+                    >
+                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                        {member.full_name}
+                      </p>
+                      <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                        {member.cedula ?? member.email}
+                        {member.last_check_in
+                          ? ` · último ${format(new Date(member.last_check_in), 'dd MMM yyyy', { locale: es })}`
+                          : ' · sin check-ins'}
+                      </p>
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge variant="warning" className="text-[10px]">
+                        {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
+                      </Badge>
+                      <Link
+                        to={`/messages?member=${member.id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        title="Enviar mensaje"
+                        aria-label={`Mensaje a ${member.full_name}`}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </Link>
+                      {wa ? (
+                        <a
+                          href={wa}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                          title="WhatsApp"
+                          aria-label={`WhatsApp a ${member.full_name}`}
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
-                  <Badge variant="warning" className="shrink-0 text-[10px]">
-                    {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
-                  </Badge>
-                </Link>
-              ))
+                );
+              })
             )}
           </div>
         </Card>
@@ -317,26 +362,35 @@ export default function Attendance() {
                 const severity = getExpirySeverity(member.days_remaining, alertDays);
                 const classes = expiryBannerClasses(severity);
                 return (
-                  <Link
+                  <div
                     key={member.user_id}
-                    to="/members?expiring=true"
                     className={cn(
-                      'flex items-center justify-between rounded-xl border p-3 transition-colors hover:opacity-90',
+                      'flex items-center justify-between gap-2 rounded-xl border p-3',
                       classes.itemBorder
                     )}
                   >
-                    <div>
+                    <Link to="/members?expiring=true" className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                         {member.full_name}
                       </p>
                       <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
                         {member.membership_name}
                       </p>
+                    </Link>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Badge className={classes.badge}>
+                        {formatExpiryLabel(member.days_remaining)}
+                      </Badge>
+                      <Link
+                        to={`/messages?member=${member.user_id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        title="Enviar mensaje"
+                        aria-label={`Mensaje a ${member.full_name}`}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </Link>
                     </div>
-                    <Badge className={classes.badge}>
-                      {formatExpiryLabel(member.days_remaining)}
-                    </Badge>
-                  </Link>
+                  </div>
                 );
               })
             )}

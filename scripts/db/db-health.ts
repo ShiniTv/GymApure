@@ -4,13 +4,13 @@
  */
 import 'dotenv/config';
 import pg from 'pg';
+import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 import { INTEGRITY_CHECKS, LEGACY_GYM_SETTINGS_KEYS, listMigrationFiles } from './audit-shared.ts';
 
+const databaseUrl = process.env.DATABASE_URL ?? '';
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('supabase')
-    ? { rejectUnauthorized: false }
-    : undefined,
+  connectionString: databaseUrl,
+  ssl: getScriptPgSslConfig(databaseUrl),
 });
 
 type Check = { name: string; ok: boolean; detail: string };

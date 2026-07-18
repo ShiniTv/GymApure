@@ -25,7 +25,7 @@ export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
 ];
 
 export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
-  { name: 'Kiosk / tablet', href: '/check-in?kiosk=1', icon: LogIn },
+  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn },
   { name: 'Clases del día', href: '/clases', icon: CalendarDays },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench },
   { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
