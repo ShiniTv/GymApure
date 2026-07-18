@@ -25,6 +25,7 @@ export interface PaymentsQueryParams {
   page: number;
   pageSize: number;
   statusFilter: string;
+  search?: string;
 }
 
 export function paymentsQueryKey(params: PaymentsQueryParams) {
@@ -37,6 +38,7 @@ async function fetchPayments(params: PaymentsQueryParams): Promise<PaginatedPaym
     limit: String(params.pageSize),
   });
   if (params.statusFilter) qs.set('status', params.statusFilter);
+  if (params.search) qs.set('q', params.search);
 
   const res = await apiFetch(`/api/payments?${qs.toString()}`);
   return parseJsonResponse<PaginatedPayments>(res);

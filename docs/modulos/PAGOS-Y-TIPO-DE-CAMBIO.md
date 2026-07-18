@@ -24,12 +24,14 @@ Gestión de pagos de membresía, comprobantes y conversión USD/VES con tasa BCV
 
 ## Flujo: aprobar o rechazar (admin)
 
-1. **Pagos** → filtra por `pending`.
+1. **Pagos** → filtra por `pending` (o busca por nombre/referencia).
 2. Revisa comprobante (clic para ampliar).
 3. **Aprobar** → **elige el plan** a asignar (obligatorio) → activa/extiende membresía del miembro.
 4. **Rechazar** → **indica el motivo** (obligatorio) → el miembro ve el motivo y recibe notificación.
 
 > Ya no se “detecta” el plan por monto: evita asignar un plan incorrecto.
+
+Staff puede buscar con `?q=` (nombre del miembro o referencia del pago).
 
 ---
 

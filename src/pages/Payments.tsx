@@ -20,6 +20,7 @@ import {
   BackToDashboardLink,
   EmptyState,
   Spinner,
+  SearchInput,
 } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import { cn } from '../lib/utils';
@@ -96,15 +97,29 @@ export default function Payments() {
   const [statusFilter, setStatusFilter] = useState(() =>
     user?.role === 'admin' || user?.role === 'receptionist' ? 'pending' : ''
   );
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const pageSize = user?.role === 'member' ? 10 : 20;
   const [memberOptions, setMemberOptions] = useState<MemberOption[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [loadingMembers, setLoadingMembers] = useState(false);
 
+  useEffect(() => {
+    if (!isStaffPayment) return;
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchInput, isStaffPayment]);
+
   const { data: paymentsData, isPending: loading } = usePaymentsQuery({
     page,
     pageSize,
     statusFilter,
+    search: isStaffPayment ? search : undefined,
   });
   const payments = paymentsData?.items ?? [];
   const total = paymentsData?.total ?? 0;
@@ -420,21 +435,33 @@ export default function Payments() {
         )}
 
         {isStaffPayment && (
-          <FilterChips
-            fullWidth
-            className="sm:w-auto"
-            options={[
-              { value: '', label: 'Todos' },
-              { value: 'pending', label: 'Pendientes', count: adminStats?.stats?.pendingPayments },
-              { value: 'approved', label: 'Aprobados' },
-              { value: 'rejected', label: 'Rechazados' },
-            ]}
-            value={statusFilter}
-            onChange={(v) => {
-              setStatusFilter(v);
-              setPage(1);
-            }}
-          />
+          <div className="space-y-2.5">
+            <SearchInput
+              placeholder="Buscar por nombre o referencia…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Buscar pagos"
+            />
+            <FilterChips
+              fullWidth
+              className="sm:w-auto"
+              options={[
+                { value: '', label: 'Todos' },
+                {
+                  value: 'pending',
+                  label: 'Pendientes',
+                  count: adminStats?.stats?.pendingPayments,
+                },
+                { value: 'approved', label: 'Aprobados' },
+                { value: 'rejected', label: 'Rechazados' },
+              ]}
+              value={statusFilter}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            />
+          </div>
         )}
 
         <Card padding="none" rounded="xl" className="overflow-hidden">
@@ -604,13 +631,19 @@ export default function Payments() {
                 ) : payments.length === 0 ? (
                   <EmptyState
                     icon={CreditCard}
-                    title="Sin pagos registrados"
-                    description="Los reportes de miembros aparecerán aquí para revisión."
+                    title={search ? 'Sin resultados' : 'Sin pagos registrados'}
+                    description={
+                      search
+                        ? 'Prueba otro nombre o referencia, o limpia la búsqueda.'
+                        : 'Los reportes de miembros aparecerán aquí para revisión.'
+                    }
                     action={
-                      <Button size="sm" onClick={() => openRegisterModal()}>
-                        <Plus className="h-4 w-4" />
-                        Registrar pago
-                      </Button>
+                      search ? undefined : (
+                        <Button size="sm" onClick={() => openRegisterModal()}>
+                          <Plus className="h-4 w-4" />
+                          Registrar pago
+                        </Button>
+                      )
                     }
                   />
                 ) : (
@@ -711,7 +744,7 @@ export default function Payments() {
                           colSpan={7}
                           className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
                         >
-                          No hay pagos registrados
+                          {search ? 'Sin resultados para esa búsqueda' : 'No hay pagos registrados'}
                         </td>
                       </tr>
                     ) : (

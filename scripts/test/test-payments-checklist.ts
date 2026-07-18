@@ -147,7 +147,8 @@ async function main() {
   const beforeSub = await jsonApi('GET', `/api/memberships/user/${userIdBefore}`);
   ok('Sin membresía antes del pago', beforeSub.res.status === 200 && beforeSub.data === null);
 
-  const report1 = await reportPayment(`REF-APPROVE-${Date.now()}`);
+  const approveRef = `REF-APPROVE-${Date.now()}`;
+  const report1 = await reportPayment(approveRef);
   ok('Miembro reporta pago', report1.res.status === 200 && report1.data.status === 'pending');
   const paymentIdApprove = report1.data.id as number;
 
@@ -184,6 +185,31 @@ async function main() {
   const adminPayments = await jsonApi('GET', '/api/payments');
   const all = (adminPayments.data as { items?: { id: number; status: string }[] }).items ?? [];
   ok('Admin ve todos los pagos', adminPayments.res.status === 200 && all.length >= 2);
+
+  const searchByName = await jsonApi(
+    'GET',
+    `/api/payments?q=${encodeURIComponent('Pago Aprobado')}&status=`
+  );
+  const nameHits =
+    (searchByName.data as { items?: { id: number; user_name?: string }[] }).items ?? [];
+  ok(
+    'Admin busca por nombre',
+    searchByName.res.status === 200 &&
+      nameHits.some((p) => Number(p.id) === Number(paymentIdApprove)),
+    JSON.stringify(nameHits.map((p) => p.id))
+  );
+
+  const searchByRef = await jsonApi(
+    'GET',
+    `/api/payments?q=${encodeURIComponent(approveRef)}&status=`
+  );
+  const refHits = (searchByRef.data as { items?: { id: number }[] }).items ?? [];
+  ok(
+    'Admin busca por referencia',
+    searchByRef.res.status === 200 &&
+      refHits.some((p) => Number(p.id) === Number(paymentIdApprove)),
+    JSON.stringify(refHits.map((p) => p.id))
+  );
 
   const approveWithoutPlan = await jsonApi('POST', `/api/payments/${paymentIdApprove}/approve`, {});
   ok(
