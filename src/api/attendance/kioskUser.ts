@@ -10,14 +10,17 @@ export interface KioskUserContext {
   expiry_warning: string | null;
 }
 
-type KioskError = {
+interface KioskError {
   ok: false;
   status: number;
   error: string;
   user_name?: string;
-};
+}
 
-type KioskSuccess = { ok: true; user: KioskUserContext };
+interface KioskSuccess {
+  ok: true;
+  user: KioskUserContext;
+}
 
 export async function resolveKioskUser(cedula: string): Promise<KioskSuccess | KioskError> {
   const userResult = await query<{ id: number; full_name: string; status: string }>(
@@ -45,6 +48,18 @@ export async function resolveKioskUser(cedula: string): Promise<KioskSuccess | K
 
   const subscription = subResult.rows[0];
   if (!subscription) {
+    const paused = await query<{ id: number }>(
+      `SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'paused' LIMIT 1`,
+      [user.id]
+    );
+    if (paused.rows[0]) {
+      return {
+        ok: false,
+        status: 403,
+        error: 'Membresía pausada — reanúdala en recepción',
+        user_name: user.full_name,
+      };
+    }
     return { ok: false, status: 403, error: 'Sin membresía activa', user_name: user.full_name };
   }
 

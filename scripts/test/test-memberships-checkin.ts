@@ -16,8 +16,11 @@ const MEMBER_PASSWORD = 'MemberCheck123!';
 const MEMBER_CEDULA = `V-${70000000 + Math.floor(Math.random() * 999999)}`;
 
 let cookie = '';
+let csrfToken = '';
 let passed = 0;
 let failed = 0;
+
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function ok(name: string, cond: boolean, detail?: string) {
   if (cond) {
@@ -30,12 +33,16 @@ function ok(name: string, cond: boolean, detail?: string) {
 }
 
 async function api(method: string, path: string, body?: unknown) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(cookie ? { Cookie: cookie } : {}),
+  };
+  if (csrfToken && MUTATING.has(method)) {
+    headers['x-csrf-token'] = csrfToken;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const contentType = res.headers.get('content-type') ?? '';
@@ -46,8 +53,26 @@ async function api(method: string, path: string, body?: unknown) {
 function saveCookie(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
+  const parts: string[] = [];
+  for (const entry of cookies) {
+    if (entry.startsWith('token=')) {
+      parts.push(entry.split(';')[0]);
+    }
+    if (entry.startsWith('csrf_token=')) {
+      const raw = entry.split(';')[0].slice('csrf_token='.length);
+      csrfToken = decodeURIComponent(raw);
+      parts.push(entry.split(';')[0]);
+    }
+  }
+  if (parts.length) cookie = parts.join('; ');
+}
+
+async function login(email: string, password: string) {
+  cookie = '';
+  csrfToken = '';
+  const res = await api('POST', '/api/auth/login', { email, password });
+  saveCookie(res.res);
+  return res;
 }
 
 async function main() {
@@ -55,13 +80,9 @@ async function main() {
 
   const receptionCookie = await loginReceptionStaff();
 
-  const adminLogin = await api('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL,
-    password: ADMIN_PASSWORD,
-  });
+  const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   ok('Login admin', adminLogin.res.status === 200);
   if (adminLogin.res.status !== 200) process.exit(1);
-  saveCookie(adminLogin.res);
 
   const plans = await api('GET', '/api/memberships');
   const planList = plans.data as { id: number; name: string }[];
@@ -79,6 +100,7 @@ async function main() {
   }
 
   cookie = '';
+  csrfToken = '';
   const reg = await api('POST', '/api/auth/register', {
     full_name: 'Member Checklist',
     email: MEMBER_EMAIL,
@@ -88,12 +110,7 @@ async function main() {
   ok('Registro miembro para check-in', reg.res.status === 201);
   const memberId = (reg.data as { user?: { id: number } }).user?.id;
 
-  cookie = '';
-  const adminAgain = await api('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL,
-    password: ADMIN_PASSWORD,
-  });
-  saveCookie(adminAgain.res);
+  await login(ADMIN_EMAIL, ADMIN_PASSWORD);
 
   const beforeCheckIn = await receptionCheckIn(receptionCookie, MEMBER_CEDULA);
   const beforeData = await beforeCheckIn.json().catch(() => ({}));
@@ -114,25 +131,82 @@ async function main() {
     'Check-in con membresía activa',
     checkIn.status === 200 && (ci as { success?: boolean }).success === true
   );
-  ok('Check-in incluye days_remaining', typeof (ci as { days_remaining?: number }).days_remaining === 'number');
+  ok(
+    'Check-in incluye days_remaining',
+    typeof (ci as { days_remaining?: number }).days_remaining === 'number'
+  );
 
   const checkOut = await receptionCheckOut(receptionCookie, MEMBER_CEDULA);
   const co = await checkOut.json().catch(() => ({}));
-  ok('Check-out recepción', checkOut.status === 200 && (co as { success?: boolean }).success === true);
+  ok(
+    'Check-out recepción',
+    checkOut.status === 200 && (co as { success?: boolean }).success === true
+  );
+
+  const pause = await api('POST', '/api/memberships/pause', { user_id: memberId });
+  ok('Admin pausa membresía', pause.res.status === 200, JSON.stringify(pause.data));
+
+  const lookupPaused = await api(
+    'GET',
+    `/api/reception/lookup?cedula=${encodeURIComponent(MEMBER_CEDULA)}`
+  );
+  ok(
+    'Lookup muestra membresía pausada',
+    lookupPaused.res.status === 200 &&
+      lookupPaused.data.access_status === 'paused' &&
+      lookupPaused.data.subscription?.status === 'paused' &&
+      lookupPaused.data.can_check_in === false,
+    JSON.stringify({
+      access_status: lookupPaused.data.access_status,
+      subscription: lookupPaused.data.subscription,
+      can_check_in: lookupPaused.data.can_check_in,
+    })
+  );
+
+  const checkInPaused = await receptionCheckIn(receptionCookie, MEMBER_CEDULA);
+  const pausedData = await checkInPaused.json().catch(() => ({}));
+  ok(
+    'Check-in con membresía pausada → 403',
+    checkInPaused.status === 403 &&
+      String((pausedData as { error?: string }).error ?? '').toLowerCase().includes('pausad'),
+    JSON.stringify(pausedData)
+  );
+
+  const resume = await api('POST', '/api/memberships/resume', { user_id: memberId });
+  ok('Admin reanuda membresía', resume.res.status === 200, JSON.stringify(resume.data));
+
+  const lookupResumed = await api(
+    'GET',
+    `/api/reception/lookup?cedula=${encodeURIComponent(MEMBER_CEDULA)}`
+  );
+  ok(
+    'Lookup tras reanudar permite ingreso',
+    lookupResumed.res.status === 200 &&
+      lookupResumed.data.access_status === 'allowed' &&
+      lookupResumed.data.can_check_in === true,
+    JSON.stringify({
+      access_status: lookupResumed.data.access_status,
+      can_check_in: lookupResumed.data.can_check_in,
+    })
+  );
+
+  const checkInResumed = await receptionCheckIn(receptionCookie, MEMBER_CEDULA);
+  const ciResumed = await checkInResumed.json().catch(() => ({}));
+  ok(
+    'Check-in tras reanudar',
+    checkInResumed.status === 200 && (ciResumed as { success?: boolean }).success === true
+  );
 
   const expiring = await api('GET', '/api/memberships/expiring');
   ok('GET /api/memberships/expiring', expiring.res.status === 200);
 
   cookie = '';
+  csrfToken = '';
   const memberStats = await api('GET', '/api/stats/member');
   ok('Stats member sin login → 401', memberStats.res.status === 401);
 
-  cookie = '';
-  const memberLogin = await api('POST', '/api/auth/login', {
-    email: MEMBER_EMAIL,
-    password: MEMBER_PASSWORD,
-  });
-  saveCookie(memberLogin.res);
+  const memberLogin = await login(MEMBER_EMAIL, MEMBER_PASSWORD);
+  ok('Login miembro', memberLogin.res.status === 200);
   const memberStatsOk = await api('GET', '/api/stats/member');
   ok('GET /api/stats/member autenticado', memberStatsOk.res.status === 200);
 

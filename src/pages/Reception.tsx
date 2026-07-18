@@ -58,14 +58,15 @@ interface LookupResult {
   };
   subscription?: {
     membership_name: string;
-    end_date: string;
+    end_date: string | null;
     days_remaining: number;
+    status?: 'active' | 'paused';
   } | null;
   attendance?: {
     is_inside: boolean;
     today_session: { check_in_time: string; check_out_time: string | null } | null;
   };
-  access_status?: 'allowed' | 'inactive' | 'no_subscription';
+  access_status?: 'allowed' | 'inactive' | 'no_subscription' | 'paused';
   can_check_in?: boolean;
   can_check_out?: boolean;
   onboarding?: MemberOnboarding | null;
@@ -350,6 +351,9 @@ export default function Reception() {
     if (lookup.access_status === 'inactive') {
       return <Badge variant="danger">Cuenta inactiva</Badge>;
     }
+    if (lookup.access_status === 'paused') {
+      return <Badge variant="warning">Membresía pausada</Badge>;
+    }
     if (lookup.access_status === 'no_subscription') {
       return <Badge variant="warning">Sin membresía activa</Badge>;
     }
@@ -358,6 +362,30 @@ export default function Reception() {
     }
     return <Badge variant="accent">Puede ingresar</Badge>;
   };
+
+  const handleResumeMembership = useCallback(async () => {
+    if (!lookup?.user?.id || actionLoading) return;
+    setActionLoading(true);
+    setMessage('');
+    try {
+      await parseJsonResponse(
+        await apiFetch('/api/memberships/resume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: lookup.user.id }),
+        })
+      );
+      setMessageType('success');
+      setMessage('Membresía reanudada');
+      await doLookup(lookup.user.cedula ?? cedula, { preserveMessage: true });
+      void loadStats();
+    } catch (err) {
+      setMessageType('error');
+      setMessage(err instanceof Error ? err.message : 'No se pudo reanudar la membresía');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [actionLoading, cedula, doLookup, loadStats, lookup]);
 
   const actionMessageBanner =
     message &&
@@ -493,14 +521,39 @@ export default function Reception() {
             {accessBadge()}
           </div>
 
-          {lookup.subscription ? (
+          {lookup.subscription?.status === 'paused' ? (
+            <div className="space-y-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                    {lookup.subscription.membership_name} — pausada
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    {lookup.subscription.days_remaining} día
+                    {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados. Reanuda para
+                    permitir el ingreso.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                loading={actionLoading}
+                onClick={() => void handleResumeMembership()}
+              >
+                Reanudar membresía
+              </Button>
+            </div>
+          ) : lookup.subscription ? (
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {lookup.subscription.membership_name}
               </p>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Vence{' '}
-                {format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                {lookup.subscription.end_date
+                  ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
+                  : '—'}
                 {' · '}
                 {lookup.subscription.days_remaining} días restantes
               </p>

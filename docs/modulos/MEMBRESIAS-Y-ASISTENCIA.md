@@ -16,6 +16,8 @@ Planes de membresía, check-in y registro de asistencia.
 
 - Se extiende al **aprobar un pago** vinculado al plan.
 - Alertas de vencimiento según días configurados en Settings.
+- **Pausar** congela días restantes; en recepción el lookup muestra estado `paused` con CTA **Reanudar** (no “sin membresía”).
+- Check-in con membresía pausada → 403 con mensaje claro.
 
 ---
 
