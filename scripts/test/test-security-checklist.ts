@@ -54,13 +54,18 @@ async function api(
 function saveCookies(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const parts: string[] = [];
   for (const entry of cookies) {
-    if (entry.startsWith('token=')) cookie = entry.split(';')[0];
+    if (entry.startsWith('token=')) {
+      parts.push(entry.split(';')[0]);
+    }
     if (entry.startsWith('csrf_token=')) {
       const raw = entry.split(';')[0].slice('csrf_token='.length);
       csrfToken = decodeURIComponent(raw);
+      parts.push(entry.split(';')[0]);
     }
   }
+  if (parts.length) cookie = parts.join('; ');
 }
 
 async function loginAs(email: string, password = DEMO_PASSWORD!) {

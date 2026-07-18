@@ -14,8 +14,11 @@ const MEMBER_PASSWORD = 'ChecklistMember123!';
 const MEMBER_CEDULA = `V-${90000000 + Math.floor(Math.random() * 999999)}`;
 
 let cookie = '';
+let csrfToken = '';
 let passed = 0;
 let failed = 0;
+
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function ok(name: string, cond: boolean, detail?: string) {
   if (cond) {
@@ -28,12 +31,16 @@ function ok(name: string, cond: boolean, detail?: string) {
 }
 
 async function api(method: string, path: string, body?: unknown) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(cookie ? { Cookie: cookie } : {}),
+  };
+  if (csrfToken && MUTATING.has(method)) {
+    headers['x-csrf-token'] = csrfToken;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
@@ -43,8 +50,18 @@ async function api(method: string, path: string, body?: unknown) {
 function saveCookie(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
+  const parts: string[] = [];
+  for (const entry of cookies) {
+    if (entry.startsWith('token=')) {
+      parts.push(entry.split(';')[0]);
+    }
+    if (entry.startsWith('csrf_token=')) {
+      const raw = entry.split(';')[0].slice('csrf_token='.length);
+      csrfToken = decodeURIComponent(raw);
+      parts.push(entry.split(';')[0]);
+    }
+  }
+  if (parts.length) cookie = parts.join('; ');
 }
 
 async function main() {
