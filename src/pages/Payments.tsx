@@ -284,18 +284,22 @@ export default function Payments() {
 
   const handleApprove = async () => {
     if (!approveTarget || approving) return;
+    if (!selectedPlanId) {
+      toast?.error('Selecciona un plan de membresía');
+      return;
+    }
 
     setApproving(true);
     try {
-      const body = selectedPlanId ? { membership_id: Number(selectedPlanId) } : {};
       const res = await apiFetch(`/api/payments/${approveTarget.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ membership_id: Number(selectedPlanId) }),
       });
       await parseJsonResponse(res);
 
       setApproveTarget(null);
+      setSelectedPlanId('');
       apiFetchPayments();
       await adminStats?.refresh();
       toast?.success('Pago aprobado');
@@ -973,13 +977,14 @@ export default function Payments() {
               <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
                 {approveTarget.user_name} — ${approveTarget.amount_usd}
               </p>
-              <Label>Plan a asignar (opcional)</Label>
+              <Label>Plan a asignar</Label>
               <Select
                 className="mb-6"
                 value={selectedPlanId}
                 onChange={(e) => setSelectedPlanId(e.target.value)}
+                required
               >
-                <option value="">Detectar por monto del pago</option>
+                <option value="">Seleccionar plan…</option>
                 {membershipPlans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
                     {plan.name} — ${plan.price_usd} / {plan.duration_days} días
@@ -1000,6 +1005,7 @@ export default function Payments() {
                   type="button"
                   className="flex-1 bg-emerald-600 shadow-emerald-900/20 hover:bg-emerald-500"
                   loading={approving}
+                  disabled={!selectedPlanId || approving}
                   onClick={handleApprove}
                 >
                   Aprobar

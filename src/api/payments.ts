@@ -234,6 +234,11 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
   const { id } = req.params;
   const membershipId = req.body.membership_id ? parseInt(String(req.body.membership_id), 10) : null;
 
+  if (!membershipId || Number.isNaN(membershipId)) {
+    res.status(400).json({ error: 'Debes seleccionar un plan de membresía para aprobar el pago' });
+    return;
+  }
+
   try {
     let approvedUserId = 0;
     let approvedAmount = 0;
@@ -250,30 +255,20 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
       approvedUserId = Number(payment.user_id);
       approvedAmount = Number(payment.amount_usd);
 
+      const byId = await client.query('SELECT * FROM memberships WHERE id = $1', [membershipId]);
+      const membership = byId.rows[0];
+      if (!membership) {
+        throw new AppError(
+          'Plan de membresía no encontrado',
+          400,
+          'Plan de membresía no encontrado'
+        );
+      }
+
       await client.query("UPDATE payments SET status = 'approved' WHERE id = $1", [id]);
 
-      let membership = null;
-
-      if (membershipId && !Number.isNaN(membershipId)) {
-        const byId = await client.query('SELECT * FROM memberships WHERE id = $1', [membershipId]);
-        membership = byId.rows[0];
-      } else {
-        let membershipResult = await client.query(
-          'SELECT * FROM memberships WHERE price_usd <= $1 ORDER BY price_usd DESC LIMIT 1',
-          [payment.amount_usd]
-        );
-        if (!membershipResult.rows[0]) {
-          membershipResult = await client.query(
-            'SELECT * FROM memberships ORDER BY duration_days ASC LIMIT 1'
-          );
-        }
-        membership = membershipResult.rows[0];
-      }
-
-      if (membership) {
-        membershipName = membership.name;
-        await assignSubscription(client, approvedUserId, Number(membership.id));
-      }
+      membershipName = membership.name;
+      await assignSubscription(client, approvedUserId, Number(membership.id));
     });
 
     await logAudit(req.user!.id, 'payment.approve', {
