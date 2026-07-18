@@ -13,6 +13,7 @@ import {
   BackToDashboardLink,
   EmptyState,
   SearchInput,
+  FilterChips,
 } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -38,6 +39,15 @@ interface HourlyVolumePoint {
   count: number;
 }
 
+interface InactiveMember {
+  id: number;
+  full_name: string;
+  cedula: string | null;
+  email: string;
+  last_check_in: string | null;
+  days_since: number | null;
+}
+
 export default function Attendance() {
   const { user } = useAuth();
   const adminStats = useAdminStatsOptional();
@@ -46,10 +56,14 @@ export default function Attendance() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [inactiveDays, setInactiveDays] = useState('14');
+  const [inactiveMembers, setInactiveMembers] = useState<InactiveMember[]>([]);
+  const [inactiveLoading, setInactiveLoading] = useState(false);
 
   const expiring = adminStats?.stats?.expiringList ?? [];
   const lastDoorAlert = adminStats?.stats?.lastDoorAlert ?? null;
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -85,6 +99,21 @@ export default function Attendance() {
     void load();
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    setInactiveLoading(true);
+    void apiFetch(`/api/attendance/inactive?days=${inactiveDays}`)
+      .then((res) => parseJsonResponse<{ days: number; members: InactiveMember[] }>(res))
+      .then((payload) => {
+        setInactiveMembers(Array.isArray(payload.members) ? payload.members : []);
+      })
+      .catch((err) => {
+        clientLogger.error('Failed to load inactive members', err);
+        setInactiveMembers([]);
+      })
+      .finally(() => setInactiveLoading(false));
+  }, [inactiveDays, isAdmin]);
+
   const totalEntries = data.reduce((sum, item) => sum + item.count, 0);
   const avgEntries = data.length > 0 ? (totalEntries / data.length).toFixed(1) : 0;
 
@@ -115,6 +144,64 @@ export default function Attendance() {
           <ReceptionActivityFeed limit={0} search={search} />
         </div>
       </Card>
+
+      {isAdmin && (
+        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+          <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 sm:text-base dark:text-white">
+              <Users className="h-4 w-4 shrink-0 text-amber-500" />
+              Miembros inactivos
+            </h3>
+            <FilterChips
+              className="sm:w-auto"
+              options={[
+                { value: '7', label: '7d' },
+                { value: '14', label: '14d' },
+                { value: '30', label: '30d' },
+              ]}
+              value={inactiveDays}
+              onChange={setInactiveDays}
+            />
+          </div>
+          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+            Sin check-in en los últimos {inactiveDays} días (o nunca).
+          </p>
+          <div className="scroll-area max-h-64 space-y-2 sm:max-h-72">
+            {inactiveLoading ? (
+              <div className="flex justify-center py-8">
+                <Spinner />
+              </div>
+            ) : inactiveMembers.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Nadie inactivo en este periodo.
+              </p>
+            ) : (
+              inactiveMembers.map((member) => (
+                <Link
+                  key={member.id}
+                  to="/members"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                      {member.full_name}
+                    </p>
+                    <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                      {member.cedula ?? member.email}
+                      {member.last_check_in
+                        ? ` · último ${format(new Date(member.last_check_in), 'dd MMM yyyy', { locale: es })}`
+                        : ' · sin check-ins'}
+                    </p>
+                  </div>
+                  <Badge variant="warning" className="shrink-0 text-[10px]">
+                    {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
+                  </Badge>
+                </Link>
+              ))
+            )}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
         <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />

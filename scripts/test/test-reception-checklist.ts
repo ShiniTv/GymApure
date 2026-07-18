@@ -88,6 +88,15 @@ async function main() {
   const settings = await api('GET', '/api/settings/expiry');
   ok('Settings bloqueado para recepcionista (403)', settings.res.status === 403);
 
+  const pin = await api('GET', '/api/settings/check-in-pin');
+  ok(
+    'GET PIN de presencia (staff)',
+    pin.res.status === 200 &&
+      typeof pin.data.require_self_check_in_pin === 'boolean' &&
+      typeof pin.data.pin_configured === 'boolean',
+    JSON.stringify(pin.data)
+  );
+
   const lookup = await api('GET', `/api/reception/lookup?cedula=${encodeURIComponent(MEMBER_CEDULA)}`);
   ok('Lookup por cédula demo member', lookup.res.status === 200 && lookup.data.found === true);
 

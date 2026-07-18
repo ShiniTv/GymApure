@@ -155,6 +155,14 @@ async function main() {
     JSON.stringify(todayHits.map((r) => r.cedula))
   );
 
+  const inactive = await api('GET', '/api/attendance/inactive?days=14');
+  ok(
+    'GET miembros inactivos',
+    inactive.res.status === 200 &&
+      Array.isArray((inactive.data as { members?: unknown[] }).members),
+    JSON.stringify(inactive.data)?.slice(0, 120)
+  );
+
   const checkOut = await receptionCheckOut(receptionCookie, MEMBER_CEDULA);
   const co = await checkOut.json().catch(() => ({}));
   ok(

@@ -20,6 +20,7 @@ import {
   CreditCard,
   Pencil,
   Ticket,
+  KeyRound,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
@@ -43,6 +44,7 @@ import { ReceptionGuestPasses } from '../components/reception/ReceptionGuestPass
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { useAuth } from '../context/AuthContext';
 import { OnboardingStatus, type MemberOnboarding } from '../components/members/OnboardingStatus';
 
 interface LookupResult {
@@ -100,6 +102,7 @@ const COUNTER_SEARCH_BTN = 'h-12 w-12 shrink-0 p-0 sm:h-[52px] sm:w-[52px]';
 
 export default function Reception() {
   usePageTitle('Recepción');
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
@@ -129,8 +132,34 @@ export default function Reception() {
   const [cedulaEditValue, setCedulaEditValue] = useState('');
   const [cedulaEditError, setCedulaEditError] = useState('');
   const [cedulaEditSaving, setCedulaEditSaving] = useState(false);
+  const [checkInPin, setCheckInPin] = useState<{
+    pin: string;
+    required: boolean;
+    configured: boolean;
+  } | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const isMobileShell = useMediaQuery('(max-width: 1023px)');
+
+  useEffect(() => {
+    void apiFetch('/api/settings/check-in-pin')
+      .then((res) =>
+        parseJsonResponse<{
+          check_in_pin?: string;
+          require_self_check_in_pin?: boolean;
+          pin_configured?: boolean;
+        }>(res)
+      )
+      .then((data) => {
+        setCheckInPin({
+          pin: data.check_in_pin ?? '',
+          required: Boolean(data.require_self_check_in_pin),
+          configured: Boolean(data.pin_configured ?? data.check_in_pin),
+        });
+      })
+      .catch(() => {
+        setCheckInPin(null);
+      });
+  }, []);
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -387,6 +416,62 @@ export default function Reception() {
       setActionLoading(false);
     }
   }, [actionLoading, cedula, doLookup, loadStats, lookup]);
+
+  const pinBanner =
+    checkInPin?.configured && checkInPin.pin ? (
+      <Card
+        padding="sm"
+        rounded="xl"
+        className={cn('border-brand/20 bg-brand/5', isCounterMode && 'px-3 py-2.5')}
+      >
+        <div className="flex items-center gap-3">
+          <div className="bg-brand/10 text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="label-caps text-zinc-500 dark:text-zinc-400">PIN del día</p>
+            <p className="font-mono text-xl font-bold tracking-[0.2em] text-zinc-900 dark:text-white">
+              {checkInPin.pin}
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              {checkInPin.required
+                ? 'Obligatorio para self check-in del miembro'
+                : 'Disponible · self check-in no lo exige aún'}
+            </p>
+          </div>
+          {user?.role === 'admin' ? (
+            <Link to="/settings" className="shrink-0 text-xs font-semibold text-zinc-500 underline">
+              Cambiar
+            </Link>
+          ) : (
+            <span className="shrink-0 text-[10px] text-zinc-400">Solo admin cambia</span>
+          )}
+        </div>
+      </Card>
+    ) : checkInPin && !checkInPin.configured ? (
+      <Card
+        padding="sm"
+        rounded="xl"
+        className="border-dashed border-zinc-300 dark:border-zinc-700"
+      >
+        <div className="flex items-start gap-2">
+          <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Sin PIN de presencia configurado.
+            {user?.role === 'admin' ? (
+              <>
+                {' '}
+                <Link to="/settings" className="font-semibold underline">
+                  Configurar en Ajustes
+                </Link>
+              </>
+            ) : (
+              ' Pide a un admin configurarlo en Ajustes.'
+            )}
+          </p>
+        </div>
+      </Card>
+    ) : null;
 
   const actionMessageBanner =
     message &&
@@ -826,6 +911,7 @@ export default function Reception() {
           {tab === 'access' && (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
               <div className="space-y-3 lg:col-span-3 lg:space-y-4">
+                {pinBanner}
                 {lookupPanel}
                 {showMemberPanel && memberPanel}
               </div>
@@ -887,9 +973,12 @@ export default function Reception() {
         />
 
         {tab === 'access' && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {lookupPanel}
-            {memberPanel}
+          <div className="space-y-4">
+            {pinBanner}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {lookupPanel}
+              {memberPanel}
+            </div>
           </div>
         )}
 

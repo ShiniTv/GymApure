@@ -26,7 +26,8 @@ Planes de membresía, check-in y registro de asistencia.
 ### Recepción (mostrador)
 
 1. **Recepción** → **Entrada / Salida**.
-2. Busca cédula → Autorizar entrada / Registrar salida.
+2. El **PIN del día** aparece arriba del buscador (si está configurado en Ajustes).
+3. Busca cédula → Autorizar entrada / Registrar salida.
 
 ### Modo tablet
 
@@ -38,8 +39,9 @@ Planes de membresía, check-in y registro de asistencia.
 
 ## Asistencia global (`/attendance` — admin)
 
-Reporte de entradas/salidas **de hoy** (lista + búsqueda por nombre/cédula), gráficos de volumen/horas pico, y membresías por vencer.
----
+- Entradas/salidas **de hoy** (lista + búsqueda por nombre/cédula).
+- **Miembros inactivos** (7 / 14 / 30 días sin check-in).
+- Gráficos de volumen/horas pico y membresías por vencer.---
 
 ## Walk-in
 
