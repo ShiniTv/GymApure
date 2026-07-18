@@ -174,20 +174,29 @@ const membershipOperationSchema = z.object({
   user_id: z.coerce.number().int().positive('user_id inválido'),
 });
 
+const membershipPauseSchema = membershipOperationSchema.extend({
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Indica un motivo de al menos 3 caracteres')
+    .max(500, 'El motivo no puede superar 500 caracteres'),
+});
+
 router.post('/pause', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
-  const parsed = membershipOperationSchema.safeParse(req.body);
+  const parsed = membershipPauseSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
   }
 
   try {
     const subscription = await withTransaction((client) =>
-      pauseSubscription(client, parsed.data.user_id)
+      pauseSubscription(client, parsed.data.user_id, parsed.data.reason)
     );
     await logAudit(req.user!.id, 'membership.pause', {
       user_id: parsed.data.user_id,
       subscription_id: subscription.id,
       days_remaining: subscription.pause_days_remaining,
+      reason: parsed.data.reason,
     });
     invalidateAdminStatsCache();
     res.json({ success: true, subscription });

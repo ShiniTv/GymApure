@@ -136,6 +136,25 @@ async function main() {
     typeof (ci as { days_remaining?: number }).days_remaining === 'number'
   );
 
+  const todayList = await api('GET', '/api/attendance/today');
+  ok(
+    'Lista asistencia de hoy',
+    todayList.res.status === 200 && Array.isArray(todayList.data),
+    JSON.stringify(todayList.data)?.slice(0, 120)
+  );
+  const todaySearch = await api(
+    'GET',
+    `/api/attendance/today?q=${encodeURIComponent('Member Checklist')}`
+  );
+  const todayHits = (todaySearch.data as { full_name?: string; cedula?: string }[]) ?? [];
+  ok(
+    'Buscar asistencia por nombre',
+    todaySearch.res.status === 200 &&
+      Array.isArray(todayHits) &&
+      todayHits.some((r) => r.cedula === MEMBER_CEDULA),
+    JSON.stringify(todayHits.map((r) => r.cedula))
+  );
+
   const checkOut = await receptionCheckOut(receptionCookie, MEMBER_CEDULA);
   const co = await checkOut.json().catch(() => ({}));
   ok(
@@ -143,7 +162,18 @@ async function main() {
     checkOut.status === 200 && (co as { success?: boolean }).success === true
   );
 
-  const pause = await api('POST', '/api/memberships/pause', { user_id: memberId });
+  const pauseWithoutReason = await api('POST', '/api/memberships/pause', { user_id: memberId });
+  ok(
+    'Pausar sin motivo → 400',
+    pauseWithoutReason.res.status === 400,
+    JSON.stringify(pauseWithoutReason.data)
+  );
+
+  const pauseReason = 'Viaje checklist membresía';
+  const pause = await api('POST', '/api/memberships/pause', {
+    user_id: memberId,
+    reason: pauseReason,
+  });
   ok('Admin pausa membresía', pause.res.status === 200, JSON.stringify(pause.data));
 
   const lookupPaused = await api(
@@ -155,6 +185,7 @@ async function main() {
     lookupPaused.res.status === 200 &&
       lookupPaused.data.access_status === 'paused' &&
       lookupPaused.data.subscription?.status === 'paused' &&
+      lookupPaused.data.subscription?.pause_reason === pauseReason &&
       lookupPaused.data.can_check_in === false,
     JSON.stringify({
       access_status: lookupPaused.data.access_status,

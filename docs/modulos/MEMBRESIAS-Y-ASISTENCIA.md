@@ -16,7 +16,7 @@ Planes de membresía, check-in y registro de asistencia.
 
 - Se extiende al **aprobar un pago** vinculado al plan.
 - Alertas de vencimiento según días configurados en Settings.
-- **Pausar** congela días restantes; en recepción el lookup muestra estado `paused` con CTA **Reanudar** (no “sin membresía”).
+- **Pausar** requiere **motivo** (obligatorio); congela días restantes. En recepción el lookup muestra estado `paused`, el motivo y CTA **Reanudar** (no “sin membresía”).
 - Check-in con membresía pausada → 403 con mensaje claro.
 
 ---
@@ -38,8 +38,7 @@ Planes de membresía, check-in y registro de asistencia.
 
 ## Asistencia global (`/attendance` — admin)
 
-Reporte de entradas/salidas, filtros por fecha y miembro.
-
+Reporte de entradas/salidas **de hoy** (lista + búsqueda por nombre/cédula), gráficos de volumen/horas pico, y membresías por vencer.
 ---
 
 ## Walk-in

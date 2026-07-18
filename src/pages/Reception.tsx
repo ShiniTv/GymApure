@@ -61,6 +61,7 @@ interface LookupResult {
     end_date: string | null;
     days_remaining: number;
     status?: 'active' | 'paused';
+    pause_reason?: string | null;
   } | null;
   attendance?: {
     is_inside: boolean;
@@ -534,6 +535,11 @@ export default function Reception() {
                     {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados. Reanuda para
                     permitir el ingreso.
                   </p>
+                  {lookup.subscription.pause_reason?.trim() && (
+                    <p className="mt-1 text-xs text-amber-700/90 dark:text-amber-300/90">
+                      Motivo: {lookup.subscription.pause_reason.trim()}
+                    </p>
+                  )}
                 </div>
               </div>
               <Button

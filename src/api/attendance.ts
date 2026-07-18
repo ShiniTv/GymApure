@@ -11,6 +11,7 @@ import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { performCheckIn, performCheckOut } from './attendance/attendanceCore.ts';
 import { logAudit } from '../lib/audit.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 
 const router = asyncRouter();
 
@@ -69,9 +70,10 @@ router.get('/today', authorize(RECEPTION_OPERATORS), async (req, res) => {
   try {
     const params: string[] = [];
     let searchSql = '';
-    if (q) {
-      params.push(`%${q.toLowerCase()}%`);
-      searchSql = ` AND (LOWER(u.full_name) LIKE $1 OR LOWER(COALESCE(u.cedula, '')) LIKE $1)`;
+    const pattern = q ? toLikeContainsPattern(q) : null;
+    if (pattern) {
+      params.push(pattern);
+      searchSql = ` AND (LOWER(u.full_name) LIKE $1${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $1${LIKE_ESCAPE_CLAUSE})`;
     }
 
     const { rows } = await query<{

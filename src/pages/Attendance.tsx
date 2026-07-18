@@ -12,12 +12,14 @@ import {
   StatCard,
   BackToDashboardLink,
   EmptyState,
+  SearchInput,
 } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
 import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
+import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
 
 const DailyVolumeChart = lazy(() =>
   import('../components/AttendanceCharts').then((m) => ({ default: m.DailyVolumeChart }))
@@ -42,10 +44,21 @@ export default function Attendance() {
   const [data, setData] = useState<DailyVolumePoint[]>([]);
   const [hourlyData, setHourlyData] = useState<HourlyVolumePoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
 
   const expiring = adminStats?.stats?.expiringList ?? [];
   const lastDoorAlert = adminStats?.stats?.lastDoorAlert ?? null;
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [searchInput]);
 
   useEffect(() => {
     const load = async () => {
@@ -80,9 +93,28 @@ export default function Attendance() {
       <PageHeader
         compact
         title={<>Asistencias</>}
-        subtitle="Análisis de volumen, horas pico y membresías por vencer"
+        subtitle="Entradas de hoy, volumen, horas pico y membresías por vencer"
         action={user?.role === 'admin' ? <BackToDashboardLink /> : undefined}
       />
+
+      <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 sm:text-base dark:text-white">
+            <Fingerprint className="text-brand h-4 w-4 shrink-0" />
+            Entradas y salidas de hoy
+          </h3>
+          <SearchInput
+            containerClassName="w-full sm:max-w-xs"
+            placeholder="Buscar por nombre o cédula…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Buscar asistencia de hoy"
+          />
+        </div>
+        <div className="scroll-area max-h-72 sm:max-h-80">
+          <ReceptionActivityFeed limit={0} search={search} />
+        </div>
+      </Card>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
         <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />

@@ -12,6 +12,7 @@ export interface ActiveSubscription {
 export interface PausedSubscription extends ActiveSubscription {
   paused_at: string;
   pause_days_remaining: number;
+  pause_reason?: string | null;
 }
 
 interface Queryable {
@@ -154,13 +155,15 @@ export async function assignSubscription(
 /** Pause a current subscription while preserving its unused days. */
 export async function pauseSubscription(
   client: Queryable,
-  userId: number
+  userId: number,
+  reason: string
 ): Promise<PausedSubscription> {
   const { rows } = await client.query<PausedSubscription>(
     `UPDATE subscriptions s
      SET status = 'paused',
          paused_at = NOW(),
          pause_days_remaining = GREATEST(0, s.end_date - CURRENT_DATE),
+         pause_reason = $2,
          resume_at = NULL
      FROM memberships m
      WHERE s.user_id = $1
@@ -170,8 +173,8 @@ export async function pauseSubscription(
      RETURNING s.id, m.name AS membership_name, s.end_date,
                GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining,
                s.start_date, s.status, m.duration_days, m.price_usd,
-               s.paused_at, s.pause_days_remaining`,
-    [userId]
+               s.paused_at, s.pause_days_remaining, s.pause_reason`,
+    [userId, reason]
   );
   if (!rows[0]) throw new Error('No hay una membresía activa para pausar');
   return rows[0];
@@ -188,7 +191,8 @@ export async function resumeSubscription(
          end_date = CURRENT_DATE + COALESCE(s.pause_days_remaining, 0),
          resume_at = NOW(),
          paused_at = NULL,
-         pause_days_remaining = NULL
+         pause_days_remaining = NULL,
+         pause_reason = NULL
      FROM memberships m
      WHERE s.user_id = $1
        AND s.membership_id = m.id

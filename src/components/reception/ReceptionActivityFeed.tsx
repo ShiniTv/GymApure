@@ -21,6 +21,8 @@ interface ReceptionActivityFeedProps {
   compact?: boolean;
   className?: string;
   refreshKey?: number;
+  /** Search by name or cédula (`?q=`). */
+  search?: string;
 }
 
 export default function ReceptionActivityFeed({
@@ -28,18 +30,25 @@ export default function ReceptionActivityFeed({
   compact = false,
   className,
   refreshKey = 0,
+  search = '',
 }: ReceptionActivityFeedProps) {
   const [rows, setRows] = useState<TodayAttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    apiFetch('/api/attendance/today')
+    const qs = new URLSearchParams();
+    if (search.trim()) qs.set('q', search.trim());
+    const path = qs.size > 0 ? `/api/attendance/today?${qs}` : '/api/attendance/today';
+    apiFetch(path)
       .then((res) => parseJsonResponse<TodayAttendanceRow[]>(res))
-      .then((data) => setRows(Array.isArray(data) ? data.slice(0, limit) : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setRows(limit > 0 ? list.slice(0, limit) : list);
+      })
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [limit, refreshKey]);
+  }, [limit, refreshKey, search]);
 
   if (loading) {
     return (
@@ -60,7 +69,7 @@ export default function ReceptionActivityFeed({
           className
         )}
       >
-        Sin movimientos registrados hoy
+        {search.trim() ? 'Sin resultados para esa búsqueda' : 'Sin movimientos registrados hoy'}
       </p>
     );
   }

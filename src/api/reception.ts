@@ -68,6 +68,7 @@ router.get(
       paused_membership_name: string | null;
       paused_end_date: string | null;
       pause_days_remaining: number | null;
+      pause_reason: string | null;
       att_id: number | null;
       check_in_time: Date | string | null;
       check_out_time: Date | string | null;
@@ -79,6 +80,7 @@ router.get(
               sub.id AS sub_id, sub.membership_name, sub.end_date, sub.days_remaining,
               paused_sub.id AS paused_sub_id, paused_sub.membership_name AS paused_membership_name,
               paused_sub.end_date AS paused_end_date, paused_sub.pause_days_remaining,
+              paused_sub.pause_reason,
               att.id AS att_id, att.check_in_time, att.check_out_time,
               (
                 EXISTS (
@@ -111,7 +113,7 @@ router.get(
          LIMIT 1
        ) sub ON true
        LEFT JOIN LATERAL (
-         SELECT s.id, m.name AS membership_name, s.end_date, s.pause_days_remaining
+         SELECT s.id, m.name AS membership_name, s.end_date, s.pause_days_remaining, s.pause_reason
          FROM subscriptions s
          JOIN memberships m ON m.id = s.membership_id
          WHERE s.user_id = u.id AND s.status = 'paused'
@@ -155,6 +157,7 @@ router.get(
             end_date: row.paused_end_date,
             days_remaining: row.pause_days_remaining ?? 0,
             status: 'paused' as const,
+            pause_reason: row.pause_reason,
           }
         : null;
 

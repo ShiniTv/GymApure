@@ -18,6 +18,7 @@ import {
   SearchInput,
   BackToDashboardLink,
   CedulaInput,
+  Textarea,
 } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import {
@@ -103,6 +104,10 @@ export default function Members() {
   const [editShiftValue, setEditShiftValue] = useState<TrainingShift | ''>('');
   const [savingShift, setSavingShift] = useState(false);
   const [membershipOperationId, setMembershipOperationId] = useState<number | null>(null);
+  const [pauseTarget, setPauseTarget] = useState<Member | null>(null);
+  const [pauseReason, setPauseReason] = useState('');
+  const [pauseError, setPauseError] = useState('');
+  const [pausing, setPausing] = useState(false);
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -460,27 +465,64 @@ export default function Members() {
 
   const handleMembershipOperation = useCallback(
     async (member: Member) => {
-      const operation = member.subscription_status === 'paused' ? 'resume' : 'pause';
-      setMembershipOperationId(member.id);
-      try {
-        await parseJsonResponse(
-          await apiFetch(`/api/memberships/${operation}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: member.id }),
-          })
-        );
-        invalidateMembers();
-        await adminStats?.refresh();
-        toast?.success(operation === 'pause' ? 'Membresía pausada' : 'Membresía reanudada');
-      } catch (err) {
-        toast?.error(err instanceof Error ? err.message : 'No se pudo actualizar la membresía');
-      } finally {
-        setMembershipOperationId(null);
+      if (member.subscription_status === 'paused') {
+        setMembershipOperationId(member.id);
+        try {
+          await parseJsonResponse(
+            await apiFetch('/api/memberships/resume', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: member.id }),
+            })
+          );
+          invalidateMembers();
+          await adminStats?.refresh();
+          toast?.success('Membresía reanudada');
+        } catch (err) {
+          toast?.error(err instanceof Error ? err.message : 'No se pudo actualizar la membresía');
+        } finally {
+          setMembershipOperationId(null);
+        }
+        return;
       }
+
+      setPauseTarget(member);
+      setPauseReason('');
+      setPauseError('');
     },
     [adminStats, invalidateMembers, toast]
   );
+
+  const confirmPauseMembership = useCallback(async () => {
+    if (!pauseTarget || pausing) return;
+    const reason = pauseReason.trim();
+    if (reason.length < 3) {
+      setPauseError('Indica un motivo de al menos 3 caracteres');
+      return;
+    }
+
+    setPausing(true);
+    setMembershipOperationId(pauseTarget.id);
+    try {
+      await parseJsonResponse(
+        await apiFetch('/api/memberships/pause', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: pauseTarget.id, reason }),
+        })
+      );
+      setPauseTarget(null);
+      setPauseReason('');
+      invalidateMembers();
+      await adminStats?.refresh();
+      toast?.success('Membresía pausada');
+    } catch (err) {
+      setPauseError(err instanceof Error ? err.message : 'No se pudo pausar la membresía');
+    } finally {
+      setPausing(false);
+      setMembershipOperationId(null);
+    }
+  }, [adminStats, invalidateMembers, pauseReason, pauseTarget, pausing, toast]);
 
   const filteredMembers = members;
   const canAddUser =
@@ -1085,6 +1127,67 @@ export default function Members() {
           }}
           member={badgeTarget}
         />
+
+        <Modal
+          open={!!pauseTarget}
+          onClose={() => {
+            if (pausing) return;
+            setPauseTarget(null);
+            setPauseReason('');
+            setPauseError('');
+          }}
+          title={
+            <>
+              Pausar <span className="text-brand">membresía</span>
+            </>
+          }
+        >
+          {pauseTarget && (
+            <div className="space-y-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                ¿Pausar la membresía de <strong>{pauseTarget.full_name}</strong>? Los días restantes
+                se congelan hasta reanudar.
+              </p>
+              <div>
+                <Label htmlFor="pause-reason">Motivo</Label>
+                <Textarea
+                  id="pause-reason"
+                  rows={3}
+                  maxLength={500}
+                  value={pauseReason}
+                  onChange={(e) => setPauseReason(e.target.value)}
+                  placeholder="Ej. Viaje, lesión, solicitud del miembro"
+                  required
+                />
+              </div>
+              {pauseError && <p className="text-sm font-bold text-red-500">{pauseError}</p>}
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  disabled={pausing}
+                  onClick={() => {
+                    setPauseTarget(null);
+                    setPauseReason('');
+                    setPauseError('');
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  loading={pausing}
+                  disabled={pauseReason.trim().length < 3 || pausing}
+                  onClick={() => void confirmPauseMembership()}
+                >
+                  Pausar
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         <Modal
           open={!!editShiftTarget}
