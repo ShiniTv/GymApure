@@ -33,6 +33,7 @@ Credenciales demo: `DEMO_PASSWORD` en `.env.dev` — ver `docs/TESTING.md`.
 # otra terminal: npm run dev
 npm run test:ux
 npm run test:ux:browser
+npm run test:ux:visual-gaps   # gaps manuales (#6, T2–T3, trainer footer)
 ```
 
 Proyectos Playwright: `mobile` (iPhone 14 390×844), `desktop` (≥1024 / 1280), `tablet` (iPad 834×1194).

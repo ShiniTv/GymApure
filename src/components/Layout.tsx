@@ -189,16 +189,18 @@ export default function Layout() {
             >
               {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSidebarOpen(!isSidebarOpen);
-              }}
-              className={clsx(iconBtnClass, !showMobileHamburger && 'hidden')}
-              aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-            >
-              {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </button>
+            {showMobileHamburger && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSidebarOpen(!isSidebarOpen);
+                }}
+                className={iconBtnClass}
+                aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+              >
+                {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
+            )}
           </div>
         </div>
 

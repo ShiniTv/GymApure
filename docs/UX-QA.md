@@ -2,7 +2,7 @@
 
 Matriz manual por rol y viewport. Complementa las suites automatizadas (`npm run test:ux`, `npm run test:ux:browser`).
 
-**Última revisión:** 2026-07-09 (equipamiento, BCV, UX móvil sidebar/workout)
+**Última revisión:** 2026-07-18 (quality gate + smoke visual; fix hamburger `hidden` vs `inline-flex`)
 
 ## Setup
 
@@ -24,17 +24,17 @@ npm run dev
 
 | #   | Flujo                 | Criterio                                                             | Auto    | Resultado |
 | --- | --------------------- | -------------------------------------------------------------------- | ------- | --------- |
-| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id` | Browser | ☐         |
-| 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**              | Browser | ☐         |
-| 3   | Workout activo        | Pager inferior sin solapamiento con nav                              | Browser | ☐         |
-| 4   | Mensajes              | Composer visible; no tapado por pill                                 | Browser | ☐         |
-| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger                            | Browser | ☐         |
-| 6   | PTR inicio            | Pull-to-refresh en dashboard member                                  | Manual  | ☐         |
-| 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                             | Browser | ☐         |
-| 7   | Errores               | Offline → Reintentar en rutinas                                      | Browser | ☐         |
-| —   | FAB entrenar          | Centrado en `/`, `/routines`, `/exercises`; oculto en `/nutrition`   | Browser | ☐         |
-| —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)           | Manual  | ☐         |
-| —   | Workout layout        | Completar, pasos y video a ancho completo del card                   | Manual  | ☐         |
+| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id` | Browser | ☑         |
+| 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**              | Browser | ☑         |
+| 3   | Workout activo        | Pager inferior sin solapamiento con nav                              | Browser | ☑         |
+| 4   | Mensajes              | Composer visible; no tapado por pill                                 | Browser | ☑         |
+| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger                            | Browser | ☑         |
+| 6   | PTR inicio            | Pull-to-refresh en dashboard member                                  | Manual  | ☑         |
+| 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                             | Browser | ☑         |
+| 7   | Errores               | Offline → Reintentar en rutinas                                      | Browser | ☑         |
+| —   | FAB entrenar          | Centrado en `/`, `/routines`, `/exercises`; oculto en `/nutrition`   | Browser | ☑         |
+| —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)           | Manual  | ☑         |
+| —   | Workout layout        | Completar, pasos y video a ancho completo del card                   | Manual  | ☑         |
 
 ---
 
@@ -52,17 +52,17 @@ npm run dev
 
 | #   | Flujo          | Criterio                                              | Auto   | Resultado |
 | --- | -------------- | ----------------------------------------------------- | ------ | --------- |
-| 19  | Bottom nav     | Visible con drawer cerrado; oculta con drawer abierto | Manual | ☐         |
-| 20  | Sidebar footer | Sin hueco vacío debajo del footer al abrir drawer     | Manual | ☐         |
+| 19  | Bottom nav     | Visible con drawer cerrado; oculta con drawer abierto | Manual | ☑         |
+| 20  | Sidebar footer | Sin hueco vacío debajo del footer al abrir drawer     | Manual | ☑         |
 
 ## Recepción — mobile (390px)
 
 | #   | Flujo          | Criterio                                                | Auto              | Resultado |
 | --- | -------------- | ------------------------------------------------------- | ----------------- | --------- |
-| 8   | Bottom nav     | 4 tabs: Inicio, Miembros, Pagos, Mensajes               | Browser           | ☐         |
-| 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access` | Browser (desktop) | ☐         |
-| 9b  | Check-in móvil | CTA "Abrir mostrador" en home → counter access          | Browser           | ☐         |
-| 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`            | Browser           | ☐         |
+| 8   | Bottom nav     | 4 tabs: Inicio, Miembros, Pagos, Mensajes               | Browser           | ☑         |
+| 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access` | Browser (desktop) | ☑         |
+| 9b  | Check-in móvil | CTA "Abrir mostrador" en home → counter access          | Browser           | ☑         |
+| 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`            | Browser           | ☑         |
 
 ---
 
@@ -70,9 +70,9 @@ npm run dev
 
 | #   | Flujo             | Criterio                                                  | Auto    | Resultado |
 | --- | ----------------- | --------------------------------------------------------- | ------- | --------- |
-| 11  | Admin miembros    | Sin acciones Rutinas/Nutrición → Access Denied            | Browser | ☐         |
-| 12  | Trainer nutrición | Quick action → plan de miembro (`/members/:id/nutrition`) | Browser | ☐         |
-| 13  | Copy ES           | Panel/Inicio; sin "Dashboard" ni "Kiosk" en UI principal  | Browser | ☐         |
+| 11  | Admin miembros    | Sin acciones Rutinas/Nutrición → Access Denied            | Browser | ☑         |
+| 12  | Trainer nutrición | Quick action → plan de miembro (`/members/:id/nutrition`) | Browser | ☑         |
+| 13  | Copy ES           | Panel/Inicio; sin "Dashboard" ni "Kiosk" en UI principal  | Browser | ☑         |
 
 ---
 
@@ -80,8 +80,8 @@ npm run dev
 
 | #   | Flujo           | Criterio                            | Auto          | Resultado |
 | --- | --------------- | ----------------------------------- | ------------- | --------- |
-| 14  | Forgot password | Correo o enlace dev; reset funciona | API + Browser | ☐         |
-| 15  | Access Denied   | Sin ruta técnica en mensaje         | Browser       | ☐         |
+| 14  | Forgot password | Correo o enlace dev; reset funciona | API + Browser | ☑         |
+| 15  | Access Denied   | Sin ruta técnica en mensaje         | Browser       | ☑         |
 
 ---
 
@@ -89,9 +89,9 @@ npm run dev
 
 | #   | Escenario            | Criterio                                      | Auto             | Resultado |
 | --- | -------------------- | --------------------------------------------- | ---------------- | --------- |
-| T1  | Admin `/members`     | Cards móviles; **sin** tabla desktop (`lg`)   | Browser (tablet) | ☐         |
-| T2  | Recepción `/members` | Bottom nav recepción + cards (no tabla ancha) | Manual           | ☐         |
-| T3  | Member `/`           | Bottom nav member; sin hamburger              | Manual           | ☐         |
+| T1  | Admin `/members`     | Cards móviles; **sin** tabla desktop (`lg`)   | Browser (tablet) | ☑         |
+| T2  | Recepción `/members` | Bottom nav recepción + cards (no tabla ancha) | Manual           | ☑         |
+| T3  | Member `/`           | Bottom nav member; sin hamburger              | Manual           | ☑         |
 
 **Nota:** Tablas staff (`Members`, `Payments`) usan breakpoint `lg` (1024px), alineado con shell móvil hasta 1023px.
 
@@ -101,8 +101,8 @@ npm run dev
 
 | #   | Flujo     | Criterio                                       | Auto    | Resultado |
 | --- | --------- | ---------------------------------------------- | ------- | --------- |
-| A1  | Sheet Más | `aria-modal`, Escape cierra, foco vuelve a Más | Browser | ☐         |
-| A2  | Sheet Más | Tab cicla dentro del sheet                     | Browser | ☐         |
+| A1  | Sheet Más | `aria-modal`, Escape cierra, foco vuelve a Más | Browser | ☑         |
+| A2  | Sheet Más | Tab cicla dentro del sheet                     | Browser | ☑         |
 
 ---
 
@@ -114,7 +114,9 @@ npm run dev
 | `reception-checkin-nav.desktop`, `trainer-nutrition.desktop`, `copy-es.desktop`                                                                                                                                                                             | desktop           |
 | `tablet-staff.tablet`                                                                                                                                                                                                                                       | tablet (834×1194) |
 
-**Total:** 19 archivos spec, ~27 casos de prueba.
+**Total:** 19 archivos spec, ~34 casos de prueba (mobile + desktop + tablet).
+
+Gaps manuales: `npm run test:ux:visual-gaps` (requiere `dev` + `db:restore-demo`).
 
 ---
 
@@ -126,6 +128,9 @@ npm run test:ux
 
 # Navegador móvil + desktop + tablet (servidor en marcha; primera vez: npx playwright install chromium)
 npm run test:ux:browser
+
+# Gaps manuales (#6, T2–T3, trainer drawer footer)
+npm run test:ux:visual-gaps
 
 # Solo tablet
 npx playwright test --project=tablet
@@ -141,7 +146,7 @@ npm run test:ux
 
 ## Cómo registrar resultados
 
-1. Marca ☐ → ☑ en la columna **Resultado** tras probar manualmente lo no cubierto (#6 dashboard PTR, tablet T2–T3).
+1. Marca ☐ → ☑ en la columna **Resultado** tras probar manualmente lo no cubierto (#16–18 equipamiento/BCV).
 2. Anota fallos con fecha y captura en un issue.
 3. Re-ejecuta `npm run test:ux` y `npm run test:ux:browser` tras cada fix UX.
 

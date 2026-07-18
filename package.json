@@ -20,6 +20,7 @@
     "test:ux": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-ux-checklist.ts",
     "test:ux:browser": "playwright test",
     "test:ux:browser:ui": "playwright test --ui",
+    "test:ux:visual-gaps": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-ux-visual-gaps.ts",
     "test:memberships-checkin": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-memberships-checkin.ts",
     "test:payments-checklist": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-payments-checklist.ts",
     "test:exchange-rate": "tsx scripts/test/test-exchange-rate.ts",

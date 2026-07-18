@@ -8,8 +8,8 @@ test.describe('Member sheet Más', () => {
   });
 
   test('abre sheet con mensajes y cerrar sesión; sin hamburger', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /abrir menú/i })).toBeHidden();
-    await expect(page.getByRole('button', { name: /cerrar menú/i })).toBeHidden();
+    await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /cerrar menú/i })).toHaveCount(0);
 
     await page.getByRole('button', { name: /^más$/i }).click();
 
