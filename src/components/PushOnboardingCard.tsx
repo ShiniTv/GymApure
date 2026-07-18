@@ -57,7 +57,8 @@ export function PushOnboardingCard() {
             Activa avisos en el teléfono
           </p>
           <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
-            Recibe mensajes del gym y recordatorios aunque no tengas la app abierta.
+            Recibe mensajes del gym y recordatorios aunque no tengas la app abierta. En iPhone,
+            añade la app a Inicio primero.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button size="sm" onClick={() => void enable()} disabled={busy}>

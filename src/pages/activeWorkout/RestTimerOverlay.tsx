@@ -6,6 +6,9 @@ interface RestTimerOverlayProps {
   restDuration: number;
   onAddTime: (seconds: number) => void;
   onSkip: () => void;
+  notificationsEnabled?: boolean;
+  canRequestNotifications?: boolean;
+  onRequestNotifications?: () => void;
 }
 
 export function RestTimerOverlay({
@@ -13,6 +16,9 @@ export function RestTimerOverlay({
   restDuration,
   onAddTime,
   onSkip,
+  notificationsEnabled = false,
+  canRequestNotifications = false,
+  onRequestNotifications,
 }: RestTimerOverlayProps) {
   const size = 120;
   const strokeWidth = 8;
@@ -56,6 +62,20 @@ export function RestTimerOverlay({
             </span>
           </div>
         </div>
+
+        {notificationsEnabled ? (
+          <p className="mb-3 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+            También en notificaciones
+          </p>
+        ) : canRequestNotifications && onRequestNotifications ? (
+          <button
+            type="button"
+            onClick={onRequestNotifications}
+            className="text-brand mb-3 text-center text-[11px] font-medium underline-offset-2 hover:underline"
+          >
+            Avisarme al terminar
+          </button>
+        ) : null}
 
         <div className="flex w-full gap-3">
           <button

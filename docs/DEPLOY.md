@@ -142,7 +142,11 @@ Configura en Render Dashboard → Environment:
 | `SMTP_USER`                      | Recomendada  | `soporte.gymapure@gmail.com`                                                            |
 | `SMTP_PASS`                      | Recomendada  | Contraseña de aplicación Google (sin espacios)                                          |
 | `SMTP_FROM`                      | Recomendada  | `GymApure <soporte.gymapure@gmail.com>`                                                 |
-| `VAPID_SUBJECT`                  | Opcional     | `mailto:soporte.gymapure@gmail.com`                                                     |
+| `VAPID_PUBLIC_KEY`               | Opcional*    | Clave pública Web Push (`npx web-push generate-vapid-keys`)                             |
+| `VAPID_PRIVATE_KEY`              | Opcional*    | Clave privada Web Push (solo servidor; no en `VITE_*`)                                  |
+| `VAPID_SUBJECT`                  | Opcional*    | `mailto:soporte.gymapure@gmail.com`                                                     |
+
+\*Sin las tres `VAPID_*`, el push con la app cerrada no envía nada (preflight avisa). Genera un par, pégalo en Render y redeploy. Tras rotar claves, los usuarios deben reactivar notificaciones en Perfil.
 
 **Redis (`REDIS_URL`):** recomendado en producción. Sin Redis, rate limiting y bloqueo de login usan memoria local (se resetean al reiniciar y no se comparten entre instancias). El servidor arranca igual pero registra un aviso en logs.
 

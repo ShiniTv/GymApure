@@ -87,6 +87,16 @@ function main() {
       smtpHost.length > 0,
       'Sin SMTP no hay reset de contraseña ni bienvenida'
     );
+
+    const vapidPublic = process.env.VAPID_PUBLIC_KEY?.trim() ?? '';
+    const vapidPrivate = process.env.VAPID_PRIVATE_KEY?.trim() ?? '';
+    const vapidSubject = process.env.VAPID_SUBJECT?.trim() ?? '';
+    const vapidComplete = vapidPublic.length > 0 && vapidPrivate.length > 0 && vapidSubject.length > 0;
+    warn(
+      'VAPID_* completo (push con app cerrada)',
+      vapidComplete,
+      'npx web-push generate-vapid-keys → VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT'
+    );
   } else {
     ok('REDIS_URL (opcional en dev)', true);
   }

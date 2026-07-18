@@ -45,7 +45,8 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 - **Modo pager móvil:** un ejercicio a la vez; navegación inferior.
 - Por ejercicio: título, **Completar**, toggles video/pasos, tabla de series.
 - Registra kg y reps por serie; marca serie completada.
-- **Temporizador de descanso** entre series.
+- **Temporizador de descanso** entre series (hora real; no se frena al cambiar de app).
+- Con permiso de notificaciones: countdown / aviso al terminar en la sombra del sistema (mejor en Android; en iOS PWA al menos aviso al volver/terminar). Acciones +30s y Saltar desde la notificación cuando el SO las soporte.
 - Video guía y pasos de ejecución a ancho completo del card.
 
 ### Finalizar

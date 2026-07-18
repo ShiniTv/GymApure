@@ -78,7 +78,25 @@ Bottom nav: Panel, Miembros, Pagos, Mensajes, Más (incluye Mostrador, Modo tabl
 
 ### Push (opcional)
 
-Con VAPID configurado: toggle en Perfil + onboarding suave en panel member.
+Requisitos para avisos con la app cerrada:
+
+1. En el servidor: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (ver [DEPLOY](../DEPLOY.md); el preflight avisa si faltan).
+2. Build de **producción** (el service worker `/sw.js` solo se registra fuera de Vite dev).
+3. El usuario concede permiso (tarjeta en inicio member o Perfil → Notificaciones push).
+4. **iPhone:** Safari 16.4+ y la PWA añadida a **Inicio** (en pestaña suelta el push no suele funcionar).
+
+Tras rotar claves VAPID, la app intenta re-suscribirse sola si el permiso sigue concedido; si no, el usuario reactiva en Perfil.
+
+### Descanso en pantalla de bloqueo
+
+Durante el entrenamiento activo, el temporizador de descanso usa hora real (`endsAt`) y, con permiso de notificaciones:
+
+- Muestra/actualiza una notificación local (tag `workout-rest`) con tiempo restante.
+- Acciones **+30s** / **Saltar** (mejor en Android Chrome).
+- Aviso al terminar + vibración.
+- Wake Lock de pantalla mientras el descanso está en primer plano.
+
+**Límites:** en iOS el countdown en vivo en bloqueo es limitado; se prioriza el aviso al terminar y reconciliar al desbloquear. Sin permiso, el overlay in-app sigue igual.
 
 ---
 

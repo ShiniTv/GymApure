@@ -3,6 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useToastOptional } from '../context/ToastContext';
 
+interface SubscribeOptions {
+  /** Skip permission prompt / success toast (re-subscribe after rotation). */
+  silent?: boolean;
+}
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const toast = useToastOptional();
@@ -14,41 +19,51 @@ export function usePushNotifications() {
     () => 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
   );
 
-  const subscribe = useCallback(async () => {
-    if (!supported || !user) return;
+  const subscribe = useCallback(
+    async (options: SubscribeOptions = {}) => {
+      if (!supported || !user) return;
+      const silent = options.silent === true;
 
-    try {
-      const perm = await Notification.requestPermission();
-      setPermission(perm);
-      if (perm !== 'granted') return;
+      try {
+        let perm: NotificationPermission =
+          'Notification' in window ? Notification.permission : 'denied';
+        if (!silent) {
+          perm = await Notification.requestPermission();
+          setPermission(perm);
+        } else {
+          setPermission(perm);
+        }
+        if (perm !== 'granted') return;
 
-      const reg = await navigator.serviceWorker.ready;
-      const existingSub = await reg.pushManager.getSubscription();
-      if (existingSub) {
-        await existingSub.unsubscribe();
+        const reg = await navigator.serviceWorker.ready;
+        const existingSub = await reg.pushManager.getSubscription();
+        if (existingSub) {
+          await existingSub.unsubscribe();
+        }
+
+        const res = await apiFetch('/api/push/vapid-key');
+        const { publicKey } = await parseJsonResponse<{ publicKey: string }>(res);
+
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+
+        await apiFetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub.toJSON() }),
+        });
+
+        setIsSubscribed(true);
+        if (!silent) toast?.success('Notificaciones activadas');
+      } catch (err) {
+        console.error('[push] subscribe error:', err);
+        if (!silent) toast?.error('No se pudieron activar las notificaciones');
       }
-
-      const res = await apiFetch('/api/push/vapid-key');
-      const { publicKey } = await parseJsonResponse<{ publicKey: string }>(res);
-
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-
-      await apiFetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub.toJSON() }),
-      });
-
-      setIsSubscribed(true);
-      toast?.success('Notificaciones activadas');
-    } catch (err) {
-      console.error('[push] subscribe error:', err);
-      toast?.error('No se pudieron activar las notificaciones');
-    }
-  }, [supported, user, toast]);
+    },
+    [supported, user, toast]
+  );
 
   const unsubscribe = useCallback(async () => {
     if (!supported) return;
@@ -74,13 +89,39 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!supported || !user) return;
 
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setIsSubscribed(!!sub))
-      .catch(() => {
+    let cancelled = false;
+
+    const syncSubscription = async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (cancelled) return;
+        setIsSubscribed(!!sub);
+        setPermission(Notification.permission);
+
+        // Permission granted but no push subscription (or lost after VAPID rotation).
+        if (Notification.permission === 'granted' && !sub) {
+          await subscribe({ silent: true });
+        }
+      } catch {
         /* push subscription probe may fail offline */
-      });
-  }, [supported, user]);
+      }
+    };
+
+    void syncSubscription();
+
+    const onSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'push-subscription-change') {
+        void subscribe({ silent: true });
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+
+    return () => {
+      cancelled = true;
+      navigator.serviceWorker.removeEventListener('message', onSwMessage);
+    };
+  }, [supported, user, subscribe]);
 
   return { supported, permission, isSubscribed, subscribe, unsubscribe };
 }

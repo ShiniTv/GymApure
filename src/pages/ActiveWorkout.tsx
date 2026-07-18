@@ -30,6 +30,13 @@ import {
   executionStepCount,
 } from '../components/exercise/ExerciseExecutionSteps';
 import { hapticLight, hapticSuccess } from '../lib/haptics';
+import {
+  clearRestNotification,
+  hasNotificationPermission,
+  listenRestNotificationActions,
+  notifyRestEnded,
+  startRestNotification,
+} from '../lib/restTimerNotifications';
 import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { useWorkoutPageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
@@ -98,6 +105,23 @@ interface SessionLogResponse {
   reps: number;
 }
 
+function restStorageKey(sessionId: number): string {
+  return `workout_rest_${sessionId}`;
+}
+
+function clearRestSessionStorage(sessionId: number | null): void {
+  if (sessionId == null) return;
+  try {
+    sessionStorage.removeItem(restStorageKey(sessionId));
+  } catch {
+    /* ignore */
+  }
+}
+
+function workoutRestUrl(routineId: string | undefined): string {
+  return routineId ? `/workout/${routineId}` : '/';
+}
+
 export default function ActiveWorkout() {
   const { id } = useParams(); // Routine ID
   const navigate = useNavigate();
@@ -121,10 +145,18 @@ export default function ActiveWorkout() {
   const [isPaused, setIsPaused] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Rest Timer State
+  // Rest Timer State (wall-clock endsAt so background tabs stay accurate)
+  const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [restTimer, setRestTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [restDuration, setRestDuration] = useState(0);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(() =>
+    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+  );
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const restEndedNotifiedRef = useRef(false);
+  const addRestTimeRef = useRef<(seconds: number) => void>(() => undefined);
+  const skipRestRef = useRef<() => void>(() => undefined);
   const [showVideo, setShowVideo] = useState<Record<number, boolean>>({});
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -233,22 +265,120 @@ export default function ActiveWorkout() {
     }
   }, [user, routine, sessionId, loading, isResetting, routineBlockedToday]);
 
-  // Rest timer — single interval while resting (avoids re-creating interval every second)
+  // Rest timer — wall-clock based (survives background throttling)
   useEffect(() => {
-    if (!isResting) return;
-    const interval = setInterval(() => {
-      setRestTimer((prev) => {
-        if (prev <= 1) {
-          setIsResting(false);
-          return 0;
+    if (!isResting || restEndsAt == null) return;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((restEndsAt - Date.now()) / 1000));
+      setRestTimer(remaining);
+      if (remaining <= 0) {
+        setIsResting(false);
+        setRestEndsAt(null);
+        if (!restEndedNotifiedRef.current) {
+          restEndedNotifiedRef.current = true;
+          hapticSuccess();
+          notifyRestEnded(workoutRestUrl(id));
         }
-        return prev - 1;
-      });
-    }, 1000);
+        clearRestSessionStorage(sessionId);
+      }
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 250);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', tick);
     return () => {
-      clearInterval(interval);
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('focus', tick);
+    };
+  }, [isResting, restEndsAt, sessionId, id]);
+
+  // Persist rest endsAt for short reloads
+  useEffect(() => {
+    if (!sessionId || !isResting || restEndsAt == null) return;
+    try {
+      sessionStorage.setItem(
+        restStorageKey(sessionId),
+        JSON.stringify({ endsAt: restEndsAt, duration: restDuration })
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [sessionId, isResting, restEndsAt, restDuration]);
+
+  // Restore rest after reload
+  useEffect(() => {
+    if (!sessionId || isResting) return;
+    try {
+      const raw = sessionStorage.getItem(restStorageKey(sessionId));
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { endsAt?: number; duration?: number };
+      if (typeof parsed.endsAt !== 'number') return;
+      const remaining = Math.max(0, Math.ceil((parsed.endsAt - Date.now()) / 1000));
+      if (remaining <= 0) {
+        clearRestSessionStorage(sessionId);
+        return;
+      }
+      restEndedNotifiedRef.current = false;
+      setRestEndsAt(parsed.endsAt);
+      setRestDuration(typeof parsed.duration === 'number' ? parsed.duration : remaining);
+      setRestTimer(remaining);
+      setIsResting(true);
+      startRestNotification(parsed.endsAt, workoutRestUrl(id));
+    } catch {
+      /* ignore */
+    }
+  }, [sessionId, isResting, id]);
+
+  // Screen Wake Lock while resting and visible
+  useEffect(() => {
+    if (!isResting) {
+      void wakeLockRef.current?.release().catch(() => undefined);
+      wakeLockRef.current = null;
+      return;
+    }
+
+    const requestLock = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!('wakeLock' in navigator)) return;
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      } catch {
+        /* unsupported / denied */
+      }
+    };
+
+    void requestLock();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void requestLock();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      void wakeLockRef.current?.release().catch(() => undefined);
+      wakeLockRef.current = null;
     };
   }, [isResting]);
+
+  // Notification action handlers (+30s / Saltar from lock screen)
+  useEffect(() => {
+    return listenRestNotificationActions({
+      onAdd30: () => addRestTimeRef.current(30),
+      onSkip: () => skipRestRef.current(),
+    });
+  }, []);
+
+  // Clear rest notification when leaving the workout page
+  useEffect(() => {
+    return () => {
+      clearRestNotification();
+    };
+  }, []);
 
   // Persist progress — debounced to avoid blocking the main thread on every keystroke
   useEffect(() => {
@@ -306,19 +436,54 @@ export default function ActiveWorkout() {
   };
 
   const startRestTimer = (seconds: number) => {
+    if (seconds <= 0) return;
+    const endsAt = Date.now() + seconds * 1000;
+    restEndedNotifiedRef.current = false;
     setRestDuration(seconds);
+    setRestEndsAt(endsAt);
     setRestTimer(seconds);
     setIsResting(true);
+    startRestNotification(endsAt, workoutRestUrl(id));
+    if (typeof Notification !== 'undefined') {
+      setNotifPermission(Notification.permission);
+    }
   };
 
   const skipRest = () => {
     setIsResting(false);
     setRestTimer(0);
+    setRestEndsAt(null);
+    clearRestNotification();
+    clearRestSessionStorage(sessionId);
   };
 
   const addRestTime = (seconds: number) => {
-    setRestTimer((prev) => prev + seconds);
-    setRestDuration((prev) => prev + seconds);
+    setRestEndsAt((prev) => {
+      const base = prev != null && prev > Date.now() ? prev : Date.now();
+      const next = base + seconds * 1000;
+      const remaining = Math.max(0, Math.ceil((next - Date.now()) / 1000));
+      setRestTimer(remaining);
+      setRestDuration((d) => d + seconds);
+      restEndedNotifiedRef.current = false;
+      startRestNotification(next, workoutRestUrl(id));
+      return next;
+    });
+    setIsResting(true);
+  };
+  addRestTimeRef.current = addRestTime;
+  skipRestRef.current = skipRest;
+
+  const requestRestNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    try {
+      const perm = await Notification.requestPermission();
+      setNotifPermission(perm);
+      if (perm === 'granted' && restEndsAt != null) {
+        startRestNotification(restEndsAt, workoutRestUrl(id));
+      }
+    } catch {
+      /* ignore */
+    }
   };
 
   const toggleVideo = (id: number) => {
@@ -1293,6 +1458,11 @@ export default function ActiveWorkout() {
           restDuration={restDuration}
           onAddTime={addRestTime}
           onSkip={skipRest}
+          notificationsEnabled={hasNotificationPermission() || notifPermission === 'granted'}
+          canRequestNotifications={
+            typeof Notification !== 'undefined' && notifPermission === 'default'
+          }
+          onRequestNotifications={() => void requestRestNotifications()}
         />
       )}
     </div>

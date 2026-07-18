@@ -67,7 +67,15 @@ Centro de avisos del sistema (campana en header).
 
 ## Push notifications (opcional)
 
-Si `VAPID_*` está configurado, usuarios pueden activar push en Perfil. Requiere PWA instalada o navegador compatible.
+Si `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` están configurados:
+
+- Toggle en **Perfil** y tarjeta de onboarding en inicio member.
+- El service worker (`public/sw.js`) solo se registra en builds de producción.
+- **Android / Chrome:** push en barra y pantalla de bloqueo con la app cerrada.
+- **iOS:** requiere PWA instalada (Añadir a Inicio) y Safari 16.4+.
+- Tras rotación de VAPID, el SW emite `pushsubscriptionchange` y el cliente re-suscribe en silencio si el permiso sigue en `granted`.
+
+El temporizador de **descanso del workout** no usa este push de servidor: usa notificaciones locales vía el mismo SW (ver [Móvil y PWA](./MOVIL-Y-PWA.md)).
 
 ---
 

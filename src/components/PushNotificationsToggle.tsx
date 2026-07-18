@@ -25,7 +25,7 @@ export function PushNotificationsToggle() {
         type="button"
         variant={isSubscribed ? 'secondary' : 'primary'}
         size="sm"
-        onClick={isSubscribed ? unsubscribe : subscribe}
+        onClick={isSubscribed ? () => void unsubscribe() : () => void subscribe()}
         className="h-9 min-h-9"
       >
         {isSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}

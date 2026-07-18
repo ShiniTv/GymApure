@@ -1,5 +1,6 @@
-const STATIC_CACHE = 'gymapure-static-v9';
+const STATIC_CACHE = 'gymapure-static-v10';
 const OFFLINE_URL = '/offline.html';
+const REST_TAG = 'workout-rest';
 
 const STATIC_ASSETS = [
   '/offline.html',
@@ -104,6 +105,30 @@ function isCacheableResponse(response) {
   return response.ok && response.type !== 'opaque';
 }
 
+function focusOrOpen(url) {
+  return clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    for (const client of windowClients) {
+      if (client.url === url && 'focus' in client) {
+        return client.focus();
+      }
+    }
+    for (const client of windowClients) {
+      if ('focus' in client) {
+        return client.focus();
+      }
+    }
+    return clients.openWindow(url);
+  });
+}
+
+function broadcastToClients(message) {
+  return clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    for (const client of clientList) {
+      client.postMessage(message);
+    }
+  });
+}
+
 // ─── Push notifications ──────────────────────────────────
 
 self.addEventListener('push', (event) => {
@@ -122,17 +147,82 @@ self.addEventListener('push', (event) => {
   } catch { /* ignore */ }
 });
 
+/** Ask open clients to re-subscribe after browser rotates the push endpoint. */
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(broadcastToClients({ type: 'push-subscription-change' }));
+});
+
+// ─── Local rest timer (workout lock screen) ───────────────
+
+self.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data || typeof data.type !== 'string') return;
+
+  if (data.type === 'rest-start' || data.type === 'rest-update') {
+    const isStart = data.type === 'rest-start';
+    event.waitUntil(
+      self.registration.showNotification('Descanso', {
+        body: data.body || '',
+        tag: REST_TAG,
+        renotify: isStart,
+        silent: !isStart,
+        icon: '/logo-mark-light.jpg',
+        badge: '/favicon.svg',
+        data: { url: data.url || '/', kind: 'rest' },
+        actions: [
+          { action: 'rest-add30', title: '+30s' },
+          { action: 'rest-skip', title: 'Saltar' },
+        ],
+      })
+    );
+    return;
+  }
+
+  if (data.type === 'rest-end') {
+    event.waitUntil(
+      self.registration.showNotification('Descanso terminado', {
+        body: '¡Listo para la siguiente serie!',
+        tag: REST_TAG,
+        renotify: true,
+        icon: '/logo-mark-light.jpg',
+        badge: '/favicon.svg',
+        vibrate: [200, 100, 200],
+        data: { url: data.url || '/', kind: 'rest-done' },
+      })
+    );
+    return;
+  }
+
+  if (data.type === 'rest-clear') {
+    event.waitUntil(
+      self.registration.getNotifications({ tag: REST_TAG }).then((notifs) => {
+        for (const n of notifs) n.close();
+      })
+    );
+  }
+});
+
 self.addEventListener('notificationclick', (event) => {
+  const action = event.action;
+  const data = event.notification.data || {};
+  const url = data.url || '/';
   event.notification.close();
-  const url = event.notification.data?.url || '/';
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url === url && 'focus' in client) {
-          return client.focus();
+
+  if (action === 'rest-add30' || action === 'rest-skip') {
+    const msgType = action === 'rest-add30' ? 'rest-action-add30' : 'rest-action-skip';
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        for (const client of windowClients) {
+          client.postMessage({ type: msgType });
         }
-      }
-      return clients.openWindow(url);
-    })
-  );
+        if (windowClients.length > 0 && 'focus' in windowClients[0]) {
+          return windowClients[0].focus();
+        }
+        return clients.openWindow(url);
+      })
+    );
+    return;
+  }
+
+  event.waitUntil(focusOrOpen(url));
 });
