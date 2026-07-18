@@ -7,6 +7,7 @@ import { authCookieOptions } from '../config/cookies.ts';
 import { createLoginSession } from '../lib/sessionAuth.ts';
 import { emitToUser } from '../lib/wsServer.ts';
 import { setCsrfCookie } from '../lib/csrf.ts';
+import { requireCsrf } from './middleware/csrf.ts';
 import { verifyPassword } from '../lib/passwordHash.ts';
 import { mfaVerifyRateLimiter } from './middleware/rateLimit.ts';
 import {
@@ -103,6 +104,7 @@ router.get(
 
 router.post(
   '/setup',
+  requireCsrf,
   authenticate,
   authorize(MFA_STAFF_ROLES),
   asyncHandler(async (req: AuthRequest, res) => {
@@ -120,6 +122,7 @@ router.post(
 
 router.post(
   '/enable',
+  requireCsrf,
   authenticate,
   authorize(MFA_STAFF_ROLES),
   asyncHandler(async (req: AuthRequest, res) => {
@@ -148,6 +151,7 @@ router.post(
 
 router.post(
   '/disable',
+  requireCsrf,
   authenticate,
   authorize(MFA_STAFF_ROLES),
   asyncHandler(async (req: AuthRequest, res) => {
