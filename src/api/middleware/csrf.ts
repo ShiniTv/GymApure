@@ -32,6 +32,19 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return;
   }
 
+  enforceCsrf(req, res, next);
+}
+
+/** CSRF obligatorio (rutas auth autenticadas montadas fuera del middleware global). */
+export function requireCsrf(req: Request, res: Response, next: NextFunction) {
+  if (!MUTATING_METHODS.has(req.method)) {
+    next();
+    return;
+  }
+  enforceCsrf(req, res, next);
+}
+
+function enforceCsrf(req: Request, res: Response, next: NextFunction) {
   const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME];
 

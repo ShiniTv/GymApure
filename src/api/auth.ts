@@ -35,6 +35,7 @@ import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib
 import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
 import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
+import { requireCsrf } from './middleware/csrf.ts';
 import mfaRoutes from './mfa.ts';
 
 const router = asyncRouter();
@@ -210,6 +211,7 @@ router.post(
 
 router.post(
   '/logout',
+  requireCsrf,
   asyncHandler(async (req, res) => {
     const token = req.cookies.token;
     if (token) {
@@ -250,6 +252,7 @@ router.get(
 
 router.post(
   '/refresh',
+  requireCsrf,
   asyncHandler(async (req, res) => {
     const token = req.cookies.token;
     if (!token) {
@@ -292,6 +295,7 @@ router.post(
 
 router.post(
   '/change-password',
+  requireCsrf,
   authenticate,
   asyncHandler(async (req: AuthRequest, res) => {
     const parsed = changePasswordSchema.safeParse(req.body);
