@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -32,12 +32,18 @@ import {
 } from '../components/ui';
 import { fieldClassName } from '../components/ui/Input';
 import { cn } from '../lib/utils';
-import { toDisplayErrorMessage } from '../lib/api';
+import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
 import { useToastOptional } from '../context/ToastContext';
 import { isStaffRole } from '../lib/roles';
-import { Check, MessageSquare, Pencil, Send, Trash2, X } from 'lucide-react';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { Check, MessageSquare, Pencil, Send, Trash2, UserPlus, X } from 'lucide-react';
 import clsx from 'clsx';
 
+interface MemberChatOption {
+  id: number;
+  full_name: string;
+  cedula: string | null;
+}
 function formatMessageTime(iso: string): string {
   try {
     return format(new Date(iso), 'd MMM, HH:mm', { locale: dateLocale });
@@ -468,9 +474,12 @@ function StaffChatView() {
   const [listPage, setListPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showChatOnMobile, setShowChatOnMobile] = useState(false);
+  const [memberHits, setMemberHits] = useState<MemberChatOption[]>([]);
+  const [memberHitsLoading, setMemberHitsLoading] = useState(false);
   const openWithMember = useOpenChatWithMember();
   const markRead = useMarkChatRead();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const memberParam = searchParams.get('member');
   const { data: conversationsPage, isPending: loadingList } = useChatConversationsQuery(
@@ -488,10 +497,63 @@ function StaffChatView() {
     selectedId != null
   );
 
+  const conversationMemberIds = useMemo(
+    () => new Set(conversations.map((c) => c.member_id)),
+    [conversations]
+  );
+
+  const startableMembers = useMemo(
+    () => memberHits.filter((m) => !conversationMemberIds.has(m.id)).slice(0, 8),
+    [memberHits, conversationMemberIds]
+  );
+
   useEffect(() => {
     setListPage(1);
   }, [search, expiringOnly]);
 
+  useEffect(() => {
+    const q = debouncedSearch.trim();
+    if (q.length < 2 || expiringOnly) {
+      setMemberHits([]);
+      setMemberHitsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setMemberHitsLoading(true);
+    void apiFetch(`/api/users/options?role=member&q=${encodeURIComponent(q)}`)
+      .then((res) => parseJsonResponse<MemberChatOption[]>(res))
+      .then((data) => {
+        if (!cancelled) setMemberHits(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberHits([]);
+      })
+      .finally(() => {
+        if (!cancelled) setMemberHitsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, expiringOnly]);
+
+  const startChatWithMember = useCallback(
+    (memberId: number) => {
+      void openWithMember
+        .mutateAsync(memberId)
+        .then((conversation) => {
+          setSelectedId(conversation.id);
+          setShowChatOnMobile(true);
+          setSearch('');
+          toast?.success('Chat abierto');
+        })
+        .catch((err) => {
+          toast?.error(toDisplayErrorMessage(err, 'No puedes abrir este chat'));
+        });
+    },
+    [openWithMember, toast]
+  );
   useEffect(() => {
     if (!memberParam || openWithMember.isPending) return;
     const memberId = parseInt(memberParam, 10);
@@ -562,46 +624,85 @@ function StaffChatView() {
           <div className="flex justify-center py-8">
             <Spinner />
           </div>
-        ) : conversations.length === 0 ? (
+        ) : conversations.length === 0 && startableMembers.length === 0 && !memberHitsLoading ? (
           <EmptyState
             icon={MessageSquare}
-            title="Sin conversaciones"
+            title={search.trim() ? 'Sin resultados' : 'Sin conversaciones'}
             description={
-              isTrainer
-                ? 'Aparecen cuando un cliente tuyo escribe o cuando abres el chat desde Miembros.'
-                : 'Los chats se crean al enviar un mensaje o cuando hay avisos automáticos.'
+              search.trim()
+                ? 'No hay chats ni miembros que coincidan. Prueba otro nombre o cédula.'
+                : isTrainer
+                  ? 'Aparecen cuando un cliente tuyo escribe o cuando abres el chat desde aquí buscando su nombre.'
+                  : 'Busca un miembro arriba para iniciar un chat, o espera avisos automáticos.'
             }
           />
         ) : (
           <>
-            <Virtuoso
-              style={{ flex: 1, height: '100%' }}
-              data={conversations}
-              itemContent={(_index, item) => (
-                <div className="pb-1">
-                  <ConversationListItem
-                    item={item}
-                    selected={item.id === selectedId}
-                    alertDays={alertDays}
-                    onSelect={() => {
-                      handleSelectConversation(item.id);
-                    }}
-                  />
-                </div>
-              )}
-            />
-            {conversationsTotal > conversationsPageSize && (
-              <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
-                <PaginationBar
-                  page={listPage}
-                  pageSize={conversationsPageSize}
-                  total={conversationsTotal}
-                  onPageChange={setListPage}
-                />
+            {startableMembers.length > 0 && (
+              <div className="mb-2 space-y-1 border-b border-zinc-100 pb-2 dark:border-zinc-800">
+                <p className="px-1 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+                  Iniciar chat
+                </p>
+                {startableMembers.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    disabled={openWithMember.isPending}
+                    onClick={() => startChatWithMember(member.id)}
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  >
+                    <UserPlus className="text-brand h-4 w-4 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                        {member.full_name}
+                      </p>
+                      {member.cedula && (
+                        <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                          {member.cedula}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
+            {memberHitsLoading && conversations.length === 0 && (
+              <div className="flex justify-center py-4">
+                <Spinner size="xs" />
+              </div>
+            )}
+            {conversations.length > 0 ? (
+              <>
+                <Virtuoso
+                  style={{ flex: 1, height: '100%' }}
+                  data={conversations}
+                  itemContent={(_index, item) => (
+                    <div className="pb-1">
+                      <ConversationListItem
+                        item={item}
+                        selected={item.id === selectedId}
+                        alertDays={alertDays}
+                        onSelect={() => {
+                          handleSelectConversation(item.id);
+                        }}
+                      />
+                    </div>
+                  )}
+                />
+                {conversationsTotal > conversationsPageSize && (
+                  <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                    <PaginationBar
+                      page={listPage}
+                      pageSize={conversationsPageSize}
+                      total={conversationsTotal}
+                      onPageChange={setListPage}
+                    />
+                  </div>
+                )}
+              </>
+            ) : null}
           </>
-        )}
+        )}{' '}
       </div>
     </div>
   );

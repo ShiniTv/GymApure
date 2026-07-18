@@ -25,8 +25,13 @@ Mensajería 1 a 1 entre miembros y staff (admin, recepción, entrenador).
 
 **Staff → miembro:**
 
-1. **Mensajes** → busca miembro.
-2. Responde consultas, avisos manuales.
+1. **Mensajes** → busca por nombre o cédula.
+2. Si ya hay conversación, ábrela; si no, **Iniciar chat** con el miembro.
+3. Responde consultas y avisos manuales.
+
+La campana de notificaciones (admin/entrenador) enlaza membresías por vencer a `/members?expiring=true`.
+
+El job de avisos de vencimiento (`POST /api/settings/expiry/run`) acepta `CRON_SECRET` o sesión **admin**.
 
 ### Avisos de vencimiento
 

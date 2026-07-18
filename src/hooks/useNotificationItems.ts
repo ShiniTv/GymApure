@@ -104,7 +104,7 @@ function buildLiveItems(
         title: 'Membresías por vencer',
         description:
           expiring === 1 ? '1 membresía vence pronto' : `${expiring} membresías vencen pronto`,
-        href: '/members',
+        href: '/members?expiring=true',
         count: expiring,
         severity: 'warning',
       });
@@ -141,7 +141,7 @@ function buildLiveItems(
           expiring === 1
             ? '1 miembro con membresía por vencer'
             : `${expiring} miembros con membresía por vencer`,
-        href: '/members',
+        href: '/members?expiring=true',
         count: expiring,
         severity: expirySeverity(minDays, alertDays),
       });
