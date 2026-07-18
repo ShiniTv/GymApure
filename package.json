@@ -24,6 +24,7 @@
     "test:payments-checklist": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-payments-checklist.ts",
     "test:exchange-rate": "tsx scripts/test/test-exchange-rate.ts",
     "test:chat-checklist": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-chat-checklist.ts",
+    "test:classes-checklist": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-classes-checklist.ts",
     "test:pagination-contracts": "tsx scripts/test/test-pagination-contracts.ts",
     "test:alerts": "tsx scripts/test/verify-alerts-panel.ts",
     "verify:local-e2e": "tsx scripts/test/verify-local-e2e.ts",

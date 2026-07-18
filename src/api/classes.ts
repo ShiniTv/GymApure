@@ -321,7 +321,7 @@ router.post(
 
 router.post(
   '/sessions/:id/cancel',
-  authorize(['admin', 'receptionist', 'trainer']),
+  authorize(['admin', 'trainer']),
   asyncHandler(async (req: AuthRequest, res) => {
     const sessionId = parseId(req.params.id);
     if (!sessionId) {

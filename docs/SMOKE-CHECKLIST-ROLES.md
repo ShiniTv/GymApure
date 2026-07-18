@@ -6,13 +6,13 @@
 - [ ] `/trainers` → Nuevo entrenador con password débil muestra mensaje Zod (no "Error de conexión")
 - [ ] Crear entrenador con password válida (Mayús+minús+número+especial) funciona
 - [ ] Bottom nav móvil: Panel / Miembros / Pagos / Mensajes / Más
-- [ ] `/clases` → crear tipo + programar sesión
+- [ ] `/clases` → crear tipo + programar sesión (con instructor) + badge espera si hay waitlist
 
 ### Recepcionista
 
 - [ ] Sidebar "Mostrador" → `/reception?mode=counter&tab=access`
 - [ ] Más → "Kiosk / tablet" → `/check-in?kiosk=1`
-- [ ] `/clases` muestra sesiones del día / cupos
+- [ ] `/clases` → **Clases del día** con cupos y badge de espera (no cancela sesiones)
 
 ### Entrenador
 

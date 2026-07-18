@@ -56,7 +56,7 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `test:routine-exercises`        | Prescripción por serie en rutinas      |
 | `test:alerts`                   | Panel alertas y notificaciones usuario |
 
-Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:pagination-contracts`, `test:alerts`, `test:exchange-rate`, `test:trainer-shifts`, `test:routine-exercises`.
+Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:classes-checklist`, `test:pagination-contracts`, `test:alerts`, `test:exchange-rate`, `test:trainer-shifts`, `test:routine-exercises`.
 
 `test:security-checklist` incluye **dual login**: segundo login invalida la cookie del primero (`401` en `/api/auth/me`). `test:auth-checklist` verifica que **logout** invalida el token server-side.
 

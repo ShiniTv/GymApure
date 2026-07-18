@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, endOfDay, format, parseISO, startOfDay } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { CalendarDays, Plus } from 'lucide-react';
 import {
@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToastOptional } from '../context/ToastContext';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTrainersQuery } from '../hooks/queries/useTrainersQuery';
 import type { ClassSessionRow } from './Reservas';
 
 interface ClassType {
@@ -55,9 +56,10 @@ export default function Classes() {
   const toast = useToastOptional();
   const queryClient = useQueryClient();
   const isAdmin = user?.role === 'admin';
-  const canCreateSession = user?.role === 'admin' || user?.role === 'trainer';
-  const canManageBookings =
-    user?.role === 'admin' || user?.role === 'trainer' || user?.role === 'receptionist';
+  const isReceptionist = user?.role === 'receptionist';
+  const isTrainer = user?.role === 'trainer';
+  const canCreateSession = isAdmin || isTrainer;
+  const canManageBookings = isAdmin || isTrainer || isReceptionist;
 
   const [typeModal, setTypeModal] = useState(false);
   const [sessionModal, setSessionModal] = useState(false);
@@ -75,20 +77,29 @@ export default function Classes() {
     class_type_id: '',
     starts_at: '',
     capacity: '',
+    instructor_id: '',
   });
 
   const range = useMemo(() => {
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
+    const now = new Date();
+    if (isReceptionist) {
+      return {
+        from: startOfDay(now).toISOString(),
+        to: endOfDay(now).toISOString(),
+      };
+    }
+    const from = startOfDay(now);
     const to = addDays(from, 21);
     return { from: from.toISOString(), to: to.toISOString() };
-  }, []);
+  }, [isReceptionist]);
 
   const { data: types = [], isPending: typesLoading } = useQuery({
     queryKey: ['class-types'],
     queryFn: fetchTypes,
-    enabled: canCreateSession || user?.role === 'receptionist',
+    enabled: canCreateSession || isReceptionist,
   });
+
+  const { data: trainers = [] } = useTrainersQuery({}, isAdmin && sessionModal);
 
   const {
     data: sessions = [],
@@ -101,6 +112,30 @@ export default function Classes() {
   });
 
   const activeTypes = types.filter((t) => t.is_active);
+  const activeTrainers = trainers.filter((t) => t.status === 'active');
+
+  const canCancelSession = (session: ClassSessionRow) => {
+    if (session.status === 'cancelled') return false;
+    if (isAdmin) return true;
+    if (isTrainer) return session.instructor_id === user?.id;
+    return false;
+  };
+
+  const pageTitle = isReceptionist ? (
+    <>
+      Clases del <span className="text-brand">día</span>
+    </>
+  ) : (
+    <>
+      Clases <span className="text-brand">grupales</span>
+    </>
+  );
+
+  const pageSubtitle = isReceptionist
+    ? 'Cupos y lista de espera de las sesiones de hoy.'
+    : isTrainer
+      ? 'Programa tus sesiones y gestiona inscritos.'
+      : 'Programa sesiones, asigna instructor y controla cupos.';
 
   const handleCreateType = async (e: FormEvent) => {
     e.preventDefault();
@@ -141,6 +176,9 @@ export default function Classes() {
         starts_at: new Date(sessionForm.starts_at).toISOString(),
       };
       if (sessionForm.capacity) body.capacity = Number(sessionForm.capacity);
+      if (isAdmin && sessionForm.instructor_id) {
+        body.instructor_id = Number(sessionForm.instructor_id);
+      }
       const res = await apiFetch('/api/classes/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -151,7 +189,7 @@ export default function Classes() {
         throw new Error(data.error || 'No se pudo programar la clase');
       }
       setSessionModal(false);
-      setSessionForm({ class_type_id: '', starts_at: '', capacity: '' });
+      setSessionForm({ class_type_id: '', starts_at: '', capacity: '', instructor_id: '' });
       toast?.success('Clase programada');
       await queryClient.invalidateQueries({ queryKey: ['class-sessions'] });
     } catch (err) {
@@ -221,12 +259,8 @@ export default function Classes() {
     <div className="page-stack">
       <PageHeader
         compact
-        title={
-          <>
-            Clases <span className="text-brand">grupales</span>
-          </>
-        }
-        subtitle="Programa sesiones, controla cupos y cancela si hace falta."
+        title={pageTitle}
+        subtitle={pageSubtitle}
         action={
           <div className="flex shrink-0 items-center gap-2">
             <BackToDashboardLink />
@@ -248,6 +282,12 @@ export default function Classes() {
                 className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4"
                 onClick={() => {
                   setError('');
+                  setSessionForm({
+                    class_type_id: '',
+                    starts_at: '',
+                    capacity: '',
+                    instructor_id: '',
+                  });
                   setSessionModal(true);
                 }}
                 aria-label="Programar clase"
@@ -278,11 +318,13 @@ export default function Classes() {
       ) : sessions.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title="Sin clases programadas"
+          title={isReceptionist ? 'Sin clases hoy' : 'Sin clases programadas'}
           description={
             canCreateSession
               ? 'Crea un tipo de clase (admin) y programa la primera sesión.'
-              : 'Aún no hay sesiones en los próximos días.'
+              : isReceptionist
+                ? 'No hay sesiones programadas para hoy.'
+                : 'Aún no hay sesiones en los próximos días.'
           }
           action={
             canCreateSession ? (
@@ -303,6 +345,7 @@ export default function Classes() {
           {sessions.map((session) => {
             const starts = parseISO(session.starts_at);
             const cancelled = session.status === 'cancelled';
+            const showCancel = canCancelSession(session);
             return (
               <Card key={session.id} padding="md" rounded="xl">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -317,6 +360,9 @@ export default function Classes() {
                         <Badge variant="default">
                           {session.booked_count}/{session.capacity} cupos
                         </Badge>
+                      )}
+                      {!cancelled && session.waitlisted_count > 0 && (
+                        <Badge variant="warning">{session.waitlisted_count} en espera</Badge>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -334,7 +380,7 @@ export default function Classes() {
                         Reservas
                       </Button>
                     )}
-                    {!cancelled && (
+                    {showCancel && (
                       <Button
                         variant="danger"
                         size="sm"
@@ -433,6 +479,22 @@ export default function Classes() {
               ))}
             </Select>
           </div>
+          {isAdmin && (
+            <div>
+              <Label>Instructor</Label>
+              <Select
+                value={sessionForm.instructor_id}
+                onChange={(e) => setSessionForm({ ...sessionForm, instructor_id: e.target.value })}
+              >
+                <option value="">Sin asignar…</option>
+                {activeTrainers.map((trainer) => (
+                  <option key={trainer.id} value={trainer.id}>
+                    {trainer.full_name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
           <div>
             <Label>Inicio</Label>
             <Input
