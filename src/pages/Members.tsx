@@ -174,7 +174,9 @@ export default function Members() {
         setMembershipPlans(Array.isArray(plansData) ? plansData : []);
 
         if (user?.role === 'receptionist') {
-          const paymentsRes = await apiFetch('/api/payments?pageSize=100&status=approved');
+          const paymentsRes = await apiFetch(
+            `/api/payments?pageSize=50&status=approved&userId=${member.id}`
+          );
           const paymentsData = await parseJsonResponse<{
             items: {
               id: number;
@@ -184,8 +186,7 @@ export default function Members() {
               created_at: string;
             }[];
           }>(paymentsRes);
-          const forMember = (paymentsData.items ?? []).filter((p) => p.user_id === member.id);
-          setApprovedPayments(forMember);
+          setApprovedPayments(paymentsData.items ?? []);
         }
       } catch {
         setMembershipPlans([]);

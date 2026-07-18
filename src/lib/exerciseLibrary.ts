@@ -1,5 +1,6 @@
 import { query } from '../db/index.ts';
 import { deleteExerciseMedia } from './mediaStorage.ts';
+import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from './sqlLike.ts';
 
 export interface ExerciseRow {
   id: number;
@@ -15,23 +16,23 @@ export interface ExerciseRow {
   created_at?: string;
 }
 
-export function buildExerciseListQuery(
+export interface ExerciseListOptions {
+  role: string;
+  trainerId: number | null;
+  muscleGroup?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+function buildLibraryBase(
   role: string,
-  trainerId: number | null,
-  muscleGroup?: string
-): { sql: string; params: unknown[] } {
-  const params: unknown[] = [];
-  let muscleFilter = '';
-
-  if (muscleGroup) {
-    params.push(muscleGroup);
-    muscleFilter = ` AND muscle_group = $${params.length}`;
-  }
-
+  trainerId: number | null
+): { fromSql: string; params: unknown[]; needsWhereOne: boolean } {
   if (role === 'trainer' && trainerId != null) {
-    params.push(trainerId, trainerId, trainerId);
-    const sql = `
-      SELECT * FROM (
+    return {
+      fromSql: `
+      FROM (
         SELECT e.*
         FROM exercises e
         WHERE e.is_system = true
@@ -54,24 +55,106 @@ export function buildExerciseListQuery(
         SELECT e.*
         FROM exercises e
         WHERE e.owner_trainer_id = $3
-      ) AS library
-      WHERE 1=1${muscleFilter}
-      ORDER BY name
-    `;
-    return { sql, params };
+      ) AS library`,
+      params: [trainerId, trainerId, trainerId],
+      needsWhereOne: true,
+    };
   }
 
   if (role === 'member') {
-    const sql = `
-      SELECT * FROM exercises
-      WHERE owner_trainer_id IS NULL AND forked_from_id IS NULL${muscleFilter}
-      ORDER BY name
-    `;
-    return { sql, params };
+    return {
+      fromSql: `FROM exercises AS library
+        WHERE owner_trainer_id IS NULL AND forked_from_id IS NULL`,
+      params: [],
+      needsWhereOne: false,
+    };
   }
 
-  const sql = `SELECT * FROM exercises WHERE 1=1${muscleFilter} ORDER BY name`;
-  return { sql, params };
+  return {
+    fromSql: 'FROM exercises AS library',
+    params: [],
+    needsWhereOne: true,
+  };
+}
+
+function appendFilters(
+  params: unknown[],
+  needsWhereOne: boolean,
+  muscleGroup?: string,
+  search?: string
+): { whereSql: string; params: unknown[] } {
+  const next = [...params];
+  const clauses: string[] = [];
+
+  if (muscleGroup) {
+    next.push(muscleGroup);
+    clauses.push(`muscle_group = $${next.length}`);
+  }
+
+  const pattern = search ? toLikeContainsPattern(search) : null;
+  if (pattern) {
+    next.push(pattern);
+    const idx = next.length;
+    clauses.push(
+      `(LOWER(name) LIKE $${idx}${LIKE_ESCAPE_CLAUSE} OR LOWER(muscle_group) LIKE $${idx}${LIKE_ESCAPE_CLAUSE})`
+    );
+  }
+
+  if (clauses.length === 0) {
+    return {
+      whereSql: needsWhereOne ? ' WHERE 1=1' : '',
+      params: next,
+    };
+  }
+
+  if (needsWhereOne) {
+    return { whereSql: ` WHERE 1=1 AND ${clauses.join(' AND ')}`, params: next };
+  }
+  return { whereSql: ` AND ${clauses.join(' AND ')}`, params: next };
+}
+
+/** @deprecated Prefer buildExerciseListQueries for pagination. */
+export function buildExerciseListQuery(
+  role: string,
+  trainerId: number | null,
+  muscleGroup?: string
+): { sql: string; params: unknown[] } {
+  const { listSql, listParams } = buildExerciseListQueries({
+    role,
+    trainerId,
+    muscleGroup,
+  });
+  return { sql: listSql, params: listParams };
+}
+
+export function buildExerciseListQueries(options: ExerciseListOptions): {
+  countSql: string;
+  listSql: string;
+  params: unknown[];
+  listParams: unknown[];
+} {
+  const base = buildLibraryBase(options.role, options.trainerId);
+  const { whereSql, params } = appendFilters(
+    base.params,
+    base.needsWhereOne,
+    options.muscleGroup,
+    options.search
+  );
+
+  const countSql = `SELECT COUNT(*)::text AS count ${base.fromSql}${whereSql}`;
+  let listSql = `SELECT * ${base.fromSql}${whereSql} ORDER BY name`;
+
+  const listParams = [...params];
+  if (options.limit != null) {
+    listParams.push(options.limit);
+    listSql += ` LIMIT $${listParams.length}`;
+  }
+  if (options.offset != null) {
+    listParams.push(options.offset);
+    listSql += ` OFFSET $${listParams.length}`;
+  }
+
+  return { countSql, listSql, params, listParams };
 }
 
 export async function getExerciseById(id: number): Promise<ExerciseRow | null> {

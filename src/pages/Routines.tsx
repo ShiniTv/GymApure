@@ -8,7 +8,7 @@ import {
   useInvalidateAssignmentData,
 } from '../hooks/queries/useRoutinesQuery';
 import { useTrainersQuery } from '../hooks/queries/useTrainersQuery';
-import { useExercisesQuery } from '../hooks/queries/useExercisesQuery';
+import { useExercisesCatalogQuery } from '../hooks/queries/useExercisesQuery';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -140,7 +140,7 @@ export default function Routines() {
     isError: membersError,
     error: membersQueryError,
   } = useMemberOptionsQuery(!isMember && !!user);
-  const { data: exercisesCatalog = [] } = useExercisesQuery(isStaffRoutines);
+  const { data: exercisesCatalog = [] } = useExercisesCatalogQuery(isStaffRoutines);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
   const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);

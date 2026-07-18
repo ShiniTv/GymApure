@@ -56,6 +56,13 @@ router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: Auth
   if (user.role === 'member') {
     params.push(user.id);
     conditions.push(`p.user_id = $${params.length}`);
+  } else if (
+    (user.role === 'admin' || user.role === 'receptionist') &&
+    typeof req.query.userId === 'string' &&
+    /^\d+$/.test(req.query.userId)
+  ) {
+    params.push(parseInt(req.query.userId, 10));
+    conditions.push(`p.user_id = $${params.length}`);
   }
 
   if (status) {

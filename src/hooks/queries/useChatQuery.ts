@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { useSocket } from '../../context/SocketContext';
 
-const CHAT_POLL_CONNECTED_MS = 30_000;
-const CHAT_POLL_DISCONNECTED_MS = 5_000;
+const CHAT_POLL_CONNECTED_MS = false as const;
+const CHAT_POLL_DISCONNECTED_MS = 15_000;
 
-function chatPollInterval(isConnected: boolean): number {
+function chatPollInterval(isConnected: boolean): number | false {
   return isConnected ? CHAT_POLL_CONNECTED_MS : CHAT_POLL_DISCONNECTED_MS;
 }
 
@@ -39,8 +39,21 @@ export interface ChatMessage {
 }
 
 export const chatUnreadKey = ['chat', 'unread'] as const;
-export const chatConversationsKey = (search?: string, expiringOnly?: boolean) =>
-  ['chat', 'conversations', search ?? '', expiringOnly ?? false] as const;
+export const chatConversationsKey = (
+  search?: string,
+  expiringOnly?: boolean,
+  page?: number,
+  pageSize?: number
+) =>
+  [
+    'chat',
+    'conversations',
+    search ?? '',
+    expiringOnly ?? false,
+    page ?? 1,
+    pageSize ?? 50,
+  ] as const;
+
 export const chatMessagesKey = (conversationId: number) =>
   ['chat', 'messages', conversationId] as const;
 export const chatMineKey = ['chat', 'mine'] as const;
@@ -53,15 +66,27 @@ async function fetchUnreadCount(): Promise<number> {
 
 async function fetchConversations(
   search?: string,
-  expiringOnly?: boolean
-): Promise<ChatConversationListItem[]> {
+  expiringOnly?: boolean,
+  page = 1,
+  pageSize = 50
+): Promise<{
+  items: ChatConversationListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}> {
   const qs = new URLSearchParams();
   if (search?.trim()) qs.set('q', search.trim());
   if (expiringOnly) qs.set('expiring', 'true');
-  const suffix = qs.toString() ? `?${qs.toString()}` : '';
-  const res = await apiFetch(`/api/chat/conversations${suffix}`);
-  const data = await parseJsonResponse<{ items: ChatConversationListItem[] }>(res);
-  return data.items;
+  qs.set('page', String(page));
+  qs.set('pageSize', String(pageSize));
+  const res = await apiFetch(`/api/chat/conversations?${qs.toString()}`);
+  return parseJsonResponse<{
+    items: ChatConversationListItem[];
+    total: number;
+    page: number;
+    pageSize: number;
+  }>(res);
 }
 
 async function fetchMemberConversation(): Promise<ChatConversationListItem> {
@@ -92,12 +117,18 @@ export function useChatUnreadQuery(enabled = true) {
   });
 }
 
-export function useChatConversationsQuery(search?: string, expiringOnly?: boolean, enabled = true) {
+export function useChatConversationsQuery(
+  search?: string,
+  expiringOnly?: boolean,
+  enabled = true,
+  page = 1,
+  pageSize = 50
+) {
   const { isConnected } = useSocket();
 
   return useQuery({
-    queryKey: chatConversationsKey(search, expiringOnly),
-    queryFn: () => fetchConversations(search, expiringOnly),
+    queryKey: chatConversationsKey(search, expiringOnly, page, pageSize),
+    queryFn: () => fetchConversations(search, expiringOnly, page, pageSize),
     enabled,
     refetchInterval: enabled ? chatPollInterval(isConnected) : false,
   });

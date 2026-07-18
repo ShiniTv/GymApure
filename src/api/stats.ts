@@ -58,6 +58,16 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     yesterdayCheckIns,
     revenueThisMonth,
     revenueLastMonth,
+    revenueHistory,
+    revenueDaily,
+    expiringList,
+    expiredThisWeek,
+    lastDoorAlert,
+    equipmentStats,
+    pendingOld,
+    pausedSubs,
+    classToday,
+    demoPending,
   ] = await Promise.all([
     query<{ total: string | null }>(
       "SELECT SUM(amount_usd)::text AS total FROM payments WHERE status = 'approved'"
@@ -88,9 +98,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
          AND created_at < DATE_TRUNC('month', CURRENT_DATE)`
     ),
-  ]);
-
-  const [revenueHistory, revenueDaily] = await Promise.all([
     query<{ month: string; income: string }>(
       `SELECT
         TO_CHAR(created_at, 'YYYY-MM') AS month,
@@ -111,16 +118,10 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
       GROUP BY created_at::date
       ORDER BY date ASC`
     ),
-  ]);
-
-  const [expiringList, expiredThisWeek, lastDoorAlert, equipmentStats] = await Promise.all([
     getExpiringSubscriptions(alertDays),
     getExpiredThisWeekCount(),
     getLastDoorAlert(alertDays),
     getEquipmentStatsSummary(),
-  ]);
-
-  const [pendingOld, pausedSubs, classToday, demoPending] = await Promise.all([
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM payments
        WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days'`
@@ -139,7 +140,9 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
          FROM class_bookings cb
          WHERE cb.session_id = cs.id AND cb.status IN ('booked', 'attended', 'waitlisted')
        ) b ON true
-       WHERE cs.status = 'scheduled' AND cs.starts_at::date = CURRENT_DATE`
+       WHERE cs.status = 'scheduled'
+         AND cs.starts_at >= CURRENT_DATE
+         AND cs.starts_at < CURRENT_DATE + INTERVAL '1 day'`
     ),
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM demo_requests WHERE status = 'pending'`
@@ -182,9 +185,53 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
   };
 }
 
+function pickAdminStatsParts(
+  payload: AdminStatsPayload,
+  parts: Set<string>
+): Partial<AdminStatsPayload> {
+  if (parts.size === 0 || parts.has('all')) return payload;
+
+  const out: Partial<AdminStatsPayload> = { expiryAlertDays: payload.expiryAlertDays };
+
+  if (parts.has('kpis')) {
+    Object.assign(out, {
+      totalRevenue: payload.totalRevenue,
+      pendingPayments: payload.pendingPayments,
+      pendingPaymentsOlderThan2Days: payload.pendingPaymentsOlderThan2Days,
+      activeSubscriptions: payload.activeSubscriptions,
+      pausedSubscriptions: payload.pausedSubscriptions,
+      todayCheckIns: payload.todayCheckIns,
+      yesterdayCheckIns: payload.yesterdayCheckIns,
+      revenueThisMonth: payload.revenueThisMonth,
+      revenueLastMonth: payload.revenueLastMonth,
+      expiringSoon: payload.expiringSoon,
+      expiredThisWeek: payload.expiredThisWeek,
+      equipmentOperational: payload.equipmentOperational,
+      equipmentLimited: payload.equipmentLimited,
+      equipmentMaintenance: payload.equipmentMaintenance,
+      equipmentOutOfService: payload.equipmentOutOfService,
+      equipmentInspectionsDue: payload.equipmentInspectionsDue,
+      classSessionsToday: payload.classSessionsToday,
+      classBookingsToday: payload.classBookingsToday,
+      classCapacityToday: payload.classCapacityToday,
+      classFillPercentToday: payload.classFillPercentToday,
+      demoLeadsPending: payload.demoLeadsPending,
+    });
+  }
+  if (parts.has('charts')) {
+    out.revenueHistory = payload.revenueHistory;
+    out.revenueDaily = payload.revenueDaily;
+  }
+  if (parts.has('lists')) {
+    out.expiringList = payload.expiringList;
+    out.lastDoorAlert = payload.lastDoorAlert;
+  }
+  return out;
+}
+
 router.get('/admin/summary', authorize(['admin']), async (_req, res) => {
   try {
-    const cached = getCachedAdminStats<AdminStatsPayload>();
+    const cached = getCachedAdminStats() as AdminStatsPayload | null;
     if (cached) {
       return res.json({ expiringSoon: cached.expiringSoon });
     }
@@ -197,16 +244,24 @@ router.get('/admin/summary', authorize(['admin']), async (_req, res) => {
   }
 });
 
-router.get('/admin', authorize(['admin']), async (_req, res) => {
+router.get('/admin', authorize(['admin']), async (req, res) => {
   try {
-    const cached = getCachedAdminStats<AdminStatsPayload>();
+    const partsRaw = typeof req.query.parts === 'string' ? req.query.parts : 'all';
+    const parts = new Set(
+      partsRaw
+        .split(',')
+        .map((p) => p.trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    const cached = getCachedAdminStats() as AdminStatsPayload | null;
     if (cached) {
-      return res.json(cached);
+      return res.json(pickAdminStatsParts(cached, parts));
     }
 
     const payload = await buildAdminStats();
     setCachedAdminStats(payload);
-    res.json(payload);
+    res.json(pickAdminStatsParts(payload, parts));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });

@@ -216,7 +216,7 @@ export default function MemberRoutine() {
   };
 
   const apiFetchAvailableRoutines = () => {
-    apiFetch('/api/routines')
+    apiFetch('/api/routines?all=1')
       .then((res) => parseJsonResponse<RoutineOption[]>(res))
       .then((data) => {
         setAvailableRoutines(Array.isArray(data) ? data : []);
@@ -411,7 +411,7 @@ export default function MemberRoutine() {
   };
 
   const apiFetchAvailableExercises = () => {
-    apiFetch('/api/exercises')
+    apiFetch('/api/exercises?all=1')
       .then((res) => parseJsonResponse<ExerciseOption[]>(res))
       .then((data) => {
         setAvailableExercises(Array.isArray(data) ? data : []);

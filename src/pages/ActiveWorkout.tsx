@@ -159,7 +159,7 @@ export default function ActiveWorkout() {
 
   useEffect(() => {
     if (!isAddingExercise) return;
-    apiFetch('/api/exercises')
+    apiFetch('/api/exercises?all=1')
       .then((res) => parseJsonResponse<ExerciseOption[]>(res))
       .then((data) => {
         setAvailableExercises(Array.isArray(data) ? data : []);

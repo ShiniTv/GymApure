@@ -19,6 +19,7 @@ import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { sameUserId, toDbId } from '../lib/ids.ts';
 import { isStaffRole, STAFF_ROLES } from '../lib/roles.ts';
 import { trainerHasMemberAccess } from '../lib/trainerAccess.ts';
+import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
 
 const router = asyncRouter();
 
@@ -58,18 +59,18 @@ router.get('/unread-count', async (req: AuthRequest, res) => {
 });
 
 router.get('/conversations', authorize(STAFF_ROLES), async (req: AuthRequest, res) => {
-  const search = typeof req.query.q === 'string' ? req.query.q : undefined;
-  const expiringOnly = req.query.expiring === 'true';
-  const listOptions =
-    req.user!.role === 'trainer' ? { trainerId: toDbId(req.user!.id) } : undefined;
-  let items = await listStaffConversations(search, listOptions);
-  if (expiringOnly) {
-    const alertDays = await getExpiryAlertDays();
-    items = items.filter(
-      (item) => item.days_remaining != null && item.days_remaining <= alertDays
-    );
-  }
-  res.json({ items });
+  const search = parseSearchQuery(req.query) || undefined;
+  const expiringOnly = parseBooleanQuery(req.query.expiring);
+  const { page, pageSize } = parsePaginationQuery(req.query, { pageSize: 50, maxPageSize: 100 });
+  const listOptions = {
+    ...(req.user!.role === 'trainer' ? { trainerId: toDbId(req.user!.id) } : {}),
+    expiringOnly,
+    alertDays: expiringOnly ? await getExpiryAlertDays() : undefined,
+    page,
+    pageSize,
+  };
+  const result = await listStaffConversations(search, listOptions);
+  res.json(result);
 });
 
 router.get('/conversations/mine', authorize(['member']), async (req: AuthRequest, res) => {
@@ -77,24 +78,28 @@ router.get('/conversations/mine', authorize(['member']), async (req: AuthRequest
   res.json(summary);
 });
 
-router.post('/conversations/with/:memberId', authorize(STAFF_ROLES), async (req: AuthRequest, res) => {
-  const memberId = parseInt(req.params.memberId, 10);
-  if (!Number.isFinite(memberId)) {
-    return res.status(400).json({ error: 'ID de miembro inválido' });
-  }
+router.post(
+  '/conversations/with/:memberId',
+  authorize(STAFF_ROLES),
+  async (req: AuthRequest, res) => {
+    const memberId = parseInt(req.params.memberId, 10);
+    if (!Number.isFinite(memberId)) {
+      return res.status(400).json({ error: 'ID de miembro inválido' });
+    }
 
-  try {
-    await assertTrainerMemberAccess(req, memberId);
-  } catch (err) {
-    const status = (err as { status?: number }).status ?? 500;
-    const message = err instanceof Error ? err.message : 'Error';
-    return res.status(status).json({ error: message });
-  }
+    try {
+      await assertTrainerMemberAccess(req, memberId);
+    } catch (err) {
+      const status = (err as { status?: number }).status ?? 500;
+      const message = err instanceof Error ? err.message : 'Error';
+      return res.status(status).json({ error: message });
+    }
 
-  const conversation = await getOrCreateConversation(memberId);
-  const summary = await getMemberConversationSummary(memberId);
-  res.json({ ...conversation, ...summary, id: conversation.id });
-});
+    const conversation = await getOrCreateConversation(memberId);
+    const summary = await getMemberConversationSummary(memberId);
+    res.json({ ...conversation, ...summary, id: conversation.id });
+  }
+);
 
 router.get('/conversations/:id/messages', async (req: AuthRequest, res) => {
   const conversationId = parseInt(req.params.id, 10);

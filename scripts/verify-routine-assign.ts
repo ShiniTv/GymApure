@@ -111,7 +111,7 @@ async function main() {
     ok('GET /api/users/:id trainer → 200', profile.status === 200, String(profile.status));
   }
 
-  const routines = await api('/api/routines', trainerSession);
+  const routines = await api('/api/routines?all=1', trainerSession);
   ok('GET /api/routines trainer → 200', routines.status === 200);
   const routineList = routines.data as unknown as { id?: number }[];
   const routineId = Array.isArray(routineList) ? routineList[0]?.id : undefined;

@@ -61,8 +61,17 @@ export async function getConversationById(
 
 export async function listStaffConversations(
   search?: string,
-  options?: { trainerId?: number }
-): Promise<ChatConversationListItem[]> {
+  options?: {
+    trainerId?: number;
+    expiringOnly?: boolean;
+    alertDays?: number;
+    page?: number;
+    pageSize?: number;
+  }
+): Promise<{ items: ChatConversationListItem[]; total: number; page: number; pageSize: number }> {
+  const page = Math.max(1, options?.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, options?.pageSize ?? 50));
+  const offset = (page - 1) * pageSize;
   const params: unknown[] = [];
   const conditions: string[] = [`u.role = 'member'`];
 
@@ -85,20 +94,21 @@ export async function listStaffConversations(
     )`);
   }
 
+  if (options?.expiringOnly) {
+    const alertDays = options.alertDays ?? 7;
+    params.push(alertDays);
+    conditions.push(`EXISTS (
+      SELECT 1 FROM subscriptions s
+      WHERE s.user_id = c.member_id
+        AND s.status = 'active'
+        AND s.end_date >= CURRENT_DATE
+        AND s.end_date <= CURRENT_DATE + $${params.length}::int
+    )`);
+  }
+
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  const { rows } = await query<ChatConversationListItem>(
-    `SELECT
-       c.id,
-       c.member_id,
-       u.full_name AS member_name,
-       u.cedula AS member_cedula,
-       c.last_message_at::text AS last_message_at,
-       lm.body AS last_message_preview,
-       lm.kind AS last_message_kind,
-       COALESCE(unread.cnt, 0)::int AS unread_count,
-       sub.days_remaining,
-       sub.membership_name
+  const fromSql = `
      FROM chat_conversations c
      JOIN users u ON u.id = c.member_id
      LEFT JOIN LATERAL (
@@ -127,12 +137,44 @@ export async function listStaffConversations(
        ORDER BY s.end_date ASC
        LIMIT 1
      ) sub ON true
-     ${whereSql}
-     ORDER BY c.last_message_at DESC`,
-    params
-  );
+     ${whereSql}`;
 
-  return rows.map(mapConversationListItem);
+  const countParams = [...params];
+  const listParams = [...params, pageSize, offset];
+
+  const [countResult, listResult] = await Promise.all([
+    query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+       FROM chat_conversations c
+       JOIN users u ON u.id = c.member_id
+       ${whereSql}`,
+      countParams
+    ),
+    query<ChatConversationListItem>(
+      `SELECT
+       c.id,
+       c.member_id,
+       u.full_name AS member_name,
+       u.cedula AS member_cedula,
+       c.last_message_at::text AS last_message_at,
+       lm.body AS last_message_preview,
+       lm.kind AS last_message_kind,
+       COALESCE(unread.cnt, 0)::int AS unread_count,
+       sub.days_remaining,
+       sub.membership_name
+     ${fromSql}
+     ORDER BY c.last_message_at DESC
+     LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams
+    ),
+  ]);
+
+  return {
+    items: listResult.rows.map(mapConversationListItem),
+    total: parseInt(countResult.rows[0]?.count || '0', 10),
+    page,
+    pageSize,
+  };
 }
 
 export async function getMemberConversationSummary(

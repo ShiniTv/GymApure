@@ -1,7 +1,12 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { query } from '../db/index.ts';
 import { authorize, type AuthRequest } from './middleware/auth.ts';
-import { sqlTodayRange, sqlRecentRange, sqlDurationMinutes } from '../lib/sqlDateRanges.ts';
+import {
+  sqlTodayRange,
+  sqlRecentRange,
+  sqlDurationMinutes,
+  sqlLastNDaysRange,
+} from '../lib/sqlDateRanges.ts';
 import { RECEPTION_OPERATORS } from '../lib/roles.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { performCheckIn, performCheckOut } from './attendance/attendanceCore.ts';
@@ -114,7 +119,7 @@ router.get('/volume', authorize(['admin']), async (req, res) => {
       LEFT JOIN (
         SELECT check_in_time::date AS check_date, COUNT(*)::int AS count
         FROM attendance
-        WHERE check_in_time::date >= CURRENT_DATE - ($1 - 1) * INTERVAL '1 day'
+        WHERE ${sqlLastNDaysRange('check_in_time', 1)}
         GROUP BY check_in_time::date
       ) daily_counts ON dates.date = daily_counts.check_date
       ORDER BY dates.date ASC
@@ -148,7 +153,7 @@ router.get('/hourly', authorize(['admin']), async (req, res) => {
       LEFT JOIN (
         SELECT EXTRACT(HOUR FROM check_in_time)::int AS check_hour, COUNT(*)::int AS count
         FROM attendance
-        WHERE check_in_time::date >= CURRENT_DATE - ($1 - 1) * INTERVAL '1 day'
+        WHERE ${sqlLastNDaysRange('check_in_time', 1)}
         GROUP BY EXTRACT(HOUR FROM check_in_time)
       ) hourly_counts ON hours.hour = hourly_counts.check_hour
       ORDER BY hours.hour ASC
@@ -179,14 +184,14 @@ router.get('/inactive', authorize(['admin']), async (req, res) => {
              MAX(a.check_in_time) AS last_check_in,
              CASE
                WHEN MAX(a.check_in_time) IS NULL THEN NULL
-               ELSE (CURRENT_DATE - MAX(a.check_in_time::date))::int
+               ELSE (CURRENT_DATE - MAX(a.check_in_time)::date)::int
              END AS days_since
       FROM users u
       LEFT JOIN attendance a ON a.user_id = u.id
       WHERE u.role = 'member' AND u.status = 'active'
       GROUP BY u.id, u.full_name, u.cedula, u.email
       HAVING MAX(a.check_in_time) IS NULL
-         OR MAX(a.check_in_time::date) <= CURRENT_DATE - $1::int
+         OR MAX(a.check_in_time) < CURRENT_DATE - ($1::int - 1) * INTERVAL '1 day'
       ORDER BY days_since DESC NULLS FIRST, u.full_name ASC
       LIMIT 100
     `,
@@ -210,7 +215,7 @@ router.get('/heatmap', authorize(['admin']), async (req, res) => {
         EXTRACT(HOUR FROM check_in_time)::int AS hour,
         COUNT(*)::int AS count
       FROM attendance
-      WHERE check_in_time::date >= CURRENT_DATE - ($1 - 1) * INTERVAL '1 day'
+      WHERE ${sqlLastNDaysRange('check_in_time', 1)}
         AND EXTRACT(HOUR FROM check_in_time) BETWEEN 6 AND 22
       GROUP BY dow, hour
       ORDER BY dow, hour
@@ -249,7 +254,8 @@ router.get('/week-comparison', authorize(['admin']), async (_req, res) => {
       LEFT JOIN (
         SELECT check_in_time::date AS d, COUNT(*)::int AS count
         FROM attendance
-        WHERE check_in_time::date >= (SELECT week_start FROM bounds)
+        WHERE check_in_time >= (SELECT week_start FROM bounds)
+          AND check_in_time < CURRENT_DATE + INTERVAL '1 day'
         GROUP BY check_in_time::date
       ) c ON c.d = gs.date::date
       ORDER BY gs.date ASC
@@ -261,16 +267,20 @@ router.get('/week-comparison', authorize(['admin']), async (_req, res) => {
       WITH bounds AS (
         SELECT
           (date_trunc('week', CURRENT_DATE) - INTERVAL '7 days')::date AS week_start,
-          (date_trunc('week', CURRENT_DATE) - INTERVAL '1 day')::date AS week_end
+          date_trunc('week', CURRENT_DATE)::date AS week_end_exclusive
       )
       SELECT gs.date::text AS date, COALESCE(c.count, 0)::int AS count
       FROM bounds b
-      CROSS JOIN generate_series(b.week_start, b.week_end, '1 day'::interval) AS gs(date)
+      CROSS JOIN generate_series(
+        b.week_start,
+        b.week_end_exclusive - INTERVAL '1 day',
+        '1 day'::interval
+      ) AS gs(date)
       LEFT JOIN (
         SELECT check_in_time::date AS d, COUNT(*)::int AS count
         FROM attendance
-        WHERE check_in_time::date >= (SELECT week_start FROM bounds)
-          AND check_in_time::date <= (SELECT week_end FROM bounds)
+        WHERE check_in_time >= (SELECT week_start FROM bounds)
+          AND check_in_time < (SELECT week_end_exclusive FROM bounds)
         GROUP BY check_in_time::date
       ) c ON c.d = gs.date::date
       ORDER BY gs.date ASC
@@ -280,11 +290,11 @@ router.get('/week-comparison', authorize(['admin']), async (_req, res) => {
     const { rows: totals } = await query<{ this_total: number; last_total: number }>(`
       SELECT
         (SELECT COUNT(*)::int FROM attendance
-         WHERE check_in_time::date >= date_trunc('week', CURRENT_DATE)::date
-           AND check_in_time::date <= CURRENT_DATE) AS this_total,
+         WHERE check_in_time >= date_trunc('week', CURRENT_DATE)
+           AND check_in_time < CURRENT_DATE + INTERVAL '1 day') AS this_total,
         (SELECT COUNT(*)::int FROM attendance
-         WHERE check_in_time::date >= (date_trunc('week', CURRENT_DATE) - INTERVAL '7 days')::date
-           AND check_in_time::date < date_trunc('week', CURRENT_DATE)::date) AS last_total
+         WHERE check_in_time >= date_trunc('week', CURRENT_DATE) - INTERVAL '7 days'
+           AND check_in_time < date_trunc('week', CURRENT_DATE)) AS last_total
     `);
 
     const thisTotal = totals[0]?.this_total ?? 0;

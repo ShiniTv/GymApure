@@ -86,9 +86,7 @@ export async function sendPushToStaff(title: string, body: string, url?: string)
       [rows.map((r) => r.user_id)]
     );
 
-    for (const user of staffUsers) {
-      await sendPushToUser(user.id, title, body, url);
-    }
+    await Promise.allSettled(staffUsers.map((user) => sendPushToUser(user.id, title, body, url)));
   } catch (err) {
     logger.error('Error sending push to staff', {
       error: err instanceof Error ? err.message : String(err),

@@ -373,14 +373,13 @@ router.get(
     void syncEquipmentInspectionAlerts();
     const isAdmin = req.user?.role === 'admin';
 
-    const [zones, catalog, vendors, stats, inventory] = await Promise.all([
+    const [zones, catalog, vendors, stats] = await Promise.all([
       query(`SELECT * FROM gym_zones ORDER BY sort_order, name`),
       query(`SELECT * FROM equipment_catalog ORDER BY category, name`),
       isAdmin
         ? query(`SELECT * FROM equipment_vendors ORDER BY name`)
         : Promise.resolve({ rows: [] }),
       getEquipmentStatsSummary(),
-      query(`${equipmentSelect} ORDER BY ge.updated_at DESC`),
     ]);
 
     res.json({
@@ -388,7 +387,7 @@ router.get(
       catalog: catalog.rows,
       vendors: vendors.rows,
       stats,
-      inventory: inventory.rows.map((row) => mapEquipmentRow(row as Record<string, unknown>)),
+      inventory: [],
     });
   })
 );

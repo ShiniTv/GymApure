@@ -84,7 +84,7 @@ async function main() {
   const trainerMe = await api('GET', '/api/auth/me');
   const primaryTrainerId = (trainerMe.data as { user?: { id?: number } }).user?.id;
 
-  const trainerRoutines = await api('GET', '/api/routines');
+  const trainerRoutines = await api('GET', '/api/routines?all=1');
   const ownRoutine = (trainerRoutines.data as { id?: number; trainer_id?: number }[])[0];
   ok('Trainer tiene al menos una rutina propia', Boolean(ownRoutine?.id));
 
@@ -231,7 +231,7 @@ async function main() {
 async function queryRoutineForTrainer(trainerUserId: number): Promise<number | undefined> {
   cookie = '';
   await loginAs('admin@gym.com');
-  const existing = await api('GET', '/api/routines');
+  const existing = await api('GET', '/api/routines?all=1');
   const list = existing.data as { id?: number; trainer_id?: number; name?: string }[];
   const found = list.find(
     (r) => Number(r.trainer_id) === trainerUserId && r.name === 'Alexis Cross-Trainer Test'

@@ -83,7 +83,7 @@ async function main() {
 
   const exerciseId = await ensureSystemExercise();
 
-  const listRes = await api('GET', '/api/exercises', undefined, trainerCookie);
+  const listRes = await api('GET', '/api/exercises?all=1', undefined, trainerCookie);
   if (listRes.res.status !== 200) {
     console.error('GET /api/exercises falló', listRes.res.status, listRes.data);
     await cleanup();
@@ -107,7 +107,7 @@ async function main() {
   }
   console.log('  OK  Ocultar ejercicio del sistema → hidden:true');
 
-  const afterRes = await api('GET', '/api/exercises', undefined, trainerCookie);
+  const afterRes = await api('GET', '/api/exercises?all=1', undefined, trainerCookie);
   const afterList = afterRes.data as unknown as Array<{ id: number }>;
   if (afterList.length !== beforeCount - 1) {
     console.error(

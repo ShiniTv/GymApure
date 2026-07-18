@@ -5,7 +5,7 @@ import {
   useInvalidateExercises,
   type Exercise,
 } from '../hooks/queries/useExercisesQuery';
-import { Plus, Video, Dumbbell } from 'lucide-react';
+import { Plus, Video, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canOperateExercises } from '../lib/roles';
 import {
@@ -22,26 +22,38 @@ import {
   FilterChips,
   EmptyState,
 } from '../components/ui';
-import { MUSCLE_GROUPS, filterExercises } from '../lib/exerciseMuscleGroups';
+import { MUSCLE_GROUPS } from '../lib/exerciseMuscleGroups';
 import { ExerciseLibraryView } from '../components/exercise/ExerciseLibraryView';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useDebouncedValue } from '../lib/useDebouncedValue';
 import {
   fetchExerciseMediaCapabilities,
   uploadExerciseVideoDirect,
   type ExerciseMediaCapabilities,
 } from '../lib/exerciseVideoUploadClient';
 export default function Exercises() {
+  const [search, setSearch] = useState('');
+  const [muscleFilter, setMuscleFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 300);
   const {
-    data: exercises = [],
+    data: exercisesPage,
     isPending: loading,
     isError: exercisesError,
     refetch: refetchExercises,
-  } = useExercisesQuery();
+  } = useExercisesQuery({
+    q: debouncedSearch,
+    muscleGroup: muscleFilter || undefined,
+    page,
+    pageSize: 50,
+  });
+  const exercises = exercisesPage?.items ?? [];
+  const total = exercisesPage?.total ?? 0;
+  const pageSize = exercisesPage?.pageSize ?? 50;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const invalidateExercises = useInvalidateExercises();
-  const [search, setSearch] = useState('');
-  const [muscleFilter, setMuscleFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -159,7 +171,11 @@ export default function Exercises() {
     }
   };
 
-  const filteredForDisplay = filterExercises(exercises, { search, muscleGroup: muscleFilter });
+  const filteredForDisplay = exercises;
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, muscleFilter]);
 
   const handleVideoUrlChange = (url: string) => {
     const embed = getYouTubeEmbedUrl(url);
@@ -253,7 +269,8 @@ export default function Exercises() {
       <ExerciseLibraryView
         exercises={filteredForDisplay}
         readOnly={readOnly}
-        search=""
+        search={debouncedSearch}
+        skipClientFilter
         onEdit={canEdit ? (exercise) => handleOpenModal(exercise) : undefined}
         onDelete={
           canEdit
@@ -265,6 +282,34 @@ export default function Exercises() {
         }
         onCreate={canEdit ? () => handleOpenModal() : undefined}
       />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {total} ejercicio{total !== 1 ? 's' : ''} · página {page} de {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              aria-label="Página siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {canEdit && (
         <>

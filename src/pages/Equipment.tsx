@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { useSearchParams } from 'react-router-dom';
 import {
   Plus,
@@ -1123,6 +1124,16 @@ export default function Equipment() {
               </section>
             ))}
           </div>
+        ) : items.length >= 48 ? (
+          <Virtuoso
+            style={{ height: 'min(70vh, 800px)' }}
+            data={items}
+            itemContent={(_index, item) => (
+              <div className="pb-2">
+                <EquipmentListCard item={item} onOpen={openDetail} />
+              </div>
+            )}
+          />
         ) : (
           <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (

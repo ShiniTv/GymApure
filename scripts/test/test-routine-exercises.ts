@@ -77,7 +77,7 @@ async function main() {
   }
   ok('Login trainer', true);
 
-  const exercisesRes = await api('GET', '/api/exercises', undefined, trainerCookie);
+  const exercisesRes = await api('GET', '/api/exercises?all=1', undefined, trainerCookie);
   ok('GET /api/exercises', exercisesRes.res.status === 200);
   const exercises = exercisesRes.data as unknown as Array<{ id: number }>;
   const exerciseId = exercises[0]?.id;

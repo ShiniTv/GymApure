@@ -9,8 +9,11 @@ import {
   routineExerciseSchema,
   routineUpdateSchema,
 } from '../lib/routineSchemas.ts';
+import { parseBooleanQuery, parsePaginationQuery } from '../lib/pagination.ts';
 
 const router = asyncRouter();
+
+const ROUTINES_ALL_MAX = 200;
 
 interface AssignmentRow {
   user_id: number;
@@ -77,7 +80,8 @@ async function fetchRoutineExercisesRows(routineId: string | number) {
   }
 }
 
-const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
+const ROUTINE_EXERCISE_PREVIEW_SQL = `LEFT JOIN LATERAL (
+       SELECT string_agg(preview_names.name, ' · ') AS exercise_preview
        FROM (
          SELECT e.name
          FROM routine_exercises re
@@ -85,7 +89,13 @@ const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' �
          WHERE re.routine_id = r.id
          ORDER BY re.id
          LIMIT 3
-       ) preview_names)`;
+       ) preview_names
+     ) preview ON true
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS exercise_count
+       FROM routine_exercises
+       WHERE routine_id = r.id
+     ) counts ON true`;
 
 async function getRoutineTrainerId(routineId: string | number): Promise<number | null> {
   const { rows } = await query<{ trainer_id: number }>(
@@ -125,18 +135,49 @@ router.get('/', async (req: AuthRequest, res) => {
       params.push(user.id);
     }
 
-    const { rows } = await query(
-      `SELECT r.*, u.full_name as trainer_name, tp.shift as trainer_shift,
-      (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count,
-      ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
+    const selectSql = `SELECT r.*, u.full_name as trainer_name, tp.shift as trainer_shift,
+      COALESCE(counts.exercise_count, 0) AS exercise_count,
+      preview.exercise_preview
       FROM routines r
       JOIN users u ON r.trainer_id = u.id
       LEFT JOIN trainer_profiles tp ON tp.user_id = r.trainer_id
+      ${ROUTINE_EXERCISE_PREVIEW_SQL}
       ${where}
-      ORDER BY r.name ASC`,
-      params
-    );
-    res.json(rows);
+      ORDER BY r.name ASC`;
+
+    const wantAll = parseBooleanQuery(req.query.all);
+    if (wantAll) {
+      const listParams = [...params, ROUTINES_ALL_MAX];
+      const { rows } = await query(`${selectSql} LIMIT $${listParams.length}`, listParams);
+      res.json(rows);
+      return;
+    }
+
+    const { page, pageSize, offset } = parsePaginationQuery(req.query, {
+      pageSize: 50,
+      maxPageSize: 100,
+    });
+    const countParams = [...params];
+    const listParams = [...params, pageSize, offset];
+    const [countResult, listResult] = await Promise.all([
+      query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+         FROM routines r
+         ${where}`,
+        countParams
+      ),
+      query(
+        `${selectSql} LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+        listParams
+      ),
+    ]);
+
+    res.json({
+      items: listResult.rows,
+      total: parseInt(countResult.rows[0]?.count || '0', 10),
+      page,
+      pageSize,
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
@@ -165,10 +206,15 @@ router.get('/assignments/all', authorize(['trainer']), async (req: AuthRequest, 
         ur.assigned_at,
         ur.start_date,
         ur.end_date,
-        (SELECT COUNT(*)::int FROM routine_exercises WHERE routine_id = r.id) as exercise_count
+        COALESCE(counts.exercise_count, 0) as exercise_count
       FROM user_routines ur
       JOIN users u ON ur.user_id = u.id
       JOIN routines r ON ur.routine_id = r.id
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*)::int AS exercise_count
+        FROM routine_exercises
+        WHERE routine_id = r.id
+      ) counts ON true
       WHERE 1=1${trainerFilter}
       ORDER BY u.full_name ASC, ur.assigned_at DESC`,
       params

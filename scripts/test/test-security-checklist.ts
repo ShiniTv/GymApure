@@ -99,7 +99,7 @@ async function main() {
   // --- Fase 2: IDOR trainers + filtrado rutinas ---
   ok('Login admin', await loginAs('admin@gym.com'));
 
-  const adminRoutinesRes = await api('GET', '/api/routines');
+  const adminRoutinesRes = await api('GET', '/api/routines?all=1');
   ok('Admin GET /api/routines → 200', adminRoutinesRes.res.status === 200);
   const adminRoutineList = adminRoutinesRes.data as unknown[];
 
@@ -109,7 +109,7 @@ async function main() {
   const memberId = (memberProfile.data as { user?: { id?: number } }).user?.id;
 
   if (memberId) {
-    const memberRoutines = await api('GET', '/api/routines');
+    const memberRoutines = await api('GET', '/api/routines?all=1');
     const memberList = memberRoutines.data as { id?: number; name?: string }[];
     ok('Member GET /api/routines → 200', memberRoutines.res.status === 200);
     ok('Member solo ve rutinas asignadas (array)', Array.isArray(memberList));
@@ -153,7 +153,7 @@ async function main() {
       `status ${allowedProfile.res.status}`
     );
 
-    const trainerRoutines = await api('GET', '/api/routines');
+    const trainerRoutines = await api('GET', '/api/routines?all=1');
     const trainerList = trainerRoutines.data as { trainer_id?: number }[];
     const trainerAuth = await api('GET', '/api/auth/me');
     const trainerId = (trainerAuth.data as { user?: { id?: number } }).user?.id;
@@ -235,7 +235,7 @@ async function main() {
   // Compare admin vs member routine counts when both exist
   cookie = '';
   ok('Login member final', await loginAs('member@gym.com'));
-  const memberFinal = await api('GET', '/api/routines');
+  const memberFinal = await api('GET', '/api/routines?all=1');
   const memberFinalList = memberFinal.data as unknown[];
   if (Array.isArray(adminRoutineList) && Array.isArray(memberFinalList)) {
     ok(

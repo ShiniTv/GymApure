@@ -17,7 +17,7 @@ export function useRoutinesLibraryQuery(enabled = true) {
   return useQuery({
     queryKey: ['routines', 'library'],
     queryFn: async () => {
-      const res = await apiFetch('/api/routines');
+      const res = await apiFetch('/api/routines?all=1');
       const data = await parseJsonResponse<Routine[]>(res);
       return Array.isArray(data) ? data : [];
     },

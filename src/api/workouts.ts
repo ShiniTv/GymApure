@@ -31,11 +31,11 @@ router.get(
               COALESCE(wl.sets_completed, 0)::int AS sets_completed
        FROM workout_sessions ws
        JOIN routines r ON ws.routine_id = r.id
-       LEFT JOIN (
-         SELECT session_id, COUNT(*)::int AS sets_completed
-         FROM workout_logs
-         GROUP BY session_id
-       ) wl ON wl.session_id = ws.id
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*)::int AS sets_completed
+         FROM workout_logs wl
+         WHERE wl.session_id = ws.id
+       ) wl ON true
        WHERE ws.user_id = $1 AND ws.end_time IS NULL
        ORDER BY ws.start_time DESC`,
       [userId]

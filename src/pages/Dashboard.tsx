@@ -62,7 +62,7 @@ export default function Dashboard() {
     return (
       <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
         <div {...handlers}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<DashboardSkeleton statCount={3} />}>
             <MemberDashboardView />
           </Suspense>
         </div>
@@ -74,7 +74,7 @@ export default function Dashboard() {
     return (
       <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
         <div {...handlers}>
-          <Suspense fallback={null}>
+          <Suspense fallback={<DashboardSkeleton statCount={6} />}>
             <AdminDashboard />
           </Suspense>
         </div>

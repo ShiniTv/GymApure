@@ -81,15 +81,17 @@ async function findUserMeasurement(userId: number, measurementId: number) {
   return rows[0] ?? null;
 }
 
-const ROUTINE_EXERCISE_PREVIEW_SQL = `(SELECT string_agg(preview_names.name, ' · ')
-  FROM (
-    SELECT e.name
-    FROM routine_exercises re
-    JOIN exercises e ON e.id = re.exercise_id
-    WHERE re.routine_id = r.id
-    ORDER BY re.id
-    LIMIT 3
-  ) preview_names)`;
+const ROUTINE_EXERCISE_PREVIEW_JOIN = `LEFT JOIN LATERAL (
+    SELECT string_agg(preview_names.name, ' · ') AS exercise_preview
+    FROM (
+      SELECT e.name
+      FROM routine_exercises re
+      JOIN exercises e ON e.id = re.exercise_id
+      WHERE re.routine_id = r.id
+      ORDER BY re.id
+      LIMIT 3
+    ) preview_names
+  ) preview ON true`;
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
@@ -97,11 +99,11 @@ function getErrorMessage(err: unknown): string {
 
 const USER_LIST_FROM = `
   FROM users u
-  LEFT JOIN (
-    SELECT user_id, MAX(end_time) AS last_workout
-    FROM workout_sessions
-    GROUP BY user_id
-  ) lw ON lw.user_id = u.id
+  LEFT JOIN LATERAL (
+    SELECT MAX(end_time) AS last_workout
+    FROM workout_sessions ws
+    WHERE ws.user_id = u.id
+  ) lw ON true
   ${activeSubscriptionLateralSql()}
   ${pausedSubscriptionLateralSql()}
 `;
@@ -263,28 +265,32 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
                 END AS subscription_status,
                 CASE WHEN u.role = 'member' THEN json_build_object(
                   'has_trainer_assignment',
-                  EXISTS (
-                    SELECT 1 FROM trainer_member_assignments tma
-                    WHERE tma.member_id = u.id
-                  ) OR EXISTS (
-                    SELECT 1 FROM user_routines ur
-                    WHERE ur.user_id = u.id
-                  ),
+                  COALESCE(ob.has_trainer_assignment, false),
                   'has_active_routine',
-                  EXISTS (
-                    SELECT 1 FROM user_routines ur
-                    WHERE ur.user_id = u.id
-                      AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
-                      AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
-                  ),
+                  COALESCE(ob.has_active_routine, false),
                   'has_class_booking',
-                  EXISTS (
-                    SELECT 1 FROM class_bookings cb
-                    WHERE cb.user_id = u.id
-                      AND cb.status IN ('booked', 'attended')
-                  )
+                  COALESCE(ob.has_class_booking, false)
                 ) ELSE NULL END AS onboarding
          ${USER_LIST_FROM}
+         LEFT JOIN LATERAL (
+           SELECT
+             EXISTS (
+               SELECT 1 FROM trainer_member_assignments tma WHERE tma.member_id = u.id
+             ) OR EXISTS (
+               SELECT 1 FROM user_routines ur WHERE ur.user_id = u.id
+             ) AS has_trainer_assignment,
+             EXISTS (
+               SELECT 1 FROM user_routines ur
+               WHERE ur.user_id = u.id
+                 AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
+                 AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
+             ) AS has_active_routine,
+             EXISTS (
+               SELECT 1 FROM class_bookings cb
+               WHERE cb.user_id = u.id AND cb.status IN ('booked', 'attended')
+             ) AS has_class_booking
+           WHERE u.role = 'member'
+         ) ob ON true
          ${whereSql}
          ORDER BY u.full_name ASC
          LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
@@ -468,7 +474,7 @@ router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, 
     const { rows } = await query(
       `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
               COALESCE(ec.exercise_count, 0)::int AS exercise_count,
-              ${ROUTINE_EXERCISE_PREVIEW_SQL} AS exercise_preview
+              preview.exercise_preview
        FROM routines r
        JOIN user_routines ur ON r.id = ur.routine_id
        LEFT JOIN (
@@ -476,6 +482,7 @@ router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, 
          FROM routine_exercises
          GROUP BY routine_id
        ) ec ON ec.routine_id = r.id
+       ${ROUTINE_EXERCISE_PREVIEW_JOIN}
        WHERE ur.user_id = $1${trainerScope}
        ORDER BY ur.assigned_at DESC`,
       params

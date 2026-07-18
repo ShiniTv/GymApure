@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,7 @@ import {
   StatCard,
   PageState,
   Modal,
+  Skeleton,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -27,18 +28,8 @@ import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+
+const WorkoutHistoryCharts = lazy(() => import('../components/workout/WorkoutHistoryCharts'));
 
 interface WorkoutSession {
   id: number;
@@ -461,79 +452,10 @@ export default function WorkoutHistory() {
                   </p>
                 </div>
               </div>
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <div className="h-44">
-                  <p className="mb-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
-                    Volumen levantado (kg)
-                  </p>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={progress.weeks}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        className="text-zinc-100 dark:text-zinc-800"
-                      />
-                      <XAxis
-                        dataKey="week_start"
-                        tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
-                        tick={{ fontSize: 10 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis tick={{ fontSize: 10 }} width={42} axisLine={false} tickLine={false} />
-                      <Tooltip
-                        formatter={(value) => [
-                          `${Number(value).toLocaleString('es-VE')} kg`,
-                          'Volumen',
-                        ]}
-                        labelFormatter={(value) =>
-                          `Semana del ${format(parseISO(value), 'dd MMM', { locale: es })}`
-                        }
-                      />
-                      <Bar dataKey="volume_kg" fill="var(--chart-accent)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="h-44">
-                  <p className="mb-1 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">
-                    Mayor peso por semana (kg)
-                  </p>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={progress.weeks}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        className="text-zinc-100 dark:text-zinc-800"
-                      />
-                      <XAxis
-                        dataKey="week_start"
-                        tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
-                        tick={{ fontSize: 10 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis tick={{ fontSize: 10 }} width={32} axisLine={false} tickLine={false} />
-                      <Tooltip
-                        formatter={(value) => [
-                          `${Number(value).toLocaleString('es-VE')} kg`,
-                          'Mayor peso',
-                        ]}
-                        labelFormatter={(value) =>
-                          `Semana del ${format(parseISO(value), 'dd MMM', { locale: es })}`
-                        }
-                      />
-                      <Legend wrapperStyle={{ fontSize: 10 }} />
-                      <Line
-                        type="monotone"
-                        dataKey="max_weight_kg"
-                        name="Peso"
-                        stroke="var(--color-brand)"
-                        strokeWidth={2}
-                        dot={{ r: 3 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="mt-4">
+                <Suspense fallback={<Skeleton className="h-44 w-full rounded-xl" />}>
+                  <WorkoutHistoryCharts weeks={progress.weeks} />
+                </Suspense>
               </div>
             </Card>
           )}

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { useAuth } from './AuthContext';
+import { useSocket } from './SocketContext';
 
 export interface AdminStats {
   totalRevenue: number;
@@ -66,6 +67,7 @@ async function fetchAdminStats(): Promise<AdminStats> {
 
 export function AdminStatsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { isConnected } = useSocket();
 
   const {
     data: stats,
@@ -76,9 +78,9 @@ export function AdminStatsProvider({ children }: { children: ReactNode }) {
     queryKey: ['admin-stats'],
     queryFn: fetchAdminStats,
     enabled: user?.role === 'admin',
-    refetchInterval: 30_000,
+    refetchInterval: isConnected ? 60_000 : 30_000,
     refetchOnWindowFocus: false,
-    staleTime: 10_000,
+    staleTime: 45_000,
     placeholderData: keepPreviousData,
   });
 

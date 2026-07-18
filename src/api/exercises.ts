@@ -18,13 +18,14 @@ import {
   getExerciseMediaCapabilities,
 } from '../lib/exerciseVideoStorage.ts';
 import {
-  buildExerciseListQuery,
+  buildExerciseListQueries,
   canTrainerMutateExercise,
   forkSystemExerciseForTrainer,
   getExerciseById,
   hideSystemExerciseForTrainer,
   isSystemCatalogExercise,
 } from '../lib/exerciseLibrary.ts';
+import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
 
 const router = asyncRouter();
 
@@ -119,15 +120,53 @@ router.post('/upload-url', authorize(['trainer']), uploadRateLimiter, async (req
   }
 });
 
+const EXERCISES_ALL_MAX = 500;
+
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const muscleGroup =
       typeof req.query.muscle_group === 'string' ? req.query.muscle_group.trim() : '';
+    const search = parseSearchQuery(req.query);
     const role = req.user?.role ?? 'member';
     const trainerId = role === 'trainer' ? req.user!.id : null;
-    const { sql, params } = buildExerciseListQuery(role, trainerId, muscleGroup || undefined);
-    const { rows } = await query(sql, params);
-    res.json(rows);
+    const wantAll = parseBooleanQuery(req.query.all);
+
+    if (wantAll) {
+      const { listSql, listParams } = buildExerciseListQueries({
+        role,
+        trainerId,
+        muscleGroup: muscleGroup || undefined,
+        search: search || undefined,
+        limit: EXERCISES_ALL_MAX,
+        offset: 0,
+      });
+      const { rows } = await query(listSql, listParams);
+      res.json(rows);
+      return;
+    }
+
+    const { page, pageSize, offset } = parsePaginationQuery(req.query, {
+      pageSize: 50,
+      maxPageSize: 100,
+    });
+    const { countSql, listSql, params, listParams } = buildExerciseListQueries({
+      role,
+      trainerId,
+      muscleGroup: muscleGroup || undefined,
+      search: search || undefined,
+      limit: pageSize,
+      offset,
+    });
+    const [countResult, listResult] = await Promise.all([
+      query<{ count: string }>(countSql, params),
+      query(listSql, listParams),
+    ]);
+    res.json({
+      items: listResult.rows,
+      total: parseInt(countResult.rows[0]?.count || '0', 10),
+      page,
+      pageSize,
+    });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });
   }

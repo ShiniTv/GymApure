@@ -24,6 +24,7 @@ import {
   EmptyState,
   Modal,
   PageHeader,
+  PaginationBar,
   SearchInput,
   Spinner,
   BackToDashboardLink,
@@ -464,6 +465,7 @@ function StaffChatView() {
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const [search, setSearch] = useState('');
   const [expiringOnly, setExpiringOnly] = useState(false);
+  const [listPage, setListPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showChatOnMobile, setShowChatOnMobile] = useState(false);
   const openWithMember = useOpenChatWithMember();
@@ -471,15 +473,24 @@ function StaffChatView() {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   const memberParam = searchParams.get('member');
-  const { data: conversations = [], isPending: loadingList } = useChatConversationsQuery(
+  const { data: conversationsPage, isPending: loadingList } = useChatConversationsQuery(
     search,
     expiringOnly,
-    true
+    true,
+    listPage,
+    50
   );
+  const conversations = conversationsPage?.items ?? [];
+  const conversationsTotal = conversationsPage?.total ?? 0;
+  const conversationsPageSize = conversationsPage?.pageSize ?? 50;
   const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
     selectedId,
     selectedId != null
   );
+
+  useEffect(() => {
+    setListPage(1);
+  }, [search, expiringOnly]);
 
   useEffect(() => {
     if (!memberParam || openWithMember.isPending) return;
@@ -546,7 +557,7 @@ function StaffChatView() {
           Por vencer ({alertDays}d)
         </button>
       </div>
-      <div className="flex-1 space-y-1 overflow-y-auto p-2">
+      <div className="flex min-h-0 flex-1 flex-col p-2">
         {loadingList ? (
           <div className="flex justify-center py-8">
             <Spinner />
@@ -562,17 +573,34 @@ function StaffChatView() {
             }
           />
         ) : (
-          conversations.map((item) => (
-            <ConversationListItem
-              key={item.id}
-              item={item}
-              selected={item.id === selectedId}
-              alertDays={alertDays}
-              onSelect={() => {
-                handleSelectConversation(item.id);
-              }}
+          <>
+            <Virtuoso
+              style={{ flex: 1, height: '100%' }}
+              data={conversations}
+              itemContent={(_index, item) => (
+                <div className="pb-1">
+                  <ConversationListItem
+                    item={item}
+                    selected={item.id === selectedId}
+                    alertDays={alertDays}
+                    onSelect={() => {
+                      handleSelectConversation(item.id);
+                    }}
+                  />
+                </div>
+              )}
             />
-          ))
+            {conversationsTotal > conversationsPageSize && (
+              <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                <PaginationBar
+                  page={listPage}
+                  pageSize={conversationsPageSize}
+                  total={conversationsTotal}
+                  onPageChange={setListPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

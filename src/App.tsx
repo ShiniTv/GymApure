@@ -90,7 +90,18 @@ function ProtectedRoute({
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading && !user) return <PageLoader />;
+  if (isLoading && !user) {
+    return (
+      <div className="flex h-dvh flex-col bg-zinc-50 dark:bg-zinc-950">
+        <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+          <div className="bg-brand/20 h-6 w-32 animate-pulse rounded-md" />
+        </div>
+        <div className="flex flex-1 items-center justify-center p-6">
+          <PageLoader />
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return <Navigate to="/login" />;
 

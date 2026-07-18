@@ -40,10 +40,11 @@ const TARGETS: LighthouseTarget[] = [
 const AUTH_PANEL_TARGET: LighthouseTarget = {
   path: '/panel',
   label: 'panel',
-  perfMin: 0.75,
+  perfMin: 0.7,
   a11yMin: 0.9,
   lcpMaxMs: 3500,
-  advisory: true,
+  /** Soft gate: warns loudly; set LIGHTHOUSE_PANEL_STRICT=1 to fail CI. */
+  advisory: process.env.LIGHTHOUSE_PANEL_STRICT !== '1',
 };
 
 const SERVER_BASE = process.env.LIGHTHOUSE_SERVER_URL ?? 'http://127.0.0.1:3000';

@@ -3,9 +3,19 @@ export function sqlTodayRange(column: string): string {
   return `${column} >= CURRENT_DATE AND ${column} < CURRENT_DATE + INTERVAL '1 day'`;
 }
 
+/**
+ * Index-friendly filter for the last N calendar days including today.
+ * Uses half-open range on the raw timestamp (avoids `::date` casts that defeat btree).
+ * `$param` is the number of days (integer).
+ */
+export function sqlLastNDaysRange(column: string, daysParam: number): string {
+  return `${column} >= CURRENT_DATE - ($${daysParam}::int - 1) * INTERVAL '1 day'
+    AND ${column} < CURRENT_DATE + INTERVAL '1 day'`;
+}
+
 /** Index-friendly filter for rows within an arbitrary date range. */
 export function sqlDateRange(column: string, fromParam: number, toParam: number): string {
-  return `${column}::date >= $${fromParam} AND ${column}::date <= $${toParam}`;
+  return `${column} >= $${fromParam}::date AND ${column} < ($${toParam}::date + INTERVAL '1 day')`;
 }
 
 /** Index-friendly filter for rows with a timestamp in the last N hours. */

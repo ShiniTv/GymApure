@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/index.ts';
 import { JWT_EXPIRES_IN, JWT_SECRET, type JwtUserPayload } from '../config/jwt.ts';
 import {
-  getCachedSessionUser,
+  getCachedSessionUserAsync,
   invalidateSessionUserCache,
   setCachedSessionUser,
 } from './sessionUserCache.ts';
@@ -88,7 +88,7 @@ export async function verifySessionToken(token: string): Promise<SessionVerifyRe
     return sessionFailure('invalid');
   }
 
-  let dbUser = getCachedSessionUser(userId);
+  let dbUser = await getCachedSessionUserAsync(userId);
   if (!dbUser) {
     dbUser = await loadSessionUserById(userId);
     if (dbUser) {

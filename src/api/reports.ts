@@ -506,7 +506,8 @@ router.get('/retention', authorize(['admin']), async (req, res) => {
        checkins AS (
          SELECT COUNT(DISTINCT a.user_id)::text AS v
          FROM attendance a, bounds b
-         WHERE a.check_in_time::date BETWEEN b.d_from AND b.d_to
+         WHERE a.check_in_time >= b.d_from
+           AND a.check_in_time < (b.d_to + INTERVAL '1 day')
        ),
        active_members AS (
          SELECT COUNT(DISTINCT s.user_id)::text AS v

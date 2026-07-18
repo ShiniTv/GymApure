@@ -99,8 +99,10 @@ async function main() {
   ok('Staff tiene unread > 0', ((unreadAfter.data as { count?: number }).count ?? 0) > 0);
 
   const list = await jsonApi('GET', '/api/chat/conversations');
-  const items = (list.data as { items?: { id: number; member_id: number }[] }).items ?? [];
+  const listData = list.data as { items?: { id: number; member_id: number }[]; total?: number };
+  const items = listData.items ?? [];
   ok('GET /api/chat/conversations', list.res.status === 200);
+  ok('Conversations PaginatedResult.total', typeof listData.total === 'number');
   ok('Lista incluye conversación del miembro', items.some((i) => i.member_id === mineData.member_id));
 
   const convo = items.find((i) => i.id === mineData.id) ?? items[0];

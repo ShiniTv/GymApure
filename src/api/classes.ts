@@ -205,29 +205,29 @@ router.get(
       `SELECT cs.id, cs.class_type_id, ct.name AS class_type_name,
               cs.instructor_id, instructor.full_name AS instructor_name,
               cs.starts_at, cs.ends_at, cs.capacity, cs.status, cs.created_at,
-              (
-                SELECT COUNT(*)::int FROM class_bookings cb
-                WHERE cb.session_id = cs.id AND cb.status = 'booked'
-              ) AS booked_count,
-              (
-                SELECT COUNT(*)::int FROM class_bookings cb
-                WHERE cb.session_id = cs.id AND cb.status = 'waitlisted'
-              ) AS waitlisted_count,
-              CASE WHEN $1::boolean THEN (
-                SELECT mine.id FROM class_bookings mine
-                WHERE mine.session_id = cs.id AND mine.user_id = $2
-                  AND mine.status IN ('booked', 'waitlisted')
-                LIMIT 1
-              ) ELSE NULL END AS my_booking_id,
-              CASE WHEN $1::boolean THEN (
-                SELECT mine.status FROM class_bookings mine
-                WHERE mine.session_id = cs.id AND mine.user_id = $2
-                  AND mine.status IN ('booked', 'waitlisted')
-                LIMIT 1
-              ) ELSE NULL END AS my_booking_status
+              COALESCE(counts.booked_count, 0) AS booked_count,
+              COALESCE(counts.waitlisted_count, 0) AS waitlisted_count,
+              mine.id AS my_booking_id,
+              mine.status AS my_booking_status
        FROM class_sessions cs
        JOIN class_types ct ON ct.id = cs.class_type_id
        LEFT JOIN users instructor ON instructor.id = cs.instructor_id
+       LEFT JOIN LATERAL (
+         SELECT
+           COUNT(*) FILTER (WHERE cb.status = 'booked')::int AS booked_count,
+           COUNT(*) FILTER (WHERE cb.status = 'waitlisted')::int AS waitlisted_count
+         FROM class_bookings cb
+         WHERE cb.session_id = cs.id
+       ) counts ON true
+       LEFT JOIN LATERAL (
+         SELECT m.id, m.status
+         FROM class_bookings m
+         WHERE $1::boolean
+           AND m.session_id = cs.id
+           AND m.user_id = $2
+           AND m.status IN ('booked', 'waitlisted')
+         LIMIT 1
+       ) mine ON true
        ${where}
        ORDER BY cs.starts_at ASC
        LIMIT 200`,

@@ -16,7 +16,34 @@ interface NotifyTarget extends ExpiringSubscription {
   subscription_id: number;
 }
 
-const NOTIFY_CONCURRENCY = 5;
+const NOTIFY_CONCURRENCY = 8;
+
+async function loadAlreadyLoggedSubscriptionIds(
+  alertType: 'expiring_soon' | 'expired',
+  subscriptionIds: number[]
+): Promise<Set<number>> {
+  if (subscriptionIds.length === 0) return new Set();
+
+  const { rows } =
+    alertType === 'expiring_soon'
+      ? await query<{ subscription_id: number }>(
+          `SELECT DISTINCT subscription_id
+           FROM chat_system_log
+           WHERE alert_type = 'expiring_soon'
+             AND notification_date = CURRENT_DATE
+             AND subscription_id = ANY($1::int[])`,
+          [subscriptionIds]
+        )
+      : await query<{ subscription_id: number }>(
+          `SELECT DISTINCT subscription_id
+           FROM chat_system_log
+           WHERE alert_type = 'expired'
+             AND subscription_id = ANY($1::int[])`,
+          [subscriptionIds]
+        );
+
+  return new Set(rows.map((r) => Number(r.subscription_id)));
+}
 
 function expiryMessage(fullName: string, membershipName: string, daysRemaining: number): string {
   if (daysRemaining <= 0) {
@@ -76,8 +103,11 @@ async function getRecentlyExpiredTargets(): Promise<NotifyTarget[]> {
 
 async function notifyExpiringSoon(
   target: NotifyTarget,
-  alertDays: number
+  alertDays: number,
+  alreadyLogged: Set<number>
 ): Promise<'sent' | 'skipped'> {
+  if (alreadyLogged.has(target.subscription_id)) return 'skipped';
+
   const sent = await postSystemMessage({
     memberId: target.user_id,
     eventType: 'expiring_soon',
@@ -102,7 +132,13 @@ async function notifyExpiringSoon(
   return sent || notificationSent ? 'sent' : 'skipped';
 }
 
-async function notifyExpired(target: NotifyTarget, alertDays: number): Promise<'sent' | 'skipped'> {
+async function notifyExpired(
+  target: NotifyTarget,
+  alertDays: number,
+  alreadyLogged: Set<number>
+): Promise<'sent' | 'skipped'> {
+  if (alreadyLogged.has(target.subscription_id)) return 'skipped';
+
   const body = `Hola ${target.full_name}, tu membresía "${target.membership_name}" en ${BRAND.name} ha vencido. Renueva para recuperar el acceso.`;
   const sent = await postSystemMessage({
     memberId: target.user_id,
@@ -140,14 +176,25 @@ export async function runExpiryJob(): Promise<ExpiryJobResult> {
   const targets = await getNotifyTargets(settings.expiry_alert_days);
   const expiredTargets = await getRecentlyExpiredTargets();
 
+  const [loggedExpiring, loggedExpired] = await Promise.all([
+    loadAlreadyLoggedSubscriptionIds(
+      'expiring_soon',
+      targets.map((t) => t.subscription_id)
+    ),
+    loadAlreadyLoggedSubscriptionIds(
+      'expired',
+      expiredTargets.map((t) => t.subscription_id)
+    ),
+  ]);
+
   const expiringResults = await mapWithConcurrency(
     targets,
-    (target) => notifyExpiringSoon(target, settings.expiry_alert_days),
+    (target) => notifyExpiringSoon(target, settings.expiry_alert_days, loggedExpiring),
     NOTIFY_CONCURRENCY
   );
   const expiredResults = await mapWithConcurrency(
     expiredTargets,
-    (target) => notifyExpired(target, settings.expiry_alert_days),
+    (target) => notifyExpired(target, settings.expiry_alert_days, loggedExpired),
     NOTIFY_CONCURRENCY
   );
 

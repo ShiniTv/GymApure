@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse, parseJsonSafe } from '../../lib/api';
 import type { NotificationsListResponse } from '../../lib/notifications/types';
+import { useSocket } from '../../context/SocketContext';
 
 export const notificationsUnreadKey = ['notifications', 'unread'] as const;
 export const notificationsListKey = (page: number, unreadOnly: boolean) =>
@@ -28,20 +29,22 @@ async function fetchNotifications(
 }
 
 export function useNotificationUnreadQuery(enabled = true) {
+  const { isConnected } = useSocket();
   return useQuery({
     queryKey: notificationsUnreadKey,
     queryFn: fetchUnreadCount,
     enabled,
-    refetchInterval: 30_000,
+    refetchInterval: isConnected ? false : 30_000,
   });
 }
 
 export function useNotificationsPanelQuery(enabled = true) {
+  const { isConnected } = useSocket();
   return useQuery({
     queryKey: notificationsPanelKey,
     queryFn: () => fetchNotifications(1, 10, true),
     enabled,
-    refetchInterval: 30_000,
+    refetchInterval: isConnected ? false : 30_000,
   });
 }
 
