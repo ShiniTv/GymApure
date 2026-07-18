@@ -13,6 +13,7 @@ import {
   Label,
   Input,
   Select,
+  Textarea,
   PaginationBar,
   Badge,
   FilterChips,
@@ -41,10 +42,10 @@ interface MemberOption {
   cedula: string | null;
 }
 
-function PaymentRejectionNote() {
+function PaymentRejectionNote({ reason }: { reason?: string | null }) {
   return (
     <p className="mt-1 text-[10px] leading-snug text-red-500/90">
-      Comprobante no verificado.{' '}
+      {reason?.trim() ? <>Motivo: {reason.trim()}. </> : <>Comprobante no verificado. </>}
       <Link to="/messages" className="font-semibold underline hover:text-red-400">
         Consulta Mensajes
       </Link>
@@ -125,6 +126,7 @@ export default function Payments() {
   } = useExchangeRateQuery(showModal && needsBsRate);
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [rejectTarget, setRejectTarget] = useState<Payment | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [proofPreview, setProofPreview] = useState<Payment | null>(null);
   const [actionError, setActionError] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -312,12 +314,22 @@ export default function Payments() {
 
   const handleReject = async () => {
     if (!rejectTarget || rejecting) return;
+    const reason = rejectReason.trim();
+    if (reason.length < 3) {
+      setActionError('Indica un motivo de al menos 3 caracteres');
+      return;
+    }
 
     setRejecting(true);
     try {
-      const res = await apiFetch(`/api/payments/${rejectTarget.id}/reject`, { method: 'POST' });
+      const res = await apiFetch(`/api/payments/${rejectTarget.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
       await parseJsonResponse(res);
       setRejectTarget(null);
+      setRejectReason('');
       apiFetchPayments();
       await adminStats?.refresh();
       toast?.success('Pago rechazado');
@@ -476,7 +488,9 @@ export default function Payments() {
                               </>
                             )}
                           </p>
-                          {payment.status === 'rejected' && <PaymentRejectionNote />}
+                          {payment.status === 'rejected' && (
+                            <PaymentRejectionNote reason={payment.rejection_reason} />
+                          )}
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           {payment.proof_url && (
@@ -563,7 +577,10 @@ export default function Payments() {
                             </Badge>
                             {payment.status === 'rejected' && (
                               <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
-                                No verificado ·{' '}
+                                {payment.rejection_reason?.trim()
+                                  ? `Motivo: ${payment.rejection_reason.trim()}`
+                                  : 'No verificado'}{' '}
+                                ·{' '}
                                 <Link to="/messages" className="font-semibold underline">
                                   Mensajes
                                 </Link>
@@ -638,7 +655,11 @@ export default function Payments() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setRejectTarget(payment)}
+                                onClick={() => {
+                                  setRejectReason('');
+                                  setActionError('');
+                                  setRejectTarget(payment);
+                                }}
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
                                 aria-label="Rechazar pago"
                               >
@@ -744,7 +765,11 @@ export default function Payments() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => setRejectTarget(payment)}
+                                    onClick={() => {
+                                      setRejectReason('');
+                                      setActionError('');
+                                      setRejectTarget(payment);
+                                    }}
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
                                     aria-label="Rechazar pago"
                                   >
@@ -1019,6 +1044,7 @@ export default function Payments() {
           open={!!rejectTarget}
           onClose={() => {
             setRejectTarget(null);
+            setRejectReason('');
             setActionError('');
           }}
           title={
@@ -1033,6 +1059,17 @@ export default function Payments() {
                 ¿Rechazar el pago de <strong>{rejectTarget.user_name}</strong> por $
                 {rejectTarget.amount_usd}?
               </p>
+              <Label htmlFor="reject-reason">Motivo</Label>
+              <Textarea
+                id="reject-reason"
+                className="mb-4"
+                rows={3}
+                maxLength={500}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Ej. Comprobante ilegible o referencia no coincide"
+                required
+              />
               {actionError && <p className="mb-4 text-sm font-bold text-red-500">{actionError}</p>}
               <div className="flex gap-4">
                 <Button
@@ -1040,7 +1077,10 @@ export default function Payments() {
                   variant="ghost"
                   className="flex-1"
                   disabled={rejecting}
-                  onClick={() => setRejectTarget(null)}
+                  onClick={() => {
+                    setRejectTarget(null);
+                    setRejectReason('');
+                  }}
                 >
                   Cancelar
                 </Button>
@@ -1049,6 +1089,7 @@ export default function Payments() {
                   variant="danger"
                   className="flex-1"
                   loading={rejecting}
+                  disabled={rejectReason.trim().length < 3 || rejecting}
                   onClick={handleReject}
                 >
                   Rechazar

@@ -96,29 +96,41 @@ export async function notifyPaymentApproved(
 export async function notifyPaymentRejected(
   userId: number,
   amountUsd: number,
-  paymentId?: number
+  paymentId?: number,
+  reason?: string
 ): Promise<void> {
   const fullName = await fetchMemberName(userId);
   if (!fullName) return;
 
-  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD no pudo ser verificado en ${BRAND.name}. Revisa el comprobante y vuelve a reportarlo, o escríbenos por este chat.`;
+  const reasonSuffix = reason?.trim() ? ` Motivo: ${reason.trim()}` : '';
+  const message = `Hola ${fullName}, tu pago de $${amountUsd} USD no pudo ser verificado en ${BRAND.name}.${reasonSuffix} Revisa el comprobante y vuelve a reportarlo, o escríbenos por este chat.`;
 
   await postSystemMessage({
     memberId: userId,
     eventType: 'payment_rejected',
     body: message,
     metadataKey: paymentId != null ? String(paymentId) : `rejected-${userId}-${amountUsd}`,
-    metadata: { amount_usd: amountUsd, payment_id: paymentId ?? null },
+    metadata: {
+      amount_usd: amountUsd,
+      payment_id: paymentId ?? null,
+      reason: reason?.trim() || null,
+    },
   });
 
   void createUserNotification({
     userId,
     type: 'payment_rejected',
     title: 'Pago no verificado',
-    body: `Tu pago de $${amountUsd} USD no pudo ser verificado. Revisa el comprobante.`,
+    body: reason?.trim()
+      ? `Tu pago de $${amountUsd} USD no pudo ser verificado. Motivo: ${reason.trim()}`
+      : `Tu pago de $${amountUsd} USD no pudo ser verificado. Revisa el comprobante.`,
     href: '/payments',
     severity: 'warning',
-    metadata: { amount_usd: amountUsd, payment_id: paymentId ?? null },
+    metadata: {
+      amount_usd: amountUsd,
+      payment_id: paymentId ?? null,
+      reason: reason?.trim() || null,
+    },
     dedupeKey:
       paymentId != null
         ? `payment:${paymentId}:rejected`

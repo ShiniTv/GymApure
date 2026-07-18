@@ -150,10 +150,12 @@ export function paymentApprovedEmail(
     <p>Ya puedes acceder al gym. ¡Disfruta tu entrenamiento!</p>`);
 }
 
-export function paymentRejectedEmail(name: string, amount: number): string {
+export function paymentRejectedEmail(name: string, amount: number, reason?: string): string {
+  const reasonBlock = reason?.trim() ? `<p><strong>Motivo:</strong> ${reason.trim()}</p>` : '';
   return layout(`<h2 style="margin-top:0">Pago rechazado</h2>
     <p>Hola <strong>${name}</strong>,</p>
     <p>Tu pago de <strong>$${amount.toFixed(2)} USD</strong> no pudo ser aprobado.</p>
+    ${reasonBlock}
     <p>Comunícate con recepción para resolverlo y volver a reportar tu pago.</p>`);
 }
 

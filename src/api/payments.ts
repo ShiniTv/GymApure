@@ -38,6 +38,14 @@ const paymentReportSchema = z.object({
   user_id: z.coerce.number().int().positive().optional(),
 });
 
+const paymentRejectSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, 'Indica un motivo de al menos 3 caracteres')
+    .max(500, 'El motivo no puede superar 500 caracteres'),
+});
+
 router.get('/', authorize(['admin', 'member', 'receptionist']), async (req: AuthRequest, res) => {
   const user = req.user!;
   const { page, pageSize, offset } = parsePaginationQuery(req.query, {
@@ -312,6 +320,12 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
 
 router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, res) => {
   const { id } = req.params;
+  const parsed = paymentRejectSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: formatZodError(parsed.error) });
+    return;
+  }
+  const reason = parsed.data.reason;
 
   try {
     const { rows } = await query<{ status: string; user_id: number; amount_usd: number }>(
@@ -323,15 +337,19 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
       return res.status(400).json({ error: 'El pago ya ha sido procesado' });
     }
 
-    await query("UPDATE payments SET status = 'rejected' WHERE id = $1", [id]);
-    await logAudit(req.user!.id, 'payment.reject', { payment_id: id });
+    await query("UPDATE payments SET status = 'rejected', rejection_reason = $2 WHERE id = $1", [
+      id,
+      reason,
+    ]);
+    await logAudit(req.user!.id, 'payment.reject', { payment_id: id, reason });
     invalidateAdminStatsCache();
     res.json({ success: true });
 
     void notifyPaymentRejected(
       Number(rows[0].user_id),
       Number(rows[0].amount_usd),
-      Number(id)
+      Number(id),
+      reason
     ).catch((err) => {
       console.error('[notify] payment rejected', err);
     });
@@ -345,7 +363,7 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
           await sendEmail({
             to: user.email,
             subject: 'Pago rechazado — GymApure',
-            html: paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd)),
+            html: paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd), reason),
           });
         }
       } catch {

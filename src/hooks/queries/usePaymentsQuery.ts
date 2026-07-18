@@ -11,6 +11,7 @@ export interface Payment {
   created_at: string;
   reference: string;
   proof_url?: string | null;
+  rejection_reason?: string | null;
 }
 
 interface PaginatedPayments {

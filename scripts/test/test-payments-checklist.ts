@@ -213,15 +213,30 @@ async function main() {
   ok('Check-in tras pago aprobado', checkIn.res.status === 200 && checkIn.data.success === true);
 
   await login(ADMIN_EMAIL, ADMIN_PASSWORD);
-  const reject = await jsonApi('POST', `/api/payments/${paymentIdReject}/reject`, {});
+  const rejectWithoutReason = await jsonApi('POST', `/api/payments/${paymentIdReject}/reject`, {});
+  ok(
+    'Rechazar sin motivo → 400',
+    rejectWithoutReason.res.status === 400,
+    JSON.stringify(rejectWithoutReason.data)
+  );
+
+  const rejectReason = 'Comprobante ilegible en checklist';
+  const reject = await jsonApi('POST', `/api/payments/${paymentIdReject}/reject`, {
+    reason: rejectReason,
+  });
   ok('Admin rechaza pago', reject.res.status === 200);
 
   await login(MEMBER_REJECT_EMAIL, MEMBER_PASSWORD);
   const rejectedList = await jsonApi('GET', '/api/payments');
-  const rejectedPayment = ((rejectedList.data as { items?: { id: number; status: string }[] }).items ?? []).find(
-    (p) => Number(p.id) === Number(paymentIdReject)
+  const rejectedPayment = (
+    (rejectedList.data as { items?: { id: number; status: string; rejection_reason?: string }[] })
+      .items ?? []
+  ).find((p) => Number(p.id) === Number(paymentIdReject));
+  ok(
+    'Pago rechazado en lista con motivo',
+    rejectedPayment?.status === 'rejected' && rejectedPayment.rejection_reason === rejectReason,
+    JSON.stringify(rejectedPayment)
   );
-  ok('Pago rechazado en lista', rejectedPayment?.status === 'rejected', JSON.stringify(rejectedPayment));
 
   cookie = '';
   const noAuth = await jsonApi('GET', '/api/payments');
