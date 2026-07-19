@@ -2,7 +2,7 @@
 
 Matriz manual por rol y viewport. Complementa las suites automatizadas (`npm run test:ux`, `npm run test:ux:browser`).
 
-**Última revisión:** 2026-07-18 (quality gate + smoke visual; fix hamburger `hidden` vs `inline-flex`)
+**Última revisión:** 2026-07-19 (shell móvil: isla unificada, header flotante, sin hamburger en todos los roles, Admin Más con secciones)
 
 ## Setup
 
@@ -28,7 +28,7 @@ npm run dev
 | 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                      | Browser | ☑         |
 | 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto           | Browser | ☑         |
 | 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                       | Browser | ☑         |
-| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger                                                    | Browser | ☑         |
+| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger; header flotante tipo isla                         | Browser | ☑         |
 | 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                          | Manual  | ☑         |
 | 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                     | Browser | ☑         |
 | 7   | Errores               | Offline → Reintentar en rutinas                                                              | Browser | ☑         |
@@ -42,31 +42,42 @@ npm run dev
 
 ## Admin — mobile / desktop
 
-| #   | Flujo          | Criterio                                      | Auto | Resultado |
-| --- | -------------- | --------------------------------------------- | ---- | --------- |
-| 16  | Equipamiento   | Registrar desde catálogo; badge "Registrado"  | API  | ☑         |
-| 17  | Tipo de cambio | Settings → override manual → refleja en pagos | API  | ☑         |
-| 18  | Equipamiento   | Sin duplicados al registrar misma máquina     | API  | ☑         |
+| #   | Flujo          | Criterio                                                                    | Auto    | Resultado |
+| --- | -------------- | --------------------------------------------------------------------------- | ------- | --------- |
+| 16  | Equipamiento   | Registrar desde catálogo; badge "Registrado"                                | API     | ☑         |
+| 17  | Tipo de cambio | Settings → override manual → refleja en pagos                               | API     | ☑         |
+| 18  | Equipamiento   | Sin duplicados al registrar misma máquina                                   | API     | ☑         |
+| 18b | Más (móvil)    | Sheet con secciones Operación/Finanzas/Supervisión/Cuenta; scroll; gap isla | Browser | ☑         |
 
 ---
 
 ## Trainer — mobile (390px)
 
-| #   | Flujo          | Criterio                                              | Auto   | Resultado |
-| --- | -------------- | ----------------------------------------------------- | ------ | --------- |
-| 19  | Bottom nav     | Visible con drawer cerrado; oculta con drawer abierto | Manual | ☑         |
-| 20  | Sidebar footer | Sin hueco vacío debajo del footer al abrir drawer     | Manual | ☑         |
+| #   | Flujo          | Criterio                                                                 | Auto    | Resultado |
+| --- | -------------- | ------------------------------------------------------------------------ | ------- | --------- |
+| 19  | Bottom nav     | Visible con drawer cerrado; oculta con drawer abierto; **sin hamburger** | Browser | ☑         |
+| 20  | Sidebar footer | Sin hueco vacío debajo del footer al abrir drawer                        | Manual  | ☑         |
 
 ## Recepción — mobile (390px)
 
 | #   | Flujo          | Criterio                                                | Auto              | Resultado |
 | --- | -------------- | ------------------------------------------------------- | ----------------- | --------- |
-| 8   | Bottom nav     | 4 tabs: Inicio, Miembros, Pagos, Mensajes               | Browser           | ☑         |
+| 8   | Bottom nav     | 4 tabs + Más; **sin hamburger** (swipe / Más)           | Browser           | ☑         |
 | 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access` | Browser (desktop) | ☑         |
 | 9b  | Check-in móvil | CTA "Abrir mostrador" en home → counter access          | Browser           | ☑         |
 | 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`            | Browser           | ☑         |
+| —   | Clearance isla | Contenido y sheet Más con gap visible sobre la pill     | Manual            | ☑         |
 
 ---
+
+## Shell móvil (todos los roles)
+
+| #   | Criterio                                                           | Auto    | Resultado |
+| --- | ------------------------------------------------------------------ | ------- | --------- |
+| S1  | `--*-nav-stack` unificado (~4.75rem + safe-area); sheet con `mb-2` | Manual  | ☑         |
+| S2  | Header sticky flotante (`rounded-2xl`, blur); sin barra full-bleed | Manual  | ☑         |
+| S3  | Sin hamburger en member / reception / trainer / admin              | Browser | ☑         |
+| S4  | Lista miembros móvil: `space-y-3` entre cards                      | Manual  | ☑         |
 
 ## Admin / Trainer — desktop (≥1024px)
 
@@ -93,7 +104,7 @@ npm run dev
 | --- | -------------------- | --------------------------------------------- | ---------------- | --------- |
 | T1  | Admin `/members`     | Cards móviles; **sin** tabla desktop (`lg`)   | Browser (tablet) | ☑         |
 | T2  | Recepción `/members` | Bottom nav recepción + cards (no tabla ancha) | Manual           | ☑         |
-| T3  | Member `/`           | Bottom nav member; sin hamburger              | Manual           | ☑         |
+| T3  | Member `/`           | Bottom nav member; sin hamburger; header isla | Manual           | ☑         |
 
 **Nota:** Tablas staff (`Members`, `Payments`) usan breakpoint `lg` (1024px), alineado con shell móvil hasta 1023px.
 
@@ -110,11 +121,11 @@ npm run dev
 
 ## Cobertura automatizada
 
-| Spec                                                                                                                                                                                                                                                        | Proyecto          |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `member-nav`, `member-routines`, `member-messages`, `member-fab`, `member-more`, `member-workout-pager`, `member-offline`, `member-ptr`, `member-more-a11y`, `access-denied`, `auth-forgot`, `reception-kiosk`, `reception-checkin-mobile`, `admin-members` | mobile            |
-| `reception-checkin-nav.desktop`, `trainer-nutrition.desktop`, `copy-es.desktop`                                                                                                                                                                             | desktop           |
-| `tablet-staff.tablet`                                                                                                                                                                                                                                       | tablet (834×1194) |
+| Spec                                                                                                                                                                                                                                                                                       | Proyecto          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| `member-nav`, `member-routines`, `member-messages`, `member-fab`, `member-more`, `member-workout-pager`, `member-offline`, `member-ptr`, `member-more-a11y`, `access-denied`, `auth-forgot`, `reception-kiosk`, `reception-checkin-mobile`, `reception-nav`, `admin-members`, `admin-more` | mobile            |
+| `reception-checkin-nav.desktop`, `trainer-nutrition.desktop`, `copy-es.desktop`                                                                                                                                                                                                            | desktop           |
+| `tablet-staff.tablet`                                                                                                                                                                                                                                                                      | tablet (834×1194) |
 
 **Total:** 19 archivos spec, ~34 casos de prueba (mobile + desktop + tablet).
 

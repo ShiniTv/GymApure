@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
@@ -62,40 +62,54 @@ export function StaffBottomNav({
         panelStyle={sheetBottomStyle}
         zIndex={46}
         className="px-4"
+        scrollable
       >
         <ul className="space-y-1">
-          {moreItems.map((item) => {
+          {moreItems.map((item, index) => {
             const itemActive = isMoreItemActive(location.pathname, location.search, item.href);
+            const prevSection = index > 0 ? moreItems[index - 1]?.section : undefined;
+            const showSection = Boolean(item.section && item.section !== prevSection);
             return (
-              <li key={item.href}>
-                <Link
-                  to={item.href}
-                  {...routePrefetchHandlers(item.href)}
-                  onClick={closeMore}
-                  className={clsx(
-                    'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
-                    itemActive
-                      ? 'bg-brand/10 text-brand'
-                      : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
-                  )}
-                  aria-current={itemActive ? 'page' : undefined}
-                >
-                  <span
+              <Fragment key={item.href}>
+                {showSection && (
+                  <li className="px-3 pt-2 pb-1 first:pt-0" aria-hidden={false}>
+                    <p className="text-[10px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                      {item.section}
+                    </p>
+                  </li>
+                )}
+                <li>
+                  <Link
+                    to={item.href}
+                    {...routePrefetchHandlers(item.href)}
+                    onClick={closeMore}
                     className={clsx(
-                      'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                      itemActive ? 'bg-brand text-white' : 'text-brand bg-zinc-100 dark:bg-zinc-800'
+                      'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
+                      itemActive
+                        ? 'bg-brand/10 text-brand'
+                        : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
                     )}
+                    aria-current={itemActive ? 'page' : undefined}
                   >
-                    <item.icon className="h-4 w-4" aria-hidden />
-                  </span>
-                  <span className="flex-1 truncate">{item.name}</span>
-                  {item.showUnreadBadge && chatUnread > 0 && (
-                    <span className="bg-brand flex h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
-                      {chatUnread > 99 ? '99+' : chatUnread}
+                    <span
+                      className={clsx(
+                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+                        itemActive
+                          ? 'bg-brand text-white'
+                          : 'text-brand bg-zinc-100 dark:bg-zinc-800'
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" aria-hidden />
                     </span>
-                  )}
-                </Link>
-              </li>
+                    <span className="flex-1 truncate">{item.name}</span>
+                    {item.showUnreadBadge && chatUnread > 0 && (
+                      <span className="bg-brand flex h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                        {chatUnread > 99 ? '99+' : chatUnread}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              </Fragment>
             );
           })}
           <li>

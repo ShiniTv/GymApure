@@ -64,7 +64,7 @@ Debug: `npm run test:ux:browser:ui`
 ### Sidebar / drawer
 
 - Footer pegado al fondo (admin, trainer, reception, member)
-- Trainer mobile: bottom nav visible con drawer cerrado; oculta con drawer abierto
+- Trainer / reception / admin mobile: bottom nav visible con drawer cerrado; oculta con drawer abierto; **sin hamburger** (Más + swipe)
 
 ## Done UX
 
