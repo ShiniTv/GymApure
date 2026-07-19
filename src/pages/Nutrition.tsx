@@ -162,7 +162,6 @@ export default function Nutrition() {
           action={<BackToDashboardLink />}
         />
         <EmptyState
-          variant="motivational"
           icon={UtensilsCrossed}
           title="Sin plan nutricional"
           description="Tu entrenador aún no ha definido tu plan. Cuando lo haga, podrás registrar comidas y ver tu progreso."

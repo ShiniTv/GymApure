@@ -39,12 +39,12 @@ export default function ReceptionActivityFeed({
     setLoading(true);
     const qs = new URLSearchParams();
     if (search.trim()) qs.set('q', search.trim());
+    if (limit > 0) qs.set('limit', String(limit));
     const path = qs.size > 0 ? `/api/attendance/today?${qs}` : '/api/attendance/today';
     apiFetch(path)
       .then((res) => parseJsonResponse<TodayAttendanceRow[]>(res))
       .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setRows(limit > 0 ? list.slice(0, limit) : list);
+        setRows(Array.isArray(data) ? data : []);
       })
       .catch(() => setRows([]))
       .finally(() => setLoading(false));

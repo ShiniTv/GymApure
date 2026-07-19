@@ -47,7 +47,7 @@ export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
 ];
 
 /** Routes where the contextual workout FAB is shown */
-export const MEMBER_FAB_ROUTES = ['/panel', '/routines', '/exercises'] as const;
+export const MEMBER_FAB_ROUTES = ['/panel', '/routines', '/exercises', '/nutrition'] as const;
 
 export function isMemberFabRoute(pathname: string): boolean {
   return MEMBER_FAB_ROUTES.some(

@@ -32,11 +32,11 @@ npm run dev
 | 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                          | Manual  | ☑         |
 | 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                     | Browser | ☑         |
 | 7   | Errores               | Offline → Reintentar en rutinas                                                              | Browser | ☑         |
-| —   | FAB entrenar          | Centrado en `/`, `/routines`, `/exercises`; oculto en `/nutrition`                           | Browser | ☑         |
+| —   | FAB entrenar          | Centrado en `/`, `/routines`, `/exercises`, `/nutrition` (si hay rutina activa)              | Browser | ☑         |
 | —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)                                   | Manual  | ☑         |
 | —   | Workout layout        | Completar, pasos y video a ancho completo del card                                           | Manual  | ☑         |
 | —   | Descanso / notifs     | Android: notif con tiempo y +30s/Saltar; iOS PWA: aviso al terminar; sin permiso: overlay OK | Manual  | ☐         |
-| —   | Push onboarding       | Tarjeta en inicio; iPhone copy menciona Añadir a Inicio; Perfil toggle                       | Manual  | ☐         |
+| —   | Push onboarding       | Tarjeta en inicio; iPhone pide Añadir a Inicio; Perfil toggle                                | Manual  | ☐         |
 
 ---
 
@@ -60,13 +60,13 @@ npm run dev
 
 ## Recepción — mobile (390px)
 
-| #   | Flujo          | Criterio                                                | Auto              | Resultado |
-| --- | -------------- | ------------------------------------------------------- | ----------------- | --------- |
-| 8   | Bottom nav     | 4 tabs + Más; **sin hamburger** (swipe / Más)           | Browser           | ☑         |
-| 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access` | Browser (desktop) | ☑         |
-| 9b  | Check-in móvil | CTA "Abrir mostrador" en home → counter access          | Browser           | ☑         |
-| 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`            | Browser           | ☑         |
-| —   | Clearance isla | Contenido y sheet Más con gap visible sobre la pill     | Manual            | ☑         |
+| #   | Flujo          | Criterio                                                      | Auto              | Resultado |
+| --- | -------------- | ------------------------------------------------------------- | ----------------- | --------- |
+| 8   | Bottom nav     | Acceso + Miembros + Pagos + Mensajes + Más; **sin hamburger** | Browser           | ☑         |
+| 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access`       | Browser (desktop) | ☑         |
+| 9b  | Check-in móvil | Tab Acceso / CTA "Abrir mostrador" → counter access           | Browser           | ☑         |
+| 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`                  | Browser           | ☑         |
+| —   | Clearance isla | Contenido y sheet Más con gap visible sobre la pill           | Manual            | ☑         |
 
 ---
 
@@ -167,11 +167,10 @@ npm run test:ux
 
 ## Backlog UX (no bloqueante)
 
-- FAB en `/nutrition` si hay rutina activa
 - Skeleton en dashboards staff (sustituir flash CARGANDO)
 - CI opcional: job `ux-browser` solo proyecto `mobile`
 
-**Hecho en revisión full-stack:** PTR en KPIs de recepción; Nutrición en pill principal (Mensajes en Más).
+**Hecho en revisión full-stack:** PTR en KPIs de recepción; Nutrición en pill principal (Mensajes en Más); FAB en `/nutrition`; Acceso en pill de recepción; EmptyState nutrición con icono utensilios.
 
 Verificación API #16–18:
 

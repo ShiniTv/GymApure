@@ -14,10 +14,17 @@ test.describe('Recepción bottom nav', () => {
     const links = nav.locator('a');
     await expect(links).toHaveCount(4);
 
-    await expect(nav.getByLabel('Inicio')).toBeVisible();
+    await expect(nav.getByLabel('Acceso')).toBeVisible();
     await expect(nav.getByLabel('Miembros')).toBeVisible();
     await expect(nav.getByLabel('Pagos')).toBeVisible();
     await expect(nav.getByLabel('Mensajes')).toBeVisible();
+  });
+
+  test('Acceso abre el mostrador', async ({ page }) => {
+    await page.goto('/members');
+    const nav = page.locator(receptionBottomNav);
+    await nav.getByLabel('Acceso').click();
+    await expect(page).toHaveURL(/\/reception\?mode=counter&tab=access/);
   });
 
   test('sin hamburger; Más abre sheet con scroll', async ({ page }) => {
@@ -27,6 +34,7 @@ test.describe('Recepción bottom nav', () => {
     await page.getByRole('button', { name: /^más$/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /resumen/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /modo tablet/i })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
   });

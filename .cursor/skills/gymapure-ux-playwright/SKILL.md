@@ -48,12 +48,12 @@ Debug: `npm run test:ux:browser:ui`
 - Rutinas: tap → expandir → Empezar entrenamiento
 - Workout activo: pager inferior sin solapar nav
 - Mensajes: composer visible, no tapado por pill
-- FAB entrenar centrado en home/rutinas/ejercicios; oculto en nutrición
+- FAB entrenar centrado en home/rutinas/ejercicios/nutrición; oculto en workout
 
 ### Recepción — mobile
 
-- 4 tabs: Inicio, Miembros, Pagos, Mensajes
-- Check-in: CTA mostrador → counter access; atajo tablet → `/check-in?kiosk=1` solo como ruta documentada (copy UI sin “Kiosk”)
+- 4 tabs: Acceso (mostrador), Miembros, Pagos, Mensajes
+- Check-in: tab Acceso / CTA mostrador → counter access; atajo tablet → `/check-in?kiosk=1` solo como ruta documentada (copy UI sin “Kiosk”)
 
 ### Admin / Trainer — desktop
 

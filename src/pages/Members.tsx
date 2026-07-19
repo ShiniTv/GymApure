@@ -6,9 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import {
   Button,
-  Input,
-  Label,
-  Modal,
   PageHeader,
   PaginationBar,
   Card,
@@ -17,8 +14,6 @@ import {
   TableRowSkeleton,
   SearchInput,
   BackToDashboardLink,
-  CedulaInput,
-  Textarea,
 } from '../components/ui';
 import { useToastOptional } from '../context/ToastContext';
 import {
@@ -33,6 +28,9 @@ import { validateCedula } from '../lib/cedulaUtils';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { MemberCardMobile } from './members/MemberCardMobile';
 import { MemberTableRow } from './members/MemberTableRow';
+import { MemberAddModal } from './members/MemberAddModal';
+import { MemberAssignModal, type MembershipPlan } from './members/MemberAssignModal';
+import { MemberActionModals } from './members/MemberActionModals';
 import { StaggerContainer, StaggerItem } from '../components/animations';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
@@ -41,13 +39,6 @@ import { MemberBadgeModal, type MemberBadgeData } from '../components/member/Mem
 import { usePageTitle } from '../hooks/usePageTitle';
 import { passwordSchema } from '../lib/passwordSchema';
 import { type TrainingShift } from '../lib/trainingShift';
-
-interface MembershipPlan {
-  id: number;
-  name: string;
-  duration_days: number;
-  price_usd: number;
-}
 
 export default function Members() {
   const { user } = useAuth();
@@ -155,7 +146,12 @@ export default function Members() {
   const isStaffMember = isTrainer || isReceptionist;
   const colCount = isStaffMember ? 5 : 6;
 
-  const { data: membersData, isPending: loading } = useMembersQuery({
+  const {
+    data: membersData,
+    isPending: loading,
+    isError: membersError,
+    refetch: refetchMembers,
+  } = useMembersQuery({
     page,
     pageSize,
     search,
@@ -594,7 +590,7 @@ export default function Members() {
   ) : undefined;
 
   const mobileActionBtnClass =
-    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-brand/10 hover:text-brand dark:text-zinc-300';
+    'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] shrink-0 touch-manipulation items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-brand/10 hover:text-brand dark:text-zinc-300';
 
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
@@ -691,436 +687,187 @@ export default function Members() {
           </Card>
         )}
 
-        <Modal
+        <MemberAddModal
           open={isAdding}
-          onClose={() => {
-            setIsAdding(false);
-          }}
-          title={
-            <>
-              Nuevo <span className="text-brand">usuario</span>
-            </>
-          }
-          scrollable
-          initialFocus="dialog"
-        >
-          {isTrainer && (
-            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-              Tras crear la cuenta:{' '}
-              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-                asigna una rutina
-              </strong>{' '}
-              en Asignaciones. La{' '}
-              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-                membresía la activa recepción
-              </strong>{' '}
-              en mostrador.
-            </p>
-          )}
-          {isReceptionist && (
-            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-              Crea la cuenta del socio. Para activar membresía y cobrar en el mostrador, use{' '}
-              <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-                Modo mostrador → Registro
-              </strong>
-              .
-            </p>
-          )}
-          <div className="form-stack">
-            <div>
-              <Label>Nombre Completo</Label>
-              <Input
-                type="text"
-                error={errors.full_name}
-                value={newMember.full_name}
-                onChange={(e) => {
-                  setNewMember({ ...newMember, full_name: e.target.value });
-                  if (errors.full_name) setErrors({ ...errors, full_name: '' });
-                }}
-                placeholder="Ej: Juan Pérez"
-              />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                error={errors.email}
-                value={newMember.email}
-                onChange={(e) => {
-                  setNewMember({ ...newMember, email: e.target.value });
-                  if (errors.email) setErrors({ ...errors, email: '' });
-                }}
-                placeholder="juan@ejemplo.com"
-              />
-            </div>
-            <div>
-              <Label>Cédula / ID</Label>
-              <CedulaInput
-                error={errors.cedula}
-                value={newMember.cedula}
-                onChange={(value) => {
-                  setNewMember({ ...newMember, cedula: value });
-                  if (errors.cedula) setErrors({ ...errors, cedula: '' });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Contraseña inicial</Label>
-              <Input
-                type="password"
-                minLength={8}
-                error={errors.password}
-                value={newMember.password}
-                onChange={(e) => {
-                  setNewMember({ ...newMember, password: e.target.value });
-                  if (errors.password) setErrors({ ...errors, password: '' });
-                }}
-                placeholder="Ej: Gym2024!"
-              />
-              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
-              </p>
-            </div>
-            <div>
-              <Label>Confirmar contraseña</Label>
-              <Input
-                type="password"
-                minLength={8}
-                error={errors.confirm_password}
-                value={newMember.confirm_password}
-                onChange={(e) => {
-                  setNewMember({ ...newMember, confirm_password: e.target.value });
-                  if (errors.confirm_password) setErrors({ ...errors, confirm_password: '' });
-                }}
-                placeholder="Repite la contraseña"
-              />
-            </div>
-            {!isStaffMember && (
-              <div>
-                <Label>Rol de Usuario</Label>
-                <select
-                  className="focus:ring-brand w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold text-zinc-900 transition-all outline-none focus:ring-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
-                  value={newMember.role}
-                  onChange={(e) => {
-                    setNewMember({ ...newMember, role: e.target.value, training_shift: '' });
-                  }}
-                >
-                  <option value="member">Miembro / Atleta</option>
-                  <option value="trainer">Entrenador / Staff</option>
-                  <option value="receptionist">Recepcionista</option>
-                  {user?.role === 'admin' && <option value="admin">Administrador</option>}
-                </select>
-              </div>
-            )}
-            {(newMember.role === 'member' || newMember.role === 'trainer') && (
-              <div>
-                <Label>
-                  {newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}
-                </Label>
-                <select
-                  className="focus:ring-brand w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold text-zinc-900 transition-all outline-none focus:ring-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
-                  value={newMember.training_shift}
-                  onChange={(e) => {
-                    setNewMember({ ...newMember, training_shift: e.target.value as TrainingShift });
-                  }}
-                >
-                  <option value="">Seleccionar turno...</option>
-                  <option value="diurno">Diurno / Mañana</option>
-                  <option value="vespertino">Vespertino / Tarde</option>
-                  <option value="nocturno">Nocturno / Noche</option>
-                </select>
-              </div>
-            )}
-            {errors.submit && (
-              <p className="text-center text-xs font-medium text-red-500">{errors.submit}</p>
-            )}
-            <Button onClick={handleAddMember} className="mt-4 w-full" size="lg">
-              Crear Usuario
-            </Button>
-          </div>
-        </Modal>
-
-        <ResponsiveTable
-          items={filteredMembers}
-          keyExtractor={(member) => member.id}
-          breakpoint="lg"
-          desktopInCard
-          loading={loading}
-          loadingSkeleton={
-            <>
-              <div className="space-y-2 lg:hidden">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                  >
-                    <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                    <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  </div>
-                ))}
-              </div>
-              <Card
-                padding="none"
-                rounded="xl"
-                className="table-shell hidden overflow-hidden lg:block"
-              >
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      <TableRowSkeleton cols={colCount} />
-                      <TableRowSkeleton cols={colCount} />
-                      <TableRowSkeleton cols={colCount} />
-                      <TableRowSkeleton cols={colCount} />
-                      <TableRowSkeleton cols={colCount} />
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            </>
-          }
-          emptyState={
-            <EmptyState
-              icon={showTrainerAssignCta ? Dumbbell : Search}
-              title={membersEmptyState.title}
-              description={membersEmptyState.description}
-              action={membersEmptyAction}
-            />
-          }
-          mobileClassName="flex flex-col gap-4"
-          mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
-          mobile={(member) => (
-            <StaggerItem>
-              <MemberCardMobile
-                member={member}
-                userRole={user?.role ?? 'member'}
-                currentUserId={user?.id}
-                isStaffMember={isStaffMember}
-                alertDays={alertDays}
-                roleBadgeClass={roleBadgeClass}
-                mobileIconBtnClass={mobileActionBtnClass}
-                onAssignSubscription={openAssignSubscription}
-                onToggleStatus={handleToggleClick}
-                onDelete={handleDeleteClick}
-                onShowBadge={openMemberBadge}
-                onEditShift={openEditShift}
-                onMembershipOperation={handleMembershipOperation}
-                membershipOperationLoading={membershipOperationId === member.id}
-                nutritionFocus={nutritionFocus}
-              />
-            </StaggerItem>
-          )}
-          header={
-            <tr>
-              <th className="px-4 py-2.5 lg:px-5">Nombre</th>
-              {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
-              <th className="px-4 py-2.5 lg:px-5">Identificación</th>
-              <th className="px-4 py-2.5 lg:px-5">Membresía</th>
-              <th className="px-4 py-2.5 lg:px-5">Estado</th>
-              <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
-            </tr>
-          }
-          desktop={(member) => (
-            <MemberTableRow
-              member={member}
-              userRole={user?.role ?? 'member'}
-              currentUserId={user?.id}
-              isStaffMember={isStaffMember}
-              alertDays={alertDays}
-              roleBadgeClass={roleBadgeClass}
-              onAssignSubscription={openAssignSubscription}
-              onToggleStatus={handleToggleClick}
-              onDelete={handleDeleteClick}
-              onShowBadge={openMemberBadge}
-              onEditShift={openEditShift}
-              onMembershipOperation={handleMembershipOperation}
-              membershipOperationLoading={membershipOperationId === member.id}
-              nutritionFocus={nutritionFocus}
-            />
-          )}
-        />
-        <PaginationBar
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          onPageChange={setPage}
-          label="usuarios"
+          onClose={() => setIsAdding(false)}
+          isTrainer={isTrainer}
+          isReceptionist={isReceptionist}
+          isStaffMember={isStaffMember}
+          canCreateAdmin={user?.role === 'admin'}
+          newMember={newMember}
+          onNewMemberChange={setNewMember}
+          errors={errors}
+          onErrorsChange={setErrors}
+          onSubmit={handleAddMember}
         />
 
-        <Modal
-          open={!!assignTarget}
-          onClose={() => {
-            setAssignTarget(null);
-          }}
-          title={
-            assignTarget ? (
-              <>
-                Membresía — <span className="text-brand">{assignTarget.full_name}</span>
-              </>
-            ) : (
-              ''
-            )
-          }
-        >
-          {assignTarget && (
-            <>
-              {assignTarget.membership_name && (
-                <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-                  Plan actual: <strong>{assignTarget.membership_name}</strong> (
-                  {assignTarget.days_remaining} días). La nueva suscripción se encadena al
-                  vencimiento.
-                </p>
-              )}
-              {isReceptionist && (
-                <div className="mb-4">
-                  <Label>Pago aprobado (obligatorio)</Label>
-                  <select
-                    className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
-                    value={selectedPaymentId}
-                    onChange={(e) => {
-                      setSelectedPaymentId(e.target.value);
-                      setAssignError('');
-                    }}
-                  >
-                    <option value="">Seleccionar pago aprobado…</option>
-                    {approvedPayments.map((payment) => (
-                      <option key={payment.id} value={payment.id}>
-                        ${payment.amount_usd} — {payment.method} —{' '}
-                        {new Date(payment.created_at).toLocaleDateString('es-VE')}
-                      </option>
-                    ))}
-                  </select>
-                  {approvedPayments.length === 0 && (
-                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                      No hay pagos aprobados para este miembro. Registre y apruebe un pago primero.
-                    </p>
-                  )}
-                </div>
-              )}
-              <select
-                className="mb-4 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
-                value={selectedPlanId}
-                onChange={(e) => {
-                  setSelectedPlanId(e.target.value);
-                }}
-              >
-                <option value="">Seleccionar plan...</option>
-                {membershipPlans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} — {plan.duration_days} días — ${plan.price_usd}
-                  </option>
-                ))}
-              </select>
-              {assignError && <p className="mb-3 text-xs text-red-500">{assignError}</p>}
-              <Button onClick={handleAssignSubscription} className="w-full">
-                Asignar / Renovar
+        {membersError ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="No se pudieron cargar los miembros"
+            description="Revisa tu conexión e inténtalo de nuevo."
+            action={
+              <Button size="sm" onClick={() => void refetchMembers()}>
+                Reintentar
               </Button>
-            </>
-          )}
-        </Modal>
-
-        <Modal
-          open={!!toggleTarget}
-          onClose={() => !toggling && setToggleTarget(null)}
-          title="Cambiar estado"
-        >
-          {toggleTarget && (
-            <>
-              <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-                {toggleTarget.status === 'active'
-                  ? `¿Desactivar a ${toggleTarget.full_name}? No podrá hacer check-in ni acceder al sistema.`
-                  : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => {
-                    setToggleTarget(null);
-                  }}
-                  disabled={toggling}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant={toggleTarget.status === 'active' ? 'danger' : 'primary'}
-                  className="flex-1"
-                  onClick={confirmToggleStatus}
-                  disabled={toggling}
-                >
-                  {toggling
-                    ? 'Cambiando...'
-                    : toggleTarget.status === 'active'
-                      ? 'Desactivar'
-                      : 'Activar'}
-                </Button>
-              </div>
-            </>
-          )}
-        </Modal>
-
-        <Modal
-          open={!!deleteTarget}
-          onClose={closeDeleteModal}
-          title={deleteTarget?.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar usuario'}
-        >
-          {deleteTarget?.role === 'trainer' ? (
-            <div className="mb-6 space-y-3">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
-                los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
-                deberás desactivarlo o reasignarlas antes.
-              </p>
-              <div>
-                <Label htmlFor="delete-trainer-confirm">
-                  Escribe el nombre exacto: <strong>{deleteTarget.full_name}</strong>
-                </Label>
-                <Input
-                  id="delete-trainer-confirm"
-                  value={deleteConfirmName}
-                  onChange={(e) => {
-                    setDeleteConfirmName(e.target.value);
-                    if (deleteError) setDeleteError('');
-                  }}
-                  placeholder={deleteTarget.full_name}
-                  autoComplete="off"
-                  disabled={deleting}
-                />
-              </div>
-              {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
-            </div>
-          ) : (
-            <div className="mb-6 space-y-2">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
-                deshacer.
-              </p>
-              {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
-            </div>
-          )}
-          <div className="flex gap-3">
-            <Button
-              variant="ghost"
-              className="flex-1"
-              onClick={closeDeleteModal}
-              disabled={deleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              className="flex-1"
-              onClick={confirmDeleteUser}
-              disabled={
-                deleting ||
-                (deleteTarget?.role === 'trainer' &&
-                  deleteConfirmName.trim().toLowerCase() !==
-                    deleteTarget.full_name.trim().toLowerCase())
+            }
+          />
+        ) : (
+          <>
+            <ResponsiveTable
+              items={filteredMembers}
+              keyExtractor={(member) => member.id}
+              breakpoint="lg"
+              desktopInCard
+              loading={loading}
+              loadingSkeleton={
+                <>
+                  <div className="space-y-2 lg:hidden">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                      >
+                        <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                        <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                      </div>
+                    ))}
+                  </div>
+                  <Card
+                    padding="none"
+                    rounded="xl"
+                    className="table-shell hidden overflow-hidden lg:block"
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          <TableRowSkeleton cols={colCount} />
+                          <TableRowSkeleton cols={colCount} />
+                          <TableRowSkeleton cols={colCount} />
+                          <TableRowSkeleton cols={colCount} />
+                          <TableRowSkeleton cols={colCount} />
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+                </>
               }
-            >
-              {deleting ? 'Eliminando...' : 'Eliminar'}
-            </Button>
-          </div>
-        </Modal>
+              emptyState={
+                <EmptyState
+                  icon={showTrainerAssignCta ? Dumbbell : Search}
+                  title={membersEmptyState.title}
+                  description={membersEmptyState.description}
+                  action={membersEmptyAction}
+                />
+              }
+              mobileClassName="flex flex-col gap-4"
+              mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
+              mobile={(member) => (
+                <StaggerItem>
+                  <MemberCardMobile
+                    member={member}
+                    userRole={user?.role ?? 'member'}
+                    currentUserId={user?.id}
+                    isStaffMember={isStaffMember}
+                    alertDays={alertDays}
+                    roleBadgeClass={roleBadgeClass}
+                    mobileIconBtnClass={mobileActionBtnClass}
+                    onAssignSubscription={openAssignSubscription}
+                    onToggleStatus={handleToggleClick}
+                    onDelete={handleDeleteClick}
+                    onShowBadge={openMemberBadge}
+                    onEditShift={openEditShift}
+                    onMembershipOperation={handleMembershipOperation}
+                    membershipOperationLoading={membershipOperationId === member.id}
+                    nutritionFocus={nutritionFocus}
+                  />
+                </StaggerItem>
+              )}
+              header={
+                <tr>
+                  <th className="px-4 py-2.5 lg:px-5">Nombre</th>
+                  {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
+                  <th className="px-4 py-2.5 lg:px-5">Identificación</th>
+                  <th className="px-4 py-2.5 lg:px-5">Membresía</th>
+                  <th className="px-4 py-2.5 lg:px-5">Estado</th>
+                  <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
+                </tr>
+              }
+              desktop={(member) => (
+                <MemberTableRow
+                  member={member}
+                  userRole={user?.role ?? 'member'}
+                  currentUserId={user?.id}
+                  isStaffMember={isStaffMember}
+                  alertDays={alertDays}
+                  roleBadgeClass={roleBadgeClass}
+                  onAssignSubscription={openAssignSubscription}
+                  onToggleStatus={handleToggleClick}
+                  onDelete={handleDeleteClick}
+                  onShowBadge={openMemberBadge}
+                  onEditShift={openEditShift}
+                  onMembershipOperation={handleMembershipOperation}
+                  membershipOperationLoading={membershipOperationId === member.id}
+                  nutritionFocus={nutritionFocus}
+                />
+              )}
+            />
+            <PaginationBar
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              label="usuarios"
+            />
+          </>
+        )}
+
+        <MemberAssignModal
+          target={assignTarget}
+          onClose={() => setAssignTarget(null)}
+          isReceptionist={isReceptionist}
+          membershipPlans={membershipPlans}
+          selectedPlanId={selectedPlanId}
+          onSelectedPlanIdChange={setSelectedPlanId}
+          approvedPayments={approvedPayments}
+          selectedPaymentId={selectedPaymentId}
+          onSelectedPaymentIdChange={setSelectedPaymentId}
+          assignError={assignError}
+          onClearAssignError={() => setAssignError('')}
+          onAssign={handleAssignSubscription}
+        />
+
+        <MemberActionModals
+          toggleTarget={toggleTarget}
+          toggling={toggling}
+          onCloseToggle={() => setToggleTarget(null)}
+          onConfirmToggle={confirmToggleStatus}
+          deleteTarget={deleteTarget}
+          deleteConfirmName={deleteConfirmName}
+          onDeleteConfirmNameChange={setDeleteConfirmName}
+          deleteError={deleteError}
+          onClearDeleteError={() => setDeleteError('')}
+          deleting={deleting}
+          onCloseDelete={closeDeleteModal}
+          onConfirmDelete={confirmDeleteUser}
+          pauseTarget={pauseTarget}
+          pauseReason={pauseReason}
+          onPauseReasonChange={setPauseReason}
+          pauseError={pauseError}
+          pausing={pausing}
+          onClosePause={() => {
+            setPauseTarget(null);
+            setPauseReason('');
+            setPauseError('');
+          }}
+          onConfirmPause={() => void confirmPauseMembership()}
+          editShiftTarget={editShiftTarget}
+          editShiftValue={editShiftValue}
+          onEditShiftValueChange={setEditShiftValue}
+          savingShift={savingShift}
+          onCloseEditShift={() => setEditShiftTarget(null)}
+          onSaveShift={saveMemberShift}
+        />
 
         <MemberBadgeModal
           open={!!badgeTarget}
@@ -1129,111 +876,6 @@ export default function Members() {
           }}
           member={badgeTarget}
         />
-
-        <Modal
-          open={!!pauseTarget}
-          onClose={() => {
-            if (pausing) return;
-            setPauseTarget(null);
-            setPauseReason('');
-            setPauseError('');
-          }}
-          title={
-            <>
-              Pausar <span className="text-brand">membresía</span>
-            </>
-          }
-        >
-          {pauseTarget && (
-            <div className="space-y-4">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                ¿Pausar la membresía de <strong>{pauseTarget.full_name}</strong>? Los días restantes
-                se congelan hasta reanudar.
-              </p>
-              <div>
-                <Label htmlFor="pause-reason">Motivo</Label>
-                <Textarea
-                  id="pause-reason"
-                  rows={3}
-                  maxLength={500}
-                  value={pauseReason}
-                  onChange={(e) => setPauseReason(e.target.value)}
-                  placeholder="Ej. Viaje, lesión, solicitud del miembro"
-                  required
-                />
-              </div>
-              {pauseError && <p className="text-sm font-bold text-red-500">{pauseError}</p>}
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="flex-1"
-                  disabled={pausing}
-                  onClick={() => {
-                    setPauseTarget(null);
-                    setPauseReason('');
-                    setPauseError('');
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  className="flex-1"
-                  loading={pausing}
-                  disabled={pauseReason.trim().length < 3 || pausing}
-                  onClick={() => void confirmPauseMembership()}
-                >
-                  Pausar
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        <Modal
-          open={!!editShiftTarget}
-          onClose={() => !savingShift && setEditShiftTarget(null)}
-          title={
-            editShiftTarget ? (
-              <>
-                Turno — <span className="text-brand">{editShiftTarget.full_name}</span>
-              </>
-            ) : (
-              ''
-            )
-          }
-        >
-          {editShiftTarget && (
-            <div className="space-y-4">
-              <ShiftFilter
-                includeAll={false}
-                label=""
-                value={editShiftValue}
-                onChange={setEditShiftValue}
-              />
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => {
-                    setEditShiftTarget(null);
-                  }}
-                  disabled={savingShift}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={saveMemberShift}
-                  disabled={savingShift || !editShiftValue}
-                >
-                  {savingShift ? 'Guardando...' : 'Guardar turno'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
       </div>
     </PullToRefreshContainer>
   );

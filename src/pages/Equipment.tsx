@@ -5,34 +5,22 @@ import {
   Plus,
   Wrench,
   AlertTriangle,
-  Camera,
   MapPin,
-  Clock,
   Settings2,
   SlidersHorizontal,
-  ChevronLeft,
-  Pencil,
-  Trash2,
-  Hammer,
-  Archive,
   Download,
-  MoreHorizontal,
 } from 'lucide-react';
-import { cn, formatMoney } from '../lib/utils';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { groupEquipmentByZone, downloadEquipmentCsv } from '../lib/equipment/inventoryHelpers';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch, parseJsonResponse, resolveEquipmentPhotoUrl, ApiError } from '../lib/api';
+import { apiFetch, parseJsonResponse, ApiError } from '../lib/api';
 import {
   EQUIPMENT_STATUSES,
   EQUIPMENT_CATEGORIES,
   EQUIPMENT_STATUS_LABELS,
   EQUIPMENT_CATEGORY_LABELS,
-  EQUIPMENT_EVENT_LABELS,
-  EQUIPMENT_STATUS_BADGE,
   equipmentDisplayName,
   type EquipmentStatus,
-  type EquipmentCategory,
 } from '../lib/equipment/constants';
 import {
   Button,
@@ -42,7 +30,6 @@ import {
   Modal,
   PageHeader,
   Spinner,
-  Badge,
   EmptyState,
   BackToDashboardLink,
   FilterChips,
@@ -50,184 +37,24 @@ import {
   Textarea,
   Select,
   SearchInput,
-  AnchoredMenu,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
-
-interface Zone {
-  id: number;
-  name: string;
-  sort_order: number;
-}
-
-interface CatalogItem {
-  id: number;
-  name: string;
-  category: EquipmentCategory;
-  description?: string | null;
-  typical_brands?: string | null;
-  is_system: boolean;
-}
-
-interface Vendor {
-  id: number;
-  name: string;
-  contact_name?: string | null;
-  phone?: string | null;
-  email?: string | null;
-}
-
-interface EquipmentBootstrap {
-  zones: Zone[];
-  catalog: CatalogItem[];
-  vendors: Vendor[];
-  stats: {
-    operational: number;
-    limited: number;
-    maintenance: number;
-    outOfService: number;
-    inspectionsDueThisWeek: number;
-  };
-  inventory: EquipmentItem[];
-}
-
-interface EquipmentItem {
-  id: number;
-  catalog_id?: number | null;
-  catalog_name?: string | null;
-  catalog_category?: EquipmentCategory | null;
-  custom_name?: string | null;
-  zone_id?: number | null;
-  zone_name?: string | null;
-  status: EquipmentStatus;
-  brand?: string | null;
-  model?: string | null;
-  serial_number?: string | null;
-  quantity: number;
-  notes?: string | null;
-  photo_url?: string | null;
-  next_inspection_at?: string | null;
-  warranty_until?: string | null;
-}
-
-interface MaintenanceEvent {
-  id: number;
-  event_type: string;
-  description: string;
-  previous_status?: string | null;
-  new_status?: string | null;
-  performed_at: string;
-  created_by_name?: string | null;
-  vendor_name?: string | null;
-  cost_usd?: number | null;
-}
-
-type AddStep = 'pick' | 'details';
-type ConfigTab = 'zones' | 'vendors';
-
-const STATUS_BORDER_STYLES: Record<EquipmentStatus, string> = {
-  operational: 'border-l-emerald-500',
-  limited: 'border-l-orange-500',
-  maintenance: 'border-l-brand',
-  out_of_service: 'border-l-red-500',
-};
-
-const STATUS_SHORT_LABELS: Record<EquipmentStatus, string> = {
-  operational: 'OK',
-  limited: 'Limit.',
-  maintenance: 'Mant.',
-  out_of_service: 'Fuera',
-};
-
-const emptyEquipmentForm = {
-  catalog_id: '',
-  custom_name: '',
-  zone_id: '',
-  status: 'operational' as EquipmentStatus,
-  brand: '',
-  model: '',
-  serial_number: '',
-  quantity: '1',
-  notes: '',
-  next_inspection_at: '',
-};
-
-const emptyRepairForm = {
-  description: '',
-  vendor_id: '',
-  cost_usd: '',
-  performed_at: '',
-  new_status: '' as EquipmentStatus | '',
-};
-
-function isInspectionDue(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false;
-  const due = new Date(dateStr);
-  due.setHours(23, 59, 59, 999);
-  return due.getTime() <= Date.now();
-}
-
-type LayoutView = 'flat' | 'zones';
-
-function EquipmentListCard({
-  item,
-  onOpen,
-  hideZone = false,
-}: {
-  item: EquipmentItem;
-  onOpen: (id: number) => void;
-  hideZone?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(item.id)}
-      className={cn(
-        'flex w-full min-w-0 items-center gap-3 rounded-xl border border-l-4 bg-white p-3 text-left transition hover:border-zinc-300 dark:bg-zinc-900 dark:hover:border-zinc-600',
-        STATUS_BORDER_STYLES[item.status],
-        'border-zinc-200 dark:border-zinc-800'
-      )}
-    >
-      {item.photo_url ? (
-        <img
-          src={resolveEquipmentPhotoUrl(item.photo_url)}
-          alt=""
-          className="h-12 w-12 shrink-0 rounded-lg object-cover"
-        />
-      ) : (
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-          <Wrench className="h-5 w-5 text-zinc-400" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-          {equipmentDisplayName(item)}
-          {item.quantity > 1 && (
-            <span className="ml-1.5 text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
-              ×{item.quantity}
-            </span>
-          )}
-        </p>
-        {!hideZone && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-zinc-500">
-            <MapPin className="h-3 w-3 shrink-0" />
-            {item.zone_name ?? 'Sin zona'}
-          </p>
-        )}
-        {isInspectionDue(item.next_inspection_at) && (
-          <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-orange-600 dark:text-orange-400">
-            <Clock className="h-3 w-3" />
-            Revisión pendiente
-          </p>
-        )}
-      </div>
-      <Badge variant={EQUIPMENT_STATUS_BADGE[item.status]} className="shrink-0 text-[10px]">
-        <span className="sm:hidden">{STATUS_SHORT_LABELS[item.status]}</span>
-        <span className="hidden sm:inline">{EQUIPMENT_STATUS_LABELS[item.status]}</span>
-      </Badge>
-    </button>
-  );
-}
+import { EquipmentListCard } from './equipment/EquipmentListCard';
+import { EquipmentConfigModal } from './equipment/EquipmentConfigModal';
+import { EquipmentDetailModal } from './equipment/EquipmentDetailModal';
+import { EquipmentAddModal } from './equipment/EquipmentAddModal';
+import { emptyEquipmentForm, emptyRepairForm, isInspectionDue } from './equipment/formDefaults';
+import type {
+  AddStep,
+  CatalogItem,
+  ConfigTab,
+  EquipmentBootstrap,
+  EquipmentItem,
+  LayoutView,
+  MaintenanceEvent,
+  Vendor,
+  Zone,
+} from './equipment/types';
 
 export default function Equipment() {
   usePageTitle('Equipamiento');
@@ -240,6 +67,7 @@ export default function Equipment() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -404,27 +232,26 @@ export default function Equipment() {
     }
   }, [isAdmin]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const refreshBootstrap = useCallback(async () => {
     setLoading(true);
-    void loadBootstrap()
-      .catch(() => {
-        if (!cancelled) {
-          setAllItems([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    setBootstrapError(false);
+    try {
+      await loadBootstrap();
+    } catch {
+      setBootstrapError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [loadBootstrap]);
 
   useEffect(() => {
-    if (loading) return;
+    void refreshBootstrap();
+  }, [refreshBootstrap]);
+
+  useEffect(() => {
+    if (loading || bootstrapError) return;
     void loadInventory();
-  }, [debouncedSearch, loadInventory, loading]);
+  }, [bootstrapError, debouncedSearch, loadInventory, loading]);
 
   useEffect(() => {
     if (!addPhotoFile) {
@@ -1082,7 +909,14 @@ export default function Equipment() {
           </Card>
         )}
 
-        {items.length === 0 ? (
+        {bootstrapError ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="No se pudo cargar el equipamiento"
+            description="Revisa tu conexión e inténtalo de nuevo."
+            action={<Button onClick={() => void refreshBootstrap()}>Reintentar</Button>}
+          />
+        ) : items.length === 0 ? (
           <EmptyState
             icon={Wrench}
             title={allItems.length === 0 ? 'Sin equipamiento registrado' : 'Sin resultados'}
@@ -1143,523 +977,74 @@ export default function Equipment() {
         )}
       </div>
 
-      <Modal
+      <EquipmentConfigModal
         open={configOpen}
         onClose={() => setConfigOpen(false)}
-        title="Configuración de equipamiento"
-        maxWidth="lg"
-        initialFocus="dialog"
-      >
-        <SegmentedControl
-          value={configTab}
-          onChange={(v) => setConfigTab(v)}
-          className="mb-4 w-full"
-          fullWidth
-          options={[
-            { value: 'zones', label: 'Zonas' },
-            { value: 'vendors', label: 'Proveedores' },
-          ]}
-        />
-        {configTab === 'zones' ? (
-          <>
-            <form onSubmit={handleAddZone} className="mb-4 flex flex-col gap-2 sm:flex-row">
-              <Input
-                placeholder="Nombre de zona (ej. Cardio)"
-                value={zoneName}
-                onChange={(e) => setZoneName(e.target.value)}
-              />
-              <Button type="submit">Añadir zona</Button>
-            </form>
-            <ul className="space-y-2">
-              {zones.map((zone) => (
-                <li
-                  key={zone.id}
-                  className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-                >
-                  <span className="font-medium">{zone.name}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <>
-            <form onSubmit={handleAddVendor} className="mb-4 grid gap-2 sm:grid-cols-2">
-              <Input
-                placeholder="Nombre del proveedor"
-                value={vendorForm.name}
-                onChange={(e) => setVendorForm((f) => ({ ...f, name: e.target.value }))}
-              />
-              <Input
-                placeholder="Contacto"
-                value={vendorForm.contact_name}
-                onChange={(e) => setVendorForm((f) => ({ ...f, contact_name: e.target.value }))}
-              />
-              <Input
-                placeholder="Teléfono"
-                value={vendorForm.phone}
-                onChange={(e) => setVendorForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-              <Input
-                placeholder="Email"
-                value={vendorForm.email}
-                onChange={(e) => setVendorForm((f) => ({ ...f, email: e.target.value }))}
-              />
-              <Button type="submit" className="sm:col-span-2">
-                Añadir proveedor
-              </Button>
-            </form>
-            <ul className="space-y-2">
-              {vendors.map((vendor) => (
-                <li
-                  key={vendor.id}
-                  className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-                >
-                  <p className="font-medium">{vendor.name}</p>
-                  {(vendor.contact_name || vendor.phone) && (
-                    <p className="text-xs text-zinc-500">
-                      {[vendor.contact_name, vendor.phone].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </Modal>
+        configTab={configTab}
+        onConfigTabChange={setConfigTab}
+        zoneName={zoneName}
+        onZoneNameChange={setZoneName}
+        onAddZone={handleAddZone}
+        zones={zones}
+        vendorForm={vendorForm}
+        onVendorFormChange={(patch) => setVendorForm((f) => ({ ...f, ...patch }))}
+        onAddVendor={handleAddVendor}
+        vendors={vendors}
+      />
 
-      <Modal
+      <EquipmentAddModal
         open={addOpen}
         onClose={closeAddModal}
-        title={addStep === 'pick' ? 'Elegir tipo de máquina' : 'Registrar en el gym'}
-        maxWidth={addStep === 'pick' ? 'lg' : 'md'}
-        initialFocus={addStep === 'pick' ? 'input' : 'dialog'}
-      >
-        {addStep === 'pick' ? (
-          <div className="space-y-4">
-            <SearchInput
-              value={catalogSearch}
-              onChange={(e) => setCatalogSearch(e.target.value)}
-              placeholder="Smith, prensa, cinta..."
-            />
-            <FilterChips
-              value={catalogCategoryFilter}
-              onChange={setCatalogCategoryFilter}
-              options={[
-                { value: 'all', label: 'Todas' },
-                ...EQUIPMENT_CATEGORIES.map((c) => ({
-                  value: c,
-                  label: EQUIPMENT_CATEGORY_LABELS[c],
-                })),
-              ]}
-            />
-            <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-800/80">
-              {filteredCatalog.length === 0 ? (
-                <p className="px-2 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  {catalog.length === 0
-                    ? 'Biblioteca vacía. Aplica las migraciones de base de datos.'
-                    : 'No hay resultados para esta búsqueda.'}
-                </p>
-              ) : (
-                filteredCatalog.map((item) => {
-                  const existing = registeredByCatalogId.get(item.id);
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleCatalogPick(item)}
-                      className={cn(
-                        'flex w-full min-w-0 items-center justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm transition-colors',
-                        existing
-                          ? 'bg-zinc-100/80 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800/80 dark:text-zinc-300'
-                          : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700'
-                      )}
-                    >
-                      <span className="min-w-0 truncate font-medium">{item.name}</span>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {existing && (
-                          <Badge variant="default" className="px-1.5 py-0.5 text-[10px]">
-                            Registrado
-                          </Badge>
-                        )}
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {EQUIPMENT_CATEGORY_LABELS[item.category]}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => {
-                setSelectedCatalogId(null);
-                setEquipmentForm(emptyEquipmentForm);
-                setAddStep('details');
-              }}
-            >
-              Equipo personalizado (no está en la biblioteca)
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleCreateEquipment} className="space-y-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="-ml-2 gap-1"
-              onClick={() => setAddStep('pick')}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Cambiar tipo
-            </Button>
-            {selectedCatalogId && (
-              <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                Tipo:{' '}
-                <span className="font-semibold text-zinc-900 dark:text-white">
-                  {catalog.find((c) => c.id === selectedCatalogId)?.name ??
-                    equipmentForm.custom_name}
-                </span>
-              </p>
-            )}
-            <div>
-              <Label>
-                {selectedCatalogId ? 'Nombre en el gym (opcional)' : 'Nombre del equipo'}
-              </Label>
-              <Input
-                value={equipmentForm.custom_name}
-                onChange={(e) => setEquipmentForm((f) => ({ ...f, custom_name: e.target.value }))}
-                placeholder="Ej. Prensa piernas #2"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label>Zona</Label>
-                <Select
-                  value={equipmentForm.zone_id}
-                  onChange={(e) => setEquipmentForm((f) => ({ ...f, zone_id: e.target.value }))}
-                >
-                  <option value="">Sin zona</option>
-                  {zones.map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Estado inicial</Label>
-                <Select
-                  value={equipmentForm.status}
-                  onChange={(e) =>
-                    setEquipmentForm((f) => ({
-                      ...f,
-                      status: e.target.value as EquipmentStatus,
-                    }))
-                  }
-                >
-                  {EQUIPMENT_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {EQUIPMENT_STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label>Marca</Label>
-                <Input
-                  value={equipmentForm.brand}
-                  onChange={(e) => setEquipmentForm((f) => ({ ...f, brand: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>Modelo</Label>
-                <Input
-                  value={equipmentForm.model}
-                  onChange={(e) => setEquipmentForm((f) => ({ ...f, model: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Próxima inspección</Label>
-              <Input
-                type="date"
-                value={equipmentForm.next_inspection_at}
-                onChange={(e) =>
-                  setEquipmentForm((f) => ({ ...f, next_inspection_at: e.target.value }))
-                }
-              />
-            </div>
-            <div>
-              <Label>Foto (opcional)</Label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                {addPhotoPreview ? (
-                  <img
-                    src={addPhotoPreview}
-                    alt=""
-                    className="h-24 w-24 shrink-0 rounded-xl object-cover"
-                  />
-                ) : (
-                  <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800">
-                    <Camera className="h-6 w-6 text-zinc-400" />
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col gap-2">
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
-                    <Camera className="h-4 w-4" />
-                    {addPhotoFile ? 'Cambiar foto' : 'Subir foto'}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => setAddPhotoFile(e.target.files?.[0] ?? null)}
-                    />
-                  </label>
-                  {addPhotoFile && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAddPhotoFile(null)}
-                    >
-                      Quitar foto
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div>
-              <Label>Notas</Label>
-              <Textarea
-                value={equipmentForm.notes}
-                onChange={(e) => setEquipmentForm((f) => ({ ...f, notes: e.target.value }))}
-                rows={3}
-              />
-            </div>
-            {formError && (
-              <div className="space-y-2">
-                <p className="text-sm text-red-500">{formError}</p>
-                {duplicateExistingId && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      closeAddModal();
-                      openDetail(duplicateExistingId);
-                    }}
-                  >
-                    Editar equipo existente
-                  </Button>
-                )}
-              </div>
-            )}
-            <Button type="submit" className="w-full" disabled={addSaving}>
-              {addSaving ? 'Registrando...' : 'Registrar en inventario'}
-            </Button>
-          </form>
-        )}
-      </Modal>
+        addStep={addStep}
+        onAddStepChange={setAddStep}
+        catalogSearch={catalogSearch}
+        onCatalogSearchChange={setCatalogSearch}
+        catalogCategoryFilter={catalogCategoryFilter}
+        onCatalogCategoryFilterChange={setCatalogCategoryFilter}
+        catalog={catalog}
+        filteredCatalog={filteredCatalog}
+        registeredByCatalogId={registeredByCatalogId}
+        onCatalogPick={handleCatalogPick}
+        selectedCatalogId={selectedCatalogId}
+        onSelectedCatalogIdChange={setSelectedCatalogId}
+        equipmentForm={equipmentForm}
+        onEquipmentFormChange={setEquipmentForm}
+        zones={zones}
+        addPhotoFile={addPhotoFile}
+        addPhotoPreview={addPhotoPreview}
+        onAddPhotoFileChange={setAddPhotoFile}
+        formError={formError}
+        duplicateExistingId={duplicateExistingId}
+        onOpenExisting={openDetail}
+        addSaving={addSaving}
+        onSubmit={handleCreateEquipment}
+      />
 
-      <Modal
+      <EquipmentDetailModal
         open={!!detailId}
         onClose={closeDetail}
-        title={detail ? equipmentDisplayName(detail) : 'Detalle del equipo'}
-        maxWidth="xl"
-      >
-        {detailLoading || !detail ? (
-          <div className="flex justify-center py-8">
-            <Spinner />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <Badge variant={EQUIPMENT_STATUS_BADGE[detail.status]}>
-                {EQUIPMENT_STATUS_LABELS[detail.status]}
-              </Badge>
-              <div className="flex flex-wrap gap-2">
-                {!isAdmin && (
-                  <Button variant="secondary" onClick={() => setReportOpen(true)}>
-                    <AlertTriangle className="h-4 w-4" />
-                    Reportar problema
-                  </Button>
-                )}
-                {isAdmin && (
-                  <>
-                    <Button variant="secondary" size="sm" onClick={openRepair}>
-                      <Hammer className="h-4 w-4" />
-                      Reparación
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={openEdit}>
-                      <Pencil className="h-4 w-4" />
-                      Editar
-                    </Button>
-                    <Button
-                      ref={detailMoreRef}
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-9 px-0"
-                      onClick={() => setDetailMoreOpen((v) => !v)}
-                      aria-label="Más acciones"
-                      aria-expanded={detailMoreOpen}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                    <AnchoredMenu
-                      open={detailMoreOpen}
-                      onClose={() => setDetailMoreOpen(false)}
-                      anchorRef={detailMoreRef}
-                      align="end"
-                    >
-                      <div className="flex flex-col p-1">
-                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                          <Camera className="h-4 w-4" />
-                          Subir foto
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              setDetailMoreOpen(false);
-                              if (file) void handlePhotoUpload(file);
-                            }}
-                          />
-                        </label>
-                        {detail.status !== 'out_of_service' && (
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            onClick={() => {
-                              setDetailMoreOpen(false);
-                              setRetireReason('');
-                              setRetireError('');
-                              setRetireOpen(true);
-                            }}
-                          >
-                            <Archive className="h-4 w-4" />
-                            Retirar del gym
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400"
-                          onClick={() => {
-                            setDetailMoreOpen(false);
-                            setDeleteError('');
-                            setDeleteOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </button>
-                      </div>
-                    </AnchoredMenu>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {detail.photo_url && (
-              <img
-                src={resolveEquipmentPhotoUrl(detail.photo_url)}
-                alt=""
-                className="max-h-48 w-full rounded-xl object-cover"
-              />
-            )}
-
-            <div className="grid gap-2 text-sm text-zinc-600 sm:grid-cols-2 dark:text-zinc-300">
-              <p>
-                <span className="font-semibold text-zinc-900 dark:text-white">Zona:</span>{' '}
-                {detail.zone_name ?? '—'}
-              </p>
-              <p>
-                <span className="font-semibold text-zinc-900 dark:text-white">Categoría:</span>{' '}
-                {detail.catalog_category ? EQUIPMENT_CATEGORY_LABELS[detail.catalog_category] : '—'}
-              </p>
-              <p>
-                <span className="font-semibold text-zinc-900 dark:text-white">Marca / modelo:</span>{' '}
-                {[detail.brand, detail.model].filter(Boolean).join(' ') || '—'}
-              </p>
-              <p>
-                <span className="font-semibold text-zinc-900 dark:text-white">Serie:</span>{' '}
-                {detail.serial_number ?? '—'}
-              </p>
-              {detail.next_inspection_at && (
-                <p className="flex items-center gap-1 sm:col-span-2">
-                  <Clock className="h-4 w-4" />
-                  Próxima inspección: {detail.next_inspection_at}
-                </p>
-              )}
-            </div>
-
-            {isAdmin && (
-              <div className="flex flex-wrap gap-2">
-                {EQUIPMENT_STATUSES.map((status) => (
-                  <Button
-                    key={status}
-                    size="sm"
-                    variant={detail.status === status ? 'primary' : 'secondary'}
-                    onClick={() => void handleStatusChange(status)}
-                  >
-                    {EQUIPMENT_STATUS_LABELS[status]}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            <div>
-              <h4 className="mb-2 text-sm font-bold text-zinc-900 dark:text-white">Historial</h4>
-              {events.length === 0 ? (
-                <p className="text-sm text-zinc-500">Sin eventos registrados.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {events.map((event) => (
-                    <li
-                      key={event.id}
-                      className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-zinc-500">
-                          {EQUIPMENT_EVENT_LABELS[
-                            event.event_type as keyof typeof EQUIPMENT_EVENT_LABELS
-                          ] ?? event.event_type}
-                        </span>
-                        <span className="text-[10px] text-zinc-400">
-                          {new Date(event.performed_at).toLocaleString('es')}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-                        {event.description}
-                      </p>
-                      {(event.vendor_name || event.cost_usd != null) && (
-                        <p className="mt-1 text-xs text-zinc-500">
-                          {[
-                            event.vendor_name,
-                            event.cost_usd != null && !Number.isNaN(Number(event.cost_usd))
-                              ? formatMoney(Number(event.cost_usd))
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </p>
-                      )}
-                      {event.created_by_name && (
-                        <p className="mt-1 text-[10px] text-zinc-400">{event.created_by_name}</p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
+        detail={detail}
+        events={events}
+        detailLoading={detailLoading}
+        isAdmin={isAdmin}
+        detailMoreOpen={detailMoreOpen}
+        detailMoreRef={detailMoreRef}
+        onDetailMoreOpenChange={setDetailMoreOpen}
+        onReport={() => setReportOpen(true)}
+        onRepair={openRepair}
+        onEdit={openEdit}
+        onPhotoUpload={(file) => void handlePhotoUpload(file)}
+        onRetireOpen={() => {
+          setRetireReason('');
+          setRetireError('');
+          setRetireOpen(true);
+        }}
+        onDeleteOpen={() => {
+          setDeleteError('');
+          setDeleteOpen(true);
+        }}
+        onStatusChange={(status) => void handleStatusChange(status)}
+      />
 
       <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Reportar problema">
         <form onSubmit={handleReport} className="space-y-4">

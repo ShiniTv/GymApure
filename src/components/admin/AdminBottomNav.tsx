@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { StaffBottomNav } from '../navigation/StaffBottomNav';
 import {
   ADMIN_PRIMARY_TABS,
@@ -7,8 +8,15 @@ import {
   isAdminMoreTabActive,
 } from '../../config/navigation/adminBottomNav';
 import type { StaffBottomNavTab } from '../../config/navigation/bottomNavTypes';
+import { readAdminFavorites, toggleAdminFavorite } from '../../lib/adminFavorites';
 
 export function AdminBottomNav() {
+  const [favoriteHrefs, setFavoriteHrefs] = useState(() => readAdminFavorites());
+
+  const onToggleFavorite = useCallback((href: string) => {
+    setFavoriteHrefs(toggleAdminFavorite(href));
+  }, []);
+
   return (
     <StaffBottomNav
       ariaLabel="Navegación administrador"
@@ -20,6 +28,8 @@ export function AdminBottomNav() {
       }
       isMoreItemActive={isAdminMoreItemActive}
       isMoreTabActive={isAdminMoreTabActive}
+      favoriteHrefs={favoriteHrefs}
+      onToggleFavorite={onToggleFavorite}
     />
   );
 }

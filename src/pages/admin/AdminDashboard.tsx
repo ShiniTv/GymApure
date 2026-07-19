@@ -20,7 +20,6 @@ import {
   ChevronUp,
   UtensilsCrossed,
   FileSpreadsheet,
-  BarChart2,
   Wrench,
   Monitor,
   Mail,
@@ -47,6 +46,11 @@ import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
+import {
+  readAdminFavorites,
+  resolveAdminFavoriteItems,
+  ADMIN_FAVORITES_CHANGED_EVENT,
+} from '../../lib/adminFavorites';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -59,10 +63,24 @@ export default function AdminDashboard() {
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
   const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
+  const [favoriteHrefs, setFavoriteHrefs] = useState(() => readAdminFavorites());
 
   const stats = adminStats.stats;
   const alertDays = stats?.expiryAlertDays ?? 7;
   const expiringList = stats?.expiringList ?? [];
+  const favoriteItems = resolveAdminFavoriteItems(favoriteHrefs);
+
+  useEffect(() => {
+    const syncFavorites = () => setFavoriteHrefs(readAdminFavorites());
+    window.addEventListener('storage', syncFavorites);
+    window.addEventListener('focus', syncFavorites);
+    window.addEventListener(ADMIN_FAVORITES_CHANGED_EVENT, syncFavorites);
+    return () => {
+      window.removeEventListener('storage', syncFavorites);
+      window.removeEventListener('focus', syncFavorites);
+      window.removeEventListener(ADMIN_FAVORITES_CHANGED_EVENT, syncFavorites);
+    };
+  }, []);
 
   useEffect(() => {
     apiFetch('/api/health/ops')
@@ -265,7 +283,14 @@ export default function AdminDashboard() {
       )}
 
       <DashboardSection title="Requiere acción" compact>
-        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+        <div
+          className={cn(
+            'grid gap-1.5 sm:gap-3',
+            demoPending > 0
+              ? 'grid-cols-3 sm:grid-cols-3 lg:grid-cols-5'
+              : 'grid-cols-4 sm:grid-cols-2 lg:grid-cols-4'
+          )}
+        >
           <QuickAction
             compact
             iconOnlyMobile
@@ -305,7 +330,42 @@ export default function AdminDashboard() {
             count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
             tone="orange"
           />
+          {demoPending > 0 && (
+            <QuickAction
+              compact
+              iconOnlyMobile
+              to="/demo-leads"
+              icon={Inbox}
+              title="Demos"
+              description="Solicitudes pendientes"
+              count={demoPending}
+              tone="blue"
+            />
+          )}
         </div>
+      </DashboardSection>
+
+      <DashboardSection title="Favoritos" compact>
+        {favoriteItems.length > 0 ? (
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-3">
+            {favoriteItems.map((item) => (
+              <QuickAction
+                key={item.href}
+                compact
+                iconOnlyMobile
+                to={item.href}
+                icon={item.icon}
+                title={item.name}
+                description={item.section ?? 'Atajo'}
+                tone="emerald"
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-zinc-200 px-3 py-3 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            Fija atajos desde Más (estrella) para verlos aquí.
+          </p>
+        )}
       </DashboardSection>
 
       <DashboardSection title="Operación" compact>
@@ -341,7 +401,7 @@ export default function AdminDashboard() {
       </DashboardSection>
 
       <DashboardSection title="Finanzas y supervisión" compact>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
           <Card padding="sm" rounded="xl" className="space-y-1">
             <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
               Pagos &gt;2 días
@@ -368,34 +428,9 @@ export default function AdminDashboard() {
               {pausedSubs}
             </p>
           </Card>
-          {demoPending > 0 ? (
-            <Link to="/demo-leads">
-              <Card
-                padding="sm"
-                rounded="xl"
-                className="hover:border-brand/40 space-y-1 transition-colors"
-              >
-                <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-                  <Inbox className="h-3 w-3" />
-                  Demos
-                </p>
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-                  {demoPending}
-                </p>
-              </Card>
-            </Link>
-          ) : (
-            <Card padding="sm" rounded="xl" className="space-y-1 opacity-60">
-              <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-                <Inbox className="h-3 w-3" />
-                Demos
-              </p>
-              <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">0</p>
-            </Card>
-          )}
         </div>
 
-        <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-3">
+        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:gap-3">
           <QuickAction
             compact
             iconOnlyMobile
@@ -413,15 +448,6 @@ export default function AdminDashboard() {
             title="Nutrición"
             description="Adherencia general"
             tone="emerald"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/audit-logs"
-            icon={BarChart2}
-            title="Auditoría"
-            description="Registro de actividad"
-            tone="orange"
           />
         </div>
       </DashboardSection>

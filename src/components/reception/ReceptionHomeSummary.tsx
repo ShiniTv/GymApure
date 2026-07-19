@@ -14,7 +14,7 @@ import {
 import { cn } from '../../lib/utils';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { QuickAction } from '../admin/QuickAction';
-import { Card, DashboardSkeleton } from '../ui';
+import { Button, Card, DashboardSkeleton, EmptyState } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
 import BrandName from '../BrandName';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
@@ -121,15 +121,18 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [statsError, setStatsError] = useState(false);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
+    setStatsError(false);
     try {
       const data = await fetchReceptionStats();
       setStats(data);
       setRefreshKey((k) => k + 1);
     } catch {
       setStats(null);
+      setStatsError(true);
     } finally {
       setRefreshing(false);
     }
@@ -137,8 +140,14 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
 
   useEffect(() => {
     void fetchReceptionStats()
-      .then((data) => setStats(data))
-      .catch(() => setStats(null))
+      .then((data) => {
+        setStats(data);
+        setStatsError(false);
+      })
+      .catch(() => {
+        setStats(null);
+        setStatsError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -155,6 +164,21 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
 
   if (loading) {
     return <DashboardSkeleton statCount={3} />;
+  }
+
+  if (statsError) {
+    return (
+      <EmptyState
+        icon={Fingerprint}
+        title="No se pudo cargar el resumen"
+        description="Revisa tu conexión e inténtalo de nuevo."
+        action={
+          <Button size="sm" onClick={() => void refresh()} loading={refreshing}>
+            Reintentar
+          </Button>
+        }
+      />
+    );
   }
 
   return (

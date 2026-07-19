@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 
 export interface Payment {
@@ -49,6 +49,7 @@ export function usePaymentsQuery(params: PaymentsQueryParams) {
     queryKey: paymentsQueryKey(params),
     queryFn: () => fetchPayments(params),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 }
 
