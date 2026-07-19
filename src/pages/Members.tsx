@@ -886,7 +886,7 @@ export default function Members() {
               action={membersEmptyAction}
             />
           }
-          mobileClassName="space-y-3"
+          mobileClassName="flex flex-col gap-4"
           mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
           mobile={(member) => (
             <StaggerItem>

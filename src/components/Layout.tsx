@@ -156,8 +156,8 @@ export default function Layout() {
           Saltar al contenido
         </a>
         {/* Mobile Header — floating island chrome */}
-        <div className="sticky top-0 z-50 px-3 pt-2 pb-1 lg:hidden">
-          <div className="flex h-12 items-center justify-between gap-2 rounded-2xl border border-zinc-200/80 bg-white/80 px-2.5 shadow-sm backdrop-blur-md dark:border-zinc-700/80 dark:bg-zinc-900/80">
+        <div className="sticky top-0 z-50 px-3 pt-2.5 pb-2 lg:hidden">
+          <div className="flex h-12 items-center justify-between gap-2 rounded-2xl border border-zinc-200/90 bg-white/90 px-2.5 shadow-[0_4px_24px_rgb(0_0_0/0.08),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-900/90 dark:shadow-[0_4px_24px_rgb(0_0_0/0.35)]">
             <div className="flex min-w-0 items-center gap-2.5">
               <Logo className="h-8 w-8 shrink-0" />
               <div className="min-w-0">

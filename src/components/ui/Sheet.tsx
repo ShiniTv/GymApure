@@ -88,7 +88,7 @@ export function Sheet({
           className={cn(
             'rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
             side === 'bottom' && 'mb-2',
-            scrollable && 'flex max-h-[min(70dvh,calc(100dvh-6.5rem))] flex-col',
+            scrollable && 'flex max-h-[min(70dvh,calc(100dvh-8rem))] flex-col',
             cardClassName
           )}
         >
