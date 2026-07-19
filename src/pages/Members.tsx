@@ -594,7 +594,7 @@ export default function Members() {
   ) : undefined;
 
   const mobileActionBtnClass =
-    'inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-700 transition-colors hover:border-brand/40 hover:bg-brand/10 hover:text-brand dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:border-brand/40 dark:hover:bg-brand/10';
+    'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-zinc-600 transition-colors hover:border-brand/40 hover:bg-brand/10 hover:text-brand dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-brand/40 dark:hover:bg-brand/10';
 
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>

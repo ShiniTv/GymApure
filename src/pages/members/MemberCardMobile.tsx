@@ -154,9 +154,10 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               type="button"
               onClick={() => navigate(`/members/${member.id}/nutrition`)}
               className={cn(mobileIconBtnClass, 'border-brand/30 bg-brand/10 text-brand')}
+              aria-label="Plan nutricional"
+              title="Plan nutricional"
             >
-              <UtensilsCrossed className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              Plan nutricional
+              <UtensilsCrossed className="h-4 w-4" aria-hidden />
             </button>
           )}
           {isTrainer && member.role === 'member' && !nutritionFocus && (
@@ -166,36 +167,36 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 onClick={() => navigate(`/members/${member.id}/routines`)}
                 className={mobileIconBtnClass}
                 aria-label="Asignar rutina"
+                title="Asignar rutina"
               >
-                <Dumbbell className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Rutina
+                <Dumbbell className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/members/${member.id}/history`)}
                 className={mobileIconBtnClass}
                 aria-label="Historial"
+                title="Historial"
               >
-                <History className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Historial
+                <History className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/members/${member.id}/nutrition`)}
                 className={mobileIconBtnClass}
                 aria-label="Nutrición"
+                title="Nutrición"
               >
-                <UtensilsCrossed className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Nutrición
+                <UtensilsCrossed className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/messages?member=${member.id}`)}
                 className={mobileIconBtnClass}
                 aria-label="Enviar mensaje"
+                title="Enviar mensaje"
               >
-                <MessageSquare className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Mensaje
+                <MessageSquare className="h-4 w-4" aria-hidden />
               </button>
             </>
           )}
@@ -208,27 +209,27 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 }}
                 className={mobileIconBtnClass}
                 aria-label="Ver carné"
+                title="Ver carné"
               >
-                <IdCard className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Carné
+                <IdCard className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => onEditShift(member)}
                 className={mobileIconBtnClass}
                 aria-label={member.training_shift ? 'Editar turno' : 'Asignar turno'}
+                title={member.training_shift ? 'Editar turno' : 'Asignar turno'}
               >
-                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Turno
+                <Clock className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/messages?member=${member.id}`)}
                 className={mobileIconBtnClass}
                 aria-label="Enviar mensaje"
+                title="Enviar mensaje"
               >
-                <MessageSquare className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Mensaje
+                <MessageSquare className="h-4 w-4" aria-hidden />
               </button>
               <button
                 type="button"
@@ -237,9 +238,9 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 }}
                 className={mobileIconBtnClass}
                 aria-label="Asignar membresía"
+                title="Asignar membresía"
               >
-                <CreditCard className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Membresía
+                <CreditCard className="h-4 w-4" aria-hidden />
               </button>
               {member.subscription_status && (
                 <button
@@ -252,13 +253,17 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                       ? 'Reanudar membresía'
                       : 'Pausar membresía'
                   }
+                  title={
+                    member.subscription_status === 'paused'
+                      ? 'Reanudar membresía'
+                      : 'Pausar membresía'
+                  }
                 >
                   {member.subscription_status === 'paused' ? (
-                    <Play className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <Play className="h-4 w-4" aria-hidden />
                   ) : (
-                    <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <Pause className="h-4 w-4" aria-hidden />
                   )}
-                  {member.subscription_status === 'paused' ? 'Reanudar' : 'Pausar'}
                 </button>
               )}
             </>
@@ -275,9 +280,9 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                   'border-emerald-500/30 text-emerald-600 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600 dark:text-emerald-400'
               )}
               aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
+              title={member.status === 'active' ? 'Desactivar' : 'Activar'}
             >
-              <Power className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {member.status === 'active' ? 'Desactivar' : 'Activar'}
+              <Power className="h-4 w-4" aria-hidden />
             </button>
           )}
           {isAdmin &&
@@ -290,9 +295,9 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 }}
                 className={dangerBtnClass}
                 aria-label={member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro'}
+                title={member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro'}
               >
-                <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Eliminar
+                <Trash2 className="h-4 w-4" aria-hidden />
               </button>
             )}
         </div>
