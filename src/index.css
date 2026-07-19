@@ -508,8 +508,9 @@ body,
   bottom: calc(var(--member-nav-stack) + var(--member-fab-gap) + env(safe-area-inset-bottom, 0px));
 }
 
+/* Shared glass surface: top island + bottom nav pill */
+.mobile-chrome-glass,
 .member-bottom-nav-pill {
-  border-radius: 9999px;
   border: 1px solid rgb(228 228 231 / 0.8);
   background: rgb(255 255 255 / 0.92);
   backdrop-filter: blur(12px);
@@ -518,12 +519,28 @@ body,
     0 1px 2px rgb(0 0 0 / 0.04);
 }
 
+.dark .mobile-chrome-glass,
 .dark .member-bottom-nav-pill {
   border-color: rgb(39 39 42 / 0.9);
   background: rgb(9 9 11 / 0.92);
   box-shadow:
     0 4px 24px rgb(0 0 0 / 0.35),
     0 1px 2px rgb(0 0 0 / 0.2);
+}
+
+.member-bottom-nav-pill {
+  border-radius: 9999px;
+}
+
+/* Compensates fixed mobile header island so content clears it */
+.mobile-top-pad {
+  padding-top: calc(var(--mobile-top-chrome) + 0.75rem) !important;
+}
+
+@media (min-width: 1024px) {
+  .mobile-top-pad {
+    padding-top: 2rem !important; /* matches lg:p-8 */
+  }
 }
 
 .member-bottom-nav-tab-icon {

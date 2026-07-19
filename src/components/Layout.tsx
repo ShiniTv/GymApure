@@ -155,9 +155,9 @@ export default function Layout() {
         >
           Saltar al contenido
         </a>
-        {/* Mobile Header — floating island chrome */}
-        <div className="sticky top-0 z-50 px-3 pt-2.5 pb-2 lg:hidden">
-          <div className="flex h-12 items-center justify-between gap-2 rounded-2xl border border-zinc-200/90 bg-white/90 px-2.5 shadow-[0_4px_24px_rgb(0_0_0/0.08),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-900/90 dark:shadow-[0_4px_24px_rgb(0_0_0/0.35)]">
+        {/* Mobile Header — fixed glass island (content scrolls underneath) */}
+        <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-3 pt-2.5 pb-2 lg:hidden">
+          <div className="mobile-chrome-glass pointer-events-auto flex h-12 items-center justify-between gap-2 rounded-2xl px-2.5">
             <div className="flex min-w-0 items-center gap-2.5">
               <Logo className="h-8 w-8 shrink-0" />
               <div className="min-w-0">
@@ -431,6 +431,7 @@ export default function Layout() {
             id="main-content"
             className={clsx(
               'h-dvh min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
+              isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
               isTrainerMobileShell && 'trainer-main-pad',
