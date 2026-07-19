@@ -71,7 +71,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
 
   const dangerBtnClass = cn(
     mobileIconBtnClass,
-    'border-red-500/25 text-red-600 hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300'
+    'text-red-500 hover:bg-red-500/10 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300'
   );
 
   return (
@@ -145,7 +145,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
 
       {showMobileActions && (
         <div
-          className="mt-2.5 flex flex-wrap gap-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800"
+          className="mt-2 flex flex-wrap gap-1 border-t border-zinc-100 pt-2 dark:border-zinc-800"
           role="group"
           aria-label={`Acciones de ${member.full_name}`}
         >
@@ -153,7 +153,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
             <button
               type="button"
               onClick={() => navigate(`/members/${member.id}/nutrition`)}
-              className={cn(mobileIconBtnClass, 'border-brand/30 bg-brand/10 text-brand')}
+              className={cn(mobileIconBtnClass, 'text-brand hover:bg-brand/10')}
               aria-label="Plan nutricional"
               title="Plan nutricional"
             >
@@ -277,7 +277,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               className={cn(
                 mobileIconBtnClass,
                 member.status !== 'active' &&
-                  'border-emerald-500/30 text-emerald-600 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600 dark:text-emerald-400'
+                  'text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600 dark:text-emerald-400'
               )}
               aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
               title={member.status === 'active' ? 'Desactivar' : 'Activar'}
