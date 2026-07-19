@@ -77,10 +77,10 @@ export function MemberHero({
             </div>
           )}
 
-          <div className="mt-5 hidden sm:flex">
+          <div className="mt-5 flex w-full sm:w-auto">
             <Button
               size="lg"
-              className="min-h-[var(--touch-comfort)]"
+              className="min-h-[var(--touch-comfort)] w-full sm:w-auto"
               disabled={!!routineId && routineCompletedToday}
               onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
             >

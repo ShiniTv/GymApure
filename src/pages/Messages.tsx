@@ -806,7 +806,7 @@ function StaffChatView() {
 }
 
 function MemberChatView() {
-  const { data: conversation, isPending } = useMemberChatQuery(true);
+  const { data: conversation, isPending, isError, isFetching, refetch } = useMemberChatQuery(true);
   const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
     conversation?.id ?? null,
     conversation?.id != null
@@ -820,12 +820,49 @@ function MemberChatView() {
     }
   }, [conversation?.id, messagesData?.messages.length]);
 
-  if (isPending || !conversation) {
+  if (isPending) {
     return (
       <PageState>
         <Spinner />
         <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando mensajes…</p>
       </PageState>
+    );
+  }
+
+  if (isError || conversation == null) {
+    return (
+      <div className="page-stack-tight">
+        <PageHeader
+          compact
+          title={
+            <>
+              Mensajes <span className="text-brand">con el gym</span>
+            </>
+          }
+          subtitle="Avisos de membresía, pagos y rutinas"
+          action={<BackToDashboardLink />}
+        />
+        <EmptyState
+          icon={MessageSquare}
+          title={isError ? 'No se pudieron cargar los mensajes' : 'Sin chat disponible'}
+          description={
+            isError
+              ? 'Revisa tu conexión e inténtalo de nuevo.'
+              : 'Aún no tienes conversación con el gym. Contacta recepción si necesitas ayuda.'
+          }
+          action={
+            <Button
+              size="sm"
+              variant={isError ? 'primary' : 'secondary'}
+              className="min-h-[var(--touch-min)]"
+              disabled={isFetching}
+              onClick={() => void refetch()}
+            >
+              Reintentar
+            </Button>
+          }
+        />
+      </div>
     );
   }
 

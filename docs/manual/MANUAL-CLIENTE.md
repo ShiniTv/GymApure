@@ -44,12 +44,12 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 
 ### Bottom nav (pill)
 
-| Tab      | Ruta                   |
-| -------- | ---------------------- |
-| Inicio   | `/panel`               |
-| Rutinas  | `/routines`            |
-| Reservas | `/reservas`            |
-| Más      | Sheet con más opciones |
+| Tab       | Ruta                   |
+| --------- | ---------------------- |
+| Inicio    | `/panel`               |
+| Rutinas   | `/routines`            |
+| Nutrición | `/nutrition`           |
+| Más       | Sheet con más opciones |
 
 ### FAB "Entrenar"
 
@@ -94,7 +94,7 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 
 ### Reservar clases grupales
 
-1. Tab **Reservas** en bottom nav (`/reservas`).
+1. **Más** → **Reservas** (`/reservas`).
 2. Elige una sesión disponible (cupos, horario, entrenador).
 3. Confirma la reserva. Si está llena, puedes unirte a la **lista de espera**.
 4. Cancela desde la misma pantalla si aún no ha empezado (mín. 2 h antes).
@@ -102,7 +102,7 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 ### Marcar entrada / salida
 
 1. En **Inicio**, usa **Marcar entrada** cuando estés en el gym (membresía activa).
-2. O muestra el **QR del carné** en **Perfil** para que recepción lo escanee en el kiosco.
+2. O muestra el **QR del carné** en **Perfil** para que recepción lo escanee en el mostrador.
 3. Al salir, **Marcar salida** o pide a recepción.
 
 ### Mensajes
@@ -120,7 +120,7 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 
 ## Accesos rápidos en Inicio
 
-Grid de iconos: Rutinas, Reservas, Biblioteca, Nutrición, Historial, Pagos.
+Grid de iconos: Rutinas, Nutrición, Historial, Pagos.
 
 ---
 

@@ -32,14 +32,14 @@ export interface MemberMoreItem {
 export const MEMBER_PRIMARY_TABS: MemberBottomTab[] = [
   { name: 'Inicio', href: '/panel', icon: Home },
   { name: 'Rutinas', href: '/routines', icon: ListChecks },
-  { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
+  { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];
 
 /** Sheet items — synced with secondary items in memberNav.ts */
 export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
+  { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
   { name: 'Reservas', href: '/reservas', icon: CalendarDays },
-  { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
   { name: 'Biblioteca', href: '/exercises', icon: BookOpen },
   { name: 'Historial', href: '/history', icon: History },
   { name: 'Pagos', href: '/payments', icon: CreditCard },

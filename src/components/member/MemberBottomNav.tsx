@@ -95,9 +95,11 @@ export function MemberBottomNav() {
     return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
-  const sheetBottom = showWorkoutFab
-    ? 'bottom-[calc(9.25rem+env(safe-area-inset-bottom))]'
-    : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]';
+  const sheetBottomStyle = {
+    bottom: showWorkoutFab
+      ? 'calc(var(--member-nav-stack) + var(--member-fab-size, 3.5rem) + var(--member-fab-gap, 0.75rem) + env(safe-area-inset-bottom, 0px))'
+      : 'calc(var(--member-nav-stack) + env(safe-area-inset-bottom, 0px))',
+  } as const;
 
   return (
     <>
@@ -113,10 +115,9 @@ export function MemberBottomNav() {
         ref={sheetRef}
         className={clsx(
           'fixed right-0 left-0 z-[46] px-4 transition-transform duration-200 ease-out lg:hidden',
-          moreOpen
-            ? clsx('translate-y-0', sheetBottom)
-            : 'pointer-events-none bottom-0 translate-y-full'
+          moreOpen ? 'translate-y-0' : 'pointer-events-none bottom-0 translate-y-full'
         )}
+        style={moreOpen ? sheetBottomStyle : undefined}
         role="dialog"
         aria-modal={moreOpen}
         aria-label="Más opciones"
@@ -225,7 +226,9 @@ export function MemberBottomNav() {
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-expanded={moreOpen}
-                      aria-label={item.name}
+                      aria-label={
+                        chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
+                      }
                     >
                       <span className="relative">
                         <span
@@ -236,6 +239,11 @@ export function MemberBottomNav() {
                         >
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
+                        {chatUnread > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
+                            {chatUnread > 9 ? '9+' : chatUnread}
+                          </span>
+                        )}
                       </span>
                     </button>
                   </li>

@@ -5,25 +5,33 @@ Repetir tras cambios de UI. Nav móvil actualizado julio 2026.
 ## Móvil 390×844 — Cliente (`member@gym.com`)
 
 - [ ] Sin scroll horizontal
+- [ ] Sin hamburger; header flotante tipo isla
 - [ ] Bottom nav pill: **Inicio**, **Rutinas**, **Nutrición**, **Más**
-- [ ] Sheet "Más": Biblioteca, Mensajes, Historial, Pagos, Mi Perfil
+- [ ] Sheet "Más": Mensajes, Reservas, Biblioteca, Historial, Pagos, Mi Perfil
 - [ ] FAB "Entrenar" centrado en `/`, `/rutinas`, `/exercises`; oculto en `/nutrition`
 - [ ] Bottom nav **oculta** en `/workout/:id`
 - [ ] Drawer sidebar: footer pegado al fondo (sin hueco debajo)
-- [ ] Inicio: grid 4 iconos compactos (Rutinas, Biblioteca, Nutrición, Historial, Pagos)
-- [ ] Workout activo: Completar dentro del card; pasos y video a ancho completo
+- [ ] Inicio: grid 4 iconos (Rutinas, Nutrición, Historial, Pagos); hero + Tu rutina arriba
+- [ ] Workout activo: Completar dentro del card; pasos colapsados por defecto; pager ≥44px
 
 ## Móvil 390×844 — Entrenador (`trainer@gym.com`)
 
-- [ ] Bottom nav entrenador visible con drawer cerrado
+- [ ] Bottom nav entrenador visible con drawer cerrado; **sin hamburger** (Más + swipe)
 - [ ] Drawer abierto: footer al fondo; bottom nav oculta
 - [ ] Sin scroll horizontal en sidebar
+- [ ] Header flotante (isla) + gap visible sobre la pill inferior
 
 ## Móvil 390×844 — Recepción (`receptionist@gym.com`)
 
-- [ ] Bottom nav: Inicio, Miembros, Pagos, Mensajes
-- [ ] Drawer abierto: footer al fondo
+- [ ] Bottom nav: Inicio, Miembros, Pagos, Mensajes, Más; **sin hamburger**
+- [ ] Drawer abierto: footer al fondo (swipe lateral)
 - [ ] CTA "Abrir mostrador" en home → counter access
+- [ ] Sheet Más no pega a la isla; cards Miembros con separación clara
+
+## Móvil 390×844 — Admin (`admin@gym.com`)
+
+- [ ] Sin hamburger; Más con secciones Operación / Finanzas / Supervisión / Cuenta + scroll
+- [ ] Header flotante alineado con pill inferior
 
 ## Desktop 1440×900 — Admin
 

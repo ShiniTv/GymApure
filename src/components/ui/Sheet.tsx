@@ -10,11 +10,15 @@ interface SheetProps {
   title?: ReactNode;
   side?: 'bottom' | 'top';
   className?: string;
+  /** Classes for the inner card surface */
+  cardClassName?: string;
   panelStyle?: CSSProperties;
   /** z-index layer — default 56 (above nav, below modal) */
   zIndex?: number;
   /** Hide on desktop breakpoints */
   hideFrom?: 'lg';
+  /** Cap height and scroll body (staff Más sheets) */
+  scrollable?: boolean;
 }
 
 export function Sheet({
@@ -24,9 +28,11 @@ export function Sheet({
   title,
   side = 'bottom',
   className,
+  cardClassName,
   panelStyle,
   zIndex = 56,
   hideFrom = 'lg',
+  scrollable = false,
 }: SheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -78,9 +84,16 @@ export function Sheet({
         )}
         style={{ zIndex, ...panelStyle }}
       >
-        <div className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+        <div
+          className={cn(
+            'rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
+            side === 'bottom' && 'mb-2',
+            scrollable && 'flex max-h-[min(70dvh,calc(100dvh-8rem))] flex-col',
+            cardClassName
+          )}
+        >
           {title && (
-            <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
               <h2 id={titleId} className="text-sm font-bold text-zinc-900 dark:text-white">
                 {title}
               </h2>
@@ -94,7 +107,11 @@ export function Sheet({
               </button>
             </div>
           )}
-          {children}
+          {scrollable ? (
+            <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>
+          ) : (
+            children
+          )}
         </div>
       </div>
     </div>

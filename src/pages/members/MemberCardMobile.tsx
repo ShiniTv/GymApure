@@ -36,6 +36,7 @@ interface MemberCardMobileProps {
   onEditShift: (member: Member) => void;
   onMembershipOperation: (member: Member) => void;
   membershipOperationLoading: boolean;
+  nutritionFocus?: boolean;
 }
 
 export const MemberCardMobile = memo(function MemberCardMobile({
@@ -53,6 +54,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   onEditShift,
   onMembershipOperation,
   membershipOperationLoading,
+  nutritionFocus = false,
 }: MemberCardMobileProps) {
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
@@ -137,40 +139,54 @@ export const MemberCardMobile = memo(function MemberCardMobile({
       </div>
 
       {showMobileActions && (
-        <div className="mt-2 flex flex-wrap gap-1 border-t border-zinc-100 pt-2 dark:border-zinc-800">
-          {isTrainer && member.role === 'member' && (
+        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+          {isTrainer && member.role === 'member' && nutritionFocus && (
+            <button
+              type="button"
+              onClick={() => navigate(`/members/${member.id}/nutrition`)}
+              className="border-brand/30 bg-brand/10 text-brand inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold"
+            >
+              <UtensilsCrossed className="h-4 w-4" aria-hidden />
+              Plan nutricional
+            </button>
+          )}
+          {isTrainer && member.role === 'member' && !nutritionFocus && (
             <>
               <button
                 type="button"
                 onClick={() => navigate(`/members/${member.id}/routines`)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Asignar rutina"
               >
-                <Dumbbell className="h-4 w-4" />
+                <Dumbbell className="h-4 w-4" aria-hidden />
+                Rutina
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/members/${member.id}/history`)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Historial"
               >
-                <History className="h-4 w-4" />
+                <History className="h-4 w-4" aria-hidden />
+                Historial
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/members/${member.id}/nutrition`)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Nutrición"
               >
-                <UtensilsCrossed className="h-4 w-4" />
+                <UtensilsCrossed className="h-4 w-4" aria-hidden />
+                Nutrición
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/messages?member=${member.id}`)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Enviar mensaje"
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-4 w-4" aria-hidden />
+                Mensaje
               </button>
             </>
           )}
@@ -181,43 +197,47 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 onClick={() => {
                   onShowBadge(member);
                 }}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Ver carné"
               >
-                <IdCard className="h-4 w-4" />
+                <IdCard className="h-4 w-4" aria-hidden />
+                Carné
               </button>
               <button
                 type="button"
                 onClick={() => onEditShift(member)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label={member.training_shift ? 'Editar turno' : 'Asignar turno'}
               >
-                <Clock className="h-4 w-4" />
+                <Clock className="h-4 w-4" aria-hidden />
+                Turno
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/messages?member=${member.id}`)}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Enviar mensaje"
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-4 w-4" aria-hidden />
+                Mensaje
               </button>
               <button
                 type="button"
                 onClick={() => {
                   onAssignSubscription(member);
                 }}
-                className={mobileIconBtnClass}
+                className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                 aria-label="Asignar membresía"
               >
-                <CreditCard className="h-4 w-4" />
+                <CreditCard className="h-4 w-4" aria-hidden />
+                Membresía
               </button>
               {member.subscription_status && (
                 <button
                   type="button"
                   onClick={() => onMembershipOperation(member)}
                   disabled={membershipOperationLoading}
-                  className={mobileIconBtnClass}
+                  className={cn(mobileIconBtnClass, 'gap-1 px-2 text-[10px] font-semibold')}
                   aria-label={
                     member.subscription_status === 'paused'
                       ? 'Reanudar membresía'
@@ -225,10 +245,11 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                   }
                 >
                   {member.subscription_status === 'paused' ? (
-                    <Play className="h-4 w-4" />
+                    <Play className="h-4 w-4" aria-hidden />
                   ) : (
-                    <Pause className="h-4 w-4" />
+                    <Pause className="h-4 w-4" aria-hidden />
                   )}
+                  {member.subscription_status === 'paused' ? 'Reanudar' : 'Pausar'}
                 </button>
               )}
             </>
@@ -239,10 +260,15 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               onClick={() => {
                 onToggleStatus(member);
               }}
-              className={cn(mobileIconBtnClass, member.status !== 'active' && 'text-emerald-500')}
+              className={cn(
+                mobileIconBtnClass,
+                'gap-1 px-2 text-[10px] font-semibold',
+                member.status !== 'active' && 'text-emerald-500'
+              )}
               aria-label={member.status === 'active' ? 'Desactivar' : 'Activar'}
             >
-              <Power className="h-4 w-4" />
+              <Power className="h-4 w-4" aria-hidden />
+              {member.status === 'active' ? 'Off' : 'On'}
             </button>
           )}
           {isAdmin &&
@@ -253,10 +279,14 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 onClick={() => {
                   onDelete(member);
                 }}
-                className={cn(mobileIconBtnClass, 'hover:bg-red-500/10 hover:text-red-500')}
+                className={cn(
+                  mobileIconBtnClass,
+                  'gap-1 px-2 text-[10px] font-semibold hover:bg-red-500/10 hover:text-red-500'
+                )}
                 aria-label={member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro'}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden />
+                Eliminar
               </button>
             )}
         </div>

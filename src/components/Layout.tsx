@@ -13,7 +13,7 @@ import { InstallPrompt } from './InstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
 import { BRAND } from '../config/brand';
 import { MobileShellProvider } from '../context/MobileShellContext';
-import { LogOut, Menu, X, Sun, Moon, PanelLeftClose } from 'lucide-react';
+import { LogOut, Sun, Moon, PanelLeftClose } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
 import clsx from 'clsx';
 import { ROLE_LABELS, PORTAL_TITLES } from '../lib/roles';
@@ -36,7 +36,7 @@ import { routePrefetchHandlers } from '../lib/routePrefetch';
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
 const iconBtnClass =
-  'inline-flex items-center justify-center h-11 w-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
+  'inline-flex items-center justify-center h-10 w-10 rounded-full text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
 
 export default function Layout() {
   useAppFonts();
@@ -78,7 +78,7 @@ export default function Layout() {
   const showReceptionBottomNav = isReceptionMobileShell && !isSidebarOpen;
   const showTrainerBottomNav = isTrainerMobileShell && !isSidebarOpen;
   const showAdminBottomNav = isAdminMobileShell && !isSidebarOpen;
-  const showMobileHamburger = !isMemberMobileShell && !isTrainerMobileShell && !isAdminMobileShell;
+  /** Bottom-nav shells use Más + swipe; never show hamburger on mobile */
   const useMobileNavLinks = isMobileShell;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
 
@@ -139,7 +139,8 @@ export default function Layout() {
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
   const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,17.5rem)] lg:w-60';
-  const hideBackToDashboard = showMemberBottomNav || showTrainerBottomNav || showAdminBottomNav;
+  const hideBackToDashboard =
+    showMemberBottomNav || showReceptionBottomNav || showTrainerBottomNav || showAdminBottomNav;
 
   return (
     <MobileShellProvider hideBackToDashboard={hideBackToDashboard}>
@@ -154,53 +155,38 @@ export default function Layout() {
         >
           Saltar al contenido
         </a>
-        {/* Mobile Header */}
-        <div
-          className={clsx(
-            'sticky top-0 z-50 flex h-14 items-center justify-between gap-2 border-b border-zinc-200/80 bg-white/80 px-3 backdrop-blur-md lg:hidden dark:border-zinc-800 dark:bg-zinc-900/80',
-            isMemberMobileShell && 'top-0'
-          )}
-        >
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Logo className="h-8 w-8 shrink-0" />
-            <div className="min-w-0">
-              {currentPage ? (
-                <>
-                  <p className="truncate text-sm leading-tight font-bold text-zinc-900 dark:text-white">
-                    {mobileHeaderTitle}
-                  </p>
-                  <p className="truncate text-[10px] leading-tight font-medium text-zinc-400 dark:text-zinc-300">
-                    {BRAND.name}
-                  </p>
-                </>
-              ) : (
-                <BrandName variant="inline" size="sm" className="truncate leading-tight" />
-              )}
+        {/* Mobile Header — floating island chrome */}
+        <div className="sticky top-0 z-50 px-3 pt-2.5 pb-2 lg:hidden">
+          <div className="flex h-12 items-center justify-between gap-2 rounded-2xl border border-zinc-200/90 bg-white/90 px-2.5 shadow-[0_4px_24px_rgb(0_0_0/0.08),0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-900/90 dark:shadow-[0_4px_24px_rgb(0_0_0/0.35)]">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Logo className="h-8 w-8 shrink-0" />
+              <div className="min-w-0">
+                {currentPage ? (
+                  <>
+                    <p className="truncate text-sm leading-tight font-bold text-zinc-900 dark:text-white">
+                      {mobileHeaderTitle}
+                    </p>
+                    <p className="truncate text-[10px] leading-tight font-medium text-zinc-400 dark:text-zinc-300">
+                      {BRAND.name}
+                    </p>
+                  </>
+                ) : (
+                  <BrandName variant="inline" size="sm" className="truncate leading-tight" />
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <InstallPrompt />
-            <NotificationBell />
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className={iconBtnClass}
-              aria-label="Cambiar tema"
-            >
-              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </button>
-            {showMobileHamburger && (
+            <div className="flex shrink-0 items-center gap-0.5">
+              <InstallPrompt />
+              <NotificationBell />
               <button
                 type="button"
-                onClick={() => {
-                  setIsSidebarOpen(!isSidebarOpen);
-                }}
+                onClick={toggleTheme}
                 className={iconBtnClass}
-                aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-label="Cambiar tema"
               >
-                {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </button>
-            )}
+            </div>
           </div>
         </div>
 
@@ -208,7 +194,7 @@ export default function Layout() {
           {/* Sidebar */}
           <aside
             className={clsx(
-              'fixed top-14 bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
+              'fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'

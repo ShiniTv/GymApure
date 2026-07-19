@@ -526,7 +526,7 @@ export default function Settings() {
         <div className="mb-2.5 flex items-center justify-between gap-2">
           <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
             <Fingerprint className="text-brand h-4 w-4 shrink-0" />
-            <span className="truncate">PIN de presencia (self check-in)</span>
+            <span className="truncate">PIN de presencia (ingreso desde la app)</span>
           </h2>
           <Button
             type="button"
@@ -555,7 +555,7 @@ export default function Settings() {
               }))
             }
           />
-          Exigir PIN en self check-in
+          Exigir PIN en ingreso desde la app
         </label>
         <div className="max-w-[10rem]">
           <Label htmlFor="check_in_pin" className="text-[11px]">

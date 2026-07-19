@@ -465,18 +465,37 @@ body,
 }
 
 :root {
-  --reception-nav-pill-height: 3.75rem;
-  --reception-nav-stack: calc(0.5rem + var(--reception-nav-pill-height));
-  --trainer-nav-pill-height: 3.75rem;
-  --trainer-nav-stack: calc(0.5rem + var(--trainer-nav-pill-height));
-  --admin-nav-pill-height: 3.75rem;
-  --admin-nav-stack: calc(0.5rem + var(--admin-nav-pill-height));
-  --member-nav-pill-height: 3.75rem;
-  --member-nav-stack: calc(0.5rem + var(--member-nav-pill-height));
+  /* Floating header: pt-2.5 + h-12 + pb-2 ≈ 4.125rem */
+  --mobile-top-chrome: 4.125rem;
+  /*
+   * Bottom island stack (content/sheet clearance):
+   * clearance above pill + pill height + pad under pill (.member-bottom-nav).
+   * Previous bug: 1rem was treated as “full stack gap” but 0.5rem is under the pill,
+   * leaving only ~8px above — content still looked glued to the island.
+   */
+  --nav-pill-height: 3.75rem;
+  --nav-pad-below-pill: 0.5rem;
+  --nav-clearance-above-pill: 1.25rem;
+  --reception-nav-pill-height: var(--nav-pill-height);
+  --reception-nav-stack: calc(
+    var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
+  );
+  --trainer-nav-pill-height: var(--nav-pill-height);
+  --trainer-nav-stack: calc(
+    var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
+  );
+  --admin-nav-pill-height: var(--nav-pill-height);
+  --admin-nav-stack: calc(
+    var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
+  );
+  --member-nav-pill-height: var(--nav-pill-height);
+  --member-nav-stack: calc(
+    var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
+  );
 }
 
 .member-bottom-nav {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0));
+  padding-bottom: max(var(--nav-pad-below-pill), env(safe-area-inset-bottom, 0));
   --member-fab-size: 3.5rem;
   --member-fab-gap: 0.75rem;
 }
@@ -537,11 +556,14 @@ body,
 }
 
 .member-main-pad {
-  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--member-nav-stack) + env(safe-area-inset-bottom, 0px));
 }
 
 html.member-has-workout-fab .member-main-pad {
-  padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(
+    var(--member-nav-stack) + var(--member-fab-size, 3.5rem) + var(--member-fab-gap, 0.75rem) +
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .scroll-to-top-btn {
@@ -571,7 +593,7 @@ html.member-has-workout-fab .member-chat-panel {
 }
 
 .staff-chat-shell {
-  --chat-top-chrome: 10.5rem;
+  --chat-top-chrome: 10.75rem;
   height: calc(100dvh - var(--chat-top-chrome) - env(safe-area-inset-bottom, 0px));
 }
 

@@ -105,6 +105,10 @@ async function main() {
       'T2 recepción /members: bottom nav recepción',
       await page.locator(receptionBottomNav).isVisible()
     );
+    ok(
+      'T2 recepción /members: sin hamburger',
+      (await page.getByRole('button', { name: /^Abrir menú$/i }).count()) === 0
+    );
     await context.close();
   }
 

@@ -28,7 +28,7 @@ export function RestTimerOverlay({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className="animate-in slide-in-from-bottom-8 fixed right-4 bottom-4 left-4 z-50 rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl md:right-8 md:left-auto md:w-80 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="animate-in slide-in-from-bottom-8 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl md:right-8 md:bottom-4 md:left-auto md:w-80 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mx-auto flex max-w-md flex-col items-center">
         <span className="mb-3 text-xs font-medium text-zinc-400 dark:text-zinc-300">Descanso</span>
 

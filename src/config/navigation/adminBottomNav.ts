@@ -30,20 +30,25 @@ export const ADMIN_PRIMARY_TABS: StaffBottomNavTab[] = [
 ];
 
 export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Mostrador', href: '/reception', icon: Fingerprint },
-  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn },
-  { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox },
-  { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
-  { name: 'Entrenadores', href: '/trainers', icon: UserCog },
-  { name: 'Clases', href: '/clases', icon: CalendarDays },
-  { name: 'Asistencias', href: '/attendance', icon: BarChart2 },
-  { name: 'Reportes', href: '/reports', icon: FileSpreadsheet },
-  { name: 'Auditoría', href: '/audit-logs', icon: ScrollText },
-  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
-  { name: 'Equipamiento', href: '/equipment', icon: Wrench },
-  { name: 'Configuración', href: '/settings', icon: Settings2 },
-  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
-  { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
+  {
+    name: 'Mostrador',
+    href: '/reception?mode=counter&tab=access',
+    icon: Fingerprint,
+    section: 'Operación',
+  },
+  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
+  { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox, section: 'Operación' },
+  { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign, section: 'Operación' },
+  { name: 'Entrenadores', href: '/trainers', icon: UserCog, section: 'Operación' },
+  { name: 'Clases', href: '/clases', icon: CalendarDays, section: 'Operación' },
+  { name: 'Asistencias', href: '/attendance', icon: BarChart2, section: 'Operación' },
+  { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
+  { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, section: 'Finanzas' },
+  { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, section: 'Supervisión' },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Supervisión' },
+  { name: 'Configuración', href: '/settings', icon: Settings2, section: 'Cuenta' },
+  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
+  { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 
 export function isAdminBottomNavActive(pathname: string, _search: string, href: string): boolean {
@@ -54,9 +59,17 @@ export function isAdminBottomNavActive(pathname: string, _search: string, href: 
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function isAdminMoreItemActive(pathname: string, _search: string, href: string): boolean {
+export function isAdminMoreItemActive(pathname: string, search: string, href: string): boolean {
   if (href.includes('?')) {
-    return pathname === href.split('?')[0];
+    const [path, query = ''] = href.split('?');
+    if (pathname !== path) return false;
+    if (!query) return true;
+    const expected = new URLSearchParams(query);
+    const current = new URLSearchParams(search);
+    for (const [key, value] of expected.entries()) {
+      if (current.get(key) !== value) return false;
+    }
+    return true;
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

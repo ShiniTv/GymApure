@@ -622,7 +622,7 @@ export default function Members() {
               : isTrainer
                 ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
                 : isReceptionist
-                  ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro walk-in.'
+                  ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro.'
                   : 'Administra usuarios del gym. Puedes eliminar miembros y entrenadores; los administradores no se eliminan desde aquí.'
           }
           action={<BackToDashboardLink />}
@@ -721,7 +721,7 @@ export default function Members() {
             <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
               Crea la cuenta del socio. Para activar membresía y cobrar en el mostrador, use{' '}
               <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-                Modo mostrador → Registro walk-in
+                Modo mostrador → Registro
               </strong>
               .
             </p>
@@ -886,7 +886,7 @@ export default function Members() {
               action={membersEmptyAction}
             />
           }
-          mobileClassName="space-y-2"
+          mobileClassName="flex flex-col gap-4"
           mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
           mobile={(member) => (
             <StaggerItem>
@@ -905,6 +905,7 @@ export default function Members() {
                 onEditShift={openEditShift}
                 onMembershipOperation={handleMembershipOperation}
                 membershipOperationLoading={membershipOperationId === member.id}
+                nutritionFocus={nutritionFocus}
               />
             </StaggerItem>
           )}
@@ -933,6 +934,7 @@ export default function Members() {
               onEditShift={openEditShift}
               onMembershipOperation={handleMembershipOperation}
               membershipOperationLoading={membershipOperationId === member.id}
+              nutritionFocus={nutritionFocus}
             />
           )}
         />

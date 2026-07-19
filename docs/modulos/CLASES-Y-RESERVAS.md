@@ -26,7 +26,7 @@ Módulo de sesiones grupales y reservas de miembros (v2.5+).
 
 ## Flujo miembro
 
-1. Abre **Reservas** (tab en bottom nav).
+1. Abre **Reservas** (Más → Reservas, o sidebar en desktop).
 2. Elige sesión con cupos disponibles (o entra a lista de espera si está llena).
 3. Confirma → notificación in-app / push.
 4. Cancela desde la misma pantalla si la sesión no ha empezado.

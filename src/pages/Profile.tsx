@@ -26,7 +26,7 @@ import {
   ScanLine,
   Printer,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -92,6 +92,7 @@ export default function Profile() {
   );
   const loading = profileLoading;
   const progressLoading = measLoading || (isMember && histLoading);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profileTab, setProfileTab] = useState<
     'datos' | 'salud' | 'progreso' | 'seguridad' | 'apariencia' | 'carne'
   >('datos');
@@ -208,13 +209,11 @@ export default function Profile() {
     const options: { value: typeof profileTab; label: string }[] = [
       { value: 'datos', label: 'Datos' },
     ];
-    if (isMember) {
-      options.push({ value: 'salud', label: 'Salud' });
-    }
     if (isMember && profile?.cedula) {
       options.push({ value: 'carne', label: 'Carné' });
     }
     if (isMember) {
+      options.push({ value: 'salud', label: 'Salud' });
       options.push({ value: 'progreso', label: 'Progreso' });
     }
     options.push(
@@ -223,6 +222,31 @@ export default function Profile() {
     );
     return options;
   }, [isMember, profile?.cedula]);
+
+  useEffect(() => {
+    const raw = searchParams.get('tab');
+    if (!raw) return;
+    const allowed = profileTabOptions.map((o) => o.value);
+    if (allowed.includes(raw as typeof profileTab)) {
+      setProfileTab(raw as typeof profileTab);
+    }
+  }, [searchParams, profileTabOptions]);
+
+  const changeProfileTab = (next: typeof profileTab) => {
+    setProfileTab(next);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === 'datos') {
+          params.delete('tab');
+        } else {
+          params.set('tab', next);
+        }
+        return params;
+      },
+      { replace: true }
+    );
+  };
 
   const handleSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
@@ -463,7 +487,7 @@ export default function Profile() {
         fullWidth
         className="w-full sm:w-auto"
         value={profileTab}
-        onChange={setProfileTab}
+        onChange={changeProfileTab}
         options={profileTabOptions}
       />
 

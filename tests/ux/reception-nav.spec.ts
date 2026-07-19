@@ -19,4 +19,15 @@ test.describe('Recepción bottom nav', () => {
     await expect(nav.getByLabel('Pagos')).toBeVisible();
     await expect(nav.getByLabel('Mensajes')).toBeVisible();
   });
+
+  test('sin hamburger; Más abre sheet con scroll', async ({ page }) => {
+    await page.goto('/reception');
+    await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
+
+    await page.getByRole('button', { name: /^más$/i }).click();
+    const sheet = page.getByRole('dialog', { name: 'Más opciones' });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /modo tablet/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
+  });
 });

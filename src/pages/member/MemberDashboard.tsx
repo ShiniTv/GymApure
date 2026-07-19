@@ -2,15 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
 import { parseDateOnly } from '../../lib/dates';
 import { dateLocale as es } from '../../lib/dateLocale';
-import {
-  AlertTriangle,
-  Clock,
-  CreditCard,
-  Dumbbell,
-  BookOpen,
-  UtensilsCrossed,
-  CalendarDays,
-} from 'lucide-react';
+import { AlertTriangle, Clock, CreditCard, Dumbbell, UtensilsCrossed } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useMemberRoutinesQuery } from '../../hooks/queries/useRoutinesQuery';
@@ -98,10 +90,6 @@ export default function MemberDashboard() {
         routineCompletedToday={primaryRoutineCompletedToday}
       />
 
-      <MemberSelfCheckInCard />
-
-      <PushOnboardingCard />
-
       {pending > 0 && (
         <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-6 py-4 sm:flex-row sm:items-center">
           <div>
@@ -185,30 +173,123 @@ export default function MemberDashboard() {
           );
         })()}
 
-      {sub && !shouldShowExpiryAlert(sub.days_remaining, alertDays) && (
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-              {sub.membership_name}
-            </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {formatRemainingDaysShort(sub.days_remaining)}
-              {sub.end_date
-                ? ` · hasta ${format(parseDateOnly(sub.end_date), 'dd MMM yyyy', { locale: es })}`
-                : ''}
-            </p>
-          </div>
-          <Link to="/payments" className="text-brand text-xs font-bold hover:underline">
-            Historial de pagos
-          </Link>
-        </Card>
-      )}
+      <MemberSelfCheckInCard />
 
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card padding="lg" rounded="2xl">
+          <h3 className="section-title mb-4">Tu rutina</h3>
+          {routine ? (
+            <>
+              <div className="flex items-center gap-4">
+                <div className="bg-brand/10 rounded-2xl p-4">
+                  <Dumbbell className="text-brand h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xl font-bold text-zinc-900 dark:text-white">
+                    {routine.name}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
+                  </p>
+                </div>
+              </div>
+              <Button
+                className="mt-6 w-full"
+                disabled={primaryRoutineCompletedToday}
+                onClick={() => navigate(`/workout/${routine.id}`)}
+              >
+                {primaryRoutineCompletedToday
+                  ? 'Completada hoy'
+                  : primaryRoutineInProgress
+                    ? 'Continuar entrenamiento'
+                    : 'Empezar entrenamiento'}
+              </Button>
+              {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
+                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Tienes un entrenamiento en curso. Puedes retomarlo cuando quieras.
+                </p>
+              )}
+              {primaryRoutineCompletedToday && (
+                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Ya entrenaste esta rutina hoy. Vuelve mañana.
+                </p>
+              )}
+              {(memberStats?.assignedRoutinesCount ?? 0) > 1 && (
+                <Link
+                  to="/routines"
+                  className="text-brand mt-3 block text-center text-xs font-bold hover:underline"
+                >
+                  Ver todos ({memberStats?.assignedRoutinesCount})
+                </Link>
+              )}
+            </>
+          ) : (
+            <EmptyState
+              variant="motivational"
+              icon={Dumbbell}
+              title="Sin rutina asignada"
+              description="Tu entrenador te asignará un plan pronto. Mientras tanto, escríbele por mensajes."
+              action={
+                <Button size="sm" onClick={() => navigate('/messages')}>
+                  Escribir a mi entrenador
+                </Button>
+              }
+            />
+          )}
+        </Card>
+
+        <Card padding="lg" rounded="2xl">
+          <h3 className="section-title mb-4">Membresía</h3>
+          {sub ? (
+            <>
+              <p
+                className={`text-2xl font-bold ${subscriptionPlanNameClass(sub.days_remaining, alertDays)}`}
+              >
+                {sub.membership_name}
+              </p>
+              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                {formatRemainingDaysShort(sub.days_remaining)}
+                {' · '}
+                Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
+              </p>
+              <div className="mt-6 h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div
+                  className="h-3 rounded-full transition-[width,background-color] duration-500"
+                  style={{
+                    width: `${subscriptionBarStyle.widthPercent}%`,
+                    backgroundColor: subscriptionBarStyle.backgroundColor,
+                  }}
+                  role="progressbar"
+                  aria-valuenow={subscriptionBarStyle.widthPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={formatRemainingDaysShort(sub.days_remaining)}
+                />
+              </div>
+              <Link
+                to="/payments"
+                className="text-brand mt-4 inline-block text-xs font-bold hover:underline"
+              >
+                Historial de pagos
+              </Link>
+            </>
+          ) : (
+            <EmptyState
+              variant="motivational"
+              icon={CreditCard}
+              title="Sin membresía activa"
+              description="Reporta tu pago para activar el acceso al gym."
+              action={
+                <Button size="sm" onClick={() => navigate('/payments')}>
+                  Reportar pago
+                </Button>
+              }
+            />
+          )}
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         <QuickAction
           compact
           iconOnlyMobile
@@ -217,24 +298,6 @@ export default function MemberDashboard() {
           title="Rutinas"
           description="Asignaciones activas"
           tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/reservas"
-          icon={CalendarDays}
-          title="Reservas"
-          description="Clases grupales"
-          tone="orange"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/exercises"
-          icon={BookOpen}
-          title="Biblioteca"
-          description="Videos y guías"
-          tone="orange"
         />
         <QuickAction
           compact
@@ -264,6 +327,8 @@ export default function MemberDashboard() {
           tone="emerald"
         />
       </div>
+
+      <PushOnboardingCard />
 
       {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
         <Card padding="lg" rounded="2xl">
@@ -321,112 +386,6 @@ export default function MemberDashboard() {
           </Link>
         </Card>
       )}
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-6">Membresía</h3>
-          {sub ? (
-            <>
-              <p
-                className={`text-2xl font-bold ${subscriptionPlanNameClass(sub.days_remaining, alertDays)}`}
-              >
-                {sub.membership_name}
-              </p>
-              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-                {formatRemainingDaysShort(sub.days_remaining)}
-                {' · '}
-                Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
-              </p>
-              <div className="mt-6 h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
-                <div
-                  className="h-3 rounded-full transition-[width,background-color] duration-500"
-                  style={{
-                    width: `${subscriptionBarStyle.widthPercent}%`,
-                    backgroundColor: subscriptionBarStyle.backgroundColor,
-                  }}
-                  role="progressbar"
-                  aria-valuenow={subscriptionBarStyle.widthPercent}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={formatRemainingDaysShort(sub.days_remaining)}
-                />
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              variant="motivational"
-              icon={CreditCard}
-              title="Sin membresía activa"
-              description="Reporta tu pago para activar el acceso al gym."
-              action={
-                <Button size="sm" onClick={() => navigate('/payments')}>
-                  Reportar pago
-                </Button>
-              }
-            />
-          )}
-        </Card>
-
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-6">Tu rutina</h3>
-          {routine ? (
-            <>
-              <div className="flex items-center gap-4">
-                <div className="bg-brand/10 rounded-2xl p-4">
-                  <Dumbbell className="text-brand h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-zinc-900 dark:text-white">{routine.name}</p>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
-                  </p>
-                </div>
-              </div>
-              <Button
-                className="mt-6 w-full"
-                disabled={primaryRoutineCompletedToday}
-                onClick={() => navigate(`/workout/${routine.id}`)}
-              >
-                {primaryRoutineCompletedToday
-                  ? 'Completada hoy'
-                  : primaryRoutineInProgress
-                    ? 'Continuar entrenamiento'
-                    : 'Empezar entrenamiento'}
-              </Button>
-              {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
-                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                  Tienes un entrenamiento en curso. Puedes retomarlo cuando quieras.
-                </p>
-              )}
-              {primaryRoutineCompletedToday && (
-                <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                  Ya entrenaste esta rutina hoy. Vuelve mañana.
-                </p>
-              )}
-              {(memberStats?.assignedRoutinesCount ?? 0) > 1 && (
-                <Link
-                  to="/routines"
-                  className="text-brand mt-3 block text-center text-xs font-bold hover:underline"
-                >
-                  Ver todos ({memberStats?.assignedRoutinesCount})
-                </Link>
-              )}
-            </>
-          ) : (
-            <EmptyState
-              variant="motivational"
-              icon={Dumbbell}
-              title="Sin rutina asignada"
-              description="Tu entrenador te asignará un plan pronto. Mientras tanto, escríbele por mensajes."
-              action={
-                <Button size="sm" onClick={() => navigate('/messages')}>
-                  Escribir a mi entrenador
-                </Button>
-              }
-            />
-          )}
-        </Card>
-      </div>
 
       {memberStats?.lastWorkout && (
         <Card padding="lg" rounded="2xl">

@@ -6,8 +6,11 @@ import { getDefaultRouteForRole } from '../lib/roles';
 export default function NotFound() {
   const { user } = useAuth();
   const home = user ? getDefaultRouteForRole(user.role) : '/login';
-  const homeLabel =
-    user?.role === 'receptionist' ? 'Inicio' : user ? 'Dashboard' : 'Iniciar sesión';
+  const homeLabel = !user
+    ? 'Iniciar sesión'
+    : user.role === 'admin' || user.role === 'trainer'
+      ? 'Panel'
+      : 'Inicio';
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">

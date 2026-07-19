@@ -16,7 +16,7 @@ import {
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
 export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
-  { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
+  { name: 'Panel', href: '/panel', icon: LayoutDashboard },
   { name: 'Miembros', href: '/members', icon: Users },
   { name: 'Rutinas', href: '/routines', icon: Dumbbell },
   { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },

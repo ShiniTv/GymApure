@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
 import { Button, Card, Input, Label } from '../ui';
@@ -90,11 +91,19 @@ export function MemberSelfCheckInCard() {
           {inside ? 'Estás dentro del gym' : 'Marcar asistencia'}
         </p>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {inside
-            ? 'Cuando salgas, registra la salida aquí o en recepción.'
-            : pinRequired
-              ? 'Pide el PIN del día en recepción para confirmar que estás en sede.'
-              : 'Úsalo en sede. También puedes mostrar tu QR en Perfil para el kiosco.'}
+          {inside ? (
+            'Cuando salgas, registra la salida aquí o en recepción.'
+          ) : pinRequired ? (
+            'Pide el PIN del día en recepción para confirmar que estás en sede.'
+          ) : (
+            <>
+              Úsalo en sede. También puedes mostrar tu QR en{' '}
+              <Link to="/profile?tab=carne" className="text-brand font-semibold hover:underline">
+                Perfil → Carné
+              </Link>{' '}
+              en recepción.
+            </>
+          )}
         </p>
         {!inside && pinRequired && (
           <div className="mt-2 max-w-[12rem]">
