@@ -66,15 +66,21 @@ router.get('/inside', authorize(RECEPTION_OPERATORS), async (_req, res) => {
 
 router.get('/today', authorize(RECEPTION_OPERATORS), async (req, res) => {
   const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  const rawLimit = typeof req.query.limit === 'string' ? Number.parseInt(req.query.limit, 10) : NaN;
+  /** Cap feed payloads; omit or `limit=0` keeps previous unbounded behavior for full-day views. */
+  const limit =
+    Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 200) : null;
 
   try {
-    const params: string[] = [];
+    const params: (string | number)[] = [];
     let searchSql = '';
     const pattern = q ? toLikeContainsPattern(q) : null;
     if (pattern) {
       params.push(pattern);
       searchSql = ` AND (LOWER(u.full_name) LIKE $1${LIKE_ESCAPE_CLAUSE} OR LOWER(COALESCE(u.cedula, '')) LIKE $1${LIKE_ESCAPE_CLAUSE})`;
     }
+    const limitSql = limit != null ? ` LIMIT $${params.length + 1}` : '';
+    if (limit != null) params.push(limit);
 
     const { rows } = await query<{
       id: number;
@@ -91,7 +97,7 @@ router.get('/today', authorize(RECEPTION_OPERATORS), async (req, res) => {
        FROM attendance a
        JOIN users u ON u.id = a.user_id
        WHERE ${sqlTodayRange('a.check_in_time')}${searchSql}
-       ORDER BY a.check_in_time DESC`,
+       ORDER BY a.check_in_time DESC${limitSql}`,
       params
     );
     res.json(rows);

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { MemberOnboarding } from '../../components/members/OnboardingStatus';
 
@@ -61,6 +61,7 @@ export function useMembersQuery(params: MembersQueryParams) {
     queryKey: membersQueryKey(params),
     queryFn: () => fetchMembers(params),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 }
 

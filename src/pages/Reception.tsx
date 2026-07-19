@@ -6,33 +6,21 @@ import {
   Fingerprint,
   LogIn,
   LogOut,
-  UserPlus,
-  Users,
   CheckCircle,
   XCircle,
   AlertTriangle,
   Search,
   Monitor,
-  RefreshCw,
   X,
   ArrowLeft,
   Tablet,
-  CreditCard,
   Pencil,
-  Ticket,
   KeyRound,
+  CreditCard,
+  UserPlus,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
-import {
-  Button,
-  Card,
-  PageHeader,
-  Badge,
-  Spinner,
-  CedulaInput,
-  Label,
-  Modal,
-} from '../components/ui';
+import { Button, Card, PageHeader, Badge, Spinner, CedulaInput, Label } from '../components/ui';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
@@ -41,156 +29,20 @@ import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed
 import ReceptionRenewPayWizard from '../components/reception/ReceptionRenewPayWizard';
 import { ReceptionGuestPasses } from '../components/reception/ReceptionGuestPasses';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
+import { CounterTabNav } from './reception/CounterTabNav';
+import { COUNTER_ACTION, COUNTER_FIELD, COUNTER_SEARCH_BTN } from './reception/counterConstants';
+import { ReceptionCounterModals } from './reception/ReceptionCounterModals';
+import { ReceptionInsideList } from './reception/ReceptionInsideList';
+import type {
+  AttendanceActionResult,
+  InsideMember,
+  LookupResult,
+  ReceptionTab,
+} from './reception/types';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useAuth } from '../context/AuthContext';
-import { OnboardingStatus, type MemberOnboarding } from '../components/members/OnboardingStatus';
-
-interface LookupResult {
-  found: boolean;
-  user?: {
-    id: number;
-    full_name: string;
-    email: string;
-    cedula: string | null;
-    phone: string | null;
-    status: string;
-    role: string;
-  };
-  subscription?: {
-    membership_name: string;
-    end_date: string | null;
-    days_remaining: number;
-    status?: 'active' | 'paused';
-    pause_reason?: string | null;
-  } | null;
-  attendance?: {
-    is_inside: boolean;
-    today_session: { check_in_time: string; check_out_time: string | null } | null;
-  };
-  access_status?: 'allowed' | 'inactive' | 'no_subscription' | 'paused';
-  can_check_in?: boolean;
-  can_check_out?: boolean;
-  onboarding?: MemberOnboarding | null;
-  error?: string;
-}
-
-interface InsideMember {
-  id: number;
-  full_name: string;
-  cedula: string | null;
-  check_in_time: string;
-}
-
-type Tab = 'access' | 'inside' | 'register' | 'renew' | 'guests';
-
-interface AttendanceActionResult {
-  error?: string;
-  user_name?: string;
-  message?: string;
-  already_checked_in?: boolean;
-  already_checked_out?: boolean;
-  duration_label?: string;
-}
-
-/** Touch-friendly counter inputs — compact on mobile */
-const COUNTER_FIELD =
-  'min-h-12 h-12 text-base font-semibold tracking-wide sm:min-h-[52px] sm:h-[52px] sm:text-lg';
-const COUNTER_ACTION = 'min-h-11 sm:min-h-[52px]';
-const COUNTER_SEARCH_BTN = 'h-12 w-12 shrink-0 p-0 sm:h-[52px] sm:w-[52px]';
-
-const COUNTER_PRIMARY_TABS: { value: Tab; label: string; icon: typeof Fingerprint }[] = [
-  { value: 'access', label: 'Acceso', icon: Fingerprint },
-  { value: 'inside', label: 'Dentro', icon: Users },
-];
-
-const COUNTER_SECONDARY_TABS: { value: Tab; label: string; icon: typeof UserPlus }[] = [
-  { value: 'register', label: 'Registro', icon: UserPlus },
-  { value: 'renew', label: 'Renovar', icon: CreditCard },
-  { value: 'guests', label: 'Invitados', icon: Ticket },
-];
-
-function CounterTabNav({
-  tab,
-  insideCount,
-  onChange,
-  renewLabel = 'Renovar',
-}: {
-  tab: Tab;
-  insideCount: number;
-  onChange: (next: Tab) => void;
-  renewLabel?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div
-        className="flex w-full gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
-        role="tablist"
-        aria-label="Operaciones principales"
-      >
-        {COUNTER_PRIMARY_TABS.map((opt) => {
-          const Icon = opt.icon;
-          const active = tab === opt.value;
-          const label = opt.value === 'inside' ? 'Dentro ahora' : opt.label;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(opt.value)}
-              className={cn(
-                'flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all',
-                active
-                  ? 'text-brand bg-white shadow-sm dark:bg-zinc-700'
-                  : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
-              )}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span>{label}</span>
-              {opt.value === 'inside' && insideCount > 0 && (
-                <span
-                  className={cn(
-                    'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
-                    active
-                      ? 'bg-brand/15 text-brand'
-                      : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
-                  )}
-                >
-                  {insideCount}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Más operaciones">
-        {COUNTER_SECONDARY_TABS.map((opt) => {
-          const Icon = opt.icon;
-          const active = tab === opt.value;
-          const label = opt.value === 'renew' ? renewLabel : opt.label;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange(opt.value)}
-              className={cn(
-                'inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors',
-                active
-                  ? 'border-brand/40 bg-brand/10 text-brand'
-                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800/60'
-              )}
-              aria-pressed={active}
-            >
-              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+import { OnboardingStatus } from '../components/members/OnboardingStatus';
 
 export default function Reception() {
   usePageTitle('Recepción');
@@ -198,7 +50,7 @@ export default function Reception() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
-  const initialTab: Tab =
+  const initialTab: ReceptionTab =
     tabParam === 'inside' ||
     tabParam === 'register' ||
     tabParam === 'renew' ||
@@ -206,7 +58,7 @@ export default function Reception() {
       ? tabParam
       : 'access';
 
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const [tab, setTab] = useState<ReceptionTab>(initialTab);
   const [cedula, setCedula] = useState('');
   const [lookup, setLookup] = useState<LookupResult | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -263,7 +115,7 @@ export default function Reception() {
     setSearchParams(next, { replace: true });
   };
 
-  const changeTab = (next: Tab) => {
+  const changeTab = (next: ReceptionTab) => {
     setTab(next);
     const params = new URLSearchParams(searchParams);
     if (next === 'access') {
@@ -815,118 +667,34 @@ export default function Reception() {
   );
 
   const insideList = (
-    <Card padding="md" rounded="xl">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="section-title">Dentro del gym ({insideCount})</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 px-0"
-          onClick={() => void loadStats()}
-          aria-label="Actualizar"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-      {tab === 'inside' && message && <div className="mb-3">{actionMessageBanner}</div>}
-      <div className={cn('scroll-area space-y-2', isCounterMode ? 'max-h-56' : 'max-h-72')}>
-        {inside.map((m) => (
-          <div
-            key={m.id}
-            className="flex items-center gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                {m.full_name}
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{m.cedula || 'Sin cédula'}</p>
-            </div>
-            <p className="shrink-0 text-xs font-medium text-emerald-600">
-              {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 shrink-0 px-2.5 text-xs"
-              disabled={!m.cedula || actionLoading}
-              loading={checkingOutCedula === m.cedula?.trim()}
-              onClick={() => requestCheckout(m)}
-              title={m.cedula ? 'Registrar salida' : 'Sin cédula registrada'}
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Salida</span>
-            </Button>
-          </div>
-        ))}
-        {inside.length === 0 && (
-          <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-300">
-            Nadie dentro en este momento
-          </p>
-        )}
-      </div>
-    </Card>
+    <ReceptionInsideList
+      inside={inside}
+      insideCount={insideCount}
+      tab={tab}
+      isCounterMode={isCounterMode}
+      actionLoading={actionLoading}
+      checkingOutCedula={checkingOutCedula}
+      messageBanner={message ? actionMessageBanner : null}
+      onRefresh={() => void loadStats()}
+      onRequestCheckout={requestCheckout}
+    />
   );
 
-  const checkoutConfirmModal = (
-    <Modal
-      open={checkoutConfirm != null}
-      onClose={() => setCheckoutConfirm(null)}
-      title="¿Registrar salida?"
-      maxWidth="sm"
-    >
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-        Se registrará la salida de{' '}
-        <strong className="text-zinc-900 dark:text-white">{checkoutConfirm?.name}</strong> del gym.
-      </p>
-      <div className="flex gap-3">
-        <Button variant="ghost" className="flex-1" onClick={() => setCheckoutConfirm(null)}>
-          Cancelar
-        </Button>
-        <Button className="flex-1" onClick={() => void confirmCheckout()} loading={actionLoading}>
-          Registrar salida
-        </Button>
-      </div>
-    </Modal>
-  );
-
-  const cedulaEditModal = (
-    <Modal
-      open={cedulaEditOpen}
-      onClose={() => setCedulaEditOpen(false)}
-      title={
-        <>
-          Corregir <span className="text-brand">cédula</span>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <div>
-          <Label>Cédula / ID</Label>
-          <CedulaInput
-            value={cedulaEditValue}
-            onChange={(value) => {
-              setCedulaEditValue(value);
-              if (cedulaEditError) setCedulaEditError('');
-            }}
-          />
-          {cedulaEditError && (
-            <p className="mt-2 text-sm font-medium text-red-500">{cedulaEditError}</p>
-          )}
-        </div>
-        <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={() => setCedulaEditOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            className="flex-1"
-            loading={cedulaEditSaving}
-            onClick={() => void saveCedulaEdit()}
-          >
-            Guardar
-          </Button>
-        </div>
-      </div>
-    </Modal>
+  const counterModals = (
+    <ReceptionCounterModals
+      checkoutConfirm={checkoutConfirm}
+      onCloseCheckout={() => setCheckoutConfirm(null)}
+      onConfirmCheckout={() => void confirmCheckout()}
+      actionLoading={actionLoading}
+      cedulaEditOpen={cedulaEditOpen}
+      onCloseCedulaEdit={() => setCedulaEditOpen(false)}
+      cedulaEditValue={cedulaEditValue}
+      onCedulaEditValueChange={setCedulaEditValue}
+      cedulaEditError={cedulaEditError}
+      onClearCedulaEditError={() => setCedulaEditError('')}
+      cedulaEditSaving={cedulaEditSaving}
+      onSaveCedulaEdit={() => void saveCedulaEdit()}
+    />
   );
 
   if (isCounterMode) {
@@ -1027,8 +795,7 @@ export default function Reception() {
           {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
           {tab === 'guests' && <ReceptionGuestPasses />}
         </div>
-        {checkoutConfirmModal}
-        {cedulaEditModal}
+        {counterModals}
       </div>
     );
   }
@@ -1076,8 +843,7 @@ export default function Reception() {
         {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
         {tab === 'guests' && <ReceptionGuestPasses />}
       </div>
-      {checkoutConfirmModal}
-      {cedulaEditModal}
+      {counterModals}
     </div>
   );
 }

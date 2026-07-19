@@ -12,18 +12,13 @@ test.describe('Member workout FAB', () => {
     await login(page, MEMBER_EMAIL, demoPassword());
   });
 
-  for (const path of ['/', '/routines', '/exercises'] as const) {
+  for (const path of ['/', '/routines', '/exercises', '/nutrition'] as const) {
     test(`visible y centrado en ${path}`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator(memberWorkoutFab)).toBeVisible({ timeout: 15_000 });
       await assertFabCentered(page);
     });
   }
-
-  test('oculto en nutrición', async ({ page }) => {
-    await page.goto('/nutrition');
-    await expect(page.locator(memberWorkoutFab)).toBeHidden();
-  });
 
   test('posición estable al navegar a rutinas', async ({ page }) => {
     await page.goto('/panel');

@@ -8,6 +8,7 @@ interface SheetProps {
   onClose: () => void;
   children: ReactNode;
   title?: ReactNode;
+  closeLabel?: string;
   side?: 'bottom' | 'top';
   className?: string;
   /** Classes for the inner card surface */
@@ -26,6 +27,7 @@ export function Sheet({
   onClose,
   children,
   title,
+  closeLabel = 'Cerrar',
   side = 'bottom',
   className,
   cardClassName,
@@ -52,7 +54,25 @@ export function Sheet({
     const sheet = sheetRef.current;
     if (sheet) {
       const focusables = sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
-      requestAnimationFrame(() => focusables[0]?.focus());
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      requestAnimationFrame(() => first?.focus());
+
+      const trapFocus = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab' || focusables.length === 0) return;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      };
+      document.addEventListener('keydown', trapFocus);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('keydown', trapFocus);
+      };
     }
 
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -101,7 +121,7 @@ export function Sheet({
                 type="button"
                 onClick={onClose}
                 className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                aria-label="Cerrar"
+                aria-label={closeLabel}
               >
                 <X className="h-4 w-4" />
               </button>

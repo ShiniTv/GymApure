@@ -35,9 +35,9 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 
 | Opción     | Ruta         |
 | ---------- | ------------ |
-| Nutrición  | `/nutrition` |
-| Biblioteca | `/exercises` |
 | Mensajes   | `/messages`  |
+| Reservas   | `/reservas`  |
+| Biblioteca | `/exercises` |
 | Historial  | `/history`   |
 | Pagos      | `/payments`  |
 | Mi Perfil  | `/profile`   |

@@ -326,22 +326,10 @@ export default function Layout() {
                 className={clsx(
                   'shrink-0 space-y-0.5 border-t border-zinc-200 dark:border-zinc-800',
                   sidebarCollapsed ? 'px-0 py-2' : 'px-2.5 py-2.5',
-                  isReceptionMobileShell &&
-                    (isSidebarOpen
-                      ? 'pb-[env(safe-area-inset-bottom)]'
-                      : 'pb-[calc(var(--reception-nav-stack)+env(safe-area-inset-bottom))]'),
-                  isTrainerMobileShell &&
-                    (isSidebarOpen
-                      ? 'pb-[env(safe-area-inset-bottom)]'
-                      : 'pb-[calc(var(--trainer-nav-stack)+env(safe-area-inset-bottom))]'),
-                  isAdminMobileShell &&
-                    (isSidebarOpen
-                      ? 'pb-[env(safe-area-inset-bottom)]'
-                      : 'pb-[calc(var(--admin-nav-stack)+env(safe-area-inset-bottom))]'),
-                  isMemberMobileShell &&
-                    (isSidebarOpen
-                      ? 'pb-[env(safe-area-inset-bottom)]'
-                      : 'pb-[calc(var(--member-nav-stack)+env(safe-area-inset-bottom))] lg:pb-2.5')
+                  isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
+                  isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
+                  isAdminMobileShell && 'pb-[env(safe-area-inset-bottom)]',
+                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-2.5'
                 )}
               >
                 {!sidebarCollapsed && (

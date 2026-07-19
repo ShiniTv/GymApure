@@ -80,6 +80,18 @@ jobs:
       - name: Database table audit
         run: npm run db:audit-tables
 
+      - name: Write .env.dev for CI demo seed
+        run: |
+          {
+            echo "DATABASE_URL=${DATABASE_URL}"
+            echo "JWT_SECRET=${JWT_SECRET}"
+            echo "CRON_SECRET=${CRON_SECRET}"
+            echo "DEMO_PASSWORD=${DEMO_PASSWORD}"
+            echo "ALLOW_PUBLIC_REGISTER=${ALLOW_PUBLIC_REGISTER}"
+            echo "PUBLIC_APP_URL=${PUBLIC_APP_URL}"
+            echo "NODE_ENV=development"
+          } > .env.dev
+
       - name: Seed demo users
         run: npm run db:restore-demo
 

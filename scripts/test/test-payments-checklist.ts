@@ -52,8 +52,7 @@ async function jsonApi(method: string, path: string, body?: unknown) {
 }
 
 function saveCookie(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const cookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
   const parts: string[] = [];
   for (const entry of cookies) {
     if (entry.startsWith('token=')) {
@@ -138,7 +137,10 @@ async function main() {
   await login(MEMBER_APPROVE_EMAIL, MEMBER_PASSWORD);
 
   const rateRes = await jsonApi('GET', '/api/exchange-rate');
-  ok('GET tasa BCV activa', rateRes.res.status === 200 && (rateRes.data as { rate?: number }).rate! > 0);
+  ok(
+    'GET tasa BCV activa',
+    rateRes.res.status === 200 && (rateRes.data as { rate?: number }).rate! > 0
+  );
   const activeRate = (rateRes.data as { rate: number }).rate;
   const expectedBs = Math.round(30 * activeRate * 100) / 100;
 
@@ -170,7 +172,10 @@ async function main() {
   const memberPayments = await jsonApi('GET', '/api/payments');
   ok('Miembro ve sus pagos', memberPayments.res.status === 200);
   const memberList = (memberPayments.data as { items?: { id: number }[] }).items ?? [];
-  ok('Lista filtrada al miembro', Array.isArray(memberList) && memberList.some((p) => Number(p.id) === Number(paymentIdApprove)));
+  ok(
+    'Lista filtrada al miembro',
+    Array.isArray(memberList) && memberList.some((p) => Number(p.id) === Number(paymentIdApprove))
+  );
 
   await login(MEMBER_REJECT_EMAIL, MEMBER_PASSWORD);
   const report2 = await reportPayment(`REF-REJECT-${Date.now()}`);
@@ -236,7 +241,11 @@ async function main() {
 
   const checkInRes = await receptionCheckIn(receptionCookie, CEDULA_APPROVE);
   const checkIn = { res: checkInRes, data: await checkInRes.json().catch(() => ({})) };
-  ok('Check-in tras pago aprobado', checkIn.res.status === 200 && checkIn.data.success === true);
+  ok(
+    'Check-in tras pago aprobado',
+    checkIn.res.status === 200 && checkIn.data.success === true,
+    JSON.stringify(checkIn.data)
+  );
 
   await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   const rejectWithoutReason = await jsonApi('POST', `/api/payments/${paymentIdReject}/reject`, {});

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, Fragment } from 'react';
+import { useState, useRef, useEffect, Fragment, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Star } from 'lucide-react';
 import clsx from 'clsx';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
@@ -20,6 +20,9 @@ interface StaffBottomNavProps {
   isPrimaryTabActive: (pathname: string, search: string, tab: StaffBottomNavTab) => boolean;
   isMoreItemActive: (pathname: string, search: string, href: string) => boolean;
   isMoreTabActive: (pathname: string, search: string) => boolean;
+  /** When set with onToggleFavorite, Más rows show a pin control. */
+  favoriteHrefs?: string[];
+  onToggleFavorite?: (href: string) => void;
 }
 
 export function StaffBottomNav({
@@ -30,12 +33,15 @@ export function StaffBottomNav({
   isPrimaryTabActive,
   isMoreItemActive,
   isMoreTabActive,
+  favoriteHrefs,
+  onToggleFavorite,
 }: StaffBottomNavProps) {
   const location = useLocation();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const favoritesEnabled = Boolean(onToggleFavorite);
 
   const sheetBottomStyle = {
     bottom: `calc(var(${navStackVar}) + env(safe-area-inset-bottom, 0px))`,
@@ -51,6 +57,13 @@ export function StaffBottomNav({
   }, [location.pathname, location.search]);
 
   const moreTabHighlighted = isMoreTabActive(location.pathname, location.search) || moreOpen;
+
+  const handleToggleFavorite = useCallback(
+    (href: string) => {
+      onToggleFavorite?.(href);
+    },
+    [onToggleFavorite]
+  );
 
   return (
     <>
@@ -69,6 +82,7 @@ export function StaffBottomNav({
             const itemActive = isMoreItemActive(location.pathname, location.search, item.href);
             const prevSection = index > 0 ? moreItems[index - 1]?.section : undefined;
             const showSection = Boolean(item.section && item.section !== prevSection);
+            const isFavorite = favoriteHrefs?.includes(item.href) ?? false;
             return (
               <Fragment key={item.href}>
                 {showSection && (
@@ -78,13 +92,13 @@ export function StaffBottomNav({
                     </p>
                   </li>
                 )}
-                <li>
+                <li className="flex items-center gap-1">
                   <Link
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     onClick={closeMore}
                     className={clsx(
-                      'flex min-h-[var(--touch-min)] touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
+                      'flex min-h-[var(--touch-min)] min-w-0 flex-1 touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
                       itemActive
                         ? 'bg-brand/10 text-brand'
                         : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
@@ -108,6 +122,24 @@ export function StaffBottomNav({
                       </span>
                     )}
                   </Link>
+                  {favoritesEnabled && (
+                    <button
+                      type="button"
+                      className={clsx(
+                        'inline-flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-colors',
+                        isFavorite
+                          ? 'text-brand'
+                          : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
+                      )}
+                      aria-label={
+                        isFavorite ? `Quitar ${item.name} de favoritos` : `Fijar ${item.name}`
+                      }
+                      aria-pressed={isFavorite}
+                      onClick={() => handleToggleFavorite(item.href)}
+                    >
+                      <Star className={clsx('h-4 w-4', isFavorite && 'fill-current')} aria-hidden />
+                    </button>
+                  )}
                 </li>
               </Fragment>
             );
