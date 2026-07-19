@@ -19,13 +19,13 @@ test.describe('Trainer nutrición quick action', () => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
   });
 
-  test('quick action Planes nutricionales lleva a miembros con focus', async ({ page }) => {
+  test('quick action Nutrición lleva a miembros con focus', async ({ page }) => {
     await page.goto('/panel');
     await waitForTrainerDashboard(page);
     // Quick action en el panel (evitar ambigüedad con el mismo link del sidebar)
     const nutritionLink = page
       .locator('#main-content')
-      .getByRole('link', { name: /planes nutricionales/i });
+      .getByRole('link', { name: /nutrición:\s*planes nutricionales/i });
     await nutritionLink.scrollIntoViewIfNeeded();
     await expect(nutritionLink).toBeVisible({ timeout: 15_000 });
 
