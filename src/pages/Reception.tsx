@@ -29,7 +29,6 @@ import {
   PageHeader,
   Badge,
   Spinner,
-  SegmentedControl,
   CedulaInput,
   Label,
   Modal,
@@ -99,6 +98,99 @@ const COUNTER_FIELD =
   'min-h-12 h-12 text-base font-semibold tracking-wide sm:min-h-[52px] sm:h-[52px] sm:text-lg';
 const COUNTER_ACTION = 'min-h-11 sm:min-h-[52px]';
 const COUNTER_SEARCH_BTN = 'h-12 w-12 shrink-0 p-0 sm:h-[52px] sm:w-[52px]';
+
+const COUNTER_PRIMARY_TABS: { value: Tab; label: string; icon: typeof Fingerprint }[] = [
+  { value: 'access', label: 'Acceso', icon: Fingerprint },
+  { value: 'inside', label: 'Dentro', icon: Users },
+];
+
+const COUNTER_SECONDARY_TABS: { value: Tab; label: string; icon: typeof UserPlus }[] = [
+  { value: 'register', label: 'Registro', icon: UserPlus },
+  { value: 'renew', label: 'Renovar', icon: CreditCard },
+  { value: 'guests', label: 'Invitados', icon: Ticket },
+];
+
+function CounterTabNav({
+  tab,
+  insideCount,
+  onChange,
+  renewLabel = 'Renovar',
+}: {
+  tab: Tab;
+  insideCount: number;
+  onChange: (next: Tab) => void;
+  renewLabel?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div
+        className="flex w-full gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
+        role="tablist"
+        aria-label="Operaciones principales"
+      >
+        {COUNTER_PRIMARY_TABS.map((opt) => {
+          const Icon = opt.icon;
+          const active = tab === opt.value;
+          const label = opt.value === 'inside' ? 'Dentro ahora' : opt.label;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(opt.value)}
+              className={cn(
+                'flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all',
+                active
+                  ? 'text-brand bg-white shadow-sm dark:bg-zinc-700'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+              )}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>{label}</span>
+              {opt.value === 'inside' && insideCount > 0 && (
+                <span
+                  className={cn(
+                    'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
+                    active
+                      ? 'bg-brand/15 text-brand'
+                      : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                  )}
+                >
+                  {insideCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Más operaciones">
+        {COUNTER_SECONDARY_TABS.map((opt) => {
+          const Icon = opt.icon;
+          const active = tab === opt.value;
+          const label = opt.value === 'renew' ? renewLabel : opt.label;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange(opt.value)}
+              className={cn(
+                'inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors',
+                active
+                  ? 'border-brand/40 bg-brand/10 text-brand'
+                  : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800/60'
+              )}
+              aria-pressed={active}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function Reception() {
   usePageTitle('Recepción');
@@ -435,8 +527,8 @@ export default function Reception() {
             </p>
             <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
               {checkInPin.required
-                ? 'Obligatorio para self check-in del miembro'
-                : 'Disponible · self check-in no lo exige aún'}
+                ? 'Obligatorio para el ingreso desde la app del miembro'
+                : 'Disponible · el ingreso desde la app aún no lo exige'}
             </p>
           </div>
           {user?.role === 'admin' ? (
@@ -704,7 +796,7 @@ export default function Reception() {
           <Link to={walkInHref(cedula)}>
             <Button variant="secondary" size="sm">
               <UserPlus className="mr-2 h-4 w-4" />
-              Iniciar walk-in
+              Iniciar registro en mostrador
             </Button>
           </Link>
           <Link to="/members">
@@ -895,27 +987,24 @@ export default function Reception() {
         </div>
 
         <div className="panel-wide space-y-4">
-          <SegmentedControl
-            variant="compact"
-            value={tab}
-            onChange={(v) => changeTab(v)}
-            options={[
-              { value: 'access', label: 'Acceso', icon: Fingerprint },
-              { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
-              { value: 'register', label: 'Registro', icon: UserPlus },
-              { value: 'renew', label: 'Renovar', icon: CreditCard },
-              { value: 'guests', label: 'Invitados', icon: Ticket },
-            ]}
-          />
+          <CounterTabNav tab={tab} insideCount={insideCount} onChange={changeTab} />
 
           {tab === 'access' && (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-5 lg:gap-4">
-              <div className="space-y-3 lg:col-span-3 lg:space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-5 md:gap-4">
+              <div className="space-y-3 md:col-span-3 md:space-y-4">
                 {pinBanner}
                 {lookupPanel}
                 {showMemberPanel && memberPanel}
+                <button
+                  type="button"
+                  onClick={() => changeTab('inside')}
+                  className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-xs font-semibold text-zinc-700 md:hidden dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300"
+                >
+                  <span>Dentro ahora</span>
+                  <span className="text-brand tabular-nums">{insideCount}</span>
+                </button>
               </div>
-              <aside className="hidden space-y-4 lg:col-span-2 lg:block">
+              <aside className="hidden space-y-4 md:col-span-2 md:block">
                 {insideList}
                 <Card padding="md" rounded="xl">
                   <h3 className="section-title mb-2">Actividad reciente</h3>
@@ -959,17 +1048,11 @@ export default function Reception() {
           subtitle="Busque por cédula para autorizar entrada y salida"
         />
 
-        <SegmentedControl
-          variant="compact"
-          value={tab}
-          onChange={(v) => changeTab(v)}
-          options={[
-            { value: 'access', label: 'Entrada / Salida', icon: Fingerprint },
-            { value: 'inside', label: 'Dentro ahora', icon: Users, count: insideCount },
-            { value: 'register', label: 'Registro', icon: UserPlus },
-            { value: 'renew', label: 'Renovar y cobrar', icon: CreditCard },
-            { value: 'guests', label: 'Invitados', icon: Ticket },
-          ]}
+        <CounterTabNav
+          tab={tab}
+          insideCount={insideCount}
+          onChange={changeTab}
+          renewLabel="Renovar y cobrar"
         />
 
         {tab === 'access' && (

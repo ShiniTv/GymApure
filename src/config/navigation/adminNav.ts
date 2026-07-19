@@ -32,7 +32,7 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Entrenadores', href: '/trainers', icon: UserCog },
       { name: 'Clases', href: '/clases', icon: CalendarDays },
       { name: 'Equipamiento', href: '/equipment', icon: Wrench },
-      { name: 'Mostrador', href: '/reception', icon: Fingerprint },
+      { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: Fingerprint },
       { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox },
     ],
   },

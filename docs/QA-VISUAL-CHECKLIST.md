@@ -6,12 +6,12 @@ Repetir tras cambios de UI. Nav móvil actualizado julio 2026.
 
 - [ ] Sin scroll horizontal
 - [ ] Bottom nav pill: **Inicio**, **Rutinas**, **Nutrición**, **Más**
-- [ ] Sheet "Más": Biblioteca, Mensajes, Historial, Pagos, Mi Perfil
+- [ ] Sheet "Más": Mensajes, Reservas, Biblioteca, Historial, Pagos, Mi Perfil
 - [ ] FAB "Entrenar" centrado en `/`, `/rutinas`, `/exercises`; oculto en `/nutrition`
 - [ ] Bottom nav **oculta** en `/workout/:id`
 - [ ] Drawer sidebar: footer pegado al fondo (sin hueco debajo)
-- [ ] Inicio: grid 4 iconos compactos (Rutinas, Biblioteca, Nutrición, Historial, Pagos)
-- [ ] Workout activo: Completar dentro del card; pasos y video a ancho completo
+- [ ] Inicio: grid 4 iconos (Rutinas, Nutrición, Historial, Pagos); hero + Tu rutina arriba
+- [ ] Workout activo: Completar dentro del card; pasos colapsados por defecto; pager ≥44px
 
 ## Móvil 390×844 — Entrenador (`trainer@gym.com`)
 

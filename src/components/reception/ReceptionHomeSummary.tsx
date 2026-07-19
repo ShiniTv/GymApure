@@ -277,7 +277,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
                 to="/payments?status=pending"
                 icon={CreditCard}
                 title="Pagos"
-                description="Aprobar pagos walk-in"
+                description="Aprobar pagos del mostrador"
                 count={pendingPayments}
                 tone="emerald"
                 compact

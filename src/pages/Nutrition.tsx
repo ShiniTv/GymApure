@@ -270,7 +270,7 @@ export default function Nutrition() {
             unit="g"
           />
           <MacroRing
-            label="Carbs"
+            label="Carbos"
             consumed={totals.carbs}
             target={plan.carbs_target_g}
             colorClass="text-blue-500"

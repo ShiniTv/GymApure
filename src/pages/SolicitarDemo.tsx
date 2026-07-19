@@ -65,7 +65,7 @@ export default function SolicitarDemo() {
             <h1 className="text-4xl leading-tight font-bold sm:text-5xl">{BRAND.heroHeadline}</h1>
             <p className="max-w-md text-base text-zinc-400 sm:text-lg">{BRAND.heroSubheadline}</p>
             <ul className="space-y-2 text-sm text-zinc-300">
-              <li>Recepción, check-in y walk-in en minutos</li>
+              <li>Recepción, check-in y registro en mostrador en minutos</li>
               <li>Pagos con comprobante y tasa BCV</li>
               <li>Rutinas, clases y chat con miembros</li>
             </ul>

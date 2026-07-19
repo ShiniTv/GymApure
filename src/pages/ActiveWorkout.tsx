@@ -1101,7 +1101,7 @@ export default function ActiveWorkout() {
         </div>
       </Modal>
 
-      {isMobileFocus && routine.exercises.length > 1 && (
+      {isMobileFocus && !isResting && routine.exercises.length > 1 && (
         <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-200 bg-zinc-50/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden dark:border-zinc-800 dark:bg-zinc-950/95">
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <Button
@@ -1123,7 +1123,7 @@ export default function ActiveWorkout() {
               <p className="text-brand text-sm font-semibold">
                 {focusedIndex + 1} / {routine.exercises.length}
               </p>
-              <div className="mt-1.5 flex justify-center gap-1">
+              <div className="mt-1.5 flex flex-wrap justify-center gap-0.5">
                 {routine.exercises.map((ex, i) => (
                   <button
                     key={ex.id}
@@ -1131,13 +1131,20 @@ export default function ActiveWorkout() {
                     onClick={() => {
                       setFocusedIndex(i);
                     }}
-                    className={cn(
-                      'h-1.5 rounded-full transition-all',
-                      i === focusedIndex ? 'bg-brand w-5' : 'w-1.5 bg-zinc-300 dark:bg-zinc-700',
-                      completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
-                    )}
+                    className="flex h-11 w-11 items-center justify-center"
                     aria-label={`Ejercicio ${i + 1}`}
-                  />
+                    aria-current={i === focusedIndex ? 'true' : undefined}
+                  >
+                    <span
+                      className={cn(
+                        'rounded-full transition-all',
+                        i === focusedIndex
+                          ? 'bg-brand h-2.5 w-5'
+                          : 'h-2.5 w-2.5 bg-zinc-300 dark:bg-zinc-700',
+                        completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
+                      )}
+                    />
+                  </button>
                 ))}
               </div>
             </div>
@@ -1219,7 +1226,7 @@ export default function ActiveWorkout() {
                       className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400 dark:hover:text-white"
                     >
                       <Video className="h-3.5 w-3.5" />
-                      {showVideo[exercise.id] ? 'Cerrar Video' : 'Video Guía'}
+                      {showVideo[exercise.id] ? 'Cerrar video' : 'Video guía'}
                     </button>
                   )}
 
@@ -1230,12 +1237,14 @@ export default function ActiveWorkout() {
                       onClick={() => {
                         setShowExecution((prev) => ({
                           ...prev,
-                          [exercise.id]: !(prev[exercise.id] ?? true),
+                          [exercise.id]: !(prev[exercise.id] ?? false),
                         }));
                       }}
                     >
                       <BookOpen className="h-3.5 w-3.5" />
-                      <span>{(showExecution[exercise.id] ?? true) ? 'Ocultar' : 'Ejecución'}</span>
+                      <span>
+                        {(showExecution[exercise.id] ?? false) ? 'Ocultar' : 'Ver ejecución'}
+                      </span>
                       <span className="bg-brand/10 text-brand dark:bg-brand/20 rounded px-1.5 py-0.5 text-[10px] font-bold">
                         {executionStepCount(exercise.execution)} pasos
                       </span>
@@ -1243,7 +1252,7 @@ export default function ActiveWorkout() {
                   )}
                 </div>
 
-                {exercise.execution && (showExecution[exercise.id] ?? true) && (
+                {exercise.execution && (showExecution[exercise.id] ?? false) && (
                   <ExerciseExecutionSteps
                     execution={exercise.execution}
                     compact
@@ -1383,7 +1392,7 @@ export default function ActiveWorkout() {
             <div className="text-left">
               <p className="font-semibold text-emerald-600 dark:text-emerald-500">Sí, la logré</p>
               <p className="text-xs font-medium text-emerald-600/60 dark:text-emerald-500/60">
-                Todos los sets completados
+                Todas las series completadas
               </p>
             </div>
             <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-emerald-500 transition-all group-hover:bg-emerald-500 group-hover:text-white">

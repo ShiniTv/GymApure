@@ -225,7 +225,9 @@ export function MemberBottomNav() {
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-expanded={moreOpen}
-                      aria-label={item.name}
+                      aria-label={
+                        chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
+                      }
                     >
                       <span className="relative">
                         <span
@@ -236,6 +238,11 @@ export function MemberBottomNav() {
                         >
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
+                        {chatUnread > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
+                            {chatUnread > 9 ? '9+' : chatUnread}
+                          </span>
+                        )}
                       </span>
                     </button>
                   </li>

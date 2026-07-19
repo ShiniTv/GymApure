@@ -17,8 +17,11 @@ Comportamiento de la interfaz móvil, navegación inferior y aplicación instala
 
 ### Bottom nav pill
 
-Tabs: **Inicio**, **Rutinas**, **Mensajes**, **Más**.
+Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**.
 
+### Sheet Más
+
+Mensajes, Reservas, Biblioteca, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
 Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### FAB "Entrenar"
@@ -26,10 +29,6 @@ Oculta en `/workout/:id` (entrenamiento inmersivo).
 - Visible en `/`, `/routines`, `/exercises`
 - Oculto en `/nutrition` y durante workout
 - Posición ajustada con CSS `--member-nav-stack` y `--member-fab-gap`
-
-### Sheet "Más"
-
-Reservas, Nutrición, Biblioteca, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
 
 ### Drawer sidebar
 

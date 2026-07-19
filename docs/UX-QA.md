@@ -24,10 +24,10 @@ npm run dev
 
 | #   | Flujo                 | Criterio                                                                                     | Auto    | Resultado |
 | --- | --------------------- | -------------------------------------------------------------------------------------------- | ------- | --------- |
-| 1   | Bottom nav            | Pill en `/`, `/routines`, `/messages`; **oculta** en `/workout/:id`                          | Browser | ☑         |
+| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`                         | Browser | ☑         |
 | 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                      | Browser | ☑         |
-| 3   | Workout activo        | Pager inferior sin solapamiento con nav                                                      | Browser | ☑         |
-| 4   | Mensajes              | Composer visible; no tapado por pill                                                         | Browser | ☑         |
+| 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto           | Browser | ☑         |
+| 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                       | Browser | ☑         |
 | 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger                                                    | Browser | ☑         |
 | 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                          | Manual  | ☑         |
 | 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                     | Browser | ☑         |
@@ -160,7 +160,7 @@ npm run test:ux
 - Skeleton en dashboards staff (sustituir flash CARGANDO)
 - CI opcional: job `ux-browser` solo proyecto `mobile`
 
-**Hecho en revisión full-stack:** PTR en KPIs de recepción; Mensajes en pill principal (Reservas en Más).
+**Hecho en revisión full-stack:** PTR en KPIs de recepción; Nutrición en pill principal (Mensajes en Más).
 
 Verificación API #16–18:
 

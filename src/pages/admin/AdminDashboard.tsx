@@ -22,11 +22,15 @@ import {
   FileSpreadsheet,
   BarChart2,
   Wrench,
+  Monitor,
   Mail,
   Inbox,
   CalendarDays,
+  LogIn,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
+import { DashboardSection } from '../../components/admin/DashboardSection';
+import { StaffPortalBanner } from '../../components/StaffPortalBanner';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import {
@@ -49,7 +53,7 @@ const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 type RevenueRange = '7d' | '30d' | '6m';
 
 export default function AdminDashboard() {
-  usePageTitle('Dashboard');
+  usePageTitle('Panel');
   const adminStats = useAdminStats();
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
@@ -145,8 +149,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-2.5 sm:space-y-3">
-      <PageHeader
-        compact
+      <StaffPortalBanner
+        eyebrow="Panel administrativo"
         title={
           <>
             Administración <span className="text-brand">general</span>
@@ -260,130 +264,167 @@ export default function AdminDashboard() {
         </p>
       )}
 
-      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5">
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/payments?status=pending"
-          icon={AlertTriangle}
-          title="Pagos"
-          description="Revisar y aprobar"
-          count={pendingPayments}
-          tone="red"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/members?expiring=true"
-          icon={CalendarClock}
-          title="Miembros"
-          description="Membresías por vencer"
-          count={expiringSoon}
-          tone="orange"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/equipment"
-          icon={Wrench}
-          title="Equipamiento"
-          description="Inventario y mantenimiento"
-          count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
-          tone="orange"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/attendance"
-          icon={Fingerprint}
-          title="Asistencias"
-          description="Volumen de ingreso"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/settings"
-          icon={Settings2}
-          title="Configuración"
-          description="Avisos y salud"
-          tone="emerald"
-        />
-      </div>
+      <DashboardSection title="Requiere acción" compact>
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/reception?mode=counter&tab=access"
+            icon={Monitor}
+            title="Mostrador"
+            description="Check-in y registro"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/payments?status=pending"
+            icon={AlertTriangle}
+            title="Pagos"
+            description="Revisar y aprobar"
+            count={pendingPayments}
+            tone="red"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/members?expiring=true"
+            icon={CalendarClock}
+            title="Miembros"
+            description="Membresías por vencer"
+            count={expiringSoon}
+            tone="orange"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/equipment"
+            icon={Wrench}
+            title="Equipamiento"
+            description="Inventario y mantenimiento"
+            count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
+            tone="orange"
+          />
+        </div>
+      </DashboardSection>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Card padding="sm" rounded="xl" className="space-y-1">
-          <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-            Pagos &gt;2 días
-          </p>
-          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-            {pendingOld}
-          </p>
-        </Card>
-        <Card padding="sm" rounded="xl" className="space-y-1">
-          <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-            <CalendarDays className="h-3 w-3" />
-            Clases hoy
-          </p>
-          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-            {classFill}%
-            <span className="ml-1 text-xs font-normal text-zinc-500">
-              ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
-            </span>
-          </p>
-        </Card>
-        <Card padding="sm" rounded="xl" className="space-y-1">
-          <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">Pausadas</p>
-          <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-            {pausedSubs}
-          </p>
-        </Card>
-        <Link to="/demo-leads">
-          <Card
-            padding="sm"
-            rounded="xl"
-            className="hover:border-brand/40 space-y-1 transition-colors"
-          >
-            <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-              <Inbox className="h-3 w-3" />
-              Demos
+      <DashboardSection title="Operación" compact>
+        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-3 sm:gap-3">
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/check-in?kiosk=1"
+            icon={LogIn}
+            title="Modo tablet"
+            description="Check-in en tablet"
+            tone="emerald"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/attendance"
+            icon={Fingerprint}
+            title="Asistencias"
+            description="Volumen de ingreso"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/settings"
+            icon={Settings2}
+            title="Configuración"
+            description="Avisos y salud"
+            tone="emerald"
+          />
+        </div>
+      </DashboardSection>
+
+      <DashboardSection title="Finanzas y supervisión" compact>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Card padding="sm" rounded="xl" className="space-y-1">
+            <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              Pagos &gt;2 días
             </p>
             <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-              {demoPending}
+              {pendingOld}
             </p>
           </Card>
-        </Link>
-      </div>
+          <Card padding="sm" rounded="xl" className="space-y-1">
+            <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              <CalendarDays className="h-3 w-3" />
+              Clases hoy
+            </p>
+            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              {classFill}%
+              <span className="ml-1 text-xs font-normal text-zinc-500">
+                ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
+              </span>
+            </p>
+          </Card>
+          <Card padding="sm" rounded="xl" className="space-y-1">
+            <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">Pausadas</p>
+            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              {pausedSubs}
+            </p>
+          </Card>
+          {demoPending > 0 ? (
+            <Link to="/demo-leads">
+              <Card
+                padding="sm"
+                rounded="xl"
+                className="hover:border-brand/40 space-y-1 transition-colors"
+              >
+                <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                  <Inbox className="h-3 w-3" />
+                  Demos
+                </p>
+                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {demoPending}
+                </p>
+              </Card>
+            </Link>
+          ) : (
+            <Card padding="sm" rounded="xl" className="space-y-1 opacity-60">
+              <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                <Inbox className="h-3 w-3" />
+                Demos
+              </p>
+              <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">0</p>
+            </Card>
+          )}
+        </div>
 
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/reports"
-          icon={FileSpreadsheet}
-          title="Reportes"
-          description="Exportar datos"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/nutrition-overview"
-          icon={UtensilsCrossed}
-          title="Nutrición"
-          description="Adherencia general"
-          tone="emerald"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/audit-logs"
-          icon={BarChart2}
-          title="Auditoría"
-          description="Registro de actividad"
-          tone="orange"
-        />
-      </div>
+        <div className="mt-2 grid grid-cols-3 gap-1.5 sm:gap-3">
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/reports"
+            icon={FileSpreadsheet}
+            title="Reportes"
+            description="Exportar datos"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/nutrition-overview"
+            icon={UtensilsCrossed}
+            title="Nutrición"
+            description="Adherencia general"
+            tone="emerald"
+          />
+          <QuickAction
+            compact
+            iconOnlyMobile
+            to="/audit-logs"
+            icon={BarChart2}
+            title="Auditoría"
+            description="Registro de actividad"
+            tone="orange"
+          />
+        </div>
+      </DashboardSection>
 
       {expiringList.length > 0 ? (
         <Card padding="sm" rounded="xl">

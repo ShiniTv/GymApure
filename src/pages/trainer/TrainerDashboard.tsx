@@ -13,8 +13,9 @@ import {
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { DashboardSection } from '../../components/admin/DashboardSection';
+import { StaffPortalBanner } from '../../components/StaffPortalBanner';
 import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
-import { StatCard, Card, PageHeader, Badge, EmptyState, Button } from '../../components/ui';
+import { StatCard, Card, Badge, EmptyState, Button, PageHeader } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
 
 export default function TrainerDashboard() {
@@ -23,9 +24,6 @@ export default function TrainerDashboard() {
   const { data: trainerStats, isError, refetch } = useTrainerStatsQuery();
 
   const stats = trainerStats;
-  const withoutRoutines = trainerStats?.membersWithoutRoutines ?? 0;
-  const expiringMembers = trainerStats?.expiringMembers ?? [];
-  const trainerHasAlerts = withoutRoutines > 0 || expiringMembers.length > 0;
 
   if (isError) {
     return (
@@ -54,45 +52,20 @@ export default function TrainerDashboard() {
 
   return (
     <div className="page-stack-tight">
-      <PageHeader
-        compact
+      <StaffPortalBanner
+        eyebrow="Portal entrenador"
         title={
           <>
             Control de <span className="text-brand">entrenamiento</span>
           </>
         }
         subtitle="Actividad con tus miembros"
-        badge={stats?.activeNow ? `${stats.activeNow} de mis miembros en el gym` : undefined}
+        action={
+          stats?.activeNow ? (
+            <Badge variant="success">{stats.activeNow} en el gym</Badge>
+          ) : undefined
+        }
       />
-
-      {trainerHasAlerts && (
-        <Card padding="sm" rounded="xl" className="border-brand/30 bg-brand/5">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="text-brand mt-0.5 h-4 w-4 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-zinc-900 dark:text-white">Atención requerida</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {withoutRoutines > 0 && (
-                  <Link
-                    to="/routines?view=calendar&assign=1"
-                    className="bg-brand/10 text-brand dark:text-brand hover:bg-brand/15 inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-semibold"
-                  >
-                    {withoutRoutines} sin rutina activa
-                  </Link>
-                )}
-                {expiringMembers.length > 0 && (
-                  <Link
-                    to="/members?expiring=true"
-                    className="inline-flex items-center rounded-lg bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-500/15 dark:text-red-400"
-                  >
-                    {expiringMembers.length} por vencer
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
 
       <DashboardSection title="Tu actividad" icon={Activity} compact>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
@@ -127,7 +100,7 @@ export default function TrainerDashboard() {
         </div>
       </DashboardSection>
 
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
         <QuickAction
           compact
           iconOnlyMobile
@@ -150,6 +123,15 @@ export default function TrainerDashboard() {
         <QuickAction
           compact
           iconOnlyMobile
+          to="/members?focus=nutrition"
+          icon={UtensilsCrossed}
+          title="Nutrición"
+          description="Planes nutricionales"
+          tone="emerald"
+        />
+        <QuickAction
+          compact
+          iconOnlyMobile
           to="/routines"
           icon={Dumbbell}
           title="Rutinas"
@@ -166,9 +148,6 @@ export default function TrainerDashboard() {
           description="Catálogo de movimientos"
           tone="blue"
         />
-      </div>
-
-      <div className="grid max-w-md grid-cols-2 gap-2 sm:gap-3">
         <QuickAction
           compact
           iconOnlyMobile
@@ -177,15 +156,6 @@ export default function TrainerDashboard() {
           title="Calendario"
           description="Vista mensual"
           tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/members?focus=nutrition"
-          icon={UtensilsCrossed}
-          title="Planes nutricionales"
-          description="Elige un miembro para editar su plan"
-          tone="emerald"
         />
       </div>
 

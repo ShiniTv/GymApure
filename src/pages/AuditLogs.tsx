@@ -48,7 +48,7 @@ const ACTION_LABELS: Record<string, string> = {
   'user.profile_update': 'Perfil actualizado',
   'reception.check_in': 'Entrada recepción',
   'reception.check_out': 'Salida recepción',
-  'reception.walk_in': 'Registro walk-in',
+  'reception.walk_in': 'Registro en mostrador',
   'settings.expiry.update': 'Config. vencimientos',
   'settings.expiry.run': 'Job vencimientos',
   'auth.login': 'Inicio de sesión',
@@ -64,7 +64,7 @@ const ACTION_FILTERS = [
   { value: 'membership.assign', label: 'Membresías' },
   { value: 'reception.check_in', label: 'Entradas' },
   { value: 'reception.check_out', label: 'Salidas' },
-  { value: 'reception.walk_in', label: 'Walk-in' },
+  { value: 'reception.walk_in', label: 'Registro mostrador' },
   { value: 'user.status_change', label: 'Estados' },
   { value: 'user.delete', label: 'Eliminaciones' },
 ];
