@@ -593,8 +593,8 @@ export default function Members() {
     </Button>
   ) : undefined;
 
-  const mobileIconBtnClass =
-    'inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-brand hover:bg-brand/10 transition-colors';
+  const mobileActionBtnClass =
+    'inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-700 transition-colors hover:border-brand/40 hover:bg-brand/10 hover:text-brand dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:border-brand/40 dark:hover:bg-brand/10';
 
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
@@ -897,7 +897,7 @@ export default function Members() {
                 isStaffMember={isStaffMember}
                 alertDays={alertDays}
                 roleBadgeClass={roleBadgeClass}
-                mobileIconBtnClass={mobileIconBtnClass}
+                mobileIconBtnClass={mobileActionBtnClass}
                 onAssignSubscription={openAssignSubscription}
                 onToggleStatus={handleToggleClick}
                 onDelete={handleDeleteClick}
