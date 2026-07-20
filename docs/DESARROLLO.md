@@ -219,10 +219,10 @@ Fuente: `src/App.tsx`. Manuales detallados en [docs/manual/](./manual/).
 
 | Ruta                     | admin | receptionist | trainer       | member      |
 | ------------------------ | ----- | ------------ | ------------- | ----------- |
-| `/` (dashboard)          | ✓     | ✓            | ✓             | ✓           |
+| `/panel`                 | ✓     | → recepción  | ✓             | ✓           |
 | `/members`               | ✓     | ✓            | ✓ (asignados) | —           |
-| `/reception`             | —     | ✓            | —             | —           |
-| `/check-in`              | —     | ✓            | —             | —           |
+| `/reception`             | ✓     | ✓            | —             | —           |
+| `/check-in`              | ✓     | ✓            | —             | —           |
 | `/attendance`            | ✓     | —            | —             | —           |
 | `/memberships`           | ✓     | —            | —             | —           |
 | `/trainers`              | ✓     | —            | —             | —           |
@@ -230,21 +230,25 @@ Fuente: `src/App.tsx`. Manuales detallados en [docs/manual/](./manual/).
 | `/payments`              | ✓     | ✓            | —             | ✓ (propios) |
 | `/reports`               | ✓     | —            | —             | —           |
 | `/audit-logs`            | ✓     | —            | —             | —           |
+| `/demo-leads`            | ✓     | —            | —             | —           |
 | `/settings`              | ✓     | —            | —             | —           |
+| `/security` (MFA)        | ✓     | ✓            | ✓             | —           |
 | `/messages`              | ✓     | ✓            | ✓             | ✓           |
 | `/notifications`         | ✓     | ✓            | ✓             | ✓           |
-| `/routines`              | —     | —            | ✓             | ✓ (propias) |
-| `/exercises`             | —     | —            | ✓             | ✓           |
-| `/nutrition-overview`    | ✓     | —            | —             | —           |
+| `/clases`                | ✓     | ✓            | ✓             | —           |
+| `/reservas`              | —     | —            | —             | ✓           |
+| `/routines`              | ✓     | —            | ✓             | ✓ (propias) |
+| `/exercises`             | ✓     | —            | ✓             | ✓           |
+| `/nutrition-overview`    | ✓     | —            | ✓             | —           |
 | `/nutrition`             | —     | —            | —             | ✓           |
 | `/workout/:id`           | —     | —            | —             | ✓           |
 | `/history`               | —     | —            | —             | ✓           |
-| `/members/:id/routines`  | —     | —            | ✓             | —           |
-| `/members/:id/nutrition` | —     | —            | ✓             | —           |
-| `/members/:id/history`   | —     | —            | ✓             | —           |
+| `/members/:id/routines`  | ✓     | —            | ✓             | —           |
+| `/members/:id/nutrition` | ✓     | —            | ✓             | —           |
+| `/members/:id/history`   | ✓     | —            | ✓             | —           |
 | `/profile`               | ✓     | ✓            | ✓             | ✓           |
 
-Rutas públicas: `/login`, `/register` (si `ALLOW_PUBLIC_REGISTER=true`), `/forgot-password`, `/reset-password`.
+Fuente de verdad de guards: `src/App.tsx`. Rutas públicas: `/login`, `/register` (si `ALLOW_PUBLIC_REGISTER=true`), `/forgot-password`, `/reset-password`, `/solicitar-demo`.
 
 ---
 

@@ -14,9 +14,11 @@ import {
   FilterChips,
   BackToDashboardLink,
   EmptyState,
-  Spinner,
   SearchInput,
+  ListRowSkeleton,
+  TableRowSkeleton,
 } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePaymentsQuery';
 import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
@@ -38,6 +40,7 @@ import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegi
 
 export default function Payments() {
   const { user } = useAuth();
+  usePageTitle('Pagos');
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
@@ -267,7 +270,10 @@ export default function Payments() {
 
   const openApproveModal = (payment: Payment) => {
     setApproveTarget(payment);
-    setSelectedPlanId('');
+    const matching = membershipPlans.find(
+      (p) => Math.abs(Number(p.price_usd) - Number(payment.amount_usd)) < 0.01
+    );
+    setSelectedPlanId(matching ? String(matching.id) : '');
   };
 
   const handleApprove = async () => {
@@ -353,12 +359,12 @@ export default function Payments() {
                 <BackToDashboardLink />
                 <Button
                   size="sm"
-                  className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+                  className="h-11 min-h-11 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
                   onClick={() => openRegisterModal()}
                   aria-label="Reportar pago"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Reportar pago</span>
+                  <span>Reportar pago</span>
                 </Button>
               </div>
             ) : isStaffPayment ? (
@@ -452,9 +458,7 @@ export default function Payments() {
               <>
                 <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
                   {loading ? (
-                    <div className="flex justify-center p-8">
-                      <Spinner />
-                    </div>
+                    <ListRowSkeleton rows={4} />
                   ) : payments.length === 0 ? (
                     <EmptyState
                       icon={CreditCard}
@@ -536,11 +540,12 @@ export default function Payments() {
                     </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {loading ? (
-                        <tr>
-                          <td colSpan={6} className="px-5 py-8 text-center">
-                            <Spinner />
-                          </td>
-                        </tr>
+                        <>
+                          <TableRowSkeleton cols={6} />
+                          <TableRowSkeleton cols={6} />
+                          <TableRowSkeleton cols={6} />
+                          <TableRowSkeleton cols={6} />
+                        </>
                       ) : payments.length === 0 ? (
                         <tr>
                           <td
@@ -608,9 +613,7 @@ export default function Payments() {
               <>
                 <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
                   {loading ? (
-                    <div className="flex justify-center p-8">
-                      <Spinner />
-                    </div>
+                    <ListRowSkeleton rows={4} />
                   ) : payments.length === 0 ? (
                     <EmptyState
                       icon={CreditCard}
@@ -718,11 +721,12 @@ export default function Payments() {
                     </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {loading ? (
-                        <tr>
-                          <td colSpan={7} className="px-5 py-8 text-center">
-                            <Spinner />
-                          </td>
-                        </tr>
+                        <>
+                          <TableRowSkeleton cols={7} />
+                          <TableRowSkeleton cols={7} />
+                          <TableRowSkeleton cols={7} />
+                          <TableRowSkeleton cols={7} />
+                        </>
                       ) : payments.length === 0 ? (
                         <tr>
                           <td

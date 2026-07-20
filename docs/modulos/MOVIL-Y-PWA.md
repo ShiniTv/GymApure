@@ -17,7 +17,7 @@ Comportamiento de la interfaz móvil, navegación inferior y aplicación instala
 
 ### Bottom nav pill
 
-Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**.
+Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**. Cada tab muestra icono + etiqueta corta visible.
 
 ### Sheet Más
 
@@ -26,8 +26,8 @@ Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### FAB "Entrenar"
 
-- Visible en `/`, `/routines`, `/exercises`
-- Oculto en `/nutrition` y durante workout
+- Visible en `/`, `/routines`, `/exercises`, `/nutrition` (si hay rutina activa)
+- Oculto durante workout (`/workout/:id`)
 - Posición ajustada con CSS `--member-nav-stack` y `--member-fab-gap`
 
 ### Drawer sidebar
@@ -50,7 +50,9 @@ Disponible en Inicio, Rutinas e Historial. Recepción: PTR en resumen/KPIs.
 
 ## Recepción
 
-Bottom nav: Inicio, Miembros, Pagos, Mensajes. Drawer / Más con Modo tablet, Equipamiento, Clases.
+Bottom nav: **Acceso** (mostrador), Miembros, Pagos, Mensajes + Más (Resumen, Modo tablet, Equipamiento, Clases, MFA, Perfil).
+
+En móvil, `/reception` abre por defecto el modo mostrador (`mode=counter`); el resumen queda como home secundaria vía Más / Salir del mostrador.
 
 Admin también puede abrir `/reception` y `/check-in` (cubre mostrador).
 
@@ -58,7 +60,10 @@ Admin también puede abrir `/reception` y `/check-in` (cubre mostrador).
 
 ## Entrenador
 
-Bottom nav con drawer. Al abrir drawer: bottom nav oculta; footer sin hueco inferior.
+Bottom nav: Panel, Miembros, Rutinas, Mensajes + Más (Nutrición, asignaciones/calendario, Clases, Ejercicios, Equipamiento, MFA, Perfil).
+Al abrir drawer: bottom nav oculta; footer sin hueco inferior.
+
+Lista de miembros: tap en tarjeta → ficha rápida (`MemberQuickSheet`) con Ver rutinas / Mensaje / Historial / Nutrición.
 
 ---
 

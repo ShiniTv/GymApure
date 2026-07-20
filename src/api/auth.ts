@@ -32,7 +32,7 @@ import {
 import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
-import { forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
+import { authRateLimiter, forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
 import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import { requireCsrf } from './middleware/csrf.ts';
@@ -52,6 +52,7 @@ router.use('/mfa', mfaRoutes);
 
 router.post(
   '/login',
+  authRateLimiter,
   asyncHandler(async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -140,6 +141,7 @@ router.post(
 
 router.post(
   '/register',
+  authRateLimiter,
   asyncHandler(async (req, res) => {
     if (!allowPublicRegister) {
       res.status(403).json({ error: 'El registro público está deshabilitado' });

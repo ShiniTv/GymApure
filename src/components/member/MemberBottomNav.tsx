@@ -159,13 +159,13 @@ export function MemberBottomNav() {
                       type="button"
                       onClick={() => setMoreOpen((v) => !v)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
-                      aria-expanded={moreOpen}
                       aria-label={
                         chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
                       }
+                      aria-expanded={moreOpen}
                     >
                       <span className="relative">
                         <span
@@ -182,6 +182,9 @@ export function MemberBottomNav() {
                           </span>
                         )}
                       </span>
+                      <span className="max-w-full truncate text-[9px] leading-none font-semibold">
+                        {item.name}
+                      </span>
                     </button>
                   </li>
                 );
@@ -193,7 +196,7 @@ export function MemberBottomNav() {
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
-                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
                     aria-label={item.name}
@@ -213,6 +216,9 @@ export function MemberBottomNav() {
                           {chatUnread > 9 ? '9+' : chatUnread}
                         </span>
                       )}
+                    </span>
+                    <span className="max-w-full truncate text-[9px] leading-none font-semibold">
+                      {item.name}
                     </span>
                   </Link>
                 </li>

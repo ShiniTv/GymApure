@@ -1,6 +1,22 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
-import { Search, Plus, Dumbbell, AlertTriangle } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Dumbbell,
+  AlertTriangle,
+  X,
+  History,
+  MessageSquare,
+  UtensilsCrossed,
+  IdCard,
+  Clock,
+  CreditCard,
+  Pause,
+  Play,
+  Power,
+  Trash2,
+} from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -27,6 +43,7 @@ import { roleBadgeClass } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { MemberCardMobile } from './members/MemberCardMobile';
+import { MemberQuickSheet, type MemberQuickAction } from './members/MemberQuickSheet';
 import { MemberTableRow } from './members/MemberTableRow';
 import { MemberAddModal } from './members/MemberAddModal';
 import { MemberAssignModal, type MembershipPlan } from './members/MemberAssignModal';
@@ -40,6 +57,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { passwordSchema } from '../lib/passwordSchema';
 import { type TrainingShift } from '../lib/trainingShift';
 
+const NO_PLAN_ALERT_DISMISS_KEY = 'gymapure_members_no_plan_alert_dismissed';
 export default function Members() {
   const { user } = useAuth();
   usePageTitle('Miembros');
@@ -99,11 +117,31 @@ export default function Members() {
   const [pauseReason, setPauseReason] = useState('');
   const [pauseError, setPauseError] = useState('');
   const [pausing, setPausing] = useState(false);
+  const [detailMember, setDetailMember] = useState<Member | null>(null);
+  const [noPlanAlertDismissed, setNoPlanAlertDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(NO_PLAN_ALERT_DISMISS_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToastOptional();
-  const nutritionFocus = searchParams.get('focus') === 'nutrition';
+
+  useEffect(() => {
+    if (searchParams.get('focus') === 'nutrition') {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('focus');
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (searchParams.get('expiring') === 'true') {
@@ -563,6 +601,127 @@ export default function Members() {
     [filteredMembers]
   );
 
+  const dismissNoPlanAlert = useCallback(() => {
+    setNoPlanAlertDismissed(true);
+    try {
+      sessionStorage.setItem(NO_PLAN_ALERT_DISMISS_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const buildQuickActions = useCallback(
+    (member: Member): MemberQuickAction[] => {
+      const role = user?.role ?? 'member';
+      const actions: MemberQuickAction[] = [];
+
+      if (role === 'trainer' && member.role === 'member') {
+        actions.push({
+          key: 'routines',
+          label: 'Ver rutinas',
+          icon: Dumbbell,
+          primary: true,
+          onClick: () => navigate(`/members/${member.id}/routines`),
+        });
+        actions.push({
+          key: 'message',
+          label: 'Enviar mensaje',
+          icon: MessageSquare,
+          primary: true,
+          onClick: () => navigate(`/messages?member=${member.id}`),
+        });
+        actions.push({
+          key: 'history',
+          label: 'Historial',
+          icon: History,
+          onClick: () => navigate(`/members/${member.id}/history`),
+        });
+        actions.push({
+          key: 'nutrition',
+          label: 'Plan nutricional',
+          icon: UtensilsCrossed,
+          onClick: () => navigate(`/members/${member.id}/nutrition`),
+        });
+      }
+
+      if ((role === 'admin' || role === 'receptionist') && member.role === 'member') {
+        actions.push({
+          key: 'badge',
+          label: 'Ver carné',
+          icon: IdCard,
+          primary: true,
+          onClick: () => openMemberBadge(member),
+        });
+        actions.push({
+          key: 'message',
+          label: 'Enviar mensaje',
+          icon: MessageSquare,
+          primary: true,
+          onClick: () => navigate(`/messages?member=${member.id}`),
+        });
+        actions.push({
+          key: 'assign',
+          label: 'Asignar membresía',
+          icon: CreditCard,
+          onClick: () => {
+            void openAssignSubscription(member);
+          },
+        });
+        actions.push({
+          key: 'shift',
+          label: member.training_shift ? 'Editar turno' : 'Asignar turno',
+          icon: Clock,
+          onClick: () => openEditShift(member),
+        });
+        if (member.subscription_status) {
+          actions.push({
+            key: 'pause',
+            label:
+              member.subscription_status === 'paused' ? 'Reanudar membresía' : 'Pausar membresía',
+            icon: member.subscription_status === 'paused' ? Play : Pause,
+            onClick: () => handleMembershipOperation(member),
+          });
+        }
+      }
+
+      if (role === 'admin' && member.role === 'member') {
+        actions.push({
+          key: 'toggle',
+          label: member.status === 'active' ? 'Desactivar' : 'Activar',
+          icon: Power,
+          onClick: () => handleToggleClick(member),
+        });
+      }
+
+      if (
+        role === 'admin' &&
+        (member.role === 'member' || member.role === 'trainer') &&
+        member.id !== user?.id
+      ) {
+        actions.push({
+          key: 'delete',
+          label: member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar miembro',
+          icon: Trash2,
+          danger: true,
+          onClick: () => handleDeleteClick(member),
+        });
+      }
+
+      return actions;
+    },
+    [
+      user?.role,
+      user?.id,
+      navigate,
+      openMemberBadge,
+      openAssignSubscription,
+      openEditShift,
+      handleMembershipOperation,
+      handleToggleClick,
+      handleDeleteClick,
+    ]
+  );
+
   const membersEmptyAction = showTrainerAssignCta ? (
     <div className="flex flex-wrap items-center justify-center gap-2">
       <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
@@ -589,14 +748,12 @@ export default function Members() {
     </Button>
   ) : undefined;
 
-  const mobileActionBtnClass =
-    'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] shrink-0 touch-manipulation items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-brand/10 hover:text-brand dark:text-zinc-300';
-
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
       <div className="page-stack" {...membersHandlers}>
         <PageHeader
           compact
+          className="max-lg:!hidden"
           title={
             isTrainer ? (
               <>
@@ -613,22 +770,20 @@ export default function Members() {
             )
           }
           subtitle={
-            nutritionFocus && isTrainer
-              ? 'Elige un miembro y abre Nutrición desde las acciones de la fila o tarjeta.'
-              : isTrainer
-                ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
-                : isReceptionist
-                  ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro.'
-                  : 'Administra usuarios del gym. Puedes eliminar miembros y entrenadores; los administradores no se eliminan desde aquí.'
+            isTrainer
+              ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
+              : isReceptionist
+                ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro.'
+                : 'Administra usuarios del gym. Puedes eliminar miembros y entrenadores; los administradores no se eliminan desde aquí.'
           }
           action={<BackToDashboardLink />}
         />
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <SearchInput
               containerClassName="flex-1 min-w-0"
-              placeholder="Buscar por nombre o identificación..."
+              placeholder="Buscar nombre o cédula…"
               value={searchInput}
               onChange={(e) => {
                 setSearchInput(e.target.value);
@@ -637,14 +792,16 @@ export default function Members() {
             {canAddUser && (
               <Button
                 size="sm"
-                className="h-11 min-h-11 shrink-0 gap-1.5 rounded-xl px-3 whitespace-nowrap"
+                className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
                 onClick={() => {
                   setIsAdding(true);
                 }}
                 aria-label={addUserLabel}
               >
                 <Plus className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-semibold sm:text-sm">{addUserLabel}</span>
+                <span className="hidden text-xs font-semibold sm:inline sm:text-sm">
+                  {addUserLabel}
+                </span>
               </Button>
             )}
           </div>
@@ -668,23 +825,29 @@ export default function Members() {
           )}
         </div>
 
-        {isTrainer && membersWithoutPlan.length > 0 && !loading && (
-          <Card padding="sm" rounded="xl" className="border-amber-500/30 bg-amber-500/5">
-            <div className="flex items-start gap-2.5">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <div className="min-w-0 flex-1 text-sm">
-                <p className="font-semibold text-zinc-900 dark:text-white">
-                  {membersWithoutPlan.length === 1
-                    ? '1 miembro sin membresía activa'
-                    : `${membersWithoutPlan.length} miembros sin membresía activa`}
-                </p>
-                <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-                  Puedes asignar rutinas y entrenar. Para check-in y cobros en mostrador, recepción
-                  debe activar el plan del socio.
-                </p>
-              </div>
-            </div>
-          </Card>
+        {isTrainer && membersWithoutPlan.length > 0 && !loading && !noPlanAlertDismissed && (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="min-w-0 flex-1 text-zinc-700 dark:text-zinc-300">
+              <span className="font-semibold text-zinc-900 dark:text-white">
+                {membersWithoutPlan.length === 1
+                  ? '1 sin membresía activa'
+                  : `${membersWithoutPlan.length} sin membresía activa`}
+              </span>
+              <span className="text-zinc-500 dark:text-zinc-400">
+                {' '}
+                · recepción debe activar el plan para check-in
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={dismissNoPlanAlert}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-amber-500/10 hover:text-zinc-700 dark:hover:text-zinc-200"
+              aria-label="Cerrar aviso"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         )}
 
         <MemberAddModal
@@ -760,26 +923,18 @@ export default function Members() {
                   action={membersEmptyAction}
                 />
               }
-              mobileClassName="flex flex-col gap-4"
-              mobileWrapper={(children) => <StaggerContainer>{children}</StaggerContainer>}
+              mobileClassName=""
+              mobileWrapper={(children) => (
+                <StaggerContainer className="flex flex-col gap-2.5">{children}</StaggerContainer>
+              )}
               mobile={(member) => (
                 <StaggerItem>
                   <MemberCardMobile
                     member={member}
-                    userRole={user?.role ?? 'member'}
-                    currentUserId={user?.id}
                     isStaffMember={isStaffMember}
                     alertDays={alertDays}
                     roleBadgeClass={roleBadgeClass}
-                    mobileIconBtnClass={mobileActionBtnClass}
-                    onAssignSubscription={openAssignSubscription}
-                    onToggleStatus={handleToggleClick}
-                    onDelete={handleDeleteClick}
-                    onShowBadge={openMemberBadge}
-                    onEditShift={openEditShift}
-                    onMembershipOperation={handleMembershipOperation}
-                    membershipOperationLoading={membershipOperationId === member.id}
-                    nutritionFocus={nutritionFocus}
+                    onOpenDetail={setDetailMember}
                   />
                 </StaggerItem>
               )}
@@ -808,7 +963,6 @@ export default function Members() {
                   onEditShift={openEditShift}
                   onMembershipOperation={handleMembershipOperation}
                   membershipOperationLoading={membershipOperationId === member.id}
-                  nutritionFocus={nutritionFocus}
                 />
               )}
             />
@@ -875,6 +1029,14 @@ export default function Members() {
             setBadgeTarget(null);
           }}
           member={badgeTarget}
+        />
+
+        <MemberQuickSheet
+          member={detailMember}
+          open={!!detailMember}
+          onClose={() => setDetailMember(null)}
+          alertDays={alertDays}
+          actions={detailMember ? buildQuickActions(detailMember) : []}
         />
       </div>
     </PullToRefreshContainer>

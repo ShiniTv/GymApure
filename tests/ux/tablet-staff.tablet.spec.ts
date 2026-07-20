@@ -15,6 +15,6 @@ test.describe('Staff tablet iPad', () => {
     ).catch(() => undefined);
 
     await expect(page.locator('.table-shell')).toBeHidden();
-    await expect(page.getByPlaceholder(/buscar por nombre/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/buscar nombre/i)).toBeVisible();
   });
 });

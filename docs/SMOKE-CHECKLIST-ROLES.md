@@ -16,14 +16,16 @@
 
 ### Entrenador
 
-- [ ] Nav "Planes nutricionales" → `/members?focus=nutrition` con copy de ayuda
+- [ ] Más → Nutrición → `/nutrition-overview`; ficha de miembro → Plan nutricional
 - [ ] Panel muestra loading/error shell si falla stats
 - [ ] `/clases` permite programar sesión propia
+- [ ] Miembros: tap tarjeta → sheet con Ver rutinas
 
 ### Cliente
 
-- [ ] Bottom nav incluye Reservas
+- [ ] Bottom nav: Inicio / Rutinas / Nutrición / Más (Reservas está en Más)
 - [ ] `/reservas` lista clases / empty state
-- [ ] Sin membresía: card de pasos 1-2-3 + CTA renovación
+- [ ] Sin membresía: un banner de prioridad (pending > activate > expiry)
 - [ ] Nutrición sin plan: CTA a Mensajes
 - [ ] Profile: tab Progreso solo para member
+- [ ] Push onboarding card en inicio (o iPhone: Añadir a Inicio)

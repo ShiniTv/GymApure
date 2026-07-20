@@ -224,16 +224,24 @@ async function main() {
     }
     console.log('✓ 2 ejercicios demo en Demo CI Routine (tests workout pager)');
 
+    // Yesterday so trainer activity feed has data without blocking member FAB / Empezar hoy.
+    await query(
+      `DELETE FROM workout_sessions
+       WHERE user_id = $1 AND routine_id = $2 AND start_time >= CURRENT_DATE`,
+      [memberId, routineId]
+    );
     await query(
       `INSERT INTO workout_sessions (user_id, routine_id, start_time)
-       SELECT $1, $2, NOW()
+       SELECT $1, $2, NOW() - INTERVAL '1 day'
        WHERE NOT EXISTS (
          SELECT 1 FROM workout_sessions
-         WHERE user_id = $1 AND routine_id = $2 AND start_time >= CURRENT_DATE
+         WHERE user_id = $1 AND routine_id = $2
+           AND start_time >= (CURRENT_DATE - INTERVAL '1 day')
+           AND start_time < CURRENT_DATE
        )`,
       [memberId, routineId]
     );
-    console.log('✓ Sesión demo para actividad reciente del entrenador');
+    console.log('✓ Sesión demo (ayer) para actividad reciente del entrenador');
 
     await query(
       `INSERT INTO nutrition_plans (

@@ -182,7 +182,7 @@ export function StaffBottomNav({
                       type="button"
                       onClick={() => setMoreOpen((open) => !open)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -197,6 +197,9 @@ export function StaffBottomNav({
                       >
                         <item.icon className="h-5 w-5" aria-hidden />
                       </span>
+                      <span className="max-w-full truncate text-[9px] leading-none font-semibold">
+                        {item.name}
+                      </span>
                     </button>
                   </li>
                 );
@@ -208,7 +211,7 @@ export function StaffBottomNav({
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
-                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl transition-colors',
+                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
                     aria-label={item.name}
@@ -228,6 +231,9 @@ export function StaffBottomNav({
                           {chatUnread > 9 ? '9+' : chatUnread}
                         </span>
                       )}
+                    </span>
+                    <span className="max-w-full truncate text-[9px] leading-none font-semibold">
+                      {item.name}
                     </span>
                   </Link>
                 </li>

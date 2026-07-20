@@ -18,7 +18,15 @@ export { Badge } from './Badge';
 export { PaginationBar } from './PaginationBar';
 export { SegmentedControl } from './SegmentedControl';
 export { EmptyState } from './EmptyState';
-export { Skeleton, StatCardSkeleton, TableRowSkeleton, DashboardSkeleton } from './Skeleton';
+export {
+  Skeleton,
+  StatCardSkeleton,
+  TableRowSkeleton,
+  DashboardSkeleton,
+  ListRowSkeleton,
+  ChatBubbleSkeleton,
+  WorkoutShellSkeleton,
+} from './Skeleton';
 export { Table, TableHead, TableBody, TableRow, TableHeader, TableCell, DataCard } from './Table';
 export { Avatar } from './Avatar';
 export { Breadcrumbs } from './Breadcrumbs';

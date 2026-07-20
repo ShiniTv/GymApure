@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse, ApiError, isNetworkError } from '../lib/api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -17,14 +17,21 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { Button, Modal, Label, Input, Spinner, EmptyState, Breadcrumbs } from '../components/ui';
-import { ExercisePicker } from '../components/exercise/ExercisePicker';
+import {
+  Button,
+  Modal,
+  Label,
+  Input,
+  EmptyState,
+  Breadcrumbs,
+  WorkoutShellSkeleton,
+  Spinner,
+} from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
 import { formatWorkoutTime } from './activeWorkout/utils';
-import { ExerciseVideoPlayer } from '../components/exercise/ExerciseVideoPlayer';
 import {
   ExerciseExecutionSteps,
   executionStepCount,
@@ -61,6 +68,15 @@ import {
   pendingWorkoutLogCount,
   readCachedWorkoutRoutine,
 } from '../lib/workoutOfflineQueue';
+
+const ExercisePicker = lazy(() =>
+  import('../components/exercise/ExercisePicker').then((m) => ({ default: m.ExercisePicker }))
+);
+const ExerciseVideoPlayer = lazy(() =>
+  import('../components/exercise/ExerciseVideoPlayer').then((m) => ({
+    default: m.ExerciseVideoPlayer,
+  }))
+);
 
 interface Exercise {
   id: number;
@@ -178,6 +194,12 @@ export default function ActiveWorkout() {
 
   useEffect(() => {
     if (!id) return;
+    const cached = readCachedWorkoutRoutine(id);
+    if (cached) {
+      setRoutine(cached as Routine);
+      setFetchError(null);
+      setLoading(false);
+    }
     apiFetch(`/api/routines/${id}`)
       .then((res) => parseJsonResponse<Routine>(res))
       .then((data) => {
@@ -195,11 +217,7 @@ export default function ActiveWorkout() {
       })
       .catch((err) => {
         clientLogger.error('Failed to fetch routine', err);
-        const cached = readCachedWorkoutRoutine(id);
         if (cached) {
-          setRoutine(cached as Routine);
-          setFetchError(null);
-          setLoading(false);
           toast?.success('Sin conexión: usando la última rutina guardada.');
           return;
         }
@@ -862,11 +880,7 @@ export default function ActiveWorkout() {
   const formatTime = formatWorkoutTime;
 
   if (loading) {
-    return (
-      <div className="page-state-center">
-        <Spinner />
-      </div>
-    );
+    return <WorkoutShellSkeleton />;
   }
 
   if (fetchError || !routine) {
@@ -1029,13 +1043,21 @@ export default function ActiveWorkout() {
         scrollable
       >
         <div className="space-y-4">
-          <ExercisePicker
-            exercises={availableExercises}
-            value={newExercise.exercise_id}
-            onChange={(exerciseId) => {
-              setNewExercise({ ...newExercise, exercise_id: exerciseId });
-            }}
-          />
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-6">
+                <Spinner />
+              </div>
+            }
+          >
+            <ExercisePicker
+              exercises={availableExercises}
+              value={newExercise.exercise_id}
+              onChange={(exerciseId) => {
+                setNewExercise({ ...newExercise, exercise_id: exerciseId });
+              }}
+            />
+          </Suspense>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Series</Label>
@@ -1262,11 +1284,17 @@ export default function ActiveWorkout() {
 
                 {showVideo[exercise.id] && exercise.video_url && (
                   <div className="w-full">
-                    <ExerciseVideoPlayer
-                      url={exercise.video_url}
-                      posterUrl={exercise.video_poster_url}
-                      title={`${exercise.name} — video tutorial`}
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="h-40 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+                      }
+                    >
+                      <ExerciseVideoPlayer
+                        url={exercise.video_url}
+                        posterUrl={exercise.video_poster_url}
+                        title={`${exercise.name} — video tutorial`}
+                      />
+                    </Suspense>
                   </div>
                 )}
               </div>

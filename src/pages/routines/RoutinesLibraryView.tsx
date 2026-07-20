@@ -8,7 +8,7 @@ import {
   Dumbbell,
   Play,
 } from 'lucide-react';
-import { Button, Card, Spinner, EmptyState, Badge, PageState } from '../../components/ui';
+import { Button, Card, EmptyState, Badge, ListRowSkeleton, Skeleton } from '../../components/ui';
 import { formatDifficulty } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import type { Routine, RoutineExercise } from './types';
@@ -69,10 +69,10 @@ export function RoutinesLibraryView({
 
   if (loadingRoutines) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando rutinas…</p>
-      </PageState>
+      <div className="space-y-3" aria-busy="true" aria-label="Cargando rutinas">
+        <Skeleton className="h-8 w-40" />
+        <ListRowSkeleton rows={4} />
+      </div>
     );
   }
 

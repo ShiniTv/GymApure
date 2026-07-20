@@ -68,3 +68,59 @@ export function DashboardSkeleton({ statCount = 4 }: { statCount?: number }) {
     </div>
   );
 }
+
+/** Conversation list / payment card placeholders */
+export function ListRowSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="space-y-2 p-2" aria-hidden>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 rounded-xl px-2.5 py-2.5">
+          <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-3.5 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Chat bubble placeholders while messages load */
+export function ChatBubbleSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div className="flex flex-1 flex-col gap-3 px-3 py-4" aria-hidden>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}>
+          <Skeleton
+            className={cn(
+              'h-10 rounded-2xl',
+              i % 3 === 0 ? 'w-3/5' : i % 2 === 0 ? 'w-2/5' : 'w-1/2'
+            )}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Active workout shell while routine/session hydrates */
+export function WorkoutShellSkeleton() {
+  return (
+    <div className="page-stack" aria-busy="true" aria-label="Cargando entrenamiento">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-9 w-9 rounded-lg" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <Skeleton className="h-28 w-full rounded-2xl" />
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}

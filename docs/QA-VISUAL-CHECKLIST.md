@@ -8,7 +8,7 @@ Repetir tras cambios de UI. Nav móvil actualizado julio 2026.
 - [ ] Sin hamburger; header flotante tipo isla
 - [ ] Bottom nav pill: **Inicio**, **Rutinas**, **Nutrición**, **Más**
 - [ ] Sheet "Más": Mensajes, Reservas, Biblioteca, Historial, Pagos, Mi Perfil
-- [ ] FAB "Entrenar" centrado en `/`, `/rutinas`, `/exercises`; oculto en `/nutrition`
+- [ ] FAB "Entrenar" centrado en `/`, `/routines`, `/exercises`, `/nutrition`; oculto en `/workout/:id`
 - [ ] Bottom nav **oculta** en `/workout/:id`
 - [ ] Drawer sidebar: footer pegado al fondo (sin hueco debajo)
 - [ ] Inicio: grid 4 iconos (Rutinas, Nutrición, Historial, Pagos); hero + Tu rutina arriba

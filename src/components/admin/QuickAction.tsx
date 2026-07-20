@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { queryClient } from '../../lib/queryClient';
+import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { paymentsQueryKey } from '../../hooks/queries/usePaymentsQuery';
 
 interface QuickActionProps {
   to: string;
@@ -14,6 +17,8 @@ interface QuickActionProps {
   iconOnlyMobile?: boolean;
   /** Breakpoint mínimo para mostrar la descripción (por defecto sm). */
   showDescriptionFrom?: 'sm' | 'md' | 'lg';
+  /** Prefetch pending payments list on hover/focus (staff pagos shortcut). */
+  prefetchPaymentsPending?: boolean;
 }
 
 const toneMap = {
@@ -32,6 +37,22 @@ const toneBadgeMap = {
   emerald: 'bg-emerald-500 text-white',
 };
 
+function prefetchPendingPayments() {
+  const params = { page: 1, pageSize: 20, statusFilter: 'pending' };
+  void queryClient.prefetchQuery({
+    queryKey: paymentsQueryKey(params),
+    queryFn: async () => {
+      const qs = new URLSearchParams({
+        page: '1',
+        limit: '20',
+        status: 'pending',
+      });
+      const res = await apiFetch(`/api/payments?${qs.toString()}`);
+      return parseJsonResponse(res);
+    },
+  });
+}
+
 export function QuickAction({
   to,
   icon: Icon,
@@ -42,6 +63,7 @@ export function QuickAction({
   compact,
   iconOnlyMobile,
   showDescriptionFrom = 'sm',
+  prefetchPaymentsPending,
 }: QuickActionProps) {
   const showCount = count != null && count > 0;
   const descriptionFromClass =
@@ -51,11 +73,19 @@ export function QuickAction({
         ? 'hidden md:block'
         : 'hidden sm:block';
 
+  const maybePrefetch = () => {
+    if (prefetchPaymentsPending || to.includes('/payments')) {
+      prefetchPendingPayments();
+    }
+  };
+
   return (
     <Link
       to={to}
       aria-label={`${title}: ${description}`}
       title={title}
+      onMouseEnter={maybePrefetch}
+      onFocus={maybePrefetch}
       className={cn(
         'group hover:border-brand/20 relative touch-manipulation rounded-xl border border-zinc-200 bg-white transition-shadow duration-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900',
         iconOnlyMobile

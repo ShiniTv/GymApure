@@ -36,7 +36,21 @@ export async function login(page: Page, email: string, password: string) {
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
   await page.getByRole('button', { name: /entrar/i }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
+
+  const leftLogin = page.waitForURL((url) => !url.pathname.startsWith('/login'), {
+    timeout: 30_000,
+  });
+  const rateLimited = page
+    .getByRole('alert')
+    .filter({ hasText: /demasiados intentos/i })
+    .waitFor({ state: 'visible', timeout: 30_000 })
+    .then(() => {
+      throw new Error(
+        'Login rate-limited (Demasiados intentos). Reinicia el server o espera la ventana de 15 min.'
+      );
+    });
+
+  await Promise.race([leftLogin, rateLimited]);
   await dismissThemeOnboardingIfPresent(page);
 }
 
@@ -53,10 +67,11 @@ export const receptionBottomNav = 'nav[aria-label="Navegación recepción"]';
 export async function getMemberRoutineCard(page: Page) {
   await page.waitForFunction(
     () => {
-      const loading = document.body.textContent?.includes('Cargando rutinas');
+      const busy = document.querySelector('[aria-busy="true"][aria-label="Cargando rutinas"]');
+      const loadingText = document.body.textContent?.includes('Cargando rutinas');
       const empty = document.body.textContent?.includes('Sin rutinas asignadas');
       const card = document.querySelector('[role="button"]');
-      return !loading && (empty || !!card);
+      return !busy && !loadingText && (empty || !!card);
     },
     undefined,
     { timeout: 20_000 }

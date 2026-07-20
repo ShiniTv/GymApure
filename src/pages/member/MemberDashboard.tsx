@@ -1,8 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { format, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
 import { parseDateOnly } from '../../lib/dates';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { AlertTriangle, Clock, CreditCard, Dumbbell, UtensilsCrossed } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  CreditCard,
+  Dumbbell,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useMemberRoutinesQuery } from '../../hooks/queries/useRoutinesQuery';
@@ -22,11 +31,14 @@ import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckIn
 import { PushOnboardingCard } from '../../components/PushOnboardingCard';
 import { Button, Card, EmptyState, PageHeader, Badge } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useMediaQuery } from '../../lib/useMediaQuery';
 
 export default function MemberDashboard() {
   const { user } = useAuth();
   usePageTitle('Inicio');
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 1023px)');
+  const [moreOpen, setMoreOpen] = useState(false);
   const memberStatsCtx = useMemberStatsOptional();
   const memberStats = memberStatsCtx?.stats ?? null;
   const statsError = memberStatsCtx?.error;
@@ -99,6 +111,9 @@ export default function MemberDashboard() {
             </p>
             <p className="mt-1 text-[11px] text-amber-800/80 dark:text-amber-300/80">
               Paso 3 de 3: espera la aprobación del staff para activar o renovar tu membresía.
+              {sub && shouldShowExpiryAlert(sub.days_remaining, alertDays)
+                ? ` · ${formatExpiryCountdown(sub.days_remaining)}`
+                : ''}
             </p>
           </div>
           <Link
@@ -131,7 +146,8 @@ export default function MemberDashboard() {
         </Card>
       )}
 
-      {sub &&
+      {pending === 0 &&
+        sub &&
         shouldShowExpiryAlert(sub.days_remaining, alertDays) &&
         (() => {
           const severity = getExpirySeverity(sub.days_remaining, alertDays);
@@ -155,21 +171,11 @@ export default function MemberDashboard() {
                   {sub.end_date
                     ? ` · vence ${format(parseDateOnly(sub.end_date), 'dd MMM yyyy', { locale: es })}`
                     : ''}
-                  {pending > 0 ? ' · ya tienes un comprobante en revisión' : ''}
                 </p>
               </div>
-              {pending > 0 ? (
-                <Link
-                  to="/payments?status=pending"
-                  className={`text-xs font-bold hover:underline ${classes.link}`}
-                >
-                  Ver comprobante
-                </Link>
-              ) : (
-                <Button size="sm" onClick={() => navigate('/payments?register=1')}>
-                  Reportar pago
-                </Button>
-              )}
+              <Button size="sm" onClick={() => navigate('/payments?register=1')}>
+                Reportar pago
+              </Button>
             </div>
           );
         })()}
@@ -331,81 +337,181 @@ export default function MemberDashboard() {
 
       <PushOnboardingCard />
 
-      {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-4">Próximas asignaciones</h3>
-          <div className="space-y-2">
-            {upcomingRoutines.map((r) => {
-              const row = r as { id: number; name: string; start_date?: string | null };
-              return (
-                <div
-                  key={row.id}
-                  className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-zinc-900 dark:text-white">
-                      {row.name}
-                    </p>
-                    {row.start_date && (
-                      <p className="mt-0.5 text-xs text-zinc-500">
-                        Inicia{' '}
-                        {format(parseDateOnly(row.start_date), 'dd MMM yyyy', { locale: es })}
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant="default">Próxima</Badge>
-                </div>
-              );
-            })}
-            {endingRoutines.map((r) => {
-              const row = r as { id: number; name: string; end_date?: string | null };
-              return (
-                <div
-                  key={row.id}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-zinc-900 dark:text-white">
-                      {row.name}
-                    </p>
-                    {row.end_date && (
-                      <p className="mt-0.5 text-xs text-zinc-500">
-                        Hasta {format(parseDateOnly(row.end_date), 'dd MMM yyyy', { locale: es })}
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant="warning">Por vencer</Badge>
-                </div>
-              );
-            })}
-          </div>
-          <Link
-            to="/routines"
-            className="text-brand mt-4 inline-block text-xs font-bold hover:underline"
+      {isMobile &&
+      (upcomingRoutines.length > 0 || endingRoutines.length > 0 || memberStats?.lastWorkout) ? (
+        <Card padding="sm" rounded="xl">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-2 text-left"
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
           >
-            Ver todas mis rutinas
-          </Link>
+            <span className="text-sm font-bold text-zinc-900 dark:text-white">Más de tu plan</span>
+            {moreOpen ? (
+              <ChevronUp className="h-4 w-4 text-zinc-400" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-zinc-400" />
+            )}
+          </button>
+          {moreOpen && (
+            <div className="mt-3 space-y-3">
+              {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-zinc-500">Próximas asignaciones</p>
+                  {upcomingRoutines.map((r) => {
+                    const row = r as { id: number; name: string; start_date?: string | null };
+                    return (
+                      <div
+                        key={row.id}
+                        className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {row.name}
+                          </p>
+                          {row.start_date && (
+                            <p className="mt-0.5 text-[11px] text-zinc-500">
+                              Inicia{' '}
+                              {format(parseDateOnly(row.start_date), 'dd MMM yyyy', { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="default">Próxima</Badge>
+                      </div>
+                    );
+                  })}
+                  {endingRoutines.map((r) => {
+                    const row = r as { id: number; name: string; end_date?: string | null };
+                    return (
+                      <div
+                        key={row.id}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {row.name}
+                          </p>
+                          {row.end_date && (
+                            <p className="mt-0.5 text-[11px] text-zinc-500">
+                              Hasta{' '}
+                              {format(parseDateOnly(row.end_date), 'dd MMM yyyy', { locale: es })}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="warning">Por vencer</Badge>
+                      </div>
+                    );
+                  })}
+                  <Link
+                    to="/routines"
+                    className="text-brand inline-block text-xs font-bold hover:underline"
+                  >
+                    Ver todas mis rutinas
+                  </Link>
+                </div>
+              )}
+              {memberStats?.lastWorkout && (
+                <div>
+                  <p className="mb-1 text-xs font-semibold text-zinc-500">Último entrenamiento</p>
+                  <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                    {memberStats.lastWorkout.routine_name}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
+                      locale: es,
+                    })}
+                  </p>
+                  <Link
+                    to="/history"
+                    className="text-brand mt-2 inline-block text-xs font-bold hover:underline"
+                  >
+                    Ver historial completo
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
-      )}
+      ) : (
+        <>
+          {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
+            <Card padding="lg" rounded="2xl">
+              <h3 className="section-title mb-4">Próximas asignaciones</h3>
+              <div className="space-y-2">
+                {upcomingRoutines.map((r) => {
+                  const row = r as { id: number; name: string; start_date?: string | null };
+                  return (
+                    <div
+                      key={row.id}
+                      className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-zinc-900 dark:text-white">
+                          {row.name}
+                        </p>
+                        {row.start_date && (
+                          <p className="mt-0.5 text-xs text-zinc-500">
+                            Inicia{' '}
+                            {format(parseDateOnly(row.start_date), 'dd MMM yyyy', { locale: es })}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="default">Próxima</Badge>
+                    </div>
+                  );
+                })}
+                {endingRoutines.map((r) => {
+                  const row = r as { id: number; name: string; end_date?: string | null };
+                  return (
+                    <div
+                      key={row.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-zinc-900 dark:text-white">
+                          {row.name}
+                        </p>
+                        {row.end_date && (
+                          <p className="mt-0.5 text-xs text-zinc-500">
+                            Hasta{' '}
+                            {format(parseDateOnly(row.end_date), 'dd MMM yyyy', { locale: es })}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="warning">Por vencer</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+              <Link
+                to="/routines"
+                className="text-brand mt-4 inline-block text-xs font-bold hover:underline"
+              >
+                Ver todas mis rutinas
+              </Link>
+            </Card>
+          )}
 
-      {memberStats?.lastWorkout && (
-        <Card padding="lg" rounded="2xl">
-          <h3 className="section-title mb-3">Último entrenamiento</h3>
-          <p className="font-bold text-zinc-800 dark:text-zinc-200">
-            {memberStats.lastWorkout.routine_name}
-          </p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
-              locale: es,
-            })}
-          </p>
-          <Link
-            to="/history"
-            className="text-brand mt-4 inline-block text-xs font-bold hover:underline"
-          >
-            Ver historial completo
-          </Link>
-        </Card>
+          {memberStats?.lastWorkout && (
+            <Card padding="lg" rounded="2xl">
+              <h3 className="section-title mb-3">Último entrenamiento</h3>
+              <p className="font-bold text-zinc-800 dark:text-zinc-200">
+                {memberStats.lastWorkout.routine_name}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
+                  locale: es,
+                })}
+              </p>
+              <Link
+                to="/history"
+                className="text-brand mt-4 inline-block text-xs font-bold hover:underline"
+              >
+                Ver historial completo
+              </Link>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

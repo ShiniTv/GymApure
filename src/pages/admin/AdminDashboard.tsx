@@ -306,9 +306,10 @@ export default function AdminDashboard() {
             to="/payments?status=pending"
             icon={AlertTriangle}
             title="Pagos"
-            description="Revisar y aprobar"
+            description={pendingOld > 0 ? `${pendingOld} con más de 2 días` : 'Revisar y aprobar'}
             count={pendingPayments}
             tone="red"
+            prefetchPaymentsPending
           />
           <QuickAction
             compact
@@ -400,6 +401,26 @@ export default function AdminDashboard() {
         </div>
       </DashboardSection>
 
+      {pendingOld > 0 && (
+        <Link
+          to="/payments?status=pending"
+          className="flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-red-700 dark:text-red-400">
+                {pendingOld} pago{pendingOld !== 1 ? 's' : ''} sin revisar (&gt;2 días)
+              </p>
+              <p className="text-[11px] text-red-700/80 dark:text-red-400/80">
+                Prioriza la aprobación para no bloquear renovaciones
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
+        </Link>
+      )}
+
       <DashboardSection title="Finanzas y supervisión" compact>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
           <Card padding="sm" rounded="xl" className="space-y-1">
@@ -484,9 +505,10 @@ export default function AdminDashboard() {
           {!showExpiringList && criticalItems.length > 0 && (
             <div className="mt-2 space-y-1">
               {criticalItems.slice(0, 1).map((item) => (
-                <div
+                <Link
                   key={item.user_id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5"
+                  to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
                 >
                   <span className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
                     {item.full_name}
@@ -494,7 +516,7 @@ export default function AdminDashboard() {
                   <Badge variant="danger" className="shrink-0 text-[10px]">
                     {formatExpiryLabel(item.days_remaining)}
                   </Badge>
-                </div>
+                </Link>
               ))}
               {criticalItems.length > 1 && (
                 <button
@@ -516,9 +538,10 @@ export default function AdminDashboard() {
                 const severity = getExpirySeverity(item.days_remaining, alertDays);
                 const classes = expiryBannerClasses(severity);
                 return (
-                  <div
+                  <Link
                     key={item.user_id}
-                    className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 ${classes.itemBorder}`}
+                    to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
+                    className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors hover:opacity-90 ${classes.itemBorder}`}
                   >
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
@@ -534,7 +557,7 @@ export default function AdminDashboard() {
                     >
                       {formatExpiryLabel(item.days_remaining)}
                     </Badge>
-                  </div>
+                  </Link>
                 );
               })}
               {expiringList.length > previewExpiring.length && (
@@ -557,7 +580,7 @@ export default function AdminDashboard() {
             type="button"
             variant="ghost"
             size="sm"
-            className="h-9 w-9 px-0 sm:hidden"
+            className="h-9 px-2.5"
             onClick={() => {
               setShowRevenueChart((v) => !v);
             }}
@@ -568,33 +591,41 @@ export default function AdminDashboard() {
             title={showRevenueChart ? 'Ocultar' : 'Ver ingresos'}
           >
             {showRevenueChart ? (
-              <ChevronUp className="h-4 w-4" />
+              <>
+                <ChevronUp className="h-4 w-4" />
+                <span className="ml-1 hidden text-xs sm:inline">Ocultar</span>
+              </>
             ) : (
-              <ChevronDown className="h-4 w-4" />
+              <>
+                <ChevronDown className="h-4 w-4" />
+                <span className="ml-1 hidden text-xs sm:inline">Ver</span>
+              </>
             )}
           </Button>
         </div>
-        <div className={cn(!showRevenueChart && 'hidden sm:block')}>
-          <SegmentedControl
-            variant="compact"
-            value={revenueRange}
-            onChange={setRevenueRange}
-            className="mb-2.5 w-full sm:w-auto"
-            fullWidth
-            options={[
-              { value: '7d', label: '7d' },
-              { value: '30d', label: '30d' },
-              { value: '6m', label: '6m' },
-            ]}
-          />
-          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
-            <RevenueChart
-              data={revenueChartData}
-              mode={revenueChartMode}
-              className="h-40 sm:h-56"
+        {showRevenueChart && (
+          <div>
+            <SegmentedControl
+              variant="compact"
+              value={revenueRange}
+              onChange={setRevenueRange}
+              className="mb-2.5 w-full sm:w-auto"
+              fullWidth
+              options={[
+                { value: '7d', label: '7d' },
+                { value: '30d', label: '30d' },
+                { value: '6m', label: '6m' },
+              ]}
             />
-          </Suspense>
-        </div>
+            <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
+              <RevenueChart
+                data={revenueChartData}
+                mode={revenueChartMode}
+                className="h-40 sm:h-56"
+              />
+            </Suspense>
+          </div>
+        )}
       </Card>
     </div>
   );

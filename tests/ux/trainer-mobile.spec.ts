@@ -18,7 +18,8 @@ test.describe('Entrenador móvil', () => {
 
     await nav.getByRole('link', { name: 'Miembros' }).click();
     await expect(page).toHaveURL(/\/members$/);
-    await expect(page.getByText('Mis miembros', { exact: true })).toBeVisible();
+    // Mobile island shows "Miembros"; desktop h1 "Mis miembros" is hidden lg:block
+    await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
     await nav.getByRole('link', { name: 'Rutinas' }).click();
     await expect(page).toHaveURL(/\/routines$/);
@@ -27,10 +28,16 @@ test.describe('Entrenador móvil', () => {
   test('el entrenador abre las rutinas de un miembro asignado', async ({ page }) => {
     await page.getByRole('link', { name: 'Miembros' }).last().click();
     await expect(page).toHaveURL(/\/members$/);
+    await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
-    const routineButton = page.getByRole('button', { name: 'Asignar rutina' }).first();
-    await expect(routineButton).toBeVisible();
-    await routineButton.click();
+    // Compact cards open MemberQuickSheet; primary action is "Ver rutinas"
+    const firstCard = page.locator('button.w-full.text-left.rounded-xl.border').first();
+    await expect(firstCard).toBeVisible();
+    await firstCard.click();
+
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole('button', { name: 'Ver rutinas' }).click();
     await expect(page).toHaveURL(/\/members\/\d+\/routines$/);
   });
 
@@ -40,8 +47,9 @@ test.describe('Entrenador móvil', () => {
 
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('link', { name: 'Planes nutricionales' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Nutrición' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Asignaciones de rutinas' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Ejercicios' })).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();

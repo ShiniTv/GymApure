@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
-import { Button, Card, Input, Label } from '../ui';
+import { Button, Card, Input, Label, Skeleton } from '../ui';
 import { useToastOptional } from '../../context/ToastContext';
 
 interface MeAttendance {
@@ -76,7 +76,20 @@ export function MemberSelfCheckInCard() {
     }
   };
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <Card padding="sm" rounded="xl" aria-busy="true" aria-label="Cargando asistencia">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+          <Skeleton className="h-9 w-24 rounded-lg" />
+        </div>
+      </Card>
+    );
+  }
 
   const inside = Boolean(state?.is_inside);
 

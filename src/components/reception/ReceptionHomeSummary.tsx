@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Fingerprint,
@@ -12,7 +12,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { QuickAction } from '../admin/QuickAction';
 import { Button, Card, DashboardSkeleton, EmptyState } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
@@ -20,12 +19,7 @@ import BrandName from '../BrandName';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../PullToRefresh';
-
-interface ReceptionStats {
-  todayCheckIns: number;
-  insideNow: number;
-  pendingPayments: number;
-}
+import { useReceptionStatsQuery } from '../../hooks/queries/useReceptionStatsQuery';
 
 type KpiTone = 'orange' | 'emerald' | 'blue';
 
@@ -105,11 +99,6 @@ function PendingPaymentsBanner({ count }: { count: number }) {
   );
 }
 
-async function fetchReceptionStats(): Promise<ReceptionStats | null> {
-  const res = await apiFetch('/api/stats/reception');
-  return parseJsonResponse<ReceptionStats>(res);
-}
-
 interface ReceptionHomeSummaryProps {
   onOpenCounter: () => void;
   compact?: boolean;
@@ -117,39 +106,19 @@ interface ReceptionHomeSummaryProps {
 
 export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSummaryProps) {
   const { isMobileShell: isMobile } = useBreakpoint();
-  const [stats, setStats] = useState<ReceptionStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [statsError, setStatsError] = useState(false);
+  const {
+    data: stats,
+    isPending: loading,
+    isError: statsError,
+    isFetching,
+    refetch,
+  } = useReceptionStatsQuery();
 
   const refresh = useCallback(async () => {
-    setRefreshing(true);
-    setStatsError(false);
-    try {
-      const data = await fetchReceptionStats();
-      setStats(data);
-      setRefreshKey((k) => k + 1);
-    } catch {
-      setStats(null);
-      setStatsError(true);
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchReceptionStats()
-      .then((data) => {
-        setStats(data);
-        setStatsError(false);
-      })
-      .catch(() => {
-        setStats(null);
-        setStatsError(true);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    await refetch();
+    setRefreshKey((k) => k + 1);
+  }, [refetch]);
 
   const {
     pullDistance,
@@ -161,12 +130,13 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
   });
 
   const pendingPayments = stats?.pendingPayments ?? 0;
+  const refreshing = isFetching && !loading;
 
-  if (loading) {
+  if (loading && !stats) {
     return <DashboardSkeleton statCount={3} />;
   }
 
-  if (statsError) {
+  if (statsError && !stats) {
     return (
       <EmptyState
         icon={Fingerprint}

@@ -20,7 +20,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
-import { Button, Card, PageHeader, Badge, Spinner, CedulaInput, Label } from '../components/ui';
+import { Button, Card, Badge, Spinner, CedulaInput, Label } from '../components/ui';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
@@ -81,8 +81,32 @@ export default function Reception() {
     required: boolean;
     configured: boolean;
   } | null>(null);
+  const [renewPrefill, setRenewPrefill] = useState<{
+    id: number;
+    full_name: string;
+    cedula: string | null;
+  } | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const isMobileShell = useMediaQuery('(max-width: 1023px)');
+
+  // Mobile defaults to counter (or last saved mode); desktop stays on summary home.
+  useEffect(() => {
+    if (!isMobileShell) return;
+    if (searchParams.has('mode')) return;
+    let preferCounter = true;
+    try {
+      const saved = localStorage.getItem('gymapure_reception_mode');
+      if (saved === 'summary') preferCounter = false;
+      if (saved === 'counter') preferCounter = true;
+    } catch {
+      /* ignore */
+    }
+    if (preferCounter) {
+      const next = new URLSearchParams(searchParams);
+      next.set('mode', 'counter');
+      setSearchParams(next, { replace: true });
+    }
+  }, [isMobileShell, searchParams, setSearchParams]);
 
   useEffect(() => {
     void apiFetch('/api/settings/check-in-pin')
@@ -113,10 +137,16 @@ export default function Reception() {
       next.delete('mode');
     }
     setSearchParams(next, { replace: true });
+    try {
+      localStorage.setItem('gymapure_reception_mode', enabled ? 'counter' : 'summary');
+    } catch {
+      /* ignore */
+    }
   };
 
   const changeTab = (next: ReceptionTab) => {
     setTab(next);
+    if (next !== 'renew') setRenewPrefill(null);
     const params = new URLSearchParams(searchParams);
     if (next === 'access') {
       params.delete('tab');
@@ -124,6 +154,16 @@ export default function Reception() {
       params.set('tab', next);
     }
     setSearchParams(params, { replace: true });
+  };
+
+  const openRenewForLookup = () => {
+    if (!lookup?.user) return;
+    setRenewPrefill({
+      id: lookup.user.id,
+      full_name: lookup.user.full_name,
+      cedula: lookup.user.cedula,
+    });
+    changeTab('renew');
   };
 
   const loadStats = useCallback(async () => {
@@ -262,12 +302,16 @@ export default function Reception() {
         if (res.ok) {
           setMessageType('success');
           setMessage(formatAttendanceMessage(action, data));
+          if (action === 'check-in' && !data.already_checked_in) {
+            setInsideCount((c) => c + 1);
+          } else if (action === 'check-out' && !data.already_checked_out) {
+            setInsideCount((c) => Math.max(0, c - 1));
+            setInside((prev) => prev.filter((m) => m.cedula?.toUpperCase() !== q.toUpperCase()));
+          }
           if (options?.clearInput) {
             setCedula('');
             setLookup(null);
-            if (!isMobileShell) {
-              setTimeout(() => cedulaRef.current?.focus(), 100);
-            }
+            setTimeout(() => cedulaRef.current?.focus(), 100);
           } else if (q.toUpperCase() === lookup?.user?.cedula?.toUpperCase()) {
             void doLookup(q, { preserveMessage: true });
           }
@@ -287,7 +331,7 @@ export default function Reception() {
         setCheckingOutCedula(null);
       }
     },
-    [formatAttendanceMessage, loadStats, isMobileShell, lookup?.user?.cedula, doLookup]
+    [formatAttendanceMessage, loadStats, lookup?.user?.cedula, doLookup]
   );
 
   const handleAction = useCallback(
@@ -580,18 +624,26 @@ export default function Reception() {
               </Button>
             </div>
           ) : lookup.subscription ? (
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                {lookup.subscription.membership_name}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Vence{' '}
-                {lookup.subscription.end_date
-                  ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
-                  : '—'}
-                {' · '}
-                {lookup.subscription.days_remaining} días restantes
-              </p>
+            <div className="space-y-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div>
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                  {lookup.subscription.membership_name}
+                </p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  Vence{' '}
+                  {lookup.subscription.end_date
+                    ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
+                    : '—'}
+                  {' · '}
+                  {lookup.subscription.days_remaining} días restantes
+                </p>
+              </div>
+              {lookup.subscription.days_remaining <= 7 && (
+                <Button size="sm" variant="secondary" onClick={openRenewForLookup}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Renovar
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
@@ -604,23 +656,21 @@ export default function Reception() {
               </div>
               {lookup.user && (
                 <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="secondary" onClick={openRenewForLookup}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Renovar / cobrar
+                  </Button>
                   <Link
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="sm" variant="secondary">
-                      <CreditCard className="mr-2 h-4 w-4" />
+                    <Button size="sm" variant="ghost">
                       Registrar pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
                     <Button size="sm" variant="ghost">
                       Asignar plan
-                    </Button>
-                  </Link>
-                  <Link to="/payments?status=pending" className="inline-flex">
-                    <Button size="sm" variant="ghost">
-                      Ver pendientes
                     </Button>
                   </Link>
                 </div>
@@ -792,7 +842,13 @@ export default function Reception() {
               />
             </div>
           )}
-          {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
+          {tab === 'renew' && (
+            <ReceptionRenewPayWizard
+              key={renewPrefill?.id ?? 'renew'}
+              initialMember={renewPrefill}
+              onComplete={() => void loadStats()}
+            />
+          )}
           {tab === 'guests' && <ReceptionGuestPasses />}
         </div>
         {counterModals}
@@ -803,46 +859,6 @@ export default function Reception() {
   return (
     <div className="page-stack">
       <ReceptionHomeSummary onOpenCounter={() => setCounterMode(true)} />
-
-      <div className="panel-wide hidden space-y-4 lg:block">
-        <PageHeader
-          compact
-          title={
-            <>
-              Control de <span className="text-brand">acceso</span>
-            </>
-          }
-          subtitle="Busque por cédula para autorizar entrada y salida"
-        />
-
-        <CounterTabNav
-          tab={tab}
-          insideCount={insideCount}
-          onChange={changeTab}
-          renewLabel="Renovar y cobrar"
-        />
-
-        {tab === 'access' && (
-          <div className="space-y-4">
-            {pinBanner}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {lookupPanel}
-              {memberPanel}
-            </div>
-          </div>
-        )}
-
-        {tab === 'inside' && insideList}
-
-        {tab === 'register' && (
-          <ReceptionWalkInWizard
-            initialCedula={searchParams.get('cedula') ?? undefined}
-            onComplete={() => void loadStats()}
-          />
-        )}
-        {tab === 'renew' && <ReceptionRenewPayWizard onComplete={() => void loadStats()} />}
-        {tab === 'guests' && <ReceptionGuestPasses />}
-      </div>
       {counterModals}
     </div>
   );

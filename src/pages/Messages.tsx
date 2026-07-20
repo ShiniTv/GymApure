@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
@@ -28,8 +28,11 @@ import {
   SearchInput,
   Spinner,
   BackToDashboardLink,
-  PageState,
+  ListRowSkeleton,
+  ChatBubbleSkeleton,
+  Skeleton,
 } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { fieldClassName } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
@@ -463,6 +466,8 @@ const ConversationListItem = memo(function ConversationListItem({
 });
 
 function StaffChatView() {
+  usePageTitle('Mensajes');
+  const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
   const isTrainer = user?.role === 'trainer';
@@ -621,9 +626,7 @@ function StaffChatView() {
       </div>
       <div className="flex min-h-0 flex-1 flex-col p-2">
         {loadingList ? (
-          <div className="flex justify-center py-8">
-            <Spinner />
-          </div>
+          <ListRowSkeleton rows={6} />
         ) : conversations.length === 0 && startableMembers.length === 0 && !memberHitsLoading ? (
           <EmptyState
             icon={MessageSquare}
@@ -634,6 +637,17 @@ function StaffChatView() {
                 : isTrainer
                   ? 'Aparecen cuando un cliente tuyo escribe o cuando abres el chat desde aquí buscando su nombre.'
                   : 'Busca un miembro arriba para iniciar un chat, o espera avisos automáticos.'
+            }
+            action={
+              isTrainer && !search.trim() ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => navigate('/routines?view=calendar&assign=1')}
+                >
+                  Asignar rutina
+                </Button>
+              ) : undefined
             }
           />
         ) : (
@@ -735,9 +749,7 @@ function StaffChatView() {
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         {loadingMessages && !messagesData ? (
-          <div className="flex flex-1 justify-center py-8">
-            <Spinner />
-          </div>
+          <ChatBubbleSkeleton />
         ) : (
           <Virtuoso
             ref={virtuosoRef}
@@ -806,6 +818,7 @@ function StaffChatView() {
 }
 
 function MemberChatView() {
+  usePageTitle('Mensajes');
   const { data: conversation, isPending, isError, isFetching, refetch } = useMemberChatQuery(true);
   const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
     conversation?.id ?? null,
@@ -822,10 +835,10 @@ function MemberChatView() {
 
   if (isPending) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando mensajes…</p>
-      </PageState>
+      <div className="page-stack-tight" aria-busy="true" aria-label="Cargando mensajes">
+        <Skeleton className="mx-4 h-8 w-48" />
+        <ChatBubbleSkeleton rows={8} />
+      </div>
     );
   }
 
@@ -890,9 +903,7 @@ function MemberChatView() {
       <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-[calc(100dvh-11rem)] dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex min-h-0 flex-1 flex-col">
           {loadingMessages && !messagesData ? (
-            <div className="flex flex-1 justify-center py-8">
-              <Spinner />
-            </div>
+            <ChatBubbleSkeleton />
           ) : messagesData && messagesData.messages.length === 0 ? (
             <div className="flex h-full min-h-[10rem] flex-col items-center justify-center px-4 py-6 text-center">
               <MessageSquare className="mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />

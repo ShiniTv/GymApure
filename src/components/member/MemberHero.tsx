@@ -1,8 +1,10 @@
 import { Flame, Dumbbell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
 import { cn } from '../../lib/utils';
+import { apiFetch } from '../../lib/api';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -39,6 +41,20 @@ export function MemberHero({
   const firstName = name.split(' ')[0] ?? name;
   const canTrain = routineId && !routineCompletedToday;
 
+  useEffect(() => {
+    if (!canTrain || !routineId) return;
+    const controller = new AbortController();
+    const t = window.setTimeout(() => {
+      void apiFetch(`/api/routines/${routineId}`, { signal: controller.signal }).catch(() => {
+        /* best-effort prefetch */
+      });
+    }, 400);
+    return () => {
+      window.clearTimeout(t);
+      controller.abort();
+    };
+  }, [canTrain, routineId]);
+
   const trainLabel = routineCompletedToday
     ? 'Completada hoy'
     : routineInProgress
@@ -53,6 +69,11 @@ export function MemberHero({
       className={cn('min-h-[var(--touch-comfort)] w-full sm:w-auto', className)}
       disabled={!!routineId && routineCompletedToday}
       onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
+      onMouseEnter={() => {
+        if (canTrain && routineId) {
+          void apiFetch(`/api/routines/${routineId}`).catch(() => undefined);
+        }
+      }}
     >
       <Dumbbell className="mr-2 h-5 w-5" />
       {trainLabel}

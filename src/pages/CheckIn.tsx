@@ -13,6 +13,7 @@ import { Button, Card, SegmentedControl, Spinner, CedulaInput } from '../compone
 import { parseBadgeScan } from '../lib/badgeQr';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const QrScannerPanel = lazy(() =>
   import('../components/checkin/QrScannerPanel').then((m) => ({ default: m.QrScannerPanel }))
@@ -20,6 +21,7 @@ const QrScannerPanel = lazy(() =>
 type KioskMode = 'check-in' | 'check-out';
 
 export default function CheckIn() {
+  usePageTitle('Acceso');
   const [searchParams] = useSearchParams();
   const isKioskMode = searchParams.get('kiosk') === '1';
   const { isDesktop: isLargeKioskLayout } = useBreakpoint();
@@ -71,9 +73,7 @@ export default function CheckIn() {
         setMessage('Código QR o cédula no reconocido');
         setExpiryWarning('');
         processingRef.current = false;
-        if (!isKioskMode) {
-          resetToIdle(4000);
-        }
+        resetToIdle(4000);
         return;
       }
 
@@ -126,26 +126,20 @@ export default function CheckIn() {
 
             setCedula('');
             processingRef.current = false;
-            if (!isKioskMode) {
-              resetToIdle(4500);
-            }
+            resetToIdle(isKioskMode ? 3500 : 4500);
           } else {
             setStatus('error');
             setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
             setExpiryWarning('');
             if (data.user_name) setUserName(data.user_name);
             processingRef.current = false;
-            if (!isKioskMode) {
-              resetToIdle(4000);
-            }
+            resetToIdle(isKioskMode ? 4000 : 4000);
           }
         } catch {
           setStatus('error');
           setMessage('Error de red');
           processingRef.current = false;
-          if (!isKioskMode) {
-            resetToIdle(4000);
-          }
+          resetToIdle(isKioskMode ? 4000 : 4000);
         }
       };
 

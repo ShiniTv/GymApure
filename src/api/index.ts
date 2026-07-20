@@ -28,15 +28,15 @@ import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
-import { apiRateLimiter, authRateLimiter } from './middleware/rateLimit.ts';
+import { apiRateLimiter } from './middleware/rateLimit.ts';
 
 const router = asyncRouter();
 
 // Health (public, no auth)
 router.use(healthRoutes);
 
-// Public routes (rate-limited)
-router.use('/auth', authRateLimiter, authRoutes);
+// Auth: brute-force limiter only on login/register (see auth.ts), not /me /logout /csrf
+router.use('/auth', authRoutes);
 router.use('/demo-requests', apiRateLimiter, demoRequestRoutes);
 
 // Cron jobs (CRON_SECRET or admin session — before global authenticate)

@@ -19,10 +19,25 @@ interface MembershipPlan {
 
 const PAYMENT_METHODS = ['efectivo', 'pago_movil', 'transferencia', 'zelle'] as const;
 
-export function ReceptionRenewPayWizard({ onComplete }: { onComplete?: () => void }) {
-  const [search, setSearch] = useState('');
+export function ReceptionRenewPayWizard({
+  onComplete,
+  initialMember,
+}: {
+  onComplete?: () => void;
+  initialMember?: { id: number; full_name: string; cedula: string | null } | null;
+}) {
+  const [search, setSearch] = useState(initialMember?.cedula ?? initialMember?.full_name ?? '');
   const [members, setMembers] = useState<MemberOption[]>([]);
-  const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberOption | null>(
+    initialMember
+      ? {
+          id: initialMember.id,
+          full_name: initialMember.full_name,
+          cedula: initialMember.cedula,
+          role: 'member',
+        }
+      : null
+  );
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [membershipId, setMembershipId] = useState('');
   const [amount, setAmount] = useState('');

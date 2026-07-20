@@ -34,7 +34,6 @@ interface MemberTableRowProps {
   onEditShift: (member: Member) => void;
   onMembershipOperation: (member: Member) => void;
   membershipOperationLoading: boolean;
-  nutritionFocus?: boolean;
 }
 
 export const MemberTableRow = memo(function MemberTableRow({
@@ -51,7 +50,6 @@ export const MemberTableRow = memo(function MemberTableRow({
   onEditShift,
   onMembershipOperation,
   membershipOperationLoading,
-  nutritionFocus = false,
 }: MemberTableRowProps) {
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
@@ -136,55 +134,42 @@ export const MemberTableRow = memo(function MemberTableRow({
         <div className="flex justify-end gap-1 opacity-100 transition-all">
           {isTrainer && member.role === 'member' && (
             <>
-              {nutritionFocus ? (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/members/${member.id}/nutrition`)}
-                  className="border-brand/30 bg-brand/10 text-brand inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold"
-                >
-                  <UtensilsCrossed className="h-4 w-4" aria-hidden />
-                  Plan nutricional
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/members/${member.id}/routines`)}
-                    className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
-                    title="Ver Rutinas"
-                    aria-label="Ver rutinas"
-                  >
-                    <Dumbbell className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/members/${member.id}/history`)}
-                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-blue-500/10 hover:text-blue-500 dark:text-zinc-300"
-                    title="Historial de Entrenamiento"
-                    aria-label="Historial de entrenamiento"
-                  >
-                    <History className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/members/${member.id}/nutrition`)}
-                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-zinc-300"
-                    title="Plan nutricional"
-                    aria-label="Plan nutricional"
-                  >
-                    <UtensilsCrossed className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/messages?member=${member.id}`)}
-                    className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
-                    title="Enviar mensaje"
-                    aria-label="Enviar mensaje"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${member.id}/routines`)}
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
+                title="Ver Rutinas"
+                aria-label="Ver rutinas"
+              >
+                <Dumbbell className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${member.id}/history`)}
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-blue-500/10 hover:text-blue-500 dark:text-zinc-300"
+                title="Historial de Entrenamiento"
+                aria-label="Historial de entrenamiento"
+              >
+                <History className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/members/${member.id}/nutrition`)}
+                className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-500 dark:text-zinc-300"
+                title="Plan nutricional"
+                aria-label="Plan nutricional"
+              >
+                <UtensilsCrossed className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/messages?member=${member.id}`)}
+                className="hover:text-brand hover:bg-brand/10 rounded-lg p-1.5 text-zinc-400 transition-colors dark:text-zinc-300"
+                title="Enviar mensaje"
+                aria-label="Enviar mensaje"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </button>
             </>
           )}
           {(userRole === 'admin' || userRole === 'receptionist') && member.role === 'member' && (
