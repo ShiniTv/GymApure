@@ -409,6 +409,26 @@ router.patch(
   })
 );
 
+/** Delete a finished (or open) session from history. Logs cascade via FK. */
+router.delete(
+  '/sessions/:sessionId',
+  requireWorkoutSessionAccess,
+  asyncHandler(async (req, res) => {
+    const sessionId = parseInt(req.params.sessionId, 10);
+    if (Number.isNaN(sessionId)) {
+      res.status(400).json({ error: 'ID de sesión inválido' });
+      return;
+    }
+
+    const { rowCount } = await query(`DELETE FROM workout_sessions WHERE id = $1`, [sessionId]);
+    if (rowCount === 0) {
+      res.status(404).json({ error: 'Sesión no encontrada' });
+      return;
+    }
+    res.json({ success: true });
+  })
+);
+
 function toIsoTimestamp(value: unknown): string | null {
   if (value == null) return null;
   if (value instanceof Date) return value.toISOString();

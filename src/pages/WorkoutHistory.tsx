@@ -123,6 +123,8 @@ export default function WorkoutHistory() {
   const [progress, setProgress] = useState<WorkoutProgress | null>(null);
   const [discardTarget, setDiscardTarget] = useState<WorkoutSession | null>(null);
   const [isDiscarding, setIsDiscarding] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
   const pageSize = 20;
 
   const userIdToFetch = id ? parseInt(id, 10) : user?.id;
@@ -158,6 +160,7 @@ export default function WorkoutHistory() {
   const closeSessionDetail = () => {
     setSelectedSessionId(null);
     setSessionDetail(null);
+    setDeleteConfirmOpen(false);
   };
 
   const filteredHistory = routineFilterId
@@ -293,6 +296,29 @@ export default function WorkoutHistory() {
       toast?.error(toDisplayErrorMessage(err, 'No se pudo descartar el entrenamiento'));
     } finally {
       setIsDiscarding(false);
+    }
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionDetail || isDeletingSession) return;
+    setIsDeletingSession(true);
+    try {
+      await parseJsonResponse(
+        await apiFetch(`/api/workouts/sessions/${sessionDetail.id}`, {
+          method: 'DELETE',
+        })
+      );
+      clearWorkoutLocalStorage(sessionDetail.id);
+      setDeleteConfirmOpen(false);
+      closeSessionDetail();
+      await memberStatsCtx?.refresh();
+      void fetchHistory();
+      toast?.success('Sesión eliminada del historial');
+    } catch (err) {
+      clientLogger.error('Failed to delete workout session', err);
+      toast?.error(toDisplayErrorMessage(err, 'No se pudo eliminar la sesión'));
+    } finally {
+      setIsDeletingSession(false);
     }
   };
 
@@ -781,6 +807,19 @@ export default function WorkoutHistory() {
               </div>
             )}
 
+            {sessionDetail.end_time && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="danger"
+                  className="w-full sm:w-auto"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar del historial
+                </Button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
                 <p className="text-lg font-bold text-zinc-900 dark:text-white">
@@ -907,6 +946,47 @@ export default function WorkoutHistory() {
                 onClick={() => void confirmDiscard()}
               >
                 {isDiscarding ? 'Descartando…' : 'Descartar'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={deleteConfirmOpen && sessionDetail !== null}
+        onClose={() => {
+          if (isDeletingSession) return;
+          setDeleteConfirmOpen(false);
+        }}
+        title="Eliminar sesión del historial"
+      >
+        {sessionDetail && (
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+              ¿Eliminar la sesión de{' '}
+              <span className="font-semibold">{sessionDetail.routine_name}</span> del{' '}
+              {formatSessionDate(sessionDetail.start_time)} a las{' '}
+              {formatSessionTime(sessionDetail.start_time)}?
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Esta acción no se puede deshacer. Se borrarán las series registradas de esta sesión.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                disabled={isDeletingSession}
+                onClick={() => setDeleteConfirmOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1"
+                disabled={isDeletingSession}
+                onClick={() => void confirmDeleteSession()}
+              >
+                {isDeletingSession ? 'Eliminando…' : 'Eliminar'}
               </Button>
             </div>
           </div>

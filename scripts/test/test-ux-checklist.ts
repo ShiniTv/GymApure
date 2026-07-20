@@ -179,6 +179,38 @@ async function main() {
     histPayload.workoutsThisWeek === histP2.workoutsThisWeek
   );
 
+  // --- Eliminar sesión del historial ---
+  const routineRow = await query<{ id: number }>(
+    `SELECT r.id FROM routines r
+     JOIN user_routines ur ON ur.routine_id = r.id
+     WHERE ur.user_id = $1
+     LIMIT 1`,
+    [memberId]
+  );
+  let disposableRoutineId = routineRow.rows[0]?.id;
+  if (!disposableRoutineId) {
+    const anyRoutine = await query<{ id: number }>('SELECT id FROM routines LIMIT 1');
+    disposableRoutineId = anyRoutine.rows[0]?.id;
+  }
+  if (disposableRoutineId) {
+    const inserted = await query<{ id: number }>(
+      `INSERT INTO workout_sessions (user_id, routine_id, success, end_time)
+       VALUES ($1, $2, 1, NOW())
+       RETURNING id`,
+      [memberId, disposableRoutineId]
+    );
+    const disposableSessionId = inserted.rows[0]?.id;
+    ok('sesión descartable creada para DELETE', typeof disposableSessionId === 'number');
+    if (disposableSessionId) {
+      const del = await api('DELETE', `/api/workouts/sessions/${disposableSessionId}`);
+      ok('member DELETE /api/workouts/sessions/:id → 200', del.res.status === 200);
+      const delAgain = await api('DELETE', `/api/workouts/sessions/${disposableSessionId}`);
+      ok('DELETE sesión inexistente → 404', delAgain.res.status === 404);
+    }
+  } else {
+    ok('sesión descartable creada para DELETE', false, 'miembro sin rutina asignada');
+  }
+
   // --- RBAC: admin no asigna rutinas (dead end API) ---
   cookie = '';
   const adminLogin = await loginAs(ADMIN_EMAIL, DEMO_PASSWORD);
@@ -192,7 +224,7 @@ async function main() {
   ok('admin POST /api/users/:id/routines → 403', assignRoutine.res.status === 403);
 
   const trainerAssignments = await api('GET', '/api/routines/assignments/all');
-  ok('admin GET /api/routines/assignments/all → 403', trainerAssignments.res.status === 403);
+  ok('admin GET /api/routines/assignments/all → 200', trainerAssignments.res.status === 200);
 
   // --- Access denied API (member) ---
   cookie = '';

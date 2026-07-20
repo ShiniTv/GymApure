@@ -73,6 +73,10 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 
 Muestra sesiones pasadas, ejercicios, volúmenes y fechas.
 
+Desde el detalle de una sesión finalizada puedes **Eliminar del historial** (con confirmación). Útil si se cargó un entrenamiento por error. Las series de esa sesión se borran; la acción no se puede deshacer.
+
+Las sesiones **en curso** se descartan con **Descartar** (no usan este botón).
+
 ---
 
 ## Meta semanal
