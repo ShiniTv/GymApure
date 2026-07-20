@@ -36,6 +36,24 @@ export function MemberHero({
   const firstName = name.split(' ')[0] ?? name;
   const canTrain = routineId && !routineCompletedToday;
 
+  const trainLabel = routineCompletedToday
+    ? 'Completada hoy'
+    : routineId
+      ? 'Entrenar ahora'
+      : 'Ver rutinas';
+
+  const renderTrainButton = (className?: string) => (
+    <Button
+      size="lg"
+      className={cn('min-h-[var(--touch-comfort)] w-full sm:w-auto', className)}
+      disabled={!!routineId && routineCompletedToday}
+      onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
+    >
+      <Dumbbell className="mr-2 h-5 w-5" />
+      {trainLabel}
+    </Button>
+  );
+
   return (
     <Card
       padding="lg"
@@ -77,30 +95,19 @@ export function MemberHero({
             </div>
           )}
 
-          <div className="mt-5 flex w-full sm:w-auto">
-            <Button
-              size="lg"
-              className="min-h-[var(--touch-comfort)] w-full sm:w-auto"
-              disabled={!!routineId && routineCompletedToday}
-              onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
-            >
-              <Dumbbell className="mr-2 h-5 w-5" />
-              {routineCompletedToday
-                ? 'Completada hoy'
-                : routineId
-                  ? 'Entrenar ahora'
-                  : 'Ver rutinas'}
-            </Button>
-          </div>
+          {/* Desktop: CTA junto al copy */}
+          <div className="mt-5 hidden w-full sm:flex sm:w-auto">{renderTrainButton()}</div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-center gap-6 sm:justify-end">
+        <div className="flex w-full shrink-0 flex-col items-center gap-4 sm:w-auto sm:justify-end">
           <ProgressRing
             value={workoutsThisWeek}
             max={weeklyTrainingGoal}
             label="Esta semana"
             sublabel="meta semanal"
           />
+          {/* Mobile: CTA debajo de la meta semanal */}
+          <div className="flex w-full sm:hidden">{renderTrainButton()}</div>
         </div>
       </div>
     </Card>
