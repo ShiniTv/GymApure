@@ -37,11 +37,11 @@ export function isStaffRole(role: string): boolean {
 }
 
 export function canOperateRoutines(role: UserRole | string): boolean {
-  return role === 'trainer';
+  return role === 'trainer' || role === 'admin';
 }
 
 export function canOperateExercises(role: UserRole | string): boolean {
-  return role === 'trainer';
+  return role === 'trainer' || role === 'admin';
 }
 
 export function canOperateReception(role: UserRole | string): boolean {

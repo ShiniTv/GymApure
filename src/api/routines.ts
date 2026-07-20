@@ -184,7 +184,7 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
-router.get('/assignments/all', authorize(['trainer']), async (req: AuthRequest, res) => {
+router.get('/assignments/all', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
 
   try {
@@ -267,7 +267,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/', authorize(['trainer']), async (req: AuthRequest, res) => {
+router.post('/', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const parsed = routineCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -299,7 +299,7 @@ router.post('/', authorize(['trainer']), async (req: AuthRequest, res) => {
   }
 });
 
-router.put('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
+router.put('/:id', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const parsed = routineUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -323,7 +323,7 @@ router.put('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   }
 });
 
-router.delete('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
+router.delete('/:id', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const routineId = parseInt(req.params.id, 10);
   if (isNaN(routineId)) return res.status(400).json({ error: 'ID de rutina inválido' });
 
@@ -357,7 +357,7 @@ router.delete('/:id', authorize(['trainer']), async (req: AuthRequest, res) => {
   }
 });
 
-router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, res) => {
+router.post('/:id/exercises', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const parsed = routineExerciseSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: formatZodError(parsed.error) });
@@ -402,7 +402,7 @@ router.post('/:id/exercises', authorize(['trainer']), async (req: AuthRequest, r
 
 router.put(
   '/:id/exercises/:routineExerciseId',
-  authorize(['trainer']),
+  authorize(['trainer', 'admin']),
   async (req: AuthRequest, res) => {
     const parsed = routineExerciseSchema.omit({ exercise_id: true }).safeParse(req.body);
     if (!parsed.success) {
@@ -450,7 +450,7 @@ router.put(
 
 router.delete(
   '/:id/exercises/:routineExerciseId',
-  authorize(['trainer']),
+  authorize(['trainer', 'admin']),
   async (req: AuthRequest, res) => {
     const trainerId = await getRoutineTrainerId(req.params.id);
     if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });

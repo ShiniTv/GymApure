@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Fingerprint,
   Inbox,
+  Dumbbell,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -30,6 +31,7 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Miembros', href: '/members', icon: Users },
       { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
       { name: 'Entrenadores', href: '/trainers', icon: UserCog },
+      { name: 'Rutinas', href: '/routines', icon: Dumbbell },
       { name: 'Clases', href: '/clases', icon: CalendarDays },
       { name: 'Equipamiento', href: '/equipment', icon: Wrench },
       { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: Fingerprint },

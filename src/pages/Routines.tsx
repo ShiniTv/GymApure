@@ -122,7 +122,7 @@ export default function Routines() {
   const memberStatsCtx = useMemberStatsOptional();
   const invalidateAssignmentData = useInvalidateAssignmentData();
   const isMember = user?.role === 'member';
-  const isStaffRoutines = user?.role === 'trainer';
+  const isStaffRoutines = user?.role === 'admin' || user?.role === 'trainer';
   const {
     data: libraryRoutines,
     isPending: libraryLoading,

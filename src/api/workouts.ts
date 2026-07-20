@@ -411,6 +411,23 @@ router.patch(
   })
 );
 
+function toIsoTimestamp(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') {
+    const parsed = new Date(value.includes('T') ? value : value.replace(' ', 'T'));
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+    return value;
+  }
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toISOString();
+}
+
+function toYmd(value: unknown): string {
+  const iso = toIsoTimestamp(value);
+  return iso ? iso.slice(0, 10) : new Date().toISOString().slice(0, 10);
+}
+
 router.get(
   '/sessions/:sessionId',
   requireWorkoutSessionAccess,
@@ -423,8 +440,8 @@ router.get(
 
     const sessionResult = await query<{
       id: number;
-      start_time: string;
-      end_time: string | null;
+      start_time: string | Date;
+      end_time: string | Date | null;
       success: number;
       routine_id: number;
       routine_name: string;
@@ -445,6 +462,9 @@ router.get(
       res.status(404).json({ error: 'Sesión no encontrada' });
       return;
     }
+
+    const startTimeIso = toIsoTimestamp(session.start_time) ?? new Date().toISOString();
+    const endTimeIso = toIsoTimestamp(session.end_time);
 
     const [plannedResult, logsResult, priorBestResult] = await Promise.all([
       query<{
@@ -487,12 +507,12 @@ router.get(
            AND ws.id <> $2
            AND ws.end_time IS NOT NULL
            AND ws.success = 1
-           AND ws.start_time < $3
+           AND ws.start_time < $3::timestamptz
            AND wl.weight IS NOT NULL
            AND wl.reps IS NOT NULL
            AND wl.reps > 0
          ORDER BY wl.exercise_id, wl.weight DESC, wl.reps DESC`,
-        [session.user_id, sessionId, session.start_time]
+        [session.user_id, sessionId, startTimeIso]
       ),
     ]);
 
@@ -506,7 +526,7 @@ router.get(
 
     // Also consider manual RM tests dated before this session.
     try {
-      const sessionDate = session.start_time.slice(0, 10);
+      const sessionDate = toYmd(session.start_time);
       const { rows: manualPrior } = await query<{
         exercise_id: number;
         weight: number;
@@ -601,8 +621,8 @@ router.get(
       id: session.id,
       routine_id: session.routine_id,
       routine_name: session.routine_name,
-      start_time: session.start_time,
-      end_time: session.end_time,
+      start_time: startTimeIso,
+      end_time: endTimeIso,
       success: session.success === 1,
       member: { id: session.user_id, full_name: session.member_name },
       exercises,
