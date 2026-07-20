@@ -28,12 +28,12 @@ export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
 ];
 
 export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
-  { name: 'Resumen', href: '/reception', icon: LayoutDashboard },
-  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn },
-  { name: 'Clases del día', href: '/clases', icon: CalendarDays },
-  { name: 'Equipamiento', href: '/equipment', icon: Wrench },
-  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
-  { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
+  { name: 'Resumen', href: '/reception', icon: LayoutDashboard, section: 'Operación' },
+  { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
+  { name: 'Clases', href: '/clases', icon: CalendarDays, section: 'Operación' },
+  { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
+  { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
+  { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 
 function hrefMatchesQuery(search: string, href: string): boolean {

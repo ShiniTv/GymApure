@@ -30,15 +30,17 @@ test.describe('Entrenador móvil', () => {
     await expect(page).toHaveURL(/\/members$/);
     await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
-    // Compact cards open MemberQuickSheet; primary action is "Ver rutinas"
+    // Compact cards open MemberQuickSheet; primary is Ver rutinas or Asignar rutina
     const firstCard = page.locator('button.w-full.text-left.rounded-xl.border').first();
     await expect(firstCard).toBeVisible();
     await firstCard.click();
 
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
-    await sheet.getByRole('button', { name: 'Ver rutinas' }).click();
-    await expect(page).toHaveURL(/\/members\/\d+\/routines$/);
+    const primary = sheet.getByRole('button', { name: /Ver rutinas|Asignar rutina/ });
+    await expect(primary).toBeVisible();
+    await primary.click();
+    await expect(page).toHaveURL(/\/members\/\d+\/routines$|\/routines\?/);
   });
 
   test('Más ofrece herramientas de entrenador y restaura el foco al cerrar', async ({ page }) => {
@@ -48,8 +50,9 @@ test.describe('Entrenador móvil', () => {
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Nutrición' })).toBeVisible();
-    await expect(sheet.getByRole('link', { name: 'Asignaciones de rutinas' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Asignaciones' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Ejercicios' })).toBeVisible();
+    await expect(sheet.getByText('Programación')).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();

@@ -1,33 +1,80 @@
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
-  Activity,
-  Clock,
   AlertTriangle,
   Dumbbell,
   CalendarClock,
+  CalendarDays,
   ChevronRight,
   MessageSquare,
 } from 'lucide-react';
-import { QuickAction } from '../../components/admin/QuickAction';
-import { DashboardSection } from '../../components/admin/DashboardSection';
-import { StaffPortalBanner } from '../../components/StaffPortalBanner';
+import { useAuth } from '../../context/AuthContext';
 import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
-import {
-  StatCard,
-  Card,
-  Badge,
-  EmptyState,
-  Button,
-  PageHeader,
-  Skeleton,
-} from '../../components/ui';
+import { Card, Badge, EmptyState, Button, PageHeader, Skeleton } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { cn } from '../../lib/utils';
+import { routePrefetchHandlers } from '../../lib/routePrefetch';
 
 const TODAY_LIST_CAP = 5;
 
+const LIGHT_CARD = 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
+
+function MetricCell({
+  label,
+  value,
+  loading,
+}: {
+  label: string;
+  value: number;
+  loading?: boolean;
+}) {
+  return (
+    <div className="min-w-0 px-2 py-2 text-center sm:px-3">
+      <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        {label}
+      </p>
+      {loading ? (
+        <Skeleton className="mx-auto mt-1 h-6 w-8" />
+      ) : (
+        <p className="mt-0.5 text-lg font-bold text-zinc-900 tabular-nums sm:text-xl dark:text-white">
+          {value}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ShortcutChip({
+  to,
+  icon: Icon,
+  label,
+  count,
+}: {
+  to: string;
+  icon: typeof Users;
+  label: string;
+  count?: number;
+}) {
+  return (
+    <Link
+      to={to}
+      {...routePrefetchHandlers(to)}
+      className="inline-flex h-9 shrink-0 touch-manipulation items-center gap-1.5 rounded-full border border-zinc-200/80 bg-transparent px-3 text-[12px] font-semibold text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700/80 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/60"
+    >
+      <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
+      {label}
+      {count != null && count > 0 ? (
+        <span className="bg-brand/15 text-brand ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+          {count > 99 ? '99+' : count}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
 export default function TrainerDashboard() {
   usePageTitle('Panel');
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { data: trainerStats, isError, isPending, refetch } = useTrainerStatsQuery();
 
@@ -35,6 +82,8 @@ export default function TrainerDashboard() {
   const trainingToday = stats?.trainingToday ?? [];
   const inactiveMembers = stats?.inactiveMembers ?? [];
   const withoutRoutines = stats?.membersWithoutRoutines ?? 0;
+  const firstName = user?.name?.split(/\s+/)[0] ?? 'entrenador';
+  const loading = isPending && !stats;
 
   if (isError) {
     return (
@@ -43,7 +92,7 @@ export default function TrainerDashboard() {
           compact
           title={
             <>
-              Control de <span className="text-brand">entrenamiento</span>
+              Panel de <span className="text-brand">entrenador</span>
             </>
           }
         />
@@ -62,12 +111,12 @@ export default function TrainerDashboard() {
   }
 
   return (
-    <div className="page-stack-tight">
-      <StaffPortalBanner
-        eyebrow="Portal entrenador"
+    <div className="mx-auto w-full max-w-3xl space-y-5">
+      <PageHeader
+        compact
         title={
           <>
-            Control de <span className="text-brand">entrenamiento</span>
+            Hola, <span className="text-brand">{firstName}</span>
           </>
         }
         subtitle="Actividad con tus miembros"
@@ -78,139 +127,83 @@ export default function TrainerDashboard() {
         }
       />
 
-      <DashboardSection title="Tu actividad" icon={Activity} compact>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-          {isPending && !stats ? (
-            <>
-              <Skeleton className="h-[4.5rem] rounded-xl" />
-              <Skeleton className="h-[4.5rem] rounded-xl" />
-              <Skeleton className="h-[4.5rem] rounded-xl" />
-              <Skeleton className="h-[4.5rem] rounded-xl" />
-            </>
-          ) : (
-            <>
-              <StatCard
-                compact
-                title="Mis miembros"
-                value={stats?.assignedMembers || 0}
-                icon={Users}
-                color="blue"
-              />
-              <StatCard
-                compact
-                title="En el gym"
-                value={stats?.activeNow || 0}
-                icon={Activity}
-                color="orange"
-              />
-              <StatCard
-                compact
-                title="Sesiones hoy"
-                value={stats?.todayWorkouts || 0}
-                icon={Clock}
-                color="emerald"
-              />
-              <StatCard
-                compact
-                title="Sin rutina"
-                value={withoutRoutines}
-                icon={AlertTriangle}
-                color="orange"
-              />
-            </>
-          )}
-        </div>
-      </DashboardSection>
+      {/* Metrics strip — one surface */}
+      <div
+        className={cn(
+          'grid grid-cols-4 divide-x divide-zinc-200/80 overflow-hidden rounded-xl border dark:divide-zinc-800/80',
+          LIGHT_CARD
+        )}
+      >
+        <MetricCell label="Miembros" value={stats?.assignedMembers ?? 0} loading={loading} />
+        <MetricCell label="En gym" value={stats?.activeNow ?? 0} loading={loading} />
+        <MetricCell label="Hoy" value={stats?.todayWorkouts ?? 0} loading={loading} />
+        <MetricCell label="Sin rutina" value={withoutRoutines} loading={loading} />
+      </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/members"
-          icon={Users}
-          title="Miembros"
-          description="Ver todos los miembros activos"
-          count={stats?.assignedMembers || 0}
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
+      {/* Shortcuts as chips */}
+      <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ShortcutChip to="/members" icon={Users} label="Miembros" count={stats?.assignedMembers} />
+        <ShortcutChip
           to="/routines?view=calendar&assign=1"
           icon={CalendarClock}
-          title="Asignar"
-          description="Asignar rutina a un miembro"
+          label="Asignar"
           count={withoutRoutines > 0 ? withoutRoutines : undefined}
-          tone="emerald"
         />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/routines?view=calendar"
-          icon={CalendarClock}
-          title="Calendario"
-          description="Vista mensual"
-          tone="blue"
-        />
+        <ShortcutChip to="/routines?view=calendar" icon={CalendarDays} label="Calendario" />
+        <ShortcutChip to="/messages" icon={MessageSquare} label="Mensajes" />
       </div>
 
       {(withoutRoutines > 0 || (stats?.expiringMembers?.length ?? 0) > 0) && (
-        <DashboardSection title="Atención requerida" icon={AlertTriangle}>
-          <div className="space-y-2">
+        <div className="space-y-1.5">
+          <p className="px-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            Atención
+          </p>
+          <div className="space-y-1.5">
             {withoutRoutines > 0 && (
               <Link
                 to="/routines?view=calendar&assign=1"
-                className="bg-brand/5 border-brand/20 hover:bg-brand/10 flex items-center justify-between rounded-xl border p-3 transition-colors"
+                className="bg-brand/5 border-brand/20 hover:bg-brand/10 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 transition-colors"
               >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="bg-brand/10 shrink-0 rounded-lg p-1.5">
-                    <Users className="text-brand h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-900 sm:text-sm dark:text-white">
-                      Sin rutina asignada
-                    </p>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {withoutRoutines} miembro{withoutRoutines !== 1 ? 's' : ''}
-                    </p>
-                  </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    Sin rutina asignada
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {withoutRoutines} miembro{withoutRoutines !== 1 ? 's' : ''}
+                  </p>
                 </div>
                 <ChevronRight className="text-brand h-4 w-4 shrink-0" />
               </Link>
             )}
-
             {(stats?.expiringMembers ?? []).map((m) => (
               <Link
                 key={m.id}
                 to={`/members/${m.id}/routines`}
-                className="flex items-center justify-between rounded-xl border border-red-500/15 bg-red-500/5 p-3 transition-colors hover:bg-red-500/10"
+                className="flex items-center justify-between gap-2 rounded-xl border border-red-500/15 bg-red-500/5 px-3 py-2.5 transition-colors hover:bg-red-500/10"
               >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="shrink-0 rounded-lg bg-red-500/10 p-1.5">
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-zinc-900 sm:text-sm dark:text-white">
-                      {m.full_name}
-                    </p>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      Membresía por vencer
-                    </p>
-                  </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    {m.full_name}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Membresía por vencer
+                  </p>
                 </div>
                 <Badge variant="danger">{m.days_remaining}d</Badge>
               </Link>
             ))}
           </div>
-        </DashboardSection>
+        </div>
       )}
 
-      <DashboardSection title="Hoy">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Card padding="sm" rounded="xl">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-bold text-zinc-900 dark:text-white">
-                Entrenando ahora ({trainingToday.length})
+      {/* Hoy — one card, two columns */}
+      <Card padding="sm" rounded="xl" className={LIGHT_CARD}>
+        <h2 className="mb-3 text-[13px] font-semibold text-zinc-900 dark:text-white">Hoy</h2>
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-zinc-100 dark:sm:divide-zinc-800">
+          <div className="sm:pr-4">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                Entrenando · {trainingToday.length}
               </p>
               {trainingToday.length > TODAY_LIST_CAP && (
                 <Link
@@ -221,37 +214,33 @@ export default function TrainerDashboard() {
                 </Link>
               )}
             </div>
-            {isPending && !stats ? (
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-3/4" />
-              </div>
+            {loading ? (
+              <Skeleton className="h-10 w-full" />
             ) : trainingToday.length === 0 ? (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Ningún miembro asignado dentro del gym.
+              <p className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
+                Nadie de tus miembros está en el gym.
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => (
                   <li key={m.id}>
                     <Link
                       to={`/members/${m.id}/routines`}
-                      className="hover:text-brand flex items-center justify-between gap-2 text-xs"
+                      className="hover:text-brand flex items-center justify-between gap-2 py-1 text-[12px] font-medium text-zinc-800 dark:text-zinc-200"
                     >
-                      <span className="truncate font-medium text-zinc-800 dark:text-zinc-200">
-                        {m.full_name}
-                      </span>
+                      <span className="truncate">{m.full_name}</span>
                       <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                     </Link>
                   </li>
                 ))}
               </ul>
             )}
-          </Card>
-          <Card padding="sm" rounded="xl">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-bold text-zinc-900 dark:text-white">
-                Sin entrenar (≥3 días)
+          </div>
+
+          <div className="border-t border-zinc-100 pt-3 sm:border-0 sm:pt-0 sm:pl-4 dark:border-zinc-800">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                Sin entrenar · ≥3d
               </p>
               {inactiveMembers.length > TODAY_LIST_CAP && (
                 <Link
@@ -262,33 +251,29 @@ export default function TrainerDashboard() {
                 </Link>
               )}
             </div>
-            {isPending && !stats ? (
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-6 w-3/4" />
-              </div>
+            {loading ? (
+              <Skeleton className="h-10 w-full" />
             ) : inactiveMembers.length === 0 ? (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Todos tus miembros han entrenado recientemente.
+              <p className="text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
+                Todos entrenaron recientemente.
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {inactiveMembers.slice(0, TODAY_LIST_CAP).map((m) => (
-                  <li key={m.id} className="flex items-center gap-1.5">
+                  <li key={m.id} className="flex items-center gap-1">
                     <Link
                       to={`/members/${m.id}/history`}
-                      className="hover:text-brand flex min-w-0 flex-1 items-center justify-between gap-2 text-xs"
+                      className="hover:text-brand flex min-w-0 flex-1 items-center justify-between gap-2 py-1 text-[12px] font-medium text-zinc-800 dark:text-zinc-200"
                     >
-                      <span className="truncate font-medium text-zinc-800 dark:text-zinc-200">
-                        {m.full_name}
+                      <span className="truncate">{m.full_name}</span>
+                      <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                        {m.days_since}d
                       </span>
-                      <Badge variant="warning">{m.days_since}d</Badge>
                     </Link>
                     <Link
                       to={`/messages?member=${m.id}`}
                       className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                       aria-label={`Mensaje a ${m.full_name}`}
-                      title="Enviar mensaje"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
                     </Link>
@@ -296,65 +281,63 @@ export default function TrainerDashboard() {
                 ))}
               </ul>
             )}
-          </Card>
+          </div>
         </div>
-      </DashboardSection>
+      </Card>
 
-      <Card padding="sm" rounded="xl">
-        <h3 className="mb-3 text-sm font-bold text-zinc-900 dark:text-white">Actividad reciente</h3>
-        <div className="scroll-area max-h-72 space-y-0">
-          {isPending && !stats ? (
-            <div className="space-y-3 py-1">
-              <Skeleton className="h-12 w-full rounded-lg" />
-              <Skeleton className="h-12 w-full rounded-lg" />
-              <Skeleton className="h-12 w-full rounded-lg" />
-            </div>
-          ) : (
-            <>
-              {stats?.recentActivities?.map((activity) => (
+      {/* Actividad reciente */}
+      <div>
+        <h2 className="mb-2 px-0.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
+          Actividad reciente
+        </h2>
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        ) : !stats?.recentActivities?.length ? (
+          <p className="px-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+            Cuando entrenen, verás sus sesiones aquí.{' '}
+            <button
+              type="button"
+              className="text-brand font-semibold underline-offset-2 hover:underline"
+              onClick={() => navigate('/members')}
+            >
+              Ver miembros
+            </button>
+          </p>
+        ) : (
+          <ul className={cn('overflow-hidden rounded-xl border', LIGHT_CARD)}>
+            {stats.recentActivities.map((activity, i) => (
+              <li key={`${activity.user_id}-${activity.start_time}`}>
                 <Link
-                  key={`${activity.user_id}-${activity.start_time}`}
                   to={`/members/${activity.user_id}/history`}
-                  className="flex items-center gap-3 rounded-lg border-b border-zinc-100 px-1 py-2.5 transition-colors last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/30"
+                  className={cn(
+                    'flex items-center gap-2.5 px-3 py-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/40',
+                    i > 0 && 'border-t border-zinc-100/80 dark:border-zinc-800/80'
+                  )}
                 >
-                  <div className="relative shrink-0">
-                    <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-lg">
-                      <Dumbbell className="h-4 w-4" />
-                    </div>
-                  </div>
+                  <Dumbbell className="text-brand h-3.5 w-3.5 shrink-0" aria-hidden />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                    <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
                       {activity.full_name}
                     </p>
-                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
                       {activity.routine_name}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center rounded-lg bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
-                    <Clock className="text-brand mr-1 h-3.5 w-3.5" />
+                  <span className="shrink-0 text-[11px] font-medium text-zinc-400 tabular-nums dark:text-zinc-500">
                     {new Date(activity.start_time).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </div>
+                  </span>
                 </Link>
-              ))}
-              {(!stats?.recentActivities || stats.recentActivities.length === 0) && (
-                <EmptyState
-                  icon={Activity}
-                  title="Sin actividad reciente"
-                  description="Cuando tus miembros empiecen a entrenar, verás sus sesiones aquí."
-                  action={
-                    <Button variant="secondary" size="sm" onClick={() => navigate('/members')}>
-                      Ver miembros
-                    </Button>
-                  }
-                />
-              )}
-            </>
-          )}
-        </div>
-      </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

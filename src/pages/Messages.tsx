@@ -725,8 +725,8 @@ function StaffChatView() {
   };
 
   const conversationListPanel = (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="space-y-2 border-b border-zinc-100 p-2.5 dark:border-zinc-800">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+      <div className="space-y-2 border-b border-zinc-100/80 p-2.5 dark:border-zinc-800/80">
         <SearchInput
           value={search}
           onChange={(e) => {
@@ -847,8 +847,8 @@ function StaffChatView() {
   );
 
   const chatPanel = selected ? (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+      <div className="flex items-center gap-2 border-b border-zinc-100/80 px-3 py-2 dark:border-zinc-800/80">
         <button
           type="button"
           onClick={handleBackToList}
@@ -927,7 +927,7 @@ function StaffChatView() {
           )}
         >
           {chatPanel ?? (
-            <div className="hidden h-full flex-col items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 lg:flex dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="hidden h-full flex-col items-center justify-center overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 p-4 lg:flex dark:border-zinc-800/80 dark:bg-zinc-900/50">
               <EmptyState
                 icon={MessageSquare}
                 title="Selecciona una conversación"

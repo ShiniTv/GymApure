@@ -119,7 +119,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                 Asignar turno
               </button>
             ) : null}
-            <OnboardingStatus onboarding={member.onboarding} compact />
+            <OnboardingStatus onboarding={member.onboarding} variant="chip" />
           </div>
         ) : (
           <span className="text-zinc-400 dark:text-zinc-300">—</span>

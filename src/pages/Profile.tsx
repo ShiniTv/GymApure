@@ -498,9 +498,9 @@ export default function Profile() {
       <div className="sticky top-0 z-20 -mx-1 bg-zinc-50/70 px-1 py-0.5 backdrop-blur-sm dark:bg-zinc-950/50">
         <SegmentedControl
           variant="compact"
-          layout={isMember ? 'scroll' : 'wrap'}
+          layout="scroll"
           fullWidth={!isMember}
-          className={isMember ? 'w-full' : 'w-full sm:w-auto'}
+          className="w-full"
           value={profileTab}
           onChange={changeProfileTab}
           options={profileTabOptions}
@@ -508,12 +508,12 @@ export default function Profile() {
       </div>
 
       {profileTab === 'datos' && (
-        <div className={cn('panel-form', isMember && 'mx-auto w-full max-w-lg')}>
+        <div className={cn('panel-form', (isMember || isTrainer) && 'mx-auto w-full max-w-lg')}>
           <Card
             padding="sm"
             rounded="xl"
             className={cn(
-              isMember &&
+              (isMember || isTrainer) &&
                 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
             )}
           >

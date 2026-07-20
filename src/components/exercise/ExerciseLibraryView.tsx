@@ -122,7 +122,10 @@ function ExerciseCard({
     <Card
       padding="sm"
       rounded="xl"
-      className={`group transition-colors ${expanded ? 'ring-brand/20 ring-2' : ''}`}
+      className={cn(
+        'group border-zinc-200/70 bg-white/80 transition-colors dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        expanded && 'ring-brand/20 ring-2'
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-2.5">

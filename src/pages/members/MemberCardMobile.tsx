@@ -36,14 +36,14 @@ export const MemberCardMobile = memo(function MemberCardMobile({
 
   return (
     <DataCard
-      className="!space-y-0 active:bg-zinc-50 dark:active:bg-zinc-800/60"
+      className="!space-y-0 !p-2.5 active:bg-zinc-50 sm:!p-3 dark:active:bg-zinc-800/60"
       onClick={() => onOpenDetail(member)}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
         <Avatar name={member.full_name} size="sm" className="shrink-0" />
         <div className="min-w-0 flex-1 text-left">
-          <div className="flex items-center gap-2">
-            <p className="min-w-0 truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="min-w-0 truncate text-[13px] leading-tight font-semibold text-zinc-900 dark:text-white">
               {member.full_name}
             </p>
             <span
@@ -54,8 +54,9 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               title={member.status === 'active' ? 'Activo' : 'Inactivo'}
               aria-label={member.status === 'active' ? 'Activo' : 'Inactivo'}
             />
+            {isStaffMember && <OnboardingStatus onboarding={member.onboarding} variant="chip" />}
           </div>
-          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug text-zinc-500 dark:text-zinc-400">
+          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
             {metaParts.length > 0 ? (
               <span className="truncate">{metaParts.join(' · ')}</span>
             ) : (
@@ -81,9 +82,6 @@ export const MemberCardMobile = memo(function MemberCardMobile({
                 {expiryBadge.label}
               </Badge>
             )}
-          </div>
-          <div className="mt-1">
-            <OnboardingStatus onboarding={member.onboarding} compact />
           </div>
         </div>
         <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300 dark:text-zinc-600" aria-hidden />

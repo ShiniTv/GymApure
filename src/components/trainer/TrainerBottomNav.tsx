@@ -1,4 +1,5 @@
 import { StaffBottomNav } from '../navigation/StaffBottomNav';
+import { useAuth } from '../../context/AuthContext';
 import {
   TRAINER_PRIMARY_TABS,
   TRAINER_MORE_ITEMS,
@@ -9,6 +10,9 @@ import {
 import type { StaffBottomNavTab } from '../../config/navigation/bottomNavTypes';
 
 export function TrainerBottomNav() {
+  const { user } = useAuth();
+  const firstName = user?.name?.split(/\s+/)[0] ?? 'entrenador';
+
   return (
     <StaffBottomNav
       ariaLabel="Navegación entrenador"
@@ -20,6 +24,8 @@ export function TrainerBottomNav() {
       }
       isMoreItemActive={isTrainerMoreItemActive}
       isMoreTabActive={isTrainerMoreTabActive}
+      greetingName={firstName}
+      greetingSubtitle="Portal entrenador"
     />
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   Dumbbell,
   Calendar,
@@ -8,7 +8,6 @@ import {
   Edit,
   Trash2,
   UserMinus,
-  Scale,
   History,
   MessageSquare,
   UtensilsCrossed,
@@ -16,6 +15,7 @@ import {
   ChevronDown,
   ChevronRight,
   Trophy,
+  Minus,
 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -59,6 +59,24 @@ import { buildExerciseSummary } from '../lib/routineDisplay';
 import { useHealthProfileQuery } from '../hooks/queries/useHealthProfileQuery';
 import { hasCriticalHealthFlags } from '../lib/healthConditions';
 import { ACTIVITY_LEVELS } from '../lib/metabolicRate';
+
+function heightCmNumber(height: number | null | undefined): number | null {
+  if (height == null || Number.isNaN(height)) return null;
+  if (height > 0 && height < 3) return Math.round(height * 1000) / 10;
+  return height;
+}
+
+function formatMemberGoal(goal: string | null | undefined): string | null {
+  if (!goal) return null;
+  const map: Record<string, string> = {
+    'Lose Weight': 'Bajar de peso',
+    'Gain Muscle': 'Ganar músculo',
+    'Gain Weight': 'Subir de peso',
+    Maintain: 'Mantener',
+    'General Fitness': 'Condición general',
+  };
+  return map[goal] ?? goal;
+}
 
 import type {
   Routine,
@@ -127,6 +145,8 @@ export default function MemberRoutine() {
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState(5);
   const [savingWeeklyGoal, setSavingWeeklyGoal] = useState(false);
+  const [weeklyGoalSaved, setWeeklyGoalSaved] = useState(false);
+  const weeklyGoalSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const assignedRoutineIds = useMemo(() => new Set(routines.map((r) => r.id)), [routines]);
   const memberId = id ? parseInt(id, 10) : undefined;
@@ -181,6 +201,12 @@ export default function MemberRoutine() {
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (weeklyGoalSavedTimerRef.current) clearTimeout(weeklyGoalSavedTimerRef.current);
+    };
+  }, []);
 
   const handleAddMeasurement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,7 +277,11 @@ export default function MemberRoutine() {
       setMember((prev) =>
         prev ? { ...prev, weekly_training_goal: data.weekly_training_goal } : prev
       );
-      toast?.success('Meta semanal actualizada');
+      setWeeklyGoalSaved(true);
+      if (weeklyGoalSavedTimerRef.current) clearTimeout(weeklyGoalSavedTimerRef.current);
+      weeklyGoalSavedTimerRef.current = setTimeout(() => {
+        setWeeklyGoalSaved(false);
+      }, 2000);
     } catch (err) {
       clientLogger.error('Failed to update weekly training goal', err);
       toast?.error(err instanceof Error ? err.message : 'No se pudo guardar la meta semanal');
@@ -516,10 +546,110 @@ export default function MemberRoutine() {
 
   const menuRoutine =
     routineMenuId != null ? routines.find((routine) => routine.id === routineMenuId) : null;
+  const heightCm = heightCmNumber(member.height);
+  const latestMeasurement = measurements[0] ?? null;
+  const hasHealthNotes = Boolean(
+    healthProfile &&
+    (healthProfile.condition_labels.length > 0 ||
+      healthProfile.conditions_notes ||
+      healthProfile.limitations_notes ||
+      healthProfile.allergies_notes ||
+      healthProfile.medications_notes)
+  );
+
+  const coachingInsight = (() => {
+    if (showHealthAlert) {
+      return {
+        tone: 'danger' as const,
+        message: 'Hay alertas de salud: revisa limitaciones antes de entrenar.',
+        actionLabel: 'Ver salud',
+        run: () => {
+          setCoachingTab('perfil');
+        },
+      };
+    }
+    if (routines.length === 0) {
+      return {
+        tone: 'warning' as const,
+        message: 'Sin rutina asignada.',
+        actionLabel: 'Asignar',
+        run: () => {
+          openAssignModal();
+        },
+      };
+    }
+    if (subscription && subscription.days_remaining <= 7) {
+      return {
+        tone: 'warning' as const,
+        message: `Membresía vence en ${subscription.days_remaining} día${subscription.days_remaining !== 1 ? 's' : ''}.`,
+        actionLabel: 'Mensaje',
+        run: () => {
+          void navigate(`/messages?member=${id}`);
+        },
+      };
+    }
+    if (measurements.length === 0) {
+      return {
+        tone: 'neutral' as const,
+        message: 'Aún no hay mediciones de progreso.',
+        actionLabel: 'Registrar',
+        run: () => {
+          setCoachingTab('mediciones');
+          setIsAddingMeasurement(true);
+        },
+      };
+    }
+    const weightBit =
+      latestMeasurement?.weight != null ? `último peso ${latestMeasurement.weight} kg` : null;
+    return {
+      tone: 'ok' as const,
+      message: [
+        `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`,
+        weightBit,
+        formatMemberGoal(member.goal),
+      ]
+        .filter(Boolean)
+        .join(' · '),
+      actionLabel: null as string | null,
+      run: null as (() => void) | null,
+    };
+  })();
+
+  const headerPrimary = showHealthAlert
+    ? {
+        label: 'Ver salud',
+        run: () => {
+          setCoachingTab('perfil');
+        },
+        solid: true,
+      }
+    : routines.length === 0
+      ? {
+          label: 'Asignar',
+          run: () => {
+            openAssignModal();
+          },
+          solid: true,
+        }
+      : {
+          label: 'Mensaje',
+          run: () => {
+            void navigate(`/messages?member=${id}`);
+          },
+          solid: false,
+        };
 
   return (
     <div className="page-stack-tight">
+      <Link
+        to="/members"
+        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 sm:hidden dark:text-zinc-400 dark:hover:text-zinc-200"
+      >
+        <ChevronRight className="h-3.5 w-3.5 rotate-180" aria-hidden />
+        Miembros
+      </Link>
       <Breadcrumbs
+        className="mb-0 hidden sm:block"
         items={[
           { label: 'Miembros', href: '/members' },
           { label: member.full_name, href: `/members/${id}/routines` },
@@ -531,50 +661,50 @@ export default function MemberRoutine() {
         compact
         showTitleOnMobile
         title={
-          <>
-            Rutinas de <span className="text-brand">{member.full_name}</span>
-          </>
+          <span className="flex min-w-0 items-center gap-2.5">
+            <Avatar name={member.full_name} size="sm" className="shrink-0" />
+            <span className="truncate">{member.full_name}</span>
+          </span>
+        }
+        subtitle={
+          coachingTab === 'rutinas'
+            ? `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`
+            : subscription
+              ? `${subscription.membership_name} · ${subscription.days_remaining} días`
+              : undefined
         }
         action={
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
             <Button
-              variant="secondary"
+              variant={headerPrimary.solid ? 'primary' : 'ghost'}
               size="sm"
-              className="h-9 gap-1.5 px-2.5 text-xs"
-              onClick={() => navigate(`/messages?member=${id}`)}
+              className={headerPrimary.solid ? 'h-9 gap-1.5 px-3 text-xs' : 'h-9 w-9 px-0'}
+              onClick={headerPrimary.run}
+              aria-label={headerPrimary.label}
+              title={headerPrimary.label}
             >
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Mensaje</span>
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="hidden h-9 gap-1.5 px-2.5 text-xs sm:inline-flex"
-              onClick={() => navigate(`/members/${id}/history`)}
-            >
-              <History className="h-3.5 w-3.5" />
-              Historial
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="hidden h-9 gap-1.5 px-2.5 text-xs sm:inline-flex"
-              onClick={() => navigate(`/members/${id}/records`)}
-            >
-              <Trophy className="h-3.5 w-3.5" />
-              Marcas
+              {headerPrimary.label === 'Mensaje' ? (
+                <MessageSquare className="h-4 w-4" />
+              ) : headerPrimary.label === 'Asignar' ? (
+                <>
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{headerPrimary.label}</span>
+                </>
+              ) : (
+                <span>{headerPrimary.label}</span>
+              )}
             </Button>
             <Button
               ref={moreMenuAnchorRef}
               variant="ghost"
               size="sm"
-              className="h-9 gap-1 px-2.5 text-xs"
+              className="h-9 w-9 px-0"
               onClick={() => setMoreMenuOpen((open) => !open)}
               aria-expanded={moreMenuOpen}
               aria-haspopup="menu"
+              aria-label="Más acciones"
             >
               <MoreHorizontal className="h-4 w-4" />
-              <span className="hidden sm:inline">Más</span>
             </Button>
           </div>
         }
@@ -586,10 +716,24 @@ export default function MemberRoutine() {
         anchorRef={moreMenuAnchorRef}
         className="min-w-[11rem]"
       >
+        {headerPrimary.label !== 'Mensaje' && (
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            onClick={() => {
+              setMoreMenuOpen(false);
+              void navigate(`/messages?member=${id}`);
+            }}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Mensaje
+          </button>
+        )}
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 sm:hidden dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
           onClick={() => {
             setMoreMenuOpen(false);
             void navigate(`/members/${id}/history`);
@@ -601,7 +745,7 @@ export default function MemberRoutine() {
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 sm:hidden dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
           onClick={() => {
             setMoreMenuOpen(false);
             void navigate(`/members/${id}/records`);
@@ -652,7 +796,7 @@ export default function MemberRoutine() {
       <Card
         padding="sm"
         rounded="xl"
-        className="sticky top-2 z-10 hidden bg-white/95 backdrop-blur-sm sm:flex sm:flex-row sm:items-center sm:justify-between dark:bg-zinc-900/95"
+        className="sticky top-2 z-10 hidden border-zinc-200/70 bg-white/95 backdrop-blur-sm sm:flex sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800/80 dark:bg-zinc-900/95"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={member.full_name} size="sm" className="shrink-0" />
@@ -670,7 +814,7 @@ export default function MemberRoutine() {
         <div className="flex shrink-0 flex-wrap gap-1.5">
           {member.goal && (
             <Badge variant="warning" className="max-w-[8rem] truncate px-1.5 py-0 text-[9px]">
-              {member.goal}
+              {formatMemberGoal(member.goal)}
             </Badge>
           )}
           {showHealthAlert && (
@@ -688,7 +832,7 @@ export default function MemberRoutine() {
 
       <SegmentedControl
         variant="compact"
-        fullWidth
+        layout="scroll"
         value={coachingTab}
         onChange={setCoachingTab}
         options={[
@@ -696,243 +840,369 @@ export default function MemberRoutine() {
           { value: 'perfil', label: 'Perfil' },
           { value: 'mediciones', label: 'Mediciones' },
         ]}
-        className="w-full sm:w-auto [&_button]:text-xs sm:[&_button]:text-sm"
+        className="w-full"
       />
 
+      <div
+        className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-[12px] ${
+          coachingInsight.tone === 'danger'
+            ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+            : coachingInsight.tone === 'warning'
+              ? 'bg-amber-500/10 text-amber-800 dark:text-amber-200'
+              : coachingInsight.tone === 'ok'
+                ? 'bg-zinc-100/80 text-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-400'
+                : 'bg-zinc-100/80 text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300'
+        }`}
+        role="status"
+      >
+        <p className="min-w-0 flex-1 leading-snug">{coachingInsight.message}</p>
+        {coachingInsight.actionLabel && coachingInsight.run && (
+          <button
+            type="button"
+            onClick={coachingInsight.run}
+            className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] font-semibold underline-offset-2 hover:underline"
+          >
+            {coachingInsight.actionLabel}
+          </button>
+        )}
+      </div>
+
       {coachingTab === 'perfil' && (
-        <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
-          <Card padding="sm" rounded="xl">
-            <h3 className="section-title mb-2.5">Perfil</h3>
-            <div className="space-y-1.5 text-xs sm:text-sm">
-              {member.height != null && (
-                <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Altura:</span>{' '}
-                  <span className="font-bold">{member.height} cm</span>
+        <div className="space-y-2.5">
+          <div className="rounded-xl border border-zinc-200/70 px-3 py-2.5 dark:border-zinc-800/80">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+              <div>
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Altura
                 </p>
-              )}
-              {member.initial_weight != null && (
-                <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Peso inicial:</span>{' '}
-                  <span className="font-bold">{member.initial_weight} kg</span>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                  {heightCm != null ? `${heightCm} cm` : '—'}
                 </p>
-              )}
-              {member.goal && (
-                <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Objetivo:</span>{' '}
-                  <span className="font-bold">{member.goal}</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  {latestMeasurement?.weight != null ? 'Peso actual' : 'Peso inicial'}
                 </p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                  {latestMeasurement?.weight != null
+                    ? `${latestMeasurement.weight} kg`
+                    : member.initial_weight != null
+                      ? `${member.initial_weight} kg`
+                      : '—'}
+                </p>
+                {latestMeasurement?.weight != null && (
+                  <button
+                    type="button"
+                    className="text-brand mt-0.5 text-[10px] font-medium hover:underline"
+                    onClick={() => {
+                      setCoachingTab('mediciones');
+                    }}
+                  >
+                    Ver mediciones
+                  </button>
+                )}
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Objetivo
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-white">
+                  {formatMemberGoal(member.goal) ?? '—'}
+                </p>
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  Meta semanal
+                </p>
+                {user?.role === 'admin' || user?.role === 'trainer' ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        className="inline-flex h-10 w-10 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 disabled:opacity-40 sm:h-8 sm:w-8 dark:hover:text-white"
+                        aria-label="Bajar meta"
+                        disabled={savingWeeklyGoal || weeklyGoal <= 1}
+                        onClick={() => {
+                          setWeeklyGoal((g) => Math.max(1, g - 1));
+                          setWeeklyGoalSaved(false);
+                        }}
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="min-w-[2.5rem] text-center text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                        {weeklyGoal}
+                        <span className="ml-0.5 text-[11px] font-medium text-zinc-500">d</span>
+                      </span>
+                      <button
+                        type="button"
+                        className="inline-flex h-10 w-10 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 disabled:opacity-40 sm:h-8 sm:w-8 dark:hover:text-white"
+                        aria-label="Subir meta"
+                        disabled={savingWeeklyGoal || weeklyGoal >= 7}
+                        onClick={() => {
+                          setWeeklyGoal((g) => Math.min(7, g + 1));
+                          setWeeklyGoalSaved(false);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {weeklyGoal !== (member.weekly_training_goal ?? 5) ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2.5 text-xs"
+                        disabled={savingWeeklyGoal}
+                        onClick={() => void handleSaveWeeklyGoal()}
+                      >
+                        {savingWeeklyGoal ? '…' : 'Guardar'}
+                      </Button>
+                    ) : weeklyGoalSaved ? (
+                      <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        Guardado
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                    {member.weekly_training_goal ?? 5} días
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-zinc-100 pt-2 text-[11px] dark:border-zinc-800">
+              {subscription ? (
+                <>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-500">
+                    {subscription.membership_name}
+                  </span>
+                  <span className="text-zinc-400 dark:text-zinc-500">·</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    {subscription.days_remaining} días
+                  </span>
+                  <span className="text-zinc-400 dark:text-zinc-500">·</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
+                  </span>
+                </>
+              ) : (
+                <span className="text-zinc-400 dark:text-zinc-500">Sin membresía activa</span>
               )}
-              <p>
-                <span className="text-zinc-500 dark:text-zinc-400">Meta semanal:</span>{' '}
-                <span className="font-bold">{member.weekly_training_goal ?? 5} días</span>
-              </p>
-              {!member.height && !member.initial_weight && !member.goal && (
-                <p className="text-xs text-zinc-400 dark:text-zinc-300">
-                  Sin datos de perfil registrados.
+            </div>
+          </div>
+
+          <details className="group rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                  Salud y limitaciones
+                </span>
+                {showHealthAlert && (
+                  <Badge variant="danger" className="px-1.5 py-0 text-[9px]">
+                    Revisar
+                  </Badge>
+                )}
+                {!showHealthAlert && !hasHealthNotes && (
+                  <span className="text-[10px] font-medium text-zinc-400">Sin datos</span>
+                )}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-zinc-100 px-3 pt-2 pb-2.5 dark:border-zinc-800">
+              {healthProfile &&
+              (healthProfile.condition_labels.length > 0 ||
+                healthProfile.conditions_notes ||
+                healthProfile.limitations_notes ||
+                healthProfile.allergies_notes ||
+                healthProfile.medications_notes) ? (
+                <div className="space-y-2 text-xs sm:text-sm">
+                  {healthProfile.condition_labels.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {healthProfile.condition_labels.map((flag) => (
+                        <Badge key={flag.id} variant="warning" className="text-[10px]">
+                          {flag.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  {healthProfile.conditions_notes && (
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">Patologías:</span>{' '}
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {healthProfile.conditions_notes}
+                      </span>
+                    </p>
+                  )}
+                  {healthProfile.limitations_notes && (
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">Limitaciones:</span>{' '}
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {healthProfile.limitations_notes}
+                      </span>
+                    </p>
+                  )}
+                  {healthProfile.allergies_notes && (
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">Alergias:</span>{' '}
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {healthProfile.allergies_notes}
+                      </span>
+                    </p>
+                  )}
+                  {healthProfile.medications_notes && (
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">Medicación:</span>{' '}
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {healthProfile.medications_notes}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    El miembro aún no ha completado su perfil de salud.
+                  </p>
+                  <button
+                    type="button"
+                    className="text-brand text-[11px] font-semibold hover:underline"
+                    onClick={() => {
+                      void navigate(`/messages?member=${id}`);
+                    }}
+                  >
+                    Pedir por mensaje
+                  </button>
+                </div>
+              )}
+            </div>
+          </details>
+
+          <details className="group rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
+              <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                Metabolismo estimado
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-zinc-100 px-3 pt-2 pb-2.5 dark:border-zinc-800">
+              {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null ? (
+                <div className="space-y-1.5 text-xs sm:text-sm">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">TMB</span>{' '}
+                      <span className="font-semibold text-zinc-900 dark:text-white">
+                        {healthProfile.bmr_kcal} kcal
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-zinc-500 dark:text-zinc-400">GET</span>{' '}
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-500">
+                        {healthProfile.tdee_kcal} kcal
+                      </span>
+                    </p>
+                  </div>
+                  {healthProfile.activity_level && (
+                    <p className="text-zinc-500 dark:text-zinc-400">
+                      {ACTIVITY_LEVELS.find((l) => l.id === healthProfile.activity_level)?.label ??
+                        healthProfile.activity_level}
+                    </p>
+                  )}
+                  {healthProfile.metabolic_computed_at && (
+                    <p className="text-[10px] text-zinc-400">
+                      Calculado{' '}
+                      {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy', {
+                        locale: es,
+                      })}
+                      {healthProfile.weight_used_kg != null &&
+                        ` · ${healthProfile.weight_used_kg} kg`}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-zinc-400">
+                    Estimación basada en datos declarados por el miembro.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  Sin cálculo de TMB/GET registrado.
                 </p>
               )}
             </div>
-          </Card>
-
-          {(user?.role === 'admin' || user?.role === 'trainer') && (
-            <Card padding="sm" rounded="xl">
-              <h3 className="section-title mb-2.5">Meta de entrenamiento</h3>
-              <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-                Días de entrenamiento por semana que verá el miembro en su dashboard.
-              </p>
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Label>Días por semana (1–7)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={7}
-                    value={weeklyGoal}
-                    onChange={(e) => {
-                      setWeeklyGoal(parseInt(e.target.value, 10) || 5);
-                    }}
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => void handleSaveWeeklyGoal()}
-                  disabled={savingWeeklyGoal}
-                >
-                  Guardar
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          <Card padding="sm" rounded="xl">
-            <h3 className="section-title mb-2.5">Membresía</h3>
-            {subscription ? (
-              <div>
-                <p className="text-base font-bold text-emerald-600 sm:text-lg dark:text-emerald-500">
-                  {subscription.membership_name}
-                </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  {subscription.days_remaining} días restantes
-                </p>
-                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">
-                  Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-400 dark:text-zinc-300">Sin membresía activa</p>
-            )}
-          </Card>
-
-          <Card padding="sm" rounded="xl">
-            <h3 className="section-title mb-2.5">Salud y limitaciones</h3>
-            {healthProfile &&
-            (healthProfile.condition_labels.length > 0 ||
-              healthProfile.conditions_notes ||
-              healthProfile.limitations_notes ||
-              healthProfile.allergies_notes ||
-              healthProfile.medications_notes) ? (
-              <div className="space-y-2 text-xs sm:text-sm">
-                {healthProfile.condition_labels.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {healthProfile.condition_labels.map((flag) => (
-                      <Badge key={flag.id} variant="warning" className="text-[10px]">
-                        {flag.label}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                {healthProfile.conditions_notes && (
-                  <p>
-                    <span className="text-zinc-500 dark:text-zinc-400">Patologías:</span>{' '}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {healthProfile.conditions_notes}
-                    </span>
-                  </p>
-                )}
-                {healthProfile.limitations_notes && (
-                  <p>
-                    <span className="text-zinc-500 dark:text-zinc-400">Limitaciones:</span>{' '}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {healthProfile.limitations_notes}
-                    </span>
-                  </p>
-                )}
-                {healthProfile.allergies_notes && (
-                  <p>
-                    <span className="text-zinc-500 dark:text-zinc-400">Alergias:</span>{' '}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {healthProfile.allergies_notes}
-                    </span>
-                  </p>
-                )}
-                {healthProfile.medications_notes && (
-                  <p>
-                    <span className="text-zinc-500 dark:text-zinc-400">Medicación:</span>{' '}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {healthProfile.medications_notes}
-                    </span>
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
-                El miembro aún no ha completado su perfil de salud.
-              </p>
-            )}
-          </Card>
-
-          <Card padding="sm" rounded="xl">
-            <h3 className="section-title mb-2.5">Metabolismo estimado</h3>
-            {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null ? (
-              <div className="space-y-2 text-xs sm:text-sm">
-                <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">TMB:</span>{' '}
-                  <span className="font-bold text-zinc-900 dark:text-white">
-                    {healthProfile.bmr_kcal} kcal/día
-                  </span>
-                </p>
-                <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">GET:</span>{' '}
-                  <span className="font-bold text-emerald-600 dark:text-emerald-500">
-                    {healthProfile.tdee_kcal} kcal/día
-                  </span>
-                </p>
-                {healthProfile.activity_level && (
-                  <p className="text-zinc-500 dark:text-zinc-400">
-                    Actividad:{' '}
-                    {ACTIVITY_LEVELS.find((l) => l.id === healthProfile.activity_level)?.label ??
-                      healthProfile.activity_level}
-                  </p>
-                )}
-                {healthProfile.metabolic_computed_at && (
-                  <p className="text-[10px] text-zinc-400">
-                    Calculado{' '}
-                    {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy', {
-                      locale: es,
-                    })}
-                    {healthProfile.weight_used_kg != null &&
-                      ` · ${healthProfile.weight_used_kg} kg`}
-                  </p>
-                )}
-                <p className="text-[10px] text-zinc-400">
-                  Estimación basada en datos declarados por el miembro.
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
-                Sin cálculo de TMB/GET registrado.
-              </p>
-            )}
-          </Card>
+          </details>
         </div>
       )}
 
       {coachingTab === 'mediciones' && (
-        <Card padding="sm" rounded="xl">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
-            <h3 className="section-title flex items-center gap-1.5">
-              <Scale className="text-brand h-3.5 w-3.5" />
-              Mediciones
-            </h3>
-            {(user?.role === 'admin' || user?.role === 'trainer') && (
+        <div className="space-y-2">
+          {(user?.role === 'admin' || user?.role === 'trainer') && (
+            <div className="flex justify-end">
               <Button
                 type="button"
                 size="sm"
-                className="h-8 px-2.5 text-xs"
+                variant="ghost"
+                className="h-8 gap-1 px-2.5 text-xs"
                 onClick={() => {
                   setIsAddingMeasurement(true);
                 }}
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Registrar</span>
+                Registrar
               </Button>
-            )}
-          </div>
+            </div>
+          )}
           {measurements.length > 0 ? (
-            <div className="space-y-1">
-              {measurements.map((m) => (
+            <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+              {measurements.map((m, i) => (
                 <div
                   key={m.id}
-                  className="flex justify-between gap-2 border-b border-zinc-100 py-2 text-xs last:border-0 sm:text-sm dark:border-zinc-800"
+                  className={`flex justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm ${
+                    i < measurements.length - 1
+                      ? 'border-b border-zinc-100 dark:border-zinc-800'
+                      : ''
+                  }`}
                 >
-                  <span className="font-bold text-zinc-600 dark:text-zinc-300">
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
                     {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                   </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">
-                    {m.weight != null ? `${m.weight} kg` : '—'}
-                    {m.body_fat_percentage != null ? ` · ${m.body_fat_percentage}% grasa` : ''}
+                  <span className="text-zinc-500 tabular-nums dark:text-zinc-400">
+                    {m.weight != null ? (
+                      <span className="font-semibold text-zinc-900 dark:text-white">
+                        {m.weight} kg
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                    {m.body_fat_percentage != null ? (
+                      <span className="text-zinc-400"> · {m.body_fat_percentage}% grasa</span>
+                    ) : null}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyState
-              icon={Scale}
-              title="Sin mediciones"
-              description="Registra la primera medición del miembro."
-            />
+            <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center dark:border-zinc-700">
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Sin mediciones
+              </p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Registra la primera para ver el progreso en Perfil.
+              </p>
+              {(user?.role === 'admin' || user?.role === 'trainer') && (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-3 h-9 px-3 text-xs"
+                  onClick={() => {
+                    setIsAddingMeasurement(true);
+                  }}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Registrar
+                </Button>
+              )}
+            </div>
           )}
-        </Card>
+        </div>
       )}
 
       <Modal
@@ -1292,9 +1562,11 @@ export default function MemberRoutine() {
                   key={routine.id}
                   padding="sm"
                   rounded="xl"
-                  className={`touch-manipulation ${isExpanded ? 'ring-brand/20 ring-2' : ''}`}
+                  className={`touch-manipulation border-zinc-200/70 dark:border-zinc-800/80 ${
+                    isExpanded ? 'ring-brand/20 ring-2' : ''
+                  }`}
                 >
-                  <div className="flex items-start gap-2.5">
+                  <div className="flex items-center gap-2">
                     <div
                       role="button"
                       tabIndex={0}
@@ -1305,15 +1577,15 @@ export default function MemberRoutine() {
                           void toggleExpandRoutine(routine.id);
                         }
                       }}
-                      className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 text-left"
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
                       aria-expanded={isExpanded}
                     >
-                      <div className="bg-brand/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9">
-                        <Dumbbell className="text-brand h-4 w-4" />
+                      <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                        <Dumbbell className="text-brand h-3.5 w-3.5" />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <h3 className="truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
                             {routine.name}
                           </h3>
@@ -1321,26 +1593,16 @@ export default function MemberRoutine() {
                             {formatDifficulty(routine.difficulty)}
                           </Badge>
                         </div>
-                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500 tabular-nums sm:text-[10px] dark:text-zinc-400">
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="h-3 w-3 shrink-0" />
                             {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
                           </span>
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                          {exerciseSummary.label}
-                        </p>
-                        {exerciseSummary.preview && (
-                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                            {exerciseSummary.preview}
-                          </p>
-                        )}
-                        {!isExpanded && (
-                          <span className="text-brand mt-1.5 inline-flex items-center text-[11px] font-semibold sm:text-xs">
-                            Toca para ver ejercicios
-                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                          <span className="text-zinc-400 dark:text-zinc-500">·</span>
+                          <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                            {exerciseSummary.label}
                           </span>
-                        )}
+                        </p>
                       </div>
                     </div>
 
@@ -1425,6 +1687,11 @@ export default function MemberRoutine() {
 
                   {isExpanded && (
                     <div className="mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
+                      {exerciseSummary.preview && (
+                        <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                          {exerciseSummary.preview}
+                        </p>
+                      )}
                       <div className="flex items-center justify-between gap-2">
                         <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                           Ejercicios
@@ -1550,6 +1817,16 @@ export default function MemberRoutine() {
                 </Card>
               );
             })
+          )}
+          {routines.length > 0 && routines.length <= 2 && (
+            <button
+              type="button"
+              onClick={() => openAssignModal()}
+              className="text-brand hover:bg-brand/5 dark:hover:bg-brand/10 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2.5 text-xs font-semibold transition-colors dark:border-zinc-700"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Asignar otra rutina
+            </button>
           )}
           <AnchoredMenu
             open={menuRoutine != null}

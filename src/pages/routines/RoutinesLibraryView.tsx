@@ -65,6 +65,7 @@ export function RoutinesLibraryView({
   const activeRoutineSet = new Set(activeRoutineIds);
   const isStaff = userRole === 'trainer' || userRole === 'admin';
   const isMember = userRole === 'member';
+  const lightCards = isMember || userRole === 'trainer';
   const totalExercises = routines.reduce((sum, r) => sum + (r.exercise_count ?? 0), 0);
 
   if (loadingRoutines) {
@@ -171,10 +172,10 @@ export function RoutinesLibraryView({
           return (
             <Card
               key={routine.id}
-              padding={isMember ? 'sm' : 'md'}
+              padding={lightCards ? 'sm' : 'md'}
               rounded="xl"
               className={`content-visibility-auto touch-manipulation overflow-hidden ${
-                isMember
+                lightCards
                   ? 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
                   : ''
               } ${isExpanded ? 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-3' : ''}`}
@@ -197,10 +198,10 @@ export function RoutinesLibraryView({
               >
                 <div
                   className={`mt-0.5 flex shrink-0 items-center justify-center rounded-lg ${
-                    isMember ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
+                    lightCards ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
                   }`}
                 >
-                  {isMember ? (
+                  {lightCards ? (
                     <Dumbbell className="text-brand h-3.5 w-3.5" />
                   ) : (
                     <Dumbbell className="text-brand dark:text-brand h-4 w-4" />

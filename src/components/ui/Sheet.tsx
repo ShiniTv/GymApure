@@ -16,8 +16,8 @@ interface SheetProps {
   panelStyle?: CSSProperties;
   /** z-index layer — default 56 (above nav, below modal) */
   zIndex?: number;
-  /** Hide on desktop breakpoints */
-  hideFrom?: 'lg';
+  /** Hide on desktop breakpoints; pass `false` to always show */
+  hideFrom?: 'lg' | false;
   /** Cap height and scroll body (staff Más sheets) */
   scrollable?: boolean;
   /** Subtle top handle for bottom sheets */
@@ -104,7 +104,7 @@ export function Sheet({
         aria-labelledby={title ? titleId : undefined}
         className={cn(
           'fixed right-0 left-0 px-3 transition-transform duration-200 ease-out',
-          side === 'bottom' && 'bottom-0',
+          side === 'bottom' && !panelStyle?.bottom && 'bottom-0',
           side === 'top' && 'top-14',
           className
         )}

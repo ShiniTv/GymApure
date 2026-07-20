@@ -25,14 +25,24 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
 
 /** Sheet items — synced with secondary items in trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
-  { name: 'Asignaciones de rutinas', href: '/routines?view=assignments', icon: CalendarClock },
-  { name: 'Calendario de rutinas', href: '/routines?view=calendar', icon: CalendarDays },
-  { name: 'Clases grupales', href: '/clases', icon: CalendarRange },
-  { name: 'Ejercicios', href: '/exercises', icon: BookOpen },
-  { name: 'Equipamiento', href: '/equipment', icon: Wrench },
-  { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
-  { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Miembros' },
+  {
+    name: 'Asignaciones',
+    href: '/routines?view=assignments',
+    icon: CalendarClock,
+    section: 'Programación',
+  },
+  {
+    name: 'Calendario',
+    href: '/routines?view=calendar',
+    icon: CalendarDays,
+    section: 'Programación',
+  },
+  { name: 'Clases', href: '/clases', icon: CalendarRange, section: 'Programación' },
+  { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Contenido' },
+  { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Contenido' },
+  { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
+  { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 
 export function isTrainerBottomNavActive(pathname: string, _search: string, href: string): boolean {

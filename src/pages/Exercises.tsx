@@ -262,7 +262,7 @@ export default function Exercises() {
       </div>
 
       <FilterChips
-        layout={readOnly ? 'scroll' : 'wrap'}
+        layout="scroll"
         options={[
           { value: '', label: 'Todos' },
           ...MUSCLE_GROUPS.map((group) => ({ value: group, label: group })),

@@ -11,6 +11,7 @@ import {
   UtensilsCrossed,
   IdCard,
   Clock,
+  CalendarClock,
   CreditCard,
   Pause,
   Play,
@@ -616,18 +617,34 @@ export default function Members() {
       const actions: MemberQuickAction[] = [];
 
       if (role === 'trainer' && member.role === 'member') {
-        actions.push({
-          key: 'routines',
-          label: 'Ver rutinas',
-          icon: Dumbbell,
-          primary: true,
-          onClick: () => navigate(`/members/${member.id}/routines`),
-        });
+        const needsRoutine = member.onboarding && !member.onboarding.has_active_routine;
+        if (needsRoutine) {
+          actions.push({
+            key: 'assign-routine',
+            label: 'Asignar rutina',
+            icon: CalendarClock,
+            primary: true,
+            onClick: () => navigate(`/routines?view=calendar&assign=1&member=${member.id}`),
+          });
+          actions.push({
+            key: 'routines',
+            label: 'Ver rutinas',
+            icon: Dumbbell,
+            onClick: () => navigate(`/members/${member.id}/routines`),
+          });
+        } else {
+          actions.push({
+            key: 'routines',
+            label: 'Ver rutinas',
+            icon: Dumbbell,
+            primary: true,
+            onClick: () => navigate(`/members/${member.id}/routines`),
+          });
+        }
         actions.push({
           key: 'message',
-          label: 'Enviar mensaje',
+          label: 'Mensaje',
           icon: MessageSquare,
-          primary: true,
           onClick: () => navigate(`/messages?member=${member.id}`),
         });
         actions.push({
@@ -638,7 +655,7 @@ export default function Members() {
         });
         actions.push({
           key: 'nutrition',
-          label: 'Plan nutricional',
+          label: 'Nutrición',
           icon: UtensilsCrossed,
           onClick: () => navigate(`/members/${member.id}/nutrition`),
         });
@@ -656,7 +673,6 @@ export default function Members() {
           key: 'message',
           label: 'Enviar mensaje',
           icon: MessageSquare,
-          primary: true,
           onClick: () => navigate(`/messages?member=${member.id}`),
         });
         actions.push({
@@ -811,6 +827,7 @@ export default function Members() {
           {(user?.role === 'admin' || isTrainer) && (
             <FilterChips
               fullWidth
+              layout="scroll"
               className="sm:w-auto sm:shrink-0"
               options={[
                 { value: '', label: 'Todos' },
@@ -826,23 +843,23 @@ export default function Members() {
         </div>
 
         {isTrainer && membersWithoutPlan.length > 0 && !loading && !noPlanAlertDismissed && (
-          <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="min-w-0 flex-1 text-zinc-700 dark:text-zinc-300">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px]">
+            <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="min-w-0 flex-1 text-zinc-600 dark:text-zinc-300">
               <span className="font-semibold text-zinc-900 dark:text-white">
                 {membersWithoutPlan.length === 1
-                  ? '1 sin membresía activa'
-                  : `${membersWithoutPlan.length} sin membresía activa`}
+                  ? '1 sin plan'
+                  : `${membersWithoutPlan.length} sin plan`}
               </span>
               <span className="text-zinc-500 dark:text-zinc-400">
                 {' '}
-                · recepción debe activar el plan para check-in
+                · recepción activa el check-in
               </span>
             </p>
             <button
               type="button"
               onClick={dismissNoPlanAlert}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-amber-500/10 hover:text-zinc-700 dark:hover:text-zinc-200"
+              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-amber-500/10 hover:text-zinc-700 dark:hover:text-zinc-200"
               aria-label="Cerrar aviso"
             >
               <X className="h-3.5 w-3.5" />

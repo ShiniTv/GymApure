@@ -105,7 +105,7 @@ export function DataCard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'w-full space-y-1.5 rounded-xl border border-zinc-200 bg-white p-3 text-left transition-colors sm:p-4 dark:border-zinc-800 dark:bg-zinc-900',
+        'w-full space-y-1.5 rounded-xl border border-zinc-200/70 bg-white/80 p-3 text-left transition-colors sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50',
         onClick && 'cursor-pointer',
         className
       )}

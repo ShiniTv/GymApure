@@ -225,6 +225,10 @@ export default function Routines() {
     }
     if (searchParams.get('assign') === '1') {
       setIsAssigningFromCalendar(true);
+      const memberId = searchParams.get('member');
+      if (memberId && /^\d+$/.test(memberId)) {
+        setAssignForm((prev) => ({ ...prev, user_id: memberId }));
+      }
     }
   }, [searchParams]);
 
@@ -607,8 +611,8 @@ export default function Routines() {
           {user?.role !== 'member' && (
             <SegmentedControl
               variant="compact"
-              fullWidth
-              className="w-full sm:w-auto"
+              layout="scroll"
+              className="w-full"
               value={view}
               onChange={changeView}
               options={[
