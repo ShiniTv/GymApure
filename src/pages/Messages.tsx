@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
@@ -39,7 +39,7 @@ import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
 import { useToastOptional } from '../context/ToastContext';
 import { isStaffRole } from '../lib/roles';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
-import { Check, MessageSquare, Pencil, Send, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, MessageSquare, Pencil, RotateCcw, Send, Trash2, UserPlus, X } from 'lucide-react';
 import clsx from 'clsx';
 
 interface MemberChatOption {
@@ -52,6 +52,77 @@ function formatMessageTime(iso: string): string {
     return format(new Date(iso), 'd MMM, HH:mm', { locale: dateLocale });
   } catch {
     return iso;
+  }
+}
+
+function formatMessageDay(iso: string): string {
+  try {
+    return format(new Date(iso), 'd MMM yyyy', { locale: dateLocale });
+  } catch {
+    return iso;
+  }
+}
+
+function sameCalendarDay(a: string, b: string): boolean {
+  try {
+    const da = new Date(a);
+    const db = new Date(b);
+    return (
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate()
+    );
+  } catch {
+    return false;
+  }
+}
+
+function DaySeparator({ iso }: { iso: string }) {
+  return (
+    <div className="my-2.5 flex items-center gap-2.5 px-1" role="separator">
+      <div className="h-px flex-1 bg-zinc-200/70 dark:bg-zinc-800/80" />
+      <span className="shrink-0 text-[10px] font-medium tracking-wide text-zinc-400 capitalize dark:text-zinc-500">
+        {formatMessageDay(iso)}
+      </span>
+      <div className="h-px flex-1 bg-zinc-200/70 dark:bg-zinc-800/80" />
+    </div>
+  );
+}
+
+function systemMessageAction(
+  message: ChatMessage,
+  viewerRole: string | undefined
+): { label: string; to: string } | null {
+  const paymentId =
+    typeof message.metadata?.payment_id === 'number'
+      ? message.metadata.payment_id
+      : typeof message.metadata?.payment_id === 'string'
+        ? Number(message.metadata.payment_id)
+        : null;
+  const staff = viewerRole != null && isStaffRole(viewerRole);
+
+  switch (message.event_type) {
+    case 'expiring_soon':
+    case 'expired':
+      return viewerRole === 'member'
+        ? { label: 'Ir a pagos', to: '/payments' }
+        : { label: 'Ver pagos', to: '/payments' };
+    case 'payment_approved':
+    case 'payment_rejected':
+      return { label: 'Ver pagos', to: '/payments' };
+    case 'payment_reported':
+      if (staff) {
+        const qs =
+          paymentId != null && Number.isFinite(paymentId)
+            ? `?status=pending&paymentId=${paymentId}`
+            : '?status=pending';
+        return { label: 'Revisar pago', to: `/payments${qs}` };
+      }
+      return { label: 'Ver pagos', to: '/payments' };
+    case 'routine_assigned':
+      return viewerRole === 'member' ? { label: 'Ver rutinas', to: '/routines' } : null;
+    default:
+      return null;
   }
 }
 
@@ -80,6 +151,7 @@ function canManageOwnMessage(
   userId: number | undefined,
   viewerRole: string | undefined
 ): boolean {
+  if (message.client_status) return false;
   if (!userId || message.kind !== 'text' || message.event_type !== 'manual') {
     return false;
   }
@@ -99,14 +171,17 @@ const ChatBubble = memo(function ChatBubble({
   const toast = useToastOptional();
   const editMessage = useEditChatMessage();
   const deleteMessage = useDeleteChatMessage();
+  const sendMessage = useSendChatMessage();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [draft, setDraft] = useState(message.body);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const side = resolveBubbleSide(message, user?.role);
   const isOutgoing = side === 'end';
   const isSystem = side === 'center';
   const manageable = canManageOwnMessage(message, user?.id, user?.role);
+  const systemAction = isSystem ? systemMessageAction(message, user?.role) : null;
   const trimmedDraft = draft.trim();
   const canSave =
     trimmedDraft.length > 0 && trimmedDraft !== message.body.trim() && !editMessage.isPending;
@@ -174,14 +249,24 @@ const ChatBubble = memo(function ChatBubble({
 
   if (isSystem) {
     return (
-      <div className="my-1.5 flex w-full justify-center px-1">
-        <div className="w-full max-w-md rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2 text-center">
-          <p className="text-[11px] leading-snug font-medium text-sky-700 dark:text-sky-300">
+      <div className="my-2 flex w-full justify-center px-2">
+        <div className="max-w-[20rem] text-center sm:max-w-sm">
+          <p className="rounded-2xl bg-zinc-100/90 px-3 py-1.5 text-[11px] leading-snug text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-300">
             {message.body}
           </p>
-          <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
-            {formatMessageTime(message.created_at)}
-          </p>
+          <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
+            <p className="text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500">
+              {formatMessageTime(message.created_at)}
+            </p>
+            {systemAction ? (
+              <Link
+                to={systemAction.to}
+                className="text-brand text-[10px] font-semibold hover:underline"
+              >
+                {systemAction.label}
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
     );
@@ -252,62 +337,102 @@ const ChatBubble = memo(function ChatBubble({
             isOutgoing ? 'items-end' : 'items-start'
           )}
         >
-          <div
+          <button
+            type="button"
             className={clsx(
-              'w-fit max-w-full rounded-xl px-3 py-2',
+              'w-fit max-w-full rounded-2xl px-3 py-2 text-left transition-opacity',
               isOutgoing
-                ? 'brand-solid rounded-br-sm'
-                : 'rounded-bl-sm border border-zinc-200/80 bg-zinc-100 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                ? 'brand-solid rounded-br-md text-white'
+                : 'rounded-bl-md border border-zinc-200/50 bg-white text-zinc-800 shadow-sm shadow-zinc-900/5 dark:border-zinc-700/60 dark:bg-zinc-800/70 dark:text-zinc-100 dark:shadow-none',
+              manageable && 'cursor-pointer',
+              message.client_status === 'sending' && 'opacity-80',
+              message.client_status === 'failed' && 'opacity-90 ring-1 ring-red-400/40'
             )}
+            onClick={() => {
+              if (!manageable || isEditing) return;
+              setActionsOpen((open) => !open);
+            }}
             onTouchStart={handleLongPressStart}
             onTouchEnd={clearLongPress}
             onTouchCancel={clearLongPress}
             onTouchMove={clearLongPress}
+            aria-expanded={manageable ? actionsOpen : undefined}
+            aria-label={manageable ? 'Mensaje, toca para opciones' : undefined}
           >
             {!isOutgoing && message.sender_name && (
-              <p className="mb-0.5 text-[10px] font-bold opacity-70">{message.sender_name}</p>
+              <p className="mb-0.5 text-[10px] font-semibold opacity-70">{message.sender_name}</p>
             )}
-            <p className="text-xs leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
+            <p className="text-[13px] leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
               {message.body}
             </p>
             <p
               className={clsx(
-                'mt-1 text-right text-[10px]',
-                isOutgoing ? 'opacity-70' : 'text-zinc-400 dark:text-zinc-300'
+                'mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums',
+                isOutgoing ? 'text-white/70' : 'text-zinc-400 dark:text-zinc-500'
               )}
             >
-              {formatMessageTime(message.created_at)}
-              {message.edited_at ? ' · editado' : ''}
+              {message.client_status === 'sending' ? (
+                <span>Enviando…</span>
+              ) : message.client_status === 'failed' ? (
+                <span className="text-red-200">No enviado</span>
+              ) : (
+                <>
+                  <span>
+                    {formatMessageTime(message.created_at)}
+                    {message.edited_at ? ' · editado' : ''}
+                  </span>
+                  {isOutgoing ? <Check className="h-3 w-3 opacity-80" aria-hidden /> : null}
+                </>
+              )}
             </p>
-          </div>
+          </button>
+          {message.client_status === 'failed' && (
+            <button
+              type="button"
+              onClick={() => {
+                void sendMessage.mutateAsync({
+                  conversationId,
+                  body: message.body,
+                  retryTempId: message.id,
+                });
+              }}
+              disabled={sendMessage.isPending}
+              className="inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[10px] font-semibold text-red-500 hover:bg-red-500/10"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden />
+              Reintentar
+            </button>
+          )}
           {manageable && (
             <div
               className={clsx(
-                'flex items-center gap-1',
-                'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
+                'flex items-center gap-0.5 transition-opacity',
+                actionsOpen
+                  ? 'opacity-100'
+                  : 'pointer-events-none opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:focus-within:pointer-events-auto sm:focus-within:opacity-100'
               )}
             >
               <button
                 type="button"
                 onClick={() => {
                   setIsEditing(true);
+                  setActionsOpen(false);
                 }}
-                className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 aria-label="Editar mensaje"
               >
                 <Pencil className="h-3.5 w-3.5" />
-                <span className="sm:hidden">Editar</span>
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowDeleteConfirm(true);
+                  setActionsOpen(false);
                 }}
-                className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-500/10"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
                 aria-label="Eliminar mensaje"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                <span className="sm:hidden">Borrar</span>
               </button>
             </div>
           )}
@@ -355,46 +480,46 @@ const ChatBubble = memo(function ChatBubble({
 function ChatComposer({
   conversationId,
   disabled,
+  placeholder = 'Escribe un mensaje…',
 }: {
   conversationId: number;
   disabled?: boolean;
+  placeholder?: string;
 }) {
   const [body, setBody] = useState('');
   const sendMessage = useSendChatMessage();
   const toast = useToastOptional();
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const trimmed = body.trim();
-    if (!trimmed || sendMessage.isPending) return;
-    try {
-      await sendMessage.mutateAsync({ conversationId, body: trimmed });
-      setBody('');
-    } catch (err) {
+    if (!trimmed || disabled) return;
+    setBody('');
+    void sendMessage.mutateAsync({ conversationId, body: trimmed }).catch((err) => {
       toast?.error(toDisplayErrorMessage(err, 'No se pudo enviar el mensaje'));
-    }
+    });
   };
 
   return (
-    <div className="shrink-0 border-t border-zinc-100 bg-white p-2.5 sm:p-3 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="shrink-0 border-t border-zinc-100/80 bg-transparent p-2 sm:bg-white sm:p-3 dark:border-zinc-800/80 dark:sm:bg-zinc-900">
       <div className="flex w-full min-w-0 items-end gap-2">
         <textarea
           value={body}
           onChange={(e) => {
             setBody(e.target.value);
           }}
-          placeholder="Escribe un mensaje…"
+          placeholder={placeholder}
           rows={1}
-          disabled={disabled || sendMessage.isPending}
+          disabled={disabled}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              void handleSend();
+              handleSend();
             }
           }}
           className={cn(
             fieldClassName,
-            'max-h-24 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl px-3 py-2.5 text-sm leading-5',
-            'text-zinc-900 dark:text-white',
+            'max-h-24 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto rounded-full border-zinc-200/80 px-3.5 py-2.5 text-sm leading-5',
+            'bg-zinc-50 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-white',
             'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
             'caret-[var(--color-brand)]'
           )}
@@ -402,9 +527,9 @@ function ChatComposer({
         <Button
           type="button"
           size="sm"
-          disabled={disabled || !body.trim() || sendMessage.isPending}
-          onClick={() => void handleSend()}
-          className="mb-0.5 h-11 min-h-11 w-11 min-w-11 shrink-0 rounded-xl p-0"
+          disabled={disabled || !body.trim()}
+          onClick={handleSend}
+          className="mb-0.5 h-10 min-h-10 w-10 min-w-10 shrink-0 rounded-full p-0 shadow-sm"
           aria-label="Enviar mensaje"
         >
           <Send className="h-4 w-4" />
@@ -879,7 +1004,8 @@ function MemberChatView() {
     );
   }
 
-  const messageCount = messagesData?.messages.length ?? 0;
+  const messages = messagesData?.messages ?? [];
+  const messageCount = messages.length;
 
   return (
     <div className="page-stack-tight">
@@ -890,46 +1016,53 @@ function MemberChatView() {
             Mensajes <span className="text-brand">con el gym</span>
           </>
         }
-        subtitle="Avisos de membresía, pagos y rutinas"
+        subtitle={
+          loadingMessages
+            ? undefined
+            : messageCount > 0
+              ? `${messageCount} mensaje${messageCount !== 1 ? 's' : ''}`
+              : undefined
+        }
         action={<BackToDashboardLink />}
       />
 
-      {!loadingMessages && messageCount > 0 && (
-        <p className="px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-          {messageCount} mensaje{messageCount !== 1 ? 's' : ''}
-        </p>
-      )}
-
-      <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white lg:h-[calc(100dvh-11rem)] dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-gradient-to-b from-zinc-50/90 via-white/70 to-zinc-50/50 lg:h-[calc(100dvh-11rem)] dark:border-zinc-800/70 dark:from-zinc-950 dark:via-zinc-950/85 dark:to-zinc-900/40">
         <div className="flex min-h-0 flex-1 flex-col">
           {loadingMessages && !messagesData ? (
             <ChatBubbleSkeleton />
-          ) : messagesData && messagesData.messages.length === 0 ? (
-            <div className="flex h-full min-h-[10rem] flex-col items-center justify-center px-4 py-6 text-center">
-              <MessageSquare className="mb-2 h-8 w-8 text-zinc-300 dark:text-zinc-600" />
-              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-                Sin mensajes aún
-              </p>
-              <p className="mt-1 max-w-xs text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                Cuando haya avisos o respuestas del staff, aparecerán aquí.
-              </p>
+          ) : messagesData && messages.length === 0 ? (
+            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
+              <EmptyState
+                variant="motivational"
+                icon={MessageSquare}
+                title="Tu bandeja con el gym"
+                description="Aquí verás avisos de membresía y pagos. También puedes escribirle al staff desde abajo."
+                className="border-0 bg-transparent p-0 shadow-none"
+              />
             </div>
           ) : (
             <Virtuoso
               ref={virtuosoRef}
               style={{ height: '100%' }}
-              data={messagesData?.messages ?? []}
-              itemContent={(_index, message) => (
-                <div className="px-2.5 pt-2.5 sm:px-3">
-                  <ChatBubble message={message} conversationId={conversation.id} />
-                </div>
-              )}
+              data={messages}
+              alignToBottom
+              initialTopMostItemIndex={Math.max(0, messageCount - 1)}
+              itemContent={(index, message) => {
+                const prev = messages[index - 1];
+                const showDay = !prev || !sameCalendarDay(prev.created_at, message.created_at);
+                return (
+                  <div className="px-3 pt-1.5 sm:px-3.5">
+                    {showDay ? <DaySeparator iso={message.created_at} /> : null}
+                    <ChatBubble message={message} conversationId={conversation.id} />
+                  </div>
+                );
+              }}
               followOutput="smooth"
               className="h-full"
             />
           )}
         </div>
-        <ChatComposer conversationId={conversation.id} />
+        <ChatComposer conversationId={conversation.id} placeholder="Escribe a recepción…" />
       </div>
     </div>
   );

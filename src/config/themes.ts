@@ -140,6 +140,9 @@ export function applyThemeToDocument(theme: Appearance, palette: PaletteId) {
   root.classList.remove('light', 'dark');
   root.classList.add(theme);
   root.dataset.palette = palette;
+  // Native <select>/<option> popups follow color-scheme; without this,
+  // dark UI text (white) can render on a light OS dropdown.
+  root.style.colorScheme = theme;
 
   const vars = getPaletteCssVars(theme, palette);
   root.style.setProperty('--color-brand', vars.brand);

@@ -68,7 +68,7 @@ function BadgeDetailRow({ label, value }: { label: string; value: string }) {
 }
 
 const CARD_CLASS =
-  'member-badge-card relative mx-auto w-[214px] overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-md print:shadow-none';
+  'member-badge-card relative mx-auto w-[214px] overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm print:border-zinc-300 print:shadow-none';
 
 export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProps) {
   const qrValue = buildBadgeQrValue(member.cedula);

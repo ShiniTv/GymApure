@@ -32,11 +32,12 @@ import {
   type Payment,
 } from './payments/helpers';
 import { useExchangeRateQuery } from '../hooks/queries/useExchangeRateQuery';
-import { PaymentRejectionNote } from './payments/PaymentRejectionNote';
 import { ProofPreviewButton } from './payments/ProofPreviewButton';
+import { PaymentMobileCard } from './payments/PaymentMobileCard';
 import { PaymentRegisterModal } from './payments/PaymentRegisterModal';
 import { PaymentActionModals } from './payments/PaymentActionModals';
 import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegisterModal';
+import { cn } from '../lib/utils';
 
 export default function Payments() {
   const { user } = useAuth();
@@ -350,7 +351,7 @@ export default function Payments() {
           }
           subtitle={
             isMember
-              ? 'Reporta tu pago para activar la membresía'
+              ? 'Activa tu membresía'
               : 'Registra pagos en mostrador y aprueba reportes de miembros'
           }
           action={
@@ -359,7 +360,7 @@ export default function Payments() {
                 <BackToDashboardLink />
                 <Button
                   size="sm"
-                  className="h-11 min-h-11 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
+                  className="h-10 min-h-10 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
                   onClick={() => openRegisterModal()}
                   aria-label="Reportar pago"
                 >
@@ -386,17 +387,30 @@ export default function Payments() {
           }
         />
 
-        {isMember && !loading && (
-          <p className="px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-            {total} pago{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
-            {statusFilter ? ` · ${paymentStatusLabel(statusFilter as Payment['status'])}` : ''}
-          </p>
+        {isMember && !loading && (payments.length > 0 || Boolean(statusFilter)) && (
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+              {total} pago{total !== 1 ? 's' : ''}
+              {statusFilter ? ` · ${paymentStatusLabel(statusFilter as Payment['status'])}` : ''}
+            </p>
+            {statusFilter ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('');
+                  setPage(1);
+                }}
+                className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+              >
+                Ver todos
+              </button>
+            ) : null}
+          </div>
         )}
 
-        {isMember && (
+        {isMember && (loading || payments.length > 0 || Boolean(statusFilter)) && (
           <FilterChips
-            fullWidth
-            className="sm:w-auto"
+            layout="scroll"
             options={[
               { value: '', label: 'Todos' },
               { value: 'pending', label: 'Pendientes' },
@@ -452,77 +466,73 @@ export default function Payments() {
               </Button>
             }
           />
+        ) : isMember && !loading && payments.length === 0 && !statusFilter ? (
+          <div className="mx-auto flex min-h-[min(48vh,26rem)] w-full max-w-sm flex-col justify-center">
+            <EmptyState
+              variant="motivational"
+              icon={CreditCard}
+              title="Aún sin pagos"
+              description="Usa Reportar pago arriba para enviar tu comprobante y activar la membresía."
+              className="border-0 bg-transparent shadow-none"
+            />
+          </div>
+        ) : isMember && !loading && payments.length === 0 && statusFilter ? (
+          <div className="mx-auto flex min-h-[min(36vh,20rem)] w-full max-w-sm flex-col justify-center">
+            <EmptyState
+              variant="motivational"
+              icon={CreditCard}
+              title="Sin resultados"
+              description={
+                statusFilter === 'pending'
+                  ? 'No tienes pagos pendientes de revisión.'
+                  : statusFilter === 'approved'
+                    ? 'Aún no tienes pagos aprobados.'
+                    : 'No tienes pagos rechazados.'
+              }
+              action={
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setStatusFilter('');
+                    setPage(1);
+                  }}
+                >
+                  Ver todos
+                </Button>
+              }
+              className="border-0 bg-transparent shadow-none"
+            />
+          </div>
         ) : (
-          <Card padding="none" rounded="xl" className="overflow-hidden">
+          <Card
+            padding="none"
+            rounded="xl"
+            className={cn(
+              'overflow-hidden',
+              isMember &&
+                'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
+            )}
+          >
             {isMember ? (
               <>
-                <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+                <div className="mx-auto w-full max-w-lg space-y-2 lg:hidden">
                   {loading ? (
                     <ListRowSkeleton rows={4} />
-                  ) : payments.length === 0 ? (
-                    <EmptyState
-                      icon={CreditCard}
-                      title="Sin pagos registrados"
-                      description="Cuando reportes un pago, aparecerá aquí con su estado."
-                      action={
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSubmitError('');
-                            setShowModal(true);
-                          }}
-                        >
-                          <Plus className="h-4 w-4" />
-                          Reportar pago
-                        </Button>
-                      }
-                    />
                   ) : (
-                    payments.map((payment) => (
-                      <div key={payment.id} className="px-3 py-2.5">
-                        <div className="flex min-w-0 items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-brand text-base leading-none font-bold tabular-nums sm:text-lg">
-                              ${payment.amount_usd}
-                            </p>
-                            <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-                              <time dateTime={payment.created_at}>
-                                {formatPaymentDate(payment.created_at)}
-                              </time>
-                              <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                              <span className="capitalize">
-                                {formatPaymentMethod(payment.method)}
-                              </span>
-                              {payment.reference && (
-                                <>
-                                  <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                                  <span className="font-mono" title={payment.reference}>
-                                    Ref: {payment.reference}
-                                  </span>
-                                </>
-                              )}
-                            </p>
-                            {payment.status === 'rejected' && (
-                              <PaymentRejectionNote reason={payment.rejection_reason} />
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            {payment.proof_url && (
-                              <ProofPreviewButton
-                                onClick={() => setProofPreview(payment)}
-                                className="h-8 w-8"
-                              />
-                            )}
-                            <Badge
-                              variant={paymentStatusVariant(payment.status)}
-                              className="shrink-0 px-1.5 py-0 text-[9px]"
-                            >
-                              {paymentStatusLabel(payment.status)}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                    <>
+                      {payments.map((payment) => (
+                        <PaymentMobileCard
+                          key={payment.id}
+                          payment={payment}
+                          onProofPreview={setProofPreview}
+                        />
+                      ))}
+                      <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+                        Los pendientes se revisan en recepción. Si rechazan uno, te avisamos en
+                        Mensajes.
+                      </p>
+                    </>
                   )}
                 </div>
 

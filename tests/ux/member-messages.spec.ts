@@ -8,7 +8,7 @@ test.describe('Member mensajes', () => {
   });
 
   test('composer visible y no cubierto por bottom nav', async ({ page }) => {
-    const composer = page.getByPlaceholder(/escribe un mensaje/i);
+    const composer = page.getByPlaceholder(/escribe (un mensaje|a recepción)/i);
     await expect(composer).toBeVisible();
 
     const nav = page.locator(memberBottomNav);

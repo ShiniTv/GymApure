@@ -74,10 +74,13 @@ export function StaffBottomNav({
         side="bottom"
         panelStyle={sheetBottomStyle}
         zIndex={46}
-        className="px-4"
+        className="px-3"
+        cardClassName="mx-auto max-w-md shadow-lg"
         scrollable
+        showHandle
+        compact
       >
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
           {moreItems.map((item, index) => {
             const itemActive = isMoreItemActive(location.pathname, location.search, item.href);
             const prevSection = index > 0 ? moreItems[index - 1]?.section : undefined;
@@ -86,19 +89,19 @@ export function StaffBottomNav({
             return (
               <Fragment key={item.href}>
                 {showSection && (
-                  <li className="px-3 pt-2 pb-1 first:pt-0" aria-hidden={false}>
-                    <p className="text-[10px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                  <li className="px-2.5 pt-2 pb-0.5 first:pt-0" aria-hidden={false}>
+                    <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
                       {item.section}
                     </p>
                   </li>
                 )}
-                <li className="flex items-center gap-1">
+                <li className="flex items-center gap-0.5">
                   <Link
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     onClick={closeMore}
                     className={clsx(
-                      'flex min-h-[var(--touch-min)] min-w-0 flex-1 touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors',
+                      'flex min-h-10 min-w-0 flex-1 touch-manipulation items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-colors',
                       itemActive
                         ? 'bg-brand/10 text-brand'
                         : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60'
@@ -107,17 +110,15 @@ export function StaffBottomNav({
                   >
                     <span
                       className={clsx(
-                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                        itemActive
-                          ? 'bg-brand text-white'
-                          : 'text-brand bg-zinc-100 dark:bg-zinc-800'
+                        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                        itemActive ? 'bg-brand/15 text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                     >
                       <item.icon className="h-4 w-4" aria-hidden />
                     </span>
                     <span className="flex-1 truncate">{item.name}</span>
                     {item.showUnreadBadge && chatUnread > 0 && (
-                      <span className="bg-brand flex h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                      <span className="bg-brand flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white">
                         {chatUnread > 99 ? '99+' : chatUnread}
                       </span>
                     )}
@@ -144,22 +145,22 @@ export function StaffBottomNav({
               </Fragment>
             );
           })}
-          <li>
-            <button
-              type="button"
-              onClick={() => {
-                closeMore();
-                requestLogout();
-              }}
-              className="flex min-h-[var(--touch-min)] w-full touch-manipulation items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
-            >
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-                <LogOut className="h-4 w-4" aria-hidden />
-              </span>
-              <span className="flex-1 truncate text-left">Cerrar sesión</span>
-            </button>
-          </li>
         </ul>
+        <div className="mt-1.5 border-t border-zinc-100 pt-1.5 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => {
+              closeMore();
+              requestLogout();
+            }}
+            className="flex min-h-10 w-full touch-manipulation items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+          >
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500/90 dark:text-red-400">
+              <LogOut className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="flex-1 truncate text-left">Cerrar sesión</span>
+          </button>
+        </div>
       </Sheet>
 
       <div className="member-bottom-nav pointer-events-none fixed right-0 bottom-0 left-0 z-50 px-4 lg:hidden">
@@ -182,7 +183,7 @@ export function StaffBottomNav({
                       type="button"
                       onClick={() => setMoreOpen((open) => !open)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl px-1 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -197,9 +198,6 @@ export function StaffBottomNav({
                       >
                         <item.icon className="h-5 w-5" aria-hidden />
                       </span>
-                      <span className="max-w-full truncate text-[9px] leading-none font-semibold">
-                        {item.name}
-                      </span>
                     </button>
                   </li>
                 );
@@ -211,7 +209,7 @@ export function StaffBottomNav({
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
-                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-colors',
+                      'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl px-1 transition-colors',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
                     aria-label={item.name}
@@ -231,9 +229,6 @@ export function StaffBottomNav({
                           {chatUnread > 9 ? '9+' : chatUnread}
                         </span>
                       )}
-                    </span>
-                    <span className="max-w-full truncate text-[9px] leading-none font-semibold">
-                      {item.name}
                     </span>
                   </Link>
                 </li>

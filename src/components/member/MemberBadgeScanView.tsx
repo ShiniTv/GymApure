@@ -57,19 +57,23 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
         <X className="h-5 w-5" />
       </button>
 
-      <div className="w-full max-w-sm text-center">
-        <h2 className="text-xl font-bold tracking-tight">{member.full_name}</h2>
-        <p className="mt-1 text-sm font-medium text-zinc-600">{member.cedula}</p>
-        <p className="mt-3 text-sm text-zinc-500">
-          Muestre este código en recepción. Mantenga el brillo de la pantalla al máximo.
+      <div className="flex w-full max-w-sm flex-col items-center text-center">
+        <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+          Escaneo en recepción
         </p>
+        <h2 className="mt-1 text-xl font-bold tracking-tight">{member.full_name}</h2>
+        <p className="mt-0.5 text-sm font-medium text-zinc-500">{member.cedula}</p>
 
-        <div className="mx-auto mt-6 inline-block rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <QRCode value={qrValue} size={300} level="H" fgColor="#18181b" bgColor="#ffffff" />
+        <div className="mt-8 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
+          <QRCode value={qrValue} size={280} level="H" fgColor="#18181b" bgColor="#ffffff" />
         </div>
 
-        <Button variant="secondary" className="mt-6 w-full" onClick={onClose}>
-          Volver al carné
+        <p className="mt-5 max-w-[16rem] text-[13px] leading-snug text-zinc-500">
+          Sube el brillo al máximo para un escaneo limpio.
+        </p>
+
+        <Button variant="ghost" className="mt-8 w-full" onClick={onClose}>
+          Cerrar
         </Button>
       </div>
     </div>,

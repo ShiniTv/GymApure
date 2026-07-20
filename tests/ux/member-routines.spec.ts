@@ -7,16 +7,15 @@ test.describe('Member rutinas preview', () => {
     await page.goto('/routines');
   });
 
-  test('tap en rutina expande y muestra Empezar entrenamiento', async ({ page }) => {
+  test('muestra CTA de entrenamiento sin salir de /routines', async ({ page }) => {
     const routineCard = await getMemberRoutineCard(page);
     if (!routineCard) {
       test.skip(true, 'Sin rutinas asignadas en demo');
       return;
     }
 
-    await routineCard.click();
     await expect(
-      page.getByRole('button', { name: /empezar entrenamiento|continuar entrenamiento/i })
+      page.getByRole('button', { name: /entrenar|continuar|completada hoy/i })
     ).toBeVisible();
     await expect(page).toHaveURL(/\/routines$/);
   });

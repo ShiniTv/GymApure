@@ -6,7 +6,6 @@ import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import {
   User,
   Scale,
-  Target,
   Camera,
   Trash2,
   Save,
@@ -14,7 +13,6 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
-  Dumbbell,
   Lock,
   CreditCard,
   AlertTriangle,
@@ -24,7 +22,8 @@ import {
   IdCard,
   Bell,
   ScanLine,
-  Printer,
+  ChevronDown,
+  MessageCircle,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
@@ -42,6 +41,8 @@ import {
   EmptyState,
   PageState,
   BackToDashboardLink,
+  Accordion,
+  AccordionItem,
 } from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
 import { cn } from '../lib/utils';
@@ -75,6 +76,19 @@ import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
 import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
 
+/** Demo/legacy rows sometimes store meters (e.g. 1.75); UI expects cm. */
+function heightCmForForm(height: number | null | undefined): string {
+  if (height == null || Number.isNaN(height)) return '';
+  if (height > 0 && height < 3) return String(Math.round(height * 1000) / 10);
+  return String(height);
+}
+
+function heightCmNumber(height: number | null | undefined): number | null {
+  if (height == null || Number.isNaN(height)) return null;
+  if (height > 0 && height < 3) return Math.round(height * 1000) / 10;
+  return height;
+}
+
 export default function Profile() {
   const { user, logoutLocal } = useAuth();
   usePageTitle('Perfil');
@@ -105,6 +119,7 @@ export default function Profile() {
   const [showScanView, setShowScanView] = useState(false);
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
   const [measurementError, setMeasurementError] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
@@ -112,7 +127,6 @@ export default function Profile() {
     confirm_password: '',
   });
   const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
   const [form, setForm] = useState({
@@ -137,7 +151,7 @@ export default function Profile() {
     setForm({
       phone: profile.phone ?? '',
       initial_weight: profile.initial_weight?.toString() ?? '',
-      height: profile.height?.toString() ?? '',
+      height: heightCmForForm(profile.height),
       goal: profile.goal ?? '',
       dob: profile.dob ? profile.dob.split('T')[0] : '',
     });
@@ -164,7 +178,9 @@ export default function Profile() {
 
   const bmi = useMemo(() => {
     if (latestWeight == null || !profile?.height) return null;
-    const h = profile.height / 100;
+    const hCm = heightCmNumber(profile.height);
+    if (hCm == null || hCm <= 0) return null;
+    const h = hCm / 100;
     return Math.round((latestWeight / (h * h)) * 10) / 10;
   }, [latestWeight, profile?.height]);
 
@@ -173,7 +189,7 @@ export default function Profile() {
     const saved = {
       phone: (profile.phone ?? '').trim(),
       initial_weight: profile.initial_weight?.toString() ?? '',
-      height: profile.height?.toString() ?? '',
+      height: heightCmForForm(profile.height),
       goal: (profile.goal ?? '').trim(),
       dob: profile.dob ? profile.dob.split('T')[0] : '',
     };
@@ -327,7 +343,6 @@ export default function Profile() {
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setPasswordSaving(true);
-    setPasswordMsg('');
     setPasswordError('');
     try {
       const res = await apiFetch('/api/auth/change-password', {
@@ -409,9 +424,7 @@ export default function Profile() {
             Mi <span className="text-brand">perfil</span>
           </>
         }
-        subtitle={
-          user.role === 'member' ? 'Datos, progreso y apariencia' : 'Tu cuenta y apariencia'
-        }
+        subtitle={user.role === 'member' ? 'Tu cuenta' : 'Tu cuenta y apariencia'}
         action={
           (isProfileDirty && profileTab === 'datos') || user.role !== 'member' ? (
             <div className="flex shrink-0 items-center gap-2">
@@ -482,43 +495,48 @@ export default function Profile() {
         </div>
       )}
 
-      <SegmentedControl
-        variant="compact"
-        fullWidth
-        className="w-full sm:w-auto"
-        value={profileTab}
-        onChange={changeProfileTab}
-        options={profileTabOptions}
-      />
+      <div className="sticky top-0 z-20 -mx-1 bg-zinc-50/70 px-1 py-0.5 backdrop-blur-sm dark:bg-zinc-950/50">
+        <SegmentedControl
+          variant="compact"
+          layout={isMember ? 'scroll' : 'wrap'}
+          fullWidth={!isMember}
+          className={isMember ? 'w-full' : 'w-full sm:w-auto'}
+          value={profileTab}
+          onChange={changeProfileTab}
+          options={profileTabOptions}
+        />
+      </div>
 
       {profileTab === 'datos' && (
-        <div className="panel-form">
-          <Card padding="sm" rounded="xl">
-            <h2 className="section-title mb-3 flex items-center gap-1.5">
-              <User className="text-brand h-3.5 w-3.5" />
-              Datos personales
-            </h2>
-
-            <div className="mb-4 flex items-center gap-3">
+        <div className={cn('panel-form', isMember && 'mx-auto w-full max-w-lg')}>
+          <Card
+            padding="sm"
+            rounded="xl"
+            className={cn(
+              isMember &&
+                'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
+            )}
+          >
+            <div className="mb-3.5 flex items-center gap-3">
               <div className="relative shrink-0">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={profile.full_name}
-                    className="ring-brand/30 h-14 w-14 rounded-xl object-cover ring-2 sm:h-16 sm:w-16"
+                    className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14"
                   />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-zinc-100 sm:h-16 sm:w-16 dark:bg-zinc-800">
-                    <User className="h-7 w-7 text-zinc-400 sm:h-8 sm:w-8 dark:text-zinc-300" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 sm:h-14 sm:w-14 dark:bg-zinc-800">
+                    <User className="h-6 w-6 text-zinc-400 dark:text-zinc-300" />
                   </div>
                 )}
                 <label
                   htmlFor="avatar-upload"
-                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors"
+                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors"
                   title="Cambiar foto"
                   aria-label="Cambiar foto de perfil"
                 >
-                  <Camera className="h-3.5 w-3.5" />
+                  <Camera className="h-3 w-3" />
                 </label>
                 <input
                   id="avatar-upload"
@@ -530,14 +548,14 @@ export default function Profile() {
                 />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
+                <p className="truncate text-[15px] font-semibold text-zinc-900 dark:text-white">
                   {profile.full_name}
                 </p>
-                <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
                   {profile.email}
                 </p>
                 {profile.cedula && (
-                  <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
+                  <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
                     {profile.cedula}
                   </p>
                 )}
@@ -562,7 +580,7 @@ export default function Profile() {
             </div>
 
             {isTrainer && trainerProfile && (
-              <div className="mb-4 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3">
+              <div className="mb-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3">
                 <p className="text-xs font-bold text-zinc-900 dark:text-white">
                   Perfil profesional
                 </p>
@@ -584,7 +602,7 @@ export default function Profile() {
               </div>
             )}
 
-            <form onSubmit={handleSaveProfile} className="space-y-3">
+            <form onSubmit={handleSaveProfile} className="space-y-2.5">
               <div>
                 <Label>Teléfono</Label>
                 <Input
@@ -607,53 +625,54 @@ export default function Profile() {
                   }}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label>Peso inicial (kg)</Label>
                   <Input
                     type="number"
                     step="0.1"
+                    inputMode="decimal"
                     value={form.initial_weight}
                     onChange={(e) => {
                       setForm({ ...form, initial_weight: e.target.value });
                     }}
+                    placeholder="70"
                   />
                 </div>
                 <div>
                   <Label>Altura (cm)</Label>
                   <Input
                     type="number"
-                    step="0.1"
+                    step="1"
+                    inputMode="decimal"
                     value={form.height}
                     onChange={(e) => {
                       setForm({ ...form, height: e.target.value });
                     }}
+                    placeholder="170"
                   />
                 </div>
               </div>
               <div>
-                <Label className="flex items-center gap-1">
-                  <Target className="h-3 w-3" />
-                  Objetivo
-                </Label>
+                <Label>Objetivo</Label>
                 <Textarea
                   value={form.goal}
                   onChange={(e) => {
                     setForm({ ...form, goal: e.target.value });
                   }}
                   rows={2}
-                  className="min-h-[4.5rem] resize-none rounded-xl px-3 py-2.5 text-sm"
-                  placeholder="Ej: Ganar masa muscular, bajar grasa corporal..."
+                  className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm"
+                  placeholder="Ej: bajar grasa, ganar músculo…"
                 />
               </div>
               <Button
                 type="submit"
-                variant={isProfileDirty ? 'primary' : 'secondary'}
+                variant="primary"
                 disabled={saving || !isProfileDirty}
                 size="sm"
                 className={cn(
-                  'h-11 min-h-11 w-full sm:w-auto sm:px-4',
-                  isProfileDirty && 'ring-2 ring-amber-500/30'
+                  'h-10 min-h-10 w-full sm:w-auto sm:px-4',
+                  isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
                 )}
                 aria-label="Guardar perfil"
               >
@@ -676,14 +695,14 @@ export default function Profile() {
       )}
 
       {profileTab === 'progreso' && isMember && (
-        <>
+        <div className="mx-auto w-full max-w-lg space-y-3 lg:max-w-none">
           {progressLoading ? (
             <div className="flex justify-center py-12">
               <Spinner />
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 <StatMini
                   label="Peso actual"
                   value={latestWeight != null ? `${latestWeight} kg` : '—'}
@@ -696,36 +715,29 @@ export default function Profile() {
                 <StatMini
                   label="IMC"
                   value={bmi != null ? bmi.toString() : '—'}
-                  sub={profile.height ? `${profile.height} cm` : undefined}
+                  sub={
+                    heightCmNumber(profile.height) != null
+                      ? `${heightCmNumber(profile.height)} cm`
+                      : undefined
+                  }
                 />
                 <StatMini label="Mediciones" value={String(measurements.length)} />
                 <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
               </div>
 
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-9 min-h-9 sm:h-11 sm:min-h-11"
-                  onClick={() => {
-                    setIsAddingMeasurement(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                  Nueva medición
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
-                <Card padding="sm" rounded="xl" className="lg:col-span-2">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <h2 className="section-title flex items-center gap-1.5">
-                      <Scale className="text-brand h-3.5 w-3.5" />
-                      Evolución de peso
-                    </h2>
+              <Card
+                padding="sm"
+                rounded="xl"
+                className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              >
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    Evolución de peso
+                  </h2>
+                  <div className="flex shrink-0 items-center gap-2">
                     {weightDelta != null && (
                       <span
-                        className={`flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold ${
+                        className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
                           weightDelta < 0
                             ? 'bg-emerald-500/10 text-emerald-600'
                             : weightDelta > 0
@@ -744,162 +756,183 @@ export default function Profile() {
                         {weightDelta} kg
                       </span>
                     )}
+                    {chartData.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 min-h-8 px-2.5"
+                        onClick={() => {
+                          setIsAddingMeasurement(true);
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Medición</span>
+                      </Button>
+                    )}
                   </div>
-
-                  {chartData.length >= 2 ? (
-                    <Suspense
-                      fallback={
-                        <div className="flex h-64 items-center justify-center">
-                          <Spinner />
-                        </div>
-                      }
-                    >
-                      <ProfileWeightChart data={chartData} />
-                    </Suspense>
-                  ) : chartData.length === 1 ? (
-                    <div className="flex h-48 flex-col items-center justify-center text-center sm:h-56">
-                      <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
-                      <p className="mt-1.5 text-xs text-zinc-400 dark:text-zinc-300">
-                        {chartData[0].date} · Registra otra medición para ver la gráfica
-                      </p>
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={Scale}
-                      title="Sin mediciones de peso"
-                      description="Registra tu primera medición para ver tu evolución."
-                    />
-                  )}
-                </Card>
-              </div>
-
-              <Card padding="sm" rounded="xl">
-                <div className="mb-3">
-                  <h2 className="section-title flex min-w-0 items-center gap-1.5">
-                    <Scale className="text-brand h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">Historial de mediciones</span>
-                  </h2>
                 </div>
 
-                {measLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Spinner />
+                {chartData.length >= 2 ? (
+                  <Suspense
+                    fallback={
+                      <div className="flex h-56 items-center justify-center">
+                        <Spinner />
+                      </div>
+                    }
+                  >
+                    <ProfileWeightChart data={chartData} />
+                  </Suspense>
+                ) : chartData.length === 1 ? (
+                  <div className="flex h-40 flex-col items-center justify-center text-center sm:h-48">
+                    <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
+                    <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+                      {chartData[0].date} · Añade otra medición para la gráfica
+                    </p>
                   </div>
-                ) : measurements.length > 0 ? (
-                  <>
-                    <div className="space-y-2 lg:hidden">
-                      {measurements.map((m) => (
-                        <div
-                          key={m.id}
-                          className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-800/30"
-                        >
-                          <p className="text-xs font-semibold text-zinc-900 dark:text-white">
-                            {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                          </p>
-                          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                            <span>
-                              Peso:{' '}
-                              <strong className="text-zinc-800 dark:text-zinc-200">
-                                {m.weight != null ? `${m.weight} kg` : '—'}
-                              </strong>
-                            </span>
-                            <span>
-                              Grasa:{' '}
-                              <strong className="text-zinc-800 dark:text-zinc-200">
-                                {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                              </strong>
-                            </span>
-                            <span>
-                              Cintura:{' '}
-                              <strong className="text-zinc-800 dark:text-zinc-200">
-                                {m.waist != null ? `${m.waist} cm` : '—'}
-                              </strong>
-                            </span>
-                            <span>
-                              Brazo:{' '}
-                              <strong className="text-zinc-800 dark:text-zinc-200">
-                                {m.arm != null ? `${m.arm} cm` : '—'}
-                              </strong>
-                            </span>
-                            <span className="col-span-2">
-                              Pierna:{' '}
-                              <strong className="text-zinc-800 dark:text-zinc-200">
-                                {m.leg != null ? `${m.leg} cm` : '—'}
-                              </strong>
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="-mx-1 hidden overflow-x-auto px-1 lg:block">
-                      <table className="w-full min-w-[28rem] text-left">
-                        <thead>
-                          <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                            <th className="pr-3 pb-2">Fecha</th>
-                            <th className="pr-3 pb-2">Peso</th>
-                            <th className="pr-3 pb-2">Grasa</th>
-                            <th className="pr-3 pb-2">Cintura</th>
-                            <th className="pr-3 pb-2">Brazo</th>
-                            <th className="pb-2">Pierna</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {measurements.map((m) => (
-                            <tr
-                              key={m.id}
-                              className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
-                            >
-                              <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
-                                {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                              </td>
-                              <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
-                                {m.weight != null ? `${m.weight} kg` : '—'}
-                              </td>
-                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                                {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                              </td>
-                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                                {m.waist != null ? `${m.waist} cm` : '—'}
-                              </td>
-                              <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
-                                {m.arm != null ? `${m.arm} cm` : '—'}
-                              </td>
-                              <td className="py-2 text-zinc-500 dark:text-zinc-400">
-                                {m.leg != null ? `${m.leg} cm` : '—'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
                 ) : (
-                  <EmptyState
-                    icon={Scale}
-                    title="Sin mediciones registradas"
-                    description="Tu historial aparecerá aquí después del primer registro."
-                  />
+                  <div className="flex flex-col items-center px-2 pt-4 pb-5 text-center">
+                    <Scale className="text-brand/50 mb-2.5 h-7 w-7" aria-hidden />
+                    <p className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">
+                      Sin mediciones de peso
+                    </p>
+                    <p className="mt-1 max-w-[14rem] text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                      Registra tu peso para ver la evolución.
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-4 h-9 min-h-9"
+                      onClick={() => {
+                        setIsAddingMeasurement(true);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Registrar peso
+                    </Button>
+                  </div>
                 )}
               </Card>
 
-              {/* Últimos entrenamientos */}
+              {measurements.length > 0 && (
+                <Card
+                  padding="sm"
+                  rounded="xl"
+                  className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setHistoryOpen((v) => !v)}
+                    className="flex w-full items-center justify-between gap-2 text-left"
+                    aria-expanded={historyOpen}
+                  >
+                    <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+                      Historial
+                      <span className="ml-1.5 font-normal text-zinc-400 dark:text-zinc-500">
+                        · {measurements.length}
+                      </span>
+                    </h2>
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 shrink-0 text-zinc-400 transition-transform',
+                        historyOpen && 'rotate-180'
+                      )}
+                    />
+                  </button>
+
+                  {historyOpen && (
+                    <>
+                      <div className="mt-2.5 space-y-1.5 lg:hidden">
+                        {measurements.map((m) => (
+                          <div key={m.id} className="rounded-xl px-2.5 py-2 dark:bg-zinc-950/40">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <p className="text-[12px] font-semibold text-zinc-900 dark:text-white">
+                                {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                              </p>
+                              <p className="text-[12px] font-semibold text-zinc-800 tabular-nums dark:text-zinc-200">
+                                {m.weight != null ? `${m.weight} kg` : '—'}
+                              </p>
+                            </div>
+                            <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+                              Grasa{' '}
+                              {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
+                              {' · '}
+                              Cintura {m.waist != null ? `${m.waist}` : '—'}
+                              {' · '}
+                              Brazo {m.arm != null ? `${m.arm}` : '—'}
+                              {' · '}
+                              Pierna {m.leg != null ? `${m.leg}` : '—'}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="-mx-1 mt-2.5 hidden overflow-x-auto px-1 lg:block">
+                        <table className="w-full min-w-[28rem] text-left">
+                          <thead>
+                            <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                              <th className="pr-3 pb-2">Fecha</th>
+                              <th className="pr-3 pb-2">Peso</th>
+                              <th className="pr-3 pb-2">Grasa</th>
+                              <th className="pr-3 pb-2">Cintura</th>
+                              <th className="pr-3 pb-2">Brazo</th>
+                              <th className="pb-2">Pierna</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {measurements.map((m) => (
+                              <tr
+                                key={m.id}
+                                className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
+                              >
+                                <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
+                                  {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                                </td>
+                                <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
+                                  {m.weight != null ? `${m.weight} kg` : '—'}
+                                </td>
+                                <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                  {m.body_fat_percentage != null
+                                    ? `${m.body_fat_percentage}%`
+                                    : '—'}
+                                </td>
+                                <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                  {m.waist != null ? `${m.waist} cm` : '—'}
+                                </td>
+                                <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                                  {m.arm != null ? `${m.arm} cm` : '—'}
+                                </td>
+                                <td className="py-2 text-zinc-500 dark:text-zinc-400">
+                                  {m.leg != null ? `${m.leg} cm` : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </Card>
+              )}
+
               {workouts.length > 0 && (
-                <Card padding="sm" rounded="xl">
-                  <h2 className="section-title mb-2.5 flex items-center gap-1.5">
-                    <Dumbbell className="text-brand h-3.5 w-3.5" />
+                <Card
+                  padding="sm"
+                  rounded="xl"
+                  className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+                >
+                  <h2 className="mb-2 text-[13px] font-semibold text-zinc-900 dark:text-white">
                     Actividad reciente
                   </h2>
                   <div className="space-y-0.5">
                     {workouts.slice(0, 5).map((w) => (
                       <div
                         key={w.id}
-                        className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 last:border-0 dark:border-zinc-800"
+                        className="flex items-center justify-between gap-2 border-b border-zinc-100/80 py-2 last:border-0 dark:border-zinc-800/80"
                       >
-                        <p className="truncate text-xs font-semibold text-zinc-800 sm:text-sm dark:text-zinc-200">
+                        <p className="truncate text-xs font-medium text-zinc-800 sm:text-sm dark:text-zinc-200">
                           {w.routine_name}
                         </p>
-                        <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-300">
-                          {format(new Date(w.start_time), 'dd MMM yyyy · HH:mm', { locale: es })}
+                        <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-500">
+                          {format(new Date(w.start_time), 'dd MMM · HH:mm', { locale: es })}
                         </p>
                       </div>
                     ))}
@@ -908,215 +941,237 @@ export default function Profile() {
               )}
             </>
           )}
-        </>
+        </div>
       )}
 
       {profileTab === 'carne' && isMember && (
-        <div className="panel-content">
-          <Card padding="sm" rounded="xl">
-            <h2 className="section-title mb-3 flex items-center gap-1.5">
-              <IdCard className="text-brand h-3.5 w-3.5" />
-              Mi carné digital
-            </h2>
-            {badgeMember ? (
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Si no tienes el carné físico, muestra este QR en recepción para registrar tu
-                  entrada. Sube el brillo de la pantalla si te lo piden escanear.
+        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 pt-1">
+          {badgeMember ? (
+            <>
+              <div className="w-full text-center">
+                <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+                  Carné digital
+                </h2>
+                <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Muéstralo en recepción · sube el brillo
                 </p>
-                <MemberBadgeCard member={badgeMember} side="front" />
-                <Button className="w-full" onClick={() => setShowScanView(true)}>
-                  <ScanLine className="h-4 w-4" />
-                  Mostrar QR para escaneo
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => setShowBadgeModal(true)}
-                >
-                  <Printer className="h-4 w-4" />
-                  Ver carné completo / Imprimir
-                </Button>
               </div>
-            ) : (
-              <EmptyState
-                icon={IdCard}
-                title="Carné no disponible"
-                description="Tu cuenta aún no tiene cédula registrada. Contacta a recepción para completar tu perfil."
-              />
-            )}
-          </Card>
+
+              <div className="-mb-8 origin-top scale-[0.82] sm:-mb-6 sm:scale-90">
+                <MemberBadgeCard
+                  member={badgeMember}
+                  side="front"
+                  className="shadow-[0_10px_28px_-12px_rgba(0,0,0,0.35)] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.65)]"
+                />
+              </div>
+
+              <div className="flex w-full flex-col items-center gap-2.5">
+                <Button className="h-11 min-h-11 w-full" onClick={() => setShowScanView(true)}>
+                  <ScanLine className="h-4 w-4" />
+                  Mostrar QR
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgeModal(true)}
+                  className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                >
+                  Ver carné completo / Imprimir
+                </button>
+              </div>
+            </>
+          ) : (
+            <EmptyState
+              icon={IdCard}
+              title="Carné no disponible"
+              description="Falta tu cédula en el perfil. Pide a recepción que la complete."
+              action={
+                <Link
+                  to="/messages"
+                  className="brand-solid brand-solid-hover inline-flex min-h-[var(--touch-min)] items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide shadow-md shadow-zinc-900/10"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Escribir a recepción
+                </Link>
+              }
+            />
+          )}
         </div>
       )}
 
       {profileTab === 'apariencia' && (
-        <div className="panel-content space-y-3">
-          <Card padding="sm" rounded="xl">
-            <h2 className="section-title mb-1 flex items-center gap-1.5">
+        <div className="mx-auto w-full max-w-lg">
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+          >
+            <h2 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
               <Palette className="text-brand h-3.5 w-3.5" />
-              Paleta de colores
+              Apariencia
             </h2>
-            <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-              Elige el color de acento de la interfaz. Los fondos y textos neutros se mantienen para
-              no distraer del contenido.
+
+            <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+              Color de acento
             </p>
             <ThemePalettePicker />
-          </Card>
 
-          <Card padding="sm" rounded="xl">
-            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-zinc-900 dark:text-white">
-              <Sun className="text-brand h-3.5 w-3.5 shrink-0" />
-              Modo claro u oscuro
-            </h3>
-            <p className="mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Elige cómo se ve el fondo de la interfaz. También puedes cambiarlo desde el icono en
-              la barra superior.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={theme === 'light' ? 'primary' : 'secondary'}
-                onClick={() => setTheme('light')}
-                className="flex-1"
-              >
-                <Sun className="h-4 w-4" />
-                Claro
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={theme === 'dark' ? 'primary' : 'secondary'}
-                onClick={() => setTheme('dark')}
-                className="flex-1"
-              >
-                <Moon className="h-4 w-4" />
-                Oscuro
-              </Button>
+            <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+              <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                Fondo · también en la barra superior
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={theme === 'light' ? 'primary' : 'secondary'}
+                  onClick={() => setTheme('light')}
+                  className="flex-1"
+                >
+                  <Sun className="h-4 w-4" />
+                  Claro
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={theme === 'dark' ? 'primary' : 'secondary'}
+                  onClick={() => setTheme('dark')}
+                  className="flex-1"
+                >
+                  <Moon className="h-4 w-4" />
+                  Oscuro
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
       )}
 
       {profileTab === 'seguridad' && (
-        <>
-          <Card padding="sm" rounded="xl" className="panel-form mb-3">
-            <h2 className="section-title mb-3 flex items-center gap-1.5">
+        <div className="mx-auto w-full max-w-lg space-y-3">
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+          >
+            <h2 className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
               <Bell className="text-brand h-3.5 w-3.5" />
-              Notificaciones push
+              Notificaciones
             </h2>
             <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-              Recibe avisos de pagos, mensajes y novedades del gym en este dispositivo.
+              Pagos, mensajes y novedades en este dispositivo.
             </p>
             <PushNotificationsToggle />
           </Card>
 
-          <Card padding="sm" rounded="xl" className="panel-form">
-            <h2 className="section-title mb-3 flex items-center gap-1.5">
-              <Lock className="text-brand h-3.5 w-3.5" />
-              Seguridad
-            </h2>
-            {user.role !== 'member' && (
-              <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50">
-                <p className="mb-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  Protege tu cuenta de staff con verificación en dos pasos (TOTP).
-                </p>
-                <Link
-                  to="/security"
-                  className="text-brand inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
-                >
-                  Configurar MFA →
-                </Link>
-              </div>
-            )}
-            {passwordMsg && (
-              <p className="mb-3 text-xs font-medium text-emerald-600">{passwordMsg}</p>
-            )}
-            {passwordError && (
-              <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>
-            )}
-            <form onSubmit={handleChangePassword} className="space-y-3">
-              <div>
-                <Label htmlFor="current_password">Contraseña actual</Label>
-                <PasswordInput
-                  id="current_password"
-                  autoComplete="current-password"
-                  value={passwordForm.current_password}
-                  onChange={(e) => {
-                    setPasswordForm({ ...passwordForm, current_password: e.target.value });
-                  }}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="new_password">Nueva contraseña</Label>
-                <PasswordInput
-                  id="new_password"
-                  autoComplete="new-password"
-                  value={passwordForm.new_password}
-                  onChange={(e) => {
-                    setPasswordForm({ ...passwordForm, new_password: e.target.value });
-                  }}
-                  minLength={8}
-                  required
-                />
-                {passwordForm.new_password &&
-                  (() => {
-                    const strength = passwordStrength(passwordForm.new_password);
-                    return (
-                      <div className="mt-2 space-y-1">
-                        <div className="flex gap-1">
-                          {[1, 2, 3].map((level) => (
-                            <div
-                              key={level}
-                              className={cn(
-                                'h-1 flex-1 rounded-full transition-colors',
-                                strength.score >= level
-                                  ? level === 1
-                                    ? 'bg-red-500'
-                                    : level === 2
-                                      ? 'bg-yellow-500'
-                                      : 'bg-emerald-500'
-                                  : 'bg-zinc-200 dark:bg-zinc-700'
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
-                          Fortaleza: {strength.label}
-                        </p>
-                      </div>
-                    );
-                  })()}
-              </div>
-              <div>
-                <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
-                <PasswordInput
-                  id="confirm_password"
-                  autoComplete="new-password"
-                  value={passwordForm.confirm_password}
-                  onChange={(e) => {
-                    setPasswordForm({ ...passwordForm, confirm_password: e.target.value });
-                  }}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={passwordSaving}
-                size="sm"
-                className="h-11 min-h-11 w-full sm:w-auto sm:px-4"
+          {user.role !== 'member' && (
+            <Card
+              padding="sm"
+              rounded="xl"
+              className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+            >
+              <h2 className="mb-1 text-[13px] font-semibold text-zinc-900 dark:text-white">
+                Verificación en dos pasos
+              </h2>
+              <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                Protege tu cuenta de staff con MFA (TOTP).
+              </p>
+              <Link
+                to="/security"
+                className="text-brand inline-flex items-center gap-1 text-sm font-semibold hover:underline"
               >
-                <Lock className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {passwordSaving ? 'Actualizando…' : 'Cambiar contraseña'}
-                </span>
-                <span className="sm:hidden">{passwordSaving ? '…' : 'Actualizar'}</span>
-              </Button>
-            </form>
-          </Card>
-        </>
+                Configurar MFA →
+              </Link>
+            </Card>
+          )}
+
+          <Accordion>
+            <AccordionItem
+              title="Cambiar contraseña"
+              icon={<Lock className="text-brand h-4 w-4" />}
+              className="rounded-xl"
+            >
+              {passwordError && (
+                <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>
+              )}
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <div>
+                  <Label htmlFor="current_password">Contraseña actual</Label>
+                  <PasswordInput
+                    id="current_password"
+                    autoComplete="current-password"
+                    value={passwordForm.current_password}
+                    onChange={(e) => {
+                      setPasswordForm({ ...passwordForm, current_password: e.target.value });
+                    }}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new_password">Nueva contraseña</Label>
+                  <PasswordInput
+                    id="new_password"
+                    autoComplete="new-password"
+                    value={passwordForm.new_password}
+                    onChange={(e) => {
+                      setPasswordForm({ ...passwordForm, new_password: e.target.value });
+                    }}
+                    minLength={8}
+                    required
+                  />
+                  {passwordForm.new_password &&
+                    (() => {
+                      const strength = passwordStrength(passwordForm.new_password);
+                      return (
+                        <div className="mt-2 space-y-1">
+                          <div className="flex gap-1">
+                            {[1, 2, 3].map((level) => (
+                              <div
+                                key={level}
+                                className={cn(
+                                  'h-1 flex-1 rounded-full transition-colors',
+                                  strength.score >= level
+                                    ? level === 1
+                                      ? 'bg-red-500'
+                                      : level === 2
+                                        ? 'bg-yellow-500'
+                                        : 'bg-emerald-500'
+                                    : 'bg-zinc-200 dark:bg-zinc-700'
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
+                            Fortaleza: {strength.label}
+                          </p>
+                        </div>
+                      );
+                    })()}
+                </div>
+                <div>
+                  <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
+                  <PasswordInput
+                    id="confirm_password"
+                    autoComplete="new-password"
+                    value={passwordForm.confirm_password}
+                    onChange={(e) => {
+                      setPasswordForm({ ...passwordForm, confirm_password: e.target.value });
+                    }}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={passwordSaving}
+                  size="sm"
+                  className="h-10 min-h-10 w-full sm:w-auto"
+                >
+                  <Lock className="h-4 w-4" />
+                  {passwordSaving ? 'Actualizando…' : 'Actualizar contraseña'}
+                </Button>
+              </form>
+            </AccordionItem>
+          </Accordion>
+        </div>
       )}
 
       <Modal
@@ -1172,26 +1227,25 @@ export default function Profile() {
         onClose={() => {
           setIsAddingMeasurement(false);
         }}
-        title="Nueva medición"
-        maxWidth="xl"
-        scrollable
+        title="Registrar peso"
+        maxWidth="sm"
       >
         {measurementError && (
-          <p className="mb-4 text-sm font-bold text-red-500">{measurementError}</p>
+          <p className="mb-3 text-sm font-medium text-red-500">{measurementError}</p>
         )}
-        <form onSubmit={handleAddMeasurement} className="form-stack">
-          <div>
-            <Label>Fecha</Label>
-            <Input
-              type="date"
-              value={measurementForm.date}
-              onChange={(e) => {
-                setMeasurementForm({ ...measurementForm, date: e.target.value });
-              }}
-              required
-            />
-          </div>
+        <form onSubmit={handleAddMeasurement} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Fecha</Label>
+              <Input
+                type="date"
+                value={measurementForm.date}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, date: e.target.value });
+                }}
+                required
+              />
+            </div>
             <div>
               <Label>Peso (kg)</Label>
               <Input
@@ -1201,44 +1255,67 @@ export default function Profile() {
                 onChange={(e) => {
                   setMeasurementForm({ ...measurementForm, weight: e.target.value });
                 }}
-              />
-            </div>
-            <div>
-              <Label>Grasa (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.body_fat_percentage}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Cintura (cm)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.waist}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, waist: e.target.value });
-                }}
-              />
-            </div>
-            <div>
-              <Label>Brazo (cm)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.arm}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, arm: e.target.value });
-                }}
+                placeholder="Ej. 72.5"
+                autoFocus
               />
             </div>
           </div>
+          <details className="group rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-medium text-zinc-500 marker:content-none dark:text-zinc-400 [&::-webkit-details-marker]:hidden">
+              Más medidas (opcional)
+            </summary>
+            <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 px-3 pt-2 pb-3 dark:border-zinc-800">
+              <div>
+                <Label>Grasa (%)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={measurementForm.body_fat_percentage}
+                  onChange={(e) => {
+                    setMeasurementForm({
+                      ...measurementForm,
+                      body_fat_percentage: e.target.value,
+                    });
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Cintura (cm)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={measurementForm.waist}
+                  onChange={(e) => {
+                    setMeasurementForm({ ...measurementForm, waist: e.target.value });
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Brazo (cm)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={measurementForm.arm}
+                  onChange={(e) => {
+                    setMeasurementForm({ ...measurementForm, arm: e.target.value });
+                  }}
+                />
+              </div>
+              <div>
+                <Label>Pierna (cm)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={measurementForm.leg}
+                  onChange={(e) => {
+                    setMeasurementForm({ ...measurementForm, leg: e.target.value });
+                  }}
+                />
+              </div>
+            </div>
+          </details>
           <Button type="submit" className="w-full">
-            Guardar medición
+            Guardar
           </Button>
         </form>
       </Modal>

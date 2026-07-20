@@ -188,6 +188,8 @@ export default function Nutrition() {
     macroHint(plan, totals, 'carbs'),
     macroHint(plan, totals, 'fat'),
   ].filter(Boolean);
+  /** One line only after logging — empty day already reads clear from gauge/rings. */
+  const coachingHint = logs.length > 0 ? (hints[0] ?? null) : null;
 
   const logsByMeal = MEAL_TYPE_ORDER.map((type) => ({
     type,
@@ -197,6 +199,7 @@ export default function Nutrition() {
   return (
     <div className="page-stack-tight mx-auto max-w-lg">
       <PageHeader
+        compact
         title={
           <>
             Mi <span className="text-brand">nutrición</span>
@@ -216,7 +219,7 @@ export default function Nutrition() {
 
       <WeekDateStrip selectedDate={selectedDate} onSelect={setSelectedDate} className="px-1" />
 
-      <section className="pt-2 pb-1">
+      <section className="pt-3 sm:pt-4">
         <CalorieSemiGauge
           consumed={totals.calories}
           target={plan.calories_target}
@@ -224,13 +227,13 @@ export default function Nutrition() {
         />
       </section>
 
-      <section className="grid grid-cols-3 gap-1 px-1 pt-2 pb-4 sm:gap-4">
+      <section className="mx-auto grid max-w-sm grid-cols-3 justify-items-center gap-1 px-1 pt-3 pb-2 sm:pt-4">
         <MacroRing
           label="Proteína"
           consumed={totals.protein}
           target={plan.protein_target_g}
           colorClass="text-amber-400 dark:text-amber-300"
-          unit="g"
+          glowColor="#fbbf24"
           icon={Beef}
         />
         <MacroRing
@@ -238,7 +241,7 @@ export default function Nutrition() {
           consumed={totals.carbs}
           target={plan.carbs_target_g}
           colorClass="text-orange-500"
-          unit="g"
+          glowColor="#f97316"
           icon={Wheat}
         />
         <MacroRing
@@ -246,27 +249,20 @@ export default function Nutrition() {
           consumed={totals.fat}
           target={plan.fat_target_g}
           colorClass="text-rose-500"
-          unit="g"
+          glowColor="#f43f5e"
           icon={Droplet}
         />
       </section>
 
-      {hints.length > 0 && (
-        <ul className="space-y-1 px-1 pb-2">
-          {hints.map((h) => (
-            <li
-              key={h}
-              className="rounded-xl bg-zinc-100/80 px-3 py-1.5 text-center text-[11px] text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300"
-            >
-              {h}
-            </li>
-          ))}
-        </ul>
+      {coachingHint && (
+        <p className="px-1 pb-1.5 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+          {coachingHint}
+        </p>
       )}
 
       {plan.notes && (
-        <p className="px-1 pb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          <span className="font-semibold text-zinc-600 dark:text-zinc-300">Entrenador: </span>
+        <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+          <span className="text-zinc-400 dark:text-zinc-500">Entrenador · </span>
           {plan.notes}
         </p>
       )}
@@ -282,9 +278,9 @@ export default function Nutrition() {
           )}
         </div>
         {logs.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-              <UtensilsCrossed className="h-5 w-5 text-zinc-400" />
+          <div className="flex flex-col items-center gap-2.5 py-5 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+              <UtensilsCrossed className="h-4 w-4 text-zinc-400" />
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Aún no registraste comidas hoy.

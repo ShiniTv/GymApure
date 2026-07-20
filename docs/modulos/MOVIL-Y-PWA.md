@@ -26,9 +26,10 @@ Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### FAB "Entrenar"
 
-- Visible en `/`, `/routines`, `/exercises`, `/nutrition` (si hay rutina activa)
+- Visible en `/routines`, `/exercises`, `/nutrition` (si hay rutina activa)
+- Oculto en Inicio (`/panel`): el hero ya muestra el CTA de entrenar
 - Oculto durante workout (`/workout/:id`)
-- Posición ajustada con CSS `--member-nav-stack` y `--member-fab-gap`
+- Anclado a la pill inferior (`--member-fab-overlap` / `--member-fab-protrude`)
 
 ### Drawer sidebar
 

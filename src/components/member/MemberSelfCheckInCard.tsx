@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
-import { Button, Card, Input, Label, Skeleton } from '../ui';
+import { Button, Input, Label, Skeleton } from '../ui';
 import { useToastOptional } from '../../context/ToastContext';
 
 interface MeAttendance {
@@ -10,7 +10,7 @@ interface MeAttendance {
   check_in_time: string | null;
 }
 
-/** Member self check-in/out when already at the gym (complements kiosk QR scan). */
+/** Compact self check-in/out row (secondary to training CTA on home). */
 export function MemberSelfCheckInCard() {
   const toast = useToastOptional();
   const [state, setState] = useState<MeAttendance | null>(null);
@@ -78,79 +78,85 @@ export function MemberSelfCheckInCard() {
 
   if (loading) {
     return (
-      <Card padding="sm" rounded="xl" aria-busy="true" aria-label="Cargando asistencia">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-xl" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-          <Skeleton className="h-9 w-24 rounded-lg" />
+      <div
+        className="flex items-center gap-3 rounded-xl border border-zinc-200/70 px-3 py-2 dark:border-zinc-800"
+        aria-busy="true"
+        aria-label="Cargando asistencia"
+      >
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Skeleton className="h-3.5 w-28" />
+          <Skeleton className="h-3 w-40" />
         </div>
-      </Card>
+        <Skeleton className="h-8 w-24 rounded-lg" />
+      </div>
     );
   }
 
   const inside = Boolean(state?.is_inside);
 
   return (
-    <Card
-      padding="sm"
-      rounded="xl"
-      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-          {inside ? 'Estás dentro del gym' : 'Marcar asistencia'}
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {inside ? (
-            'Cuando salgas, registra la salida aquí o en recepción.'
-          ) : pinRequired ? (
-            'Pide el PIN del día en recepción para confirmar que estás en sede.'
-          ) : (
-            <>
-              Úsalo en sede. También puedes mostrar tu QR en{' '}
-              <Link to="/profile?tab=carne" className="text-brand font-semibold hover:underline">
-                Perfil → Carné
-              </Link>{' '}
-              en recepción.
-            </>
-          )}
-        </p>
-        {!inside && pinRequired && (
-          <div className="mt-2 max-w-[12rem]">
-            <Label htmlFor="self-check-in-pin" className="sr-only">
-              PIN de presencia
-            </Label>
-            <Input
-              id="self-check-in-pin"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="PIN del día"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              className="h-9"
-            />
-          </div>
+    <div className="rounded-xl border border-zinc-200/70 px-3 py-2 dark:border-zinc-800">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-zinc-900 dark:text-white">
+            {inside ? 'Dentro del gym' : 'Asistencia'}
+          </p>
+          <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+            {inside ? (
+              'Registra la salida al irte'
+            ) : pinRequired ? (
+              'PIN de recepción requerido'
+            ) : (
+              <>
+                En sede ·{' '}
+                <Link to="/profile?tab=carne" className="text-brand font-semibold hover:underline">
+                  Carné QR
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
+        {inside ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 shrink-0 px-2.5"
+            loading={busy}
+            onClick={() => void act('out')}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Salida
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-9 shrink-0 px-2.5"
+            loading={busy}
+            disabled={pinRequired && !pin.trim()}
+            onClick={() => void act('in')}
+          >
+            <LogIn className="h-3.5 w-3.5" />
+            Entrada
+          </Button>
         )}
       </div>
-      {inside ? (
-        <Button size="sm" variant="secondary" loading={busy} onClick={() => void act('out')}>
-          <LogOut className="h-4 w-4" />
-          Marcar salida
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          loading={busy}
-          disabled={pinRequired && !pin.trim()}
-          onClick={() => void act('in')}
-        >
-          <LogIn className="h-4 w-4" />
-          Marcar entrada
-        </Button>
+      {!inside && pinRequired && (
+        <div className="mt-2 max-w-[11rem]">
+          <Label htmlFor="self-check-in-pin" className="sr-only">
+            PIN de presencia
+          </Label>
+          <Input
+            id="self-check-in-pin"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="PIN del día"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className="h-8 text-sm"
+          />
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

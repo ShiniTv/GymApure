@@ -37,7 +37,7 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 ## Flujo: miembro inicia entrenamiento
 
 1. **Inicio** o **Rutinas** → expande rutina → **Empezar entrenamiento**.
-2. También: FAB central "Entrenar" en `/`, `/routines`, `/exercises`.
+2. También: FAB central "Entrenar" en `/routines`, `/exercises`, `/nutrition` (no en Inicio).
 3. Redirige a `/workout/:id`.
 
 ### Durante la sesión

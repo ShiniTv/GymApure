@@ -13,6 +13,8 @@ interface FilterChipsProps {
   className?: string;
   /** Stretch to fill parent width (e.g. mobile toolbars) */
   fullWidth?: boolean;
+  /** Horizontal scroll row — better for many chips on mobile */
+  layout?: 'wrap' | 'scroll';
 }
 
 export function FilterChips({
@@ -21,12 +23,19 @@ export function FilterChips({
   onChange,
   className,
   fullWidth = false,
+  layout = 'wrap',
 }: FilterChipsProps) {
+  const scroll = layout === 'scroll';
+
   return (
     <div
       className={cn(
-        'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
-        fullWidth ? 'w-full' : 'w-fit max-w-full',
+        scroll
+          ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          : cn(
+              'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
+              fullWidth ? 'w-full' : 'w-fit max-w-full'
+            ),
         className
       )}
       role="tablist"
@@ -42,11 +51,21 @@ export function FilterChips({
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'focus-visible:ring-brand/50 inline-flex min-h-9 touch-manipulation items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all focus-visible:ring-2 focus-visible:outline-none sm:min-h-[var(--touch-min)]',
-              fullWidth && 'flex-1',
-              active
-                ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
-                : 'text-zinc-600 hover:text-zinc-800 dark:text-zinc-300 dark:hover:text-zinc-100'
+              'focus-visible:ring-brand/50 inline-flex touch-manipulation items-center justify-center gap-1.5 font-semibold transition-all focus-visible:ring-2 focus-visible:outline-none',
+              scroll
+                ? cn(
+                    'h-8 shrink-0 rounded-full border px-3 text-[11px]',
+                    active
+                      ? 'border-brand/30 bg-brand/10 text-brand'
+                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600'
+                  )
+                : cn(
+                    'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] sm:min-h-[var(--touch-min)]',
+                    fullWidth && 'flex-1',
+                    active
+                      ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
+                      : 'text-zinc-600 hover:text-zinc-800 dark:text-zinc-300 dark:hover:text-zinc-100'
+                  )
             )}
           >
             {opt.label}

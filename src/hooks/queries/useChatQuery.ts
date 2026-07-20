@@ -22,6 +22,8 @@ export interface ChatConversationListItem {
   membership_name: string | null;
 }
 
+export type ChatClientStatus = 'sending' | 'failed';
+
 export interface ChatMessage {
   id: number;
   conversation_id: number;
@@ -36,6 +38,8 @@ export interface ChatMessage {
   edited_at: string | null;
   created_at: string;
   is_mine: boolean;
+  /** Present only for optimistic / offline-failed client bubbles. */
+  client_status?: ChatClientStatus;
 }
 
 export const chatUnreadKey = ['chat', 'unread'] as const;
@@ -156,10 +160,33 @@ export function useChatMessagesQuery(conversationId: number | null, enabled = tr
   });
 }
 
+interface SendChatVariables {
+  conversationId: number;
+  body: string;
+  /** When retrying a failed optimistic bubble, replace this temp id. */
+  retryTempId?: number;
+}
+
+interface MessagesCache {
+  messages: ChatMessage[];
+  hasMore: boolean;
+}
+
+function patchMessagesCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  conversationId: number,
+  updater: (messages: ChatMessage[]) => ChatMessage[]
+) {
+  queryClient.setQueryData<MessagesCache>(chatMessagesKey(conversationId), (old) => {
+    const messages = updater(old?.messages ?? []);
+    return { messages, hasMore: old?.hasMore ?? false };
+  });
+}
+
 export function useSendChatMessage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, body }: { conversationId: number; body: string }) => {
+    mutationFn: async ({ conversationId, body }: SendChatVariables) => {
       const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -167,8 +194,49 @@ export function useSendChatMessage() {
       });
       return parseJsonResponse<ChatMessage>(res);
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: chatMessagesKey(variables.conversationId) });
+    onMutate: async (variables) => {
+      const { conversationId, body, retryTempId } = variables;
+      await queryClient.cancelQueries({ queryKey: chatMessagesKey(conversationId) });
+      const previous = queryClient.getQueryData<MessagesCache>(chatMessagesKey(conversationId));
+      const tempId = retryTempId ?? -Date.now();
+      const optimistic: ChatMessage = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_id: null,
+        sender_name: null,
+        sender_role: null,
+        body,
+        kind: 'text',
+        event_type: 'manual',
+        metadata: {},
+        read_at: null,
+        edited_at: null,
+        created_at: new Date().toISOString(),
+        is_mine: true,
+        client_status: 'sending',
+      };
+      patchMessagesCache(queryClient, conversationId, (messages) => {
+        const withoutRetry =
+          retryTempId != null ? messages.filter((m) => m.id !== retryTempId) : messages;
+        return [...withoutRetry, optimistic];
+      });
+      return { previous, tempId };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.tempId == null) return;
+      patchMessagesCache(queryClient, variables.conversationId, (messages) =>
+        messages.map((m) =>
+          m.id === context.tempId ? { ...m, client_status: 'failed' as const } : m
+        )
+      );
+    },
+    onSuccess: (data, variables, context) => {
+      patchMessagesCache(queryClient, variables.conversationId, (messages) => {
+        const withoutTemp =
+          context?.tempId != null ? messages.filter((m) => m.id !== context.tempId) : messages;
+        if (withoutTemp.some((m) => m.id === data.id)) return withoutTemp;
+        return [...withoutTemp, data];
+      });
       void queryClient.invalidateQueries({ queryKey: chatUnreadKey });
       void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
       void queryClient.invalidateQueries({ queryKey: chatMineKey });

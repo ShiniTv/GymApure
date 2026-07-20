@@ -61,6 +61,12 @@
   .dark .recharts-default-tooltip {
     --chart-accent: #fafafa;
   }
+
+  /* Native select dropdowns: keep option text readable in dark mode */
+  .dark select option {
+    background-color: #27272a;
+    color: #fafafa;
+  }
 }
 
 body,
@@ -473,7 +479,8 @@ body,
    * Previous bug: 1rem was treated as “full stack gap” but 0.5rem is under the pill,
    * leaving only ~8px above — content still looked glued to the island.
    */
-  --nav-pill-height: 4.25rem;
+  /* Icon-only tabs: touch target + py-2; no label row */
+  --nav-pill-height: 3.5rem;
   --nav-pad-below-pill: 0.5rem;
   --nav-clearance-above-pill: 1.25rem;
   --reception-nav-pill-height: var(--nav-pill-height);
@@ -492,20 +499,27 @@ body,
   --member-nav-stack: calc(
     var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
   );
+  /* Workout FAB docked on member bottom pill */
+  --member-fab-size: 3.25rem;
+  --member-fab-overlap: 0.875rem;
+  --member-fab-protrude: calc(var(--member-fab-size) - var(--member-fab-overlap));
 }
 
 .member-bottom-nav {
   padding-bottom: max(var(--nav-pad-below-pill), env(safe-area-inset-bottom, 0));
-  --member-fab-size: 3.5rem;
-  --member-fab-gap: 0.75rem;
 }
 
 .member-bottom-nav-fab {
   left: 50%;
+  z-index: 2;
   width: var(--member-fab-size);
   height: var(--member-fab-size);
   margin-left: calc(var(--member-fab-size) / -2);
-  bottom: calc(var(--member-nav-stack) + var(--member-fab-gap) + env(safe-area-inset-bottom, 0px));
+  /* Anchor to the pill top instead of floating in content */
+  bottom: calc(
+    max(var(--nav-pad-below-pill), env(safe-area-inset-bottom, 0px)) +
+      var(--member-nav-pill-height) - var(--member-fab-overlap)
+  );
 }
 
 /* Shared glass surface: top island + bottom nav pill */
@@ -577,8 +591,10 @@ body,
 }
 
 html.member-has-workout-fab .member-main-pad {
+  /* Only the part of the FAB that sticks above the pill needs extra clearance */
   padding-bottom: calc(
-    var(--member-nav-stack) + var(--member-fab-size, 3.5rem) + var(--member-fab-gap, 0.75rem) +
+    var(--member-nav-stack) +
+      max(0rem, var(--member-fab-protrude) - var(--nav-clearance-above-pill)) + 0.35rem +
       env(safe-area-inset-bottom, 0px)
   );
 }
@@ -588,11 +604,15 @@ html.member-has-workout-fab .member-main-pad {
 }
 
 html.member-has-workout-fab .scroll-to-top-btn {
-  bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(
+    var(--member-nav-stack) + var(--member-fab-protrude) + 0.5rem + env(safe-area-inset-bottom, 0px)
+  );
 }
 
 html.member-has-workout-fab .offline-banner-above-nav {
-  bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(
+    var(--member-nav-stack) + var(--member-fab-protrude) + 0.5rem + env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .member-chat-panel {
@@ -606,7 +626,10 @@ html.member-has-workout-fab .offline-banner-above-nav {
 }
 
 html.member-has-workout-fab .member-chat-panel {
-  height: calc(100dvh - 10.5rem - 8.5rem - env(safe-area-inset-bottom, 0px));
+  height: calc(
+    100dvh - 10.5rem - var(--member-nav-stack) - var(--member-fab-protrude) -
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .staff-chat-shell {
@@ -652,7 +675,10 @@ html.member-has-workout-fab .member-chat-panel {
 
 @media (min-width: 640px) {
   html.member-has-workout-fab .member-chat-panel {
-    height: calc(100dvh - 11rem - 8.5rem - env(safe-area-inset-bottom, 0px));
+    height: calc(
+      100dvh - 11rem - var(--member-nav-stack) - var(--member-fab-protrude) -
+        env(safe-area-inset-bottom, 0px)
+    );
   }
 }
 

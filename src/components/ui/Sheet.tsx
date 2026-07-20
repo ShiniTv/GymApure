@@ -20,6 +20,10 @@ interface SheetProps {
   hideFrom?: 'lg';
   /** Cap height and scroll body (staff Más sheets) */
   scrollable?: boolean;
+  /** Subtle top handle for bottom sheets */
+  showHandle?: boolean;
+  /** Tighter header + padding for compact menus */
+  compact?: boolean;
 }
 
 export function Sheet({
@@ -35,6 +39,8 @@ export function Sheet({
   zIndex = 56,
   hideFrom = 'lg',
   scrollable = false,
+  showHandle = false,
+  compact = false,
 }: SheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -106,21 +112,38 @@ export function Sheet({
       >
         <div
           className={cn(
-            'rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
+            'rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
+            compact ? 'p-2.5' : 'p-3',
             side === 'bottom' && 'mb-2',
             scrollable && 'flex max-h-[min(70dvh,calc(100dvh-8rem))] flex-col',
             cardClassName
           )}
         >
+          {showHandle && side === 'bottom' ? (
+            <div className="flex justify-center pb-1" aria-hidden>
+              <div className="h-1 w-8 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            </div>
+          ) : null}
           {title && (
-            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
-              <h2 id={titleId} className="text-sm font-bold text-zinc-900 dark:text-white">
+            <div
+              className={cn(
+                'flex shrink-0 items-center justify-between gap-2',
+                compact ? 'mb-1.5' : 'mb-2'
+              )}
+            >
+              <h2
+                id={titleId}
+                className={cn(
+                  'text-zinc-900 dark:text-white',
+                  compact ? 'text-sm font-semibold' : 'text-sm font-bold'
+                )}
+              >
                 {title}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 aria-label={closeLabel}
               >
                 <X className="h-4 w-4" />

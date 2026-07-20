@@ -7,11 +7,7 @@ export default function ThemePalettePicker() {
   const { palette, setPalette } = useTheme();
 
   return (
-    <div className="space-y-3">
-      <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
-        8 paletas disponibles · combínalas con modo claro u oscuro
-      </p>
-
+    <div className="space-y-2.5">
       <div
         role="radiogroup"
         aria-label="Paleta de colores"

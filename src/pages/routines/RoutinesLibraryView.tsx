@@ -9,7 +9,7 @@ import {
   Play,
 } from 'lucide-react';
 import { Button, Card, EmptyState, Badge, ListRowSkeleton, Skeleton } from '../../components/ui';
-import { formatDifficulty } from '../../lib/utils';
+import { formatDifficulty, cn } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import type { Routine, RoutineExercise } from './types';
 
@@ -78,29 +78,55 @@ export function RoutinesLibraryView({
 
   if (routines.length === 0) {
     return (
-      <EmptyState
-        variant={isMember ? 'motivational' : 'default'}
-        icon={Dumbbell}
-        title={isMember ? 'Sin rutinas asignadas' : 'Sin rutinas'}
-        description={
-          isMember
-            ? 'Tu entrenador aún no te asignó rutinas. Cuando lo haga, aparecerán aquí.'
-            : 'Crea tu primera rutina para asignarla a tus miembros.'
-        }
-        action={
-          !isMember ? (
-            <Button size="sm" onClick={onCreateRoutine}>
-              <Plus className="h-4 w-4" />
-              Crear rutina
-            </Button>
-          ) : undefined
-        }
-      />
+      <div
+        className={cn(
+          'mx-auto flex w-full max-w-sm flex-col justify-center',
+          isMember && 'min-h-[min(52vh,28rem)]'
+        )}
+      >
+        <EmptyState
+          variant={isMember ? 'motivational' : 'default'}
+          icon={Dumbbell}
+          title={isMember ? 'Aún sin rutina' : 'Sin rutinas'}
+          description={
+            isMember
+              ? 'Cuando tu entrenador te asigne una, aparecerá aquí lista para entrenar.'
+              : 'Crea tu primera rutina para asignarla a tus miembros.'
+          }
+          action={
+            !isMember ? (
+              <Button size="sm" onClick={onCreateRoutine}>
+                <Plus className="h-4 w-4" />
+                Crear rutina
+              </Button>
+            ) : undefined
+          }
+          className={isMember ? 'border-0 bg-transparent shadow-none' : undefined}
+        />
+      </div>
     );
   }
 
+  const memberSparse = isMember && routines.length <= 2;
+  const anyInProgress = routines.some((r) => activeRoutineSet.has(r.id));
+  const allDoneToday =
+    isMember && routines.length > 0 && routines.every((r) => completedTodaySet.has(r.id));
+  const memberFooterHint = isMember
+    ? allDoneToday
+      ? 'Listo por hoy. Mañana puedes repetir o esperar una nueva asignación.'
+      : anyInProgress
+        ? 'Tienes un entrenamiento en curso: pulsa Continuar cuando quieras.'
+        : 'Pulsa Entrenar para empezar. El chevron muestra series y reps.'
+    : null;
+
   return (
-    <div className="space-y-2">
+    <div
+      className={cn(
+        'space-y-3',
+        isMember && 'mx-auto w-full',
+        memberSparse && 'max-w-md sm:max-w-lg'
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           {routines.length} rutina{routines.length !== 1 ? 's' : ''} · {totalExercises} ejercicio
@@ -119,7 +145,13 @@ export function RoutinesLibraryView({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
+      <div
+        className={cn(
+          'grid gap-2.5',
+          isMember ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3'
+        )}
+      >
+        {' '}
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
@@ -130,14 +162,21 @@ export function RoutinesLibraryView({
             preview: routine.exercise_preview,
             loadedExercises: routine.exercises,
           });
+          const workoutLabel = completedToday
+            ? 'Completada hoy'
+            : inProgress
+              ? 'Continuar'
+              : 'Entrenar';
 
           return (
             <Card
               key={routine.id}
-              padding="sm"
+              padding={isMember ? 'sm' : 'md'}
               rounded="xl"
               className={`content-visibility-auto touch-manipulation overflow-hidden ${
-                isMember ? 'from-brand/8 bg-gradient-to-br via-transparent to-transparent' : ''
+                isMember
+                  ? 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
+                  : ''
               } ${isExpanded ? 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-3' : ''}`}
             >
               <div
@@ -154,53 +193,53 @@ export function RoutinesLibraryView({
                       }
                     : undefined
                 }
-                className={`group flex items-center gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
+                className={`group flex items-start gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
               >
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isMember ? 'bg-brand/15' : 'bg-brand/10'}`}
+                  className={`mt-0.5 flex shrink-0 items-center justify-center rounded-lg ${
+                    isMember ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
+                  }`}
                 >
                   {isMember ? (
-                    <Play className="text-brand fill-brand/20 h-4 w-4" />
+                    <Dumbbell className="text-brand h-3.5 w-3.5" />
                   ) : (
                     <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="flex-1 truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
-                      {routine.name}
-                    </h3>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge
-                        variant={difficultyVariant(routine.difficulty)}
-                        className="shrink-0 px-1.5 py-0 text-[9px]"
-                      >
-                        {formatDifficulty(routine.difficulty)}
+                  <h3 className="truncate text-[15px] leading-snug font-semibold text-zinc-900 dark:text-white">
+                    {routine.name}
+                  </h3>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant={difficultyVariant(routine.difficulty)}
+                      className="shrink-0 px-2 py-0.5 text-[10px]"
+                    >
+                      {formatDifficulty(routine.difficulty)}
+                    </Badge>
+                    {inProgress && !completedToday && (
+                      <Badge variant="warning" className="shrink-0 px-2 py-0.5 text-[10px]">
+                        En curso
                       </Badge>
-                      {inProgress && !completedToday && (
-                        <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
-                          En curso
-                        </Badge>
-                      )}
-                      {completedToday && (
-                        <Badge variant="success" className="shrink-0 px-1.5 py-0 text-[9px]">
-                          Hecha hoy
-                        </Badge>
-                      )}
-                    </div>
+                    )}
+                    {completedToday && (
+                      <Badge variant="success" className="shrink-0 px-2 py-0.5 text-[10px]">
+                        Hecha hoy
+                      </Badge>
+                    )}
                   </div>
-                  <p className="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <p className="mt-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                     {exerciseSummary.label}
                   </p>
-                  {exerciseSummary.preview && (
-                    <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  {exerciseSummary.preview ? (
+                    <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
                       {exerciseSummary.preview}
                     </p>
-                  )}
-                  {canOpen && !isExpanded && (
-                    <span className="text-brand dark:text-brand mt-1.5 inline-flex items-center text-[11px] font-semibold sm:text-xs">
-                      Toca para ver ejercicios
+                  ) : null}
+                  {!isMember && canOpen && !isExpanded && (
+                    <span className="text-brand mt-2 inline-flex items-center text-[11px] font-semibold">
+                      Ver ejercicios
                       <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                     </span>
                   )}
@@ -261,10 +300,10 @@ export function RoutinesLibraryView({
                         e.stopPropagation();
                         void onToggleExpandRoutine(routine.id);
                       }}
-                      className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 ${
                         isExpanded
-                          ? 'bg-brand border-brand text-white'
-                          : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400'
+                          ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
+                          : ''
                       }`}
                       aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
                       aria-expanded={isExpanded}
@@ -278,51 +317,54 @@ export function RoutinesLibraryView({
                 </div>
               </div>
 
+              {isMember && (
+                <div className="mt-2.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="min-h-9 w-full shadow-none sm:w-auto"
+                    disabled={completedToday}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartWorkout?.(routine.id);
+                    }}
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    {workoutLabel}
+                  </Button>
+                </div>
+              )}
+
               {isExpanded && (
-                <div className="animate-in slide-in-from-top-2 mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 duration-200 dark:border-zinc-800">
+                <div className="animate-in slide-in-from-top-2 mt-3 space-y-2.5 border-t border-zinc-100/80 pt-3 duration-200 dark:border-zinc-800/80">
                   {isMember ? (
                     <>
-                      <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Ejercicios
-                      </h4>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="space-y-2">
                         {routine.exercises?.map((exercise) => (
                           <div
                             key={exercise.routine_exercise_id}
-                            className="rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-800/50"
+                            className="rounded-lg px-2.5 py-2 dark:bg-zinc-950/40"
                           >
-                            <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                              {exercise.name}
-                            </h5>
-                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <h5 className="truncate text-sm font-medium text-zinc-900 dark:text-white">
+                                {exercise.name}
+                              </h5>
+                              <p className="shrink-0 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                                {exercise.sets}×{exercise.reps}
+                              </p>
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-zinc-400 capitalize dark:text-zinc-500">
                               {exercise.muscle_group}
-                            </p>
-                            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                              {exercise.sets} series × {exercise.reps} reps ·{' '}
-                              {exercise.rest_seconds}s descanso
+                              {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
                             </p>
                           </div>
                         ))}
                         {(!routine.exercises || routine.exercises.length === 0) && (
-                          <div className="col-span-full rounded-lg border border-dashed border-zinc-200 py-5 text-center text-[11px] text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-300">
+                          <div className="rounded-lg border border-dashed border-zinc-200 py-5 text-center text-xs text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-300">
                             Sin ejercicios en esta rutina
                           </div>
                         )}
                       </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        disabled={completedToday}
-                        onClick={() => onStartWorkout?.(routine.id)}
-                      >
-                        <Play className="h-4 w-4" />
-                        {completedToday
-                          ? 'Completada hoy'
-                          : inProgress
-                            ? 'Continuar entrenamiento'
-                            : 'Empezar entrenamiento'}
-                      </Button>
                     </>
                   ) : (
                     <>
@@ -436,6 +478,12 @@ export function RoutinesLibraryView({
           );
         })}
       </div>
+
+      {memberFooterHint ? (
+        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+          {memberFooterHint}
+        </p>
+      ) : null}
     </div>
   );
 }

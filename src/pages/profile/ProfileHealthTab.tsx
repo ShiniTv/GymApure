@@ -1,8 +1,16 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { HeartPulse, Activity, Info } from 'lucide-react';
+import { Activity, ChevronDown, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { Button, Card, Label, Textarea } from '../../components/ui';
+import {
+  Accordion,
+  AccordionItem,
+  Button,
+  Card,
+  Label,
+  Select,
+  Textarea,
+} from '../../components/ui';
 import { useToastOptional } from '../../context/ToastContext';
 import {
   useHealthProfileQuery,
@@ -18,6 +26,12 @@ interface ProfileHealthTabProps {
   profile: UserProfile;
   measurements: Measurement[];
   onSwitchToDatos: () => void;
+}
+
+function heightCmNumber(height: number | null | undefined): number | null {
+  if (height == null || Number.isNaN(height)) return null;
+  if (height > 0 && height < 3) return Math.round(height * 1000) / 10;
+  return height;
 }
 
 export function ProfileHealthTab({
@@ -38,6 +52,7 @@ export function ProfileHealthTab({
   const [sex, setSex] = useState<'male' | 'female' | ''>('');
   const [activityLevel, setActivityLevel] = useState<string>('');
   const [healthConsent, setHealthConsent] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!healthProfile) return;
@@ -49,6 +64,9 @@ export function ProfileHealthTab({
     setSex(healthProfile.sex ?? '');
     setActivityLevel(healthProfile.activity_level ?? '');
     setHealthConsent(Boolean(healthProfile.health_consent_at));
+    if (healthProfile.allergies_notes || healthProfile.medications_notes) {
+      setMoreOpen(true);
+    }
   }, [healthProfile]);
 
   const latestWeight = useMemo(() => {
@@ -66,7 +84,12 @@ export function ProfileHealthTab({
     }
   }, [profile.dob]);
 
-  const missingAnthropometrics = !profile.dob || !profile.height || !latestWeight;
+  const heightCm = heightCmNumber(profile.height);
+  const missingAnthropometrics = !profile.dob || heightCm == null || !latestWeight;
+  const hasConsent = Boolean(healthProfile?.health_consent_at);
+  const conditionLabels = HEALTH_CONDITION_FLAGS.filter((f) => conditionFlags.includes(f.id)).map(
+    (f) => f.shortLabel
+  );
 
   const toggleFlag = (id: string) => {
     setConditionFlags((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
@@ -100,203 +123,271 @@ export function ProfileHealthTab({
 
   if (isPending && !healthProfile) {
     return (
-      <Card padding="sm" rounded="xl">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando perfil de salud…</p>
-      </Card>
+      <div className="mx-auto w-full max-w-lg">
+        <Card
+          padding="sm"
+          rounded="xl"
+          className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+        >
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando perfil de salud…</p>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <form className="panel-form space-y-4" onSubmit={(e) => void handleSave(e, false)}>
-      <Card padding="sm" rounded="xl">
-        <h2 className="section-title mb-2 flex items-center gap-1.5">
-          <HeartPulse className="text-brand h-3.5 w-3.5" />
-          Antecedentes de salud
-        </h2>
-        <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-          Esta información la verá tu entrenador para adaptar rutinas y recomendaciones. No
-          sustituye una evaluación médica.
+    <form
+      className="panel-form mx-auto w-full max-w-lg space-y-3"
+      onSubmit={(e) => void handleSave(e, false)}
+    >
+      {(conditionLabels.length > 0 || healthProfile?.tdee_kcal != null) && (
+        <div className="flex flex-wrap gap-1.5 px-0.5">
+          {conditionLabels.length > 0 && (
+            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              {conditionLabels.length} condición{conditionLabels.length === 1 ? '' : 'es'}
+            </span>
+          )}
+          {healthProfile?.tdee_kcal != null && (
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+              GET {healthProfile.tdee_kcal} kcal
+            </span>
+          )}
+          {healthProfile?.bmr_kcal != null && (
+            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              TMB {healthProfile.bmr_kcal} kcal
+            </span>
+          )}
+        </div>
+      )}
+
+      <Card
+        padding="sm"
+        rounded="xl"
+        className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+      >
+        <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">Antecedentes</h2>
+        <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+          Lo ve tu entrenador · no sustituye criterio médico
         </p>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {HEALTH_CONDITION_FLAGS.map((flag) => (
-            <label
-              key={flag.id}
-              className={cn(
-                'flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
-                conditionFlags.includes(flag.id)
-                  ? 'border-brand/40 bg-brand/5 text-zinc-900 dark:text-zinc-100'
-                  : 'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300'
-              )}
-            >
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={conditionFlags.includes(flag.id)}
-                onChange={() => toggleFlag(flag.id)}
-              />
-              <span>{flag.label}</span>
-            </label>
-          ))}
+        <p className="mt-3.5 mb-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          Condiciones
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {HEALTH_CONDITION_FLAGS.map((flag) => {
+            const active = conditionFlags.includes(flag.id);
+            return (
+              <button
+                key={flag.id}
+                type="button"
+                title={flag.label}
+                onClick={() => toggleFlag(flag.id)}
+                aria-pressed={active}
+                className={cn(
+                  'inline-flex h-7 items-center rounded-full border px-2.5 text-[11px] font-medium transition-colors',
+                  active
+                    ? 'border-brand/30 bg-brand/10 text-brand'
+                    : 'border-zinc-200/80 bg-transparent text-zinc-600 hover:border-zinc-300 dark:border-zinc-700/80 dark:text-zinc-300 dark:hover:border-zinc-600'
+                )}
+              >
+                {flag.shortLabel}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3.5">
           <div>
-            <Label>Patologías o padecimientos (detalle)</Label>
+            <Label>Detalle de padecimientos</Label>
             <Textarea
-              rows={3}
+              rows={2}
               value={conditionsNotes}
               onChange={(e) => setConditionsNotes(e.target.value)}
-              placeholder="Ej.: hipertensión controlada, asma leve, etc."
+              placeholder="Ej.: hipertensión controlada…"
+              className="mt-1 min-h-[2.75rem] resize-none"
             />
           </div>
           <div>
-            <Label>Limitaciones físicas para entrenar</Label>
+            <Label>Limitaciones al entrenar</Label>
             <Textarea
-              rows={3}
+              rows={2}
               value={limitationsNotes}
               onChange={(e) => setLimitationsNotes(e.target.value)}
-              placeholder="Ej.: no impacto en rodilla derecha, evitar carga axial…"
-            />
-          </div>
-          <div>
-            <Label>Alergias alimentarias</Label>
-            <Textarea
-              rows={2}
-              value={allergiesNotes}
-              onChange={(e) => setAllergiesNotes(e.target.value)}
-              placeholder="Ej.: mariscos, lactosa…"
-            />
-          </div>
-          <div>
-            <Label>Medicación relevante (opcional)</Label>
-            <Textarea
-              rows={2}
-              value={medicationsNotes}
-              onChange={(e) => setMedicationsNotes(e.target.value)}
-              placeholder="Ej.: medicación para tiroides, antiinflamatorios…"
+              placeholder="Ej.: evitar impacto en rodilla…"
+              className="mt-1 min-h-[2.75rem] resize-none"
             />
           </div>
         </div>
 
-        <label className="mt-4 flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={healthConsent}
-            onChange={(e) => setHealthConsent(e.target.checked)}
-          />
-          <span>
-            Declaro que la información es veraz y entiendo que es autodeclarada; no reemplaza el
-            criterio de un profesional de la salud.
-          </span>
-        </label>
-      </Card>
-
-      <Card padding="sm" rounded="xl">
-        <h2 className="section-title mb-2 flex items-center gap-1.5">
-          <Activity className="text-brand h-3.5 w-3.5" />
-          Metabolismo estimado (TMB / GET)
-        </h2>
-        <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-          <strong>TMB</strong> = calorías en reposo. <strong>GET</strong> = calorías con tu nivel de
-          actividad diaria (fórmula Mifflin-St Jeor).
-        </p>
-
-        {missingAnthropometrics && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              Completa fecha de nacimiento, altura y peso en{' '}
-              <button type="button" className="font-semibold underline" onClick={onSwitchToDatos}>
-                Datos
-              </button>{' '}
-              para calcular TMB y GET.
-            </p>
-          </div>
-        )}
-
-        {!missingAnthropometrics && (
-          <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-            Datos usados: {latestWeight} kg · {profile.height} cm · {age} años
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <Label>Sexo biológico (para la fórmula)</Label>
-            <select
-              className="input-field w-full"
-              value={sex}
-              onChange={(e) => setSex(e.target.value as 'male' | 'female' | '')}
-            >
-              <option value="">Seleccionar…</option>
-              <option value="male">Hombre</option>
-              <option value="female">Mujer</option>
-            </select>
-          </div>
-          <div>
-            <Label>Nivel de actividad</Label>
-            <select
-              className="input-field w-full"
-              value={activityLevel}
-              onChange={(e) => setActivityLevel(e.target.value)}
-            >
-              <option value="">Seleccionar…</option>
-              {ACTIVITY_LEVELS.map((level) => (
-                <option key={level.id} value={level.id}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="mt-3 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
+            aria-expanded={moreOpen}
+          >
+            <span className="text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+              Alergias y medicación
+            </span>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 shrink-0 text-zinc-400 transition-transform',
+                moreOpen && 'rotate-180'
+              )}
+            />
+          </button>
+          {moreOpen && (
+            <div className="grid grid-cols-1 gap-3 pt-1 pb-1 sm:grid-cols-2">
+              <div>
+                <Label>Alergias</Label>
+                <Textarea
+                  rows={2}
+                  value={allergiesNotes}
+                  onChange={(e) => setAllergiesNotes(e.target.value)}
+                  placeholder="Ej.: lactosa…"
+                  className="mt-1 min-h-[2.75rem] resize-none"
+                />
+              </div>
+              <div>
+                <Label>Medicación</Label>
+                <Textarea
+                  rows={2}
+                  value={medicationsNotes}
+                  onChange={(e) => setMedicationsNotes(e.target.value)}
+                  placeholder="Opcional"
+                  className="mt-1 min-h-[2.75rem] resize-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null && (
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-800/50">
-              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">TMB</p>
-              <p className="text-xl font-bold text-zinc-900 dark:text-white">
-                {healthProfile.bmr_kcal}{' '}
-                <span className="text-sm font-medium text-zinc-500">kcal/día</span>
-              </p>
-            </div>
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-3">
-              <p className="text-[10px] font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
-                GET
-              </p>
-              <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
-                {healthProfile.tdee_kcal} <span className="text-sm font-medium">kcal/día</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {healthProfile?.metabolic_computed_at && (
-          <p className="mt-2 text-[10px] text-zinc-400">
-            Último cálculo:{' '}
-            {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy · HH:mm', {
-              locale: es,
-            })}
-            {healthProfile.weight_used_kg != null &&
-              ` · Peso usado: ${healthProfile.weight_used_kg} kg`}
-          </p>
+        {!hasConsent && (
+          <label className="mt-3 flex items-start gap-2 text-[11px] leading-snug text-zinc-600 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={healthConsent}
+              onChange={(e) => setHealthConsent(e.target.checked)}
+            />
+            <span>
+              Declaro que la información es veraz y autodeclarada; no reemplaza criterio médico.
+            </span>
+          </label>
         )}
       </Card>
 
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button type="submit" disabled={updateMutation.isPending}>
-          Guardar salud
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={updateMutation.isPending || missingAnthropometrics || !sex || !activityLevel}
-          onClick={(e) => void handleSave(e, true)}
+      <Accordion>
+        <AccordionItem
+          title="Metabolismo (TMB / GET)"
+          icon={<Activity className="text-brand h-4 w-4" />}
+          defaultOpen={false}
+          className="rounded-xl"
         >
-          Calcular y guardar TMB/GET
-        </Button>
-      </div>
+          <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+            TMB = reposo · GET = con tu actividad (Mifflin-St Jeor).
+          </p>
+
+          {missingAnthropometrics && (
+            <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <p>
+                Completa nacimiento, altura y peso en{' '}
+                <button type="button" className="font-semibold underline" onClick={onSwitchToDatos}>
+                  Datos
+                </button>{' '}
+                para calcular.
+              </p>
+            </div>
+          )}
+
+          {!missingAnthropometrics && (
+            <p className="mb-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+              {latestWeight} kg · {heightCm} cm · {age} años
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="health-sex">Sexo biológico</Label>
+              <Select
+                id="health-sex"
+                value={sex}
+                onChange={(e) => setSex(e.target.value as 'male' | 'female' | '')}
+              >
+                <option value="">Seleccionar…</option>
+                <option value="male">Hombre</option>
+                <option value="female">Mujer</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="health-activity">Actividad</Label>
+              <Select
+                id="health-activity"
+                value={activityLevel}
+                onChange={(e) => setActivityLevel(e.target.value)}
+              >
+                <option value="">Seleccionar…</option>
+                {ACTIVITY_LEVELS.map((level) => (
+                  <option key={level.id} value={level.id}>
+                    {level.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+
+          {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/40">
+                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  TMB
+                </p>
+                <p className="text-lg font-bold text-zinc-900 dark:text-white">
+                  {healthProfile.bmr_kcal}{' '}
+                  <span className="text-xs font-medium text-zinc-500">kcal</span>
+                </p>
+              </div>
+              <div className="rounded-xl bg-emerald-500/5 px-3 py-2.5">
+                <p className="text-[10px] font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
+                  GET
+                </p>
+                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+                  {healthProfile.tdee_kcal} <span className="text-xs font-medium">kcal</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {healthProfile?.metabolic_computed_at && (
+            <p className="mt-2 text-[10px] text-zinc-400">
+              Último cálculo:{' '}
+              {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy · HH:mm', {
+                locale: es,
+              })}
+              {healthProfile.weight_used_kg != null && ` · ${healthProfile.weight_used_kg} kg`}
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="text-brand mt-3 text-[11px] font-semibold underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={updateMutation.isPending || missingAnthropometrics || !sex || !activityLevel}
+            onClick={(e) => void handleSave(e, true)}
+          >
+            Calcular y guardar TMB/GET
+          </button>
+        </AccordionItem>
+      </Accordion>
+
+      <Button
+        type="submit"
+        size="sm"
+        className="h-10 min-h-10 w-full sm:w-auto"
+        disabled={updateMutation.isPending}
+      >
+        Guardar salud
+      </Button>
     </form>
   );
 }

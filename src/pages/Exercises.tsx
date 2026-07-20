@@ -172,6 +172,14 @@ export default function Exercises() {
   };
 
   const filteredForDisplay = exercises;
+  const hasActiveFilters = Boolean(debouncedSearch.trim() || muscleFilter);
+  const clearFilters = () => {
+    setSearch('');
+    setMuscleFilter('');
+  };
+  const resultsLabel = `${total} ejercicio${total !== 1 ? 's' : ''}${
+    muscleFilter ? ` · ${muscleFilter}` : ''
+  }${debouncedSearch.trim() ? ` · «${debouncedSearch.trim()}»` : ''}`;
 
   useEffect(() => {
     setPage(1);
@@ -225,18 +233,14 @@ export default function Exercises() {
             Biblioteca de <span className="text-brand">ejercicios</span>
           </>
         }
-        subtitle={
-          readOnly
-            ? 'Consulta movimientos y videos de tu entrenador'
-            : 'Catálogo de movimientos para rutinas'
-        }
+        subtitle={readOnly ? 'Movimientos y videos' : 'Catálogo de movimientos para rutinas'}
         action={<BackToDashboardLink />}
       />
 
       <div className="flex items-center gap-2">
         <SearchInput
           containerClassName="flex-1 min-w-0"
-          placeholder="Buscar por nombre o grupo muscular..."
+          placeholder={readOnly ? 'Buscar ejercicio…' : 'Buscar por nombre o grupo muscular...'}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -258,6 +262,7 @@ export default function Exercises() {
       </div>
 
       <FilterChips
+        layout={readOnly ? 'scroll' : 'wrap'}
         options={[
           { value: '', label: 'Todos' },
           ...MUSCLE_GROUPS.map((group) => ({ value: group, label: group })),
@@ -266,11 +271,30 @@ export default function Exercises() {
         onChange={setMuscleFilter}
       />
 
+      {(readOnly || totalPages <= 1) && (
+        <div className="flex items-center justify-between gap-2 px-0.5">
+          <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+            {resultsLabel}
+          </p>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+            >
+              Limpiar
+            </button>
+          ) : null}
+        </div>
+      )}
+
       <ExerciseLibraryView
         exercises={filteredForDisplay}
         readOnly={readOnly}
         search={debouncedSearch}
+        muscleFilter={muscleFilter}
         skipClientFilter
+        onClearFilters={hasActiveFilters ? clearFilters : undefined}
         onEdit={canEdit ? (exercise) => handleOpenModal(exercise) : undefined}
         onDelete={
           canEdit

@@ -1,14 +1,22 @@
 export const HEALTH_CONDITION_FLAGS = [
-  { id: 'diabetes', label: 'Diabetes' },
-  { id: 'hypertension', label: 'Hipertensión' },
-  { id: 'cardiovascular', label: 'Enfermedad cardiovascular' },
-  { id: 'respiratory', label: 'Asma / problema respiratorio' },
-  { id: 'musculoskeletal_injury', label: 'Lesión musculoesquelética' },
-  { id: 'back_injury', label: 'Lesión de espalda / columna' },
-  { id: 'joint_issues', label: 'Problemas articulares' },
-  { id: 'post_surgery', label: 'Post-operatorio reciente' },
-  { id: 'mobility_disability', label: 'Discapacidad / movilidad reducida' },
-  { id: 'other', label: 'Otra condición' },
+  { id: 'diabetes', label: 'Diabetes', shortLabel: 'Diabetes' },
+  { id: 'hypertension', label: 'Hipertensión', shortLabel: 'Hipertensión' },
+  { id: 'cardiovascular', label: 'Enfermedad cardiovascular', shortLabel: 'Cardiovascular' },
+  { id: 'respiratory', label: 'Asma / problema respiratorio', shortLabel: 'Asma / respiratorio' },
+  {
+    id: 'musculoskeletal_injury',
+    label: 'Lesión musculoesquelética',
+    shortLabel: 'Lesión muscular',
+  },
+  { id: 'back_injury', label: 'Lesión de espalda / columna', shortLabel: 'Espalda / columna' },
+  { id: 'joint_issues', label: 'Problemas articulares', shortLabel: 'Articulares' },
+  { id: 'post_surgery', label: 'Post-operatorio reciente', shortLabel: 'Post-operatorio' },
+  {
+    id: 'mobility_disability',
+    label: 'Discapacidad / movilidad reducida',
+    shortLabel: 'Movilidad',
+  },
+  { id: 'other', label: 'Otra condición', shortLabel: 'Otra' },
 ] as const;
 
 export type HealthConditionFlagId = (typeof HEALTH_CONDITION_FLAGS)[number]['id'];

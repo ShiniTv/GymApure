@@ -535,9 +535,7 @@ export default function Routines() {
               )
             }
             subtitle={
-              user?.role === 'member'
-                ? 'Rutinas asignadas por tu entrenador'
-                : 'Plantillas y calendario'
+              user?.role === 'member' ? 'Asignadas por tu entrenador' : 'Plantillas y calendario'
             }
             action={<BackToDashboardLink />}
           />

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -18,6 +18,8 @@ interface SegmentedControlProps<T extends string> {
   /** Stretch tabs to fill the container width */
   fullWidth?: boolean;
   variant?: 'default' | 'kiosk' | 'compact';
+  /** Horizontal scroll — better for many tabs on mobile */
+  layout?: 'wrap' | 'scroll';
 }
 
 const accentActive: Record<'brand' | 'check-out', string> = {
@@ -33,9 +35,48 @@ export function SegmentedControl<T extends string>({
   className,
   fullWidth = false,
   variant = 'default',
+  layout = 'wrap',
 }: SegmentedControlProps<T>) {
   const isKiosk = variant === 'kiosk';
   const isCompact = variant === 'compact';
+  const scroll = layout === 'scroll' && !isKiosk;
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollEdges = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || !scroll) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(max > 2 && el.scrollLeft < max - 2);
+  }, [scroll]);
+
+  useEffect(() => {
+    if (!scroll) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    updateScrollEdges();
+    const onScroll = () => updateScrollEdges();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateScrollEdges) : null;
+    ro?.observe(el);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      ro?.disconnect();
+    };
+  }, [scroll, options.length, updateScrollEdges]);
+
+  useEffect(() => {
+    if (!scroll) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const active = el.querySelector<HTMLElement>('[aria-selected="true"]');
+    active?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    // After scrollIntoView settles, refresh fades
+    const t = window.setTimeout(updateScrollEdges, 280);
+    return () => window.clearTimeout(t);
+  }, [value, scroll, updateScrollEdges]);
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent, currentIndex: number) => {
@@ -58,16 +99,19 @@ export function SegmentedControl<T extends string>({
     [options, onChange]
   );
 
-  return (
+  const tablist = (
     <div
+      ref={scrollerRef}
       className={cn(
         isKiosk
           ? 'flex gap-2 rounded-2xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-900'
-          : cn(
-              'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
-              fullWidth ? 'w-full' : 'w-fit max-w-full'
-            ),
-        className
+          : scroll
+            ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+            : cn(
+                'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
+                fullWidth ? 'w-full' : 'w-fit max-w-full'
+              ),
+        !scroll && className
       )}
       role="tablist"
     >
@@ -86,7 +130,7 @@ export function SegmentedControl<T extends string>({
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
               'focus-visible:ring-brand/50 flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
-              fullWidth && 'flex-1',
+              fullWidth && !scroll && 'flex-1',
               isKiosk
                 ? cn(
                     'rounded-xl py-3 text-xs font-semibold',
@@ -94,17 +138,26 @@ export function SegmentedControl<T extends string>({
                       ? accentActive[accent]
                       : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                   )
-                : cn(
-                    isCompact
-                      ? 'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
-                      : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
-                    active
-                      ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
-                  )
+                : scroll
+                  ? cn(
+                      'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
+                      active
+                        ? 'bg-brand/10 text-brand'
+                        : 'bg-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    )
+                  : cn(
+                      isCompact
+                        ? 'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
+                        : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
+                      active
+                        ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
+                        : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+                    )
             )}
           >
-            {Icon && <Icon className={cn('shrink-0', isCompact ? 'h-3.5 w-3.5' : 'h-4 w-4')} />}
+            {Icon && (
+              <Icon className={cn('shrink-0', isCompact || scroll ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
+            )}
             <span>{option.label}</span>
             {option.count != null && option.count > 0 && (
               <span
@@ -121,6 +174,26 @@ export function SegmentedControl<T extends string>({
           </button>
         );
       })}
+    </div>
+  );
+
+  if (!scroll) return tablist;
+
+  return (
+    <div className={cn('relative w-full', className)}>
+      {canScrollLeft && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-zinc-50 to-transparent dark:from-zinc-950"
+        />
+      )}
+      {canScrollRight && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-zinc-50 to-transparent dark:from-zinc-950"
+        />
+      )}
+      {tablist}
     </div>
   );
 }

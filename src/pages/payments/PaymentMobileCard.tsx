@@ -1,7 +1,5 @@
 import { memo } from 'react';
-import { Link } from 'react-router-dom';
 import { Badge } from '../../components/ui';
-import { cn } from '../../lib/utils';
 import type { Payment } from './helpers';
 import {
   formatPaymentDate,
@@ -9,6 +7,7 @@ import {
   paymentStatusVariant,
   paymentStatusLabel,
 } from './helpers';
+import { PaymentRejectionNote } from './PaymentRejectionNote';
 
 interface PaymentMobileCardProps {
   payment: Payment;
@@ -17,7 +16,6 @@ interface PaymentMobileCardProps {
   onApprove?: (payment: Payment) => void;
   onReject?: (payment: Payment) => void;
   onProofPreview?: (payment: Payment) => void;
-  onProofPreviewBtn?: (payment: Payment) => void;
 }
 
 export const PaymentMobileCard = memo(function PaymentMobileCard({
@@ -28,24 +26,76 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
   onReject,
   onProofPreview,
 }: PaymentMobileCardProps) {
+  if (!isStaff) {
+    return (
+      <div className="rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <p className="text-brand text-[15px] leading-none font-bold tabular-nums">
+                ${payment.amount_usd}
+              </p>
+              <Badge
+                variant={paymentStatusVariant(payment.status)}
+                className="shrink-0 px-1.5 py-0 text-[9px]"
+              >
+                {paymentStatusLabel(payment.status)}
+              </Badge>
+            </div>
+            <p className="mt-1 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+              <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
+              <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+              <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
+            </p>
+            {payment.reference ? (
+              <p
+                className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
+                title={payment.reference}
+              >
+                Ref. {payment.reference}
+              </p>
+            ) : null}
+            {payment.status === 'rejected' ? (
+              <PaymentRejectionNote reason={payment.rejection_reason} />
+            ) : null}
+          </div>
+          {payment.proof_url ? (
+            <button
+              type="button"
+              onClick={() => onProofPreview?.(payment)}
+              className="text-brand hover:bg-brand/10 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+              aria-label="Ver comprobante"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <path d="M4 4h16v16H4z" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M2 12h3M19 12h3" />
+              </svg>
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-3 py-2.5">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          {isStaff && (
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-              {payment.user_name}
-            </p>
-          )}
-          <p
-            className={cn(
-              'text-brand leading-none font-bold tabular-nums',
-              isStaff ? 'mt-0.5 text-base' : 'text-base sm:text-lg'
-            )}
-          >
+          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+            {payment.user_name}
+          </p>
+          <p className="text-brand mt-0.5 text-base leading-none font-bold tabular-nums">
             ${payment.amount_usd}
           </p>
-          <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500">
+          <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
             <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
             <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
             <span className="capitalize">{formatPaymentMethod(payment.method)}</span>
@@ -59,12 +109,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
             )}
           </p>
           {payment.status === 'rejected' && (
-            <p className="mt-1 text-[10px] leading-snug text-red-500/90">
-              Comprobante no verificado.{' '}
-              <Link to="/messages" className="font-semibold underline hover:text-red-400">
-                Consulta Mensajes
-              </Link>
-            </p>
+            <PaymentRejectionNote reason={payment.rejection_reason} />
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -82,6 +127,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden
                 >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
@@ -98,6 +144,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden
                 >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
@@ -117,6 +164,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                aria-hidden
               >
                 <path d="M4 4h16v16H4z" />
                 <circle cx="12" cy="12" r="3" />

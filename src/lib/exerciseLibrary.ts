@@ -1,6 +1,7 @@
 import { query } from '../db/index.ts';
 import { deleteExerciseMedia } from './mediaStorage.ts';
 import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from './sqlLike.ts';
+import { expandMuscleGroupFilter } from './exerciseMuscleGroups.ts';
 
 export interface ExerciseRow {
   id: number;
@@ -87,8 +88,9 @@ function appendFilters(
   const clauses: string[] = [];
 
   if (muscleGroup) {
-    next.push(muscleGroup);
-    clauses.push(`muscle_group = $${next.length}`);
+    const variants = expandMuscleGroupFilter(muscleGroup).map((v) => v.toLowerCase());
+    next.push(variants);
+    clauses.push(`LOWER(muscle_group) = ANY($${next.length}::text[])`);
   }
 
   const pattern = search ? toLikeContainsPattern(search) : null;
