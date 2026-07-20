@@ -59,7 +59,7 @@ export default function NutritionOverview() {
       : (data?.members.length ?? 0);
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <PageHeader
         compact
         className={isTrainer ? 'max-lg:!hidden' : undefined}

@@ -391,7 +391,7 @@ export default function CheckIn() {
               className={cn(
                 'mt-8',
                 isMobileKiosk &&
-                  'sticky bottom-0 -mx-4 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
+                  'sticky bottom-0 -mx-4 border-t border-zinc-800 bg-zinc-950 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
               )}
             >
               <Button
@@ -424,7 +424,7 @@ export default function CheckIn() {
         <div className="flex min-h-dvh flex-col text-white">
           <header
             className={cn(
-              'relative flex shrink-0 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md',
+              'relative flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950',
               isLargeKioskLayout ? 'px-6 py-5 md:px-10' : 'px-4 py-3'
             )}
           >

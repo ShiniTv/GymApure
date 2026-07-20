@@ -335,7 +335,7 @@ export default function Payments() {
 
   return (
     <PullToRefreshContainer pullDistance={pullPayments} isRefreshing={refreshingPayments}>
-      <div className="page-stack-tight" {...paymentsHandlers}>
+      <div className="page-stack-tight mx-auto w-full max-w-5xl" {...paymentsHandlers}>
         <PageHeader
           compact
           showTitleOnMobile={isStaffPayment}

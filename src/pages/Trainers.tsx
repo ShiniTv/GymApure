@@ -231,7 +231,7 @@ export default function Trainers() {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <PageHeader
         compact
         title={

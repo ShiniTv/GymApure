@@ -111,7 +111,7 @@ export default function AdminDashboard() {
 
   if (adminStats.error && !stats) {
     return (
-      <div className="space-y-2.5 sm:space-y-3">
+      <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <PageHeader
           compact
           title={
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
   const pausedSubs = stats?.pausedSubscriptions ?? 0;
 
   return (
-    <div className="space-y-2.5 sm:space-y-3">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <StaffPortalBanner
         eyebrow="Panel administrativo"
         title={
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
           )}
 
           {showExpiringList && (
-            <div className="mt-2 max-h-44 space-y-1.5 overflow-y-auto">
+            <div className="mt-2 space-y-1.5">
               {previewExpiring.map((item) => {
                 const severity = getExpirySeverity(item.days_remaining, alertDays);
                 const classes = expiryBannerClasses(severity);

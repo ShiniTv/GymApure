@@ -136,7 +136,7 @@ export default function Attendance() {
   const avgEntries = data.length > 0 ? (totalEntries / data.length).toFixed(1) : 0;
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <PageHeader
         compact
         title={<>Asistencias</>}
@@ -144,9 +144,9 @@ export default function Attendance() {
         action={user?.role === 'admin' ? <BackToDashboardLink /> : undefined}
       />
 
-      <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
-        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 sm:text-base dark:text-white">
+      <Card padding="sm" rounded="xl" className="md:p-4">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
             <Fingerprint className="text-brand h-4 w-4 shrink-0" />
             Entradas y salidas de hoy
           </h3>
@@ -158,15 +158,13 @@ export default function Attendance() {
             aria-label="Buscar asistencia de hoy"
           />
         </div>
-        <div className="scroll-area max-h-72 sm:max-h-80">
-          <ReceptionActivityFeed limit={0} search={search} />
-        </div>
+        <ReceptionActivityFeed limit={0} search={search} />
       </Card>
 
       {isAdmin && (
-        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
-          <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 sm:text-base dark:text-white">
+        <Card padding="sm" rounded="xl" className="md:p-4">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Users className="h-4 w-4 shrink-0 text-amber-500" />
               Miembros inactivos
             </h3>
@@ -184,7 +182,7 @@ export default function Attendance() {
           <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
             Sin check-in en los últimos {inactiveDays} días (o nunca).
           </p>
-          <div className="scroll-area max-h-64 space-y-2 sm:max-h-72">
+          <div className="space-y-2">
             {inactiveLoading ? (
               <div className="flex justify-center py-8">
                 <Spinner />
@@ -261,7 +259,7 @@ export default function Attendance() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6">
-        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+        <Card padding="sm" rounded="xl" className="md:p-4">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
             <Calendar className="text-brand h-4 w-4 shrink-0" />
             Volumen diario (7d)
@@ -291,7 +289,7 @@ export default function Attendance() {
           </div>
         </Card>
 
-        <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+        <Card padding="sm" rounded="xl" className="md:p-4">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
             <Clock className="h-4 w-4 shrink-0 text-blue-500" />
             Horas pico (30d)
@@ -322,7 +320,7 @@ export default function Attendance() {
         </Card>
       </div>
 
-      <Card padding="md" rounded="xl" className="sm:rounded-2xl sm:p-6">
+      <Card padding="sm" rounded="xl" className="md:p-4">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
           <AlertTriangle className="text-brand h-4 w-4 shrink-0" />
           Próximos vencimientos ({alertDays}d)
@@ -352,7 +350,7 @@ export default function Attendance() {
               </p>
             </div>
           )}
-          <div className="scroll-area max-h-56 space-y-2 sm:max-h-64">
+          <div className="space-y-2">
             {expiring.length === 0 ? (
               <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 No hay membresías por vencer en los próximos {alertDays} días.

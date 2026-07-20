@@ -766,7 +766,7 @@ export default function Members() {
 
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
-      <div className="page-stack" {...membersHandlers}>
+      <div className="page-stack-tight mx-auto w-full max-w-5xl" {...membersHandlers}>
         <PageHeader
           compact
           className="max-lg:!hidden"
