@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginDesktop, demoPassword, TRAINER_EMAIL } from './helpers';
 
-async function waitForTrainerDashboard(page: import('@playwright/test').Page) {
+async function waitForMain(page: import('@playwright/test').Page) {
   await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
   await page.waitForFunction(
     () => {
@@ -14,22 +14,26 @@ async function waitForTrainerDashboard(page: import('@playwright/test').Page) {
   );
 }
 
-test.describe('Trainer nutrición quick action', () => {
+test.describe('Trainer nutrición overview', () => {
   test.beforeEach(async ({ page }) => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
   });
 
-  test('quick action Nutrición lleva a miembros con focus', async ({ page }) => {
-    await page.goto('/panel');
-    await waitForTrainerDashboard(page);
-    // Quick action en el panel (evitar ambigüedad con el mismo link del sidebar)
-    const nutritionLink = page
-      .locator('#main-content')
-      .getByRole('link', { name: /nutrición:\s*planes nutricionales/i });
-    await nutritionLink.scrollIntoViewIfNeeded();
-    await expect(nutritionLink).toBeVisible({ timeout: 15_000 });
+  test('nav Nutrición abre overview de clientes', async ({ page }) => {
+    await page.goto('/nutrition-overview');
+    await waitForMain(page);
+    await expect(page.getByText(/Nutrición de/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Sin plan' })).toBeVisible();
+  });
 
-    const href = await nutritionLink.getAttribute('href');
-    expect(href).toBe('/members?focus=nutrition');
+  test('abre plan nutricional desde acciones de la fila en miembros', async ({ page }) => {
+    await page.goto('/members');
+    await waitForMain(page);
+
+    const nutritionButton = page.getByRole('button', { name: 'Plan nutricional' }).first();
+    await expect(nutritionButton).toBeVisible({ timeout: 15_000 });
+    await nutritionButton.click();
+
+    await expect(page).toHaveURL(/\/members\/\d+\/nutrition$/);
   });
 });

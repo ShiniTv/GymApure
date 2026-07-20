@@ -44,6 +44,13 @@ const envSchema = z.object({
   ENABLE_HIBP_CHECK: z.string().optional(),
   REQUIRE_MFA_FOR_STAFF: z.string().optional(),
   PUBLIC_APP_URL: z.string().url().optional(),
+  /** Optional — food photo analysis. Never expose to the frontend. */
+  GEMINI_API_KEY: z.string().min(10).optional(),
+  OPENROUTER_API_KEY: z.string().min(10).optional(),
+  /** gemini | openrouter | mock — if omitted, auto: openrouter → gemini → mock (dev). */
+  FOOD_VISION_PROVIDER: z.enum(['gemini', 'openrouter', 'mock']).optional(),
+  /** OpenRouter model id (default openrouter/free). */
+  OPENROUTER_FOOD_MODEL: z.string().min(3).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -121,6 +128,10 @@ export const env = {
     deriveSupabaseUrlFromDatabaseUrl(parsedEnv.DATABASE_URL) ||
     undefined,
   SUPABASE_SERVICE_ROLE_KEY: parsedEnv.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined,
+  GEMINI_API_KEY: parsedEnv.GEMINI_API_KEY?.trim() || undefined,
+  OPENROUTER_API_KEY: parsedEnv.OPENROUTER_API_KEY?.trim() || undefined,
+  FOOD_VISION_PROVIDER: parsedEnv.FOOD_VISION_PROVIDER,
+  OPENROUTER_FOOD_MODEL: parsedEnv.OPENROUTER_FOOD_MODEL?.trim() || undefined,
 };
 
 function resolveAllowPublicRegister(): boolean {

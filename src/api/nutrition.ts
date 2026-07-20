@@ -15,7 +15,10 @@ import {
   type NutritionLogEntry,
   type NutritionPlan,
 } from '../lib/nutrition.ts';
-
+import { foodImageUpload } from '../lib/uploadStorage.ts';
+import { assertImageUpload } from '../lib/uploadValidation.ts';
+import { foodAnalyzeRateLimiter, uploadRateLimiter } from './middleware/rateLimit.ts';
+import { analyzeFoodImage, FoodVisionError } from '../lib/foodVision.ts';
 const router = asyncRouter();
 
 const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
@@ -463,6 +466,44 @@ router.delete(
   })
 );
 
+router.post(
+  '/nutrition/analyze-food',
+  authorize(['member']),
+  foodAnalyzeRateLimiter,
+  uploadRateLimiter,
+  foodImageUpload.single('photo'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: 'Foto requerida (campo photo)' });
+      return;
+    }
+
+    try {
+      assertImageUpload(req.file);
+    } catch (err: unknown) {
+      res.status(400).json({ error: err instanceof Error ? err.message : 'Imagen inválida' });
+      return;
+    }
+
+    const buffer = req.file.buffer;
+    if (!buffer?.length) {
+      res.status(400).json({ error: 'Imagen vacía o no leída' });
+      return;
+    }
+
+    try {
+      const analysis = await analyzeFoodImage(buffer, req.file.mimetype);
+      res.json(analysis);
+    } catch (err: unknown) {
+      if (err instanceof FoodVisionError) {
+        res.status(err.status).json({ error: err.message });
+        return;
+      }
+      throw err;
+    }
+  })
+);
+
 router.get(
   '/admin/overview',
   authorize(['admin']),
@@ -592,6 +633,179 @@ router.get(
       members: overview,
       with_plan: overview.length,
       logging_active: overview.filter((m) => m.logged_days > 0).length,
+    });
+  })
+);
+
+/** Trainer overview: assigned members with/without plan + 7-day adherence. */
+router.get(
+  '/trainer/overview',
+  authorize(['trainer']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const trainerId = req.user!.id;
+    const days = 7;
+    const endDate = formatLocalDate(new Date());
+    const start = new Date();
+    start.setDate(start.getDate() - (days - 1));
+    const startDate = formatLocalDate(start);
+
+    const { rows: members } = await query<{
+      user_id: number;
+      full_name: string;
+      plan_title: string | null;
+      calories_target: number | null;
+      calories_margin: number | null;
+      protein_target_g: number | null;
+      protein_margin_g: number | null;
+      carbs_target_g: number | null;
+      carbs_margin_g: number | null;
+      fat_target_g: number | null;
+      fat_margin_g: number | null;
+    }>(
+      `SELECT u.id AS user_id, u.full_name,
+              np.title AS plan_title,
+              np.calories_target, np.calories_margin,
+              np.protein_target_g, np.protein_margin_g,
+              np.carbs_target_g, np.carbs_margin_g,
+              np.fat_target_g, np.fat_margin_g
+       FROM users u
+       LEFT JOIN nutrition_plans np ON np.user_id = u.id AND np.is_active = true
+       WHERE u.role = 'member' AND u.status = 'active'
+         AND (
+           u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+           OR u.id IN (
+             SELECT ur.user_id FROM user_routines ur
+             JOIN routines r ON r.id = ur.routine_id
+             WHERE r.trainer_id = $1
+           )
+         )
+       ORDER BY (np.id IS NULL) ASC, u.full_name ASC`,
+      [trainerId]
+    );
+
+    if (members.length === 0) {
+      res.json({
+        period_days: days,
+        start_date: startDate,
+        end_date: endDate,
+        members: [],
+        with_plan: 0,
+        without_plan: 0,
+        logging_active: 0,
+        assigned_total: 0,
+      });
+      return;
+    }
+
+    const withPlanIds = members.filter((m) => m.plan_title).map((m) => m.user_id);
+    const aggByUser = new Map<
+      number,
+      { calories: number; protein: number; carbs: number; fat: number; logged_days: number }
+    >();
+
+    if (withPlanIds.length > 0) {
+      const { rows: aggRows } = await query<{
+        user_id: number;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        logged_days: number;
+      }>(
+        `SELECT user_id,
+                COALESCE(SUM(calories), 0)::int AS calories,
+                COALESCE(SUM(protein_g), 0)::float AS protein,
+                COALESCE(SUM(carbs_g), 0)::float AS carbs,
+                COALESCE(SUM(fat_g), 0)::float AS fat,
+                COUNT(DISTINCT (logged_at AT TIME ZONE 'UTC')::date)::int AS logged_days
+         FROM nutrition_log_entries
+         WHERE user_id = ANY($1::int[])
+           AND (logged_at AT TIME ZONE 'UTC')::date >= $2::date
+           AND (logged_at AT TIME ZONE 'UTC')::date <= $3::date
+         GROUP BY user_id`,
+        [withPlanIds, startDate, endDate]
+      );
+      for (const row of aggRows) {
+        aggByUser.set(row.user_id, row);
+      }
+    }
+
+    const overview = members.map((member) => {
+      const hasPlan = Boolean(member.plan_title);
+      if (!hasPlan) {
+        return {
+          user_id: member.user_id,
+          full_name: member.full_name,
+          plan_title: null as string | null,
+          has_plan: false,
+          logged_days: 0,
+          adherence_percent: 0,
+          calories_status: 'none',
+        };
+      }
+
+      const agg = aggByUser.get(member.user_id);
+      const totals = totalsFromRow(agg ?? {});
+      const loggedDays = agg?.logged_days ?? 0;
+      const plan: NutritionPlan = {
+        id: 0,
+        user_id: member.user_id,
+        trainer_id: trainerId,
+        title: member.plan_title!,
+        calories_target: member.calories_target ?? 0,
+        protein_target_g: member.protein_target_g ?? 0,
+        carbs_target_g: member.carbs_target_g ?? 0,
+        fat_target_g: member.fat_target_g ?? 0,
+        calories_margin: member.calories_margin ?? 0,
+        protein_margin_g: member.protein_margin_g ?? 0,
+        carbs_margin_g: member.carbs_margin_g ?? 0,
+        fat_margin_g: member.fat_margin_g ?? 0,
+        notes: null,
+        start_date: null,
+        end_date: null,
+        is_active: true,
+        created_at: '',
+        updated_at: '',
+      };
+
+      const dailyAdherence =
+        loggedDays > 0
+          ? Math.round(
+              adherencePercent(plan, {
+                calories: Math.round(totals.calories / loggedDays),
+                protein: totals.protein / loggedDays,
+                carbs: totals.carbs / loggedDays,
+                fat: totals.fat / loggedDays,
+              })
+            )
+          : 0;
+
+      return {
+        user_id: member.user_id,
+        full_name: member.full_name,
+        plan_title: member.plan_title,
+        has_plan: true,
+        logged_days: loggedDays,
+        adherence_percent: dailyAdherence,
+        calories_status: getMacroStatus(
+          totals.calories,
+          plan.calories_target * Math.max(loggedDays, 1),
+          plan.calories_margin * Math.max(loggedDays, 1)
+        ),
+      };
+    });
+
+    const withPlan = overview.filter((m) => m.has_plan).length;
+
+    res.json({
+      period_days: days,
+      start_date: startDate,
+      end_date: endDate,
+      members: overview,
+      with_plan: withPlan,
+      without_plan: overview.length - withPlan,
+      logging_active: overview.filter((m) => m.logged_days > 0).length,
+      assigned_total: overview.length,
     });
   })
 );

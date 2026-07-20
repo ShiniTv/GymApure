@@ -112,6 +112,13 @@ export const avatarUpload = multer({
   fileFilter: avatarFilter,
 });
 
+/** Meal photo for AI analysis (memory only — not persisted). */
+export const foodImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: avatarFilter,
+});
+
 export function resolveFilePath(
   kind: 'proofs' | 'videos' | 'avatars',
   filename: string

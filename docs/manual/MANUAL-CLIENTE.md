@@ -84,7 +84,8 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 ### Consultar nutrición
 
 1. Tab **Nutrición** en bottom nav.
-2. Ve plan asignado por tu entrenador.
+2. Revisa el gauge de calorías y los anillos de proteína, carbos y grasas frente al plan de tu entrenador.
+3. **Registrar comida** (manual) o **Analizar foto** (estimación IA; revisa y ajusta antes de guardar).
 
 ### Registrar o ver pagos
 

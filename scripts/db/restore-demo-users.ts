@@ -234,6 +234,36 @@ async function main() {
       [memberId, routineId]
     );
     console.log('✓ Sesión demo para actividad reciente del entrenador');
+
+    await query(
+      `INSERT INTO nutrition_plans (
+         user_id, trainer_id, title,
+         calories_target, protein_target_g, carbs_target_g, fat_target_g,
+         calories_margin, protein_margin_g, carbs_margin_g, fat_margin_g,
+         notes, is_active
+       ) VALUES ($1, $2, $3, 2200, 150, 220, 70, 150, 15, 20, 10, $4, true)
+       ON CONFLICT (user_id) DO UPDATE SET
+         trainer_id = EXCLUDED.trainer_id,
+         title = EXCLUDED.title,
+         calories_target = EXCLUDED.calories_target,
+         protein_target_g = EXCLUDED.protein_target_g,
+         carbs_target_g = EXCLUDED.carbs_target_g,
+         fat_target_g = EXCLUDED.fat_target_g,
+         calories_margin = EXCLUDED.calories_margin,
+         protein_margin_g = EXCLUDED.protein_margin_g,
+         carbs_margin_g = EXCLUDED.carbs_margin_g,
+         fat_margin_g = EXCLUDED.fat_margin_g,
+         notes = EXCLUDED.notes,
+         is_active = true,
+         updated_at = NOW()`,
+      [
+        memberId,
+        trainerId,
+        'Plan demo — Jane',
+        'Come balanceado y registra tus comidas en la app.',
+      ]
+    );
+    console.log('✓ Plan nutricional demo para member@gym.com');
   }
 
   console.log(`\nListo. Contraseña demo actualizada (valor en DEMO_PASSWORD de .env).`);

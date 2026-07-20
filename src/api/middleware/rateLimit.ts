@@ -62,6 +62,18 @@ export let mfaVerifyRateLimiter = createLimiter({
   message: { error: 'Demasiados intentos MFA. Espera e inicia sesión de nuevo.' },
 });
 
+/** Food photo AI analysis — cost control (prefer user id when authenticated). */
+export let foodAnalyzeRateLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: strictLimits ? 20 : 100,
+  keyGenerator: (req) => {
+    const userId = (req as { user?: { id?: number } }).user?.id;
+    const ip = req.ip ?? 'unknown';
+    return userId != null ? `food-ai:${userId}:${ip}` : `food-ai-ip:${ip}`;
+  },
+  message: { error: 'Demasiados análisis de comida. Espera un poco e inténtalo de nuevo.' },
+});
+
 export async function initRateLimiters(): Promise<void> {
   const store = await buildStore();
   if (!store) return;
@@ -100,6 +112,19 @@ export async function initRateLimiters(): Promise<void> {
       windowMs: 15 * 60 * 1000,
       max: strictLimits ? 10 : 200,
       message: { error: 'Demasiados intentos MFA. Espera e inicia sesión de nuevo.' },
+    },
+    store
+  );
+  foodAnalyzeRateLimiter = createLimiter(
+    {
+      windowMs: 60 * 60 * 1000,
+      max: strictLimits ? 20 : 100,
+      keyGenerator: (req) => {
+        const userId = (req as { user?: { id?: number } }).user?.id;
+        const ip = req.ip ?? 'unknown';
+        return userId != null ? `food-ai:${userId}:${ip}` : `food-ai-ip:${ip}`;
+      },
+      message: { error: 'Demasiados análisis de comida. Espera un poco e inténtalo de nuevo.' },
     },
     store
   );

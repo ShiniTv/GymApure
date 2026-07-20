@@ -1,8 +1,8 @@
 # Nutrición
 
-Planes nutricionales asignados por entrenador/admin al miembro.
+Planes nutricionales asignados por entrenador/admin al miembro, con seguimiento diario de macros y registro de comidas (manual o por foto con IA).
 
-**Rutas:** `/nutrition` (miembro), `/nutrition-overview` (admin), `/members/:id/nutrition` (entrenador)
+**Rutas:** `/nutrition` (miembro), `/nutrition-overview` (admin/entrenador), `/members/:id/nutrition` (entrenador)
 
 ---
 
@@ -10,34 +10,53 @@ Planes nutricionales asignados por entrenador/admin al miembro.
 
 1. Abre ficha del miembro asignado.
 2. **Nutrición** o `/members/:id/nutrition`.
-3. Define estructura del plan (comidas, notas, objetivos según formulario).
+3. Define macros objetivo (kcal, proteína, carbos, grasas), márgenes y notas.
 4. Guardar.
 
 **Resultado esperado:** El miembro ve el plan en **Nutrición**.
 
 ---
 
-## Flujo: miembro consulta plan
+## Flujo: miembro consulta y registra
 
-1. Tab **Nutrición** en bottom nav (móvil).
-2. Revisa comidas y recomendaciones del día.
+1. Tab **Nutrición** en bottom nav (móvil) o menú.
+2. Selector de semana + gauge semi-circular de calorías + anillos P/C/G vs el plan.
+3. **Registrar comida** (manual) o **Analizar foto** (IA).
+4. Con foto: cámara/galería → análisis → preview editable → guardar en el log del día.
+
+**Resultado esperado:** Los macros del día se suman al progreso frente al plan del entrenador.
 
 ---
 
-## Flujo: admin overview
+## Flujo: foto → IA (opcional)
+
+1. Configura en el servidor (nunca en el frontend):
+   - `FOOD_VISION_PROVIDER=mock` — macros de ejemplo (desarrollo).
+   - `FOOD_VISION_PROVIDER=openrouter` + `OPENROUTER_API_KEY` — modelos gratis vía [OpenRouter](https://openrouter.ai/keys).
+   - `FOOD_VISION_PROVIDER=gemini` + `GEMINI_API_KEY` — Gemini Flash.
+   - Si no defines proveedor: openrouter → gemini → mock (solo fuera de producción).
+2. `POST /api/nutrition/analyze-food` (solo `member`), multipart campo `photo` (JPEG/PNG/WebP, máx. 5 MB).
+3. Rate limit: análisis por usuario/hora + rate limit de uploads.
+4. La foto no se persiste; solo se estiman macros. El cliente debe confirmar/editar antes de guardar el log.
+5. Sin clave / error de red: mensaje claro y fallback a registro manual.
+
+---
+
+## Flujo: admin / entrenador overview
 
 1. **Nutrición overview** (`/nutrition-overview`).
-2. Vista global de qué miembros tienen plan activo.
+2. Vista de miembros con plan y adherencia reciente.
 
 ---
 
 ## Permisos
 
-| Acción                 | admin | trainer       | member |
-| ---------------------- | ----- | ------------- | ------ |
-| Ver propio plan        | —     | —             | ✓      |
-| Editar plan de miembro | ✓     | ✓ (asignados) | —      |
-| Overview global        | ✓     | —             | —      |
+| Acción                     | admin | trainer       | member |
+| -------------------------- | ----- | ------------- | ------ |
+| Ver propio plan / logs     | —     | —             | ✓      |
+| Editar plan de miembro     | ✓     | ✓ (asignados) | —      |
+| Overview global / clientes | ✓     | ✓ (asignados) | —      |
+| Analizar foto de comida    | —     | —             | ✓      |
 
 ---
 

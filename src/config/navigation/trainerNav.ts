@@ -23,7 +23,7 @@ export const TRAINER_NAV: NavSection[] = [
     name: 'Mis miembros',
     items: [
       { name: 'Miembros', href: '/members', icon: Users },
-      { name: 'Planes nutricionales', href: '/members?focus=nutrition', icon: UtensilsCrossed },
+      { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
     ],
   },
   {

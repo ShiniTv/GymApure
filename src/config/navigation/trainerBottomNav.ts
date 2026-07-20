@@ -25,7 +25,7 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
 
 /** Sheet items — synced with secondary items in trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Planes nutricionales', href: '/members?focus=nutrition', icon: UtensilsCrossed },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
   { name: 'Asignaciones de rutinas', href: '/routines?view=assignments', icon: CalendarClock },
   { name: 'Calendario de rutinas', href: '/routines?view=calendar', icon: CalendarDays },
   { name: 'Clases grupales', href: '/clases', icon: CalendarRange },
@@ -48,7 +48,6 @@ export function isTrainerMoreItemActive(pathname: string, search: string, href: 
   const [path, query = ''] = href.split('?');
   if (pathname !== path && !pathname.startsWith(`${path}/`)) return false;
   if (!query) {
-    // Bare /members should not match /members?focus=nutrition
     if (path === '/members') {
       const current = new URLSearchParams(search);
       return !current.get('focus');

@@ -9,6 +9,7 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 - [ ] `git ls-files` no lista `.env`, `.env.dev`, `.env.prod` ni `.env.backup`
 - [ ] Solo están versionados `.env.example`, `.env.dev.example`, `.env.prod.example`
 - [ ] Las plantillas `.env.*.example` usan `CHANGEME` — sin JWT, passwords ni service role reales
+- [ ] `GEMINI_API_KEY` (si se usa análisis de comida) solo en backend / secretos de hosting — nunca `VITE_*` ni frontend
 - [ ] `.gitignore` ignora `.env*` excepto los tres `.example` permitidos
 
 ## Controles automáticos
