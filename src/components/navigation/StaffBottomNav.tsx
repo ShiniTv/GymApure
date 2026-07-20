@@ -100,7 +100,7 @@ export function StaffBottomNav({
       <Sheet
         open={moreOpen}
         onClose={closeMore}
-        title="Más opciones"
+        title={greetingName ? undefined : 'Más'}
         closeLabel="Cerrar menú"
         side="bottom"
         panelStyle={sheetBottomStyle}
@@ -156,10 +156,10 @@ export function StaffBottomNav({
                             {...routePrefetchHandlers(item.href)}
                             onClick={closeMore}
                             className={clsx(
-                              'relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-center transition-transform active:scale-[0.98]',
+                              'relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center transition-transform active:scale-[0.98]',
                               itemActive
-                                ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
-                                : 'bg-zinc-50/80 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800/40 dark:text-zinc-200 dark:hover:bg-zinc-800/70'
+                                ? 'border-brand/40 bg-brand/10 text-brand'
+                                : 'border-zinc-200/70 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800/50'
                             )}
                             aria-current={itemActive ? 'page' : undefined}
                             aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}

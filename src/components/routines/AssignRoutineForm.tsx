@@ -59,7 +59,7 @@ export function AssignRoutineForm({
   selectedMemberShift = null,
   availableTrainers = [],
   submitDisabled = false,
-  submitLabel = 'Asignar Rutina',
+  submitLabel = 'Asignar',
   membersLoading = false,
   membersError,
   onCreateMember,
@@ -71,25 +71,27 @@ export function AssignRoutineForm({
   const singleDayLabel =
     value.start_date && format(parseDateOnly(value.start_date), 'EEE d MMM yyyy', { locale: es });
 
+  const shiftShort = selectedMemberShift ? SHIFT_LABELS[selectedMemberShift].split(' / ')[0] : null;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {!memberIdFixed && (
         <div>
-          <Label>Seleccionar Miembro</Label>
+          <Label>Miembro</Label>
           {membersLoading ? (
-            <div className="flex items-center gap-2 py-3 text-sm text-zinc-500">
+            <div className="flex items-center gap-2 py-2.5 text-xs text-zinc-500">
               <Spinner className="h-4 w-4" />
               Cargando miembros…
             </div>
           ) : membersError ? (
-            <p className="py-2 text-sm text-red-500">
+            <p className="py-2 text-xs text-red-500">
               {toDisplayErrorMessage(membersError, 'No se pudieron cargar los miembros')}
             </p>
           ) : members.length === 0 ? (
-            <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 p-4 text-center dark:border-zinc-700">
-              <p className="text-sm text-zinc-500">No hay miembros registrados.</p>
+            <div className="space-y-2 rounded-xl border border-dashed border-zinc-200/80 px-3 py-4 text-center dark:border-zinc-700">
+              <p className="text-xs text-zinc-500">No hay miembros registrados.</p>
               {onCreateMember && (
-                <Button variant="secondary" size="sm" onClick={onCreateMember}>
+                <Button variant="ghost" size="sm" onClick={onCreateMember}>
                   Crear miembro
                 </Button>
               )}
@@ -102,20 +104,20 @@ export function AssignRoutineForm({
                   onChange({ ...value, user_id: e.target.value, routine_id: '' });
                 }}
               >
-                <option value="">Selección...</option>
+                <option value="">Elegir miembro…</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.full_name}
-                    {m.training_shift ? ` (${SHIFT_LABELS[m.training_shift].split(' / ')[0]})` : ''}
+                    {m.training_shift ? ` · ${SHIFT_LABELS[m.training_shift].split(' / ')[0]}` : ''}
                   </option>
                 ))}
               </Select>
               {selectedMemberShift && (
                 <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Turno del miembro:{' '}
-                  <span className="text-brand font-semibold">
-                    {SHIFT_LABELS[selectedMemberShift]}
-                  </span>
+                  Turno: {SHIFT_LABELS[selectedMemberShift]}
+                  {availableTrainers.length > 0
+                    ? ` · ${availableTrainers.map((t) => t.full_name).join(', ')}`
+                    : ''}
                 </p>
               )}
             </>
@@ -124,49 +126,35 @@ export function AssignRoutineForm({
       )}
 
       <div>
-        <Label>Seleccionar Rutina</Label>
+        <Label>Rutina</Label>
         <Select
-          className="font-mono text-sm"
           value={value.routine_id}
           onChange={(e) => {
             onChange({ ...value, routine_id: e.target.value });
           }}
         >
-          <option value="">Selección...</option>
+          <option value="">Elegir rutina…</option>
           {routineOptions.map((r) => {
             const isReassign = assignedRoutineIds?.has(r.id);
             return (
               <option key={r.id} value={r.id}>
-                {r.name} ({formatDifficulty(r.difficulty)})
-                {r.trainer_name ? ` — ${r.trainer_name}` : ''}
-                {isReassign ? ' — reasignar fechas' : ''}
+                {r.name} · {formatDifficulty(r.difficulty)}
+                {r.trainer_name ? ` · ${r.trainer_name}` : ''}
+                {isReassign ? ' · reasignar' : ''}
               </option>
             );
           })}
         </Select>
-        {selectedMemberShift && memberIdFixed == null && (
-          <div className="border-brand/20 bg-brand/5 mt-2 rounded-lg border px-3 py-2">
-            <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
-              Disponibles en {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}:
-            </p>
-            <p className="text-brand mt-0.5 text-xs font-bold">
-              {availableTrainers.length > 0
-                ? availableTrainers.map((t) => t.full_name).join(', ')
-                : 'Ningún entrenador asignado a este turno'}
-            </p>
-          </div>
-        )}
         {selectedMemberShift && routineOptions.length === 0 && (
           <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-            No hay rutinas de entrenadores en el turno{' '}
-            {SHIFT_LABELS[selectedMemberShift].split(' / ')[0]}.
+            No hay rutinas de entrenadores en {shiftShort}.
           </p>
         )}
       </div>
 
-      <div className={singleDay ? 'space-y-2' : 'grid grid-cols-2 gap-4'}>
+      <div className={singleDay ? 'space-y-2' : 'grid grid-cols-2 gap-3'}>
         {singleDay && singleDayLabel && (
-          <p className="text-sm font-semibold text-zinc-800 capitalize dark:text-zinc-200">
+          <p className="text-xs font-medium text-zinc-700 capitalize dark:text-zinc-300">
             {singleDayLabel}
           </p>
         )}
@@ -197,18 +185,19 @@ export function AssignRoutineForm({
             />
           </div>
         )}
-        {singleDay && (
+        {singleDay ? (
           <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            La rutina aparecerá solo en este día del calendario. Puedes ajustar la fecha si lo
-            necesitas.
+            Aparecerá solo este día en el calendario.
+          </p>
+        ) : (
+          <p className="col-span-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+            Periodo en que el miembro tendrá esta rutina activa.
           </p>
         )}
       </div>
 
       <Button
-        variant="secondary"
-        className="w-full"
-        size="lg"
+        className="min-h-11 w-full"
         onClick={onSubmit}
         disabled={
           submitDisabled ||
@@ -217,7 +206,7 @@ export function AssignRoutineForm({
           (!memberIdFixed && !value.user_id)
         }
       >
-        <UserPlus className="h-5 w-5" />
+        <UserPlus className="h-4 w-4" />
         {submitLabel}
       </Button>
     </div>

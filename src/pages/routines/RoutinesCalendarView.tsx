@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Play, UserPlus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
 import {
   format,
   addMonths,
@@ -11,10 +11,11 @@ import {
   startOfWeek,
   endOfWeek,
   isWithinInterval,
+  differenceInCalendarDays,
 } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { Button, Card, Badge } from '../../components/ui';
-import { formatDifficulty } from '../../lib/utils';
+import { Button, Badge } from '../../components/ui';
+import { formatDifficulty, cn } from '../../lib/utils';
 import type { CalendarAssignment } from './types';
 
 export interface RoutinesCalendarViewProps {
@@ -36,6 +37,8 @@ function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success'
 }
 
 const SWIPE_THRESHOLD_PX = 48;
+const LIGHT =
+  'rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
 
 export function RoutinesCalendarView({
   currentDate,
@@ -67,7 +70,21 @@ export function RoutinesCalendarView({
   );
 
   const shiftWeek = (direction: 'prev' | 'next') => {
-    setCurrentDate(direction === 'next' ? addDays(currentDate, 7) : subDays(currentDate, 7));
+    const next = direction === 'next' ? addDays(currentDate, 7) : subDays(currentDate, 7);
+    setCurrentDate(next);
+    const nextWeekStart = startOfWeek(next, { weekStartsOn: 1 });
+    const nextWeekEnd = endOfWeek(next, { weekStartsOn: 1 });
+    const today = new Date();
+    if (isWithinInterval(today, { start: nextWeekStart, end: nextWeekEnd })) {
+      setSelectedDay(today);
+      return;
+    }
+    if (selectedDay) {
+      const offset = Math.min(6, Math.max(0, differenceInCalendarDays(selectedDay, weekStart)));
+      setSelectedDay(addDays(nextWeekStart, offset));
+      return;
+    }
+    setSelectedDay(nextWeekStart);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -84,46 +101,74 @@ export function RoutinesCalendarView({
 
   return (
     <div className="space-y-2.5">
-      <Card padding="sm" rounded="xl">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <h2 className="truncate text-sm font-bold text-zinc-900 capitalize sm:text-base dark:text-white">
-              {format(currentDate, 'MMMM yyyy', { locale: es })}
-            </h2>
-            <div className="flex shrink-0 items-center rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
-              <button
-                type="button"
-                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-white dark:text-zinc-400 dark:hover:bg-zinc-700"
-                aria-label="Mes anterior"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-white dark:text-zinc-400 dark:hover:bg-zinc-700"
-                aria-label="Mes siguiente"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+      {/* Header: month label + week nav + ghost assign */}
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-zinc-900 capitalize dark:text-white">
+            {format(currentDate, 'MMMM yyyy', { locale: es })}
+          </p>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+            {isCurrentWeek
+              ? 'Semana actual'
+              : `Semana del ${format(weekStart, 'd MMM', { locale: es })}`}
+            {' · '}
+            {weekAssignmentCount} asignación{weekAssignmentCount !== 1 ? 'es' : ''}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => shiftWeek('prev')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            aria-label="Semana anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => shiftWeek('next')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            aria-label="Semana siguiente"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
           <Button
             size="sm"
-            className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
+            variant="ghost"
+            className="h-9 w-9 shrink-0 p-0"
             onClick={onAssignDirect}
             aria-label="Asignar rutina"
             title="Asignar rutina"
           >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span className="text-xs font-semibold">Asignar rutina</span>
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
+      </div>
 
-        {/* Desktop month grid — xl+ only; tablets use week agenda below */}
-        <div className="scroll-x-bleed hidden xl:block">
-          <div className="grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-xl border border-zinc-100 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800">
+      {/* Desktop month grid — xl+ */}
+      <div className={cn(LIGHT, 'hidden overflow-hidden xl:block')}>
+        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              aria-label="Mes anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+        <div className="scroll-x-bleed">
+          <div className="grid min-w-[640px] grid-cols-7 gap-px bg-zinc-100 dark:bg-zinc-800">
             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
               <div
                 key={day}
@@ -151,15 +196,20 @@ export function RoutinesCalendarView({
                       setSelectedDay(day);
                     }
                   }}
-                  className={`group relative min-h-[100px] cursor-pointer border-t border-l border-zinc-100 bg-white p-1.5 transition-all dark:border-zinc-800 dark:bg-zinc-900 ${isOtherMonth ? 'opacity-30' : 'opacity-100'} ${isSelected ? 'bg-brand/5 dark:bg-brand/10' : ''}`}
+                  className={cn(
+                    'group relative min-h-[100px] cursor-pointer border-t border-l border-zinc-100 bg-white p-1.5 transition-all dark:border-zinc-800 dark:bg-zinc-900',
+                    isOtherMonth && 'opacity-30',
+                    isSelected && 'bg-brand/5 dark:bg-brand/10'
+                  )}
                 >
                   <div className="flex items-start justify-between">
                     <span
-                      className={`text-[10px] font-semibold ${
+                      className={cn(
+                        'text-[10px] font-semibold',
                         isToday
                           ? 'brand-solid flex h-5 w-5 items-center justify-center rounded-full'
                           : 'text-zinc-400 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-white'
-                      }`}
+                      )}
                     >
                       {format(day, 'd')}
                     </span>
@@ -197,13 +247,7 @@ export function RoutinesCalendarView({
                       </button>
                     ))}
                     {dayAssignments.length > 3 && (
-                      <div
-                        className="cursor-help text-center text-[9px] font-medium text-zinc-400 dark:text-zinc-300"
-                        title={dayAssignments
-                          .slice(3)
-                          .map((a) => a.member_name)
-                          .join(', ')}
-                      >
+                      <div className="text-center text-[9px] font-medium text-zinc-400">
                         + {dayAssignments.length - 3} más
                       </div>
                     )}
@@ -217,144 +261,118 @@ export function RoutinesCalendarView({
             })}
           </div>
         </div>
+      </div>
 
-        {/* Tablet & mobile: week agenda with swipe */}
-        <div
-          className="touch-pan-y xl:hidden"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5">
-            <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-              {isCurrentWeek
-                ? 'Semana actual'
-                : `Semana del ${format(weekStart, 'd MMM', { locale: es })}`}
-              {' · '}
-              {weekAssignmentCount} asignación{weekAssignmentCount !== 1 ? 'es' : ''}
-            </p>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <button
-                type="button"
-                onClick={() => shiftWeek('prev')}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                aria-label="Semana anterior"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => shiftWeek('next')}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                aria-label="Semana siguiente"
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-          <p className="mb-1.5 px-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
-            Desliza horizontalmente para cambiar semana
-          </p>
-          <div className="space-y-1">
-            {mobileWeekDays.map((day) => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const dayAssignments = assignmentsByDay[dateStr] || [];
-              const isSelected = selectedDay && isSameDay(day, selectedDay);
-              const isToday = isSameDay(day, new Date());
-              const isOtherMonth = !isSameMonth(day, currentDate);
+      {/* Mobile / tablet: horizontal week strip */}
+      <div
+        className={cn(LIGHT, 'touch-pan-y p-2 xl:hidden')}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="grid grid-cols-7 gap-1">
+          {mobileWeekDays.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const count = assignmentsByDay[dateStr]?.length ?? 0;
+            const isSelected = selectedDay && isSameDay(day, selectedDay);
+            const isToday = isSameDay(day, new Date());
+            const isOtherMonth = !isSameMonth(day, currentDate);
 
-              return (
-                <button
-                  key={dateStr}
-                  type="button"
-                  onClick={() => setSelectedDay(day)}
-                  className={`flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${isSelected ? 'border-brand bg-brand/5 dark:bg-brand/10' : 'border-zinc-100 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/50'} ${isToday && !isSelected ? 'ring-brand/30 ring-1' : ''} ${isOtherMonth ? 'opacity-50' : ''}`}
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      className={`shrink-0 text-xs font-semibold ${
-                        isToday
-                          ? 'brand-solid flex h-7 w-7 items-center justify-center rounded-full'
-                          : 'w-7 text-center text-zinc-900 tabular-nums dark:text-white'
-                      }`}
-                    >
-                      {format(day, 'd')}
-                    </span>
-                    <span className="truncate text-[10px] font-medium text-zinc-500 capitalize dark:text-zinc-400">
-                      {format(day, 'EEE', { locale: es })}
-                    </span>
-                  </div>
-                  {dayAssignments.length > 0 ? (
-                    <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
-                      {dayAssignments.length}
-                    </Badge>
-                  ) : (
-                    <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-300">—</span>
+            return (
+              <button
+                key={dateStr}
+                type="button"
+                onClick={() => setSelectedDay(day)}
+                className={cn(
+                  'flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors',
+                  isSelected
+                    ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
+                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50',
+                  isOtherMonth && 'opacity-45'
+                )}
+                aria-pressed={isSelected || undefined}
+                aria-label={`${format(day, 'EEEE d', { locale: es })}${count ? `, ${count} asignaciones` : ''}`}
+              >
+                <span className="text-[9px] font-medium tracking-wide uppercase opacity-70">
+                  {format(day, 'EEE', { locale: es }).slice(0, 3)}
+                </span>
+                <span
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold tabular-nums',
+                    isToday && !isSelected && 'brand-solid',
+                    isSelected && !isToday && 'font-bold'
                   )}
-                </button>
-              );
-            })}
-          </div>
+                >
+                  {format(day, 'd')}
+                </span>
+                {count > 0 ? (
+                  <span className="bg-brand h-1 w-1 rounded-full" aria-hidden />
+                ) : (
+                  <span className="h-1 w-1" aria-hidden />
+                )}
+              </button>
+            );
+          })}
         </div>
-      </Card>
+      </div>
 
+      {/* Selected day detail */}
       {selectedDay && (
-        <Card padding="sm" rounded="xl" className="animate-in slide-in-from-bottom-2 duration-200">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
+        <div className={cn(LIGHT, 'animate-in fade-in p-3 duration-150')}>
+          <div className="mb-2 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-bold text-zinc-900 capitalize dark:text-white">
+              <h3 className="truncate text-sm font-semibold text-zinc-900 capitalize dark:text-white">
                 {format(selectedDay, 'EEE d MMM', { locale: es })}
               </h3>
-              <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
                 {selectedDayAssignments.length} asignación
                 {selectedDayAssignments.length !== 1 ? 'es' : ''}
               </p>
             </div>
             <Button
               size="sm"
-              className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
+              variant="ghost"
+              className="h-9 w-9 shrink-0 p-0"
               onClick={() => onAssignOnDay(format(selectedDay, 'yyyy-MM-dd'))}
               aria-label="Asignar en este día"
-              title="Asignar rutina"
+              title="Asignar en este día"
             >
-              <UserPlus className="h-4 w-4 shrink-0" />
-              <span className="text-xs font-semibold">Asignar rutina</span>
+              <UserPlus className="h-4 w-4" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {selectedDayAssignments.map((a, i) => (
-              <button
-                key={`${a.member_id}-${a.routine_name}-${i}`}
-                type="button"
-                onClick={() => onNavigateToMemberRoutines(a.member_id)}
-                className="hover:border-brand/40 hover:bg-brand/5 flex w-full items-center gap-2.5 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 text-left transition-colors dark:border-zinc-800 dark:bg-zinc-800/50"
-              >
-                <div className="bg-brand/10 text-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                  <Play className="h-3.5 w-3.5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                    {a.member_name}
-                  </p>
-                  <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-400">
-                    {a.routine_name}
-                  </p>
-                </div>
-                <Badge
-                  variant={difficultyVariant(a.difficulty)}
-                  className="shrink-0 px-1.5 py-0 text-[9px]"
-                >
-                  {formatDifficulty(a.difficulty)}
-                </Badge>
-              </button>
-            ))}
-            {selectedDayAssignments.length === 0 && (
-              <div className="col-span-full rounded-lg border border-dashed border-zinc-200 py-6 text-center text-xs text-zinc-400 dark:border-zinc-800 dark:text-zinc-300">
-                Sin asignaciones este día
-              </div>
-            )}
-          </div>
-        </Card>
+          {selectedDayAssignments.length > 0 ? (
+            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {selectedDayAssignments.map((a, i) => (
+                <li key={`${a.member_id}-${a.routine_name}-${i}`}>
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToMemberRoutines(a.member_id)}
+                    className="flex w-full items-center gap-2.5 py-2 text-left transition-colors first:pt-0 last:pb-0 hover:opacity-90"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                        {a.member_name}
+                      </p>
+                      <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                        {a.routine_name}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={difficultyVariant(a.difficulty)}
+                      className="shrink-0 px-1.5 py-0 text-[9px]"
+                    >
+                      {formatDifficulty(a.difficulty)}
+                    </Badge>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="rounded-lg border border-dashed border-zinc-200 py-5 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
+              Sin asignaciones este día
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

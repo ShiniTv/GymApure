@@ -104,6 +104,7 @@ export default function Routines() {
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<RoutineExercise | null>(null);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
+  const [pendingAddExerciseId, setPendingAddExerciseId] = useState<number | null>(null);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [deleteRoutineTarget, setDeleteRoutineTarget] = useState<Routine | null>(null);
   const [deleteRoutineError, setDeleteRoutineError] = useState<string | null>(null);
@@ -220,7 +221,7 @@ export default function Routines() {
     const param = searchParams.get('view');
     if (param === 'assignments' || param === 'calendar') {
       setView(param);
-    } else if (!param) {
+    } else if (!param || param === 'library') {
       setView('library');
     }
     if (searchParams.get('assign') === '1') {
@@ -231,6 +232,52 @@ export default function Routines() {
       }
     }
   }, [searchParams]);
+
+  // Deep link: /routines?routine=&addExercise= — abre el modal en la rutina elegida
+  useEffect(() => {
+    if (isMember || libraryLoading) return;
+    const addExercise = searchParams.get('addExercise');
+    if (!addExercise || !/^\d+$/.test(addExercise)) return;
+
+    const exerciseId = Number(addExercise);
+    const routineParam = searchParams.get('routine');
+    const routineId = routineParam && /^\d+$/.test(routineParam) ? Number(routineParam) : null;
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('addExercise');
+    next.delete('routine');
+    if (!next.get('view')) next.set('view', 'library');
+    setSearchParams(next, { replace: true });
+
+    setView('library');
+    setNewExercise((prev) => ({ ...prev, exercise_id: String(exerciseId) }));
+    setPendingAddExerciseId(exerciseId);
+
+    if (routineId == null) {
+      toast?.success('Elige una rutina y pulsa Añadir ejercicio');
+      return;
+    }
+
+    const exists = (libraryRoutines ?? []).some((r) => r.id === routineId);
+    if (!exists) {
+      toast?.error('No se encontró esa rutina');
+      return;
+    }
+
+    void (async () => {
+      setExpandedRoutineId(routineId);
+      setAddExerciseError(null);
+      try {
+        await refreshRoutineExercises(routineId);
+        setPendingAddExerciseId(null);
+        setIsAddingExercise(true);
+        toast?.success('Revisa series y reps, luego confirma para añadir');
+      } catch (err) {
+        clientLogger.error('Failed to open add-exercise from library', err);
+        toast?.error(err instanceof Error ? err.message : 'No se pudo abrir la rutina');
+      }
+    })();
+  }, [searchParams, libraryLoading, isMember, libraryRoutines]);
 
   const refreshRoutineExercises = async (routineId: number) => {
     const res = await apiFetch(`/api/routines/${routineId}`);
@@ -249,6 +296,13 @@ export default function Routines() {
   };
 
   const openAssignModal = useCallback(() => {
+    const start = format(new Date(), 'yyyy-MM-dd');
+    const end = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+    setAssignForm((prev) => ({
+      ...prev,
+      start_date: start,
+      end_date: end,
+    }));
     setAssignSingleDay(false);
     setIsAssigningFromCalendar(true);
   }, []);
@@ -527,19 +581,25 @@ export default function Routines() {
         <>
           <PageHeader
             compact
+            showTitleOnMobile
             title={
-              user?.role === 'member' ? (
-                <>
-                  Mis <span className="text-brand">rutinas</span>
-                </>
-              ) : (
-                <>
-                  Gestión de <span className="text-brand">rutinas</span>
-                </>
-              )
+              <>
+                Mis <span className="text-brand">rutinas</span>
+              </>
             }
             subtitle={
-              user?.role === 'member' ? 'Asignadas por tu entrenador' : 'Plantillas y calendario'
+              user?.role === 'member'
+                ? 'Asignadas por tu entrenador'
+                : view === 'assignments'
+                  ? (() => {
+                      const active = assignments.filter((m) => m.routines && m.routines.length > 0);
+                      const total = active.reduce((sum, m) => sum + (m.routines?.length ?? 0), 0);
+                      if (loadingAssignments) return 'Cargando asignaciones…';
+                      return `${active.length} miembro${active.length !== 1 ? 's' : ''} · ${total} rutina${total !== 1 ? 's' : ''} activa${total !== 1 ? 's' : ''}`;
+                    })()
+                  : view === 'calendar'
+                    ? 'Semana y asignaciones por día'
+                    : `${routines.length} plantilla${routines.length !== 1 ? 's' : ''} · listas para asignar`
             }
             action={<BackToDashboardLink />}
           />
@@ -698,6 +758,13 @@ export default function Routines() {
               onAddExercise={(routineId) => {
                 setExpandedRoutineId(routineId);
                 setAddExerciseError(null);
+                if (pendingAddExerciseId != null) {
+                  setNewExercise((prev) => ({
+                    ...prev,
+                    exercise_id: String(pendingAddExerciseId),
+                  }));
+                  setPendingAddExerciseId(null);
+                }
                 setIsAddingExercise(true);
               }}
               onInlineUpdate={handleInlineUpdate}

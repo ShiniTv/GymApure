@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
-  useExercisesQuery,
+  useExercisesCatalogQuery,
   useInvalidateExercises,
   type Exercise,
 } from '../hooks/queries/useExercisesQuery';
-import { Plus, Video, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Video, Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canOperateExercises } from '../lib/roles';
 import {
@@ -22,37 +22,35 @@ import {
   FilterChips,
   EmptyState,
 } from '../components/ui';
-import { MUSCLE_GROUPS } from '../lib/exerciseMuscleGroups';
+import {
+  MUSCLE_GROUPS,
+  filterExercises,
+  formatMuscleGroupLabel,
+} from '../lib/exerciseMuscleGroups';
 import { ExerciseLibraryView } from '../components/exercise/ExerciseLibraryView';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { cn } from '../lib/utils';
 import {
   fetchExerciseMediaCapabilities,
   uploadExerciseVideoDirect,
   type ExerciseMediaCapabilities,
 } from '../lib/exerciseVideoUploadClient';
+
 export default function Exercises() {
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('');
-  const [page, setPage] = useState(1);
+  const [videoOnly, setVideoOnly] = useState(false);
   const debouncedSearch = useDebouncedValue(search, 300);
   const {
-    data: exercisesPage,
+    data: catalog,
     isPending: loading,
     isError: exercisesError,
     refetch: refetchExercises,
-  } = useExercisesQuery({
-    q: debouncedSearch,
-    muscleGroup: muscleFilter || undefined,
-    page,
-    pageSize: 50,
-  });
-  const exercises = exercisesPage?.items ?? [];
-  const total = exercisesPage?.total ?? 0;
-  const pageSize = exercisesPage?.pageSize ?? 50;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  } = useExercisesCatalogQuery(true);
+  const catalogList = catalog ?? [];
   const invalidateExercises = useInvalidateExercises();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Exercise | null>(null);
@@ -85,6 +83,31 @@ export default function Exercises() {
       .then(setMediaCapabilities)
       .catch(() => setMediaCapabilities(null));
   }, [canEdit]);
+
+  const muscleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const group of MUSCLE_GROUPS) counts[group] = 0;
+    for (const exercise of catalogList) {
+      const label = formatMuscleGroupLabel(exercise.muscle_group);
+      if (label in counts) counts[label] += 1;
+      else counts[label] = (counts[label] ?? 0) + 1;
+    }
+    return counts;
+  }, [catalogList]);
+
+  const videoCount = useMemo(
+    () => catalogList.filter((e) => Boolean(e.video_url)).length,
+    [catalogList]
+  );
+
+  const filteredForDisplay = useMemo(() => {
+    let list = filterExercises(catalogList, {
+      search: debouncedSearch,
+      muscleGroup: muscleFilter,
+    });
+    if (videoOnly) list = list.filter((e) => Boolean(e.video_url));
+    return list;
+  }, [catalogList, debouncedSearch, muscleFilter, videoOnly]);
 
   const refreshExercises = () => invalidateExercises();
 
@@ -171,19 +194,17 @@ export default function Exercises() {
     }
   };
 
-  const filteredForDisplay = exercises;
-  const hasActiveFilters = Boolean(debouncedSearch.trim() || muscleFilter);
+  const hasActiveFilters = Boolean(debouncedSearch.trim() || muscleFilter || videoOnly);
   const clearFilters = () => {
     setSearch('');
     setMuscleFilter('');
+    setVideoOnly(false);
   };
-  const resultsLabel = `${total} ejercicio${total !== 1 ? 's' : ''}${
+  const resultsLabel = `${filteredForDisplay.length} ejercicio${filteredForDisplay.length !== 1 ? 's' : ''}${
     muscleFilter ? ` · ${muscleFilter}` : ''
-  }${debouncedSearch.trim() ? ` · «${debouncedSearch.trim()}»` : ''}`;
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, muscleFilter]);
+  }${videoOnly ? ' · con video' : ''}${
+    debouncedSearch.trim() ? ` · «${debouncedSearch.trim()}»` : ''
+  }`;
 
   const handleVideoUrlChange = (url: string) => {
     const embed = getYouTubeEmbedUrl(url);
@@ -225,74 +246,108 @@ export default function Exercises() {
   }
 
   return (
-    <div className="page-stack-tight">
+    <div className="mx-auto w-full max-w-6xl space-y-3 sm:space-y-4">
       <PageHeader
         compact
         title={
           <>
-            Biblioteca de <span className="text-brand">ejercicios</span>
+            {readOnly ? (
+              <>
+                Mis <span className="text-brand">ejercicios</span>
+              </>
+            ) : (
+              <>
+                Biblioteca de <span className="text-brand">ejercicios</span>
+              </>
+            )}
           </>
         }
-        subtitle={readOnly ? 'Movimientos y videos' : 'Catálogo de movimientos para rutinas'}
+        subtitle={readOnly ? 'Movimientos y videos' : 'Para armar rutinas'}
         action={<BackToDashboardLink />}
       />
 
       <div className="flex items-center gap-2">
         <SearchInput
-          containerClassName="flex-1 min-w-0"
-          placeholder={readOnly ? 'Buscar ejercicio…' : 'Buscar por nombre o grupo muscular...'}
+          containerClassName="min-w-0 flex-1"
+          placeholder="Buscar ejercicio…"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
           }}
+          aria-label="Buscar por nombre o grupo muscular"
         />
         {canEdit && (
           <Button
             size="sm"
-            className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+            variant="ghost"
+            className="h-10 w-10 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3"
             onClick={() => {
               handleOpenModal();
             }}
             aria-label="Nuevo ejercicio"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nuevo</span>
           </Button>
         )}
       </div>
 
-      <FilterChips
-        layout="scroll"
-        options={[
-          { value: '', label: 'Todos' },
-          ...MUSCLE_GROUPS.map((group) => ({ value: group, label: group })),
-        ]}
-        value={muscleFilter}
-        onChange={setMuscleFilter}
-      />
-
-      {(readOnly || totalPages <= 1) && (
-        <div className="flex items-center justify-between gap-2 px-0.5">
-          <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-            {resultsLabel}
-          </p>
-          {hasActiveFilters ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
-            >
-              Limpiar
-            </button>
+      <div className="flex flex-col gap-2">
+        <FilterChips
+          layout="scroll"
+          options={[
+            { value: '', label: 'Todos', count: catalogList.length },
+            ...MUSCLE_GROUPS.map((group) => ({
+              value: group,
+              label: group,
+              count: muscleCounts[group] ?? 0,
+            })),
+          ]}
+          value={muscleFilter}
+          onChange={setMuscleFilter}
+        />
+        <button
+          type="button"
+          onClick={() => setVideoOnly((v) => !v)}
+          className={cn(
+            'inline-flex h-8 w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors',
+            videoOnly
+              ? 'border-brand/30 bg-brand/10 text-brand'
+              : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600'
+          )}
+          aria-pressed={videoOnly}
+        >
+          <Video className="h-3.5 w-3.5" aria-hidden />
+          Con video
+          {videoCount > 0 ? (
+            <span className="bg-brand/15 text-brand rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+              {videoCount > 99 ? '99+' : videoCount}
+            </span>
           ) : null}
-        </div>
-      )}
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+          {resultsLabel}
+        </p>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+          >
+            Limpiar
+          </button>
+        ) : null}
+      </div>
 
       <ExerciseLibraryView
         exercises={filteredForDisplay}
         readOnly={readOnly}
         search={debouncedSearch}
         muscleFilter={muscleFilter}
+        videoOnly={videoOnly}
         skipClientFilter
         onClearFilters={hasActiveFilters ? clearFilters : undefined}
         onEdit={canEdit ? (exercise) => handleOpenModal(exercise) : undefined}
@@ -306,34 +361,6 @@ export default function Exercises() {
         }
         onCreate={canEdit ? () => handleOpenModal() : undefined}
       />
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between gap-3 pt-1">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {total} ejercicio{total !== 1 ? 's' : ''} · página {page} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
 
       {canEdit && (
         <>
@@ -396,11 +423,7 @@ export default function Exercises() {
             }}
             maxWidth="xl"
             scrollable
-            title={
-              <>
-                {editingExercise ? 'EDITAR' : 'NUEVO'} <span className="text-brand">EJERCICIO</span>
-              </>
-            }
+            title={<>{editingExercise ? 'Editar ejercicio' : 'Nuevo ejercicio'}</>}
           >
             <form onSubmit={handleSubmit} className="page-stack">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

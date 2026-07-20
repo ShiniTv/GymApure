@@ -416,7 +416,7 @@ export default function Profile() {
   const avatarUrl = resolveAvatarUrl(profile.profile_image);
 
   return (
-    <div className="page-stack-tight">
+    <div className="page-stack-tight mx-auto w-full max-w-4xl">
       <PageHeader
         compact
         title={
@@ -495,11 +495,11 @@ export default function Profile() {
         </div>
       )}
 
-      <div className="sticky top-0 z-20 -mx-1 bg-zinc-50/70 px-1 py-0.5 backdrop-blur-sm dark:bg-zinc-950/50">
+      <div className="pb-0.5 md:pb-1">
         <SegmentedControl
           variant="compact"
-          layout="scroll"
-          fullWidth={!isMember}
+          layout="wrap"
+          fullWidth
           className="w-full"
           value={profileTab}
           onChange={changeProfileTab}
@@ -508,179 +508,186 @@ export default function Profile() {
       </div>
 
       {profileTab === 'datos' && (
-        <div className={cn('panel-form', (isMember || isTrainer) && 'mx-auto w-full max-w-lg')}>
+        <div className="w-full">
           <Card
             padding="sm"
             rounded="xl"
             className={cn(
-              (isMember || isTrainer) &&
-                'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
+              'border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50'
             )}
           >
-            <div className="mb-3.5 flex items-center gap-3">
-              <div className="relative shrink-0">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={profile.full_name}
-                    className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 sm:h-14 sm:w-14 dark:bg-zinc-800">
-                    <User className="h-6 w-6 text-zinc-400 dark:text-zinc-300" />
-                  </div>
-                )}
-                <label
-                  htmlFor="avatar-upload"
-                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors"
-                  title="Cambiar foto"
-                  aria-label="Cambiar foto de perfil"
-                >
-                  <Camera className="h-3 w-3" />
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                  disabled={avatarUploading || avatarRemoving}
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-[15px] font-semibold text-zinc-900 dark:text-white">
-                  {profile.full_name}
-                </p>
-                <p className="mt-0.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {profile.email}
-                </p>
-                {profile.cedula && (
-                  <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-                    {profile.cedula}
-                  </p>
-                )}
-                {avatarUploading && (
-                  <p className="text-brand mt-1 text-[10px] font-medium">Subiendo foto…</p>
-                )}
-                {avatarUrl && !avatarUploading && (
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowRemoveAvatarModal(true);
-                      }}
-                      disabled={avatarRemoving}
-                      className="text-[10px] font-semibold text-zinc-500 transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:text-zinc-400 dark:hover:text-red-400"
+            <div className="md:grid md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] md:items-start md:gap-6 lg:gap-8">
+              <div className="mb-3.5 md:mb-0">
+                <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
+                  <div className="relative shrink-0">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={profile.full_name}
+                        className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl dark:bg-zinc-800">
+                        <User className="h-6 w-6 text-zinc-400 md:h-8 md:w-8 dark:text-zinc-300" />
+                      </div>
+                    )}
+                    <label
+                      htmlFor="avatar-upload"
+                      className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors md:h-7 md:w-7"
+                      title="Cambiar foto"
+                      aria-label="Cambiar foto de perfil"
                     >
-                      Quitar foto
-                    </button>
+                      <Camera className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                    </label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                      disabled={avatarUploading || avatarRemoving}
+                    />
+                  </div>
+                  <div className="min-w-0 md:w-full">
+                    <p className="truncate text-[15px] font-semibold text-zinc-900 md:text-base md:whitespace-normal dark:text-white">
+                      {profile.full_name}
+                    </p>
+                    <p className="mt-0.5 truncate text-[11px] text-zinc-500 md:text-xs md:whitespace-normal dark:text-zinc-400">
+                      {profile.email}
+                    </p>
+                    {profile.cedula && (
+                      <p className="mt-0.5 text-[10px] text-zinc-400 md:text-[11px] dark:text-zinc-500">
+                        {profile.cedula}
+                      </p>
+                    )}
+                    {avatarUploading && (
+                      <p className="text-brand mt-1 text-[10px] font-medium">Subiendo foto…</p>
+                    )}
+                    {avatarUrl && !avatarUploading && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2 md:mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowRemoveAvatarModal(true);
+                          }}
+                          disabled={avatarRemoving}
+                          className="text-[10px] font-semibold text-zinc-500 transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:text-zinc-400 dark:hover:text-red-400"
+                        >
+                          Quitar foto
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {isTrainer && trainerProfile && (
+                  <div className="mt-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 md:mt-4">
+                    <p className="text-xs font-bold text-zinc-900 dark:text-white">
+                      Perfil profesional
+                    </p>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                      Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
+                    </p>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                      Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
+                    </p>
+                    {trainerProfile.specialty && (
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                        Especialidad: <strong>{trainerProfile.specialty}</strong>
+                      </p>
+                    )}
+                    <p className="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                      Para cambiar nivel, turno o especialidad, contacta al administrador (sección
+                      Entrenadores).
+                    </p>
                   </div>
                 )}
               </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-2.5 md:space-y-3">
+                <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+                  <div>
+                    <Label>Teléfono</Label>
+                    <Input
+                      type="tel"
+                      inputMode="tel"
+                      value={form.phone}
+                      onChange={(e) => {
+                        setForm({ ...form, phone: e.target.value });
+                      }}
+                      placeholder="+58 412 0000000"
+                    />
+                  </div>
+                  <div>
+                    <Label>Fecha de nacimiento</Label>
+                    <Input
+                      type="date"
+                      value={form.dob}
+                      onChange={(e) => {
+                        setForm({ ...form, dob: e.target.value });
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div>
+                    <Label>Peso inicial (kg)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      inputMode="decimal"
+                      value={form.initial_weight}
+                      onChange={(e) => {
+                        setForm({ ...form, initial_weight: e.target.value });
+                      }}
+                      placeholder="70"
+                    />
+                  </div>
+                  <div>
+                    <Label>Altura (cm)</Label>
+                    <Input
+                      type="number"
+                      step="1"
+                      inputMode="decimal"
+                      value={form.height}
+                      onChange={(e) => {
+                        setForm({ ...form, height: e.target.value });
+                      }}
+                      placeholder="170"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Objetivo</Label>
+                  <Textarea
+                    value={form.goal}
+                    onChange={(e) => {
+                      setForm({ ...form, goal: e.target.value });
+                    }}
+                    rows={2}
+                    className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm md:min-h-[5rem]"
+                    placeholder="Ej: bajar grasa, ganar músculo…"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={saving || !isProfileDirty}
+                  size="sm"
+                  className={cn(
+                    'h-10 min-h-10 w-full sm:w-auto sm:px-4',
+                    isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
+                  )}
+                  aria-label="Guardar perfil"
+                >
+                  <Save className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {saving ? 'Guardando…' : 'Guardar perfil'}
+                  </span>
+                  <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
+                </Button>
+              </form>
             </div>
-
-            {isTrainer && trainerProfile && (
-              <div className="mb-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3">
-                <p className="text-xs font-bold text-zinc-900 dark:text-white">
-                  Perfil profesional
-                </p>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                  Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
-                </p>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                  Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
-                </p>
-                {trainerProfile.specialty && (
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
-                    Especialidad: <strong>{trainerProfile.specialty}</strong>
-                  </p>
-                )}
-                <p className="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                  Para cambiar nivel, turno o especialidad, contacta al administrador (sección
-                  Entrenadores).
-                </p>
-              </div>
-            )}
-
-            <form onSubmit={handleSaveProfile} className="space-y-2.5">
-              <div>
-                <Label>Teléfono</Label>
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => {
-                    setForm({ ...form, phone: e.target.value });
-                  }}
-                  placeholder="+58 412 0000000"
-                />
-              </div>
-              <div>
-                <Label>Fecha de nacimiento</Label>
-                <Input
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => {
-                    setForm({ ...form, dob: e.target.value });
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Peso inicial (kg)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    inputMode="decimal"
-                    value={form.initial_weight}
-                    onChange={(e) => {
-                      setForm({ ...form, initial_weight: e.target.value });
-                    }}
-                    placeholder="70"
-                  />
-                </div>
-                <div>
-                  <Label>Altura (cm)</Label>
-                  <Input
-                    type="number"
-                    step="1"
-                    inputMode="decimal"
-                    value={form.height}
-                    onChange={(e) => {
-                      setForm({ ...form, height: e.target.value });
-                    }}
-                    placeholder="170"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Objetivo</Label>
-                <Textarea
-                  value={form.goal}
-                  onChange={(e) => {
-                    setForm({ ...form, goal: e.target.value });
-                  }}
-                  rows={2}
-                  className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm"
-                  placeholder="Ej: bajar grasa, ganar músculo…"
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={saving || !isProfileDirty}
-                size="sm"
-                className={cn(
-                  'h-10 min-h-10 w-full sm:w-auto sm:px-4',
-                  isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
-                )}
-                aria-label="Guardar perfil"
-              >
-                <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">{saving ? 'Guardando…' : 'Guardar perfil'}</span>
-                <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
-              </Button>
-            </form>
           </Card>
         </div>
       )}
@@ -695,7 +702,7 @@ export default function Profile() {
       )}
 
       {profileTab === 'progreso' && isMember && (
-        <div className="mx-auto w-full max-w-lg space-y-3 lg:max-w-none">
+        <div className="w-full space-y-3">
           {progressLoading ? (
             <div className="flex justify-center py-12">
               <Spinner />
@@ -945,27 +952,29 @@ export default function Profile() {
       )}
 
       {profileTab === 'carne' && isMember && (
-        <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 pt-1">
+        <div className="mx-auto w-full max-w-sm pt-1 md:max-w-2xl">
           {badgeMember ? (
-            <>
-              <div className="w-full text-center">
-                <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-                  Carné digital
-                </h2>
-                <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Muéstralo en recepción · sube el brillo
-                </p>
+            <div className="flex flex-col items-center gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)] md:items-center md:gap-8">
+              <div className="flex w-full flex-col items-center gap-3 md:items-start">
+                <div className="w-full text-center md:text-left">
+                  <h2 className="text-[13px] font-semibold text-zinc-900 md:text-sm dark:text-white">
+                    Carné digital
+                  </h2>
+                  <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Muéstralo en recepción · sube el brillo
+                  </p>
+                </div>
+
+                <div className="-mb-8 origin-top scale-[0.82] sm:-mb-6 sm:scale-90 md:mb-0 md:scale-100">
+                  <MemberBadgeCard
+                    member={badgeMember}
+                    side="front"
+                    className="shadow-[0_10px_28px_-12px_rgba(0,0,0,0.35)] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.65)]"
+                  />
+                </div>
               </div>
 
-              <div className="-mb-8 origin-top scale-[0.82] sm:-mb-6 sm:scale-90">
-                <MemberBadgeCard
-                  member={badgeMember}
-                  side="front"
-                  className="shadow-[0_10px_28px_-12px_rgba(0,0,0,0.35)] dark:shadow-[0_12px_32px_-10px_rgba(0,0,0,0.65)]"
-                />
-              </div>
-
-              <div className="flex w-full flex-col items-center gap-2.5">
+              <div className="flex w-full flex-col items-center gap-2.5 md:items-stretch">
                 <Button className="h-11 min-h-11 w-full" onClick={() => setShowScanView(true)}>
                   <ScanLine className="h-4 w-4" />
                   Mostrar QR
@@ -973,12 +982,12 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowBadgeModal(true)}
-                  className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline md:text-center dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
                   Ver carné completo / Imprimir
                 </button>
               </div>
-            </>
+            </div>
           ) : (
             <EmptyState
               icon={IdCard}
@@ -999,47 +1008,51 @@ export default function Profile() {
       )}
 
       {profileTab === 'apariencia' && (
-        <div className="mx-auto w-full max-w-lg">
+        <div className="w-full">
           <Card
             padding="sm"
             rounded="xl"
-            className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+            className="border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50"
           >
-            <h2 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
+            <h2 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 md:text-sm dark:text-white">
               <Palette className="text-brand h-3.5 w-3.5" />
               Apariencia
             </h2>
 
-            <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-              Color de acento
-            </p>
-            <ThemePalettePicker />
+            <div className="md:grid md:grid-cols-2 md:gap-6 lg:gap-8">
+              <div>
+                <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                  Color de acento
+                </p>
+                <ThemePalettePicker />
+              </div>
 
-            <div className="mt-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-              <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                Fondo · también en la barra superior
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={theme === 'light' ? 'primary' : 'secondary'}
-                  onClick={() => setTheme('light')}
-                  className="flex-1"
-                >
-                  <Sun className="h-4 w-4" />
-                  Claro
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={theme === 'dark' ? 'primary' : 'secondary'}
-                  onClick={() => setTheme('dark')}
-                  className="flex-1"
-                >
-                  <Moon className="h-4 w-4" />
-                  Oscuro
-                </Button>
+              <div className="mt-4 border-t border-zinc-100 pt-3 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:pl-8 dark:border-zinc-800">
+                <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                  Fondo · también en la barra superior
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={theme === 'light' ? 'primary' : 'secondary'}
+                    onClick={() => setTheme('light')}
+                    className="flex-1"
+                  >
+                    <Sun className="h-4 w-4" />
+                    Claro
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={theme === 'dark' ? 'primary' : 'secondary'}
+                    onClick={() => setTheme('dark')}
+                    className="flex-1"
+                  >
+                    <Moon className="h-4 w-4" />
+                    Oscuro
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>
@@ -1047,48 +1060,51 @@ export default function Profile() {
       )}
 
       {profileTab === 'seguridad' && (
-        <div className="mx-auto w-full max-w-lg space-y-3">
-          <Card
-            padding="sm"
-            rounded="xl"
-            className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-          >
-            <h2 className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
-              <Bell className="text-brand h-3.5 w-3.5" />
-              Notificaciones
-            </h2>
-            <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-              Pagos, mensajes y novedades en este dispositivo.
-            </p>
-            <PushNotificationsToggle />
-          </Card>
-
-          {user.role !== 'member' && (
+        <div className="grid w-full gap-3 md:grid-cols-2 md:items-start md:gap-4">
+          <div className="space-y-3">
             <Card
               padding="sm"
               rounded="xl"
-              className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              className="border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
             >
-              <h2 className="mb-1 text-[13px] font-semibold text-zinc-900 dark:text-white">
-                Verificación en dos pasos
+              <h2 className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
+                <Bell className="text-brand h-3.5 w-3.5" />
+                Notificaciones
               </h2>
-              <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-                Protege tu cuenta de staff con MFA (TOTP).
+              <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                Pagos, mensajes y novedades en este dispositivo.
               </p>
-              <Link
-                to="/security"
-                className="text-brand inline-flex items-center gap-1 text-sm font-semibold hover:underline"
-              >
-                Configurar MFA →
-              </Link>
+              <PushNotificationsToggle />
             </Card>
-          )}
+
+            {user.role !== 'member' && (
+              <Card
+                padding="sm"
+                rounded="xl"
+                className="border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              >
+                <h2 className="mb-1 text-[13px] font-semibold text-zinc-900 dark:text-white">
+                  Verificación en dos pasos
+                </h2>
+                <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Protege tu cuenta de staff con MFA (TOTP).
+                </p>
+                <Link
+                  to="/security"
+                  className="text-brand inline-flex items-center gap-1 text-sm font-semibold hover:underline"
+                >
+                  Configurar MFA →
+                </Link>
+              </Card>
+            )}
+          </div>
 
           <Accordion>
             <AccordionItem
               title="Cambiar contraseña"
               icon={<Lock className="text-brand h-4 w-4" />}
               className="rounded-xl"
+              defaultOpen
             >
               {passwordError && (
                 <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>

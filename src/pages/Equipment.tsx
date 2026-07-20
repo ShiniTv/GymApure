@@ -39,6 +39,7 @@ import {
   SearchInput,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { cn } from '../lib/utils';
 import { EquipmentListCard } from './equipment/EquipmentListCard';
 import { EquipmentConfigModal } from './equipment/EquipmentConfigModal';
 import { EquipmentDetailModal } from './equipment/EquipmentDetailModal';
@@ -643,6 +644,12 @@ export default function Equipment() {
     setStaffQuickFilter('all');
   };
 
+  useEffect(() => {
+    if (allItems.length === 0 && layoutView === 'zones') {
+      setLayoutView('flat');
+    }
+  }, [allItems.length, layoutView]);
+
   const attentionCount = useMemo(
     () =>
       (statusCounts.limited ?? 0) +
@@ -679,7 +686,7 @@ export default function Equipment() {
   }
 
   return (
-    <div className="page-stack min-w-0">
+    <div className="mx-auto w-full max-w-6xl min-w-0 space-y-3 sm:space-y-4">
       <PageHeader
         compact
         title={
@@ -688,7 +695,11 @@ export default function Equipment() {
           </>
         }
         subtitle={
-          isAdmin ? 'Inventario y mantenimiento' : 'Consulta el estado y reporta incidencias'
+          isAdmin
+            ? 'Inventario y mantenimiento'
+            : allItems.length === 0
+              ? undefined
+              : 'Estado e incidencias'
         }
         action={
           isAdmin ? (
@@ -716,11 +727,10 @@ export default function Equipment() {
         }
       />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5 sm:gap-3">
         {isAdmin ? (
           <FilterChips
-            fullWidth
-            className="sm:w-auto"
+            layout="scroll"
             value={adminSummaryFilter}
             onChange={handleAdminSummaryFilter}
             options={[
@@ -734,7 +744,7 @@ export default function Equipment() {
                 ? [
                     {
                       value: '__inspection__',
-                      label: 'Revisión pendiente',
+                      label: 'Revisión',
                       count: inspectionDueCount,
                     },
                   ]
@@ -743,20 +753,19 @@ export default function Equipment() {
           />
         ) : (
           <FilterChips
-            fullWidth
-            className="sm:w-auto"
+            layout="scroll"
             value={staffQuickFilter}
             onChange={(v) => setStaffQuickFilter(v as typeof staffQuickFilter)}
             options={[
               { value: 'all', label: 'Todos' },
               {
                 value: 'attention',
-                label: 'Requieren atención',
+                label: 'Atención',
                 count: attentionCount,
               },
               {
                 value: 'inspection_due',
-                label: 'Revisión pendiente',
+                label: 'Revisión',
                 count: inspectionDueCount,
               },
             ]}
@@ -791,116 +800,126 @@ export default function Equipment() {
           </div>
         )}
 
-        <Card padding="sm" rounded="xl" className="min-w-0 space-y-3">
-          <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center">
-            <SearchInput
-              containerClassName="min-w-0 w-full flex-1"
-              placeholder="Buscar equipo, marca o modelo..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+        {/* Toolbar: stack on xs, one row from sm+ */}
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:gap-3">
+          <SearchInput
+            containerClassName="min-w-0 w-full flex-1"
+            placeholder="Buscar equipo…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar equipo, marca o modelo"
+          />
+          <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:justify-end">
+            {allItems.length > 0 ? (
               <SegmentedControl
                 variant="compact"
                 value={layoutView}
                 onChange={(v) => setLayoutView(v)}
-                className="w-full min-w-0 sm:w-auto"
+                className="min-w-0 flex-1 sm:flex-none"
                 options={[
                   { value: 'flat', label: 'Lista' },
-                  { value: 'zones', label: 'Por zona' },
+                  { value: 'zones', label: 'Zonas' },
                 ]}
               />
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className={cn(
+                'h-9 gap-1.5 px-2.5',
+                filtersOpen && 'bg-zinc-100 dark:bg-zinc-800',
+                activeFilterCount > 0 && 'text-brand'
+              )}
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-label="Filtros"
+              title="Filtros"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="hidden md:inline">Filtros</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
+            {isAdmin && items.length > 0 && (
               <Button
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
-                className="gap-1.5"
-                onClick={() => setFiltersOpen((v) => !v)}
-                aria-expanded={filtersOpen}
+                className="h-9 w-9 shrink-0 px-0"
+                onClick={() => downloadEquipmentCsv(items)}
+                aria-label="Exportar CSV"
+                title="Exportar CSV"
               >
-                <SlidersHorizontal className="h-4 w-4" />
-                <span className="hidden sm:inline">Filtros</span>
-                {activeFilterCount > 0 && (
-                  <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
-                    {activeFilterCount}
-                  </span>
-                )}
+                <Download className="h-4 w-4" />
               </Button>
-              {isAdmin && items.length > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 w-9 shrink-0 px-0"
-                  onClick={() => downloadEquipmentCsv(items)}
-                  aria-label="Exportar CSV"
-                  title="Exportar CSV"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-        </Card>
+        </div>
 
         {filtersOpen && (
-          <Card padding="sm" rounded="xl" className="space-y-3">
-            {isAdmin && (
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="space-y-3 border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+          >
+            <div className="grid gap-3 lg:grid-cols-2">
+              {isAdmin && (
+                <FilterChips
+                  layout="scroll"
+                  value={statusFilter}
+                  onChange={(value) => {
+                    setInspectionDueOnly(false);
+                    setStatusFilter(value);
+                  }}
+                  options={[
+                    { value: 'all', label: 'Estados' },
+                    ...EQUIPMENT_STATUSES.map((s) => ({
+                      value: s,
+                      label: EQUIPMENT_STATUS_LABELS[s],
+                      count: statusCounts[s],
+                    })),
+                  ]}
+                />
+              )}
               <FilterChips
-                fullWidth
-                className="sm:w-auto"
-                value={statusFilter}
-                onChange={(value) => {
-                  setInspectionDueOnly(false);
-                  setStatusFilter(value);
-                }}
+                layout="scroll"
+                value={zoneFilter}
+                onChange={setZoneFilter}
                 options={[
-                  { value: 'all', label: 'Todos los estados' },
-                  ...EQUIPMENT_STATUSES.map((s) => ({
-                    value: s,
-                    label: EQUIPMENT_STATUS_LABELS[s],
-                    count: statusCounts[s],
+                  { value: 'all', label: 'Zonas' },
+                  ...zones.map((z) => ({ value: String(z.id), label: z.name })),
+                ]}
+              />
+              <FilterChips
+                layout="scroll"
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                options={[
+                  { value: 'all', label: 'Categorías' },
+                  ...EQUIPMENT_CATEGORIES.map((c) => ({
+                    value: c,
+                    label: EQUIPMENT_CATEGORY_LABELS[c],
                   })),
                 ]}
               />
-            )}
-            <FilterChips
-              fullWidth
-              className="sm:w-auto"
-              value={zoneFilter}
-              onChange={setZoneFilter}
-              options={[
-                { value: 'all', label: 'Todas las zonas' },
-                ...zones.map((z) => ({ value: String(z.id), label: z.name })),
-              ]}
-            />
-            <FilterChips
-              fullWidth
-              className="sm:w-auto"
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              options={[
-                { value: 'all', label: 'Todas las categorías' },
-                ...EQUIPMENT_CATEGORIES.map((c) => ({
-                  value: c,
-                  label: EQUIPMENT_CATEGORY_LABELS[c],
-                })),
-              ]}
-            />
-            <FilterChips
-              fullWidth
-              className="sm:w-auto"
-              value={inspectionDueOnly ? 'due' : 'all'}
-              onChange={(v) => setInspectionDueOnly(v === 'due')}
-              options={[
-                { value: 'all', label: 'Cualquier revisión' },
-                {
-                  value: 'due',
-                  label: 'Revisión pendiente',
-                  count: inspectionDueCount,
-                },
-              ]}
-            />
+              <FilterChips
+                layout="scroll"
+                value={inspectionDueOnly ? 'due' : 'all'}
+                onChange={(v) => setInspectionDueOnly(v === 'due')}
+                options={[
+                  { value: 'all', label: 'Revisión' },
+                  {
+                    value: 'due',
+                    label: 'Pendiente',
+                    count: inspectionDueCount,
+                  },
+                ]}
+              />
+            </div>
             {activeFilterCount > 0 && (
               <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
                 Limpiar filtros
@@ -911,46 +930,56 @@ export default function Equipment() {
 
         {bootstrapError ? (
           <EmptyState
+            compact
             icon={AlertTriangle}
             title="No se pudo cargar el equipamiento"
             description="Revisa tu conexión e inténtalo de nuevo."
-            action={<Button onClick={() => void refreshBootstrap()}>Reintentar</Button>}
+            className="mx-auto max-w-md"
+            action={
+              <Button size="sm" onClick={() => void refreshBootstrap()}>
+                Reintentar
+              </Button>
+            }
           />
         ) : items.length === 0 ? (
           <EmptyState
+            compact
             icon={Wrench}
+            className="mx-auto max-w-md"
             title={allItems.length === 0 ? 'Sin equipamiento registrado' : 'Sin resultados'}
             description={
               allItems.length === 0
                 ? isAdmin
                   ? 'Añade el primer equipo desde la biblioteca del sistema.'
-                  : 'Aún no hay equipos en el inventario.'
+                  : 'Cuando el admin registre equipos, aparecerán aquí.'
                 : 'Prueba otra búsqueda o ajusta los filtros.'
             }
             action={
               allItems.length === 0 && isAdmin ? (
-                <Button onClick={() => openAddFromCatalog()}>Añadir equipo</Button>
-              ) : activeFilterCount > 0 ? (
-                <Button variant="secondary" onClick={clearFilters}>
+                <Button size="sm" onClick={() => openAddFromCatalog()}>
+                  Añadir equipo
+                </Button>
+              ) : activeFilterCount > 0 || staffQuickFilter !== 'all' ? (
+                <Button size="sm" variant="secondary" onClick={clearFilters}>
                   Limpiar filtros
                 </Button>
               ) : undefined
             }
           />
         ) : layoutView === 'zones' ? (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {zoneGroups.map((group) => (
               <section key={group.zoneId ?? 'none'}>
                 <div className="mb-2 flex items-center gap-2 px-0.5">
                   <MapPin className="text-brand h-4 w-4 shrink-0" />
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
                     {group.zoneName}
                   </h3>
                   <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500 tabular-nums dark:bg-zinc-800">
                     {group.items.length}
                   </span>
                 </div>
-                <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((item) => (
                     <EquipmentListCard key={item.id} item={item} onOpen={openDetail} hideZone />
                   ))}
@@ -960,16 +989,17 @@ export default function Equipment() {
           </div>
         ) : items.length >= 48 ? (
           <Virtuoso
-            style={{ height: 'min(70vh, 800px)' }}
+            style={{ height: 'min(70vh, 900px)' }}
             data={items}
+            className="rounded-xl"
             itemContent={(_index, item) => (
-              <div className="pb-2">
+              <div className="pb-2 sm:pr-1">
                 <EquipmentListCard item={item} onOpen={openDetail} />
               </div>
             )}
           />
         ) : (
-          <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((item) => (
               <EquipmentListCard key={item.id} item={item} onOpen={openDetail} />
             ))}

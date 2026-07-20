@@ -338,6 +338,7 @@ export default function Payments() {
       <div className="page-stack-tight" {...paymentsHandlers}>
         <PageHeader
           compact
+          showTitleOnMobile={isStaffPayment}
           title={
             isMember ? (
               <>
@@ -345,15 +346,11 @@ export default function Payments() {
               </>
             ) : (
               <>
-                Gestión de <span className="text-brand">pagos</span>
+                <span className="text-brand">Pagos</span>
               </>
             )
           }
-          subtitle={
-            isMember
-              ? 'Activa tu membresía'
-              : 'Registra pagos en mostrador y aprueba reportes de miembros'
-          }
+          subtitle={isMember ? 'Activa tu membresía' : undefined}
           action={
             isMember ? (
               <div className="flex flex-wrap items-center justify-end gap-2">
@@ -373,12 +370,13 @@ export default function Payments() {
                 <BackToDashboardLink />
                 <Button
                   size="sm"
-                  className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+                  variant="ghost"
+                  className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-10 sm:w-auto sm:px-3"
                   onClick={() => openRegisterModal()}
                   aria-label="Registrar pago"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Registrar pago</span>
+                  <span className="hidden sm:inline">Registrar</span>
                 </Button>
               </div>
             ) : (

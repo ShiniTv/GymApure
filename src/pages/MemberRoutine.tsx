@@ -1134,7 +1134,7 @@ export default function MemberRoutine() {
 
       {coachingTab === 'mediciones' && (
         <div className="space-y-2">
-          {(user?.role === 'admin' || user?.role === 'trainer') && (
+          {(user?.role === 'admin' || user?.role === 'trainer') && measurements.length > 0 && (
             <div className="flex justify-end">
               <Button
                 type="button"
@@ -1152,32 +1152,63 @@ export default function MemberRoutine() {
           )}
           {measurements.length > 0 ? (
             <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
-              {measurements.map((m, i) => (
-                <div
-                  key={m.id}
-                  className={`flex justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm ${
-                    i < measurements.length - 1
-                      ? 'border-b border-zinc-100 dark:border-zinc-800'
-                      : ''
-                  }`}
-                >
-                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
-                    {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                  </span>
-                  <span className="text-zinc-500 tabular-nums dark:text-zinc-400">
-                    {m.weight != null ? (
-                      <span className="font-semibold text-zinc-900 dark:text-white">
-                        {m.weight} kg
-                      </span>
-                    ) : (
-                      '—'
-                    )}
-                    {m.body_fat_percentage != null ? (
-                      <span className="text-zinc-400"> · {m.body_fat_percentage}% grasa</span>
-                    ) : null}
-                  </span>
-                </div>
-              ))}
+              {measurements.map((m, i) => {
+                const prev = measurements[i + 1];
+                const weightDelta =
+                  m.weight != null && prev?.weight != null
+                    ? Math.round((m.weight - prev.weight) * 10) / 10
+                    : null;
+                const extras = [
+                  m.waist != null ? `cintura ${m.waist}` : null,
+                  m.arm != null ? `brazo ${m.arm}` : null,
+                  m.leg != null ? `pierna ${m.leg}` : null,
+                ].filter(Boolean);
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex items-start justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm ${
+                      i < measurements.length - 1
+                        ? 'border-b border-zinc-100 dark:border-zinc-800'
+                        : ''
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-zinc-600 dark:text-zinc-300">
+                        {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
+                      </p>
+                      {extras.length > 0 && (
+                        <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+                          {extras.join(' · ')} cm
+                        </p>
+                      )}
+                    </div>
+                    <div className="shrink-0 text-right tabular-nums">
+                      {m.weight != null ? (
+                        <p className="font-semibold text-zinc-900 dark:text-white">
+                          {m.weight} kg
+                          {weightDelta != null && weightDelta !== 0 && (
+                            <span
+                              className={
+                                weightDelta < 0
+                                  ? 'ml-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400'
+                                  : 'ml-1 text-[10px] font-medium text-amber-600 dark:text-amber-400'
+                              }
+                            >
+                              {weightDelta > 0 ? '+' : ''}
+                              {weightDelta}
+                            </span>
+                          )}
+                        </p>
+                      ) : (
+                        <p className="text-zinc-400">—</p>
+                      )}
+                      {m.body_fat_percentage != null && (
+                        <p className="text-[10px] text-zinc-400">{m.body_fat_percentage}% grasa</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center dark:border-zinc-700">
@@ -1268,6 +1299,17 @@ export default function MemberRoutine() {
                 value={measurementForm.arm}
                 onChange={(e) => {
                   setMeasurementForm({ ...measurementForm, arm: e.target.value });
+                }}
+              />
+            </div>
+            <div>
+              <Label>Pierna (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={measurementForm.leg}
+                onChange={(e) => {
+                  setMeasurementForm({ ...measurementForm, leg: e.target.value });
                 }}
               />
             </div>
@@ -1440,7 +1482,7 @@ export default function MemberRoutine() {
           setIsAssigning(false);
         }}
         initialFocus="dialog"
-        title="Asignar Rutina"
+        title="Asignar rutina"
       >
         <AssignRoutineForm
           value={assignForm}

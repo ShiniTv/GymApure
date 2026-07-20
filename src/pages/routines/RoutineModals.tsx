@@ -123,11 +123,7 @@ export function RoutineModals({
           setIsAssigningFromCalendar(false);
         }}
         initialFocus="dialog"
-        title={
-          <>
-            ASIGNAR <span className="text-brand">RUTINA</span>
-          </>
-        }
+        title={assignSingleDay ? 'Asignar para un día' : 'Asignar rutina'}
       >
         <AssignRoutineForm
           value={assignForm}
@@ -149,11 +145,7 @@ export function RoutineModals({
         onClose={() => {
           setIsCreating(false);
         }}
-        title={
-          <>
-            NUEVA <span className="text-brand">RUTINA</span>
-          </>
-        }
+        title="Nueva rutina"
       >
         <div className="space-y-4">
           <div>
@@ -193,7 +185,7 @@ export function RoutineModals({
         onClose={() => {
           setEditingRoutine(null);
         }}
-        title="Editar Rutina"
+        title="Editar rutina"
       >
         {editingRoutine && (
           <div className="space-y-4">
@@ -244,7 +236,7 @@ export function RoutineModals({
           setIsAddingExercise(false);
         }}
         initialFocus="dialog"
-        title="Añadir Ejercicio"
+        title="Añadir ejercicio"
         maxWidth="xl"
         scrollable
       >
@@ -306,7 +298,7 @@ export function RoutineModals({
           setIsEditingExercise(false);
         }}
         initialFocus="dialog"
-        title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
+        title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar ejercicio'}
         maxWidth="xl"
         scrollable
       >

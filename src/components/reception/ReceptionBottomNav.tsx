@@ -1,4 +1,5 @@
 import { StaffBottomNav } from '../navigation/StaffBottomNav';
+import { useAuth } from '../../context/AuthContext';
 import {
   RECEPTION_PRIMARY_TABS,
   RECEPTION_MORE_ITEMS,
@@ -9,6 +10,9 @@ import {
 import type { StaffBottomNavTab } from '../../config/navigation/bottomNavTypes';
 
 export function ReceptionBottomNav() {
+  const { user } = useAuth();
+  const firstName = user?.name?.split(/\s+/)[0] ?? 'recepción';
+
   return (
     <StaffBottomNav
       ariaLabel="Navegación recepción"
@@ -20,6 +24,8 @@ export function ReceptionBottomNav() {
       }
       isMoreItemActive={isReceptionMoreItemActive}
       isMoreTabActive={isReceptionMoreTabActive}
+      greetingName={firstName}
+      greetingSubtitle="Portal recepción"
     />
   );
 }

@@ -3,16 +3,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
-  Fingerprint,
   LogIn,
   LogOut,
   CheckCircle,
   XCircle,
   AlertTriangle,
   Search,
-  Monitor,
   X,
-  ArrowLeft,
   Tablet,
   Pencil,
   KeyRound,
@@ -407,58 +404,46 @@ export default function Reception() {
 
   const pinBanner =
     checkInPin?.configured && checkInPin.pin ? (
-      <Card
-        padding="sm"
-        rounded="xl"
-        className={cn('border-brand/20 bg-brand/5', isCounterMode && 'px-3 py-2.5')}
+      <div
+        className={cn(
+          'border-brand/20 bg-brand/5 flex items-center gap-2.5 rounded-xl border px-3 py-2',
+          !isCounterMode && 'px-4 py-3'
+        )}
       >
-        <div className="flex items-center gap-3">
-          <div className="bg-brand/10 text-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-            <KeyRound className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="label-caps text-zinc-500 dark:text-zinc-400">PIN del día</p>
-            <p className="font-mono text-xl font-bold tracking-[0.2em] text-zinc-900 dark:text-white">
-              {checkInPin.pin}
-            </p>
-            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-              {checkInPin.required
-                ? 'Obligatorio para el ingreso desde la app del miembro'
-                : 'Disponible · el ingreso desde la app aún no lo exige'}
-            </p>
-          </div>
-          {user?.role === 'admin' ? (
-            <Link to="/settings" className="shrink-0 text-xs font-semibold text-zinc-500 underline">
-              Cambiar
-            </Link>
-          ) : (
-            <span className="shrink-0 text-[10px] text-zinc-400">Solo admin cambia</span>
-          )}
-        </div>
-      </Card>
-    ) : checkInPin && !checkInPin.configured ? (
-      <Card
-        padding="sm"
-        rounded="xl"
-        className="border-dashed border-zinc-300 dark:border-zinc-700"
-      >
-        <div className="flex items-start gap-2">
-          <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Sin PIN de presencia configurado.
-            {user?.role === 'admin' ? (
-              <>
-                {' '}
-                <Link to="/settings" className="font-semibold underline">
-                  Configurar en Ajustes
-                </Link>
-              </>
-            ) : (
-              ' Pide a un admin configurarlo en Ajustes.'
-            )}
+        <KeyRound className="text-brand h-4 w-4 shrink-0" aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            PIN del día
+          </p>
+          <p className="font-mono text-lg font-bold tracking-[0.18em] text-zinc-900 dark:text-white">
+            {checkInPin.pin}
           </p>
         </div>
-      </Card>
+        {user?.role === 'admin' ? (
+          <Link
+            to="/settings"
+            className="shrink-0 text-[11px] font-semibold text-zinc-500 underline"
+          >
+            Cambiar
+          </Link>
+        ) : (
+          <span className="shrink-0 text-[10px] text-zinc-400">Solo admin</span>
+        )}
+      </div>
+    ) : checkInPin && !checkInPin.configured ? (
+      <p className="px-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+        Sin PIN de presencia.
+        {user?.role === 'admin' ? (
+          <>
+            {' '}
+            <Link to="/settings" className="font-semibold underline">
+              Configurar en Ajustes
+            </Link>
+          </>
+        ) : (
+          ' Pide a un admin configurarlo.'
+        )}
+      </p>
     ) : null;
 
   const actionMessageBanner =
@@ -486,10 +471,15 @@ export default function Reception() {
     ));
 
   const lookupPanel = (
-    <Card padding="md" rounded="xl" className="space-y-3">
+    <div
+      className={cn(
+        'space-y-3 rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
+      )}
+    >
       <div className="space-y-2">
-        <Label htmlFor="reception-cedula" className="label-caps">
-          Cédula del visitante
+        <Label htmlFor="reception-cedula" className="text-xs font-medium text-zinc-500">
+          Cédula
         </Label>
         <div className="flex items-stretch gap-2">
           <div className="min-w-0 flex-1">
@@ -503,6 +493,7 @@ export default function Reception() {
             />
           </div>
           <Button
+            variant={isCounterMode ? 'ghost' : undefined}
             onClick={() => void doLookup()}
             loading={lookupLoading}
             disabled={!cedula.trim()}
@@ -540,7 +531,7 @@ export default function Reception() {
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
-          size={isCounterMode ? 'sm' : 'sm'}
+          size="sm"
           className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
@@ -549,8 +540,8 @@ export default function Reception() {
           <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
         </Button>
         <Button
-          size={isCounterMode ? 'sm' : 'sm'}
-          variant="secondary"
+          size="sm"
+          variant={isCounterMode ? 'ghost' : 'secondary'}
           className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
@@ -559,60 +550,63 @@ export default function Reception() {
           <span className="truncate">{isCounterMode ? 'Salida' : 'Registrar salida'}</span>
         </Button>
       </div>
-    </Card>
+    </div>
   );
 
   const memberPanel = (
-    <Card padding="md" rounded="xl" className={cn(isCounterMode && 'min-h-0')}>
+    <div
+      className={cn(
+        'rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
+      )}
+    >
       {lookupLoading ? (
-        <div className="flex items-center justify-center py-10">
+        <div className="flex items-center justify-center py-8">
           <Spinner />
         </div>
       ) : lookup?.found && lookup.user ? (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3
                 className={cn(
-                  'font-bold text-zinc-900 dark:text-white',
-                  isCounterMode ? 'text-base' : 'text-lg'
+                  'font-semibold text-zinc-900 dark:text-white',
+                  isCounterMode ? 'text-sm' : 'text-lg font-bold'
                 )}
               >
                 {lookup.user.full_name}
               </h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{lookup.user.cedula}</p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-300">{lookup.user.email}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2 h-8 px-2 text-xs"
-                onClick={openCedulaEdit}
-              >
-                <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                Corregir cédula
-              </Button>
+              <p className="mt-0.5 text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+                {lookup.user.cedula}
+                {!isCounterMode && lookup.user.email ? ` · ${lookup.user.email}` : ''}
+              </p>
+              {!isCounterMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-8 px-2 text-xs"
+                  onClick={openCedulaEdit}
+                >
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                  Corregir cédula
+                </Button>
+              )}
             </div>
             {accessBadge()}
           </div>
 
           {lookup.subscription?.status === 'paused' ? (
-            <div className="space-y-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <div className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
                     {lookup.subscription.membership_name} — pausada
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
                     {lookup.subscription.days_remaining} día
-                    {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados. Reanuda para
-                    permitir el ingreso.
+                    {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados.
                   </p>
-                  {lookup.subscription.pause_reason?.trim() && (
-                    <p className="mt-1 text-xs text-amber-700/90 dark:text-amber-300/90">
-                      Motivo: {lookup.subscription.pause_reason.trim()}
-                    </p>
-                  )}
                 </div>
               </div>
               <Button
@@ -624,52 +618,59 @@ export default function Reception() {
               </Button>
             </div>
           ) : lookup.subscription ? (
-            <div className="space-y-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-              <div>
-                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-2.5 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   {lookup.subscription.membership_name}
                 </p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  Vence{' '}
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {lookup.subscription.days_remaining} días · vence{' '}
                   {lookup.subscription.end_date
                     ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
                     : '—'}
-                  {' · '}
-                  {lookup.subscription.days_remaining} días restantes
                 </p>
               </div>
               {lookup.subscription.days_remaining <= 7 && (
-                <Button size="sm" variant="secondary" onClick={openRenewForLookup}>
-                  <CreditCard className="mr-2 h-4 w-4" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2 text-xs"
+                  onClick={openRenewForLookup}
+                >
+                  <CreditCard className="mr-1 h-3.5 w-3.5" />
                   Renovar
                 </Button>
               )}
             </div>
           ) : (
-            <div className="space-y-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+            <div className="space-y-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2.5">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
-                <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-                  Sin membresía activa — registre un pago o asigne un plan vinculado a un pago
-                  aprobado
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+                <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+                  Sin membresía activa
                 </p>
               </div>
               {lookup.user && (
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" onClick={openRenewForLookup}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Renovar / cobrar
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2 text-xs"
+                    onClick={openRenewForLookup}
+                  >
+                    <CreditCard className="mr-1 h-3.5 w-3.5" />
+                    Renovar
                   </Button>
                   <Link
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="sm" variant="ghost">
-                      Registrar pago
+                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
+                      Pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
-                    <Button size="sm" variant="ghost">
+                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
                       Asignar plan
                     </Button>
                   </Link>
@@ -678,7 +679,17 @@ export default function Reception() {
             </div>
           )}
 
-          <OnboardingStatus onboarding={lookup.onboarding} />
+          <OnboardingStatus onboarding={lookup.onboarding} variant="chip" />
+
+          {isCounterMode && (
+            <button
+              type="button"
+              onClick={openCedulaEdit}
+              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+            >
+              Corregir cédula
+            </button>
+          )}
 
           {lookup.attendance?.today_session && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -692,28 +703,28 @@ export default function Reception() {
           )}
         </div>
       ) : lookup && !lookup.found ? (
-        <div className="space-y-3 py-8 text-center">
-          <XCircle className="mx-auto h-10 w-10 text-red-400" />
+        <div className="space-y-2.5 py-4 text-center">
           <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
-          <Link to={walkInHref(cedula)}>
-            <Button variant="secondary" size="sm">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Iniciar registro en mostrador
-            </Button>
-          </Link>
-          <Link to="/members">
-            <Button variant="ghost" size="sm">
-              Solo crear cuenta
-            </Button>
-          </Link>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            <Link to={walkInHref(cedula)}>
+              <Button size="sm" className="h-9 px-3 text-xs">
+                <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                Registrar
+              </Button>
+            </Link>
+            <Link to="/members">
+              <Button variant="ghost" size="sm" className="h-9 px-3 text-xs">
+                Solo cuenta
+              </Button>
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="py-4 text-center text-zinc-400 sm:py-5 dark:text-zinc-300">
-          <Fingerprint className="mx-auto mb-1.5 h-6 w-6 opacity-30 sm:h-7 sm:w-7" />
-          <p className="label-caps text-[11px] font-medium">Ingrese una cédula para consultar</p>
+        <div className="py-3 text-center text-zinc-400 dark:text-zinc-500">
+          <p className="text-[11px] font-medium">Ingresa una cédula para consultar</p>
         </div>
       )}
-    </Card>
+    </div>
   );
 
   const insideList = (
@@ -751,35 +762,20 @@ export default function Reception() {
     const showMemberPanel = lookupLoading || lookup != null;
 
     return (
-      <div className="page-stack">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="bg-brand/10 text-brand shrink-0 rounded-lg p-1.5">
-              <Monitor className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-bold text-zinc-900 sm:text-lg dark:text-white">
-                Modo mostrador
-              </h1>
-              <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                <span className="lg:hidden">{insideCount} dentro</span>
-                <span className="hidden lg:inline">
-                  {insideCount} dentro · F1 entrada · F2 salida
-                </span>
-              </p>
-            </div>
+      <div className="page-stack-tight">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-semibold text-zinc-900 dark:text-white">
+              Acceso
+            </h1>
+            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="lg:hidden">{insideCount} dentro</span>
+              <span className="hidden lg:inline">
+                {insideCount} dentro · F1 entrada · F2 salida
+              </span>
+            </p>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-9 p-0"
-              onClick={() => setCounterMode(false)}
-              title="Volver al resumen"
-              aria-label="Volver al resumen"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          <div className="flex shrink-0 items-center gap-0.5">
             <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
               <Button
                 variant="ghost"
@@ -794,37 +790,33 @@ export default function Reception() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 px-2.5"
+              className="h-9 w-9 p-0"
               onClick={() => setCounterMode(false)}
-              title="Salir del modo mostrador"
+              title="Salir del mostrador"
+              aria-label="Salir del mostrador"
             >
               <X className="h-4 w-4" />
-              <span className="hidden text-xs sm:inline">Salir</span>
             </Button>
           </div>
         </div>
 
-        <div className="panel-wide space-y-4">
+        <div className="panel-wide space-y-3">
           <CounterTabNav tab={tab} insideCount={insideCount} onChange={changeTab} />
 
           {tab === 'access' && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-5 md:gap-4">
-              <div className="space-y-3 md:col-span-3 md:space-y-4">
+              <div className="space-y-2.5 md:col-span-3">
                 {pinBanner}
                 {lookupPanel}
                 {showMemberPanel && memberPanel}
-                <button
-                  type="button"
-                  onClick={() => changeTab('inside')}
-                  className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-left text-xs font-semibold text-zinc-700 md:hidden dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300"
-                >
-                  <span>Dentro ahora</span>
-                  <span className="text-brand tabular-nums">{insideCount}</span>
-                </button>
               </div>
               <aside className="hidden space-y-4 md:col-span-2 md:block">
                 {insideList}
-                <Card padding="md" rounded="xl">
+                <Card
+                  padding="md"
+                  rounded="xl"
+                  className="border-zinc-200/70 dark:border-zinc-800/80"
+                >
                   <h3 className="section-title mb-2">Actividad reciente</h3>
                   <ReceptionActivityFeed limit={5} compact refreshKey={feedRefresh} />
                 </Card>

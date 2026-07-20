@@ -85,25 +85,26 @@ export function RoutinesLibraryView({
           isMember && 'min-h-[min(52vh,28rem)]'
         )}
       >
-        <EmptyState
-          variant={isMember ? 'motivational' : 'default'}
-          icon={Dumbbell}
-          title={isMember ? 'Aún sin rutina' : 'Sin rutinas'}
-          description={
-            isMember
-              ? 'Cuando tu entrenador te asigne una, aparecerá aquí lista para entrenar.'
-              : 'Crea tu primera rutina para asignarla a tus miembros.'
-          }
-          action={
-            !isMember ? (
-              <Button size="sm" onClick={onCreateRoutine}>
-                <Plus className="h-4 w-4" />
-                Crear rutina
-              </Button>
-            ) : undefined
-          }
-          className={isMember ? 'border-0 bg-transparent shadow-none' : undefined}
-        />
+        {isStaff ? (
+          <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 px-4 py-8 text-center dark:border-zinc-700">
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sin plantillas</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Crea la primera para asignarla a tus miembros.
+            </p>
+            <Button size="sm" className="mx-auto" onClick={onCreateRoutine}>
+              <Plus className="h-4 w-4" />
+              Crear plantilla
+            </Button>
+          </div>
+        ) : (
+          <EmptyState
+            variant="motivational"
+            icon={Dumbbell}
+            title="Aún sin rutina"
+            description="Cuando tu entrenador te asigne una, aparecerá aquí lista para entrenar."
+            className="border-0 bg-transparent shadow-none"
+          />
+        )}
       </div>
     );
   }
@@ -123,8 +124,8 @@ export function RoutinesLibraryView({
   return (
     <div
       className={cn(
-        'space-y-3',
-        isMember && 'mx-auto w-full',
+        'space-y-2.5',
+        isMember && 'mx-auto w-full space-y-3',
         memberSparse && 'max-w-md sm:max-w-lg'
       )}
     >
@@ -136,23 +137,23 @@ export function RoutinesLibraryView({
         {isStaff && (
           <Button
             size="sm"
-            className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+            variant="ghost"
+            className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
             onClick={onCreateRoutine}
             aria-label="Nueva rutina"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nueva rutina</span>
+            <span className="hidden text-xs sm:inline">Nueva</span>
           </Button>
         )}
       </div>
 
       <div
         className={cn(
-          'grid gap-2.5',
-          isMember ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3'
+          'grid gap-2',
+          isMember ? 'grid-cols-1 gap-2.5' : 'grid-cols-1 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3'
         )}
       >
-        {' '}
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
@@ -194,52 +195,55 @@ export function RoutinesLibraryView({
                       }
                     : undefined
                 }
-                className={`group flex items-start gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
+                className={`group flex items-center gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
               >
-                <div
-                  className={`mt-0.5 flex shrink-0 items-center justify-center rounded-lg ${
-                    lightCards ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
-                  }`}
-                >
-                  {lightCards ? (
-                    <Dumbbell className="text-brand h-3.5 w-3.5" />
-                  ) : (
-                    <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
-                  )}
-                </div>
+                {!(lightCards && isStaff) && (
+                  <div
+                    className={`flex shrink-0 items-center justify-center rounded-lg ${
+                      lightCards ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
+                    }`}
+                  >
+                    {lightCards ? (
+                      <Dumbbell className="text-brand h-3.5 w-3.5" />
+                    ) : (
+                      <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
+                    )}
+                  </div>
+                )}
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-[15px] leading-snug font-semibold text-zinc-900 dark:text-white">
-                    {routine.name}
-                  </h3>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <h3 className="truncate text-sm leading-snug font-semibold text-zinc-900 dark:text-white">
+                      {routine.name}
+                    </h3>
                     <Badge
                       variant={difficultyVariant(routine.difficulty)}
-                      className="shrink-0 px-2 py-0.5 text-[10px]"
+                      className="shrink-0 px-1.5 py-0 text-[9px]"
                     >
                       {formatDifficulty(routine.difficulty)}
                     </Badge>
                     {inProgress && !completedToday && (
-                      <Badge variant="warning" className="shrink-0 px-2 py-0.5 text-[10px]">
+                      <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
                         En curso
                       </Badge>
                     )}
                     {completedToday && (
-                      <Badge variant="success" className="shrink-0 px-2 py-0.5 text-[10px]">
+                      <Badge variant="success" className="shrink-0 px-1.5 py-0 text-[9px]">
                         Hecha hoy
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                     {exerciseSummary.label}
                   </p>
-                  {exerciseSummary.preview ? (
+                  {/* Preview: members always; staff only when expanded (see below) */}
+                  {isMember && exerciseSummary.preview ? (
                     <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
                       {exerciseSummary.preview}
                     </p>
                   ) : null}
                   {!isMember && canOpen && !isExpanded && (
-                    <span className="text-brand mt-2 inline-flex items-center text-[11px] font-semibold">
+                    <span className="text-brand mt-1.5 hidden text-[11px] font-semibold sm:inline-flex sm:items-center">
                       Ver ejercicios
                       <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                     </span>
@@ -255,7 +259,7 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           onEditRoutine(routine);
                         }}
-                        className="hover:text-brand hover:bg-brand/10 inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-400 transition-colors sm:h-8 sm:w-8 sm:rounded-lg dark:text-zinc-300"
+                        className="hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors sm:inline-flex dark:text-zinc-300"
                         aria-label={`Configurar ${routine.name}`}
                         title="Configurar"
                       >
@@ -267,7 +271,7 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           onDeleteRoutine(routine);
                         }}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 sm:h-8 sm:w-8 sm:rounded-lg dark:text-zinc-300"
+                        className="hidden h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 sm:inline-flex dark:text-zinc-300"
                         aria-label={`Eliminar ${routine.name}`}
                         title="Eliminar"
                       >
@@ -279,10 +283,10 @@ export function RoutinesLibraryView({
                           e.stopPropagation();
                           void onToggleExpandRoutine(routine.id);
                         }}
-                        className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8 ${
                           isExpanded
-                            ? 'border-zinc-900 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
                         }`}
                         aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
                         aria-expanded={isExpanded}
@@ -338,6 +342,35 @@ export function RoutinesLibraryView({
 
               {isExpanded && (
                 <div className="animate-in slide-in-from-top-2 mt-3 space-y-2.5 border-t border-zinc-100/80 pt-3 duration-200 dark:border-zinc-800/80">
+                  {isStaff && exerciseSummary.preview ? (
+                    <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                      {exerciseSummary.preview}
+                    </p>
+                  ) : null}
+                  {isStaff && (
+                    <div className="flex gap-1.5 sm:hidden">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-9 flex-1 text-xs"
+                        onClick={() => onEditRoutine(routine)}
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                        Configurar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-9 flex-1 text-xs text-red-600 dark:text-red-400"
+                        onClick={() => onDeleteRoutine(routine)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  )}
                   {isMember ? (
                     <>
                       <div className="space-y-2">
@@ -385,83 +418,111 @@ export function RoutinesLibraryView({
                         </Button>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 lg:grid-cols-3">
                         {routine.exercises?.map((exercise) => (
-                          <div
-                            key={exercise.routine_exercise_id}
-                            className="flex items-start justify-between gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-800/50"
-                          >
-                            <div className="min-w-0">
-                              <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                                {exercise.name}
-                              </h5>
-                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                                {exercise.muscle_group}
-                              </p>
-                              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                                <label className="inline-flex items-center gap-1">
-                                  Sets
-                                  <input
-                                    type="number"
-                                    className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-                                    defaultValue={exercise.sets}
-                                    onBlur={(e) =>
-                                      onInlineUpdate(
-                                        routine.id,
-                                        exercise,
-                                        'sets',
-                                        parseInt(e.target.value)
-                                      )
-                                    }
-                                    onKeyDown={(e) =>
-                                      e.key === 'Enter' && (e.target as HTMLInputElement).blur()
-                                    }
-                                  />
-                                </label>
-                                <label className="inline-flex items-center gap-1">
-                                  Reps
-                                  <input
-                                    type="number"
-                                    className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-                                    defaultValue={exercise.reps}
-                                    onBlur={(e) =>
-                                      onInlineUpdate(
-                                        routine.id,
-                                        exercise,
-                                        'reps',
-                                        parseInt(e.target.value)
-                                      )
-                                    }
-                                    onKeyDown={(e) =>
-                                      e.key === 'Enter' && (e.target as HTMLInputElement).blur()
-                                    }
-                                  />
-                                </label>
-                                <span>
-                                  Rst{' '}
-                                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                                    {exercise.rest_seconds}s
-                                  </span>
-                                </span>
+                          <div key={exercise.routine_exercise_id}>
+                            <div className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 sm:hidden dark:border-zinc-800">
+                              <div className="min-w-0">
+                                <h5 className="truncate text-sm font-medium text-zinc-900 dark:text-white">
+                                  {exercise.name}
+                                </h5>
+                                <p className="text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                                  {exercise.sets}×{exercise.reps}
+                                  {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => onEditExercise(exercise)}
+                                  className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400"
+                                  aria-label={`Editar ${exercise.name}`}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteExercise(routine.id, exercise)}
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:text-red-500"
+                                  aria-label={`Eliminar ${exercise.name}`}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                             </div>
-                            <div className="flex shrink-0 gap-0.5">
-                              <button
-                                type="button"
-                                onClick={() => onEditExercise(exercise)}
-                                className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                                aria-label={`Editar ${exercise.name}`}
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onDeleteExercise(routine.id, exercise)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                                aria-label={`Eliminar ${exercise.name}`}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
+                            <div className="hidden items-start justify-between gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 sm:flex dark:border-zinc-700 dark:bg-zinc-800/50">
+                              <div className="min-w-0">
+                                <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                                  {exercise.name}
+                                </h5>
+                                <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                                  {exercise.muscle_group}
+                                </p>
+                                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                                  <label className="inline-flex items-center gap-1">
+                                    Sets
+                                    <input
+                                      type="number"
+                                      className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                      defaultValue={exercise.sets}
+                                      onBlur={(e) =>
+                                        onInlineUpdate(
+                                          routine.id,
+                                          exercise,
+                                          'sets',
+                                          parseInt(e.target.value)
+                                        )
+                                      }
+                                      onKeyDown={(e) =>
+                                        e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                      }
+                                    />
+                                  </label>
+                                  <label className="inline-flex items-center gap-1">
+                                    Reps
+                                    <input
+                                      type="number"
+                                      className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                      defaultValue={exercise.reps}
+                                      onBlur={(e) =>
+                                        onInlineUpdate(
+                                          routine.id,
+                                          exercise,
+                                          'reps',
+                                          parseInt(e.target.value)
+                                        )
+                                      }
+                                      onKeyDown={(e) =>
+                                        e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                      }
+                                    />
+                                  </label>
+                                  <span>
+                                    Rst{' '}
+                                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                                      {exercise.rest_seconds}s
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex shrink-0 gap-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => onEditExercise(exercise)}
+                                  className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                                  aria-label={`Editar ${exercise.name}`}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onDeleteExercise(routine.id, exercise)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                                  aria-label={`Eliminar ${exercise.name}`}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -479,6 +540,17 @@ export function RoutinesLibraryView({
           );
         })}
       </div>
+
+      {isStaff && routines.length <= 1 && (
+        <button
+          type="button"
+          onClick={onCreateRoutine}
+          className="text-brand hover:bg-brand/5 dark:hover:bg-brand/10 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2.5 text-xs font-semibold transition-colors dark:border-zinc-700"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {routines.length === 0 ? 'Crear plantilla' : 'Crear otra plantilla'}
+        </button>
+      )}
 
       {memberFooterHint ? (
         <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">

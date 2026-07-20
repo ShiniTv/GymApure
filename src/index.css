@@ -633,8 +633,31 @@ html.member-has-workout-fab .member-chat-panel {
 }
 
 .staff-chat-shell {
-  --chat-top-chrome: 10.75rem;
+  --chat-top-chrome: 11rem;
   height: calc(100dvh - var(--chat-top-chrome) - env(safe-area-inset-bottom, 0px));
+  min-height: 22rem;
+}
+
+.staff-chat-mobile-thread {
+  height: calc(
+    100dvh - var(--mobile-top-chrome) - var(--trainer-nav-stack) - 1.25rem -
+      env(safe-area-inset-bottom, 0px)
+  );
+  min-height: 16rem;
+}
+
+.reception-main-pad .staff-chat-mobile-thread {
+  height: calc(
+    100dvh - var(--mobile-top-chrome) - var(--reception-nav-stack) - 1.25rem -
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.admin-main-pad .staff-chat-mobile-thread {
+  height: calc(
+    100dvh - var(--mobile-top-chrome) - var(--admin-nav-stack) - 1.25rem -
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .reception-main-pad .staff-chat-shell {
@@ -649,9 +672,15 @@ html.member-has-workout-fab .member-chat-panel {
   );
 }
 
+.admin-main-pad .staff-chat-shell {
+  height: calc(
+    100dvh - var(--chat-top-chrome) - var(--admin-nav-stack) - env(safe-area-inset-bottom, 0px)
+  );
+}
+
 @media (min-width: 640px) {
   .staff-chat-shell {
-    --chat-top-chrome: 11.5rem;
+    --chat-top-chrome: 11.25rem;
   }
 
   .member-chat-panel {
@@ -659,17 +688,29 @@ html.member-has-workout-fab .member-chat-panel {
   }
 }
 
+@media (min-width: 768px) {
+  .staff-chat-shell {
+    --chat-top-chrome: 11.5rem;
+    height: calc(100dvh - 11.5rem - env(safe-area-inset-bottom, 0px));
+  }
+
+  .reception-main-pad .staff-chat-shell,
+  .trainer-main-pad .staff-chat-shell,
+  .admin-main-pad .staff-chat-shell {
+    height: calc(100dvh - 11.5rem - env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (min-width: 1024px) {
   .staff-chat-shell {
-    height: calc(100dvh - 11.5rem);
+    --chat-top-chrome: 12rem;
+    height: calc(100dvh - 12rem);
   }
 
-  .reception-main-pad .staff-chat-shell {
-    height: calc(100dvh - 11.5rem);
-  }
-
-  .trainer-main-pad .staff-chat-shell {
-    height: calc(100dvh - 11.5rem);
+  .reception-main-pad .staff-chat-shell,
+  .trainer-main-pad .staff-chat-shell,
+  .admin-main-pad .staff-chat-shell {
+    height: calc(100dvh - 12rem);
   }
 }
 

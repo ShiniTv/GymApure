@@ -347,7 +347,7 @@ export default function ReceptionWalkInWizard({
         {success.checked_in && !checkedOut && (
           <Button
             variant="secondary"
-            className="min-h-[48px] w-full"
+            className="min-h-11 w-full"
             onClick={() => void handleWalkInCheckout()}
             loading={checkoutLoading}
           >
@@ -357,7 +357,7 @@ export default function ReceptionWalkInWizard({
         )}
         {checkoutError && <p className="text-sm text-red-600 dark:text-red-400">{checkoutError}</p>}
 
-        <Button className="min-h-[48px] w-full" onClick={resetWizard}>
+        <Button className="min-h-11 w-full" onClick={resetWizard}>
           Registrar otra persona
         </Button>
       </Card>
@@ -365,53 +365,61 @@ export default function ReceptionWalkInWizard({
   }
 
   return (
-    <Card padding="md" rounded="2xl" className="page-stack max-w-2xl">
+    <div className="page-stack max-w-2xl rounded-xl border border-zinc-200/70 bg-white/80 p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
       <div>
-        <h3 className="section-title flex items-center gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
           <UserPlus className="text-brand h-4 w-4" />
           Registro en mostrador
         </h3>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Una sola operación: cuenta, membresía activa y pago aprobado.
-        </p>
-        <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs leading-relaxed text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
-          Use esto cuando el cliente{' '}
-          <strong className="font-semibold text-zinc-800 dark:text-zinc-200">
-            paga hoy en el mostrador
-          </strong>{' '}
-          (efectivo, pago móvil, etc.) y quiere entrar al gym.{' '}
-          <Link to="/members" className="text-brand font-semibold hover:underline">
-            ¿Solo crear cuenta sin pago? Ir a Miembros →
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          Cuenta + plan + pago.{' '}
+          <Link to="/members" className="text-brand font-medium hover:underline">
+            Solo cuenta →
           </Link>
-        </div>
+        </p>
       </div>
 
-      <div className="flex gap-2">
+      <div
+        className="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="tablist"
+        aria-label="Pasos del registro"
+      >
         {STEPS.map((label, i) => (
-          <div
+          <button
             key={label}
+            type="button"
+            role="tab"
+            aria-selected={i === step}
+            disabled={i > step}
+            onClick={() => {
+              if (i < step) {
+                setError('');
+                setStep(i);
+              }
+            }}
             className={cn(
-              'flex-1 rounded-xl border py-2 text-center text-xs font-semibold transition-colors',
+              'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors',
               i === step
-                ? 'bg-brand/10 border-brand/30 text-brand'
+                ? 'border-brand/40 bg-brand/10 text-brand'
                 : i < step
-                  ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-600'
-                  : 'border-zinc-200 text-zinc-400 dark:border-zinc-800 dark:text-zinc-300'
+                  ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600'
+                  : 'border-zinc-200/80 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500'
             )}
           >
+            <span className="tabular-nums opacity-70">{i + 1}</span>
             {label}
-          </div>
+          </button>
         ))}
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-600">
           {error}
         </div>
       )}
 
       {step === 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <Label>Nombre completo</Label>
             <Input
@@ -420,21 +428,21 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, full_name: e.target.value });
               }}
               placeholder="Ej: Juan Pérez"
-              className="min-h-[48px] text-base"
+              className="min-h-11 text-base"
             />
           </div>
           <div>
-            <Label>Cédula (obligatoria)</Label>
+            <Label>Cédula</Label>
             <CedulaInput
               value={form.cedula}
               onChange={(value) => {
                 setForm({ ...form, cedula: value });
               }}
-              className="min-h-[48px] text-base font-bold tracking-wider"
+              className="min-h-11 text-base font-semibold tracking-wider"
             />
           </div>
           <div>
-            <Label>Correo electrónico</Label>
+            <Label>Correo</Label>
             <Input
               type="email"
               value={form.email}
@@ -442,7 +450,7 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, email: e.target.value });
               }}
               placeholder="juan@ejemplo.com"
-              className="min-h-[48px] text-base"
+              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -455,7 +463,7 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, phone: e.target.value });
               }}
               placeholder="0414-0000000"
-              className="min-h-[48px] text-base"
+              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -506,17 +514,17 @@ export default function ReceptionWalkInWizard({
                     setForm({ ...form, membership_id: String(plan.id) });
                   }}
                   className={cn(
-                    'min-h-[88px] touch-manipulation rounded-2xl border p-4 text-left transition-all',
+                    'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-all',
                     form.membership_id === String(plan.id)
-                      ? 'border-brand bg-brand/10 ring-brand/20 ring-2'
-                      : 'hover:border-brand/40 border-zinc-200 dark:border-zinc-800'
+                      ? 'border-brand/40 bg-brand/10'
+                      : 'hover:border-brand/30 border-zinc-200/80 dark:border-zinc-800'
                   )}
                 >
-                  <p className="font-semibold text-zinc-900 dark:text-white">{plan.name}</p>
-                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{plan.name}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                     {plan.duration_days} días
                   </p>
-                  <p className="text-brand mt-2 text-lg font-bold">${plan.price_usd}</p>
+                  <p className="text-brand mt-1 text-base font-bold">${plan.price_usd}</p>
                 </button>
               ))}
             </div>
@@ -533,7 +541,7 @@ export default function ReceptionWalkInWizard({
               onChange={(e) => {
                 setForm({ ...form, method: e.target.value });
               }}
-              className="min-h-[48px] w-full text-base"
+              className="min-h-11 w-full text-base"
             >
               {PAYMENT_METHODS.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -550,7 +558,7 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, reference: e.target.value });
               }}
               placeholder="Nº de referencia o nota"
-              className="min-h-[48px] text-base"
+              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -587,7 +595,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <label className="flex min-h-[48px] cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <label className="flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
             <input
               type="checkbox"
               checked={form.check_in}
@@ -646,24 +654,19 @@ export default function ReceptionWalkInWizard({
 
       <div className="flex gap-3 pt-2">
         {step > 0 && (
-          <Button
-            variant="secondary"
-            className="min-h-[48px]"
-            onClick={goBack}
-            disabled={submitting}
-          >
+          <Button variant="secondary" className="min-h-11" onClick={goBack} disabled={submitting}>
             <ChevronLeft className="mr-1 h-5 w-5" />
             Atrás
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="min-h-[48px] flex-1" onClick={goNext}>
+          <Button className="min-h-11 flex-1" onClick={goNext}>
             Siguiente
             <ChevronRight className="ml-1 h-5 w-5" />
           </Button>
         ) : (
           <Button
-            className="min-h-[48px] flex-1"
+            className="min-h-11 flex-1"
             onClick={() => void handleSubmit()}
             loading={submitting}
           >
@@ -672,6 +675,6 @@ export default function ReceptionWalkInWizard({
           </Button>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

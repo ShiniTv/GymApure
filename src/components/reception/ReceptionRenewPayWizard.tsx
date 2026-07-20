@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Search, Upload } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe } from '../../lib/api';
-import { Button, Card, Input, Label } from '../ui';
+import { Button, Input, Label } from '../ui';
 
 interface MemberOption {
   id: number;
@@ -17,7 +17,12 @@ interface MembershipPlan {
   price_usd: number;
 }
 
-const PAYMENT_METHODS = ['efectivo', 'pago_movil', 'transferencia', 'zelle'] as const;
+const PAYMENT_METHODS = [
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'pago_movil', label: 'Pago móvil' },
+  { value: 'transferencia', label: 'Transferencia' },
+  { value: 'zelle', label: 'Zelle' },
+] as const;
 
 export function ReceptionRenewPayWizard({
   onComplete,
@@ -41,7 +46,7 @@ export function ReceptionRenewPayWizard({
   const [plans, setPlans] = useState<MembershipPlan[]>([]);
   const [membershipId, setMembershipId] = useState('');
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<(typeof PAYMENT_METHODS)[number]>('efectivo');
+  const [method, setMethod] = useState<(typeof PAYMENT_METHODS)[number]['value']>('efectivo');
   const [reference, setReference] = useState('');
   const [proof, setProof] = useState<File | null>(null);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -102,7 +107,7 @@ export function ReceptionRenewPayWizard({
       const res = await apiFetch('/api/reception/renew', { method: 'POST', body: form });
       const data = await parseJsonSafe<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? 'No se pudo registrar la renovación');
-      setSuccess(`Renovación y pago aprobados para ${selectedMember.full_name}`);
+      setSuccess(`Renovación aprobada para ${selectedMember.full_name}`);
       setReference('');
       setProof(null);
       onComplete?.();
@@ -114,34 +119,37 @@ export function ReceptionRenewPayWizard({
   };
 
   return (
-    <Card padding="md" rounded="xl" className="mx-auto max-w-2xl space-y-5">
+    <div className="mx-auto max-w-2xl space-y-3 rounded-xl border border-zinc-200/70 bg-white/80 p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
       <div>
-        <h2 className="section-title">Renovar y cobrar</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          El pago se aprueba y la membresía se renueva en una sola operación.
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Renovar y cobrar</h2>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          Pago aprobado y membresía renovada en un paso.
         </p>
       </div>
 
       <div>
-        <Label>Buscar socio por nombre o cédula</Label>
-        <div className="flex gap-2">
+        <Label>Socio</Label>
+        <div className="mt-1 flex gap-2">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && void findMembers()}
-            placeholder="Ej. V-12345678 o Ana Pérez"
+            placeholder="Cédula o nombre"
+            className="min-h-11"
           />
           <Button
+            variant="ghost"
             onClick={() => void findMembers()}
             loading={loadingSearch}
             disabled={!search.trim()}
+            className="h-11 w-11 shrink-0 px-0"
+            aria-label="Buscar socio"
           >
             <Search className="h-4 w-4" />
-            Buscar
           </Button>
         </div>
         {members.length > 0 && (
-          <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-xl border border-zinc-200 p-2 dark:border-zinc-700">
+          <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-zinc-200/70 dark:border-zinc-800">
             {members.map((member) => (
               <button
                 type="button"
@@ -151,35 +159,35 @@ export function ReceptionRenewPayWizard({
                   setMembers([]);
                   setError('');
                 }}
-                className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
               >
                 <span className="font-semibold text-zinc-900 dark:text-white">
                   {member.full_name}
                 </span>
-                <span className="ml-2 text-zinc-500">{member.cedula ?? 'Sin cédula'}</span>
+                <span className="ml-2 text-xs text-zinc-500">{member.cedula ?? 'Sin cédula'}</span>
               </button>
             ))}
           </div>
         )}
         {selectedMember && (
-          <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            Socio: {selectedMember.full_name} · {selectedMember.cedula ?? 'Sin cédula'}
+          <p className="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            {selectedMember.full_name} · {selectedMember.cedula ?? 'Sin cédula'}
           </p>
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label>Plan</Label>
           <select
-            className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
+            className="mt-1 min-h-11 w-full rounded-xl border border-zinc-200 bg-transparent px-3 text-sm font-medium dark:border-zinc-700"
             value={membershipId}
             onChange={(event) => choosePlan(event.target.value)}
           >
-            <option value="">Seleccionar plan…</option>
+            <option value="">Seleccionar…</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} — {plan.duration_days} días — ${plan.price_usd}
+                {plan.name} — {plan.duration_days}d — ${plan.price_usd}
               </option>
             ))}
           </select>
@@ -193,33 +201,38 @@ export function ReceptionRenewPayWizard({
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
             placeholder={selectedPlan ? String(selectedPlan.price_usd) : '0.00'}
+            className="min-h-11"
           />
         </div>
         <div>
-          <Label>Método de pago</Label>
+          <Label>Método</Label>
           <select
-            className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
+            className="mt-1 min-h-11 w-full rounded-xl border border-zinc-200 bg-transparent px-3 text-sm font-medium dark:border-zinc-700"
             value={method}
             onChange={(event) => setMethod(event.target.value as typeof method)}
           >
-            {PAYMENT_METHODS.map((value) => (
-              <option key={value} value={value}>
-                {value.replace('_', ' ')}
+            {PAYMENT_METHODS.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
               </option>
             ))}
           </select>
         </div>
         <div>
           <Label>Referencia (opcional)</Label>
-          <Input value={reference} onChange={(event) => setReference(event.target.value)} />
+          <Input
+            value={reference}
+            onChange={(event) => setReference(event.target.value)}
+            className="min-h-11"
+          />
         </div>
       </div>
 
       <div>
         <Label>Comprobante (opcional)</Label>
-        <label className="mt-1 flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-sm text-zinc-500 dark:border-zinc-700">
-          <Upload className="h-4 w-4" />
-          {proof?.name ?? 'Subir JPG, PNG, WebP o PDF'}
+        <label className="mt-1 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-3 text-xs text-zinc-500 dark:border-zinc-700">
+          <Upload className="h-3.5 w-3.5" />
+          {proof?.name ?? 'JPG, PNG, WebP o PDF'}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -229,17 +242,17 @@ export function ReceptionRenewPayWizard({
         </label>
       </div>
 
-      {error && <p className="text-sm font-medium text-red-500">{error}</p>}
+      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
       {success && (
-        <p className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-          <CheckCircle className="h-4 w-4" />
+        <p className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <CheckCircle className="h-3.5 w-3.5" />
           {success}
         </p>
       )}
-      <Button className="w-full" size="lg" loading={submitting} onClick={() => void submit()}>
-        Aprobar pago y renovar
+      <Button className="min-h-11 w-full" loading={submitting} onClick={() => void submit()}>
+        Aprobar y renovar
       </Button>
-    </Card>
+    </div>
   );
 }
 
