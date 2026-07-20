@@ -832,7 +832,7 @@ export default function ActiveWorkout() {
     setSessionError(null);
     try {
       if (sessionId) {
-        const res = await apiFetch('/api/workouts/cancel', {
+        const res = await apiFetch('/api/workouts/discard', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ session_id: sessionId }),
@@ -1433,11 +1433,10 @@ export default function ActiveWorkout() {
         onClose={() => {
           setShowResetConfirm(false);
         }}
-        title="Reiniciar progreso"
+        title="Descartar y reiniciar"
       >
         <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-          Se cerrará la sesión actual y comenzará una nueva desde cero. El tiempo y el progreso se
-          reiniciarán.
+          Se eliminará esta sesión incompleta (no quedará en el historial) y podrás empezar de cero.
         </p>
         <div className="flex gap-4">
           <Button
@@ -1456,7 +1455,7 @@ export default function ActiveWorkout() {
             onClick={() => void confirmResetProgress()}
             disabled={isResetting}
           >
-            {isResetting ? 'Reiniciando…' : 'Reiniciar'}
+            {isResetting ? 'Reiniciando…' : 'Descartar y reiniciar'}
           </Button>
         </div>
       </Modal>

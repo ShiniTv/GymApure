@@ -88,6 +88,7 @@ export default function MemberDashboard() {
         routineId={routine?.id}
         routineName={routine?.name}
         routineCompletedToday={primaryRoutineCompletedToday}
+        routineInProgress={primaryRoutineInProgress}
       />
 
       {pending > 0 && (

@@ -151,9 +151,9 @@ router.post(
     );
 
     if (successfulToday.rows[0]) {
+      // Drop orphan in-progress sessions — do not write them as failed history.
       await query(
-        `UPDATE workout_sessions
-         SET end_time = NOW(), success = 0
+        `DELETE FROM workout_sessions
          WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL`,
         [targetUserId, routine_id]
       );
@@ -164,9 +164,9 @@ router.post(
       return;
     }
 
+    // Very old open sessions: discard instead of marking failed in history.
     await query(
-      `UPDATE workout_sessions
-       SET end_time = NOW(), success = 0
+      `DELETE FROM workout_sessions
        WHERE user_id = $1 AND routine_id = $2
          AND end_time IS NULL
          AND start_time < NOW() - INTERVAL '12 hours'`,
@@ -304,9 +304,9 @@ router.post(
     );
 
     if (success) {
+      // Discard sibling open sessions (no failed history rows).
       await query(
-        `UPDATE workout_sessions
-         SET end_time = NOW(), success = 0
+        `DELETE FROM workout_sessions
          WHERE user_id = $1 AND routine_id = $2
            AND end_time IS NULL AND id != $3`,
         [session.user_id, session.routine_id, session_id]
@@ -345,6 +345,7 @@ router.post(
   '/cancel',
   requireWorkoutSessionAccess,
   asyncHandler(async (req, res) => {
+    // Alias of discard: abandoning mid-workout must not create a failed history row.
     const parsed = cancelWorkoutSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' });
@@ -354,16 +355,13 @@ router.post(
     const { session_id } = parsed.data;
 
     const { rowCount } = await query(
-      `UPDATE workout_sessions
-     SET end_time = NOW(), success = 0
-     WHERE id = $1 AND end_time IS NULL`,
+      `DELETE FROM workout_sessions WHERE id = $1 AND end_time IS NULL`,
       [session_id]
     );
     if (rowCount === 0) {
       res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
       return;
     }
-    await query('DELETE FROM workout_logs WHERE session_id = $1', [session_id]);
     res.json({ success: true });
   })
 );

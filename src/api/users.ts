@@ -644,6 +644,7 @@ router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, r
          JOIN routines r ON ws.routine_id = r.id
          WHERE ws.user_id = $1
            AND ws.end_time IS NOT NULL
+           AND ws.success = 1
            AND ws.start_time >= DATE_TRUNC('week', CURRENT_DATE)${trainerScope}`,
         countParams
       ),

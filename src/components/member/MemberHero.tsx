@@ -19,6 +19,8 @@ interface MemberHeroProps {
   routineId?: number;
   routineName?: string;
   routineCompletedToday?: boolean;
+  /** True when there is an open session for the primary routine. */
+  routineInProgress?: boolean;
   className?: string;
 }
 
@@ -30,6 +32,7 @@ export function MemberHero({
   routineId,
   routineName,
   routineCompletedToday = false,
+  routineInProgress = false,
   className,
 }: MemberHeroProps) {
   const navigate = useNavigate();
@@ -38,9 +41,11 @@ export function MemberHero({
 
   const trainLabel = routineCompletedToday
     ? 'Completada hoy'
-    : routineId
-      ? 'Entrenar ahora'
-      : 'Ver rutinas';
+    : routineInProgress
+      ? 'Continuar entrenamiento'
+      : routineId
+        ? 'Entrenar ahora'
+        : 'Ver rutinas';
 
   const renderTrainButton = (className?: string) => (
     <Button
@@ -80,6 +85,12 @@ export function MemberHero({
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
+          {routineInProgress && !routineCompletedToday && (
+            <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">
+              Tienes un entrenamiento en curso — puedes continuar donde lo dejaste
+            </p>
+          )}
+
           {routineCompletedToday && (
             <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               Rutina completada hoy — vuelve mañana
@@ -95,7 +106,6 @@ export function MemberHero({
             </div>
           )}
 
-          {/* Desktop: CTA junto al copy */}
           <div className="mt-5 hidden w-full sm:flex sm:w-auto">{renderTrainButton()}</div>
         </div>
 
@@ -106,7 +116,6 @@ export function MemberHero({
             label="Esta semana"
             sublabel="meta semanal"
           />
-          {/* Mobile: CTA debajo de la meta semanal */}
           <div className="flex w-full sm:hidden">{renderTrainButton()}</div>
         </div>
       </div>

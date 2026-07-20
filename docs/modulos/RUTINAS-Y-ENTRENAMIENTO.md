@@ -51,8 +51,16 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 
 ### Finalizar
 
-- Marca ejercicios completados.
-- **Finalizar entrenamiento** → guarda sesión en historial.
+- **Finalizar entrenamiento** → la sesión pasa al historial (Exitoso o Fallido según confirmación).
+- Si sales de la app sin finalizar, la sesión queda **en curso**: puedes **Continuar** desde Inicio, Rutinas o Historial.
+- **Descartar** (historial o Reiniciar en la sesión) elimina la sesión incompleta; **no** crea registro fallido.
+
+| Acción             | Resultado                         |
+| ------------------ | --------------------------------- |
+| Salir / cerrar app | Sigue en curso (reanudable)       |
+| Continuar          | Retoma series ya registradas      |
+| Finalizar          | Entra al historial                |
+| Descartar          | Se borra; no aparece en historial |
 
 ---
 

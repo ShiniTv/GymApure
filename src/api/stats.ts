@@ -552,14 +552,17 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
         `SELECT ws.start_time, ws.end_time, r.name AS routine_name
          FROM workout_sessions ws
          JOIN routines r ON r.id = ws.routine_id
-         WHERE ws.user_id = $1
+         WHERE ws.user_id = $1 AND ws.end_time IS NOT NULL AND ws.success = 1
          ORDER BY ws.start_time DESC
          LIMIT 1`,
         [userId]
       ),
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM workout_sessions
-         WHERE user_id = $1 AND start_time >= DATE_TRUNC('month', CURRENT_DATE)`,
+         WHERE user_id = $1
+           AND end_time IS NOT NULL
+           AND success = 1
+           AND start_time >= DATE_TRUNC('month', CURRENT_DATE)`,
         [userId]
       ),
       query<{ count: string }>(
@@ -567,12 +570,13 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
          FROM workout_sessions
          WHERE user_id = $1
            AND end_time IS NOT NULL
+           AND success = 1
            AND start_time >= DATE_TRUNC('week', CURRENT_DATE)`,
         [userId]
       ),
       query<{ d: string }>(
         `SELECT DISTINCT DATE(start_time)::text AS d FROM workout_sessions
-         WHERE user_id = $1 AND end_time IS NOT NULL
+         WHERE user_id = $1 AND end_time IS NOT NULL AND success = 1
          ORDER BY d DESC LIMIT 90`,
         [userId]
       ),
