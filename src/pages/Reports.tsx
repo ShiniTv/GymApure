@@ -261,20 +261,22 @@ export default function Reports() {
                 </div>
               </div>
 
-              <div className="mt-auto flex flex-col gap-1.5">
+              <div className="mt-auto flex gap-1.5">
                 <Button
                   size="sm"
+                  className="min-w-0 flex-1"
                   loading={pdfLoading}
                   disabled={busy && !pdfLoading}
                   aria-label={`Descargar PDF de ${report.title}`}
                   onClick={() => handleDownload(report.type, report.hasDateRange, 'pdf')}
                 >
                   <FileText className="h-4 w-4" />
-                  Descargar PDF
+                  PDF
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
+                  className="min-w-0 flex-1"
                   loading={csvLoading}
                   disabled={busy && !csvLoading}
                   aria-label={`Descargar CSV de ${report.title}`}

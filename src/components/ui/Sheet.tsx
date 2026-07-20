@@ -115,7 +115,7 @@ export function Sheet({
             'rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
             compact ? 'p-2.5' : 'p-3',
             side === 'bottom' && 'mb-2',
-            scrollable && 'flex max-h-[min(70dvh,calc(100dvh-8rem))] flex-col',
+            scrollable && 'flex max-h-[min(78dvh,calc(100dvh-7rem))] flex-col',
             cardClassName
           )}
         >

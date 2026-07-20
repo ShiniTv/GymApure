@@ -147,7 +147,7 @@ export default function MemberNutrition() {
       : null;
 
   return (
-    <div className="page-stack-tight max-w-3xl">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <Breadcrumbs
         items={[
           { label: 'Miembros', href: '/members' },
@@ -221,183 +221,185 @@ export default function MemberNutrition() {
         )}
       </div>
 
-      <Card padding="sm" rounded="xl">
-        <h2 className="section-title mb-3 flex items-center gap-1.5">
-          <UtensilsCrossed className="text-brand h-3.5 w-3.5" />
-          Plan nutricional
-        </h2>
-        {saveMsg && <p className="mb-2 text-xs text-emerald-600">{saveMsg}</p>}
-        {saveError && <p className="mb-2 text-xs text-red-500">{saveError}</p>}
-        <form onSubmit={handleSavePlan} className="space-y-3">
-          <div>
-            <Label>Título del plan</Label>
-            <Input
-              value={planForm.title}
-              onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
+        <Card padding="sm" rounded="xl" className="md:p-4">
+          <h2 className="section-title mb-3 flex items-center gap-1.5">
+            <UtensilsCrossed className="text-brand h-3.5 w-3.5" />
+            Plan nutricional
+          </h2>
+          {saveMsg && <p className="mb-2 text-xs text-emerald-600">{saveMsg}</p>}
+          {saveError && <p className="mb-2 text-xs text-red-500">{saveError}</p>}
+          <form onSubmit={handleSavePlan} className="space-y-3">
             <div>
-              <Label>kcal / día</Label>
+              <Label>Título del plan</Label>
               <Input
-                type="number"
-                min={1}
-                value={planForm.calories_target}
-                onChange={(e) => setPlanForm({ ...planForm, calories_target: e.target.value })}
+                value={planForm.title}
+                onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
                 required
               />
             </div>
-            <div>
-              <Label>Proteína (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.protein_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, protein_target_g: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label>Carbos (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.carbs_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, carbs_target_g: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label>Grasas (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.fat_target_g}
-                onChange={(e) => setPlanForm({ ...planForm, fat_target_g: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <div>
-              <Label>± kcal</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.calories_margin}
-                onChange={(e) => setPlanForm({ ...planForm, calories_margin: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± proteína (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.protein_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, protein_margin_g: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± carbos (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.carbs_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, carbs_margin_g: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>± grasas (g)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={planForm.fat_margin_g}
-                onChange={(e) => setPlanForm({ ...planForm, fat_margin_g: e.target.value })}
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Notas para el cliente</Label>
-            <Textarea
-              value={planForm.notes}
-              onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
-              placeholder="Indicaciones, horarios, preferencias…"
-              rows={3}
-            />
-          </div>
-          <Button type="submit" loading={saving} size="sm">
-            <Save className="h-4 w-4" />
-            {plan ? 'Actualizar plan' : 'Crear plan'}
-          </Button>
-        </form>
-      </Card>
-
-      <Card padding="sm" rounded="xl">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="section-title">Adherencia (7 días)</h2>
-          {avgAdherence != null && (
-            <span
-              className={cn(
-                'text-xs font-bold tabular-nums',
-                avgAdherence >= 75
-                  ? 'text-emerald-600'
-                  : avgAdherence >= 50
-                    ? 'text-amber-600'
-                    : 'text-red-500'
-              )}
-            >
-              Promedio {avgAdherence}%
-            </span>
-          )}
-        </div>
-        {summaryLoading && !summary ? (
-          <div className="flex justify-center py-6">
-            <Spinner />
-          </div>
-        ) : !plan ? (
-          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            Guarda un plan nutricional arriba para ver la adherencia del cliente.
-          </p>
-        ) : !summary || summary.days.every((d) => d.totals.calories === 0) ? (
-          <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            El cliente aún no ha registrado comidas esta semana.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {summary.days.map((day) => (
-              <div
-                key={day.date}
-                className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-              >
-                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                    {format(new Date(day.date + 'T12:00:00'), 'EEE d MMM', { locale: es })}
-                  </p>
-                  <p className="text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
-                    {day.totals.calories} kcal · P {Math.round(day.totals.protein)}g · C{' '}
-                    {Math.round(day.totals.carbs)}g · G {Math.round(day.totals.fat)}g
-                  </p>
-                </div>
-                <AdherenceBar
-                  percent={day.adherence_percent}
-                  status={day.calories_status}
-                  label="Cumplimiento"
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div>
+                <Label>kcal / día</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={planForm.calories_target}
+                  onChange={(e) => setPlanForm({ ...planForm, calories_target: e.target.value })}
+                  required
                 />
               </div>
-            ))}
+              <div>
+                <Label>Proteína (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.protein_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, protein_target_g: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Carbos (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.carbs_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, carbs_target_g: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Grasas (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.fat_target_g}
+                  onChange={(e) => setPlanForm({ ...planForm, fat_target_g: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div>
+                <Label>± kcal</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.calories_margin}
+                  onChange={(e) => setPlanForm({ ...planForm, calories_margin: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± proteína (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.protein_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, protein_margin_g: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± carbos (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.carbs_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, carbs_margin_g: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>± grasas (g)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={planForm.fat_margin_g}
+                  onChange={(e) => setPlanForm({ ...planForm, fat_margin_g: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Notas para el cliente</Label>
+              <Textarea
+                value={planForm.notes}
+                onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
+                placeholder="Indicaciones, horarios, preferencias…"
+                rows={3}
+              />
+            </div>
+            <Button type="submit" loading={saving} size="sm">
+              <Save className="h-4 w-4" />
+              {plan ? 'Actualizar plan' : 'Crear plan'}
+            </Button>
+          </form>
+        </Card>
+
+        <Card padding="sm" rounded="xl" className="md:p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="section-title">Adherencia (7 días)</h2>
+            {avgAdherence != null && (
+              <span
+                className={cn(
+                  'text-xs font-bold tabular-nums',
+                  avgAdherence >= 75
+                    ? 'text-emerald-600'
+                    : avgAdherence >= 50
+                      ? 'text-amber-600'
+                      : 'text-red-500'
+                )}
+              >
+                Promedio {avgAdherence}%
+              </span>
+            )}
           </div>
-        )}
-        {!plan && (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Guarda un plan arriba para que el cliente pueda ver sus metas en{' '}
-            <Link to="/nutrition" className="text-brand font-semibold hover:underline">
-              Mi nutrición
-            </Link>
-            .
-          </p>
-        )}
-      </Card>
+          {summaryLoading && !summary ? (
+            <div className="flex justify-center py-6">
+              <Spinner />
+            </div>
+          ) : !plan ? (
+            <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              Guarda un plan nutricional arriba para ver la adherencia del cliente.
+            </p>
+          ) : !summary || summary.days.every((d) => d.totals.calories === 0) ? (
+            <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              El cliente aún no ha registrado comidas esta semana.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {summary.days.map((day) => (
+                <div
+                  key={day.date}
+                  className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
+                >
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      {format(new Date(day.date + 'T12:00:00'), 'EEE d MMM', { locale: es })}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                      {day.totals.calories} kcal · P {Math.round(day.totals.protein)}g · C{' '}
+                      {Math.round(day.totals.carbs)}g · G {Math.round(day.totals.fat)}g
+                    </p>
+                  </div>
+                  <AdherenceBar
+                    percent={day.adherence_percent}
+                    status={day.calories_status}
+                    label="Cumplimiento"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {!plan && (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Guarda un plan arriba para que el cliente pueda ver sus metas en{' '}
+              <Link to="/nutrition" className="text-brand font-semibold hover:underline">
+                Mi nutrición
+              </Link>
+              .
+            </p>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

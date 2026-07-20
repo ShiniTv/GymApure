@@ -640,7 +640,7 @@ export default function MemberRoutine() {
         };
 
   return (
-    <div className="page-stack-tight">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <Link
         to="/members"
         className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 sm:hidden dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -796,7 +796,7 @@ export default function MemberRoutine() {
       <Card
         padding="sm"
         rounded="xl"
-        className="sticky top-2 z-10 hidden border-zinc-200/70 bg-white/95 backdrop-blur-sm sm:flex sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800/80 dark:bg-zinc-900/95"
+        className="hidden border-zinc-200/70 bg-white sm:flex sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800/80 dark:bg-zinc-900/50"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={member.full_name} size="sm" className="shrink-0" />

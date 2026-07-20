@@ -59,14 +59,14 @@ const ACTION_LABELS: Record<string, string> = {
 
 const ACTION_FILTERS = [
   { value: '', label: 'Todas' },
-  { value: 'payment.approve', label: 'Pagos aprobados' },
-  { value: 'payment.reject', label: 'Pagos rechazados' },
+  { value: 'payment.approve', label: 'Aprobados' },
+  { value: 'payment.reject', label: 'Rechazados' },
   { value: 'membership.assign', label: 'Membresías' },
   { value: 'reception.check_in', label: 'Entradas' },
   { value: 'reception.check_out', label: 'Salidas' },
-  { value: 'reception.walk_in', label: 'Registro mostrador' },
+  { value: 'reception.walk_in', label: 'Mostrador' },
   { value: 'user.status_change', label: 'Estados' },
-  { value: 'user.delete', label: 'Eliminaciones' },
+  { value: 'user.delete', label: 'Bajas' },
 ];
 
 function formatDetails(details: string | null): string {
@@ -155,11 +155,16 @@ export default function AuditLogs() {
         }
       />
 
-      <FilterChips options={ACTION_FILTERS} value={actionFilter} onChange={setActionFilter} />
+      <FilterChips
+        layout="scroll"
+        options={ACTION_FILTERS}
+        value={actionFilter}
+        onChange={setActionFilter}
+      />
 
-      <Card padding="lg" rounded="2xl">
+      <Card padding="sm" rounded="xl" className="md:p-4">
         {loading ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center py-8">
             <Spinner />
           </div>
         ) : logs.length === 0 ? (
@@ -176,7 +181,7 @@ export default function AuditLogs() {
               const isLast = index === logs.length - 1;
 
               return (
-                <li key={log.id} className="relative flex gap-4 pb-8">
+                <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
                   {!isLast && (
                     <span
                       className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"

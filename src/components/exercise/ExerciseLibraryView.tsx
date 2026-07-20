@@ -230,13 +230,8 @@ export function ExerciseLibraryView({
   }
 
   return (
-    <div className={cn(readOnly ? 'mx-auto w-full max-w-lg space-y-1.5' : 'space-y-1.5')}>
-      <div
-        className={cn(
-          'grid grid-cols-1 gap-1.5',
-          !readOnly && 'md:grid-cols-2 md:gap-2 xl:grid-cols-3 xl:gap-2.5'
-        )}
-      >
+    <div className="space-y-1.5">
+      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 md:gap-2 xl:grid-cols-3 xl:gap-2.5">
         {filteredExercises.map((exercise) => (
           <ExerciseCard
             key={exercise.id}
@@ -250,7 +245,7 @@ export function ExerciseLibraryView({
         ))}
       </div>
       {readOnly ? (
-        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 md:text-left dark:text-zinc-500">
           Toca un ejercicio para ver video o guía de ejecución.
         </p>
       ) : (

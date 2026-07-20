@@ -619,9 +619,11 @@ export default function Payments() {
               </>
             ) : (
               <>
-                <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+                <div className="lg:hidden">
                   {loading ? (
-                    <ListRowSkeleton rows={4} />
+                    <div className="px-3 py-2">
+                      <ListRowSkeleton rows={4} />
+                    </div>
                   ) : payments.length === 0 ? (
                     <EmptyState
                       icon={CreditCard}
@@ -641,77 +643,85 @@ export default function Payments() {
                       }
                     />
                   ) : (
-                    payments.map((payment) => (
-                      <div key={payment.id} className="px-3 py-2.5">
-                        <div className="flex min-w-0 items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                              {payment.user_name}
-                            </p>
-                            <p className="text-brand mt-0.5 text-base leading-none font-bold tabular-nums">
-                              ${payment.amount_usd}
-                            </p>
-                            <p className="mt-1 truncate text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-                              <time dateTime={payment.created_at}>
-                                {formatPaymentDate(payment.created_at)}
-                              </time>
-                              <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                              <span className="capitalize">
-                                {formatPaymentMethod(payment.method)}
-                              </span>
-                              {payment.reference && (
-                                <>
-                                  <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                                  <span className="font-mono" title={payment.reference}>
-                                    Ref: {payment.reference}
-                                  </span>
-                                </>
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            {isStaffPayment && payment.status === 'pending' && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openApproveModal(payment)}
-                                  className="border-emerald-200 px-2 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
+                    <div className="space-y-2 px-1 py-1">
+                      {payments.map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-brand text-base leading-none font-bold tabular-nums">
+                                  ${payment.amount_usd}
+                                </p>
+                                <Badge
+                                  variant={paymentStatusVariant(payment.status)}
+                                  className="px-1.5 py-0 text-[9px]"
                                 >
-                                  <Check className="h-4 w-4" />
-                                  Aprobar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setRejectReason('');
-                                    setActionError('');
-                                    setRejectTarget(payment);
-                                  }}
-                                  className="border-red-200 px-2 text-red-600 hover:bg-red-500/10 hover:text-red-600 dark:border-red-900 dark:text-red-400"
+                                  {paymentStatusLabel(payment.status)}
+                                </Badge>
+                              </div>
+                              <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                                Miembro
+                              </p>
+                              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                                {payment.user_name}
+                              </p>
+                              <p className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                                <time dateTime={payment.created_at}>
+                                  {formatPaymentDate(payment.created_at)}
+                                </time>
+                                <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                                <span className="capitalize">
+                                  {formatPaymentMethod(payment.method)}
+                                </span>
+                              </p>
+                              {payment.reference ? (
+                                <p
+                                  className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
+                                  title={payment.reference}
                                 >
-                                  <X className="h-4 w-4" />
-                                  Rechazar
-                                </Button>
-                              </>
-                            )}
-                            {payment.proof_url && (
+                                  Ref. {payment.reference}
+                                </p>
+                              ) : null}
+                            </div>
+                            {payment.proof_url ? (
                               <ProofPreviewButton
                                 onClick={() => setProofPreview(payment)}
-                                className="h-8 w-8"
+                                className="h-9 w-9 shrink-0"
                               />
-                            )}
-                            <Badge
-                              variant={paymentStatusVariant(payment.status)}
-                              className="px-1.5 py-0 text-[9px]"
-                            >
-                              {paymentStatusLabel(payment.status)}
-                            </Badge>
+                            ) : null}
                           </div>
+                          {isStaffPayment && payment.status === 'pending' ? (
+                            <div className="mt-2.5 flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openApproveModal(payment)}
+                                className="h-9 min-h-9 flex-1 border-emerald-500/35 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                              >
+                                <Check className="h-4 w-4" />
+                                Aprobar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setRejectReason('');
+                                  setActionError('');
+                                  setRejectTarget(payment);
+                                }}
+                                className="h-9 min-h-9 flex-1 border-red-500/35 bg-red-500/5 text-red-600 hover:bg-red-500/15 dark:text-red-400"
+                              >
+                                <X className="h-4 w-4" />
+                                Rechazar
+                              </Button>
+                            </div>
+                          ) : null}
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
                 <div className="hidden overflow-x-auto lg:block">

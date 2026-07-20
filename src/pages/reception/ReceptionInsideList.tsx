@@ -3,14 +3,12 @@ import { LogOut, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { Button } from '../../components/ui';
-import { cn } from '../../lib/utils';
 import type { InsideMember, ReceptionTab } from './types';
 
 interface ReceptionInsideListProps {
   inside: InsideMember[];
   insideCount: number;
   tab: ReceptionTab;
-  isCounterMode: boolean;
   actionLoading: boolean;
   checkingOutCedula: string | null;
   messageBanner: ReactNode;
@@ -22,7 +20,6 @@ export function ReceptionInsideList({
   inside,
   insideCount,
   tab,
-  isCounterMode,
   actionLoading,
   checkingOutCedula,
   messageBanner,
@@ -30,7 +27,7 @@ export function ReceptionInsideList({
   onRequestCheckout,
 }: ReceptionInsideListProps) {
   return (
-    <div className="rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
           Dentro
@@ -47,12 +44,7 @@ export function ReceptionInsideList({
         </Button>
       </div>
       {tab === 'inside' && messageBanner && <div className="mb-2">{messageBanner}</div>}
-      <div
-        className={cn(
-          'scroll-area divide-y divide-zinc-100 dark:divide-zinc-800',
-          isCounterMode ? 'max-h-56' : 'max-h-72'
-        )}
-      >
+      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
         {inside.map((m) => (
           <div key={m.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
             <div className="min-w-0 flex-1">

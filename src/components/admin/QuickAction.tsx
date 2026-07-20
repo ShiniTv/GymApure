@@ -118,7 +118,7 @@ export function QuickAction({
         )}
       </div>
       {iconOnlyMobile && (
-        <span className="mt-1 max-w-full truncate text-center text-[9px] leading-none font-semibold text-zinc-600 sm:hidden dark:text-zinc-400">
+        <span className="mt-1 max-w-full truncate text-center text-[10px] leading-tight font-semibold text-zinc-700 sm:hidden dark:text-zinc-300">
           {title}
         </span>
       )}

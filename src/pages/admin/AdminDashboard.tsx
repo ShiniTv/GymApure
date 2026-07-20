@@ -23,7 +23,6 @@ import {
   Wrench,
   Monitor,
   Mail,
-  Inbox,
   CalendarDays,
   LogIn,
 } from 'lucide-react';
@@ -42,15 +41,10 @@ import {
   SegmentedControl,
   EmptyState,
 } from '../../components/ui';
-import { cn, formatMoney } from '../../lib/utils';
+import { formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
-import {
-  readAdminFavorites,
-  resolveAdminFavoriteItems,
-  ADMIN_FAVORITES_CHANGED_EVENT,
-} from '../../lib/adminFavorites';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -63,24 +57,10 @@ export default function AdminDashboard() {
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
   const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
-  const [favoriteHrefs, setFavoriteHrefs] = useState(() => readAdminFavorites());
 
   const stats = adminStats.stats;
   const alertDays = stats?.expiryAlertDays ?? 7;
   const expiringList = stats?.expiringList ?? [];
-  const favoriteItems = resolveAdminFavoriteItems(favoriteHrefs);
-
-  useEffect(() => {
-    const syncFavorites = () => setFavoriteHrefs(readAdminFavorites());
-    window.addEventListener('storage', syncFavorites);
-    window.addEventListener('focus', syncFavorites);
-    window.addEventListener(ADMIN_FAVORITES_CHANGED_EVENT, syncFavorites);
-    return () => {
-      window.removeEventListener('storage', syncFavorites);
-      window.removeEventListener('focus', syncFavorites);
-      window.removeEventListener(ADMIN_FAVORITES_CHANGED_EVENT, syncFavorites);
-    };
-  }, []);
 
   useEffect(() => {
     apiFetch('/api/health/ops')
@@ -162,7 +142,6 @@ export default function AdminDashboard() {
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
   const pendingOld = stats?.pendingPaymentsOlderThan2Days ?? 0;
   const classFill = stats?.classFillPercentToday ?? 0;
-  const demoPending = stats?.demoLeadsPending ?? 0;
   const pausedSubs = stats?.pausedSubscriptions ?? 0;
 
   return (
@@ -283,14 +262,7 @@ export default function AdminDashboard() {
       )}
 
       <DashboardSection title="Requiere acción" compact>
-        <div
-          className={cn(
-            'grid gap-1.5 sm:gap-3',
-            demoPending > 0
-              ? 'grid-cols-3 sm:grid-cols-3 lg:grid-cols-5'
-              : 'grid-cols-4 sm:grid-cols-2 lg:grid-cols-4'
-          )}
-        >
+        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
           <QuickAction
             compact
             iconOnlyMobile
@@ -331,42 +303,7 @@ export default function AdminDashboard() {
             count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
             tone="orange"
           />
-          {demoPending > 0 && (
-            <QuickAction
-              compact
-              iconOnlyMobile
-              to="/demo-leads"
-              icon={Inbox}
-              title="Demos"
-              description="Solicitudes pendientes"
-              count={demoPending}
-              tone="blue"
-            />
-          )}
         </div>
-      </DashboardSection>
-
-      <DashboardSection title="Favoritos" compact>
-        {favoriteItems.length > 0 ? (
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 sm:gap-3">
-            {favoriteItems.map((item) => (
-              <QuickAction
-                key={item.href}
-                compact
-                iconOnlyMobile
-                to={item.href}
-                icon={item.icon}
-                title={item.name}
-                description={item.section ?? 'Atajo'}
-                tone="emerald"
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="rounded-xl border border-dashed border-zinc-200 px-3 py-3 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            Fija atajos desde Más (estrella) para verlos aquí.
-          </p>
-        )}
       </DashboardSection>
 
       <DashboardSection title="Operación" compact>

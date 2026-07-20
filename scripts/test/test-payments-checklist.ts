@@ -122,13 +122,13 @@ async function main() {
   cookie = '';
   csrfToken = '';
   await jsonApi('POST', '/api/auth/register', {
-    full_name: 'Pago Aprobado',
+    full_name: 'Cliente Aprobar',
     email: MEMBER_APPROVE_EMAIL,
     password: MEMBER_PASSWORD,
     cedula: CEDULA_APPROVE,
   });
   await jsonApi('POST', '/api/auth/register', {
-    full_name: 'Pago Rechazado',
+    full_name: 'Cliente Rechazo',
     email: MEMBER_REJECT_EMAIL,
     password: MEMBER_PASSWORD,
     cedula: CEDULA_REJECT,
@@ -193,7 +193,7 @@ async function main() {
 
   const searchByName = await jsonApi(
     'GET',
-    `/api/payments?q=${encodeURIComponent('Pago Aprobado')}&status=`
+    `/api/payments?q=${encodeURIComponent('Cliente Aprobar')}&status=`
   );
   const nameHits =
     (searchByName.data as { items?: { id: number; user_name?: string }[] }).items ?? [];

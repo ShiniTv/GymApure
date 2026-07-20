@@ -15,7 +15,6 @@ import {
   CalendarDays,
   ShieldCheck,
   Fingerprint,
-  Inbox,
   Dumbbell,
 } from 'lucide-react';
 import type { NavSection } from './types';
@@ -35,7 +34,6 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Clases', href: '/clases', icon: CalendarDays },
       { name: 'Equipamiento', href: '/equipment', icon: Wrench },
       { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: Fingerprint },
-      { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox },
     ],
   },
   {

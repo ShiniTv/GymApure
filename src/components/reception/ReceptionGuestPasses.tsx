@@ -84,8 +84,8 @@ export function ReceptionGuestPasses() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-3">
-      <div className="space-y-3 rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="mx-auto w-full max-w-3xl space-y-3">
+      <div className="space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
             <Ticket className="text-brand h-4 w-4" />

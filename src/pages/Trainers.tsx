@@ -267,8 +267,7 @@ export default function Trainers() {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[11px] tracking-wider text-zinc-500 uppercase">Turno</Label>
-          <ShiftFilter value={shiftFilter} onChange={setShiftFilter} />
+          <ShiftFilter value={shiftFilter} onChange={setShiftFilter} label="Turno" />
         </div>
 
         <div className="flex flex-wrap gap-1.5">

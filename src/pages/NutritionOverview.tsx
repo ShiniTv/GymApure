@@ -110,10 +110,7 @@ export default function NutritionOverview() {
       ) : (
         <>
           <div
-            className={cn(
-              'grid gap-2',
-              isTrainer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'
-            )}
+            className={cn('grid gap-2', isTrainer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3')}
           >
             {isTrainer && (
               <Card padding="sm" rounded="xl">
@@ -139,11 +136,7 @@ export default function NutritionOverview() {
                 </p>
               </Card>
             ) : null}
-            <Card
-              padding="sm"
-              rounded="xl"
-              className={isTrainer ? undefined : 'col-span-2 sm:col-span-1'}
-            >
+            <Card padding="sm" rounded="xl">
               <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                 Registrando
               </p>
@@ -152,12 +145,12 @@ export default function NutritionOverview() {
               </p>
             </Card>
             {!isTrainer && (
-              <Card padding="sm" rounded="xl" className="col-span-2 sm:col-span-1">
+              <Card padding="sm" rounded="xl">
                 <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                   Periodo
                 </p>
-                <p className="text-sm font-bold text-zinc-900 dark:text-white">
-                  {data.period_days} días
+                <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
+                  {data.period_days}d
                 </p>
               </Card>
             )}
@@ -196,13 +189,13 @@ export default function NutritionOverview() {
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
             {members.length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}
                 title="Sin resultados"
                 description="Prueba otro filtro o búsqueda."
-                className="py-8"
+                className="py-8 sm:col-span-2"
               />
             ) : (
               members.map((member) => {

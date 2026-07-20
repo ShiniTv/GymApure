@@ -109,7 +109,6 @@ export function RoutinesLibraryView({
     );
   }
 
-  const memberSparse = isMember && routines.length <= 2;
   const anyInProgress = routines.some((r) => activeRoutineSet.has(r.id));
   const allDoneToday =
     isMember && routines.length > 0 && routines.every((r) => completedTodaySet.has(r.id));
@@ -122,13 +121,7 @@ export function RoutinesLibraryView({
     : null;
 
   return (
-    <div
-      className={cn(
-        'space-y-2.5',
-        isMember && 'mx-auto w-full space-y-3',
-        memberSparse && 'max-w-md sm:max-w-lg'
-      )}
-    >
+    <div className="w-full space-y-2.5 sm:space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           {routines.length} rutina{routines.length !== 1 ? 's' : ''} · {totalExercises} ejercicio
@@ -148,12 +141,7 @@ export function RoutinesLibraryView({
         )}
       </div>
 
-      <div
-        className={cn(
-          'grid gap-2',
-          isMember ? 'grid-cols-1 gap-2.5' : 'grid-cols-1 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3'
-        )}
-      >
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;

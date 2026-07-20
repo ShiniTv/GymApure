@@ -119,7 +119,7 @@ export function ReceptionRenewPayWizard({
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-3 rounded-xl border border-zinc-200/70 bg-white/80 p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="mx-auto w-full max-w-3xl space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
       <div>
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Renovar y cobrar</h2>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
@@ -149,7 +149,7 @@ export function ReceptionRenewPayWizard({
           </Button>
         </div>
         {members.length > 0 && (
-          <div className="mt-2 max-h-40 space-y-0.5 overflow-y-auto rounded-xl border border-zinc-200/70 dark:border-zinc-800">
+          <div className="mt-2 space-y-0.5 rounded-xl border border-zinc-200/70 dark:border-zinc-800">
             {members.map((member) => (
               <button
                 type="button"

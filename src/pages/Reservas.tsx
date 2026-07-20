@@ -103,7 +103,7 @@ export default function Reservas() {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <PageHeader
         compact
         title={
@@ -137,7 +137,7 @@ export default function Reservas() {
           description="Cuando el gym publique sesiones, podrás reservar aquí."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
           {upcoming.map((session) => {
             const starts = parseISO(session.starts_at);
             const ends = parseISO(session.ends_at);

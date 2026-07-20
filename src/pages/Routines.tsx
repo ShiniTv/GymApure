@@ -563,7 +563,7 @@ export default function Routines() {
   }, [view, selectedDay]);
 
   const routinesPage = (
-    <div className="page-stack-tight">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       {isMember && routinesLoadError && (
         <EmptyState
           icon={Dumbbell}

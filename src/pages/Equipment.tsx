@@ -864,7 +864,7 @@ export default function Equipment() {
           <Card
             padding="sm"
             rounded="xl"
-            className="space-y-3 border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+            className="space-y-3 border-zinc-200/70 bg-white dark:border-zinc-800/80 dark:bg-zinc-900/50"
           >
             <div className="grid gap-3 lg:grid-cols-2">
               {isAdmin && (

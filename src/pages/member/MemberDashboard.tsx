@@ -71,7 +71,7 @@ export default function MemberDashboard() {
 
   if (statsError && !memberStats) {
     return (
-      <div className="page-stack">
+      <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <PageHeader
           showTitleOnMobile
           title={
@@ -92,7 +92,7 @@ export default function MemberDashboard() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <MemberHero
         name={user?.name ?? 'Atleta'}
         workoutsThisWeek={memberStats?.workoutsThisWeek ?? 0}

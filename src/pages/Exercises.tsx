@@ -213,7 +213,7 @@ export default function Exercises() {
 
   if (exercisesError && !loading) {
     return (
-      <div className="page-stack-tight">
+      <div className="page-stack-tight mx-auto w-full max-w-6xl">
         <PageHeader
           compact
           title={

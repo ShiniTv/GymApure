@@ -155,7 +155,7 @@ export default function Nutrition() {
 
   if (!plan) {
     return (
-      <div className="page-stack-tight">
+      <div className="page-stack-tight mx-auto w-full max-w-4xl">
         <PageHeader
           title={
             <>
@@ -197,7 +197,7 @@ export default function Nutrition() {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <div className="page-stack-tight mx-auto max-w-lg">
+    <div className="page-stack-tight mx-auto w-full max-w-4xl">
       <PageHeader
         compact
         title={
@@ -219,129 +219,133 @@ export default function Nutrition() {
 
       <WeekDateStrip selectedDate={selectedDate} onSelect={setSelectedDate} className="px-1" />
 
-      <section className="pt-3 sm:pt-4">
-        <CalorieSemiGauge
-          consumed={totals.calories}
-          target={plan.calories_target}
-          date={selectedDate}
-        />
-      </section>
+      <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-start md:gap-5 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-6">
+        <div className="space-y-2">
+          <section className="pt-3 sm:pt-2 md:pt-0">
+            <CalorieSemiGauge
+              consumed={totals.calories}
+              target={plan.calories_target}
+              date={selectedDate}
+            />
+          </section>
 
-      <section className="mx-auto grid max-w-sm grid-cols-3 justify-items-center gap-1 px-1 pt-3 pb-2 sm:pt-4">
-        <MacroRing
-          label="Proteína"
-          consumed={totals.protein}
-          target={plan.protein_target_g}
-          colorClass="text-amber-400 dark:text-amber-300"
-          glowColor="#fbbf24"
-          icon={Beef}
-        />
-        <MacroRing
-          label="Carbos"
-          consumed={totals.carbs}
-          target={plan.carbs_target_g}
-          colorClass="text-orange-500"
-          glowColor="#f97316"
-          icon={Wheat}
-        />
-        <MacroRing
-          label="Grasas"
-          consumed={totals.fat}
-          target={plan.fat_target_g}
-          colorClass="text-rose-500"
-          glowColor="#f43f5e"
-          icon={Droplet}
-        />
-      </section>
+          <section className="mx-auto grid max-w-sm grid-cols-3 justify-items-center gap-1 px-1 pt-2 pb-1 md:max-w-none md:pt-1">
+            <MacroRing
+              label="Proteína"
+              consumed={totals.protein}
+              target={plan.protein_target_g}
+              colorClass="text-amber-400 dark:text-amber-300"
+              glowColor="#fbbf24"
+              icon={Beef}
+            />
+            <MacroRing
+              label="Carbos"
+              consumed={totals.carbs}
+              target={plan.carbs_target_g}
+              colorClass="text-orange-500"
+              glowColor="#f97316"
+              icon={Wheat}
+            />
+            <MacroRing
+              label="Grasas"
+              consumed={totals.fat}
+              target={plan.fat_target_g}
+              colorClass="text-rose-500"
+              glowColor="#f43f5e"
+              icon={Droplet}
+            />
+          </section>
 
-      {coachingHint && (
-        <p className="px-1 pb-1.5 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
-          {coachingHint}
-        </p>
-      )}
+          {coachingHint && (
+            <p className="px-1 pb-1 text-center text-[11px] text-zinc-500 md:text-left dark:text-zinc-400">
+              {coachingHint}
+            </p>
+          )}
 
-      {plan.notes && (
-        <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-          <span className="text-zinc-400 dark:text-zinc-500">Entrenador · </span>
-          {plan.notes}
-        </p>
-      )}
-
-      <Card padding="sm" rounded="xl" className="border-zinc-200/80 dark:border-zinc-800">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="section-title">Comidas del día</h2>
-          {canEditLogs && (
-            <Button size="sm" variant="ghost" onClick={openAddMeal} className="text-brand">
-              <Plus className="h-4 w-4" />
-              Añadir
-            </Button>
+          {plan.notes && (
+            <p className="px-2 pb-1 text-center text-[11px] leading-relaxed text-zinc-500 md:px-1 md:text-left dark:text-zinc-400">
+              <span className="text-zinc-400 dark:text-zinc-500">Entrenador · </span>
+              {plan.notes}
+            </p>
           )}
         </div>
-        {logs.length === 0 ? (
-          <div className="flex flex-col items-center gap-2.5 py-5 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-              <UtensilsCrossed className="h-4 w-4 text-zinc-400" />
-            </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Aún no registraste comidas hoy.
-            </p>
+
+        <Card padding="sm" rounded="xl" className="border-zinc-200/80 md:p-4 dark:border-zinc-800">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="section-title">Comidas del día</h2>
             {canEditLogs && (
-              <Button size="sm" onClick={openAddMeal}>
+              <Button size="sm" variant="ghost" onClick={openAddMeal} className="text-brand">
                 <Plus className="h-4 w-4" />
-                Registrar comida
+                Añadir
               </Button>
             )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {logsByMeal.map(({ type, items }) => (
-              <div key={type}>
-                <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
-                  {MEAL_TYPE_LABELS[type]}
-                </p>
-                <ul className="space-y-2">
-                  {items.map((log) => (
-                    <li
-                      key={log.id}
-                      className="flex items-start justify-between gap-2 rounded-2xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                          {log.description}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
-                          {log.calories} kcal · P {log.protein_g}g · C {log.carbs_g}g · G{' '}
-                          {log.fat_g}g
-                        </p>
-                      </div>
-                      {canEditLogs && (
-                        <div className="flex shrink-0 gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => openEditMeal(log)}
-                            className="hover:text-brand hover:bg-brand/10 rounded-xl p-2 text-zinc-400 dark:text-zinc-300"
-                            aria-label="Editar"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleDeleteMeal(log)}
-                            className="rounded-xl p-2 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                            aria-label="Eliminar"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+          {logs.length === 0 ? (
+            <div className="flex flex-col items-center gap-2.5 py-5 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+                <UtensilsCrossed className="h-4 w-4 text-zinc-400" />
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Aún no registraste comidas hoy.
+              </p>
+              {canEditLogs && (
+                <Button size="sm" onClick={openAddMeal}>
+                  <Plus className="h-4 w-4" />
+                  Registrar comida
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {logsByMeal.map(({ type, items }) => (
+                <div key={type}>
+                  <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
+                    {MEAL_TYPE_LABELS[type]}
+                  </p>
+                  <ul className="space-y-2">
+                    {items.map((log) => (
+                      <li
+                        key={log.id}
+                        className="flex items-start justify-between gap-2 rounded-2xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                            {log.description}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                            {log.calories} kcal · P {log.protein_g}g · C {log.carbs_g}g · G{' '}
+                            {log.fat_g}g
+                          </p>
+                        </div>
+                        {canEditLogs && (
+                          <div className="flex shrink-0 gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => openEditMeal(log)}
+                              className="hover:text-brand hover:bg-brand/10 rounded-xl p-2 text-zinc-400 dark:text-zinc-300"
+                              aria-label="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDeleteMeal(log)}
+                              className="rounded-xl p-2 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                              aria-label="Eliminar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
 
       <Modal
         open={showMealModal}

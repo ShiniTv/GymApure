@@ -341,17 +341,17 @@ export default function Classes() {
           }
         />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
           {sessions.map((session) => {
             const starts = parseISO(session.starts_at);
             const cancelled = session.status === 'cancelled';
             const showCancel = canCancelSession(session);
             return (
-              <Card key={session.id} padding="md" rounded="xl">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Card key={session.id} padding="sm" rounded="xl" className="md:p-4">
+                <div className="flex flex-col gap-3 sm:h-full sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                      <h3 className="text-[15px] font-bold text-zinc-900 dark:text-white">
                         {session.class_type_name}
                       </h3>
                       {cancelled ? (
@@ -372,11 +372,7 @@ export default function Classes() {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     {canManageBookings && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => void openBookings(session)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => void openBookings(session)}>
                         Reservas
                       </Button>
                     )}
@@ -387,7 +383,7 @@ export default function Classes() {
                         disabled={saving}
                         onClick={() => void handleCancelSession(session.id)}
                       >
-                        Cancelar clase
+                        Cancelar
                       </Button>
                     )}
                   </div>

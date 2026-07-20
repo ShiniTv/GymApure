@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Fingerprint,
   LogIn,
-  Inbox,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -37,7 +36,6 @@ export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
     section: 'Operación',
   },
   { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
-  { name: 'Solicitudes demo', href: '/demo-leads', icon: Inbox, section: 'Operación' },
   { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign, section: 'Operación' },
   { name: 'Entrenadores', href: '/trainers', icon: UserCog, section: 'Operación' },
   { name: 'Clases', href: '/clases', icon: CalendarDays, section: 'Operación' },

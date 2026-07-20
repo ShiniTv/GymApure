@@ -25,7 +25,7 @@ export function EquipmentListCard({
       onClick={() => onOpen(item.id)}
       className={cn(
         'flex w-full min-w-0 items-center gap-2.5 rounded-xl border border-l-4 p-2.5 text-left transition-colors sm:gap-3 sm:p-3',
-        'border-zinc-200/70 bg-white/80 hover:border-zinc-300 hover:bg-white',
+        'border-zinc-200/70 bg-white hover:border-zinc-300',
         'dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80',
         STATUS_BORDER_STYLES[item.status]
       )}

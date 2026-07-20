@@ -557,7 +557,7 @@ export default function CheckIn() {
         ]}
         className="mb-6"
       />
-      <Card padding="lg" rounded="2xl" className="shadow-2xl transition-all">
+      <Card padding="sm" rounded="xl" className="shadow-md transition-all md:p-5">
         {formContent}
       </Card>
       <div className="mt-8 flex flex-col items-center gap-3">

@@ -246,7 +246,7 @@ export default function Attendance() {
         </Card>
       )}
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />
         <StatCard compact title="Promedio" value={avgEntries} icon={TrendingUp} color="blue" />
         <StatCard
@@ -258,7 +258,7 @@ export default function Attendance() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         <Card padding="sm" rounded="xl" className="md:p-4">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-zinc-900 sm:mb-5 sm:text-base dark:text-white">
             <Calendar className="text-brand h-4 w-4 shrink-0" />

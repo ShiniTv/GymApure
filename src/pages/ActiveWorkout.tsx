@@ -885,7 +885,7 @@ export default function ActiveWorkout() {
 
   if (fetchError || !routine) {
     return (
-      <div className="page-stack">
+      <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <EmptyState
           icon={Dumbbell}
           title="Rutina no disponible"
@@ -898,7 +898,7 @@ export default function ActiveWorkout() {
 
   if (routineBlockedToday) {
     return (
-      <div className="page-stack">
+      <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <EmptyState
           icon={CheckCircle}
           title="Rutina completada hoy"
@@ -925,14 +925,16 @@ export default function ActiveWorkout() {
     : 0;
 
   return (
-    <div className={cn('page-stack', isMobileFocus ? 'pb-36' : 'pb-20')}>
+    <div
+      className={cn('page-stack-tight mx-auto w-full max-w-5xl', isMobileFocus ? 'pb-36' : 'pb-20')}
+    >
       <WorkoutCelebration active={showCelebration} />
       <Breadcrumbs
         className="hidden md:flex"
         items={[{ label: 'Rutinas', href: '/routines' }, { label: routine.name }]}
       />
 
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/80 py-2.5 backdrop-blur-md sm:py-3 dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-zinc-50 py-2.5 sm:py-3 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex min-w-0 items-center gap-2 md:gap-4">
           <button
             onClick={() => navigate('/routines')}
@@ -1124,7 +1126,7 @@ export default function ActiveWorkout() {
       </Modal>
 
       {isMobileFocus && !isResting && routine.exercises.length > 1 && (
-        <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-200 bg-zinc-50/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden dark:border-zinc-800 dark:bg-zinc-950/95">
+        <div className="fixed right-0 bottom-0 left-0 z-40 border-t border-zinc-200 bg-zinc-50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden dark:border-zinc-800 dark:bg-zinc-950">
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <Button
               type="button"

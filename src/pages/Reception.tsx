@@ -473,7 +473,7 @@ export default function Reception() {
   const lookupPanel = (
     <div
       className={cn(
-        'space-y-3 rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        'space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
         !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
       )}
     >
@@ -556,7 +556,7 @@ export default function Reception() {
   const memberPanel = (
     <div
       className={cn(
-        'rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        'rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
         !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
       )}
     >
@@ -732,7 +732,6 @@ export default function Reception() {
       inside={inside}
       insideCount={insideCount}
       tab={tab}
-      isCounterMode={isCounterMode}
       actionLoading={actionLoading}
       checkingOutCedula={checkingOutCedula}
       messageBanner={message ? actionMessageBanner : null}
@@ -762,7 +761,7 @@ export default function Reception() {
     const showMemberPanel = lookupLoading || lookup != null;
 
     return (
-      <div className="page-stack-tight">
+      <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold text-zinc-900 dark:text-white">
@@ -800,7 +799,7 @@ export default function Reception() {
           </div>
         </div>
 
-        <div className="panel-wide space-y-3">
+        <div className="mx-auto w-full max-w-5xl space-y-3">
           <CounterTabNav tab={tab} insideCount={insideCount} onChange={changeTab} />
 
           {tab === 'access' && (
@@ -849,7 +848,7 @@ export default function Reception() {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <ReceptionHomeSummary onOpenCounter={() => setCounterMode(true)} />
       {counterModals}
     </div>

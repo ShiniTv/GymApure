@@ -131,9 +131,9 @@ export default function DemoLeads() {
         ]}
       />
 
-      <Card padding="lg" rounded="2xl">
+      <Card padding="sm" rounded="xl" className="md:p-4">
         {loading ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center py-8">
             <Spinner />
           </div>
         ) : leads.length === 0 ? (

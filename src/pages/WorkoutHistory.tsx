@@ -373,7 +373,7 @@ export default function WorkoutHistory() {
   }
 
   const historyPage = (
-    <div className="page-stack-tight">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       {id && (
         <Breadcrumbs
           items={[

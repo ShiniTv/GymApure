@@ -249,7 +249,7 @@ export default function ReceptionWalkInWizard({
 
   if (success) {
     return (
-      <Card padding="md" rounded="2xl" className="page-stack max-w-2xl">
+      <Card padding="sm" rounded="xl" className="mx-auto w-full max-w-3xl md:p-4">
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
@@ -365,7 +365,7 @@ export default function ReceptionWalkInWizard({
   }
 
   return (
-    <div className="page-stack max-w-2xl rounded-xl border border-zinc-200/70 bg-white/80 p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="mx-auto w-full max-w-3xl space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
       <div>
         <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
           <UserPlus className="text-brand h-4 w-4" />

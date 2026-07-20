@@ -32,7 +32,7 @@ interface KpiItem {
 }
 
 const LIGHT =
-  'rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
+  'rounded-xl border border-zinc-200/70 bg-white dark:border-zinc-800/80 dark:bg-zinc-900/50';
 
 const kpiToneMap: Record<KpiTone, string> = {
   orange: 'text-brand dark:text-brand',
@@ -303,7 +303,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
                 {isMobile ? 'Ver todo' : 'Dentro ahora'}
               </Link>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col md:max-h-[260px] md:overflow-y-auto">
+            <div className="flex min-h-0 flex-1 flex-col">
               <ReceptionActivityFeed
                 limit={isMobile ? 3 : 10}
                 refreshKey={refreshKey}
