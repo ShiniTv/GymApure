@@ -101,7 +101,6 @@ export function MemberBottomNav() {
         zIndex={46}
         className="px-3"
         cardClassName="mx-auto max-w-md shadow-lg"
-        scrollable
         showHandle
         compact
       >
