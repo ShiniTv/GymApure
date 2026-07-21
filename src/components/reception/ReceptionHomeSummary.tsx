@@ -276,7 +276,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
               ]}
             />
 
-            <div className="hidden gap-1.5 overflow-x-auto pb-0.5 lg:flex">
+            <div className="hidden flex-wrap gap-1.5 pb-0.5 lg:flex">
               <ShortcutChip to="/members" icon={UserPlus} label="Miembros" />
               <ShortcutChip
                 to="/payments?status=pending"

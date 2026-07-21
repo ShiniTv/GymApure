@@ -9,13 +9,11 @@ import {
   Settings2,
   UserCog,
   UserCircle,
-  UtensilsCrossed,
   Wrench,
   BadgeDollarSign,
   CalendarDays,
   ShieldCheck,
   Fingerprint,
-  Dumbbell,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -30,7 +28,6 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Miembros', href: '/members', icon: Users },
       { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign },
       { name: 'Entrenadores', href: '/trainers', icon: UserCog },
-      { name: 'Rutinas', href: '/routines', icon: Dumbbell },
       { name: 'Clases', href: '/clases', icon: CalendarDays },
       { name: 'Equipamiento', href: '/equipment', icon: Wrench },
       { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: Fingerprint },
@@ -46,7 +43,6 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Asistencias', href: '/attendance', icon: BarChart2 },
       { name: 'Reportes', href: '/reports', icon: FileSpreadsheet },
       { name: 'Auditoría', href: '/audit-logs', icon: ScrollText },
-      { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
       { name: 'Mensajes', href: '/messages', icon: MessageSquare },
     ],
   },

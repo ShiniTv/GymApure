@@ -256,7 +256,7 @@ export default function Classes() {
   const loading = sessionsLoading || (canCreateSession && typesLoading);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
         title={pageTitle}
@@ -341,7 +341,7 @@ export default function Classes() {
           }
         />
       ) : (
-        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
           {sessions.map((session) => {
             const starts = parseISO(session.starts_at);
             const cancelled = session.status === 'cancelled';
@@ -399,6 +399,7 @@ export default function Classes() {
         onClose={() => {
           if (!saving) setTypeModal(false);
         }}
+        maxWidth="lg"
         title={
           <>
             Nuevo <span className="text-brand">tipo</span>
@@ -453,6 +454,7 @@ export default function Classes() {
         onClose={() => {
           if (!saving) setSessionModal(false);
         }}
+        maxWidth="lg"
         title={
           <>
             Programar <span className="text-brand">clase</span>
@@ -526,6 +528,7 @@ export default function Classes() {
         onClose={() => {
           if (!saving) setBookingSession(null);
         }}
+        maxWidth="2xl"
         title={
           bookingSession ? (
             <>

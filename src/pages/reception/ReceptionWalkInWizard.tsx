@@ -379,11 +379,7 @@ export default function ReceptionWalkInWizard({
         </p>
       </div>
 
-      <div
-        className="flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label="Pasos del registro"
-      >
+      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Pasos del registro">
         {STEPS.map((label, i) => (
           <button
             key={label}

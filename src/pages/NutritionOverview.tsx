@@ -15,6 +15,7 @@ import {
   Avatar,
   BackToDashboardLink,
   SearchInput,
+  FilterChips,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { cn } from '../lib/utils';
@@ -59,10 +60,10 @@ export default function NutritionOverview() {
       : (data?.members.length ?? 0);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
-        className={isTrainer ? 'max-lg:!hidden' : undefined}
+        showTitleOnMobile
         title={
           isTrainer ? (
             <>
@@ -81,12 +82,6 @@ export default function NutritionOverview() {
         }
         action={<BackToDashboardLink />}
       />
-
-      {isTrainer && (
-        <p className="px-0.5 text-[11px] text-zinc-500 lg:hidden dark:text-zinc-400">
-          Quién tiene plan, quién no, y adherencia de los últimos 7 días.
-        </p>
-      )}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -163,33 +158,20 @@ export default function NutritionOverview() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    { id: 'all', label: 'Todos' },
-                    { id: 'without', label: 'Sin plan' },
-                    { id: 'with', label: 'Con plan' },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setFilter(opt.id)}
-                    className={cn(
-                      'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                      filter === opt.id
-                        ? 'border-brand/40 bg-brand/10 text-brand'
-                        : 'border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              <FilterChips
+                options={[
+                  { value: 'all', label: 'Todos' },
+                  { value: 'without', label: 'Sin plan' },
+                  { value: 'with', label: 'Con plan' },
+                ]}
+                value={filter}
+                onChange={(v) => setFilter(v as 'all' | 'with' | 'without')}
+              />
             </div>
           )}
 
-          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+          {/* Mobile / tablet cards */}
+          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:hidden">
             {members.length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}
@@ -259,6 +241,83 @@ export default function NutritionOverview() {
               })
             )}
           </div>
+
+          {/* Desktop table */}
+          <Card padding="none" rounded="xl" className="hidden overflow-hidden lg:block">
+            {members.length === 0 ? (
+              <EmptyState
+                icon={UtensilsCrossed}
+                title="Sin resultados"
+                description="Prueba otro filtro o búsqueda."
+                className="py-10"
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[40rem] text-left text-sm">
+                  <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+                    <tr>
+                      <th className="px-4 py-2.5">Miembro</th>
+                      <th className="px-4 py-2.5">Plan</th>
+                      <th className="px-4 py-2.5">Registros</th>
+                      <th className="px-4 py-2.5">Adherencia</th>
+                      <th className="px-4 py-2.5 text-right"> </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {members.map((member) => {
+                      const hasPlan = 'has_plan' in member ? member.has_plan : true;
+                      return (
+                        <tr
+                          key={member.user_id}
+                          className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <Avatar name={member.full_name} size="sm" className="shrink-0" />
+                              <p className="truncate font-semibold text-zinc-900 dark:text-white">
+                                {member.full_name}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="max-w-[14rem] px-4 py-3 text-xs text-zinc-600 dark:text-zinc-300">
+                            {hasPlan ? (
+                              <span className="truncate">{member.plan_title}</span>
+                            ) : (
+                              <span className="text-amber-600 dark:text-amber-400">Sin plan</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+                            {hasPlan ? `${member.logged_days}d` : '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {hasPlan ? (
+                              <Badge
+                                className={cn(
+                                  'tabular-nums',
+                                  adherenceBadgeClass(member.adherence_percent)
+                                )}
+                              >
+                                {member.adherence_percent}%
+                              </Badge>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Link to={`/members/${member.user_id}/nutrition`}>
+                              <Button size="sm" variant={hasPlan ? 'ghost' : 'secondary'}>
+                                {hasPlan ? 'Ver' : 'Crear'}
+                              </Button>
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </>
       )}
     </div>

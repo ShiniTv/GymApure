@@ -59,11 +59,12 @@ export default function Notifications() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="page-stack-tight mx-auto w-full max-w-5xl">
       <PageHeader
+        compact
+        showTitleOnMobile
         title="Notificaciones"
         subtitle="Novedades y alertas que requieren atención"
-        showTitleOnMobile
         action={
           unreadPersisted > 0 ? (
             <Button

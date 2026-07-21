@@ -163,8 +163,8 @@ export function MemberBottomNav() {
                         <span className="relative inline-flex">
                           <item.icon className="h-5 w-5" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
-                            <span className="bg-brand absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-[8px] font-bold text-white">
-                              {chatUnread > 9 ? '9+' : chatUnread}
+                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                              {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
                         </span>
@@ -247,8 +247,8 @@ export function MemberBottomNav() {
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {chatUnread > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
-                            {chatUnread > 9 ? '9+' : chatUnread}
+                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
                       </span>
@@ -276,8 +276,8 @@ export function MemberBottomNav() {
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {item.showUnreadBadge && chatUnread > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 flex h-[0.875rem] min-w-[0.875rem] items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white ring-2 ring-white dark:ring-zinc-900">
-                            {chatUnread > 9 ? '9+' : chatUnread}
+                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
                       </span>

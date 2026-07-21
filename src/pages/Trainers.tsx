@@ -21,6 +21,7 @@ import {
   Textarea,
   TableRowSkeleton,
   PasswordInput,
+  FilterChips,
 } from '../components/ui';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { TrainerMembersModal } from '../components/trainers/TrainerMembersModal';
@@ -37,7 +38,6 @@ import { passwordSchema } from '../lib/passwordSchema';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
 
 const EMPTY_FORM = {
@@ -231,7 +231,7 @@ export default function Trainers() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
         title={
@@ -268,40 +268,18 @@ export default function Trainers() {
 
         <div className="space-y-2">
           <ShiftFilter value={shiftFilter} onChange={setShiftFilter} label="Turno" />
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setLevelFilter('');
-            }}
-            className={cn(
-              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-              levelFilter === ''
-                ? 'border-brand bg-brand/10 text-brand'
-                : 'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
-            )}
-          >
-            Todos los niveles
-          </button>
-          {TRAINER_LEVELS.map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => {
-                setLevelFilter(level);
-              }}
-              className={cn(
-                'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                levelFilter === level
-                  ? 'border-brand bg-brand/10 text-brand'
-                  : 'border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
-              )}
-            >
-              {LEVEL_LABELS[level]}
-            </button>
-          ))}
+          <FilterChips
+            options={[
+              { value: '', label: 'Todos los niveles' },
+              ...TRAINER_LEVELS.map((level) => ({
+                value: level,
+                label: LEVEL_LABELS[level],
+              })),
+            ]}
+            value={levelFilter}
+            onChange={(v) => setLevelFilter(v as TrainerLevel | '')}
+            ariaLabel="Nivel del entrenador"
+          />
         </div>
       </div>
 
@@ -501,6 +479,7 @@ export default function Trainers() {
             Nuevo <span className="text-brand">entrenador</span>
           </>
         }
+        maxWidth="2xl"
         scrollable
       >
         <div className="form-stack">
@@ -633,6 +612,7 @@ export default function Trainers() {
             Editar <span className="text-brand">perfil</span>
           </>
         }
+        maxWidth="2xl"
         scrollable
       >
         {editTarget && (

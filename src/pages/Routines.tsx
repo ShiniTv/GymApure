@@ -563,7 +563,7 @@ export default function Routines() {
   }, [view, selectedDay]);
 
   const routinesPage = (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       {isMember && routinesLoadError && (
         <EmptyState
           icon={Dumbbell}
@@ -583,9 +583,15 @@ export default function Routines() {
             compact
             showTitleOnMobile
             title={
-              <>
-                Mis <span className="text-brand">rutinas</span>
-              </>
+              isMember ? (
+                <>
+                  Mis <span className="text-brand">rutinas</span>
+                </>
+              ) : (
+                <>
+                  Gestión de <span className="text-brand">rutinas</span>
+                </>
+              )
             }
             subtitle={
               user?.role === 'member'
@@ -671,7 +677,7 @@ export default function Routines() {
           {user?.role !== 'member' && (
             <SegmentedControl
               variant="compact"
-              layout="scroll"
+              layout="wrap"
               className="w-full"
               value={view}
               onChange={changeView}

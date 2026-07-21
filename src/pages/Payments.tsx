@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Check, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { formatMoney } from '../lib/utils';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -335,10 +336,9 @@ export default function Payments() {
 
   return (
     <PullToRefreshContainer pullDistance={pullPayments} isRefreshing={refreshingPayments}>
-      <div className="page-stack-tight mx-auto w-full max-w-5xl" {...paymentsHandlers}>
+      <div className="page-stack-tight mx-auto w-full max-w-7xl" {...paymentsHandlers}>
         <PageHeader
           compact
-          showTitleOnMobile={isStaffPayment}
           title={
             isMember ? (
               <>
@@ -385,6 +385,43 @@ export default function Payments() {
           }
         />
 
+        {isStaffPayment && adminStats?.stats && (
+          <div className="hidden grid-cols-4 gap-2 lg:grid">
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Pendientes
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.pendingPayments}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                &gt;2 días
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Ingresos mes
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                En lista
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {total}
+              </p>
+            </div>
+          </div>
+        )}
+
         {isMember && !loading && (payments.length > 0 || Boolean(statusFilter)) && (
           <div className="flex items-center justify-between gap-2 px-0.5">
             <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -423,7 +460,7 @@ export default function Payments() {
         )}
 
         {isStaffPayment && (
-          <div className="space-y-2.5">
+          <>
             <SearchInput
               placeholder="Buscar por nombre o referencia…"
               value={searchInput}
@@ -449,7 +486,7 @@ export default function Payments() {
                 setPage(1);
               }}
             />
-          </div>
+          </>
         )}
 
         {paymentsError ? (
@@ -578,7 +615,7 @@ export default function Payments() {
                               {formatPaymentMethod(payment.method)}
                             </td>
                             <td
-                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
+                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
                               title={payment.reference}
                             >
                               {payment.reference}
@@ -774,7 +811,7 @@ export default function Payments() {
                               {formatPaymentMethod(payment.method)}
                             </td>
                             <td
-                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:px-5 dark:text-zinc-300"
+                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
                               title={payment.reference}
                             >
                               {payment.reference}

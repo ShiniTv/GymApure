@@ -1,5 +1,6 @@
-import { cn } from '../../lib/utils';
+import { FilterChips } from '../ui/FilterChips';
 import { TRAINING_SHIFTS, SHIFT_SHORT_LABELS, type TrainingShift } from '../../lib/trainingShift';
+import { cn } from '../../lib/utils';
 
 interface ShiftFilterProps {
   value: TrainingShift | '';
@@ -16,52 +17,21 @@ export function ShiftFilter({
   className,
   label = 'Turno de entrenamiento',
 }: ShiftFilterProps) {
+  const options = [
+    ...(includeAll ? [{ value: '', label: 'Todos los turnos' }] : []),
+    ...TRAINING_SHIFTS.map((shift) => ({
+      value: shift,
+      label: SHIFT_SHORT_LABELS[shift],
+    })),
+  ];
+
   return (
-    <div className={cn('space-y-1.5', className)}>
-      {label ? (
-        <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-          {label}
-        </p>
-      ) : null}
-      <div
-        className="flex flex-wrap gap-1.5"
-        role="group"
-        aria-label={label || 'Filtrar por turno'}
-      >
-        {includeAll && (
-          <button
-            type="button"
-            onClick={() => {
-              onChange('');
-            }}
-            className={cn(
-              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-              value === ''
-                ? 'border-brand bg-brand/10 text-brand'
-                : 'hover:border-brand/40 border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
-            )}
-          >
-            Todos
-          </button>
-        )}
-        {TRAINING_SHIFTS.map((shift) => (
-          <button
-            key={shift}
-            type="button"
-            onClick={() => {
-              onChange(shift);
-            }}
-            className={cn(
-              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-              value === shift
-                ? 'border-brand bg-brand/10 text-brand'
-                : 'hover:border-brand/40 border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400'
-            )}
-          >
-            {SHIFT_SHORT_LABELS[shift]}
-          </button>
-        ))}
-      </div>
-    </div>
+    <FilterChips
+      className={cn(className)}
+      ariaLabel={label}
+      options={options}
+      value={value}
+      onChange={(next) => onChange(next as TrainingShift | '')}
+    />
   );
 }

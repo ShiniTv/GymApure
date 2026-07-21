@@ -55,5 +55,6 @@ export function notificationItemWeight(item: NotificationItem): number {
 
 export function formatNotificationBadgeCount(total: number): string | null {
   if (total <= 0) return null;
-  return total > 9 ? '9+' : String(total);
+  if (total > 99) return '99+';
+  return String(total);
 }

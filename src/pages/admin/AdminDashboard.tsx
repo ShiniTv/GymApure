@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  UtensilsCrossed,
   FileSpreadsheet,
   Wrench,
   Monitor,
@@ -44,6 +43,7 @@ import {
 import { formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
@@ -53,6 +53,7 @@ type RevenueRange = '7d' | '30d' | '6m';
 export default function AdminDashboard() {
   usePageTitle('Panel');
   const adminStats = useAdminStats();
+  const { isDesktop } = useBreakpoint();
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
@@ -91,7 +92,7 @@ export default function AdminDashboard() {
 
   if (adminStats.error && !stats) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-5xl">
+      <div className="page-stack-tight mx-auto w-full max-w-7xl">
         <PageHeader
           compact
           title={
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
   const criticalItems = expiringList.filter(
     (item) => getExpirySeverity(item.days_remaining, alertDays) === 'critical'
   );
-  const previewExpiring = expiringList.slice(0, 5);
+  const previewExpiring = expiringList.slice(0, isDesktop ? 12 : 5);
   const revenueThisMonth = stats?.revenueThisMonth ?? 0;
   const revenueLastMonth = stats?.revenueLastMonth ?? 0;
   const yesterdayCheckIns = stats?.yesterdayCheckIns ?? 0;
@@ -143,9 +144,11 @@ export default function AdminDashboard() {
   const pendingOld = stats?.pendingPaymentsOlderThan2Days ?? 0;
   const classFill = stats?.classFillPercentToday ?? 0;
   const pausedSubs = stats?.pausedSubscriptions ?? 0;
+  const chartExpanded = showRevenueChart || isDesktop;
+  const expiringExpanded = showExpiringList || isDesktop;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <StaffPortalBanner
         eyebrow="Panel administrativo"
         title={
@@ -261,309 +264,323 @@ export default function AdminDashboard() {
         </p>
       )}
 
-      <DashboardSection title="Requiere acción" compact>
-        <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/reception?mode=counter&tab=access"
-            icon={Monitor}
-            title="Mostrador"
-            description="Check-in y registro"
-            tone="blue"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/payments?status=pending"
-            icon={AlertTriangle}
-            title="Pagos"
-            description={pendingOld > 0 ? `${pendingOld} con más de 2 días` : 'Revisar y aprobar'}
-            count={pendingPayments}
-            tone="red"
-            prefetchPaymentsPending
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/members?expiring=true"
-            icon={CalendarClock}
-            title="Miembros"
-            description="Membresías por vencer"
-            count={expiringSoon}
-            tone="orange"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/equipment"
-            icon={Wrench}
-            title="Equipamiento"
-            description="Inventario y mantenimiento"
-            count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
-            tone="orange"
-          />
-        </div>
-      </DashboardSection>
-
-      <DashboardSection title="Operación" compact>
-        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-3 sm:gap-3">
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/check-in?kiosk=1"
-            icon={LogIn}
-            title="Modo tablet"
-            description="Check-in en tablet"
-            tone="emerald"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/attendance"
-            icon={Fingerprint}
-            title="Asistencias"
-            description="Volumen de ingreso"
-            tone="blue"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/settings"
-            icon={Settings2}
-            title="Configuración"
-            description="Avisos y salud"
-            tone="emerald"
-          />
-        </div>
-      </DashboardSection>
-
-      {pendingOld > 0 && (
-        <Link
-          to="/payments?status=pending"
-          className="flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
-        >
-          <div className="flex min-w-0 items-center gap-2.5">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-red-700 dark:text-red-400">
-                {pendingOld} pago{pendingOld !== 1 ? 's' : ''} sin revisar (&gt;2 días)
-              </p>
-              <p className="text-[11px] text-red-700/80 dark:text-red-400/80">
-                Prioriza la aprobación para no bloquear renovaciones
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
-        </Link>
-      )}
-
-      <DashboardSection title="Finanzas y supervisión" compact>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
-          <Card padding="sm" rounded="xl" className="space-y-1">
-            <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-              Pagos &gt;2 días
-            </p>
-            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-              {pendingOld}
-            </p>
-          </Card>
-          <Card padding="sm" rounded="xl" className="space-y-1">
-            <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
-              <CalendarDays className="h-3 w-3" />
-              Clases hoy
-            </p>
-            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-              {classFill}%
-              <span className="ml-1 text-xs font-normal text-zinc-500">
-                ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
-              </span>
-            </p>
-          </Card>
-          <Card padding="sm" rounded="xl" className="space-y-1">
-            <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">Pausadas</p>
-            <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-              {pausedSubs}
-            </p>
-          </Card>
-        </div>
-
-        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:gap-3">
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/reports"
-            icon={FileSpreadsheet}
-            title="Reportes"
-            description="Exportar datos"
-            tone="blue"
-          />
-          <QuickAction
-            compact
-            iconOnlyMobile
-            to="/nutrition-overview"
-            icon={UtensilsCrossed}
-            title="Nutrición"
-            description="Adherencia general"
-            tone="emerald"
-          />
-        </div>
-      </DashboardSection>
-
-      {expiringList.length > 0 ? (
-        <Card padding="sm" rounded="xl">
-          <button
-            type="button"
-            className="flex w-full min-w-0 items-center gap-2 text-left"
-            onClick={() => {
-              setShowExpiringList((v) => !v);
-            }}
-            aria-expanded={showExpiringList}
-          >
-            <CalendarClock className="text-brand h-4 w-4 shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-zinc-900 dark:text-white">
-                Próximos vencimientos
-              </p>
-              <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                {expiringList.length} en {alertDays} días
-                {criticalExpiring > 0
-                  ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}`
-                  : ''}
-              </p>
-            </div>
-            {showExpiringList ? (
-              <ChevronUp className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
-            ) : (
-              <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
-            )}
-          </button>
-
-          {!showExpiringList && criticalItems.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {criticalItems.slice(0, 1).map((item) => (
-                <Link
-                  key={item.user_id}
-                  to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
-                >
-                  <span className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                    {item.full_name}
-                  </span>
-                  <Badge variant="danger" className="shrink-0 text-[10px]">
-                    {formatExpiryLabel(item.days_remaining)}
-                  </Badge>
-                </Link>
-              ))}
-              {criticalItems.length > 1 && (
-                <button
-                  type="button"
-                  className="text-brand hover:text-brand w-full py-0.5 text-[11px] font-semibold"
-                  onClick={() => {
-                    setShowExpiringList(true);
-                  }}
-                >
-                  Ver {criticalItems.length} crítico{criticalItems.length !== 1 ? 's' : ''}
-                </button>
-              )}
-            </div>
-          )}
-
-          {showExpiringList && (
-            <div className="mt-2 space-y-1.5">
-              {previewExpiring.map((item) => {
-                const severity = getExpirySeverity(item.days_remaining, alertDays);
-                const classes = expiryBannerClasses(severity);
-                return (
-                  <Link
-                    key={item.user_id}
-                    to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
-                    className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors hover:opacity-90 ${classes.itemBorder}`}
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                        {item.full_name}
-                      </p>
-                      <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
-                        {format(new Date(item.end_date), 'dd MMM', { locale: es })}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={severity === 'critical' ? 'danger' : 'warning'}
-                      className="shrink-0 text-[10px]"
-                    >
-                      {formatExpiryLabel(item.days_remaining)}
-                    </Badge>
-                  </Link>
-                );
-              })}
-              {expiringList.length > previewExpiring.length && (
-                <Link
-                  to="/members?expiring=true"
-                  className="text-brand hover:text-brand block py-0.5 text-center text-[11px] font-semibold"
-                >
-                  +{expiringList.length - previewExpiring.length} más en Miembros
-                </Link>
-              )}
-            </div>
-          )}
-        </Card>
-      ) : null}
-
-      <Card padding="sm" rounded="xl">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Flujo de ingresos</h3>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-9 px-2.5"
-            onClick={() => {
-              setShowRevenueChart((v) => !v);
-            }}
-            aria-expanded={showRevenueChart}
-            aria-label={
-              showRevenueChart ? 'Ocultar gráfico de ingresos' : 'Ver gráfico de ingresos'
-            }
-            title={showRevenueChart ? 'Ocultar' : 'Ver ingresos'}
-          >
-            {showRevenueChart ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                <span className="ml-1 hidden text-xs sm:inline">Ocultar</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                <span className="ml-1 hidden text-xs sm:inline">Ver</span>
-              </>
-            )}
-          </Button>
-        </div>
-        {showRevenueChart && (
-          <div>
-            <SegmentedControl
-              variant="compact"
-              value={revenueRange}
-              onChange={setRevenueRange}
-              className="mb-2.5 w-full sm:w-auto"
-              fullWidth
-              options={[
-                { value: '7d', label: '7d' },
-                { value: '30d', label: '30d' },
-                { value: '6m', label: '6m' },
-              ]}
-            />
-            <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
-              <RevenueChart
-                data={revenueChartData}
-                mode={revenueChartMode}
-                className="h-40 sm:h-56"
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-5">
+        <div className="space-y-4">
+          <DashboardSection title="Requiere acción" compact>
+            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/reception?mode=counter&tab=access"
+                icon={Monitor}
+                title="Mostrador"
+                description="Check-in y registro"
+                tone="blue"
               />
-            </Suspense>
-          </div>
-        )}
-      </Card>
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/payments?status=pending"
+                icon={AlertTriangle}
+                title="Pagos"
+                description={
+                  pendingOld > 0 ? `${pendingOld} con más de 2 días` : 'Revisar y aprobar'
+                }
+                count={pendingPayments}
+                tone="red"
+                prefetchPaymentsPending
+              />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/members?expiring=true"
+                icon={CalendarClock}
+                title="Miembros"
+                description="Membresías por vencer"
+                count={expiringSoon}
+                tone="orange"
+              />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/equipment"
+                icon={Wrench}
+                title="Equipamiento"
+                description="Inventario y mantenimiento"
+                count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
+                tone="orange"
+              />
+            </div>
+          </DashboardSection>
+
+          <DashboardSection title="Operación" compact>
+            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-3 sm:gap-3">
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/check-in?kiosk=1"
+                icon={LogIn}
+                title="Modo tablet"
+                description="Check-in en tablet"
+                tone="emerald"
+              />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/attendance"
+                icon={Fingerprint}
+                title="Asistencias"
+                description="Volumen de ingreso"
+                tone="blue"
+              />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/settings"
+                icon={Settings2}
+                title="Configuración"
+                description="Avisos y salud"
+                tone="emerald"
+              />
+            </div>
+          </DashboardSection>
+
+          {pendingOld > 0 && (
+            <Link
+              to="/payments?status=pending"
+              className="flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-red-700 dark:text-red-400">
+                    {pendingOld} pago{pendingOld !== 1 ? 's' : ''} sin revisar (&gt;2 días)
+                  </p>
+                  <p className="text-[11px] text-red-700/80 dark:text-red-400/80">
+                    Prioriza la aprobación para no bloquear renovaciones
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
+            </Link>
+          )}
+
+          <DashboardSection title="Finanzas y supervisión" compact>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
+              <Card padding="sm" rounded="xl" className="space-y-1">
+                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                  Pagos &gt;2 días
+                </p>
+                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {pendingOld}
+                </p>
+              </Card>
+              <Card padding="sm" rounded="xl" className="space-y-1">
+                <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                  <CalendarDays className="h-3 w-3" />
+                  Clases hoy
+                </p>
+                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {classFill}%
+                  <span className="ml-1 text-xs font-normal text-zinc-500">
+                    ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
+                  </span>
+                </p>
+              </Card>
+              <Card padding="sm" rounded="xl" className="space-y-1">
+                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                  Pausadas
+                </p>
+                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {pausedSubs}
+                </p>
+              </Card>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-1.5 sm:gap-3">
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/reports"
+                icon={FileSpreadsheet}
+                title="Reportes"
+                description="Exportar datos"
+                tone="blue"
+              />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/attendance"
+                icon={Activity}
+                title="Asistencias"
+                description="Check-ins del gym"
+                tone="emerald"
+              />
+            </div>
+          </DashboardSection>
+        </div>
+
+        <div className="space-y-4 lg:sticky lg:top-3">
+          {expiringList.length > 0 ? (
+            <Card padding="sm" rounded="xl">
+              <button
+                type="button"
+                className="flex w-full min-w-0 items-center gap-2 text-left lg:cursor-default"
+                onClick={() => {
+                  if (isDesktop) return;
+                  setShowExpiringList((v) => !v);
+                }}
+                aria-expanded={expiringExpanded}
+              >
+                <CalendarClock className="text-brand h-4 w-4 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-zinc-900 dark:text-white">
+                    Próximos vencimientos
+                  </p>
+                  <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {expiringList.length} en {alertDays} días
+                    {criticalExpiring > 0
+                      ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}`
+                      : ''}
+                  </p>
+                </div>
+                {!isDesktop &&
+                  (expiringExpanded ? (
+                    <ChevronUp className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
+                  ))}
+              </button>
+
+              {!expiringExpanded && criticalItems.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {criticalItems.slice(0, 1).map((item) => (
+                    <Link
+                      key={item.user_id}
+                      to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
+                    >
+                      <span className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                        {item.full_name}
+                      </span>
+                      <Badge variant="danger" className="shrink-0 text-[10px]">
+                        {formatExpiryLabel(item.days_remaining)}
+                      </Badge>
+                    </Link>
+                  ))}
+                  {criticalItems.length > 1 && (
+                    <button
+                      type="button"
+                      className="text-brand hover:text-brand w-full py-0.5 text-[11px] font-semibold"
+                      onClick={() => {
+                        setShowExpiringList(true);
+                      }}
+                    >
+                      Ver {criticalItems.length} crítico{criticalItems.length !== 1 ? 's' : ''}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {expiringExpanded && (
+                <div className="mt-2 max-h-[min(50vh,22rem)] space-y-1.5 overflow-y-auto lg:max-h-[min(40vh,18rem)]">
+                  {previewExpiring.map((item) => {
+                    const severity = getExpirySeverity(item.days_remaining, alertDays);
+                    const classes = expiryBannerClasses(severity);
+                    return (
+                      <Link
+                        key={item.user_id}
+                        to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
+                        className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors hover:opacity-90 ${classes.itemBorder}`}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                            {item.full_name}
+                          </p>
+                          <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                            {format(new Date(item.end_date), 'dd MMM', { locale: es })}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={severity === 'critical' ? 'danger' : 'warning'}
+                          className="shrink-0 text-[10px]"
+                        >
+                          {formatExpiryLabel(item.days_remaining)}
+                        </Badge>
+                      </Link>
+                    );
+                  })}
+                  {expiringList.length > previewExpiring.length && (
+                    <Link
+                      to="/members?expiring=true"
+                      className="text-brand hover:text-brand block py-0.5 text-center text-[11px] font-semibold"
+                    >
+                      +{expiringList.length - previewExpiring.length} más en Miembros
+                    </Link>
+                  )}
+                </div>
+              )}
+            </Card>
+          ) : null}
+
+          <Card padding="sm" rounded="xl">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Flujo de ingresos</h3>
+              {!isDesktop && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-2.5"
+                  onClick={() => {
+                    setShowRevenueChart((v) => !v);
+                  }}
+                  aria-expanded={chartExpanded}
+                  aria-label={
+                    chartExpanded ? 'Ocultar gráfico de ingresos' : 'Ver gráfico de ingresos'
+                  }
+                  title={chartExpanded ? 'Ocultar' : 'Ver ingresos'}
+                >
+                  {chartExpanded ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      <span className="ml-1 hidden text-xs sm:inline">Ocultar</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      <span className="ml-1 hidden text-xs sm:inline">Ver</span>
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            {chartExpanded && (
+              <div>
+                <SegmentedControl
+                  variant="compact"
+                  value={revenueRange}
+                  onChange={setRevenueRange}
+                  className="mb-2.5 w-full sm:w-auto"
+                  fullWidth
+                  options={[
+                    { value: '7d', label: '7d' },
+                    { value: '30d', label: '30d' },
+                    { value: '6m', label: '6m' },
+                  ]}
+                />
+                <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
+                  <RevenueChart
+                    data={revenueChartData}
+                    mode={revenueChartMode}
+                    className="h-40 sm:h-56 lg:h-52"
+                  />
+                </Suspense>
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

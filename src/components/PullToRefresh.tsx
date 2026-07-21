@@ -66,14 +66,19 @@ export function PullToRefreshContainer({
       </div>
       <div
         className={cn(isRefreshing && 'overflow-hidden')}
-        style={{
-          transform: `translateY(${isRefreshing ? '40' : String(Math.min(pullDistance, THRESHOLD))}px)`,
-          transition: isRefreshing
-            ? 'transform 0.3s ease'
-            : pullDistance > 0
-              ? 'none'
-              : 'transform 0.3s ease',
-        }}
+        style={
+          pullDistance > 0 || isRefreshing
+            ? {
+                // Prefer margin over transform so position:sticky children keep working.
+                marginTop: isRefreshing ? 40 : Math.min(pullDistance, THRESHOLD),
+                transition: isRefreshing
+                  ? 'margin-top 0.3s ease'
+                  : pullDistance > 0
+                    ? 'none'
+                    : 'margin-top 0.3s ease',
+              }
+            : undefined
+        }
       >
         {children}
       </div>

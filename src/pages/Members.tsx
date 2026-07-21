@@ -766,10 +766,9 @@ export default function Members() {
 
   return (
     <PullToRefreshContainer pullDistance={pullMembers} isRefreshing={refreshingMembers}>
-      <div className="page-stack-tight mx-auto w-full max-w-5xl" {...membersHandlers}>
+      <div className="page-stack-tight mx-auto w-full max-w-7xl" {...membersHandlers}>
         <PageHeader
           compact
-          className="max-lg:!hidden"
           title={
             isTrainer ? (
               <>
@@ -787,59 +786,94 @@ export default function Members() {
           }
           subtitle={
             isTrainer
-              ? 'Consulta tus miembros asignados y gestiona sus rutinas de entrenamiento'
+              ? 'Tus miembros asignados'
               : isReceptionist
-                ? 'Cree cuentas aquí. Para cobrar y activar membresía el mismo día, use Modo mostrador → Registro.'
-                : 'Administra usuarios del gym. Puedes eliminar miembros y entrenadores; los administradores no se eliminan desde aquí.'
+                ? 'Altas y cuentas del gym'
+                : 'Usuarios del gym'
           }
           action={<BackToDashboardLink />}
         />
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <SearchInput
-              containerClassName="flex-1 min-w-0"
-              placeholder="Buscar nombre o cédula…"
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-              }}
-            />
-            {canAddUser && (
-              <Button
-                size="sm"
-                className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
-                onClick={() => {
-                  setIsAdding(true);
-                }}
-                aria-label={addUserLabel}
-              >
-                <Plus className="h-4 w-4 shrink-0" />
-                <span className="hidden text-xs font-semibold sm:inline sm:text-sm">
-                  {addUserLabel}
-                </span>
-              </Button>
-            )}
+        {user?.role === 'admin' && adminStats?.stats && (
+          <div className="hidden grid-cols-4 gap-2 lg:grid">
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Activas
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.activeSubscriptions}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Por vencer ({alertDays}d)
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.expiringSoon}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Pagos pend.
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.pendingPayments}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                En lista
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {total}
+              </p>
+            </div>
           </div>
-          {(user?.role === 'admin' || user?.role === 'receptionist') && (
-            <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} />
-          )}
-          {(user?.role === 'admin' || isTrainer) && (
-            <FilterChips
-              fullWidth
-              className="sm:w-auto sm:shrink-0"
-              options={[
-                { value: '', label: 'Todos' },
-                { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-              ]}
-              value={expiringFilter ? 'expiring' : ''}
-              onChange={(v) => {
-                setExpiringFilter(v === 'expiring');
-                setPage(1);
+        )}
+
+        <div className="flex items-center gap-2">
+          <SearchInput
+            containerClassName="flex-1 min-w-0"
+            placeholder="Buscar nombre o cédula…"
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+            }}
+          />
+          {canAddUser && (
+            <Button
+              size="sm"
+              className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+              onClick={() => {
+                setIsAdding(true);
               }}
-            />
+              aria-label={addUserLabel}
+            >
+              <Plus className="h-4 w-4 shrink-0" />
+              <span className="hidden text-xs font-semibold sm:inline sm:text-sm">
+                {addUserLabel}
+              </span>
+            </Button>
           )}
         </div>
+        {(user?.role === 'admin' || user?.role === 'receptionist') && (
+          <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} label="Turno" />
+        )}
+        {(user?.role === 'admin' || isTrainer) && (
+          <FilterChips
+            fullWidth
+            className="sm:w-auto sm:shrink-0"
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+            ]}
+            value={expiringFilter ? 'expiring' : ''}
+            onChange={(v) => {
+              setExpiringFilter(v === 'expiring');
+              setPage(1);
+            }}
+          />
+        )}
 
         {isTrainer && membersWithoutPlan.length > 0 && !loading && !noPlanAlertDismissed && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px]">

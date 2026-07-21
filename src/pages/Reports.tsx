@@ -150,7 +150,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
         title={
@@ -169,55 +169,57 @@ export default function Reports() {
       )}
 
       <Card padding="sm" rounded="xl">
-        <div className="mb-2.5 flex items-center gap-2">
-          <Calendar className="text-brand h-4 w-4 shrink-0" />
-          <div className="min-w-0">
-            <h2 className="text-sm leading-tight font-bold text-zinc-900 dark:text-white">
-              Rango de fechas
-            </h2>
-            <p className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
-              Pagos y asistencias
-            </p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex min-w-0 items-center gap-2 lg:mb-0.5">
+            <Calendar className="text-brand h-4 w-4 shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-sm leading-tight font-bold text-zinc-900 dark:text-white">
+                Rango de fechas
+              </h2>
+              <p className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
+                Pagos y asistencias
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="min-w-0">
-            <Label className="text-[11px]">Desde</Label>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:items-end lg:gap-2">
+            <div className="min-w-0 lg:w-40">
+              <Label className="text-[11px]">Desde</Label>
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </div>
+            <div className="min-w-0 lg:w-40">
+              <Label className="text-[11px]">Hasta</Label>
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            </div>
+            <div className="col-span-2 flex flex-wrap gap-1.5 lg:col-span-1 lg:pb-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2.5 text-[11px]"
+                onClick={() => setLastDays(7)}
+              >
+                7 días
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2.5 text-[11px]"
+                onClick={() => setLastDays(30)}
+              >
+                30 días
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2.5 text-[11px]"
+                onClick={setCurrentMonth}
+              >
+                Este mes
+              </Button>
+            </div>
           </div>
-          <div className="min-w-0">
-            <Label className="text-[11px]">Hasta</Label>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-        </div>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2.5 text-[11px]"
-            onClick={() => setLastDays(7)}
-          >
-            7 días
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2.5 text-[11px]"
-            onClick={() => setLastDays(30)}
-          >
-            30 días
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2.5 text-[11px]"
-            onClick={setCurrentMonth}
-          >
-            Este mes
-          </Button>
         </div>
       </Card>
 

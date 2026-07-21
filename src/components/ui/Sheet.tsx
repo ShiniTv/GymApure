@@ -24,6 +24,8 @@ interface SheetProps {
   showHandle?: boolean;
   /** Tighter header + padding for compact menus */
   compact?: boolean;
+  /** Accessible name when `title` is omitted (e.g. custom greeting header) */
+  ariaLabel?: string;
 }
 
 export function Sheet({
@@ -41,6 +43,7 @@ export function Sheet({
   scrollable = false,
   showHandle = false,
   compact = false,
+  ariaLabel,
 }: SheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -102,6 +105,7 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
+        aria-label={!title ? ariaLabel : undefined}
         className={cn(
           'fixed right-0 left-0 px-3 transition-transform duration-200 ease-out',
           side === 'bottom' && !panelStyle?.bottom && 'bottom-0',

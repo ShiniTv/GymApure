@@ -2,6 +2,7 @@ import { Modal, Avatar, Badge, Button } from '../../components/ui';
 import { OnboardingStatus } from '../../components/members/OnboardingStatus';
 import { cn } from '../../lib/utils';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
+import { SHIFT_SHORT_LABELS } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 import type { LucideIcon } from 'lucide-react';
 
@@ -22,7 +23,14 @@ interface MemberQuickSheetProps {
   actions: MemberQuickAction[];
 }
 
-/** Ficha rápida del miembro — modal centrado (móvil y desktop). */
+const ROLE_LABELS: Record<string, string> = {
+  member: 'Cliente',
+  trainer: 'Entrenador',
+  receptionist: 'Recepción',
+  admin: 'Admin',
+};
+
+/** Ficha rápida del miembro — modal centrado; más densa en desktop. */
 export function MemberQuickSheet({
   member,
   open,
@@ -46,6 +54,25 @@ export function MemberQuickSheet({
     action.onClick();
   };
 
+  const metaRows: { label: string; value: string }[] = [
+    { label: 'Rol', value: ROLE_LABELS[member.role] ?? member.role },
+    { label: 'Cédula', value: member.cedula || '—' },
+    { label: 'Email', value: member.email || '—' },
+  ];
+  if (member.phone) metaRows.push({ label: 'Teléfono', value: member.phone });
+  if (member.training_shift) {
+    metaRows.push({ label: 'Turno', value: SHIFT_SHORT_LABELS[member.training_shift] });
+  }
+  if (member.membership_name) {
+    metaRows.push({
+      label: 'Plan',
+      value:
+        member.days_remaining != null
+          ? `${member.membership_name} · ${member.days_remaining}d`
+          : member.membership_name,
+    });
+  }
+
   return (
     <Modal
       open={open}
@@ -56,7 +83,7 @@ export function MemberQuickSheet({
           <span className="truncate">{member.full_name}</span>
         </span>
       }
-      maxWidth="sm"
+      maxWidth="2xl"
       initialFocus="dialog"
       className="mx-4"
     >
@@ -75,12 +102,21 @@ export function MemberQuickSheet({
         <OnboardingStatus onboarding={member.onboarding} variant="chip" />
       </div>
 
-      <p className="mt-1.5 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-        {[member.cedula || 'Sin cédula', member.membership_name].filter(Boolean).join(' · ')}
-        {member.membership_name != null && member.days_remaining != null
-          ? ` · ${member.days_remaining}d`
-          : ''}
-      </p>
+      <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {metaRows.map((row) => (
+          <div
+            key={row.label}
+            className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
+          >
+            <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+              {row.label}
+            </dt>
+            <dd className="mt-0.5 truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       {primary && (
         <Button type="button" className="mt-3.5 h-11 min-h-11 w-full" onClick={() => run(primary)}>
@@ -94,7 +130,8 @@ export function MemberQuickSheet({
           className={cn(
             'mt-2 grid gap-1.5',
             secondary.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
-            secondary.length === 3 && 'sm:grid-cols-3'
+            secondary.length >= 3 && 'sm:grid-cols-3',
+            secondary.length >= 4 && 'lg:grid-cols-4'
           )}
         >
           {secondary.map((action) => (

@@ -130,8 +130,9 @@ export default function AuditLogs() {
   }, [loadLogs]);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
+        compact
         title={
           <>
             Registro de <span className="text-brand">auditoría</span>
@@ -166,66 +167,115 @@ export default function AuditLogs() {
           <EmptyState
             icon={Shield}
             title="No hay registros"
-            description="Las acciones de administradores y recepción aparecerán aquí en formato de línea de tiempo."
+            description="Las acciones de administradores y recepción aparecerán aquí."
           />
         ) : (
-          <ol className="relative space-y-0">
-            {logs.map((log, index) => {
-              const Icon = actionIcon(log.action);
-              const variant = actionBadgeVariant(log.action);
-              const isLast = index === logs.length - 1;
+          <>
+            {/* Mobile / tablet: timeline */}
+            <ol className="relative space-y-0 lg:hidden">
+              {logs.map((log, index) => {
+                const Icon = actionIcon(log.action);
+                const variant = actionBadgeVariant(log.action);
+                const isLast = index === logs.length - 1;
 
-              return (
-                <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
-                  {!isLast && (
-                    <span
-                      className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"
-                      aria-hidden
-                    />
-                  )}
-                  <div
-                    className={cn(
-                      'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-white dark:ring-zinc-900',
-                      variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
-                      variant === 'danger' && 'bg-red-500/10 text-red-600',
-                      variant === 'accent' && 'bg-brand/10 text-brand',
-                      variant === 'default' &&
-                        'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                return (
+                  <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
+                    {!isLast && (
+                      <span
+                        className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"
+                        aria-hidden
+                      />
                     )}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1 pt-0.5">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <Badge variant={variant}>{actionLabel(log.action)}</Badge>
-                      <time
-                        className="text-xs text-zinc-400 dark:text-zinc-300"
-                        dateTime={log.created_at}
-                      >
-                        {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
-                      </time>
+                    <div
+                      className={cn(
+                        'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-white dark:ring-zinc-900',
+                        variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
+                        variant === 'danger' && 'bg-red-500/10 text-red-600',
+                        variant === 'accent' && 'bg-brand/10 text-brand',
+                        variant === 'default' &&
+                          'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                        {log.user_name ?? 'Sistema'}
-                      </p>
-                      {log.user_email ? (
-                        <p
-                          className="mt-0.5 truncate text-xs font-normal text-zinc-500 dark:text-zinc-400"
-                          title={log.user_email}
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <Badge variant={variant}>{actionLabel(log.action)}</Badge>
+                        <time
+                          className="text-xs text-zinc-400 dark:text-zinc-300"
+                          dateTime={log.created_at}
                         >
-                          {log.user_email}
+                          {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
+                        </time>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                          {log.user_name ?? 'Sistema'}
                         </p>
-                      ) : null}
+                        {log.user_email ? (
+                          <p
+                            className="mt-0.5 truncate text-xs font-normal text-zinc-500 dark:text-zinc-400"
+                            title={log.user_email}
+                          >
+                            {log.user_email}
+                          </p>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
+                        {formatDetails(log.details)}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
-                      {formatDetails(log.details)}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {/* Desktop: dense table */}
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[52rem] text-left text-sm">
+                <thead className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-400">
+                  <tr>
+                    <th className="px-3 py-2.5">Cuándo</th>
+                    <th className="px-3 py-2.5">Acción</th>
+                    <th className="px-3 py-2.5">Actor</th>
+                    <th className="px-3 py-2.5">Detalle</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {logs.map((log) => {
+                    const variant = actionBadgeVariant(log.action);
+                    return (
+                      <tr key={log.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                        <td className="px-3 py-2.5 text-xs whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
+                          <time dateTime={log.created_at}>
+                            {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', {
+                              locale: es,
+                            })}
+                          </time>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <Badge variant={variant}>{actionLabel(log.action)}</Badge>
+                        </td>
+                        <td className="max-w-[14rem] px-3 py-2.5">
+                          <p className="truncate font-semibold text-zinc-900 dark:text-white">
+                            {log.user_name ?? 'Sistema'}
+                          </p>
+                          {log.user_email ? (
+                            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                              {log.user_email}
+                            </p>
+                          ) : null}
+                        </td>
+                        <td className="max-w-[28rem] px-3 py-2.5 text-xs text-zinc-600 dark:text-zinc-300">
+                          <p className="line-clamp-2 break-words">{formatDetails(log.details)}</p>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>

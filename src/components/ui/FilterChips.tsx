@@ -13,6 +13,8 @@ interface FilterChipsProps {
   className?: string;
   /** Stretch segmented bar to container width. Default: true. */
   fullWidth?: boolean;
+  /** Accessible name for the filter group. */
+  ariaLabel?: string;
 }
 
 /** List filters — always the same segmented bar as profile tabs (no scroll pills). */
@@ -22,6 +24,7 @@ export function FilterChips({
   onChange,
   className,
   fullWidth = true,
+  ariaLabel = 'Filtros',
 }: FilterChipsProps) {
   return (
     <SegmentedControl
@@ -29,7 +32,7 @@ export function FilterChips({
       layout="wrap"
       fullWidth={fullWidth}
       className={className}
-      ariaLabel="Filtros"
+      ariaLabel={ariaLabel}
       value={value}
       onChange={onChange}
       options={options}

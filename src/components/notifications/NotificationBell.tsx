@@ -34,7 +34,7 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
           compact
-            ? 'relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            ? 'relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800'
             : defaultBtnClass,
           className
         )}
@@ -43,19 +43,21 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
         aria-haspopup="dialog"
         title="Notificaciones"
       >
-        <Bell className={compact ? 'h-4 w-4' : 'h-4 w-4'} />
-        {badgeLabel && (
-          <span
-            className={clsx(
-              'brand-solid absolute flex items-center justify-center rounded-full font-bold text-white',
-              compact
-                ? 'top-0 right-0 h-4 min-w-4 px-0.5 text-[9px]'
-                : 'top-1 right-1 h-4 min-w-4 px-0.5 text-[10px]'
-            )}
-          >
-            {badgeLabel}
-          </span>
-        )}
+        <span className="relative inline-flex">
+          <Bell className={compact ? 'h-4 w-4' : 'h-[1.125rem] w-[1.125rem]'} aria-hidden />
+          {badgeLabel && (
+            <span
+              className={clsx(
+                'absolute flex items-center justify-center rounded-full font-bold tabular-nums ring-2',
+                compact
+                  ? 'bg-brand -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-[9px] text-white ring-white dark:text-zinc-900 dark:ring-zinc-900'
+                  : 'bg-brand -top-2 -right-2.5 h-[1.125rem] min-w-[1.125rem] px-1 text-[10px] leading-none text-white shadow-sm ring-white dark:text-zinc-900 dark:ring-zinc-950'
+              )}
+            >
+              {badgeLabel}
+            </span>
+          )}
+        </span>
       </button>
 
       <NotificationPanel

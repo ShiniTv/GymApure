@@ -418,7 +418,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'h-dvh min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
+              'h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',

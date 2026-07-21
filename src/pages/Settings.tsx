@@ -394,7 +394,7 @@ export default function Settings() {
     : [];
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-4xl">
+    <div className="page-stack-tight mx-auto w-full max-w-6xl">
       <PageHeader
         compact
         title={

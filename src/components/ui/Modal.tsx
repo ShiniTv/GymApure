@@ -10,13 +10,20 @@ interface ModalProps {
   title: ReactNode;
   children: ReactNode;
   className?: string;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
   scrollable?: boolean;
   /** 'input' (default): focus first field; 'dialog': focus panel without opening mobile keyboard; false: no focus move */
   initialFocus?: 'input' | 'dialog' | false;
 }
 
-const maxWidthMap = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' };
+const maxWidthMap = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-2xl',
+  '2xl': 'max-w-3xl',
+  '3xl': 'max-w-4xl',
+};
 
 export function Modal({
   open,

@@ -389,7 +389,7 @@ function AppRoutes() {
             <Route
               path="members/:id/routines"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -445,7 +445,7 @@ function AppRoutes() {
             <Route
               path="routines"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer', 'member']}>
+                <ProtectedRoute allowedRoles={['trainer', 'member']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -459,7 +459,7 @@ function AppRoutes() {
             <Route
               path="exercises"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer', 'member']}>
+                <ProtectedRoute allowedRoles={['trainer', 'member']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -473,7 +473,7 @@ function AppRoutes() {
             <Route
               path="nutrition-overview"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -569,7 +569,7 @@ function AppRoutes() {
             <Route
               path="members/:id/nutrition"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);

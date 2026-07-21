@@ -20,11 +20,11 @@ test.describe('Admin sheet Más', () => {
     await expect(sheet.getByText('Cuenta')).toBeVisible();
 
     await expect(sheet.getByRole('link', { name: /mostrador/i })).toBeVisible();
-    await expect(sheet.getByRole('link', { name: /solicitudes demo/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /auditoría/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /mi perfil/i })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /fijar auditoría/i })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /^nutrición$/i })).toHaveCount(0);
+    await expect(sheet.getByRole('link', { name: /^rutinas$/i })).toHaveCount(0);
 
     const box = await sheet.boundingBox();
     const vp = page.viewportSize();

@@ -37,7 +37,7 @@ test.describe('Entrenador móvil', () => {
 
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
-    const primary = sheet.getByRole('button', { name: /Ver rutinas|Asignar rutina/ });
+    const primary = sheet.getByRole('button', { name: /Ver rutinas|Asignar rutina/ }).first();
     await expect(primary).toBeVisible();
     await primary.click();
     await expect(page).toHaveURL(/\/members\/\d+\/routines$|\/routines\?/);

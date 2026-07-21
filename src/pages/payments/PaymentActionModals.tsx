@@ -55,6 +55,7 @@ export function PaymentActionModals({
       <Modal
         open={!!approveTarget && isStaffPayment}
         onClose={onCloseApprove}
+        maxWidth="lg"
         title={
           <>
             Aprobar <span className="text-emerald-500">pago</span>
@@ -63,9 +64,22 @@ export function PaymentActionModals({
       >
         {approveTarget && (
           <>
-            <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-              {approveTarget.user_name} — ${approveTarget.amount_usd}
-            </p>
+            <div className="mb-6 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                {approveTarget.user_name} — ${approveTarget.amount_usd}
+                {approveTarget.reference ? ` · Ref: ${approveTarget.reference}` : ''}
+              </p>
+              {approveTarget.proof_url ? (
+                <a
+                  href={paymentProofUrl(approveTarget.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand text-xs font-semibold hover:underline sm:justify-self-end"
+                >
+                  Ver comprobante
+                </a>
+              ) : null}
+            </div>
             <Label>Plan a asignar</Label>
             <Select
               className="mb-6"
@@ -160,7 +174,7 @@ export function PaymentActionModals({
         open={!!proofPreview}
         onClose={onCloseProof}
         title="Comprobante de pago"
-        maxWidth="lg"
+        maxWidth="2xl"
         scrollable
       >
         {proofPreview && (

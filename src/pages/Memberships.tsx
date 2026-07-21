@@ -120,7 +120,7 @@ export default function Memberships() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
         title={
@@ -230,6 +230,7 @@ export default function Memberships() {
         onClose={() => {
           if (!saving) setModalOpen(false);
         }}
+        maxWidth="lg"
         title={
           <>
             {editingId ? 'Editar' : 'Nuevo'} <span className="text-brand">plan</span>

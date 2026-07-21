@@ -832,7 +832,7 @@ export default function MemberRoutine() {
 
       <SegmentedControl
         variant="compact"
-        layout="scroll"
+        layout="wrap"
         value={coachingTab}
         onChange={setCoachingTab}
         options={[

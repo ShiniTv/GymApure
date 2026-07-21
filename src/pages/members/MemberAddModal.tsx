@@ -48,6 +48,7 @@ export function MemberAddModal({
           Nuevo <span className="text-brand">usuario</span>
         </>
       }
+      maxWidth="2xl"
       scrollable
       initialFocus="dialog"
     >

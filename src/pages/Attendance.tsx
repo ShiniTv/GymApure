@@ -136,7 +136,7 @@ export default function Attendance() {
   const avgEntries = data.length > 0 ? (totalEntries / data.length).toFixed(1) : 0;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
         title={<>Asistencias</>}
@@ -144,107 +144,111 @@ export default function Attendance() {
         action={user?.role === 'admin' ? <BackToDashboardLink /> : undefined}
       />
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
-            <Fingerprint className="text-brand h-4 w-4 shrink-0" />
-            Entradas y salidas de hoy
-          </h3>
-          <SearchInput
-            containerClassName="w-full sm:max-w-xs"
-            placeholder="Buscar por nombre o cédula…"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Buscar asistencia de hoy"
-          />
-        </div>
-        <ReceptionActivityFeed limit={0} search={search} />
-      </Card>
-
-      {isAdmin && (
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
         <Card padding="sm" rounded="xl" className="md:p-4">
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
-              <Users className="h-4 w-4 shrink-0 text-amber-500" />
-              Miembros inactivos
+              <Fingerprint className="text-brand h-4 w-4 shrink-0" />
+              Entradas y salidas de hoy
             </h3>
-            <FilterChips
-              className="sm:w-auto"
-              options={[
-                { value: '7', label: '7d' },
-                { value: '14', label: '14d' },
-                { value: '30', label: '30d' },
-              ]}
-              value={inactiveDays}
-              onChange={setInactiveDays}
+            <SearchInput
+              containerClassName="w-full sm:max-w-xs"
+              placeholder="Buscar por nombre o cédula…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              aria-label="Buscar asistencia de hoy"
             />
           </div>
-          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
-            Sin check-in en los últimos {inactiveDays} días (o nunca).
-          </p>
-          <div className="space-y-2">
-            {inactiveLoading ? (
-              <div className="flex justify-center py-8">
-                <Spinner />
-              </div>
-            ) : inactiveMembers.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Nadie inactivo en este periodo.
-              </p>
-            ) : (
-              inactiveMembers.map((member) => {
-                const wa = whatsappHref(member.phone);
-                return (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
-                  >
-                    <Link
-                      to={`/members?q=${encodeURIComponent(member.full_name)}`}
-                      className="min-w-0 flex-1"
-                    >
-                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                        {member.full_name}
-                      </p>
-                      <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                        {member.cedula ?? member.email}
-                        {member.last_check_in
-                          ? ` · último ${format(new Date(member.last_check_in), 'dd MMM yyyy', { locale: es })}`
-                          : ' · sin check-ins'}
-                      </p>
-                    </Link>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <Badge variant="warning" className="text-[10px]">
-                        {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
-                      </Badge>
-                      <Link
-                        to={`/messages?member=${member.id}`}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                        title="Enviar mensaje"
-                        aria-label={`Mensaje a ${member.full_name}`}
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                      </Link>
-                      {wa ? (
-                        <a
-                          href={wa}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
-                          title="WhatsApp"
-                          aria-label={`WhatsApp a ${member.full_name}`}
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                        </a>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <ReceptionActivityFeed limit={0} search={search} />
         </Card>
-      )}
+
+        {isAdmin ? (
+          <Card padding="sm" rounded="xl" className="md:p-4">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+                <Users className="h-4 w-4 shrink-0 text-amber-500" />
+                Miembros inactivos
+              </h3>
+              <FilterChips
+                className="sm:w-auto"
+                options={[
+                  { value: '7', label: '7d' },
+                  { value: '14', label: '14d' },
+                  { value: '30', label: '30d' },
+                ]}
+                value={inactiveDays}
+                onChange={setInactiveDays}
+              />
+            </div>
+            <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+              Sin check-in en los últimos {inactiveDays} días (o nunca).
+            </p>
+            <div className="max-h-[min(55vh,28rem)] space-y-2 overflow-y-auto lg:max-h-[min(60vh,32rem)]">
+              {inactiveLoading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner />
+                </div>
+              ) : inactiveMembers.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="Sin miembros inactivos"
+                  description={`Nadie sin check-in en los últimos ${inactiveDays} días.`}
+                />
+              ) : (
+                inactiveMembers.map((member) => {
+                  const wa = whatsappHref(member.phone);
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+                    >
+                      <Link
+                        to={`/members?q=${encodeURIComponent(member.full_name)}`}
+                        className="min-w-0 flex-1"
+                      >
+                        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                          {member.full_name}
+                        </p>
+                        <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {member.cedula ?? member.email}
+                          {member.last_check_in
+                            ? ` · último ${format(new Date(member.last_check_in), 'dd MMM yyyy', { locale: es })}`
+                            : ' · sin check-ins'}
+                        </p>
+                      </Link>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <Badge variant="warning" className="text-[10px]">
+                          {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
+                        </Badge>
+                        <Link
+                          to={`/messages?member=${member.id}`}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                          title="Enviar mensaje"
+                          aria-label={`Mensaje a ${member.full_name}`}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                        </Link>
+                        {wa ? (
+                          <a
+                            href={wa}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            title="WhatsApp"
+                            aria-label={`WhatsApp a ${member.full_name}`}
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </Card>
+        ) : null}
+      </div>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />

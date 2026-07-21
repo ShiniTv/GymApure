@@ -355,7 +355,7 @@ export default function TrainerDashboard() {
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-wrap lg:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-wrap gap-2 pb-0.5">
         <ShortcutChip to="/members" icon={Users} label="Miembros" count={stats?.assignedMembers} />
         <ShortcutChip
           to="/routines?view=calendar&assign=1"

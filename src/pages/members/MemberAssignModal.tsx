@@ -48,6 +48,7 @@ export function MemberAssignModal({
     <Modal
       open={!!target}
       onClose={onClose}
+      maxWidth="lg"
       title={
         target ? (
           <>

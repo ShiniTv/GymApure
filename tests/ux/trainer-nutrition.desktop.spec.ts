@@ -23,7 +23,7 @@ test.describe('Trainer nutrición overview', () => {
     await page.goto('/nutrition-overview');
     await waitForMain(page);
     await expect(page.getByText(/Nutrición de/i)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: 'Sin plan' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /Sin plan/i })).toBeVisible();
   });
 
   test('abre plan nutricional desde acciones de la fila en miembros', async ({ page }) => {
