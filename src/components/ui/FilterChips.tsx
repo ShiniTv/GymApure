@@ -11,19 +11,22 @@ interface FilterChipsProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  /** Stretch segmented bar to container width. Default: true. */
+  /**
+   * Stretch chips to container width.
+   * Default false (hug content) — use true on mobile for primary tab rows with many options.
+   */
   fullWidth?: boolean;
   /** Accessible name for the filter group. */
   ariaLabel?: string;
 }
 
-/** List filters — always the same segmented bar as profile tabs (no scroll pills). */
+/** Compact list filters — hug content on desktop; pass fullWidth only when needed. */
 export function FilterChips({
   options,
   value,
   onChange,
   className,
-  fullWidth = true,
+  fullWidth = false,
   ariaLabel = 'Filtros',
 }: FilterChipsProps) {
   return (

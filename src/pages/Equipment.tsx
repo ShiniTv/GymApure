@@ -727,9 +727,10 @@ export default function Equipment() {
         }
       />
 
-      <div className="flex flex-col gap-2.5 sm:gap-3">
+      <div className="flex flex-col gap-3">
         {isAdmin ? (
           <FilterChips
+            className="w-fit max-w-full"
             value={adminSummaryFilter}
             onChange={handleAdminSummaryFilter}
             options={[
@@ -752,6 +753,7 @@ export default function Equipment() {
           />
         ) : (
           <FilterChips
+            className="w-fit max-w-full"
             value={staffQuickFilter}
             onChange={(v) => setStaffQuickFilter(v as typeof staffQuickFilter)}
             options={[
@@ -771,16 +773,16 @@ export default function Equipment() {
         )}
 
         {showAttentionAlert && (
-          <div className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-2">
-            <p className="flex min-w-0 flex-1 items-center gap-2 truncate text-xs font-medium text-orange-800 dark:text-orange-300">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
+          <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-1.5">
+            <p className="flex min-w-0 items-center gap-2 truncate text-xs font-medium text-orange-800 dark:text-orange-300">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               {attentionCount} equipo{attentionCount !== 1 ? 's' : ''} requieren atención
             </p>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 shrink-0 text-orange-700 dark:text-orange-300"
+              className="h-7 shrink-0 px-2 text-orange-700 dark:text-orange-300"
               onClick={() => {
                 setFiltersOpen(true);
                 if ((statusCounts.maintenance ?? 0) > 0) {
@@ -799,7 +801,7 @@ export default function Equipment() {
         )}
 
         {/* Toolbar: stack on xs, one row from sm+ */}
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:gap-3">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <SearchInput
             containerClassName="min-w-0 w-full flex-1"
             placeholder="Buscar equipo…"
@@ -807,13 +809,13 @@ export default function Equipment() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Buscar equipo, marca o modelo"
           />
-          <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:justify-end">
+          <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-11 sm:justify-end">
             {allItems.length > 0 ? (
               <SegmentedControl
                 variant="compact"
                 value={layoutView}
                 onChange={(v) => setLayoutView(v)}
-                className="min-w-0 flex-1 sm:flex-none"
+                className="w-fit max-w-full"
                 options={[
                   { value: 'flat', label: 'Lista' },
                   { value: 'zones', label: 'Zonas' },

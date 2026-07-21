@@ -390,7 +390,7 @@ export default function Payments() {
         )}
 
         {isStaffPayment && adminStats?.stats && (
-          <div className="hidden grid-cols-4 gap-2 lg:grid">
+          <div className="hidden grid-cols-4 gap-3 lg:grid lg:gap-4">
             <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
               <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                 Pendientes
@@ -464,8 +464,8 @@ export default function Payments() {
         )}
 
         {isStaffPayment && (
-          <>
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <SearchInput
                 containerClassName="min-w-0 flex-1"
                 placeholder="Buscar por nombre o referencia…"
@@ -485,8 +485,7 @@ export default function Payments() {
               )}
             </div>
             <FilterChips
-              fullWidth
-              className="sm:w-auto"
+              className="w-fit max-w-full"
               options={[
                 { value: '', label: 'Todos' },
                 {
@@ -503,7 +502,7 @@ export default function Payments() {
                 setPage(1);
               }}
             />
-          </>
+          </div>
         )}
 
         {paymentsError ? (

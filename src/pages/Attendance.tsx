@@ -144,8 +144,8 @@ export default function Attendance() {
         action={user?.role === 'admin' ? <BackToDashboardLink /> : undefined}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <Card padding="sm" rounded="xl" className="md:p-4">
+      <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
+        <Card padding="sm" rounded="xl" className="flex min-w-0 flex-col md:p-4">
           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Fingerprint className="text-brand h-4 w-4 shrink-0" />
@@ -159,18 +159,20 @@ export default function Attendance() {
               aria-label="Buscar asistencia de hoy"
             />
           </div>
-          <ReceptionActivityFeed limit={0} search={search} />
+          <div className="min-h-0 flex-1">
+            <ReceptionActivityFeed limit={0} search={search} />
+          </div>
         </Card>
 
         {isAdmin ? (
-          <Card padding="sm" rounded="xl" className="md:p-4">
+          <Card padding="sm" rounded="xl" className="flex min-w-0 flex-col md:p-4">
             <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
                 <Users className="h-4 w-4 shrink-0 text-amber-500" />
                 Miembros inactivos
               </h3>
               <FilterChips
-                className="sm:w-auto"
+                className="w-fit max-w-full"
                 options={[
                   { value: '7', label: '7d' },
                   { value: '14', label: '14d' },
@@ -183,7 +185,7 @@ export default function Attendance() {
             <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
               Sin check-in en los últimos {inactiveDays} días (o nunca).
             </p>
-            <div className="max-h-[min(55vh,28rem)] space-y-2 overflow-y-auto lg:max-h-[min(60vh,32rem)]">
+            <div className="max-h-[min(55vh,28rem)] min-h-0 flex-1 space-y-2 overflow-y-auto lg:max-h-none">
               {inactiveLoading ? (
                 <div className="flex justify-center py-8">
                   <Spinner />
@@ -250,7 +252,7 @@ export default function Attendance() {
         ) : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard compact title="7d" value={totalEntries} icon={Fingerprint} color="orange" />
         <StatCard compact title="Promedio" value={avgEntries} icon={TrendingUp} color="blue" />
         <StatCard

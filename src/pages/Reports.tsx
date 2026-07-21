@@ -169,8 +169,8 @@ export default function Reports() {
       )}
 
       <Card padding="sm" rounded="xl">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex min-w-0 items-center gap-2 lg:mb-0.5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:mr-auto sm:mb-0.5">
             <Calendar className="text-brand h-4 w-4 shrink-0" />
             <div className="min-w-0">
               <h2 className="text-sm leading-tight font-bold text-zinc-900 dark:text-white">
@@ -181,16 +181,16 @@ export default function Reports() {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 lg:flex lg:items-end lg:gap-2">
-            <div className="min-w-0 lg:w-40">
+          <div className="flex min-w-0 flex-wrap items-end gap-2 sm:gap-3">
+            <div className="w-[calc(50%-0.25rem)] min-w-0 sm:w-36">
               <Label className="text-[11px]">Desde</Label>
               <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </div>
-            <div className="min-w-0 lg:w-40">
+            <div className="w-[calc(50%-0.25rem)] min-w-0 sm:w-36">
               <Label className="text-[11px]">Hasta</Label>
               <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
-            <div className="col-span-2 flex flex-wrap gap-1.5 lg:col-span-1 lg:pb-0.5">
+            <div className="flex flex-wrap gap-1.5 pb-0.5">
               <Button
                 type="button"
                 variant="ghost"
@@ -223,7 +223,7 @@ export default function Reports() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {REPORTS.map((report) => {
           const Icon = report.icon;
           const count = preview?.[report.previewKey];

@@ -8,6 +8,8 @@ interface ShiftFilterProps {
   includeAll?: boolean;
   className?: string;
   label?: string;
+  /** Stretch to container. Default false — chips hug content. */
+  fullWidth?: boolean;
 }
 
 export function ShiftFilter({
@@ -16,6 +18,7 @@ export function ShiftFilter({
   includeAll = true,
   className,
   label = 'Turno de entrenamiento',
+  fullWidth = false,
 }: ShiftFilterProps) {
   const options = [
     ...(includeAll ? [{ value: '', label: 'Todos los turnos' }] : []),
@@ -29,6 +32,7 @@ export function ShiftFilter({
     <FilterChips
       className={cn(className)}
       ariaLabel={label}
+      fullWidth={fullWidth}
       options={options}
       value={value}
       onChange={(next) => onChange(next as TrainingShift | '')}

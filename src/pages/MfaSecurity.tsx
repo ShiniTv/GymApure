@@ -145,7 +145,7 @@ export default function MfaSecurity() {
   const showGuide = !enabled && !setup;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 sm:space-y-5">
+    <div className="page-stack-tight mx-auto w-full max-w-3xl">
       <PageHeader
         compact
         title={
@@ -156,8 +156,8 @@ export default function MfaSecurity() {
         subtitle="Verificación en 2 pasos para tu cuenta de staff"
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-5">
-        <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-1 lg:gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-stretch">
+        <div className="space-y-3 sm:space-y-4">
           {/* Status row */}
           <Card padding="sm" rounded="xl" className={cn(SURFACE, 'lg:p-4')}>
             {statusLoading ? (
@@ -271,7 +271,7 @@ export default function MfaSecurity() {
                   value={enableCode}
                   onChange={(e) => setEnableCode(e.target.value)}
                   placeholder="123456"
-                  className="mt-1 max-w-[12rem] tracking-[0.2em]"
+                  className="mt-1 max-w-[10rem] tracking-[0.2em]"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function MfaSecurity() {
                     value={disableCode}
                     onChange={(e) => setDisableCode(e.target.value)}
                     placeholder="123456"
-                    className="mt-1 tracking-[0.2em]"
+                    className="mt-1 max-w-[10rem] tracking-[0.2em]"
                   />
                 </div>
               </div>
@@ -350,7 +350,9 @@ export default function MfaSecurity() {
 
         {/* Guide — fills empty space when inactive */}
         {showGuide || statusLoading ? (
-          <aside className={cn('rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}>
+          <aside
+            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+          >
             <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">Cómo funciona</p>
             <p className="mt-1 text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
               Un código de tu teléfono confirma que eres tú, además de la contraseña.
@@ -372,7 +374,9 @@ export default function MfaSecurity() {
             </ol>
           </aside>
         ) : enabled ? (
-          <aside className={cn('rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}>
+          <aside
+            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+          >
             <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
               Protección activa
             </p>
@@ -381,7 +385,9 @@ export default function MfaSecurity() {
             </p>
           </aside>
         ) : (
-          <aside className={cn('rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}>
+          <aside
+            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+          >
             <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
               Mientras configuras
             </p>

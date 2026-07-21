@@ -419,8 +419,8 @@ export default function Settings() {
         </Card>
       )}
 
-      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
-        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
+        <Card padding="sm" rounded="xl" className="flex min-w-0 flex-col overflow-hidden md:p-4">
           <div className="mb-2.5 flex min-w-0 items-center gap-2">
             <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Settings2 className="text-brand h-4 w-4 shrink-0" />
@@ -431,7 +431,9 @@ export default function Settings() {
             Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes,
             check-ins).
           </p>
-          <PushNotificationsToggle />
+          <div className="mt-auto">
+            <PushNotificationsToggle />
+          </div>
         </Card>
 
         {settingsLoadError && (
@@ -493,7 +495,7 @@ export default function Settings() {
               Vencimiento, pagos y rutinas se envían al chat de cada miembro.
             </p>
 
-            <div className="max-w-[8rem]">
+            <div className="max-w-[6rem]">
               <Label htmlFor="expiry_alert_days" className="text-[11px]">
                 Días de anticipación
               </Label>
@@ -529,8 +531,8 @@ export default function Settings() {
         )}
       </div>
 
-      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
-        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
+        <Card padding="sm" rounded="xl" className="flex min-w-0 flex-col overflow-hidden md:p-4">
           <div className="mb-2.5 flex min-w-0 items-center gap-2">
             <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Fingerprint className="text-brand h-4 w-4 shrink-0" />
@@ -566,7 +568,7 @@ export default function Settings() {
             />
             <span className="min-w-0 leading-snug">Exigir PIN en ingreso desde la app</span>
           </label>
-          <div className="max-w-[10rem]">
+          <div className="mt-auto max-w-[8rem]">
             <Label htmlFor="check_in_pin" className="text-[11px]">
               PIN del día
             </Label>
@@ -582,7 +584,7 @@ export default function Settings() {
         </Card>
 
         {exchangeRateView && (
-          <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+          <Card padding="sm" rounded="xl" className="flex min-w-0 flex-col overflow-hidden md:p-4">
             <div className="mb-2.5 flex min-w-0 items-center gap-2">
               <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
                 <DollarSign className="text-brand h-4 w-4 shrink-0" />

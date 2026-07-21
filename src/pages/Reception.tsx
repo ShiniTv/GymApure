@@ -803,18 +803,18 @@ export default function Reception() {
           <CounterTabNav tab={tab} insideCount={insideCount} onChange={changeTab} />
 
           {tab === 'access' && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-5 md:gap-4">
-              <div className="space-y-2.5 md:col-span-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-5 md:items-stretch md:gap-4">
+              <div className="flex min-w-0 flex-col space-y-2.5 md:col-span-3">
                 {pinBanner}
                 {lookupPanel}
                 {showMemberPanel && memberPanel}
               </div>
-              <aside className="hidden space-y-4 md:col-span-2 md:block">
-                {insideList}
+              <aside className="hidden min-w-0 md:col-span-2 md:flex md:flex-col md:gap-4">
+                <div className="min-w-0 flex-1">{insideList}</div>
                 <Card
                   padding="md"
                   rounded="xl"
-                  className="border-zinc-200/70 dark:border-zinc-800/80"
+                  className="min-w-0 border-zinc-200/70 dark:border-zinc-800/80"
                 >
                   <h3 className="section-title mb-2">Actividad reciente</h3>
                   <ReceptionActivityFeed limit={5} compact refreshKey={feedRefresh} />

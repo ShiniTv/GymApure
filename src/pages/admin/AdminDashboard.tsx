@@ -24,6 +24,7 @@ import {
   Mail,
   CalendarDays,
   LogIn,
+  Users,
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { DashboardSection } from '../../components/admin/DashboardSection';
@@ -211,7 +212,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3 [&>*]:h-full">
+      <StaggerContainer className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 [&>*]:h-full">
         <StaggerItem>
           <StatCard
             compact
@@ -264,10 +265,10 @@ export default function AdminDashboard() {
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
         <div className="space-y-4">
           <DashboardSection title="Requiere acción" compact>
-            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               <QuickAction
                 compact
                 iconOnlyMobile
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
           </DashboardSection>
 
           <DashboardSection title="Operación" compact>
-            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-3 sm:gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               <QuickAction
                 compact
                 iconOnlyMobile
@@ -342,6 +343,15 @@ export default function AdminDashboard() {
                 description="Avisos y salud"
                 tone="emerald"
               />
+              <QuickAction
+                compact
+                iconOnlyMobile
+                to="/trainers"
+                icon={Users}
+                title="Entrenadores"
+                description="Turnos y niveles"
+                tone="blue"
+              />
             </div>
           </DashboardSection>
 
@@ -366,7 +376,7 @@ export default function AdminDashboard() {
           )}
 
           <DashboardSection title="Finanzas y supervisión" compact>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               <Card padding="sm" rounded="xl" className="space-y-1">
                 <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
                   Pagos &gt;2 días
@@ -395,9 +405,17 @@ export default function AdminDashboard() {
                   {pausedSubs}
                 </p>
               </Card>
+              <Card padding="sm" rounded="xl" className="space-y-1">
+                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+                  Pendientes
+                </p>
+                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {pendingPayments}
+                </p>
+              </Card>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-1.5 sm:gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
               <QuickAction
                 compact
                 iconOnlyMobile
@@ -561,8 +579,7 @@ export default function AdminDashboard() {
                   variant="compact"
                   value={revenueRange}
                   onChange={setRevenueRange}
-                  className="mb-2.5 w-full sm:w-auto"
-                  fullWidth
+                  className="mb-2.5 w-fit max-w-full"
                   options={[
                     { value: '7d', label: '7d' },
                     { value: '30d', label: '30d' },

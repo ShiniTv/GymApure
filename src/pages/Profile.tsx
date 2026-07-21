@@ -516,7 +516,7 @@ export default function Profile() {
               'border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50'
             )}
           >
-            <div className="md:grid md:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] md:items-start md:gap-6 lg:gap-8">
+            <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-5 lg:gap-6">
               <div className="mb-3.5 md:mb-0">
                 <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
                   <div className="relative shrink-0">
@@ -604,7 +604,7 @@ export default function Profile() {
                 )}
               </div>
 
-              <form onSubmit={handleSaveProfile} className="space-y-2.5 md:space-y-3">
+              <form onSubmit={handleSaveProfile} className="min-w-0 space-y-2.5 md:space-y-3">
                 <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
                   <div>
                     <Label>Teléfono</Label>
@@ -657,7 +657,7 @@ export default function Profile() {
                     />
                   </div>
                 </div>
-                <div>
+                <div className="max-w-xl">
                   <Label>Objetivo</Label>
                   <Textarea
                     value={form.goal}
@@ -665,7 +665,7 @@ export default function Profile() {
                       setForm({ ...form, goal: e.target.value });
                     }}
                     rows={2}
-                    className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm md:min-h-[5rem]"
+                    className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm md:min-h-[4.5rem]"
                     placeholder="Ej: bajar grasa, ganar músculo…"
                   />
                 </div>
@@ -675,7 +675,7 @@ export default function Profile() {
                   disabled={saving || !isProfileDirty}
                   size="sm"
                   className={cn(
-                    'h-10 min-h-10 w-full sm:w-auto sm:px-4',
+                    'mt-0.5 h-10 min-h-10 w-full sm:w-auto sm:px-4',
                     isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
                   )}
                   aria-label="Guardar perfil"
@@ -1060,12 +1060,12 @@ export default function Profile() {
       )}
 
       {profileTab === 'seguridad' && (
-        <div className="grid w-full gap-3 md:grid-cols-2 md:items-start md:gap-4">
-          <div className="space-y-3">
+        <div className="grid w-full gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
+          <div className="flex min-w-0 flex-col space-y-3">
             <Card
               padding="sm"
               rounded="xl"
-              className="border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              className="min-w-0 border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
             >
               <h2 className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
                 <Bell className="text-brand h-3.5 w-3.5" />
@@ -1081,7 +1081,7 @@ export default function Profile() {
               <Card
                 padding="sm"
                 rounded="xl"
-                className="border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+                className="min-w-0 border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
               >
                 <h2 className="mb-1 text-[13px] font-semibold text-zinc-900 dark:text-white">
                   Verificación en dos pasos

@@ -19,6 +19,7 @@ export function CounterTabNav({
     <SegmentedControl
       variant="compact"
       layout="wrap"
+      fullWidth
       className="w-full"
       value={tab}
       onChange={onChange}

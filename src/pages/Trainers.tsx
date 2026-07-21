@@ -243,10 +243,10 @@ export default function Trainers() {
         action={<BackToDashboardLink />}
       />
 
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <SearchInput
-            containerClassName="flex-1 min-w-0"
+            containerClassName="min-w-0 flex-1"
             placeholder="Buscar por nombre o especialidad..."
             value={search}
             onChange={(e) => {
@@ -255,7 +255,7 @@ export default function Trainers() {
           />
           <Button
             size="sm"
-            className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4"
+            className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 sm:h-11 sm:w-auto sm:px-4"
             onClick={() => {
               setIsCreating(true);
             }}
@@ -266,7 +266,7 @@ export default function Trainers() {
           </Button>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <ShiftFilter value={shiftFilter} onChange={setShiftFilter} label="Turno" />
           <FilterChips
             options={[

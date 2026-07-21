@@ -156,9 +156,14 @@ export default function AuditLogs() {
         }
       />
 
-      <FilterChips options={ACTION_FILTERS} value={actionFilter} onChange={setActionFilter} />
+      <FilterChips
+        className="w-fit max-w-full"
+        options={ACTION_FILTERS}
+        value={actionFilter}
+        onChange={setActionFilter}
+      />
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
+      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
         {loading ? (
           <div className="flex justify-center py-8">
             <Spinner />
@@ -177,6 +182,7 @@ export default function AuditLogs() {
                 const Icon = actionIcon(log.action);
                 const variant = actionBadgeVariant(log.action);
                 const isLast = index === logs.length - 1;
+                const detailText = formatDetails(log.details);
 
                 return (
                   <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
@@ -221,8 +227,11 @@ export default function AuditLogs() {
                           </p>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-xs break-words text-zinc-500 dark:text-zinc-400">
-                        {formatDetails(log.details)}
+                      <p
+                        className="mt-1 line-clamp-2 text-xs break-words text-zinc-500 dark:text-zinc-400"
+                        title={detailText}
+                      >
+                        {detailText}
                       </p>
                     </div>
                   </li>
@@ -231,19 +240,20 @@ export default function AuditLogs() {
             </ol>
 
             {/* Desktop: dense table */}
-            <div className="hidden overflow-x-auto lg:block">
+            <div className="hidden min-w-0 overflow-x-auto lg:block">
               <table className="w-full min-w-[52rem] text-left text-sm">
                 <thead className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-400">
                   <tr>
                     <th className="px-3 py-2.5">Cuándo</th>
                     <th className="px-3 py-2.5">Acción</th>
                     <th className="px-3 py-2.5">Actor</th>
-                    <th className="px-3 py-2.5">Detalle</th>
+                    <th className="min-w-0 px-3 py-2.5">Detalle</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {logs.map((log) => {
                     const variant = actionBadgeVariant(log.action);
+                    const detailText = formatDetails(log.details);
                     return (
                       <tr key={log.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
                         <td className="px-3 py-2.5 text-xs whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
@@ -256,18 +266,23 @@ export default function AuditLogs() {
                         <td className="px-3 py-2.5">
                           <Badge variant={variant}>{actionLabel(log.action)}</Badge>
                         </td>
-                        <td className="max-w-[14rem] px-3 py-2.5">
+                        <td className="max-w-[14rem] min-w-0 px-3 py-2.5">
                           <p className="truncate font-semibold text-zinc-900 dark:text-white">
                             {log.user_name ?? 'Sistema'}
                           </p>
                           {log.user_email ? (
-                            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <p
+                              className="truncate text-[11px] text-zinc-500 dark:text-zinc-400"
+                              title={log.user_email}
+                            >
                               {log.user_email}
                             </p>
                           ) : null}
                         </td>
-                        <td className="max-w-[28rem] px-3 py-2.5 text-xs text-zinc-600 dark:text-zinc-300">
-                          <p className="line-clamp-2 break-words">{formatDetails(log.details)}</p>
+                        <td className="max-w-[28rem] min-w-0 px-3 py-2.5 text-xs text-zinc-600 dark:text-zinc-300">
+                          <p className="line-clamp-2 break-words" title={detailText}>
+                            {detailText}
+                          </p>
                         </td>
                       </tr>
                     );
