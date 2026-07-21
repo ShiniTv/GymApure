@@ -20,6 +20,8 @@ interface SegmentedControlProps<T extends string> {
   variant?: 'default' | 'kiosk' | 'compact';
   /** Horizontal scroll — better for many tabs on mobile */
   layout?: 'wrap' | 'scroll';
+  /** Accessible name when used as filters (not section tabs) */
+  ariaLabel?: string;
 }
 
 const accentActive: Record<'brand' | 'check-out', string> = {
@@ -36,6 +38,7 @@ export function SegmentedControl<T extends string>({
   fullWidth = false,
   variant = 'default',
   layout = 'wrap',
+  ariaLabel,
 }: SegmentedControlProps<T>) {
   const isKiosk = variant === 'kiosk';
   const isCompact = variant === 'compact';
@@ -114,6 +117,7 @@ export function SegmentedControl<T extends string>({
         !scroll && className
       )}
       role="tablist"
+      aria-label={ariaLabel}
     >
       {options.map((option, index) => {
         const active = value === option.value;
@@ -122,14 +126,14 @@ export function SegmentedControl<T extends string>({
 
         return (
           <button
-            key={option.value}
+            key={option.value || '__empty__'}
             type="button"
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'focus-visible:ring-brand/50 flex items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
+              'focus-visible:ring-brand/50 flex touch-manipulation items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
               fullWidth && !scroll && 'flex-1',
               isKiosk
                 ? cn(
@@ -168,7 +172,7 @@ export function SegmentedControl<T extends string>({
                     : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                 )}
               >
-                {option.count}
+                {option.count > 99 ? '99+' : option.count}
               </span>
             )}
           </button>

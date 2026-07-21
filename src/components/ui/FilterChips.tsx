@@ -1,4 +1,4 @@
-import { cn } from '../../lib/utils';
+import { SegmentedControl } from './SegmentedControl';
 
 export interface FilterChipOption {
   value: string;
@@ -11,79 +11,28 @@ interface FilterChipsProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  /** Stretch to fill parent width (e.g. mobile toolbars) */
+  /** Stretch segmented bar to container width. Default: true. */
   fullWidth?: boolean;
-  /** Horizontal scroll row — better for many chips on mobile */
-  layout?: 'wrap' | 'scroll';
 }
 
+/** List filters — always the same segmented bar as profile tabs (no scroll pills). */
 export function FilterChips({
   options,
   value,
   onChange,
   className,
-  fullWidth = false,
-  layout = 'wrap',
+  fullWidth = true,
 }: FilterChipsProps) {
-  const scroll = layout === 'scroll';
-
   return (
-    <div
-      className={cn(
-        scroll
-          ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-          : cn(
-              'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
-              fullWidth ? 'w-full' : 'w-fit max-w-full'
-            ),
-        className
-      )}
-      role="tablist"
-      aria-label="Filtros"
-    >
-      {options.map((opt) => {
-        const active = value === opt.value;
-        return (
-          <button
-            key={opt.value || '__all__'}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'focus-visible:ring-brand/50 inline-flex touch-manipulation items-center justify-center gap-1.5 font-semibold transition-all focus-visible:ring-2 focus-visible:outline-none',
-              scroll
-                ? cn(
-                    'h-8 shrink-0 rounded-full border px-3 text-[11px]',
-                    active
-                      ? 'border-brand/30 bg-brand/10 text-brand'
-                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600'
-                  )
-                : cn(
-                    'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] sm:min-h-[var(--touch-min)]',
-                    fullWidth && 'flex-1',
-                    active
-                      ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
-                      : 'text-zinc-600 hover:text-zinc-800 dark:text-zinc-300 dark:hover:text-zinc-100'
-                  )
-            )}
-          >
-            {opt.label}
-            {opt.count != null && opt.count > 0 && (
-              <span
-                className={cn(
-                  'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
-                  active
-                    ? 'bg-brand/15 text-brand dark:text-brand'
-                    : 'bg-zinc-200/80 text-zinc-500 dark:bg-zinc-900/80 dark:text-zinc-400'
-                )}
-              >
-                {opt.count > 99 ? '99+' : opt.count}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl
+      variant="compact"
+      layout="wrap"
+      fullWidth={fullWidth}
+      className={className}
+      ariaLabel="Filtros"
+      value={value}
+      onChange={onChange}
+      options={options}
+    />
   );
 }

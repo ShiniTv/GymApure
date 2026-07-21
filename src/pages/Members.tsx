@@ -827,7 +827,6 @@ export default function Members() {
           {(user?.role === 'admin' || isTrainer) && (
             <FilterChips
               fullWidth
-              layout="scroll"
               className="sm:w-auto sm:shrink-0"
               options={[
                 { value: '', label: 'Todos' },

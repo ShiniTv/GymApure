@@ -6,7 +6,7 @@ const LazyChart = lazy(() =>
     default: function WeeklyVolumeMiniChart({ data }: { data: { day: string; count: number }[] }) {
       const { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } = mod;
       return (
-        <ResponsiveContainer width="100%" height={120}>
+        <ResponsiveContainer width="100%" height={104}>
           <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#a1a1aa" />
             <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
@@ -22,6 +22,12 @@ interface WorkoutWeeklyChartProps {
   history: { start_time: string }[];
 }
 
+function weeklyInsight(total: number): string {
+  if (total === 0) return 'Sin entrenamientos en los últimos 7 días';
+  if (total === 1) return '1 entreno en los últimos 7 días';
+  return `${total} entrenos en los últimos 7 días`;
+}
+
 export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
   const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const now = new Date();
@@ -33,15 +39,39 @@ export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
     return { day: days[d.getDay()] ?? '', count };
   });
 
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-[120px] items-center justify-center">
-          <Spinner size="sm" />
+  const total = data.reduce((sum, row) => sum + row.count, 0);
+  const insight = weeklyInsight(total);
+
+  if (total === 0) {
+    return (
+      <div>
+        <p className="mb-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          Últimos 7 días
+        </p>
+        <div className="flex h-[6.5rem] items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/60 px-3 text-center text-[11px] leading-snug text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/30 dark:text-zinc-400">
+          {insight}
         </div>
-      }
-    >
-      <LazyChart data={data} />
-    </Suspense>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          Últimos 7 días
+        </p>
+        <p className="text-brand text-[11px] font-medium">{insight}</p>
+      </div>
+      <Suspense
+        fallback={
+          <div className="flex h-[6.5rem] items-center justify-center">
+            <Spinner size="sm" />
+          </div>
+        }
+      >
+        <LazyChart data={data} />
+      </Suspense>
+    </div>
   );
 }

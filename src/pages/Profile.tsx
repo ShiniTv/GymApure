@@ -1104,7 +1104,6 @@ export default function Profile() {
               title="Cambiar contraseña"
               icon={<Lock className="text-brand h-4 w-4" />}
               className="rounded-xl"
-              defaultOpen
             >
               {passwordError && (
                 <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>

@@ -16,6 +16,8 @@ import {
   Dumbbell,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  MoreVertical,
 } from 'lucide-react';
 import {
   Button,
@@ -26,12 +28,21 @@ import {
   Breadcrumbs,
   WorkoutShellSkeleton,
   Spinner,
+  AnchoredMenu,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
+import { formatMuscleGroupLabel } from '../lib/exerciseMuscleGroups';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
 import { formatWorkoutTime } from './activeWorkout/utils';
+import {
+  formatLastSetHint,
+  getLastSetHint,
+  lastSessionLogMap,
+  resolveSetValues,
+  type LastSessionSetLog,
+} from './activeWorkout/setValues';
 import {
   ExerciseExecutionSteps,
   executionStepCount,
@@ -148,6 +159,9 @@ export default function ActiveWorkout() {
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [logs, setLogs] = useState<Record<string, LogEntry>>({});
+  const [lastSessionLogs, setLastSessionLogs] = useState<
+    Record<string, { weight: number; reps: number }>
+  >({});
   const [completedExercises, setCompletedExercises] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -160,6 +174,10 @@ export default function ActiveWorkout() {
   const [timer, setTimer] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [resetMenuOpen, setResetMenuOpen] = useState(false);
+  const resetMenuAnchorRef = useRef<HTMLButtonElement>(null);
+  const [pausePulse, setPausePulse] = useState(false);
+  const pausePulseTimeoutRef = useRef<number | null>(null);
 
   // Rest Timer State (wall-clock endsAt so background tabs stay accurate)
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
@@ -183,6 +201,14 @@ export default function ActiveWorkout() {
   const isRoutineCompletedToday = routineId != null && completedTodayIds.includes(routineId);
 
   useWorkoutPageTitle(routine?.name);
+
+  useEffect(() => {
+    return () => {
+      if (pausePulseTimeoutRef.current != null) {
+        window.clearTimeout(pausePulseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
@@ -576,6 +602,40 @@ export default function ActiveWorkout() {
     }));
   };
 
+  const handleRemoveLastSet = (exerciseId: number) => {
+    const exercise = routine?.exercises.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    if (exercise.sets <= 1) return;
+
+    const lastSetNum = exercise.sets;
+    const lastKey = `${exerciseId}-${lastSetNum}`;
+    const isLastCompleted = Boolean(logs[lastKey]?.completed);
+    if (isLastCompleted) {
+      toast?.error('No puedes eliminar una serie completada.');
+      return;
+    }
+
+    setRoutine((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        exercises: prev.exercises.map((e) =>
+          e.id === exerciseId ? { ...e, sets: Math.max(1, e.sets - 1) } : e
+        ),
+      };
+    });
+
+    setLogs((prev) => {
+      // Avoid `delete next[lastKey]` (dinamic key) to keep ESLint happy.
+      // Build the next object without the last set key.
+      const { [lastKey]: _removed, ...rest } = prev;
+      return rest;
+    });
+
+    // If user deleted a set, the exercise can't remain marked as fully complete.
+    setCompletedExercises((prev) => ({ ...prev, [exerciseId]: false }));
+  };
+
   const startSession = async (routineId: number) => {
     if (!user || !routine || isStartingRef.current || routineBlockedToday) return;
     isStartingRef.current = true;
@@ -589,8 +649,10 @@ export default function ActiveWorkout() {
         id: number;
         start_time?: string;
         logs?: SessionLogResponse[];
+        last_session_logs?: LastSessionSetLog[];
       }>(res);
       setSessionId(data.id);
+      setLastSessionLogs(lastSessionLogMap(data.last_session_logs ?? []));
 
       // Load completed exercises from localStorage
       const savedCompletedStr = localStorage.getItem(
@@ -688,21 +750,28 @@ export default function ActiveWorkout() {
 
   const toggleSetComplete = async (exerciseId: number, setNum: number) => {
     const key = `${exerciseId}-${setNum}`;
-    const entry = logs[key];
-    const weight = Number.parseFloat(entry?.weight ?? '');
-    const reps = Number.parseInt(entry?.reps ?? '', 10);
+    const exercise = routine?.exercises.find((e) => e.id === exerciseId);
+    if (!exercise) return;
 
-    // Peso 0 es válido (peso corporal / rutina estática sin kg prescrito).
+    const { weight, reps } = resolveSetValues(exercise, setNum, logs, lastSessionLogs);
+
     if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) {
       setSetValidationError('Ingresa peso y repeticiones antes de marcar la serie.');
       return;
     }
     setSetValidationError(null);
 
-    // Optimistic update
+    // Optimistic update with resolved values
     setLogs((prev) => ({
       ...prev,
-      [key]: { ...prev[key], completed: true },
+      [key]: {
+        ...prev[key],
+        exercise_id: exerciseId,
+        set_number: setNum,
+        weight: String(weight),
+        reps: String(reps),
+        completed: true,
+      },
     }));
 
     // Send to API
@@ -722,8 +791,7 @@ export default function ActiveWorkout() {
       hapticLight();
 
       // Start Rest Timer
-      const exercise = routine?.exercises.find((e) => e.id === exerciseId);
-      if (exercise && exercise.rest_seconds > 0) {
+      if (exercise.rest_seconds > 0) {
         startRestTimer(exercise.rest_seconds);
       }
 
@@ -736,12 +804,19 @@ export default function ActiveWorkout() {
         });
         if (allSetsDone) {
           setCompletedExercises((prev) => ({ ...prev, [exerciseId]: true }));
-          if (isMobileFocus && routine) {
+          if (routine) {
             const idx = routine.exercises.findIndex((e) => e.id === exerciseId);
             if (idx >= 0 && idx < routine.exercises.length - 1) {
+              const nextExerciseId = routine.exercises[idx + 1]?.id;
               window.setTimeout(() => {
-                setFocusedIndex(idx + 1);
-              }, 400);
+                if (isMobileFocus) {
+                  setFocusedIndex(idx + 1);
+                } else if (nextExerciseId != null) {
+                  document
+                    .getElementById(`active-workout-exercise-${nextExerciseId}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }, 350);
             }
           }
         }
@@ -845,6 +920,17 @@ export default function ActiveWorkout() {
     setShowResetConfirm(true);
   };
 
+  const togglePause = () => {
+    const next = !isPaused;
+    setIsPaused(next);
+    hapticLight();
+    setPausePulse(true);
+    if (pausePulseTimeoutRef.current != null) {
+      window.clearTimeout(pausePulseTimeoutRef.current);
+    }
+    pausePulseTimeoutRef.current = window.setTimeout(() => setPausePulse(false), 520);
+  };
+
   const confirmResetProgress = async () => {
     setIsResetting(true);
     setSessionError(null);
@@ -923,6 +1009,14 @@ export default function ActiveWorkout() {
   const progressPct = routine.exercises.length
     ? Math.round((completedCount / routine.exercises.length) * 100)
     : 0;
+  const completedSets = Object.values(logs).filter((entry) => entry.completed).length;
+  const totalVolumeKg = Object.values(logs).reduce((sum, entry) => {
+    if (!entry.completed) return sum;
+    const weight = Number.parseFloat(entry.weight ?? '0');
+    const reps = Number.parseInt(entry.reps ?? '0', 10);
+    if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) return sum;
+    return sum + weight * reps;
+  }, 0);
 
   return (
     <div
@@ -934,81 +1028,132 @@ export default function ActiveWorkout() {
         items={[{ label: 'Rutinas', href: '/routines' }, { label: routine.name }]}
       />
 
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-zinc-50 py-2.5 sm:py-3 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex min-w-0 items-center gap-2 md:gap-4">
-          <button
-            onClick={() => navigate('/routines')}
-            className="shrink-0 rounded-full p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          >
-            <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
-          </button>
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-bold text-zinc-900 md:text-xl dark:text-white">
-              {routine.name}
-            </h1>
-            <div className="text-brand dark:text-brand mt-0.5 flex items-center font-mono text-sm font-semibold">
-              <Clock className="mr-1 h-3.5 w-3.5 shrink-0" />
-              {formatTime(timer)}
-              {isPaused && (
-                <span className="ml-2 text-xs text-zinc-400 dark:text-zinc-300">Pausado</span>
-              )}
+      <div className="sticky top-0 z-10 -mx-3 border-b border-zinc-200 bg-zinc-50/95 px-3 backdrop-blur-sm sm:-mx-0 sm:px-0 dark:border-zinc-800 dark:bg-zinc-950/95">
+        <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/routines')}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              aria-label="Volver a rutinas"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-bold text-zinc-900 sm:text-base md:text-lg dark:text-white">
+                {routine.name}
+              </h1>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                <span
+                  className={cn(
+                    'bg-brand/10 text-brand inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums transition-all',
+                    pausePulse ? 'animate-pulse' : ''
+                  )}
+                >
+                  <Clock className="h-3 w-3 shrink-0" />
+                  {formatTime(timer)}
+                </span>
+                {isPaused ? (
+                  <span
+                    className={cn(
+                      'rounded-full bg-zinc-200/80 px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-all dark:bg-zinc-800 dark:text-zinc-300',
+                      pausePulse ? 'animate-pulse' : ''
+                    )}
+                  >
+                    Pausado
+                  </span>
+                ) : null}
+                <span className="hidden text-[10px] font-medium text-zinc-500 sm:inline dark:text-zinc-400">
+                  {completedCount}/{routine.exercises.length} ejercicios
+                </span>
+              </div>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                togglePause();
+              }}
+              disabled={!sessionId}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              aria-label={isPaused ? 'Reanudar cronómetro' : 'Pausar cronómetro'}
+              title={isPaused ? 'Reanudar' : 'Pausar'}
+            >
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            </button>
+            <button
+              ref={resetMenuAnchorRef}
+              type="button"
+              onClick={() => setResetMenuOpen((open) => !open)}
+              disabled={!sessionId || isResetting}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 disabled:opacity-40 sm:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+              aria-label="Más acciones"
+              aria-haspopup="menu"
+              aria-expanded={resetMenuOpen}
+              title="Acciones"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            <AnchoredMenu
+              open={resetMenuOpen}
+              onClose={() => setResetMenuOpen(false)}
+              anchorRef={resetMenuAnchorRef}
+              align="end"
+              className="min-w-[14rem]"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                disabled={!sessionId || isResetting}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-500/10 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-500/10"
+                onClick={() => {
+                  setResetMenuOpen(false);
+                  resetProgress();
+                }}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reiniciar sesión
+              </button>
+            </AnchoredMenu>
+            <button
+              type="button"
+              onClick={resetProgress}
+              disabled={!sessionId || isResetting}
+              className="hidden h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-40 sm:inline-flex dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+              aria-label="Reiniciar sesión"
+              title="Reiniciar"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <Button
+              onClick={finishWorkout}
+              disabled={!sessionId}
+              size="sm"
+              className="h-9 px-3 text-xs sm:px-4 sm:text-sm"
+            >
+              Finalizar
+            </Button>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => {
-              setIsPaused((p) => !p);
-            }}
-            disabled={!sessionId}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
-            aria-label={isPaused ? 'Reanudar cronómetro' : 'Pausar cronómetro'}
-            title={isPaused ? 'Reanudar' : 'Pausar'}
-          >
-            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-            <span className="ml-0 hidden sm:ml-1 sm:inline">
-              {isPaused ? 'Reanudar' : 'Pausar'}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={resetProgress}
-            disabled={!sessionId || isResetting}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-40 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-xs sm:font-semibold dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
-            aria-label="Reiniciar sesión"
-            title="Reiniciar"
-          >
-            <RotateCcw className="h-4 w-4" />
-            <span className="ml-0 hidden sm:ml-1 sm:inline">Reiniciar</span>
-          </button>
-          <Button
-            onClick={finishWorkout}
-            disabled={!sessionId}
-            size="sm"
-            className="h-9 px-3 sm:h-auto sm:min-h-11"
-          >
-            Finalizar
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          <span>Progreso de sesión</span>
-          <span className="text-brand dark:text-brand">
-            {completedCount}/{routine.exercises.length} ejercicios · {progressPct}%
-          </span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+        <div className="pb-2.5">
+          <div className="mb-1 flex items-center justify-between text-[10px] font-medium text-zinc-500 sm:hidden dark:text-zinc-400">
+            <span>Progreso</span>
+            <span className="text-brand">{progressPct}%</span>
+          </div>
           <div
-            className="bg-brand h-full rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
+            className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
             role="progressbar"
             aria-valuenow={progressPct}
             aria-valuemin={0}
             aria-valuemax={100}
-          />
+            aria-label={`Progreso de sesión ${progressPct}%`}
+          >
+            <div
+              className="bg-brand h-full rounded-full transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -1192,8 +1337,9 @@ export default function ActiveWorkout() {
         {routine.exercises.map((exercise, index) => (
           <div
             key={exercise.id}
+            id={`active-workout-exercise-${exercise.id}`}
             className={cn(
-              'rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all md:p-6 dark:border-zinc-800 dark:bg-zinc-900',
+              'rounded-xl border border-zinc-200 bg-white p-3 shadow-sm transition-all sm:p-4 md:p-6 dark:border-zinc-800 dark:bg-zinc-900',
               completedExercises[exercise.id]
                 ? 'scale-[0.98] opacity-50 ring-2 ring-emerald-500/50'
                 : '',
@@ -1208,8 +1354,9 @@ export default function ActiveWorkout() {
                   </span>
                   <span className="truncate">{exercise.name}</span>
                 </h3>
-                <p className="mt-2 text-sm font-medium text-zinc-500 capitalize dark:text-zinc-400">
-                  {exercise.muscle_group} · Descanso: {exercise.rest_seconds}s
+                <p className="mt-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  {formatMuscleGroupLabel(exercise.muscle_group)} · Descanso:{' '}
+                  {exercise.rest_seconds}s
                 </p>
                 {exercise.weight_suggestion && (
                   <p className="text-brand dark:text-brand mt-1 text-xs font-bold">
@@ -1303,69 +1450,104 @@ export default function ActiveWorkout() {
             )}
 
             <div className="space-y-4">
-              <div className="grid grid-cols-[minmax(0,2.5rem)_1fr_1fr_auto] gap-2 px-1 text-center text-xs font-medium text-zinc-400 sm:grid-cols-10 sm:gap-3 sm:px-2 dark:text-zinc-500">
+              <div className="grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] gap-2 px-1 text-center text-[11px] font-semibold text-zinc-400 sm:grid-cols-10 sm:gap-3 sm:px-2 dark:text-zinc-500">
                 <div className="sm:col-span-2">Serie</div>
                 <div className="sm:col-span-3">kg</div>
                 <div className="sm:col-span-3">Reps</div>
-                <div>Ok</div>
+                <div className="flex items-center justify-center">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                </div>
               </div>
 
               {Array.from({ length: exercise.sets }).map((_, i) => {
                 const setNum = i + 1;
                 const key = `${exercise.id}-${setNum}`;
                 const isCompleted = logs[key]?.completed;
+                const priorSet = getLastSetHint(exercise.id, setNum, lastSessionLogs);
+                const lastHintLabel = !isCompleted && priorSet ? formatLastSetHint(priorSet) : null;
+                const weightInputId = `workout-weight-${exercise.id}-${setNum}`;
+                const repsInputId = `workout-reps-${exercise.id}-${setNum}`;
 
                 return (
                   <div
                     key={setNum}
-                    className={`grid grid-cols-[minmax(0,2.5rem)_1fr_1fr_auto] items-center gap-2 rounded-2xl p-2 transition-all sm:grid-cols-10 sm:gap-3 ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-zinc-50 dark:bg-zinc-800/30'}`}
+                    className={`grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] items-center gap-2 rounded-2xl p-1.5 transition-all sm:grid-cols-10 sm:gap-3 ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-zinc-50 dark:bg-zinc-800/30'}`}
                   >
                     <div className="flex justify-center sm:col-span-2">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-100 bg-white text-sm font-semibold text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-100 bg-white text-sm font-semibold text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                         {setNum}
                       </span>
                     </div>
                     <div className="min-w-0 sm:col-span-3">
                       <Input
+                        id={weightInputId}
                         type="number"
-                        placeholder="0"
-                        className="min-h-[44px] py-3 text-center text-base font-bold sm:min-h-[48px] sm:py-4 sm:text-lg md:py-3 md:text-sm"
+                        inputMode="decimal"
+                        enterKeyHint="next"
+                        placeholder={priorSet ? String(priorSet.weight) : '0'}
+                        className="min-h-[40px] py-2 text-center text-base font-bold sm:min-h-[44px] sm:py-3 sm:text-lg md:py-2 md:text-base"
                         value={logs[key]?.weight || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'weight', e.target.value);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            document.getElementById(repsInputId)?.focus();
+                          }
+                        }}
                         disabled={isCompleted}
+                        aria-label={`Peso serie ${setNum}`}
                       />
+                      {lastHintLabel ? (
+                        <p className="mt-0.5 truncate text-center text-[10px] text-zinc-400 dark:text-zinc-500">
+                          {lastHintLabel}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="min-w-0 sm:col-span-3">
                       <Input
+                        id={repsInputId}
                         type="number"
-                        placeholder={exercise.reps.toString()}
-                        className="min-h-[44px] py-3 text-center text-base font-bold sm:min-h-[48px] sm:py-4 sm:text-lg md:py-3 md:text-sm"
+                        inputMode="numeric"
+                        enterKeyHint="done"
+                        placeholder={priorSet ? String(priorSet.reps) : exercise.reps.toString()}
+                        className="min-h-[40px] py-2 text-center text-base font-bold sm:min-h-[44px] sm:py-3 sm:text-lg md:py-2 md:text-base"
                         value={logs[key]?.reps || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'reps', e.target.value);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            void toggleSetComplete(exercise.id, setNum);
+                          }
+                        }}
                         disabled={isCompleted}
+                        aria-label={`Repeticiones serie ${setNum}`}
                       />
                     </div>
                     <div className="flex justify-center sm:col-span-2">
                       {isCompleted ? (
                         <button
+                          type="button"
                           onClick={() => {
                             editSet(exercise.id, setNum);
                           }}
-                          className="bg-brand/10 text-brand hover:bg-brand/20 rounded-xl p-2.5 shadow-sm transition-all"
+                          className="bg-brand/10 text-brand hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-lg p-0 shadow-sm transition-all"
                           title="Editar serie"
+                          aria-label={`Editar serie ${setNum}`}
                         >
-                          <Edit2 className="h-5 w-5" />
+                          <Edit2 className="h-4 w-4" />
                         </button>
                       ) : (
                         <button
-                          onClick={() => toggleSetComplete(exercise.id, setNum)}
-                          className="hover:text-brand hover:border-brand rounded-xl border border-zinc-100 bg-white p-2.5 text-zinc-300 shadow-sm transition-all dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600"
+                          type="button"
+                          onClick={() => void toggleSetComplete(exercise.id, setNum)}
+                          className="hover:text-brand hover:border-brand flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-100 bg-white p-0 text-zinc-300 shadow-sm transition-all dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600"
+                          aria-label={`Marcar serie ${setNum} como hecha`}
                         >
-                          <CheckCircle className="h-6 w-6" />
+                          <CheckCircle className="h-5 w-5" />
                         </button>
                       )}
                     </div>
@@ -1373,11 +1555,25 @@ export default function ActiveWorkout() {
                 );
               })}
 
+              {exercise.sets > 1 && !logs[`${exercise.id}-${exercise.sets}`]?.completed && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLastSet(exercise.id)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-100 bg-white text-zinc-400 shadow-sm transition-all hover:border-red-200 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600 dark:hover:border-red-500/30 dark:hover:text-red-400"
+                    aria-label="Eliminar última serie"
+                    title="Eliminar última serie"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={() => {
                   handleAddSet(exercise.id);
                 }}
-                className="hover:text-brand hover:bg-brand/5 hover:border-brand/50 mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-zinc-100 py-3 text-xs font-medium text-zinc-400 transition-all dark:border-zinc-800 dark:text-zinc-300"
+                className="hover:text-brand hover:bg-brand/5 hover:border-brand/50 mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-100 py-2.5 text-xs font-medium text-zinc-400 transition-all dark:border-zinc-800 dark:text-zinc-300"
               >
                 <Plus className="h-4 w-4" />
                 Añadir Serie
@@ -1396,36 +1592,48 @@ export default function ActiveWorkout() {
         }}
         title={<>¡Felicidades!</>}
       >
-        <div className="mb-8 text-center">
-          <div className="brand-solid mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg shadow-zinc-900/20">
+        <div className="mb-5 text-center">
+          <div className="brand-solid ring-brand/10 mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-4 shadow-zinc-900/20">
             <CheckCircle className="h-8 w-8" />
           </div>
-          <p className="font-medium text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
             ¿Completaste tu rutina exitosamente?
           </p>
-          <p className="text-brand mt-3 text-xs font-medium">
-            {formatTime(timer)} · {completedCount}/{routine.exercises.length} ejercicios
-          </p>
+          <div className="mt-3 flex items-center justify-center gap-2 text-[11px]">
+            <span className="bg-brand/10 text-brand rounded-full px-2.5 py-1 font-semibold">
+              {formatTime(timer)}
+            </span>
+            <span className="rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              {completedCount}/{routine.exercises.length} ejercicios
+            </span>
+          </div>
+          <div className="mt-3 rounded-xl border border-zinc-100 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/40">
+            <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+              {completedSets} serie{completedSets === 1 ? '' : 's'} registradas
+              <span className="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
+              {totalVolumeKg.toLocaleString('es-VE')} kg de volumen total
+            </p>
+          </div>
         </div>
 
         {finishError && (
           <p className="mb-4 text-center text-sm font-bold text-red-500">{finishError}</p>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => void confirmFinish(true)}
             disabled={isSubmittingFinish}
-            className="group flex w-full items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 p-6 transition-all hover:border-emerald-500 disabled:opacity-60 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+            className="group flex w-full items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 transition-all hover:border-emerald-500 disabled:opacity-60 dark:border-emerald-500/25 dark:bg-emerald-500/10"
           >
             <div className="text-left">
               <p className="font-semibold text-emerald-600 dark:text-emerald-500">Sí, la logré</p>
-              <p className="text-xs font-medium text-emerald-600/60 dark:text-emerald-500/60">
+              <p className="mt-0.5 text-xs font-medium text-emerald-600/65 dark:text-emerald-500/65">
                 Todas las series completadas
               </p>
             </div>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-emerald-500 transition-all group-hover:bg-emerald-500 group-hover:text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-500 transition-all group-hover:bg-emerald-500 group-hover:text-white">
               <CheckCircle className="h-4 w-4" />
             </div>
           </button>
@@ -1434,19 +1642,20 @@ export default function ActiveWorkout() {
             type="button"
             onClick={() => void confirmFinish(false)}
             disabled={isSubmittingFinish}
-            className="group flex w-full items-center justify-between rounded-2xl border border-zinc-100 bg-zinc-50 p-6 transition-all hover:border-zinc-400 disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-800/50"
+            className="group flex w-full items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-4 transition-all hover:border-zinc-400 disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-800/50"
           >
             <div className="text-left">
               <p className="font-semibold text-zinc-600 dark:text-zinc-400">No completamente</p>
-              <p className="text-xs font-medium text-zinc-500/60 dark:text-zinc-400/60">
+              <p className="mt-0.5 text-xs font-medium text-zinc-500/60 dark:text-zinc-400/60">
                 Faltaron algunos ejercicios
               </p>
             </div>
+            <div className="h-2.5 w-2.5 rounded-full bg-zinc-300 transition-all group-hover:bg-zinc-500 dark:bg-zinc-600 dark:group-hover:bg-zinc-400" />
           </button>
 
           <Button
             variant="ghost"
-            className="mt-4 w-full"
+            className="mt-1 w-full"
             size="sm"
             disabled={isSubmittingFinish}
             onClick={() => {

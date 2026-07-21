@@ -157,7 +157,7 @@ export function ProfileHealthTab({
         </div>
       )}
 
-      <div className="md:grid md:grid-cols-2 md:items-start md:gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
         <Card
           padding="sm"
           rounded="xl"
@@ -279,7 +279,6 @@ export function ProfileHealthTab({
           <AccordionItem
             title="Metabolismo (TMB / GET)"
             icon={<Activity className="text-brand h-4 w-4" />}
-            defaultOpen
             className="rounded-xl"
           >
             <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">

@@ -730,7 +730,6 @@ export default function Equipment() {
       <div className="flex flex-col gap-2.5 sm:gap-3">
         {isAdmin ? (
           <FilterChips
-            layout="scroll"
             value={adminSummaryFilter}
             onChange={handleAdminSummaryFilter}
             options={[
@@ -753,7 +752,6 @@ export default function Equipment() {
           />
         ) : (
           <FilterChips
-            layout="scroll"
             value={staffQuickFilter}
             onChange={(v) => setStaffQuickFilter(v as typeof staffQuickFilter)}
             options={[
@@ -869,7 +867,6 @@ export default function Equipment() {
             <div className="grid gap-3 lg:grid-cols-2">
               {isAdmin && (
                 <FilterChips
-                  layout="scroll"
                   value={statusFilter}
                   onChange={(value) => {
                     setInspectionDueOnly(false);
@@ -886,7 +883,6 @@ export default function Equipment() {
                 />
               )}
               <FilterChips
-                layout="scroll"
                 value={zoneFilter}
                 onChange={setZoneFilter}
                 options={[
@@ -895,7 +891,6 @@ export default function Equipment() {
                 ]}
               />
               <FilterChips
-                layout="scroll"
                 value={categoryFilter}
                 onChange={setCategoryFilter}
                 options={[
@@ -907,7 +902,6 @@ export default function Equipment() {
                 ]}
               />
               <FilterChips
-                layout="scroll"
                 value={inspectionDueOnly ? 'due' : 'all'}
                 onChange={(v) => setInspectionDueOnly(v === 'due')}
                 options={[

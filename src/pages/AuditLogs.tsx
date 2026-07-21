@@ -155,12 +155,7 @@ export default function AuditLogs() {
         }
       />
 
-      <FilterChips
-        layout="scroll"
-        options={ACTION_FILTERS}
-        value={actionFilter}
-        onChange={setActionFilter}
-      />
+      <FilterChips options={ACTION_FILTERS} value={actionFilter} onChange={setActionFilter} />
 
       <Card padding="sm" rounded="xl" className="md:p-4">
         {loading ? (

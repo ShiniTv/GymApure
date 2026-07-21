@@ -294,7 +294,6 @@ export default function Exercises() {
 
       <div className="flex flex-col gap-2">
         <FilterChips
-          layout="scroll"
           options={[
             { value: '', label: 'Todos', count: catalogList.length },
             ...MUSCLE_GROUPS.map((group) => ({
@@ -306,25 +305,34 @@ export default function Exercises() {
           value={muscleFilter}
           onChange={setMuscleFilter}
         />
-        <button
-          type="button"
-          onClick={() => setVideoOnly((v) => !v)}
-          className={cn(
-            'inline-flex h-8 w-fit shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors',
-            videoOnly
-              ? 'border-brand/30 bg-brand/10 text-brand'
-              : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600'
-          )}
-          aria-pressed={videoOnly}
-        >
-          <Video className="h-3.5 w-3.5" aria-hidden />
-          Con video
-          {videoCount > 0 ? (
-            <span className="bg-brand/15 text-brand rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
-              {videoCount > 99 ? '99+' : videoCount}
-            </span>
-          ) : null}
-        </button>
+        <div className="inline-flex w-fit max-w-full rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800">
+          <button
+            type="button"
+            onClick={() => setVideoOnly((v) => !v)}
+            className={cn(
+              'focus-visible:ring-brand/50 inline-flex min-h-9 touch-manipulation items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition-all focus-visible:ring-2 focus-visible:outline-none',
+              videoOnly
+                ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
+                : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+            )}
+            aria-pressed={videoOnly}
+          >
+            <Video className="h-3.5 w-3.5" aria-hidden />
+            Con video
+            {videoCount > 0 ? (
+              <span
+                className={cn(
+                  'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
+                  videoOnly
+                    ? 'bg-brand/15 text-brand dark:text-brand'
+                    : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                )}
+              >
+                {videoCount > 99 ? '99+' : videoCount}
+              </span>
+            ) : null}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-2 px-0.5">

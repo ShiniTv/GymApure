@@ -15,6 +15,29 @@ import { isBetterSet, pickBestSet } from '../lib/exerciseRecords.ts';
 
 const router = asyncRouter();
 
+async function fetchLastSessionLogs(userId: number, routineId: number) {
+  const { rows } = await query<{
+    exercise_id: number;
+    set_number: number;
+    weight: number;
+    reps: number;
+  }>(
+    `WITH last_completed AS (
+       SELECT id FROM workout_sessions
+       WHERE user_id = $1 AND routine_id = $2
+         AND end_time IS NOT NULL AND success = 1
+       ORDER BY start_time DESC
+       LIMIT 1
+     )
+     SELECT wl.exercise_id, wl.set_number, wl.weight::float8 AS weight, wl.reps::int AS reps
+     FROM workout_logs wl
+     WHERE wl.session_id = (SELECT id FROM last_completed)
+     ORDER BY wl.exercise_id, wl.set_number`,
+    [userId, routineId]
+  );
+  return rows;
+}
+
 router.get(
   '/active',
   authorize(['member']),
@@ -182,16 +205,20 @@ router.post(
 
     if (existing.rows[0]) {
       const session = existing.rows[0];
-      const logs = await query(
-        `SELECT exercise_id, set_number, weight, reps
+      const [logs, lastSessionLogs] = await Promise.all([
+        query(
+          `SELECT exercise_id, set_number, weight, reps
          FROM workout_logs WHERE session_id = $1`,
-        [session.id]
-      );
+          [session.id]
+        ),
+        fetchLastSessionLogs(targetUserId, routine_id),
+      ]);
       res.json({
         id: session.id,
         start_time: session.start_time,
         status: 'resumed',
         logs: logs.rows,
+        last_session_logs: lastSessionLogs,
       });
       return;
     }
@@ -205,11 +232,13 @@ router.post(
       );
 
       const newSession = insert.rows[0];
+      const lastSessionLogs = await fetchLastSessionLogs(targetUserId, routine_id);
       res.json({
         id: newSession.id,
         start_time: newSession.start_time,
         status: 'started',
         logs: [],
+        last_session_logs: lastSessionLogs,
       });
     } catch (err: unknown) {
       const pgErr = err as { code?: string };
@@ -222,16 +251,20 @@ router.post(
         );
         if (raced.rows[0]) {
           const session = raced.rows[0];
-          const logs = await query(
-            `SELECT exercise_id, set_number, weight, reps
+          const [logs, lastSessionLogs] = await Promise.all([
+            query(
+              `SELECT exercise_id, set_number, weight, reps
              FROM workout_logs WHERE session_id = $1`,
-            [session.id]
-          );
+              [session.id]
+            ),
+            fetchLastSessionLogs(targetUserId, routine_id),
+          ]);
           res.json({
             id: session.id,
             start_time: session.start_time,
             status: 'resumed',
             logs: logs.rows,
+            last_session_logs: lastSessionLogs,
           });
           return;
         }

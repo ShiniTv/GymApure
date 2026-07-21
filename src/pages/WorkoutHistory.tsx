@@ -14,8 +14,6 @@ import {
   EmptyState,
   Button,
   Breadcrumbs,
-  BackToDashboardLink,
-  StatCard,
   PageState,
   Modal,
   Skeleton,
@@ -121,6 +119,7 @@ export default function WorkoutHistory() {
   const [sessionDetail, setSessionDetail] = useState<SessionDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [progress, setProgress] = useState<WorkoutProgress | null>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
   const [discardTarget, setDiscardTarget] = useState<WorkoutSession | null>(null);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -227,6 +226,7 @@ export default function WorkoutHistory() {
   useEffect(() => {
     if (!isMemberSelf) return;
     let cancelled = false;
+    setProgressLoading(true);
     void apiFetch('/api/workouts/progress')
       .then((res) => parseJsonResponse<WorkoutProgress>(res))
       .then((data) => {
@@ -234,6 +234,9 @@ export default function WorkoutHistory() {
       })
       .catch(() => {
         if (!cancelled) setProgress(null);
+      })
+      .finally(() => {
+        if (!cancelled) setProgressLoading(false);
       });
     return () => {
       cancelled = true;
@@ -408,10 +411,11 @@ export default function WorkoutHistory() {
           id ? (
             <div className="flex items-center gap-1.5">
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
-                className="h-9 gap-1.5 px-2.5 text-xs"
+                className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
                 onClick={() => navigate(`/members/${id}/records`)}
+                aria-label="Marcas personales"
               >
                 <Trophy className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Marcas</span>
@@ -426,69 +430,140 @@ export default function WorkoutHistory() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-9 gap-1.5 px-2.5 text-xs"
-                onClick={() => navigate('/history/records')}
-              >
-                <Trophy className="h-3.5 w-3.5" />
-                Marcas
-              </Button>
-              <BackToDashboardLink />
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
+              onClick={() => navigate('/history/records')}
+              aria-label="Marcas personales"
+            >
+              <Trophy className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Marcas</span>
+            </Button>
           )
         }
       />
 
       {!id && (
-        <>
-          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-            <StatCard
-              compact
-              title="Esta semana"
-              value={workoutsThisWeek}
-              icon={Calendar}
-              color="orange"
-            />
-            <StatCard compact title="Total sesiones" value={total} icon={Dumbbell} color="blue" />
-          </div>
-          {history.length > 0 && (
-            <Card padding="sm" rounded="xl">
-              <h3 className="section-title mb-2">Volumen semanal</h3>
-              <WorkoutWeeklyChart history={history} />
+        <div className="flex flex-col gap-3">
+          {filteredActiveSessions.length > 0 && (
+            <Card
+              padding="sm"
+              rounded="xl"
+              className="border-brand/30 bg-brand/5 dark:border-brand/25 order-1"
+            >
+              <h3 className="section-title mb-2">Entrenamientos en curso</h3>
+              <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                Puedes salir y volver cuando quieras. Solo se registrará al pulsar Finalizar.
+              </p>
+              <div className="space-y-2">
+                {filteredActiveSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-100 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
+                      <p className="mt-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                        Iniciado {formatSessionDate(session.start_time)} ·{' '}
+                        {formatSessionTime(session.start_time)} · {session.sets_completed} series
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button size="sm" onClick={() => navigate(`/workout/${session.routine_id}`)}>
+                        <Play className="h-3.5 w-3.5" />
+                        Continuar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setDiscardTarget(session)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Descartar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </Card>
           )}
-          {progress && (
-            <Card padding="md" rounded="xl">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+
+          <div className="order-2 grid gap-3 lg:grid-cols-2 lg:items-start">
+            <Card
+              padding="sm"
+              rounded="xl"
+              className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+            >
+              <div className="mb-3">
+                <h3 className="section-title">Tu actividad</h3>
+                <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  Sesiones y ritmo de la semana
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                {(
+                  [
+                    { title: 'Esta semana', value: workoutsThisWeek },
+                    { title: 'Total', value: total },
+                    {
+                      title: 'Meta',
+                      value: progress
+                        ? `${progress.workouts_this_week}/${progress.weekly_goal}`
+                        : progressLoading
+                          ? '…'
+                          : '—',
+                    },
+                  ] as const
+                ).map((stat) => (
+                  <div
+                    key={stat.title}
+                    className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-2 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/40"
+                  >
+                    <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                      {stat.title}
+                    </p>
+                    <p className="mt-0.5 text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                      {stat.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                <WorkoutWeeklyChart history={history} />
+              </div>
+            </Card>
+
+            {(progressLoading || progress) && (
+              <Card
+                padding="sm"
+                rounded="xl"
+                className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              >
+                <div className="mb-3">
                   <h3 className="section-title">Progreso de fuerza</h3>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Últimas 8 semanas de entrenamientos completados.
+                  <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                    {progressLoading
+                      ? 'Cargando tendencia de las últimas 8 semanas…'
+                      : progress && progress.goal_completion_percent > 0
+                        ? `Volumen y peso máximo · ${progress.goal_completion_percent}% de tu meta semanal`
+                        : 'Volumen y peso máximo · últimas 8 semanas'}
                   </p>
                 </div>
-                <div className="bg-brand/10 rounded-lg px-3 py-2 text-right">
-                  <p className="text-brand text-lg font-bold tabular-nums">
-                    {progress.workouts_this_week}/{progress.weekly_goal}
-                  </p>
-                  <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
-                    Meta semanal · {progress.goal_completion_percent}%
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <Suspense fallback={<Skeleton className="h-44 w-full rounded-xl" />}>
-                  <WorkoutHistoryCharts weeks={progress.weeks} />
-                </Suspense>
-              </div>
-            </Card>
-          )}
-        </>
+                {progressLoading ? (
+                  <Skeleton className="h-40 w-full rounded-xl sm:h-44" />
+                ) : progress ? (
+                  <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-44" />}>
+                    <WorkoutHistoryCharts weeks={progress.weeks} />
+                  </Suspense>
+                ) : null}
+              </Card>
+            )}
+          </div>
+        </div>
       )}
 
-      {filteredActiveSessions.length > 0 && (
+      {id && filteredActiveSessions.length > 0 && (
         <Card padding="md" rounded="xl" className="border-brand/30 bg-brand/5">
           <h3 className="section-title mb-3">Entrenamientos en curso</h3>
           <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
@@ -526,7 +601,21 @@ export default function WorkoutHistory() {
         </Card>
       )}
 
-      <Card padding="none" rounded="xl" className="overflow-hidden">
+      <Card
+        padding="none"
+        rounded="xl"
+        className="overflow-hidden border-zinc-200/70 dark:border-zinc-800/80"
+      >
+        {(filteredHistory.length > 0 || filteredActiveSessions.length > 0 || loading) && !id && (
+          <div className="border-b border-zinc-100 bg-zinc-50/50 px-3 py-2.5 sm:px-4 dark:border-zinc-800 dark:bg-zinc-900/30">
+            <h3 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+              Sesiones registradas
+            </h3>
+            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              Toca una sesión para ver detalle y series
+            </p>
+          </div>
+        )}
         {filteredHistory.length === 0 && filteredActiveSessions.length === 0 && !loading ? (
           <EmptyState
             variant="motivational"
@@ -754,31 +843,44 @@ export default function WorkoutHistory() {
           </div>
         ) : sessionDetail ? (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>
-                {formatSessionTime(sessionDetail.start_time)}
-                {sessionDetail.end_time
-                  ? ` – ${formatSessionTime(sessionDetail.end_time)}`
-                  : ' · En curso'}
-              </span>
-              <span>·</span>
-              <span>{formatDuration(sessionDetail.start_time, sessionDetail.end_time)}</span>
-              <Badge
-                variant={
-                  sessionDetail.end_time
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <span>
+                  {formatSessionTime(sessionDetail.start_time)}
+                  {sessionDetail.end_time
+                    ? ` – ${formatSessionTime(sessionDetail.end_time)}`
+                    : ' · En curso'}
+                </span>
+                <span>·</span>
+                <span>{formatDuration(sessionDetail.start_time, sessionDetail.end_time)}</span>
+                <Badge
+                  variant={
+                    sessionDetail.end_time
+                      ? sessionDetail.success
+                        ? 'success'
+                        : 'danger'
+                      : 'warning'
+                  }
+                  className="px-1.5 py-0 text-[9px]"
+                >
+                  {sessionDetail.end_time
                     ? sessionDetail.success
-                      ? 'success'
-                      : 'danger'
-                    : 'warning'
-                }
-                className="px-1.5 py-0 text-[9px]"
-              >
-                {sessionDetail.end_time
-                  ? sessionDetail.success
-                    ? 'Exitoso'
-                    : 'Fallido'
-                  : 'En curso'}
-              </Badge>
+                      ? 'Exitoso'
+                      : 'Fallido'
+                    : 'En curso'}
+                </Badge>
+              </div>
+              {sessionDetail.end_time && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0 p-0 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  aria-label="Eliminar del historial"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
 
             {!sessionDetail.end_time && !id && (
@@ -803,19 +905,6 @@ export default function WorkoutHistory() {
                 >
                   <Trash2 className="h-4 w-4" />
                   Descartar
-                </Button>
-              </div>
-            )}
-
-            {sessionDetail.end_time && (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="danger"
-                  className="w-full sm:w-auto"
-                  onClick={() => setDeleteConfirmOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Eliminar del historial
                 </Button>
               </div>
             )}

@@ -408,7 +408,6 @@ export default function Payments() {
 
         {isMember && (loading || payments.length > 0 || Boolean(statusFilter)) && (
           <FilterChips
-            layout="scroll"
             options={[
               { value: '', label: 'Todos' },
               { value: 'pending', label: 'Pendientes' },
