@@ -394,9 +394,10 @@ export default function Settings() {
     : [];
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-6xl">
+    <div className="page-stack-tight mx-auto w-full max-w-6xl min-w-0">
       <PageHeader
         compact
+        className="max-lg:hidden"
         title={
           <>
             Configuración <span className="text-brand">del sistema</span>
@@ -407,21 +408,21 @@ export default function Settings() {
       />
 
       {emailConfigured === false && (
-        <Card padding="sm" rounded="xl" className="border-amber-500/30 bg-amber-500/10">
+        <Card padding="sm" rounded="xl" className="min-w-0 border-amber-500/30 bg-amber-500/10">
           <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
             SMTP no configurado
           </p>
-          <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80">
+          <p className="mt-1 text-xs leading-snug text-amber-800/80 dark:text-amber-300/80">
             Configure las variables SMTP del servidor para enviar bienvenidas, resets y avisos. Sin
             correo, recepción entregará el enlace de creación de contraseña en mostrador.
           </p>
         </Card>
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
-        <Card padding="sm" rounded="xl" className="md:p-4">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
-            <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
+        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+          <div className="mb-2.5 flex min-w-0 items-center gap-2">
+            <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Settings2 className="text-brand h-4 w-4 shrink-0" />
               <span className="truncate">Notificaciones push</span>
             </h2>
@@ -434,7 +435,11 @@ export default function Settings() {
         </Card>
 
         {settingsLoadError && (
-          <Card padding="sm" rounded="xl" className="border-red-500/30 bg-red-500/5 md:p-4">
+          <Card
+            padding="sm"
+            rounded="xl"
+            className="min-w-0 overflow-hidden border-red-500/30 bg-red-500/5 md:p-4"
+          >
             <p className="text-sm font-semibold text-red-600 dark:text-red-400">
               No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
             </p>
@@ -442,7 +447,7 @@ export default function Settings() {
         )}
 
         {settingsLoading && !expirySettings && !settingsLoadError && (
-          <Card padding="sm" rounded="xl" className="md:p-4">
+          <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
             <div className="space-y-3">
               <Skeleton className="h-4 w-48" />
               <Skeleton className="h-10 w-full" />
@@ -451,18 +456,18 @@ export default function Settings() {
         )}
 
         {expirySettings && (
-          <Card padding="sm" rounded="xl" className="md:p-4">
-            <div className="mb-2.5 flex items-center justify-between gap-2">
-              <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+          <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+            <div className="mb-2.5 flex min-w-0 items-center gap-2">
+              <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
                 <Settings2 className="text-brand h-4 w-4 shrink-0" />
                 <span className="truncate">Avisos de membresía</span>
               </h2>
-              <div className="flex shrink-0 gap-1.5">
+              <div className="flex shrink-0 items-center gap-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-9 w-9 px-0"
+                  className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                   onClick={runExpiryJobNow}
                   disabled={settingsSaving}
                   aria-label="Ejecutar avisos ahora"
@@ -473,7 +478,7 @@ export default function Settings() {
                 <Button
                   type="button"
                   size="sm"
-                  className="h-9 w-9 px-0"
+                  className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                   onClick={saveExpirySettings}
                   disabled={settingsSaving}
                   aria-label="Guardar"
@@ -524,17 +529,17 @@ export default function Settings() {
         )}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
-        <Card padding="sm" rounded="xl" className="md:p-4">
-          <div className="mb-2.5 flex items-center justify-between gap-2">
-            <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
+        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+          <div className="mb-2.5 flex min-w-0 items-center gap-2">
+            <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
               <Fingerprint className="text-brand h-4 w-4 shrink-0" />
-              <span className="truncate">PIN de presencia (ingreso desde la app)</span>
+              <span className="truncate">PIN de presencia</span>
             </h2>
             <Button
               type="button"
               size="sm"
-              className="h-9 w-9 px-0"
+              className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
               onClick={() => void saveCheckInPin()}
               disabled={settingsSaving}
               aria-label="Guardar PIN"
@@ -547,9 +552,10 @@ export default function Settings() {
             Si está activo, el miembro debe ingresar el PIN del día (visible en recepción) para
             marcar entrada desde la app.
           </p>
-          <label className="mb-3 flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="mb-3 flex min-w-0 items-start gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
             <input
               type="checkbox"
+              className="mt-0.5 shrink-0"
               checked={checkInPinForm.require_self_check_in_pin}
               onChange={(e) =>
                 setCheckInPinForm((f) => ({
@@ -558,7 +564,7 @@ export default function Settings() {
                 }))
               }
             />
-            Exigir PIN en ingreso desde la app
+            <span className="min-w-0 leading-snug">Exigir PIN en ingreso desde la app</span>
           </label>
           <div className="max-w-[10rem]">
             <Label htmlFor="check_in_pin" className="text-[11px]">
@@ -576,18 +582,18 @@ export default function Settings() {
         </Card>
 
         {exchangeRateView && (
-          <Card padding="sm" rounded="xl" className="md:p-4">
-            <div className="mb-2.5 flex items-center justify-between gap-2">
-              <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+          <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+            <div className="mb-2.5 flex min-w-0 items-center gap-2">
+              <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
                 <DollarSign className="text-brand h-4 w-4 shrink-0" />
-                <span className="truncate">Tasa de cambio USD (BCV)</span>
+                <span className="truncate">Tasa USD (BCV)</span>
               </h2>
-              <div className="flex shrink-0 gap-1.5">
+              <div className="flex shrink-0 items-center gap-1">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-9 w-9 px-0"
+                  className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                   onClick={refreshExchangeRate}
                   disabled={settingsSaving}
                   aria-label="Actualizar desde BCV"
@@ -598,7 +604,7 @@ export default function Settings() {
                 <Button
                   type="button"
                   size="sm"
-                  className="h-9 w-9 px-0"
+                  className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                   onClick={saveExchangeRateOverride}
                   disabled={settingsSaving}
                   aria-label="Guardar override"
@@ -615,18 +621,18 @@ export default function Settings() {
             </p>
 
             {exchangeRateView.active ? (
-              <div className="mb-4 rounded-lg border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
+              <div className="mb-4 min-w-0 rounded-lg border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
                 <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Tasa activa
                 </p>
-                <p className="mt-1 text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="mt-1 text-lg font-bold break-words text-zinc-900 tabular-nums dark:text-white">
                   {exchangeRateView.active.rate.toLocaleString('es-VE', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 4,
                   })}{' '}
                   Bs/USD
                 </p>
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
                   Fuente: {exchangeRateView.active.source === 'manual' ? 'Manual' : 'BCV'} · Fecha
                   valor: {exchangeRateView.active.effective_date}
                 </p>
@@ -638,8 +644,8 @@ export default function Settings() {
               </p>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+              <div className="min-w-0">
                 <Label htmlFor="exchange_override_rate" className="text-[11px]">
                   Override manual (Bs/USD)
                 </Label>
@@ -655,7 +661,7 @@ export default function Settings() {
                   }
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label htmlFor="exchange_override_note" className="text-[11px]">
                   Nota (opcional)
                 </Label>
@@ -684,7 +690,7 @@ export default function Settings() {
             )}
 
             {exchangeRateView.history.length > 0 && (
-              <div className="mt-4">
+              <div className="mt-4 min-w-0">
                 <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Historial BCV reciente
                 </p>
@@ -692,7 +698,7 @@ export default function Settings() {
                   {exchangeRateView.history.slice(0, 5).map((row) => (
                     <div
                       key={row.id}
-                      className="rounded-lg border border-zinc-100 px-2.5 py-2 text-xs dark:border-zinc-800"
+                      className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 text-xs dark:border-zinc-800"
                     >
                       <span className="font-bold text-zinc-900 tabular-nums dark:text-white">
                         {row.rate.toLocaleString('es-VE', {
@@ -714,19 +720,19 @@ export default function Settings() {
         )}
       </div>
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+        <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
+          <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
             <Activity className="text-brand h-4 w-4 shrink-0" />
-            Salud operativa
+            <span className="truncate">Salud operativa</span>
           </h2>
           {opsMetrics && (
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 flex-wrap items-center gap-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 px-0"
+                className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                 onClick={() => downloadMetricsExport('json')}
                 aria-label="Export JSON"
                 title="Export JSON"
@@ -737,7 +743,7 @@ export default function Settings() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 px-0"
+                className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                 onClick={() => downloadMetricsExport('csv')}
                 aria-label="Export CSV"
                 title="Export CSV"
@@ -758,7 +764,7 @@ export default function Settings() {
         ) : opsMetrics ? (
           <>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+              <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
                 <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   DB ms
                 </p>
@@ -766,7 +772,7 @@ export default function Settings() {
                   {opsMetrics.db.latency_ms ?? '—'}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+              <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
                 <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Avg req ms
                 </p>
@@ -774,7 +780,7 @@ export default function Settings() {
                   {opsMetrics.request_metrics.avgResponseMs}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+              <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
                 <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Error rate
                 </p>
@@ -788,7 +794,7 @@ export default function Settings() {
                   {opsMetrics.request_metrics.errorRatePercent}%
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+              <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
                 <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Slow rate
                 </p>
@@ -805,7 +811,7 @@ export default function Settings() {
             </div>
 
             {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
-              <div className="mt-4">
+              <div className="mt-4 min-w-0">
                 <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                   Top rutas lentas
                 </p>
@@ -813,7 +819,7 @@ export default function Settings() {
                   {opsMetrics.request_metrics.topSlowRoutes.map((route) => (
                     <div
                       key={`${route.method}-${route.path}`}
-                      className="rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800"
+                      className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800"
                     >
                       <p className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                         {route.method} {route.path}
@@ -828,7 +834,7 @@ export default function Settings() {
               </div>
             )}
 
-            <div className="mt-4">
+            <div className="mt-4 min-w-0">
               <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
                 Alertas activas
               </p>

@@ -39,14 +39,17 @@ import { PaymentRegisterModal } from './payments/PaymentRegisterModal';
 import { PaymentActionModals } from './payments/PaymentActionModals';
 import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegisterModal';
 import { cn } from '../lib/utils';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 export default function Payments() {
   const { user } = useAuth();
   usePageTitle('Pagos');
+  const { isMobileShell } = useBreakpoint();
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
   const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
+  const showStaffMobileChrome = isStaffPayment && isMobileShell;
   const invalidatePayments = useInvalidatePayments();
 
   const onRefreshPayments = useCallback(async () => {
@@ -337,53 +340,54 @@ export default function Payments() {
   return (
     <PullToRefreshContainer pullDistance={pullPayments} isRefreshing={refreshingPayments}>
       <div className="page-stack-tight mx-auto w-full max-w-7xl" {...paymentsHandlers}>
-        <PageHeader
-          compact
-          title={
-            isMember ? (
-              <>
-                Mis <span className="text-brand">pagos</span>
-              </>
-            ) : (
-              <>
-                <span className="text-brand">Pagos</span>
-              </>
-            )
-          }
-          subtitle={isMember ? 'Activa tu membresía' : undefined}
-          action={
-            isMember ? (
-              <div className="flex flex-wrap items-center justify-end gap-2">
+        {!showStaffMobileChrome && (
+          <PageHeader
+            compact
+            title={
+              isMember ? (
+                <>
+                  Mis <span className="text-brand">pagos</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-brand">Pagos</span>
+                </>
+              )
+            }
+            subtitle={isMember ? 'Activa tu membresía' : undefined}
+            action={
+              isMember ? (
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <BackToDashboardLink />
+                  <Button
+                    size="sm"
+                    className="h-10 min-h-10 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
+                    onClick={() => openRegisterModal()}
+                    aria-label="Reportar pago"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Reportar pago</span>
+                  </Button>
+                </div>
+              ) : isStaffPayment ? (
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <BackToDashboardLink />
+                  <Button
+                    size="sm"
+                    className="h-10 min-h-10 shrink-0 rounded-xl px-3"
+                    onClick={() => openRegisterModal()}
+                    aria-label="Registrar pago"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Registrar</span>
+                  </Button>
+                </div>
+              ) : (
                 <BackToDashboardLink />
-                <Button
-                  size="sm"
-                  className="h-10 min-h-10 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
-                  onClick={() => openRegisterModal()}
-                  aria-label="Reportar pago"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Reportar pago</span>
-                </Button>
-              </div>
-            ) : isStaffPayment ? (
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <BackToDashboardLink />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-10 sm:w-auto sm:px-3"
-                  onClick={() => openRegisterModal()}
-                  aria-label="Registrar pago"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Registrar</span>
-                </Button>
-              </div>
-            ) : (
-              <BackToDashboardLink />
-            )
-          }
-        />
+              )
+            }
+          />
+        )}
 
         {isStaffPayment && adminStats?.stats && (
           <div className="hidden grid-cols-4 gap-2 lg:grid">
@@ -461,12 +465,25 @@ export default function Payments() {
 
         {isStaffPayment && (
           <>
-            <SearchInput
-              placeholder="Buscar por nombre o referencia…"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Buscar pagos"
-            />
+            <div className="flex items-center gap-2">
+              <SearchInput
+                containerClassName="min-w-0 flex-1"
+                placeholder="Buscar por nombre o referencia…"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                aria-label="Buscar pagos"
+              />
+              {showStaffMobileChrome && (
+                <Button
+                  size="sm"
+                  className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0"
+                  onClick={() => openRegisterModal()}
+                  aria-label="Registrar pago"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <FilterChips
               fullWidth
               className="sm:w-auto"

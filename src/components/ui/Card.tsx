@@ -38,7 +38,13 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={cn(variantMap[variant], roundedMap[rounded], paddingMap[padding], className)}
+      className={cn(
+        variantMap[variant],
+        roundedMap[rounded],
+        paddingMap[padding],
+        'min-w-0',
+        className
+      )}
       {...props}
     >
       {children}
