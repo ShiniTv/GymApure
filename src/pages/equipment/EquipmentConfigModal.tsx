@@ -47,8 +47,7 @@ export function EquipmentConfigModal({
       <SegmentedControl
         value={configTab}
         onChange={(v) => onConfigTabChange(v)}
-        className="mb-4 w-full"
-        fullWidth
+        className="mb-4 w-fit max-w-full"
         options={[
           { value: 'zones', label: 'Zonas' },
           { value: 'vendors', label: 'Proveedores' },

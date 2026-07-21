@@ -80,7 +80,7 @@ export default function Notifications() {
       />
 
       <FilterChips
-        fullWidth
+        className="w-fit max-w-full"
         value={filter}
         onChange={(value) => {
           setFilter(value as 'all' | 'unread');
@@ -111,7 +111,7 @@ export default function Notifications() {
           }
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {hasLive && (
             <section>
               <h2 className="mb-2 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">

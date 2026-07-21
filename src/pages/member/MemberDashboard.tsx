@@ -105,7 +105,7 @@ export default function MemberDashboard() {
       />
 
       {pending > 0 && (
-        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-6 py-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-amber-600/25 bg-amber-500/10 px-4 py-3 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
               Tienes {pending} pago(s) pendiente(s) de revisión.
@@ -161,7 +161,7 @@ export default function MemberDashboard() {
                 : '';
           return (
             <div
-              className={`flex flex-col justify-between gap-3 rounded-2xl border px-6 py-4 sm:flex-row sm:items-center ${classes.container}`}
+              className={`flex flex-col justify-between gap-3 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center ${classes.container}`}
             >
               <div>
                 <p className={`text-sm font-bold ${classes.text}`}>
@@ -260,8 +260,8 @@ export default function MemberDashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card padding="lg" rounded="2xl">
-            <h3 className="section-title mb-4">Tu rutina</h3>
+          <Card padding="sm" rounded="2xl" className="md:p-5">
+            <h3 className="section-title mb-3">Tu rutina</h3>
             {routine ? (
               <>
                 <div className="flex items-center gap-4">
@@ -279,7 +279,7 @@ export default function MemberDashboard() {
                 </div>
                 <Button
                   size="sm"
-                  className="mt-5 w-full shadow-sm"
+                  className="mt-3 w-full shadow-sm"
                   disabled={primaryRoutineCompletedToday}
                   onClick={() => navigate(`/workout/${routine.id}`)}
                 >
@@ -323,8 +323,8 @@ export default function MemberDashboard() {
             )}
           </Card>
 
-          <Card padding="lg" rounded="2xl">
-            <h3 className="section-title mb-4">Membresía</h3>
+          <Card padding="sm" rounded="2xl" className="md:p-5">
+            <h3 className="section-title mb-3">Membresía</h3>
             {sub ? (
               <>
                 <p
@@ -337,7 +337,7 @@ export default function MemberDashboard() {
                   {' · '}
                   Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
                 </p>
-                <div className="mt-6 h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="mt-4 h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
                   <div
                     className="h-3 rounded-full transition-[width,background-color] duration-500"
                     style={{
@@ -514,8 +514,8 @@ export default function MemberDashboard() {
       ) : (
         <>
           {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
-            <Card padding="lg" rounded="2xl">
-              <h3 className="section-title mb-4">Próximas asignaciones</h3>
+            <Card padding="sm" rounded="2xl" className="md:p-5">
+              <h3 className="section-title mb-3">Próximas asignaciones</h3>
               <div className="space-y-2">
                 {upcomingRoutines.map((r) => {
                   const row = r as { id: number; name: string; start_date?: string | null };
@@ -572,7 +572,7 @@ export default function MemberDashboard() {
           )}
 
           {memberStats?.lastWorkout && (
-            <Card padding="lg" rounded="2xl">
+            <Card padding="sm" rounded="2xl" className="md:p-5">
               <h3 className="section-title mb-3">Último entrenamiento</h3>
               <p className="font-bold text-zinc-800 dark:text-zinc-200">
                 {memberStats.lastWorkout.routine_name}

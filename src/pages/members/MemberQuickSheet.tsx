@@ -130,8 +130,7 @@ export function MemberQuickSheet({
           className={cn(
             'mt-2 grid gap-1.5',
             secondary.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
-            secondary.length >= 3 && 'sm:grid-cols-3',
-            secondary.length >= 4 && 'lg:grid-cols-4'
+            secondary.length >= 3 && 'sm:grid-cols-4'
           )}
         >
           {secondary.map((action) => (

@@ -120,8 +120,7 @@ export default function DemoLeads() {
       />
 
       <FilterChips
-        fullWidth
-        className="sm:w-auto"
+        className="w-fit max-w-full"
         value={statusFilter}
         onChange={(value) => setStatusFilter(value as LeadStatus | 'all')}
         options={[
@@ -152,8 +151,8 @@ export default function DemoLeads() {
             {/* Mobile: article cards */}
             <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
               {leads.map((lead) => (
-                <article key={lead.id} className="py-5 first:pt-0 last:pb-0">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <article key={lead.id} className="py-3 first:pt-0 last:pb-0 sm:py-4">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="truncate text-base font-bold text-zinc-900 dark:text-white">

@@ -188,7 +188,7 @@ export default function CheckIn() {
       disabled={status === 'scanning'}
       preventMobileKeyboard={isKioskMode && !isMobileKiosk}
       kioskSize={isMobileKiosk ? 'compact' : 'default'}
-      className={!isKioskMode ? 'py-4 text-xl md:text-2xl' : undefined}
+      className={!isKioskMode ? 'py-2.5 text-base sm:text-lg' : undefined}
     />
   );
 
@@ -214,7 +214,7 @@ export default function CheckIn() {
       {status === 'idle' || status === 'scanning' ? (
         <form
           onSubmit={handleSubmit}
-          className={cn('space-y-8', isKioskMode && (isMobileKiosk ? 'space-y-5' : 'space-y-10'))}
+          className={cn(isKioskMode ? (isMobileKiosk ? 'space-y-5' : 'space-y-10') : 'space-y-4')}
         >
           <div className="space-y-4 text-center">
             {isKioskMode && !isLargeKioskLayout ? (
@@ -407,7 +407,7 @@ export default function CheckIn() {
             <Button
               type="button"
               variant="ghost"
-              className="mt-8"
+              className={cn(isKioskMode ? 'mt-8' : 'mt-4')}
               onClick={() => setStatus('idle')}
             >
               Volver a escanear
@@ -542,10 +542,10 @@ export default function CheckIn() {
 
   return (
     <AuthShell variant="kiosk" backLink={{ to: '/reception', label: 'Volver a recepción' }}>
-      <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-8" />
+      <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-4 sm:mb-6" />
       <SegmentedControl
-        variant="kiosk"
-        fullWidth
+        variant="compact"
+        className="mb-4 w-fit max-w-full sm:mb-6"
         value={mode}
         onChange={(next) => {
           setMode(next);
@@ -555,12 +555,11 @@ export default function CheckIn() {
           { value: 'check-in', label: 'Entrada', icon: LogIn, accent: 'brand' },
           { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
         ]}
-        className="mb-6"
       />
       <Card padding="sm" rounded="xl" className="shadow-md transition-all md:p-5">
         {formContent}
       </Card>
-      <div className="mt-8 flex flex-col items-center gap-3">
+      <div className="mt-4 flex flex-col items-center gap-3 sm:mt-6">
         <div className="flex justify-center gap-6">
           <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />

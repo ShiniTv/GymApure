@@ -323,7 +323,7 @@ export default function TrainerDashboard() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 sm:space-y-5 lg:max-w-5xl lg:space-y-6">
+    <div className="page-stack-tight mx-auto w-full max-w-3xl lg:max-w-5xl">
       <PageHeader
         compact
         title={

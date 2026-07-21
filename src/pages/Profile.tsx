@@ -516,7 +516,7 @@ export default function Profile() {
               'border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50'
             )}
           >
-            <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-5 lg:gap-6">
+            <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-4">
               <div className="mb-3.5 md:mb-0">
                 <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
                   <div className="relative shrink-0">
@@ -954,7 +954,7 @@ export default function Profile() {
       {profileTab === 'carne' && isMember && (
         <div className="mx-auto w-full max-w-sm pt-1 md:max-w-2xl">
           {badgeMember ? (
-            <div className="flex flex-col items-center gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)] md:items-center md:gap-8">
+            <div className="flex flex-col items-center gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)] md:items-center md:gap-4">
               <div className="flex w-full flex-col items-center gap-3 md:items-start">
                 <div className="w-full text-center md:text-left">
                   <h2 className="text-[13px] font-semibold text-zinc-900 md:text-sm dark:text-white">
@@ -1019,7 +1019,7 @@ export default function Profile() {
               Apariencia
             </h2>
 
-            <div className="md:grid md:grid-cols-2 md:gap-6 lg:gap-8">
+            <div className="md:grid md:grid-cols-2 md:gap-4">
               <div>
                 <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                   Color de acento

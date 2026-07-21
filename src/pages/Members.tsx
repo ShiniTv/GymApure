@@ -831,48 +831,54 @@ export default function Members() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <SearchInput
-            containerClassName="flex-1 min-w-0"
-            placeholder="Buscar nombre o cédula…"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-            }}
-          />
-          {canAddUser && (
-            <Button
-              size="sm"
-              className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
-              onClick={() => {
-                setIsAdding(true);
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <SearchInput
+              containerClassName="min-w-0 flex-1"
+              placeholder="Buscar nombre o cédula…"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
               }}
-              aria-label={addUserLabel}
-            >
-              <Plus className="h-4 w-4 shrink-0" />
-              <span className="hidden text-xs font-semibold sm:inline sm:text-sm">
-                {addUserLabel}
-              </span>
-            </Button>
+            />
+            {canAddUser && (
+              <Button
+                size="sm"
+                className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+                onClick={() => {
+                  setIsAdding(true);
+                }}
+                aria-label={addUserLabel}
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="hidden text-xs font-semibold sm:inline sm:text-sm">
+                  {addUserLabel}
+                </span>
+              </Button>
+            )}
+          </div>
+          {(user?.role === 'admin' || user?.role === 'receptionist' || isTrainer) && (
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {(user?.role === 'admin' || user?.role === 'receptionist') && (
+                <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} label="Turno" />
+              )}
+              {(user?.role === 'admin' || isTrainer) && (
+                <FilterChips
+                  className="w-fit max-w-full shrink-0"
+                  options={[
+                    { value: '', label: 'Todos' },
+                    { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+                  ]}
+                  value={expiringFilter ? 'expiring' : ''}
+                  onChange={(v) => {
+                    setExpiringFilter(v === 'expiring');
+                    setPage(1);
+                  }}
+                />
+              )}
+            </div>
           )}
         </div>
-        {(user?.role === 'admin' || user?.role === 'receptionist') && (
-          <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} label="Turno" />
-        )}
-        {(user?.role === 'admin' || isTrainer) && (
-          <FilterChips
-            className="sm:w-auto sm:shrink-0"
-            options={[
-              { value: '', label: 'Todos' },
-              { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-            ]}
-            value={expiringFilter ? 'expiring' : ''}
-            onChange={(v) => {
-              setExpiringFilter(v === 'expiring');
-              setPage(1);
-            }}
-          />
-        )}
 
         {isTrainer && membersWithoutPlan.length > 0 && !loading && !noPlanAlertDismissed && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px]">

@@ -301,7 +301,7 @@ export default function Classes() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-8">
           <Spinner />
         </div>
       ) : isError ? (
@@ -341,14 +341,14 @@ export default function Classes() {
           }
         />
       ) : (
-        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           {sessions.map((session) => {
             const starts = parseISO(session.starts_at);
             const cancelled = session.status === 'cancelled';
             const showCancel = canCancelSession(session);
             return (
-              <Card key={session.id} padding="sm" rounded="xl" className="md:p-4">
-                <div className="flex flex-col gap-3 sm:h-full sm:justify-between">
+              <Card key={session.id} padding="sm" rounded="xl" className="h-full md:p-4">
+                <div className="flex h-full flex-col gap-3 sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[15px] font-bold text-zinc-900 dark:text-white">
@@ -417,7 +417,7 @@ export default function Classes() {
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Duración (min)</Label>
               <Input
                 type="number"
@@ -427,7 +427,7 @@ export default function Classes() {
                 onChange={(e) => setTypeForm({ ...typeForm, duration_minutes: e.target.value })}
               />
             </div>
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Cupo default</Label>
               <Input
                 type="number"
@@ -502,7 +502,7 @@ export default function Classes() {
               onChange={(e) => setSessionForm({ ...sessionForm, starts_at: e.target.value })}
             />
           </div>
-          <div>
+          <div className="max-w-[8rem]">
             <Label>Cupo (opcional)</Label>
             <Input
               type="number"

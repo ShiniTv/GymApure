@@ -157,6 +157,7 @@ export default function Nutrition() {
     return (
       <div className="page-stack-tight mx-auto w-full max-w-4xl">
         <PageHeader
+          compact
           title={
             <>
               Mi <span className="text-brand">nutrición</span>
@@ -219,7 +220,7 @@ export default function Nutrition() {
 
       <WeekDateStrip selectedDate={selectedDate} onSelect={setSelectedDate} className="px-1" />
 
-      <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-start md:gap-5 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-6">
+      <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-stretch md:gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
         <div className="space-y-2">
           <section className="pt-3 sm:pt-2 md:pt-0">
             <CalorieSemiGauge

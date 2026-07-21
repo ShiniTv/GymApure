@@ -141,7 +141,7 @@ export function RoutinesLibraryView({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
           const canOpen = isMember || isStaff;
@@ -167,7 +167,7 @@ export function RoutinesLibraryView({
                 lightCards
                   ? 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
                   : ''
-              } ${isExpanded ? 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-3' : ''}`}
+              } ${isExpanded ? 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4' : ''}`}
             >
               <div
                 role={canOpen ? 'button' : undefined}
@@ -406,7 +406,7 @@ export function RoutinesLibraryView({
                         </Button>
                       </div>
 
-                      <div className="space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 lg:grid-cols-3">
+                      <div className="space-y-0 sm:grid sm:grid-cols-2 sm:gap-3">
                         {routine.exercises?.map((exercise) => (
                           <div key={exercise.routine_exercise_id}>
                             <div className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 sm:hidden dark:border-zinc-800">

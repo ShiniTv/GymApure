@@ -231,7 +231,7 @@ export function ExerciseLibraryView({
 
   return (
     <div className="space-y-1.5">
-      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 md:gap-2 xl:grid-cols-3 xl:gap-2.5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
         {filteredExercises.map((exercise) => (
           <ExerciseCard
             key={exercise.id}

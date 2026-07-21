@@ -249,7 +249,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
           </div>
         </Link>
 
-        <div className="grid gap-2.5 md:grid-cols-5 md:items-stretch md:gap-3">
+        <div className="grid gap-3 md:grid-cols-5 md:items-stretch md:gap-4">
           <div className="space-y-2 md:col-span-2">
             <ReceptionKpiStrip
               items={[

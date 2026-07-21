@@ -221,7 +221,7 @@ export default function MemberNutrition() {
         )}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
+      <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
         <Card padding="sm" rounded="xl" className="md:p-4">
           <h2 className="section-title mb-3 flex items-center gap-1.5">
             <UtensilsCrossed className="text-brand h-3.5 w-3.5" />

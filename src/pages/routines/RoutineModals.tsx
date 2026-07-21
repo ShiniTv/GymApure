@@ -255,8 +255,8 @@ export function RoutineModals({
               setNewExercise({ ...newExercise, ...prescription });
             }}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="max-w-[8rem]">
               <Label>Descanso (seg)</Label>
               <Input
                 type="number"
@@ -311,8 +311,8 @@ export function RoutineModals({
                 setEditingExercise({ ...editingExercise, ...prescription });
               }}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="max-w-[8rem]">
                 <Label>Descanso (seg)</Label>
                 <Input
                   type="number"

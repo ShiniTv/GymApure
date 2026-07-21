@@ -146,7 +146,7 @@ export default function Memberships() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-8">
           <Spinner />
         </div>
       ) : loadError ? (
@@ -169,7 +169,7 @@ export default function Memberships() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3 xl:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {plans.map((plan) => {
             const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
             return (
@@ -249,7 +249,7 @@ export default function Memberships() {
               placeholder="Ej: Mensual"
             />
           </div>
-          <div>
+          <div className="max-w-[8rem]">
             <Label>Duración (días)</Label>
             <Input
               type="number"
@@ -261,7 +261,7 @@ export default function Memberships() {
               }}
             />
           </div>
-          <div>
+          <div className="max-w-[10rem]">
             <Label>Precio USD</Label>
             <Input
               type="number"

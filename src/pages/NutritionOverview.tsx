@@ -105,7 +105,7 @@ export default function NutritionOverview() {
       ) : (
         <>
           <div
-            className={cn('grid gap-2', isTrainer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3')}
+            className={cn('grid gap-3', isTrainer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3')}
           >
             {isTrainer && (
               <Card padding="sm" rounded="xl">
@@ -152,13 +152,15 @@ export default function NutritionOverview() {
           </div>
 
           {isTrainer && (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <SearchInput
+                containerClassName="min-w-0 flex-1"
                 placeholder="Buscar cliente…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
               <FilterChips
+                className="w-fit max-w-full shrink-0"
                 options={[
                   { value: 'all', label: 'Todos' },
                   { value: 'without', label: 'Sin plan' },
@@ -171,7 +173,7 @@ export default function NutritionOverview() {
           )}
 
           {/* Mobile / tablet cards */}
-          <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:hidden">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:hidden">
             {members.length === 0 ? (
               <EmptyState
                 icon={UtensilsCrossed}

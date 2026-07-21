@@ -22,6 +22,7 @@ import {
   Badge,
   Button,
   EmptyState,
+  FilterChips,
   Modal,
   PageHeader,
   PaginationBar,
@@ -827,7 +828,7 @@ function StaffChatView() {
           <span className="hidden sm:inline">Solo clientes con rutina asignada por ti</span>
         </p>
       ) : null}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <SearchInput
           containerClassName="min-w-0 flex-1"
           value={search}
@@ -836,20 +837,15 @@ function StaffChatView() {
           }}
           placeholder={isTrainer ? 'Buscar cliente…' : 'Buscar miembro…'}
         />
-        <button
-          type="button"
-          onClick={() => {
-            setExpiringOnly((v) => !v);
-          }}
-          className={clsx(
-            'h-10 shrink-0 rounded-lg border px-3 text-xs font-semibold transition-colors sm:h-9',
-            expiringOnly
-              ? 'border-brand/40 bg-brand/10 text-brand'
-              : 'border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'
-          )}
-        >
-          Por vencer ({alertDays}d)
-        </button>
+        <FilterChips
+          className="w-fit max-w-full shrink-0"
+          options={[
+            { value: '', label: 'Todos' },
+            { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+          ]}
+          value={expiringOnly ? 'expiring' : ''}
+          onChange={(v) => setExpiringOnly(v === 'expiring')}
+        />
       </div>
     </div>
   );
@@ -926,7 +922,7 @@ function StaffChatView() {
   const threadOpenOnMobile = showChatOnMobile && selected != null;
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
       {/* —— Móvil: lista con scroll de página (sin Virtuoso / sin altura 0) —— */}
       <div className={clsx('space-y-3 md:hidden', threadOpenOnMobile && 'hidden')}>
         <PageHeader
@@ -962,7 +958,7 @@ function StaffChatView() {
           subtitle={isTrainer ? undefined : 'Chat con clientes y avisos del gym'}
           action={<BackToDashboardLink />}
         />
-        <div className="staff-chat-shell mt-3 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
+        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
           <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
             <div className="shrink-0 space-y-2 border-b border-zinc-100/80 p-3 dark:border-zinc-800/80">
               {listToolbar}

@@ -975,7 +975,7 @@ export default function Equipment() {
                     {group.items.length}
                   </span>
                 </div>
-                <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
                   {group.items.map((item) => (
                     <EquipmentListCard key={item.id} item={item} onOpen={openDetail} hideZone />
                   ))}
@@ -995,7 +995,7 @@ export default function Equipment() {
             )}
           />
         ) : (
-          <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
             {items.map((item) => (
               <EquipmentListCard key={item.id} item={item} onOpen={openDetail} />
             ))}

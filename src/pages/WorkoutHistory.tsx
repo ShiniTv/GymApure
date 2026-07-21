@@ -22,6 +22,7 @@ import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
+import { cn } from '../lib/utils';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -381,7 +382,13 @@ export default function WorkoutHistory() {
         <Breadcrumbs
           items={[
             { label: 'Miembros', href: '/members' },
-            { label: displayName ?? 'Miembro', href: `/members/${id}/routines` },
+            {
+              label: displayName ?? 'Miembro',
+              href:
+                user?.role === 'trainer'
+                  ? `/members/${id}/routines`
+                  : `/members?q=${encodeURIComponent(displayName ?? '')}`,
+            },
             { label: 'Historial' },
           ]}
         />
@@ -422,7 +429,13 @@ export default function WorkoutHistory() {
               </Button>
               <button
                 type="button"
-                onClick={() => navigate(`/members/${id}/routines`)}
+                onClick={() =>
+                  navigate(
+                    user?.role === 'trainer'
+                      ? `/members/${id}/routines`
+                      : `/members?q=${encodeURIComponent(displayName ?? '')}`
+                  )
+                }
                 className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 lg:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
                 aria-label="Volver al miembro"
               >
@@ -489,11 +502,16 @@ export default function WorkoutHistory() {
             </Card>
           )}
 
-          <div className="order-2 grid gap-3 lg:grid-cols-2 lg:items-start">
+          <div
+            className={cn(
+              'order-2 grid gap-3',
+              progressLoading || progress ? 'lg:grid-cols-2 lg:items-stretch' : 'lg:grid-cols-1'
+            )}
+          >
             <Card
               padding="sm"
               rounded="xl"
-              className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              className="flex h-full flex-col border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
             >
               <div className="mb-3">
                 <h3 className="section-title">Tu actividad</h3>
@@ -538,7 +556,7 @@ export default function WorkoutHistory() {
               <Card
                 padding="sm"
                 rounded="xl"
-                className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+                className="flex h-full flex-col border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
               >
                 <div className="mb-3">
                   <h3 className="section-title">Progreso de fuerza</h3>

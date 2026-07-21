@@ -96,7 +96,7 @@ export function RoutinesAssignmentsView({
         )}
       </div>
 
-      <div className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0 xl:grid-cols-3">
+      <div className="space-y-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:space-y-0 xl:grid-cols-4 xl:gap-4">
         {activeMembers.map((member) => {
           const routineCount = member.routines?.length ?? 0;
           return (

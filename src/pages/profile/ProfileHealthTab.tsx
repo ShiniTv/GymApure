@@ -157,7 +157,7 @@ export function ProfileHealthTab({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
         <Card
           padding="sm"
           rounded="xl"

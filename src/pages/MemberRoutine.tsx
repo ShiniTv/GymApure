@@ -1257,8 +1257,8 @@ export default function MemberRoutine() {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="max-w-[8rem]">
               <Label>Peso (kg)</Label>
               <Input
                 type="number"
@@ -1269,7 +1269,7 @@ export default function MemberRoutine() {
                 }}
               />
             </div>
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Grasa (%)</Label>
               <Input
                 type="number"
@@ -1280,7 +1280,7 @@ export default function MemberRoutine() {
                 }}
               />
             </div>
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Cintura (cm)</Label>
               <Input
                 type="number"
@@ -1291,7 +1291,7 @@ export default function MemberRoutine() {
                 }}
               />
             </div>
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Brazo (cm)</Label>
               <Input
                 type="number"
@@ -1302,7 +1302,7 @@ export default function MemberRoutine() {
                 }}
               />
             </div>
-            <div>
+            <div className="max-w-[8rem]">
               <Label>Pierna (cm)</Label>
               <Input
                 type="number"
@@ -1384,8 +1384,8 @@ export default function MemberRoutine() {
               setNewExercise({ ...newExercise, ...prescription });
             }}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="max-w-[8rem]">
               <Label>Descanso (seg)</Label>
               <Input
                 type="number"
@@ -1440,8 +1440,8 @@ export default function MemberRoutine() {
                 setEditingExercise({ ...editingExercise, ...prescription });
               }}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="max-w-[8rem]">
                 <Label>Descanso (seg)</Label>
                 <Input
                   type="number"

@@ -678,7 +678,7 @@ export default function Routines() {
             <SegmentedControl
               variant="compact"
               layout="wrap"
-              className="w-full"
+              className="w-fit max-w-full"
               value={view}
               onChange={changeView}
               options={[

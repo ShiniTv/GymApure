@@ -477,13 +477,13 @@ export default function ReceptionWalkInWizard({
       )}
 
       {step === 1 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {loadingPlans ? (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-6">
               <Spinner />
             </div>
           ) : plans.length === 0 ? (
-            <div className="space-y-3 py-8 text-center">
+            <div className="space-y-3 py-6 text-center">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 No hay planes de membresía disponibles. El administrador debe crear al menos un
                 plan.
@@ -529,7 +529,7 @@ export default function ReceptionWalkInWizard({
       )}
 
       {step === 2 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
             <Label>Método de pago</Label>
             <Select

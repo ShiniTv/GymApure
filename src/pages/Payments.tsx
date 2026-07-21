@@ -517,7 +517,7 @@ export default function Payments() {
             }
           />
         ) : isMember && !loading && payments.length === 0 && !statusFilter ? (
-          <div className="mx-auto flex min-h-[min(48vh,26rem)] w-full max-w-sm flex-col justify-center">
+          <div className="mx-auto flex min-h-[min(32vh,18rem)] w-full max-w-sm flex-col justify-center">
             <EmptyState
               variant="motivational"
               icon={CreditCard}
@@ -527,7 +527,7 @@ export default function Payments() {
             />
           </div>
         ) : isMember && !loading && payments.length === 0 && statusFilter ? (
-          <div className="mx-auto flex min-h-[min(36vh,20rem)] w-full max-w-sm flex-col justify-center">
+          <div className="mx-auto flex min-h-[min(24vh,14rem)] w-full max-w-sm flex-col justify-center">
             <EmptyState
               variant="motivational"
               icon={CreditCard}

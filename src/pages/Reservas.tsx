@@ -116,7 +116,7 @@ export default function Reservas() {
       />
 
       {isPending ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-8">
           <Spinner />
         </div>
       ) : isError ? (
