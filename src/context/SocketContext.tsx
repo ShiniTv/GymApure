@@ -48,12 +48,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       });
 
       s.on('message:new', (payload?: { conversationId?: number }) => {
-        void queryClient.invalidateQueries({ queryKey: ['chat'] });
+        void queryClient.invalidateQueries({ queryKey: ['chat', 'unread'] });
+        void queryClient.invalidateQueries({ queryKey: ['chat', 'mine'] });
+        void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
         const conversationId = payload?.conversationId;
         if (conversationId != null) {
           void queryClient.invalidateQueries({
             queryKey: ['chat', 'messages', conversationId],
           });
+        } else {
+          void queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
         }
       });
 

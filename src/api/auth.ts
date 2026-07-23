@@ -242,6 +242,7 @@ router.get(
 
     const result = await verifySessionToken(token);
     if (result.type === 'success') {
+      setCsrfCookie(res);
       res.json({ user: result.user });
       return;
     }

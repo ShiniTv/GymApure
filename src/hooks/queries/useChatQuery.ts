@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
+import { isStaffRole } from '../../lib/roles';
 
 const CHAT_POLL_CONNECTED_MS = 30_000;
 const CHAT_POLL_DISCONNECTED_MS = 8_000;
@@ -132,24 +134,28 @@ export function useChatConversationsQuery(
   page = 1,
   pageSize = 50
 ) {
+  const { user } = useAuth();
   const { isConnected } = useSocket();
+  const canList = enabled && user != null && isStaffRole(user.role);
 
   return useQuery({
     queryKey: chatConversationsKey(search, expiringOnly, page, pageSize),
     queryFn: () => fetchConversations(search, expiringOnly, page, pageSize),
-    enabled,
-    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
+    enabled: canList,
+    refetchInterval: canList ? chatPollInterval(isConnected) : false,
   });
 }
 
 export function useMemberChatQuery(enabled = true) {
+  const { user } = useAuth();
   const { isConnected } = useSocket();
+  const canLoad = enabled && user?.role === 'member';
 
   return useQuery({
     queryKey: chatMineKey,
     queryFn: fetchMemberConversation,
-    enabled,
-    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
+    enabled: canLoad,
+    refetchInterval: canLoad ? chatPollInterval(isConnected) : false,
   });
 }
 

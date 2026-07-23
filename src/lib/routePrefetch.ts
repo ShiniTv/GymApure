@@ -71,14 +71,9 @@ function prefetchRouteData(path: string): void {
   }
 
   if (path === '/panel') {
-    dataPrefetched.add(path);
-    void queryClient.prefetchQuery({
-      queryKey: ['admin-stats'],
-      queryFn: async () => {
-        const res = await apiFetch('/api/stats/admin');
-        return parseJsonResponse(res);
-      },
-    });
+    // AdminStatsProvider already loads /api/stats/admin for admins only.
+    // Prefetching here caused 403 noise for trainer/member/reception.
+    return;
   }
 }
 
