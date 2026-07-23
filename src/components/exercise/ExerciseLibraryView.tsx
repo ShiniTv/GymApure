@@ -40,13 +40,14 @@ function ExerciseCard({
   const muscleLabel = formatMuscleGroupLabel(exercise.muscle_group);
   const canManage = Boolean(onEdit && onDelete);
   const hasVideo = Boolean(exercise.video_url);
+  const hasBothMedia = hasVideo && Boolean(exercise.execution);
 
   return (
     <Card
       padding="sm"
       rounded="xl"
       className={cn(
-        'border-zinc-200/70 bg-white/80 transition-colors dark:border-zinc-800/80 dark:bg-zinc-900/50',
+        'h-fit border-zinc-200/70 bg-white/80 transition-colors dark:border-zinc-800/80 dark:bg-zinc-900/50',
         expanded && 'ring-brand/20 ring-2'
       )}
     >
@@ -104,9 +105,15 @@ function ExerciseCard({
             </p>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+          {/* Side-by-side only when the card spans a full desktop row (see grid col-span). */}
+          <div
+            className={cn(
+              'grid grid-cols-1 gap-3',
+              hasBothMedia && 'md:grid-cols-2 md:items-start md:gap-4'
+            )}
+          >
             {hasVideo ? (
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <h4 className="label-caps flex items-center gap-2">
                   <Video className="h-3 w-3" /> Video
                 </h4>
@@ -118,7 +125,7 @@ function ExerciseCard({
               </div>
             ) : null}
             {exercise.execution ? (
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <h4 className="label-caps flex items-center gap-2">
                   <BookOpen className="h-3 w-3" /> Ejecución
                 </h4>
@@ -126,6 +133,7 @@ function ExerciseCard({
                   execution={exercise.execution}
                   title="Guía de ejecución"
                   showTitle={false}
+                  compact
                 />
               </div>
             ) : null}
@@ -231,18 +239,22 @@ export function ExerciseLibraryView({
 
   return (
     <div className="space-y-1.5">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
-        {filteredExercises.map((exercise) => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            expanded={expandedId === exercise.id}
-            readOnly={readOnly}
-            onToggle={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))}
+      <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+        {filteredExercises.map((exercise) => {
+          const expanded = expandedId === exercise.id;
+          return (
+            <div key={exercise.id} className={cn(expanded && 'md:col-span-2 xl:col-span-4')}>
+              <ExerciseCard
+                exercise={exercise}
+                expanded={expanded}
+                readOnly={readOnly}
+                onToggle={() => setExpandedId(expanded ? null : exercise.id)}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
+          );
+        })}
       </div>
       {readOnly ? (
         <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 md:text-left dark:text-zinc-500">

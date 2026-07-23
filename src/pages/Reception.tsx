@@ -768,10 +768,9 @@ export default function Reception() {
               Acceso
             </h1>
             <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-              <span className="lg:hidden">{insideCount} dentro</span>
-              <span className="hidden lg:inline">
-                {insideCount} dentro · F1 entrada · F2 salida
-              </span>
+              {/* Count lives in tab + lista Dentro; avoid triple KPI on md+ access desk. */}
+              <span className="md:hidden">{insideCount} dentro</span>
+              <span className="hidden md:inline">F1 entrada · F2 salida</span>
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-0.5">
