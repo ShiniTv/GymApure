@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { downloadReport, apiFetch, parseJsonResponse } from '../lib/api';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
+import { cn, formatMoney } from '../lib/utils';
 
 import {
   FileSpreadsheet,
@@ -23,7 +24,10 @@ import {
   PageHeader,
   Skeleton,
   BackToDashboardLink,
+  Badge,
+  EmptyState,
 } from '../components/ui';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 type ReportType = 'payments' | 'attendance' | 'members' | 'retention';
 type ReportFormat = 'csv' | 'pdf';
@@ -33,6 +37,30 @@ interface ReportPreview {
   attendance: number;
   members: number;
   retention?: number;
+  paymentsTotalUsd?: number;
+  paymentsApproved?: number;
+  paymentsPending?: number;
+  paymentsRejected?: number;
+  samples?: {
+    payments: {
+      date: string;
+      name: string;
+      amountUsd: number;
+      status: string;
+      method: string;
+    }[];
+    attendance: {
+      date: string;
+      name: string;
+      durationMinutes: number | null;
+    }[];
+    members: {
+      name: string;
+      membership: string | null;
+      daysRemaining: number | null;
+      status: string;
+    }[];
+  };
 }
 
 const REPORTS: {
@@ -41,7 +69,7 @@ const REPORTS: {
   description: string;
   icon: typeof DollarSign;
   hasDateRange: boolean;
-  previewKey: keyof ReportPreview;
+  previewKey: keyof Pick<ReportPreview, 'payments' | 'attendance' | 'members' | 'retention'>;
 }[] = [
   {
     type: 'payments',
@@ -77,12 +105,38 @@ const REPORTS: {
   },
 ];
 
+function statusLabel(status: string): string {
+  if (status === 'approved') return 'Aprobado';
+  if (status === 'pending') return 'Pendiente';
+  if (status === 'rejected') return 'Rechazado';
+  if (status === 'active') return 'Activo';
+  if (status === 'inactive') return 'Inactivo';
+  return status;
+}
+
+function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'default' {
+  if (status === 'approved' || status === 'active') return 'success';
+  if (status === 'pending') return 'warning';
+  if (status === 'rejected' || status === 'inactive') return 'danger';
+  return 'default';
+}
+
+function formatSampleDate(value: string): string {
+  try {
+    return format(new Date(value), 'dd/MM/yyyy');
+  } catch {
+    return value;
+  }
+}
+
 export default function Reports() {
+  usePageTitle('Reportes');
   const today = format(new Date(), 'yyyy-MM-dd');
   const monthAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
 
   const [from, setFrom] = useState(monthAgo);
   const [to, setTo] = useState(today);
+  const [selectedType, setSelectedType] = useState<ReportType>('payments');
 
   const debouncedFrom = useDebouncedValue(from, 400);
   const debouncedTo = useDebouncedValue(to, 400);
@@ -149,6 +203,9 @@ export default function Reports() {
     }
   };
 
+  const selectedReport = REPORTS.find((r) => r.type === selectedType) ?? REPORTS[0];
+  const selectedCount = preview?.[selectedReport.previewKey];
+
   return (
     <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
@@ -158,7 +215,7 @@ export default function Reports() {
             Reportes <span className="text-brand">exportables</span>
           </>
         }
-        subtitle="PDF con formato GymApure o CSV para contabilidad."
+        subtitle="Vista previa del rango + PDF/CSV para compartir o contabilidad."
         action={<BackToDashboardLink />}
       />
 
@@ -177,7 +234,7 @@ export default function Reports() {
                 Rango de fechas
               </h2>
               <p className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
-                Pagos y asistencias
+                Pagos, asistencias y retención
               </p>
             </div>
           </div>
@@ -223,74 +280,286 @@ export default function Reports() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-        {REPORTS.map((report) => {
-          const Icon = report.icon;
-          const count = preview?.[report.previewKey];
-          const pdfLoading = downloading?.type === report.type && downloading.format === 'pdf';
-          const csvLoading = downloading?.type === report.type && downloading.format === 'csv';
-          const busy = downloading?.type === report.type;
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] lg:items-start">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+          {REPORTS.map((report) => {
+            const Icon = report.icon;
+            const count = preview?.[report.previewKey];
+            const pdfLoading = downloading?.type === report.type && downloading.format === 'pdf';
+            const csvLoading = downloading?.type === report.type && downloading.format === 'csv';
+            const busy = downloading?.type === report.type;
+            const selected = selectedType === report.type;
 
-          return (
-            <Card key={report.type} padding="sm" rounded="xl" className="flex flex-col">
-              <div className="mb-2.5 flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-start gap-2">
-                  <div className="bg-brand/10 shrink-0 rounded-lg p-1.5">
-                    <Icon className="text-brand dark:text-brand h-4 w-4" />
+            return (
+              <Card
+                key={report.type}
+                padding="sm"
+                rounded="xl"
+                role="button"
+                tabIndex={0}
+                aria-pressed={selected}
+                aria-label={`Vista previa de ${report.title}`}
+                className={cn(
+                  'flex cursor-pointer flex-col transition-colors',
+                  selected
+                    ? 'border-brand/40 bg-brand/[0.04] ring-brand/30 ring-1'
+                    : 'hover:border-zinc-300 dark:hover:border-zinc-700'
+                )}
+                onClick={() => setSelectedType(report.type)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedType(report.type);
+                  }
+                }}
+              >
+                <div className="mb-2.5 flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-start gap-2">
+                    <div className="bg-brand/10 shrink-0 rounded-lg p-1.5">
+                      <Icon className="text-brand dark:text-brand h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+                        {report.title}
+                      </h3>
+                      <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                        {report.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
-                      {report.title}
-                    </h3>
-                    <p className="mt-0.5 line-clamp-1 hidden text-[11px] leading-snug text-zinc-500 sm:block dark:text-zinc-400">
-                      {report.description}
-                    </p>
+                  <div className="shrink-0 pl-1 text-right">
+                    {previewLoading ? (
+                      <Skeleton className="ml-auto h-7 w-8" />
+                    ) : (
+                      <>
+                        <p className="text-brand text-lg leading-none font-bold tabular-nums sm:text-xl">
+                          {count ?? '—'}
+                        </p>
+                        <p className="mt-0.5 text-[9px] tracking-wide text-zinc-400 uppercase dark:text-zinc-300">
+                          reg.
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="shrink-0 pl-1 text-right">
-                  {previewLoading ? (
-                    <Skeleton className="ml-auto h-7 w-8" />
-                  ) : (
-                    <>
-                      <p className="text-brand text-lg leading-none font-bold tabular-nums sm:text-xl">
-                        {count ?? '—'}
-                      </p>
-                      <p className="mt-0.5 text-[9px] tracking-wide text-zinc-400 uppercase dark:text-zinc-300">
-                        reg.
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
 
-              <div className="mt-auto flex gap-1.5">
-                <Button
-                  size="sm"
-                  className="min-w-0 flex-1"
-                  loading={pdfLoading}
-                  disabled={busy && !pdfLoading}
-                  aria-label={`Descargar PDF de ${report.title}`}
-                  onClick={() => handleDownload(report.type, report.hasDateRange, 'pdf')}
-                >
-                  <FileText className="h-4 w-4" />
-                  PDF
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="min-w-0 flex-1"
-                  loading={csvLoading}
-                  disabled={busy && !csvLoading}
-                  aria-label={`Descargar CSV de ${report.title}`}
-                  onClick={() => handleDownload(report.type, report.hasDateRange, 'csv')}
-                >
-                  <Download className="h-4 w-4" />
-                  CSV
-                </Button>
+                <div className="mt-auto flex gap-1.5">
+                  <Button
+                    size="sm"
+                    className="min-w-0 flex-1"
+                    loading={pdfLoading}
+                    disabled={busy && !pdfLoading}
+                    aria-label={`Descargar PDF de ${report.title}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleDownload(report.type, report.hasDateRange, 'pdf');
+                    }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    PDF
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="min-w-0 flex-1"
+                    loading={csvLoading}
+                    disabled={busy && !csvLoading}
+                    aria-label={`Descargar CSV de ${report.title}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleDownload(report.type, report.hasDateRange, 'csv');
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                    CSV
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <Card padding="sm" rounded="xl" className="min-w-0">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">
+                Vista previa · {selectedReport.title}
+              </h2>
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                {selectedReport.hasDateRange
+                  ? `${formatSampleDate(from)} – ${formatSampleDate(to)}`
+                  : 'Estado actual de miembros'}
+                {typeof selectedCount === 'number' ? ` · ${selectedCount} registros` : ''}
+              </p>
+            </div>
+          </div>
+
+          {selectedType === 'payments' && (
+            <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  Total USD
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {previewLoading ? '—' : formatMoney(preview?.paymentsTotalUsd ?? 0)}
+                </p>
               </div>
-            </Card>
-          );
-        })}
+              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  Aprobados
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {previewLoading ? '—' : (preview?.paymentsApproved ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  Pendientes
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {previewLoading ? '—' : (preview?.paymentsPending ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  Rechazados
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                  {previewLoading ? '—' : (preview?.paymentsRejected ?? 0)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {previewLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : selectedType === 'retention' ? (
+            <EmptyState
+              icon={FileText}
+              title={`${preview?.retention ?? 0} membresías vencidas/inactivas`}
+              description="Descarga el PDF o CSV para el detalle de retención, no-shows y renovaciones."
+              className="border-0 bg-transparent py-4 shadow-none"
+            />
+          ) : selectedType === 'payments' ? (
+            (preview?.samples?.payments?.length ?? 0) === 0 ? (
+              <EmptyState
+                icon={DollarSign}
+                title="Sin pagos en este rango"
+                description="Prueba otro periodo o registra un pago en mostrador."
+                className="border-0 bg-transparent py-4 shadow-none"
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
+                  <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                    <tr>
+                      <th className="pr-2 pb-2">Fecha</th>
+                      <th className="pr-2 pb-2">Miembro</th>
+                      <th className="pr-2 pb-2 text-right">USD</th>
+                      <th className="pb-2">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {preview?.samples?.payments.map((row, i) => (
+                      <tr key={`${row.name}-${i}`}>
+                        <td className="py-2 pr-2 whitespace-nowrap">
+                          {formatSampleDate(row.date)}
+                        </td>
+                        <td className="max-w-[8rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                          {row.name}
+                        </td>
+                        <td className="py-2 pr-2 text-right font-semibold text-zinc-900 tabular-nums dark:text-white">
+                          ${row.amountUsd}
+                        </td>
+                        <td className="py-2">
+                          <Badge variant={statusVariant(row.status)} className="text-[9px]">
+                            {statusLabel(row.status)}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : selectedType === 'attendance' ? (
+            (preview?.samples?.attendance?.length ?? 0) === 0 ? (
+              <EmptyState
+                icon={Fingerprint}
+                title="Sin asistencias en este rango"
+                description="Los check-ins del mostrador aparecerán aquí."
+                className="border-0 bg-transparent py-4 shadow-none"
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
+                  <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                    <tr>
+                      <th className="pr-2 pb-2">Fecha</th>
+                      <th className="pr-2 pb-2">Miembro</th>
+                      <th className="pb-2 text-right">Min</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {preview?.samples?.attendance.map((row, i) => (
+                      <tr key={`${row.name}-${i}`}>
+                        <td className="py-2 pr-2 whitespace-nowrap">
+                          {formatSampleDate(row.date)}
+                        </td>
+                        <td className="max-w-[10rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                          {row.name}
+                        </td>
+                        <td className="py-2 text-right tabular-nums">
+                          {row.durationMinutes ?? '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : (preview?.samples?.members?.length ?? 0) === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Sin miembros"
+              description="Cuando haya clientes registrados verás una muestra aquí."
+              className="border-0 bg-transparent py-4 shadow-none"
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
+                <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                  <tr>
+                    <th className="pr-2 pb-2">Miembro</th>
+                    <th className="pr-2 pb-2">Plan</th>
+                    <th className="pb-2 text-right">Días</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {preview?.samples?.members.map((row, i) => (
+                    <tr key={`${row.name}-${i}`}>
+                      <td className="max-w-[9rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                        {row.name}
+                      </td>
+                      <td className="max-w-[7rem] truncate py-2 pr-2">
+                        {row.membership || 'Sin plan'}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">{row.daysRemaining ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <p className="mt-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+            Muestra de hasta 8 filas. El export incluye el conjunto completo del rango.
+          </p>
+        </Card>
       </div>
 
       <p className="flex items-start gap-2 px-0.5 text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400">

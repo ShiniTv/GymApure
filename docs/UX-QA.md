@@ -22,21 +22,21 @@ npm run dev
 
 ## Member — mobile (390px)
 
-| #   | Flujo                 | Criterio                                                                                                    | Auto    | Resultado        |
-| --- | --------------------- | ----------------------------------------------------------------------------------------------------------- | ------- | ---------------- |
-| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`                                        | Browser | ☑                |
-| 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                                     | Browser | ☑                |
-| 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto                          | Browser | ☑                |
-| 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                                      | Browser | ☑                |
-| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger; header flotante tipo isla                                        | Browser | ☑                |
-| 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                                         | Manual  | ☑                |
-| 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                                    | Browser | ☑                |
-| 7   | Errores               | Offline → Reintentar en rutinas                                                                             | Browser | ☑                |
-| —   | FAB entrenar          | Centrado en `/routines`, `/exercises`, `/nutrition`; oculto en Inicio (`/panel`, hero CTA) y `/workout/:id` | Browser | ☑                |
-| —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)                                                  | Manual  | ☑                |
-| —   | Workout layout        | Completar, pasos y video a ancho completo del card                                                          | Manual  | ☑                |
-| —   | Descanso / notifs     | Android: notif con tiempo y +30s/Saltar; iOS PWA: aviso al terminar; sin permiso: overlay OK                | Manual  | ☐ (código listo) |
-| —   | Push onboarding       | Tarjeta en inicio; iPhone pide Añadir a Inicio; Perfil toggle                                               | Manual  | ☐ (código listo) |
+| #   | Flujo                 | Criterio                                                                                                    | Auto    | Resultado                             |
+| --- | --------------------- | ----------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------- |
+| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`                                        | Browser | ☑                                     |
+| 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                                     | Browser | ☑                                     |
+| 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto                          | Browser | ☑                                     |
+| 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                                      | Browser | ☑                                     |
+| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger; header flotante tipo isla                                        | Browser | ☑                                     |
+| 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                                         | Manual  | ☑                                     |
+| 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                                    | Browser | ☑                                     |
+| 7   | Errores               | Offline → Reintentar en rutinas                                                                             | Browser | ☑                                     |
+| —   | FAB entrenar          | Centrado en `/routines`, `/exercises`, `/nutrition`; oculto en Inicio (`/panel`, hero CTA) y `/workout/:id` | Browser | ☑                                     |
+| —   | Sidebar drawer        | Footer pegado al fondo (admin, trainer, reception, member)                                                  | Manual  | ☑                                     |
+| —   | Workout layout        | Completar, pasos y video a ancho completo del card                                                          | Manual  | ☑                                     |
+| —   | Descanso / notifs     | Android: notif con tiempo y +30s/Saltar; iOS PWA: aviso al terminar; sin permiso: overlay OK                | Manual  | ☐ (código listo)                      |
+| —   | Push onboarding       | Tarjeta en inicio; iPhone pide Añadir a Inicio (aunque sin PushManager); Perfil/Settings toggle             | Manual  | ☐ (código listo; verificar en device) |
 
 ---
 

@@ -37,6 +37,7 @@ import { ProofPreviewButton } from './payments/ProofPreviewButton';
 import { PaymentMobileCard } from './payments/PaymentMobileCard';
 import { PaymentRegisterModal } from './payments/PaymentRegisterModal';
 import { PaymentActionModals } from './payments/PaymentActionModals';
+import { PaymentDetailRail } from './payments/PaymentDetailRail';
 import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegisterModal';
 import { cn } from '../lib/utils';
 import { useBreakpoint } from '../hooks/useBreakpoint';
@@ -44,7 +45,7 @@ import { useBreakpoint } from '../hooks/useBreakpoint';
 export default function Payments() {
   const { user } = useAuth();
   usePageTitle('Pagos');
-  const { isMobileShell } = useBreakpoint();
+  const { isMobileShell, isDesktop } = useBreakpoint();
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
@@ -122,6 +123,7 @@ export default function Payments() {
   const [rejectTarget, setRejectTarget] = useState<Payment | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [proofPreview, setProofPreview] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [actionError, setActionError] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -130,6 +132,13 @@ export default function Payments() {
   const [rejecting, setRejecting] = useState(false);
   const [searchParams] = useSearchParams();
   const toast = useToastOptional();
+
+  useEffect(() => {
+    if (!selectedPayment) return;
+    if (!payments.some((p) => p.id === selectedPayment.id)) {
+      setSelectedPayment(null);
+    }
+  }, [payments, selectedPayment]);
 
   const openRegisterModal = useCallback((memberId?: string) => {
     setSubmitError('');
@@ -555,340 +564,382 @@ export default function Payments() {
             />
           </div>
         ) : (
-          <Card
-            padding="none"
-            rounded="xl"
+          <div
             className={cn(
-              'overflow-hidden',
-              isMember &&
-                'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
+              isStaffPayment &&
+                isDesktop &&
+                selectedPayment &&
+                'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-4'
             )}
           >
-            {isMember ? (
-              <>
-                <div className="mx-auto w-full max-w-lg space-y-2 lg:hidden">
-                  {loading ? (
-                    <ListRowSkeleton rows={4} />
-                  ) : (
-                    <>
-                      {payments.map((payment) => (
-                        <PaymentMobileCard
-                          key={payment.id}
-                          payment={payment}
-                          onProofPreview={setProofPreview}
-                        />
-                      ))}
-                      <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-                        Los pendientes se revisan en recepción. Si rechazan uno, te avisamos en
-                        Mensajes.
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                <div className="hidden overflow-x-auto lg:block">
-                  <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                    <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
-                      <tr>
-                        <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
-                        <th className="px-3 py-2.5 lg:px-5">Fecha</th>
-                        <th className="px-3 py-2.5 lg:px-5">Método</th>
-                        <th className="px-3 py-2.5 lg:px-5">Referencia</th>
-                        <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
-                        <th className="px-3 py-2.5 lg:px-5">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {loading ? (
-                        <>
-                          <TableRowSkeleton cols={6} />
-                          <TableRowSkeleton cols={6} />
-                          <TableRowSkeleton cols={6} />
-                          <TableRowSkeleton cols={6} />
-                        </>
-                      ) : payments.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
-                          >
-                            No hay pagos registrados
-                          </td>
-                        </tr>
-                      ) : (
-                        payments.map((payment) => (
-                          <tr
+            <Card
+              padding="none"
+              rounded="xl"
+              className={cn(
+                'min-w-0 overflow-hidden',
+                isMember &&
+                  'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
+              )}
+            >
+              {isMember ? (
+                <>
+                  <div className="mx-auto w-full max-w-lg space-y-2 lg:hidden">
+                    {loading ? (
+                      <ListRowSkeleton rows={4} />
+                    ) : (
+                      <>
+                        {payments.map((payment) => (
+                          <PaymentMobileCard
                             key={payment.id}
-                            className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
-                          >
-                            <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
-                              ${payment.amount_usd}
-                            </td>
-                            <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
-                              {formatPaymentDate(payment.created_at)}
-                            </td>
-                            <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
-                              {formatPaymentMethod(payment.method)}
-                            </td>
+                            payment={payment}
+                            onProofPreview={setProofPreview}
+                          />
+                        ))}
+                        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+                          Los pendientes se revisan en recepción. Si rechazan uno, te avisamos en
+                          Mensajes.
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="hidden overflow-x-auto lg:block">
+                    <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
+                      <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+                        <tr>
+                          <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
+                          <th className="px-3 py-2.5 lg:px-5">Fecha</th>
+                          <th className="px-3 py-2.5 lg:px-5">Método</th>
+                          <th className="px-3 py-2.5 lg:px-5">Referencia</th>
+                          <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
+                          <th className="px-3 py-2.5 lg:px-5">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        {loading ? (
+                          <>
+                            <TableRowSkeleton cols={6} />
+                            <TableRowSkeleton cols={6} />
+                            <TableRowSkeleton cols={6} />
+                            <TableRowSkeleton cols={6} />
+                          </>
+                        ) : payments.length === 0 ? (
+                          <tr>
                             <td
-                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
-                              title={payment.reference}
+                              colSpan={6}
+                              className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
                             >
-                              {payment.reference}
-                            </td>
-                            <td className="px-3 py-2.5 lg:px-5">
-                              {payment.proof_url ? (
-                                <ProofPreviewButton onClick={() => setProofPreview(payment)} />
-                              ) : (
-                                <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 lg:px-5">
-                              <Badge
-                                variant={paymentStatusVariant(payment.status)}
-                                className="px-1.5 py-0 text-[9px]"
-                              >
-                                {paymentStatusLabel(payment.status)}
-                              </Badge>
-                              {payment.status === 'rejected' && (
-                                <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
-                                  {payment.rejection_reason?.trim()
-                                    ? `Motivo: ${payment.rejection_reason.trim()}`
-                                    : 'No verificado'}{' '}
-                                  ·{' '}
-                                  <Link to="/messages" className="font-semibold underline">
-                                    Mensajes
-                                  </Link>
-                                </p>
-                              )}
+                              No hay pagos registrados
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="lg:hidden">
-                  {loading ? (
-                    <div className="px-3 py-2">
-                      <ListRowSkeleton rows={4} />
-                    </div>
-                  ) : payments.length === 0 ? (
-                    <EmptyState
-                      icon={CreditCard}
-                      title={search ? 'Sin resultados' : 'Sin pagos registrados'}
-                      description={
-                        search
-                          ? 'Prueba otro nombre o referencia, o limpia la búsqueda.'
-                          : 'Los reportes de miembros aparecerán aquí para revisión.'
-                      }
-                      action={
-                        search ? undefined : (
-                          <Button size="sm" onClick={() => openRegisterModal()}>
-                            <Plus className="h-4 w-4" />
-                            Registrar pago
-                          </Button>
-                        )
-                      }
-                    />
-                  ) : (
-                    <div className="space-y-2 px-1 py-1">
-                      {payments.map((payment) => (
-                        <div
-                          key={payment.id}
-                          className="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-brand text-base leading-none font-bold tabular-nums">
-                                  ${payment.amount_usd}
-                                </p>
+                        ) : (
+                          payments.map((payment) => (
+                            <tr
+                              key={payment.id}
+                              className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                            >
+                              <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                                ${payment.amount_usd}
+                              </td>
+                              <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                                {formatPaymentDate(payment.created_at)}
+                              </td>
+                              <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                                {formatPaymentMethod(payment.method)}
+                              </td>
+                              <td
+                                className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
+                                title={payment.reference}
+                              >
+                                {payment.reference}
+                              </td>
+                              <td className="px-3 py-2.5 lg:px-5">
+                                {payment.proof_url ? (
+                                  <ProofPreviewButton onClick={() => setProofPreview(payment)} />
+                                ) : (
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-300">
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5 lg:px-5">
                                 <Badge
                                   variant={paymentStatusVariant(payment.status)}
                                   className="px-1.5 py-0 text-[9px]"
                                 >
                                   {paymentStatusLabel(payment.status)}
                                 </Badge>
-                              </div>
-                              <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
-                                Miembro
-                              </p>
-                              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                                {payment.user_name}
-                              </p>
-                              <p className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                                <time dateTime={payment.created_at}>
-                                  {formatPaymentDate(payment.created_at)}
-                                </time>
-                                <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                                <span className="capitalize">
-                                  {formatPaymentMethod(payment.method)}
-                                </span>
-                              </p>
-                              {payment.reference ? (
-                                <p
-                                  className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
-                                  title={payment.reference}
-                                >
-                                  Ref. {payment.reference}
+                                {payment.status === 'rejected' && (
+                                  <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
+                                    {payment.rejection_reason?.trim()
+                                      ? `Motivo: ${payment.rejection_reason.trim()}`
+                                      : 'No verificado'}{' '}
+                                    ·{' '}
+                                    <Link to="/messages" className="font-semibold underline">
+                                      Mensajes
+                                    </Link>
+                                  </p>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="lg:hidden">
+                    {loading ? (
+                      <div className="px-3 py-2">
+                        <ListRowSkeleton rows={4} />
+                      </div>
+                    ) : payments.length === 0 ? (
+                      <EmptyState
+                        icon={CreditCard}
+                        title={search ? 'Sin resultados' : 'Sin pagos registrados'}
+                        description={
+                          search
+                            ? 'Prueba otro nombre o referencia, o limpia la búsqueda.'
+                            : 'Los reportes de miembros aparecerán aquí para revisión.'
+                        }
+                        action={
+                          search ? undefined : (
+                            <Button size="sm" onClick={() => openRegisterModal()}>
+                              <Plus className="h-4 w-4" />
+                              Registrar pago
+                            </Button>
+                          )
+                        }
+                      />
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 px-1 py-1 md:grid-cols-2">
+                        {payments.map((payment) => (
+                          <div
+                            key={payment.id}
+                            className="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-brand text-base leading-none font-bold tabular-nums">
+                                    ${payment.amount_usd}
+                                  </p>
+                                  <Badge
+                                    variant={paymentStatusVariant(payment.status)}
+                                    className="px-1.5 py-0 text-[9px]"
+                                  >
+                                    {paymentStatusLabel(payment.status)}
+                                  </Badge>
+                                </div>
+                                <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+                                  Miembro
                                 </p>
+                                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                                  {payment.user_name}
+                                </p>
+                                <p className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                                  <time dateTime={payment.created_at}>
+                                    {formatPaymentDate(payment.created_at)}
+                                  </time>
+                                  <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
+                                  <span className="capitalize">
+                                    {formatPaymentMethod(payment.method)}
+                                  </span>
+                                </p>
+                                {payment.reference ? (
+                                  <p
+                                    className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
+                                    title={payment.reference}
+                                  >
+                                    Ref. {payment.reference}
+                                  </p>
+                                ) : null}
+                              </div>
+                              {payment.proof_url ? (
+                                <ProofPreviewButton
+                                  onClick={() => setProofPreview(payment)}
+                                  className="h-9 w-9 shrink-0"
+                                />
                               ) : null}
                             </div>
-                            {payment.proof_url ? (
-                              <ProofPreviewButton
-                                onClick={() => setProofPreview(payment)}
-                                className="h-9 w-9 shrink-0"
-                              />
+                            {isStaffPayment && payment.status === 'pending' ? (
+                              <div className="mt-2.5 flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openApproveModal(payment)}
+                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-emerald-500/35 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
+                                >
+                                  <Check className="h-4 w-4" />
+                                  Aprobar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setRejectReason('');
+                                    setActionError('');
+                                    setRejectTarget(payment);
+                                  }}
+                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-red-500/35 bg-red-500/5 text-red-600 hover:bg-red-500/15 dark:text-red-400"
+                                >
+                                  <X className="h-4 w-4" />
+                                  Rechazar
+                                </Button>
+                              </div>
                             ) : null}
                           </div>
-                          {isStaffPayment && payment.status === 'pending' ? (
-                            <div className="mt-2.5 flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => openApproveModal(payment)}
-                                className="h-9 min-h-9 flex-1 border-emerald-500/35 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
-                              >
-                                <Check className="h-4 w-4" />
-                                Aprobar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setRejectReason('');
-                                  setActionError('');
-                                  setRejectTarget(payment);
-                                }}
-                                className="h-9 min-h-9 flex-1 border-red-500/35 bg-red-500/5 text-red-600 hover:bg-red-500/15 dark:text-red-400"
-                              >
-                                <X className="h-4 w-4" />
-                                Rechazar
-                              </Button>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="hidden overflow-x-auto lg:block">
-                  <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                    <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
-                      <tr>
-                        <th className="px-3 py-2.5 lg:px-5">Usuario</th>
-                        <th className="px-3 py-2.5 lg:px-5">Fecha</th>
-                        <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
-                        <th className="px-3 py-2.5 lg:px-5">Método</th>
-                        <th className="px-3 py-2.5 lg:px-5">Referencia</th>
-                        <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
-                        <th className="px-3 py-2.5 lg:px-5">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {loading ? (
-                        <>
-                          <TableRowSkeleton cols={7} />
-                          <TableRowSkeleton cols={7} />
-                          <TableRowSkeleton cols={7} />
-                          <TableRowSkeleton cols={7} />
-                        </>
-                      ) : payments.length === 0 ? (
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="hidden overflow-x-auto lg:block">
+                    <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
+                      <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
                         <tr>
-                          <td
-                            colSpan={7}
-                            className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
-                          >
-                            {search
-                              ? 'Sin resultados para esa búsqueda'
-                              : 'No hay pagos registrados'}
-                          </td>
+                          <th className="px-3 py-2.5 lg:px-5">Usuario</th>
+                          <th className="px-3 py-2.5 lg:px-5">Fecha</th>
+                          <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
+                          <th className="px-3 py-2.5 lg:px-5">Método</th>
+                          <th className="px-3 py-2.5 lg:px-5">Referencia</th>
+                          <th className="px-3 py-2.5 lg:px-5">Comprobante</th>
+                          <th className="px-3 py-2.5 lg:px-5">Estado</th>
                         </tr>
-                      ) : (
-                        payments.map((payment) => (
-                          <tr
-                            key={payment.id}
-                            className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
-                          >
-                            <td className="px-3 py-2.5 font-medium text-zinc-700 lg:px-5 dark:text-zinc-200">
-                              {payment.user_name}
-                            </td>
-                            <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
-                              {formatPaymentDate(payment.created_at)}
-                            </td>
-                            <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
-                              ${payment.amount_usd}
-                            </td>
-                            <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
-                              {formatPaymentMethod(payment.method)}
-                            </td>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        {loading ? (
+                          <>
+                            <TableRowSkeleton cols={7} />
+                            <TableRowSkeleton cols={7} />
+                            <TableRowSkeleton cols={7} />
+                            <TableRowSkeleton cols={7} />
+                          </>
+                        ) : payments.length === 0 ? (
+                          <tr>
                             <td
-                              className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
-                              title={payment.reference}
+                              colSpan={7}
+                              className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
                             >
-                              {payment.reference}
-                            </td>
-                            <td className="px-3 py-2.5 lg:px-5">
-                              {payment.proof_url ? (
-                                <ProofPreviewButton onClick={() => setProofPreview(payment)} />
-                              ) : (
-                                <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 lg:px-5">
-                              <div className="flex items-center gap-1">
-                                <Badge
-                                  variant={paymentStatusVariant(payment.status)}
-                                  className="px-1.5 py-0 text-[9px]"
-                                >
-                                  {paymentStatusLabel(payment.status)}
-                                </Badge>
-                                {isStaffPayment && payment.status === 'pending' && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => openApproveModal(payment)}
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
-                                      aria-label="Aprobar pago"
-                                    >
-                                      <Check className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setRejectReason('');
-                                        setActionError('');
-                                        setRejectTarget(payment);
-                                      }}
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
-                                      aria-label="Rechazar pago"
-                                    >
-                                      <X className="h-3.5 w-3.5" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              {search
+                                ? 'Sin resultados para esa búsqueda'
+                                : 'No hay pagos registrados'}
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-            <PaginationBar
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={setPage}
-              label="pagos"
-            />
-          </Card>
+                        ) : (
+                          payments.map((payment) => (
+                            <tr
+                              key={payment.id}
+                              className={cn(
+                                'cursor-pointer transition-colors',
+                                selectedPayment?.id === payment.id
+                                  ? 'bg-brand/5 dark:bg-brand/10'
+                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
+                              )}
+                              onClick={() => setSelectedPayment(payment)}
+                              aria-selected={selectedPayment?.id === payment.id}
+                            >
+                              <td className="px-3 py-2.5 font-medium text-zinc-700 lg:px-5 dark:text-zinc-200">
+                                {payment.user_name}
+                              </td>
+                              <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                                {formatPaymentDate(payment.created_at)}
+                              </td>
+                              <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                                ${payment.amount_usd}
+                              </td>
+                              <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                                {formatPaymentMethod(payment.method)}
+                              </td>
+                              <td
+                                className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
+                                title={payment.reference}
+                              >
+                                {payment.reference}
+                              </td>
+                              <td
+                                className="px-3 py-2.5 lg:px-5"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {payment.proof_url ? (
+                                  <ProofPreviewButton onClick={() => setProofPreview(payment)} />
+                                ) : (
+                                  <span className="text-xs text-zinc-400 dark:text-zinc-300">
+                                    —
+                                  </span>
+                                )}
+                              </td>
+                              <td
+                                className="px-3 py-2.5 lg:px-5"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <Badge
+                                    variant={paymentStatusVariant(payment.status)}
+                                    className="px-1.5 py-0 text-[9px]"
+                                  >
+                                    {paymentStatusLabel(payment.status)}
+                                  </Badge>
+                                  {isStaffPayment && payment.status === 'pending' && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => openApproveModal(payment)}
+                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-500/10"
+                                        aria-label="Aprobar pago"
+                                      >
+                                        <Check className="h-3.5 w-3.5" />
+                                        Aprobar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setRejectReason('');
+                                          setActionError('');
+                                          setRejectTarget(payment);
+                                        }}
+                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-red-500 hover:bg-red-500/10"
+                                        aria-label="Rechazar pago"
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                        Rechazar
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+              <PaginationBar
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={setPage}
+                label="pagos"
+              />
+            </Card>
+            {isStaffPayment && isDesktop && selectedPayment ? (
+              <PaymentDetailRail
+                payment={selectedPayment}
+                isStaff={isStaffPayment}
+                onClose={() => setSelectedPayment(null)}
+                onApprove={openApproveModal}
+                onReject={(payment) => {
+                  setRejectReason('');
+                  setActionError('');
+                  setRejectTarget(payment);
+                }}
+                onProofPreview={setProofPreview}
+              />
+            ) : null}
+          </div>
         )}
 
         <PaymentRegisterModal

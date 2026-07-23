@@ -183,9 +183,19 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
   const to = parseDateParam(req.query.to);
   const paymentsFilter = buildDateFilter('p.created_at', from, to);
   const attendanceFilter = buildDateFilter('a.check_in_time', from, to);
+  const SAMPLE_LIMIT = 8;
 
   try {
-    const [payments, attendance, members, retention] = await Promise.all([
+    const [
+      payments,
+      attendance,
+      members,
+      retention,
+      paymentsAgg,
+      paymentSamples,
+      attendanceSamples,
+      memberSamples,
+    ] = await Promise.all([
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM payments p WHERE 1=1${paymentsFilter.sql}`,
         paymentsFilter.params
@@ -205,13 +215,107 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
            AND end_date <= COALESCE($2::date, CURRENT_DATE)`,
         [from, to]
       ),
+      query<{
+        total_usd: string;
+        approved: string;
+        pending: string;
+        rejected: string;
+      }>(
+        `SELECT
+           COALESCE(SUM(CASE WHEN p.status = 'approved' THEN p.amount_usd ELSE 0 END), 0)::text AS total_usd,
+           COUNT(*) FILTER (WHERE p.status = 'approved')::text AS approved,
+           COUNT(*) FILTER (WHERE p.status = 'pending')::text AS pending,
+           COUNT(*) FILTER (WHERE p.status = 'rejected')::text AS rejected
+         FROM payments p
+         WHERE 1=1${paymentsFilter.sql}`,
+        paymentsFilter.params
+      ),
+      query<{
+        created_at: Date | string;
+        user_name: string;
+        amount_usd: number;
+        status: string;
+        method: string;
+      }>(
+        `SELECT p.created_at, u.full_name AS user_name, p.amount_usd, p.status, p.method
+         FROM payments p
+         JOIN users u ON u.id = p.user_id
+         WHERE 1=1${paymentsFilter.sql}
+         ORDER BY p.created_at DESC
+         LIMIT ${SAMPLE_LIMIT}`,
+        paymentsFilter.params
+      ),
+      query<{
+        check_in_time: Date | string;
+        full_name: string;
+        duration_minutes: number | null;
+      }>(
+        `SELECT a.check_in_time, u.full_name,
+                CASE
+                  WHEN a.check_out_time IS NOT NULL THEN
+                    ROUND(EXTRACT(EPOCH FROM (a.check_out_time - a.check_in_time)) / 60)::int
+                  ELSE NULL
+                END AS duration_minutes
+         FROM attendance a
+         JOIN users u ON u.id = a.user_id
+         WHERE 1=1${attendanceFilter.sql}
+         ORDER BY a.check_in_time DESC
+         LIMIT ${SAMPLE_LIMIT}`,
+        attendanceFilter.params
+      ),
+      query<{
+        full_name: string;
+        membership_name: string | null;
+        days_remaining: number | null;
+        status: string;
+      }>(
+        `SELECT u.full_name, u.status,
+                sub.membership_name,
+                sub.days_remaining
+         FROM users u
+         ${activeSubscriptionLateralSql()}
+         WHERE u.role = 'member'
+         ORDER BY COALESCE(sub.days_remaining, 9999) ASC, u.full_name ASC
+         LIMIT ${SAMPLE_LIMIT}`
+      ),
     ]);
+
+    const agg = paymentsAgg.rows[0] ?? {
+      total_usd: '0',
+      approved: '0',
+      pending: '0',
+      rejected: '0',
+    };
 
     res.json({
       payments: parseInt(payments.rows[0]?.count || '0', 10),
       attendance: parseInt(attendance.rows[0]?.count || '0', 10),
       members: parseInt(members.rows[0]?.count || '0', 10),
       retention: parseInt(retention.rows[0]?.count || '0', 10),
+      paymentsTotalUsd: Number(agg.total_usd),
+      paymentsApproved: parseInt(agg.approved, 10),
+      paymentsPending: parseInt(agg.pending, 10),
+      paymentsRejected: parseInt(agg.rejected, 10),
+      samples: {
+        payments: paymentSamples.rows.map((r) => ({
+          date: r.created_at,
+          name: r.user_name,
+          amountUsd: Number(r.amount_usd),
+          status: r.status,
+          method: r.method,
+        })),
+        attendance: attendanceSamples.rows.map((r) => ({
+          date: r.check_in_time,
+          name: r.full_name,
+          durationMinutes: r.duration_minutes,
+        })),
+        members: memberSamples.rows.map((r) => ({
+          name: r.full_name,
+          membership: r.membership_name,
+          daysRemaining: r.days_remaining,
+          status: r.status,
+        })),
+      },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

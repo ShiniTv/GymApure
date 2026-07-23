@@ -216,20 +216,20 @@ export function MemberBottomNav() {
           className="member-bottom-nav-pill pointer-events-auto relative mx-auto max-w-md"
           aria-label="Navegación principal"
         >
-          <ul className="flex items-center justify-around px-3 py-2">
+          <ul className="flex items-stretch justify-around px-2 py-1.5">
             {MEMBER_PRIMARY_TABS.map((item, index) => {
               const active = isTabActive(item.href, item.action);
               const insertFabSlot = showWorkoutFab && index === 2;
 
               const tab =
                 item.action === 'more' ? (
-                  <li key={item.name} className="flex flex-1 justify-center">
+                  <li key={item.name} className="flex min-w-0 flex-1 justify-center">
                     <button
                       ref={moreButtonRef}
                       type="button"
                       onClick={() => setMoreOpen((v) => !v)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl px-1 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={
@@ -252,15 +252,18 @@ export function MemberBottomNav() {
                           </span>
                         )}
                       </span>
+                      <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                        {item.name}
+                      </span>
                     </button>
                   </li>
                 ) : (
-                  <li key={item.name} className="flex flex-1 justify-center">
+                  <li key={item.name} className="flex min-w-0 flex-1 justify-center">
                     <Link
                       to={item.href}
                       {...routePrefetchHandlers(item.href)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] touch-manipulation items-center justify-center rounded-xl px-1 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -280,6 +283,9 @@ export function MemberBottomNav() {
                             {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
+                      </span>
+                      <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                        {item.name}
                       </span>
                     </Link>
                   </li>

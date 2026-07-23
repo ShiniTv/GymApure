@@ -40,11 +40,12 @@ import {
 } from '../hooks/queries/useMembersQuery';
 import { useInvalidateMemberOptions } from '../hooks/queries/useRoutinesQuery';
 import { clientLogger } from '../lib/clientLogger';
-import { roleBadgeClass } from '../lib/utils';
+import { cn, roleBadgeClass } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { ResponsiveTable } from '../components/ResponsiveTable';
 import { MemberCardMobile } from './members/MemberCardMobile';
 import { MemberQuickSheet, type MemberQuickAction } from './members/MemberQuickSheet';
+import { MemberDetailRail } from './members/MemberDetailPanel';
 import { MemberTableRow } from './members/MemberTableRow';
 import { MemberAddModal } from './members/MemberAddModal';
 import { MemberAssignModal, type MembershipPlan } from './members/MemberAssignModal';
@@ -57,11 +58,13 @@ import { MemberBadgeModal, type MemberBadgeData } from '../components/member/Mem
 import { usePageTitle } from '../hooks/usePageTitle';
 import { passwordSchema } from '../lib/passwordSchema';
 import { type TrainingShift } from '../lib/trainingShift';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 const NO_PLAN_ALERT_DISMISS_KEY = 'gymapure_members_no_plan_alert_dismissed';
 export default function Members() {
   const { user } = useAuth();
   usePageTitle('Miembros');
+  const { isDesktop } = useBreakpoint();
   const adminStats = useAdminStatsOptional();
   const invalidateMembers = useInvalidateMembers();
   const invalidateMemberOptions = useInvalidateMemberOptions();
@@ -564,6 +567,13 @@ export default function Members() {
     user?.role === 'trainer' || user?.role === 'admin' || user?.role === 'receptionist';
   const addUserLabel = isStaffMember ? 'Nuevo miembro' : 'Nuevo usuario';
 
+  useEffect(() => {
+    if (!detailMember) return;
+    if (!filteredMembers.some((m) => m.id === detailMember.id)) {
+      setDetailMember(null);
+    }
+  }, [filteredMembers, detailMember]);
+
   const membersEmptyState = (() => {
     if (expiringFilter) {
       return {
@@ -931,104 +941,124 @@ export default function Members() {
             }
           />
         ) : (
-          <>
-            <ResponsiveTable
-              items={filteredMembers}
-              keyExtractor={(member) => member.id}
-              breakpoint="lg"
-              desktopInCard
-              loading={loading}
-              loadingSkeleton={
-                <>
-                  <div className="space-y-2 lg:hidden">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                      >
-                        <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                        <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                      </div>
-                    ))}
-                  </div>
-                  <Card
-                    padding="none"
-                    rounded="xl"
-                    className="table-shell hidden overflow-hidden lg:block"
-                  >
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                        <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                          <TableRowSkeleton cols={colCount} />
-                          <TableRowSkeleton cols={colCount} />
-                          <TableRowSkeleton cols={colCount} />
-                          <TableRowSkeleton cols={colCount} />
-                          <TableRowSkeleton cols={colCount} />
-                        </tbody>
-                      </table>
+          <div
+            className={cn(
+              isDesktop &&
+                detailMember &&
+                'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-4'
+            )}
+          >
+            <div className="min-w-0">
+              <ResponsiveTable
+                items={filteredMembers}
+                keyExtractor={(member) => member.id}
+                breakpoint="lg"
+                desktopInCard
+                loading={loading}
+                loadingSkeleton={
+                  <>
+                    <div className="space-y-2 lg:hidden">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                        >
+                          <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                          <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                        </div>
+                      ))}
                     </div>
-                  </Card>
-                </>
-              }
-              emptyState={
-                <EmptyState
-                  icon={showTrainerAssignCta ? Dumbbell : Search}
-                  title={membersEmptyState.title}
-                  description={membersEmptyState.description}
-                  action={membersEmptyAction}
-                />
-              }
-              mobileClassName=""
-              mobileWrapper={(children) => (
-                <StaggerContainer className="flex flex-col gap-2.5">{children}</StaggerContainer>
-              )}
-              mobile={(member) => (
-                <StaggerItem>
-                  <MemberCardMobile
+                    <Card
+                      padding="none"
+                      rounded="xl"
+                      className="table-shell hidden overflow-hidden lg:block"
+                    >
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
+                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            <TableRowSkeleton cols={colCount} />
+                            <TableRowSkeleton cols={colCount} />
+                            <TableRowSkeleton cols={colCount} />
+                            <TableRowSkeleton cols={colCount} />
+                            <TableRowSkeleton cols={colCount} />
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+                  </>
+                }
+                emptyState={
+                  <EmptyState
+                    icon={showTrainerAssignCta ? Dumbbell : Search}
+                    title={membersEmptyState.title}
+                    description={membersEmptyState.description}
+                    action={membersEmptyAction}
+                  />
+                }
+                mobileClassName=""
+                mobileWrapper={(children) => (
+                  <StaggerContainer className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    {children}
+                  </StaggerContainer>
+                )}
+                mobile={(member) => (
+                  <StaggerItem>
+                    <MemberCardMobile
+                      member={member}
+                      isStaffMember={isStaffMember}
+                      alertDays={alertDays}
+                      roleBadgeClass={roleBadgeClass}
+                      onOpenDetail={setDetailMember}
+                    />
+                  </StaggerItem>
+                )}
+                header={
+                  <tr>
+                    <th className="px-4 py-2.5 lg:px-5">Nombre</th>
+                    {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
+                    <th className="px-4 py-2.5 lg:px-5">Identificación</th>
+                    <th className="px-4 py-2.5 lg:px-5">Membresía</th>
+                    <th className="px-4 py-2.5 lg:px-5">Estado</th>
+                    <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
+                  </tr>
+                }
+                desktop={(member) => (
+                  <MemberTableRow
                     member={member}
+                    userRole={user?.role ?? 'member'}
+                    currentUserId={user?.id}
                     isStaffMember={isStaffMember}
                     alertDays={alertDays}
                     roleBadgeClass={roleBadgeClass}
-                    onOpenDetail={setDetailMember}
+                    selected={detailMember?.id === member.id}
+                    onSelect={setDetailMember}
+                    onAssignSubscription={openAssignSubscription}
+                    onToggleStatus={handleToggleClick}
+                    onDelete={handleDeleteClick}
+                    onShowBadge={openMemberBadge}
+                    onEditShift={openEditShift}
+                    onMembershipOperation={handleMembershipOperation}
+                    membershipOperationLoading={membershipOperationId === member.id}
                   />
-                </StaggerItem>
-              )}
-              header={
-                <tr>
-                  <th className="px-4 py-2.5 lg:px-5">Nombre</th>
-                  {!isStaffMember && <th className="px-4 py-2.5 lg:px-5">Rol</th>}
-                  <th className="px-4 py-2.5 lg:px-5">Identificación</th>
-                  <th className="px-4 py-2.5 lg:px-5">Membresía</th>
-                  <th className="px-4 py-2.5 lg:px-5">Estado</th>
-                  <th className="px-4 py-2.5 text-right lg:px-5">Acciones</th>
-                </tr>
-              }
-              desktop={(member) => (
-                <MemberTableRow
-                  member={member}
-                  userRole={user?.role ?? 'member'}
-                  currentUserId={user?.id}
-                  isStaffMember={isStaffMember}
-                  alertDays={alertDays}
-                  roleBadgeClass={roleBadgeClass}
-                  onAssignSubscription={openAssignSubscription}
-                  onToggleStatus={handleToggleClick}
-                  onDelete={handleDeleteClick}
-                  onShowBadge={openMemberBadge}
-                  onEditShift={openEditShift}
-                  onMembershipOperation={handleMembershipOperation}
-                  membershipOperationLoading={membershipOperationId === member.id}
-                />
-              )}
-            />
-            <PaginationBar
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={setPage}
-              label="usuarios"
-            />
-          </>
+                )}
+              />
+              <PaginationBar
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={setPage}
+                label="usuarios"
+              />
+            </div>
+            {isDesktop && detailMember ? (
+              <MemberDetailRail
+                member={detailMember}
+                alertDays={alertDays}
+                actions={buildQuickActions(detailMember)}
+                onClose={() => setDetailMember(null)}
+              />
+            ) : null}
+          </div>
         )}
 
         <MemberAssignModal
@@ -1088,7 +1118,7 @@ export default function Members() {
 
         <MemberQuickSheet
           member={detailMember}
-          open={!!detailMember}
+          open={!!detailMember && !isDesktop}
           onClose={() => setDetailMember(null)}
           alertDays={alertDays}
           actions={detailMember ? buildQuickActions(detailMember) : []}

@@ -118,7 +118,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
               <button
                 type="button"
                 onClick={() => onApprove?.(payment)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-emerald-600 hover:bg-emerald-500/10"
+                className="inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-500/10"
                 aria-label="Aprobar pago"
               >
                 <svg
@@ -131,11 +131,12 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
                 >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
+                <span className="sr-only sm:not-sr-only">Aprobar</span>
               </button>
               <button
                 type="button"
                 onClick={() => onReject?.(payment)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
+                className="inline-flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-red-500 hover:bg-red-500/10"
                 aria-label="Rechazar pago"
               >
                 <svg
@@ -148,6 +149,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
                 >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
+                <span className="sr-only sm:not-sr-only">Rechazar</span>
               </button>
             </>
           )}

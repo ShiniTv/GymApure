@@ -477,8 +477,8 @@ body,
    * Previous bug: 1rem was treated as “full stack gap” but 0.5rem is under the pill,
    * leaving only ~8px above — content still looked glued to the island.
    */
-  /* Icon-only tabs: touch target + py-2; no label row */
-  --nav-pill-height: 3.5rem;
+  /* Icon + label tabs: icon circle + caption + py */
+  --nav-pill-height: 4.25rem;
   --nav-pad-below-pill: 0.5rem;
   --nav-clearance-above-pill: 1.25rem;
   --reception-nav-pill-height: var(--nav-pill-height);
@@ -559,8 +559,8 @@ body,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 9999px;
   transition:
     background-color 0.2s ease,

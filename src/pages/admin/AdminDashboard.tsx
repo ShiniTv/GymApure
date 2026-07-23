@@ -41,7 +41,7 @@ import {
   SegmentedControl,
   EmptyState,
 } from '../../components/ui';
-import { formatMoney } from '../../lib/utils';
+import { cn, formatMoney } from '../../lib/utils';
 import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
@@ -268,50 +268,197 @@ export default function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
         <div className="space-y-4">
           <DashboardSection title="Requiere acción" compact>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-              <QuickAction
-                compact
-                iconOnlyMobile
-                to="/reception?mode=counter&tab=access"
-                icon={Monitor}
-                title="Mostrador"
-                description="Check-in y registro"
-                tone="blue"
-              />
-              <QuickAction
-                compact
-                iconOnlyMobile
-                to="/payments?status=pending"
-                icon={AlertTriangle}
-                title="Pagos"
-                description={
-                  pendingOld > 0 ? `${pendingOld} con más de 2 días` : 'Revisar y aprobar'
-                }
-                count={pendingPayments}
-                tone="red"
-                prefetchPaymentsPending
-              />
-              <QuickAction
-                compact
-                iconOnlyMobile
-                to="/members?expiring=true"
-                icon={CalendarClock}
-                title="Miembros"
-                description="Membresías por vencer"
-                count={expiringSoon}
-                tone="orange"
-              />
-              <QuickAction
-                compact
-                iconOnlyMobile
-                to="/equipment"
-                icon={Wrench}
-                title="Equipamiento"
-                description="Inventario y mantenimiento"
-                count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
-                tone="orange"
-              />
-            </div>
+            {(() => {
+              const actionItems: {
+                key: string;
+                to: string;
+                title: string;
+                description: string;
+                count?: number;
+                tone: string;
+                icon: typeof AlertTriangle;
+              }[] = [];
+
+              if (pendingPayments > 0) {
+                actionItems.push({
+                  key: 'payments',
+                  to: '/payments?status=pending',
+                  title: 'Pagos por aprobar',
+                  description:
+                    pendingOld > 0
+                      ? `${pendingOld} con más de 2 días sin revisar`
+                      : 'Revisa comprobantes y aprueba renovaciones',
+                  count: pendingPayments,
+                  tone: 'border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-400',
+                  icon: AlertTriangle,
+                });
+              }
+              if (expiringSoon > 0) {
+                actionItems.push({
+                  key: 'expiring',
+                  to: '/members?expiring=true',
+                  title: 'Membresías por vencer',
+                  description:
+                    criticalExpiring > 0
+                      ? `${criticalExpiring} críticas · contactar o renovar`
+                      : `En los próximos ${alertDays} días`,
+                  count: expiringSoon,
+                  tone: 'border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 text-orange-700 dark:text-orange-400',
+                  icon: CalendarClock,
+                });
+              }
+              if (equipmentAlertCount > 0) {
+                actionItems.push({
+                  key: 'equipment',
+                  to: '/equipment',
+                  title: 'Equipamiento',
+                  description:
+                    equipmentOutOfService > 0
+                      ? `${equipmentOutOfService} fuera de servicio`
+                      : `${equipmentInspectionsDue} inspección${equipmentInspectionsDue !== 1 ? 'es' : ''} pendiente${equipmentInspectionsDue !== 1 ? 's' : ''}`,
+                  count: equipmentAlertCount,
+                  tone: 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-800 dark:text-amber-300',
+                  icon: Wrench,
+                });
+              }
+              if (emailConfigured === false) {
+                actionItems.push({
+                  key: 'email',
+                  to: '/settings',
+                  title: 'Correo sin configurar',
+                  description: 'Bienvenidas y resets no se enviarán',
+                  tone: 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-800 dark:text-amber-300',
+                  icon: Mail,
+                });
+              }
+
+              if (actionItems.length === 0) {
+                return (
+                  <Card
+                    padding="sm"
+                    rounded="xl"
+                    className="border-emerald-500/20 bg-emerald-500/5"
+                  >
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      Nada urgente por ahora
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                      Sin pagos pendientes, vencimientos ni alertas de equipos.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <QuickAction
+                        compact
+                        iconOnlyMobile
+                        to="/reception?mode=counter&tab=access"
+                        icon={Monitor}
+                        title="Mostrador"
+                        description="Check-in"
+                        tone="blue"
+                      />
+                      <QuickAction
+                        compact
+                        iconOnlyMobile
+                        to="/payments?status=pending"
+                        icon={AlertTriangle}
+                        title="Pagos"
+                        description="Cola de revisión"
+                        tone="red"
+                        prefetchPaymentsPending
+                      />
+                      <QuickAction
+                        compact
+                        iconOnlyMobile
+                        to="/members?expiring=true"
+                        icon={CalendarClock}
+                        title="Por vencer"
+                        description="Membresías"
+                        tone="orange"
+                      />
+                      <QuickAction
+                        compact
+                        iconOnlyMobile
+                        to="/equipment"
+                        icon={Wrench}
+                        title="Equipos"
+                        description="Inventario"
+                        tone="orange"
+                      />
+                    </div>
+                  </Card>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {actionItems.map((item) => (
+                    <Link
+                      key={item.key}
+                      to={item.to}
+                      className={cn(
+                        'flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 transition-colors',
+                        item.tone
+                      )}
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <item.icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold">
+                            {item.title}
+                            {typeof item.count === 'number' ? (
+                              <span className="ml-1.5 tabular-nums">({item.count})</span>
+                            ) : null}
+                          </p>
+                          <p className="truncate text-[11px] opacity-80">{item.description}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                    </Link>
+                  ))}
+                  <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-4">
+                    <QuickAction
+                      compact
+                      iconOnlyMobile
+                      to="/reception?mode=counter&tab=access"
+                      icon={Monitor}
+                      title="Mostrador"
+                      description="Check-in"
+                      tone="blue"
+                    />
+                    <QuickAction
+                      compact
+                      iconOnlyMobile
+                      to="/payments?status=pending"
+                      icon={AlertTriangle}
+                      title="Pagos"
+                      description="Cola"
+                      count={pendingPayments || undefined}
+                      tone="red"
+                      prefetchPaymentsPending
+                    />
+                    <QuickAction
+                      compact
+                      iconOnlyMobile
+                      to="/members?expiring=true"
+                      icon={CalendarClock}
+                      title="Por vencer"
+                      description="Miembros"
+                      count={expiringSoon || undefined}
+                      tone="orange"
+                    />
+                    <QuickAction
+                      compact
+                      iconOnlyMobile
+                      to="/equipment"
+                      icon={Wrench}
+                      title="Equipos"
+                      description="Inventario"
+                      count={equipmentAlertCount > 0 ? equipmentAlertCount : undefined}
+                      tone="orange"
+                    />
+                  </div>
+                </div>
+              );
+            })()}
           </DashboardSection>
 
           <DashboardSection title="Operación" compact>
@@ -354,26 +501,6 @@ export default function AdminDashboard() {
               />
             </div>
           </DashboardSection>
-
-          {pendingOld > 0 && (
-            <Link
-              to="/payments?status=pending"
-              className="flex items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 transition-colors hover:bg-red-500/10"
-            >
-              <div className="flex min-w-0 items-center gap-2.5">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-red-700 dark:text-red-400">
-                    {pendingOld} pago{pendingOld !== 1 ? 's' : ''} sin revisar (&gt;2 días)
-                  </p>
-                  <p className="text-[11px] text-red-700/80 dark:text-red-400/80">
-                    Prioriza la aprobación para no bloquear renovaciones
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
-            </Link>
-          )}
 
           <DashboardSection title="Finanzas y supervisión" compact>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -428,10 +555,10 @@ export default function AdminDashboard() {
               <QuickAction
                 compact
                 iconOnlyMobile
-                to="/attendance"
-                icon={Activity}
-                title="Asistencias"
-                description="Check-ins del gym"
+                to="/audit-logs"
+                icon={Monitor}
+                title="Auditoría"
+                description="Eventos del sistema"
                 tone="emerald"
               />
             </div>

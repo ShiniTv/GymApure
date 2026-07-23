@@ -30,7 +30,9 @@ export async function markExpiredSubscriptions(): Promise<number> {
   return result.rowCount ?? 0;
 }
 
-export async function getExpiringSubscriptions(days = DEFAULT_EXPIRY_ALERT_DAYS): Promise<ExpiringSubscription[]> {
+export async function getExpiringSubscriptions(
+  days = DEFAULT_EXPIRY_ALERT_DAYS
+): Promise<ExpiringSubscription[]> {
   const { rows } = await query<ExpiringSubscription>(
     `SELECT DISTINCT ON (u.id)
       u.id AS user_id,
@@ -43,12 +45,18 @@ export async function getExpiringSubscriptions(days = DEFAULT_EXPIRY_ALERT_DAYS)
      ORDER BY u.id, s.end_date ASC`,
     [days]
   );
-  return rows.sort((a, b) => a.days_remaining - b.days_remaining || a.full_name.localeCompare(b.full_name));
+  return rows.sort(
+    (a, b) => a.days_remaining - b.days_remaining || a.full_name.localeCompare(b.full_name)
+  );
 }
 
 export async function getExpiringCount(days = DEFAULT_EXPIRY_ALERT_DAYS): Promise<number> {
-  const list = await getExpiringSubscriptions(days);
-  return list.length;
+  const { rows } = await query<{ count: string }>(
+    `SELECT COUNT(DISTINCT u.id)::text AS count
+     ${EXPIRING_FROM}`,
+    [days]
+  );
+  return parseInt(rows[0]?.count || '0', 10);
 }
 
 export async function getExpiredThisWeekCount(): Promise<number> {
@@ -68,18 +76,25 @@ export interface LastDoorAlert {
   check_in_time: string;
 }
 
-export async function getLastDoorAlert(days = DEFAULT_EXPIRY_ALERT_DAYS): Promise<LastDoorAlert | null> {
+/**
+ * Last check-in from a member whose membership is within the alert window.
+ * Scoped to recent attendance so the query can use time indexes.
+ */
+export async function getLastDoorAlert(
+  days = DEFAULT_EXPIRY_ALERT_DAYS
+): Promise<LastDoorAlert | null> {
   const { rows } = await query<LastDoorAlert>(
     `SELECT u.full_name, m.name AS membership_name,
             GREATEST(0, s.end_date - a.check_in_time::date)::int AS days_remaining,
             a.check_in_time::text AS check_in_time
      FROM attendance a
-     JOIN users u ON u.id = a.user_id
+     JOIN users u ON u.id = a.user_id AND u.role = 'member' AND u.status = 'active'
      JOIN subscriptions s ON s.user_id = u.id
        AND s.status = 'active'
-       AND s.end_date >= a.check_in_time::date
+       AND s.end_date >= CURRENT_DATE
+       AND s.end_date <= CURRENT_DATE + $1::int
      JOIN memberships m ON m.id = s.membership_id
-     WHERE GREATEST(0, s.end_date - a.check_in_time::date) <= $1
+     WHERE a.check_in_time >= CURRENT_DATE - INTERVAL '14 days'
      ORDER BY a.check_in_time DESC
      LIMIT 1`,
     [days]
@@ -87,7 +102,10 @@ export async function getLastDoorAlert(days = DEFAULT_EXPIRY_ALERT_DAYS): Promis
   return rows[0] ?? null;
 }
 
-export function buildExpiryWarning(daysRemaining: number, alertDays = DEFAULT_EXPIRY_ALERT_DAYS): string | null {
+export function buildExpiryWarning(
+  daysRemaining: number,
+  alertDays = DEFAULT_EXPIRY_ALERT_DAYS
+): string | null {
   if (daysRemaining <= 0) return 'Membresía vence hoy';
   if (daysRemaining === 1) return 'Membresía vence mañana';
   if (daysRemaining <= alertDays) {

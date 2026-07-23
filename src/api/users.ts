@@ -108,6 +108,14 @@ const USER_LIST_FROM = `
   ${pausedSubscriptionLateralSql()}
 `;
 
+/** COUNT does not need workout/paused laterals; only active sub when filtering expiring. */
+function userCountFromSql(expiringOnly: boolean): string {
+  if (expiringOnly) {
+    return `FROM users u
+  ${activeSubscriptionLateralSql()}`;
+  }
+  return `FROM users u`;
+}
 function buildUserListFilters(
   query: Record<string, unknown>,
   alertDays: number,
@@ -242,13 +250,14 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
           ? { membersOnly: true }
           : undefined;
     const { whereSql, params } = buildUserListFilters(req.query, alertDays, listOptions);
+    const expiringOnly = parseBooleanQuery(req.query.expiring);
 
     const countParams = [...params];
     const listParams = [...params, pageSize, offset];
 
     const [countResult, listResult] = await Promise.all([
       query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count ${USER_LIST_FROM} ${whereSql}`,
+        `SELECT COUNT(*)::text AS count ${userCountFromSql(expiringOnly)} ${whereSql}`,
         countParams
       ),
       query(

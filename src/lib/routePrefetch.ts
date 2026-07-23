@@ -1,4 +1,10 @@
+import { queryClient } from './queryClient';
+import { apiFetch, parseJsonResponse } from './api';
+import { membersQueryKey } from '../hooks/queries/useMembersQuery';
+import { paymentsQueryKey } from '../hooks/queries/usePaymentsQuery';
+
 const prefetched = new Set<string>();
+const dataPrefetched = new Set<string>();
 
 const ROUTE_PREFETCH: Record<string, () => Promise<unknown>> = {
   '/panel': () => import('../pages/Dashboard'),
@@ -23,13 +29,67 @@ const ROUTE_PREFETCH: Record<string, () => Promise<unknown>> = {
   '/check-in': () => import('../pages/CheckIn'),
 };
 
+function prefetchRouteData(path: string): void {
+  if (dataPrefetched.has(path)) return;
+
+  if (path === '/members') {
+    dataPrefetched.add(path);
+    const params = {
+      page: 1,
+      pageSize: 20,
+      search: '',
+      expiringFilter: false,
+      isTrainer: false,
+    };
+    void queryClient.prefetchQuery({
+      queryKey: membersQueryKey(params),
+      queryFn: async () => {
+        const qs = new URLSearchParams({ page: '1', limit: '20' });
+        const res = await apiFetch(`/api/users?${qs.toString()}`);
+        return parseJsonResponse(res);
+      },
+    });
+    return;
+  }
+
+  if (path === '/payments') {
+    dataPrefetched.add(path);
+    const params = { page: 1, pageSize: 20, statusFilter: 'pending' };
+    void queryClient.prefetchQuery({
+      queryKey: paymentsQueryKey(params),
+      queryFn: async () => {
+        const qs = new URLSearchParams({
+          page: '1',
+          limit: '20',
+          status: 'pending',
+        });
+        const res = await apiFetch(`/api/payments?${qs.toString()}`);
+        return parseJsonResponse(res);
+      },
+    });
+    return;
+  }
+
+  if (path === '/panel') {
+    dataPrefetched.add(path);
+    void queryClient.prefetchQuery({
+      queryKey: ['admin-stats'],
+      queryFn: async () => {
+        const res = await apiFetch('/api/stats/admin');
+        return parseJsonResponse(res);
+      },
+    });
+  }
+}
+
 export function prefetchRoute(href: string): void {
   const [path] = href.split('?');
   const loader = ROUTE_PREFETCH[path];
-  if (!loader || prefetched.has(path)) return;
-
-  prefetched.add(path);
-  void loader();
+  if (loader && !prefetched.has(path)) {
+    prefetched.add(path);
+    void loader();
+  }
+  prefetchRouteData(path);
 }
 
 export function routePrefetchHandlers(href: string) {

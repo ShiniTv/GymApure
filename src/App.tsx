@@ -5,7 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import AuthenticatedShell from './components/AuthenticatedShell';
 import { SocketProvider } from './context/SocketContext';
-import { Spinner } from './components/ui';
+import { DashboardSkeleton } from './components/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
 import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
@@ -69,13 +69,12 @@ const DemoLeads = lazy(() => import('./pages/DemoLeads'));
 
 function PageLoader() {
   return (
-    <div className="flex h-dvh items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
-      <div className="flex flex-col items-center gap-4">
-        <Spinner size="xl" />
-        <p className="text-[11px] font-bold tracking-[0.15em] text-zinc-400 uppercase dark:text-zinc-500">
-          Cargando...
-        </p>
-      </div>
+    <div
+      className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8"
+      aria-busy="true"
+      aria-label="Cargando página"
+    >
+      <DashboardSkeleton />
     </div>
   );
 }

@@ -92,6 +92,32 @@ Requisitos para avisos con la app cerrada:
 
 Tras rotar claves VAPID, la app intenta re-suscribirse sola si el permiso sigue concedido; si no, el usuario reactiva en Perfil.
 
+### Checklist QA en dispositivo real
+
+Usar build de producción (o preview `npm run build && npm run preview`) con VAPID configurado. Marcar en [UX-QA](../UX-QA.md) al cerrar.
+
+**Android (Chrome)**
+
+- [ ] Inicio member muestra tarjeta “Activa avisos…” (si no está ya suscrito / no dismissed)
+- [ ] **Activar notificaciones** → permiso del sistema → estado activo
+- [ ] Perfil → Seguridad: toggle Activar/Desactivar coherente
+- [ ] Con app en segundo plano: mensaje del gym genera notificación (o aviso in-app si el OS bloquea)
+- [ ] Opcional: Instalar app / Añadir a inicio desde el menú del navegador
+
+**iPhone (Safari 16.4+)**
+
+- [ ] Sin PWA: tarjeta **“Añadir a Inicio para avisos”** visible en inicio (aunque Safari no tenga PushManager)
+- [ ] Compartir → Añadir a Inicio → abrir desde el icono (standalone)
+- [ ] Tras abrir desde Inicio: Perfil → Seguridad permite **Activar** push (si VAPID ok)
+- [ ] En pestaña Safari suelta (sin Inicio): no exige push; copy de Añadir a Inicio en Settings/Perfil si aplica
+
+**Escritorio**
+
+- [ ] Sidebar: prompt de instalar PWA cuando el navegador lo soporte (`InstallPrompt`)
+- [ ] Hover Miembros/Pagos no muestra “Cargando…” (skeleton o datos precargados)
+
+---
+
 ### Descanso en pantalla de bloqueo
 
 Durante el entrenamiento activo, el temporizador de descanso usa hora real (`endsAt`) y, con permiso de notificaciones:

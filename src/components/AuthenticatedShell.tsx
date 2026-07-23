@@ -3,19 +3,18 @@ import { useAuth } from '../context/AuthContext';
 import { AdminStatsProvider } from '../context/AdminStatsContext';
 import { MemberStatsProvider } from '../context/MemberStatsContext';
 import { SocketProvider } from '../context/SocketContext';
-import { Spinner } from './ui';
+import { DashboardSkeleton } from './ui';
 
 const Layout = lazy(() => import('./Layout'));
 
 function ShellLoader() {
   return (
-    <div className="flex h-dvh items-center justify-center bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-white">
-      <div className="flex flex-col items-center gap-4">
-        <Spinner size="xl" />
-        <p className="text-[11px] font-bold tracking-[0.15em] text-zinc-400 uppercase dark:text-zinc-500">
-          Cargando...
-        </p>
-      </div>
+    <div
+      className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8"
+      aria-busy="true"
+      aria-label="Cargando panel"
+    >
+      <DashboardSkeleton />
     </div>
   );
 }

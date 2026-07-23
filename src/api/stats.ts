@@ -55,52 +55,53 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
   const alertDays = await getExpiryAlertDays();
 
   const [
-    totalRevenue,
-    pendingPayments,
+    paymentAgg,
+    pendingAgg,
     activeSubscriptions,
-    todayCheckIns,
-    yesterdayCheckIns,
-    revenueThisMonth,
-    revenueLastMonth,
+    attendanceAgg,
     revenueHistory,
     revenueDaily,
     expiringList,
     expiredThisWeek,
     lastDoorAlert,
     equipmentStats,
-    pendingOld,
     pausedSubs,
     classToday,
     demoPending,
   ] = await Promise.all([
-    query<{ total: string | null }>(
-      "SELECT SUM(amount_usd)::text AS total FROM payments WHERE status = 'approved'"
+    query<{ total_all: string; this_month: string; last_month: string }>(
+      `SELECT
+         COALESCE(SUM(amount_usd), 0)::text AS total_all,
+         COALESCE(SUM(amount_usd) FILTER (
+           WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
+         ), 0)::text AS this_month,
+         COALESCE(SUM(amount_usd) FILTER (
+           WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
+             AND created_at < DATE_TRUNC('month', CURRENT_DATE)
+         ), 0)::text AS last_month
+       FROM payments
+       WHERE status = 'approved'`
     ),
-    query<{ count: string }>(
-      "SELECT COUNT(*)::text AS count FROM payments WHERE status = 'pending'"
+    query<{ pending: string; pending_old: string }>(
+      `SELECT
+         COUNT(*)::text AS pending,
+         COUNT(*) FILTER (WHERE created_at < NOW() - INTERVAL '2 days')::text AS pending_old
+       FROM payments
+       WHERE status = 'pending'`
     ),
     query<{ count: string }>(
       `SELECT COUNT(DISTINCT user_id)::text AS count FROM subscriptions
        WHERE status = 'active' AND end_date >= CURRENT_DATE`
     ),
-    query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM attendance WHERE ${sqlTodayRange('check_in_time')}`
-    ),
-    query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM attendance
-       WHERE check_in_time >= CURRENT_DATE - INTERVAL '1 day'
-         AND check_in_time < CURRENT_DATE`
-    ),
-    query<{ total: string | null }>(
-      `SELECT SUM(amount_usd)::text AS total FROM payments
-       WHERE status = 'approved'
-         AND created_at >= DATE_TRUNC('month', CURRENT_DATE)`
-    ),
-    query<{ total: string | null }>(
-      `SELECT SUM(amount_usd)::text AS total FROM payments
-       WHERE status = 'approved'
-         AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
-         AND created_at < DATE_TRUNC('month', CURRENT_DATE)`
+    query<{ today: string; yesterday: string }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE ${sqlTodayRange('check_in_time')})::text AS today,
+         COUNT(*) FILTER (
+           WHERE check_in_time >= CURRENT_DATE - INTERVAL '1 day'
+             AND check_in_time < CURRENT_DATE
+         )::text AS yesterday
+       FROM attendance
+       WHERE check_in_time >= CURRENT_DATE - INTERVAL '1 day'`
     ),
     query<{ month: string; income: string }>(
       `SELECT
@@ -126,10 +127,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     getExpiredThisWeekCount(),
     getLastDoorAlert(alertDays),
     getEquipmentStatsSummary(),
-    query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM payments
-       WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days'`
-    ),
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM subscriptions WHERE status = 'paused'`
     ),
@@ -160,15 +157,15 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     classCapacityToday > 0 ? Math.round((classBookingsToday / classCapacityToday) * 100) : 0;
 
   return {
-    totalRevenue: parseFloat(totalRevenue.rows[0]?.total || '0'),
-    pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
-    pendingPaymentsOlderThan2Days: parseInt(pendingOld.rows[0]?.count || '0', 10),
+    totalRevenue: parseFloat(paymentAgg.rows[0]?.total_all || '0'),
+    pendingPayments: parseInt(pendingAgg.rows[0]?.pending || '0', 10),
+    pendingPaymentsOlderThan2Days: parseInt(pendingAgg.rows[0]?.pending_old || '0', 10),
     activeSubscriptions: parseInt(activeSubscriptions.rows[0]?.count || '0', 10),
     pausedSubscriptions: parseInt(pausedSubs.rows[0]?.count || '0', 10),
-    todayCheckIns: parseInt(todayCheckIns.rows[0]?.count || '0', 10),
-    yesterdayCheckIns: parseInt(yesterdayCheckIns.rows[0]?.count || '0', 10),
-    revenueThisMonth: parseFloat(revenueThisMonth.rows[0]?.total || '0'),
-    revenueLastMonth: parseFloat(revenueLastMonth.rows[0]?.total || '0'),
+    todayCheckIns: parseInt(attendanceAgg.rows[0]?.today || '0', 10),
+    yesterdayCheckIns: parseInt(attendanceAgg.rows[0]?.yesterday || '0', 10),
+    revenueThisMonth: parseFloat(paymentAgg.rows[0]?.this_month || '0'),
+    revenueLastMonth: parseFloat(paymentAgg.rows[0]?.last_month || '0'),
     expiringSoon: expiringList.length,
     expiredThisWeek,
     expiringList,
