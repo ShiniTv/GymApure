@@ -234,8 +234,10 @@ router.get(
   '/me',
   asyncHandler(async (req, res) => {
     const token = req.cookies.token;
+    // No cookie: anonymous session probe (login page). 200 avoids Chrome console noise from 401.
+    // Invalid/expired cookie still returns 401/403 so clients clear stale state.
     if (!token) {
-      res.status(401).json({ error: 'No autenticado' });
+      res.json({ user: null });
       return;
     }
 

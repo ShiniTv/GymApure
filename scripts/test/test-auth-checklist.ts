@@ -134,7 +134,10 @@ async function main() {
   const logoutRes = await api('POST', '/api/auth/logout');
   ok('Logout → 200', logoutRes.res.status === 200);
   const afterLogout = await api('GET', '/api/auth/me');
-  ok('Cookie invalidada tras logout → 401', afterLogout.res.status === 401);
+  ok(
+    'Tras logout → /me anónimo (200, user null)',
+    afterLogout.res.status === 200 && afterLogout.data.user == null
+  );
 
   cookie = '';
   const adminAgain = await api('POST', '/api/auth/login', {

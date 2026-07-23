@@ -66,10 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!res.ok || !contentType.includes('application/json')) {
           throw new Error('Not authenticated');
         }
-        return res.json() as Promise<{ user: User }>;
+        return res.json() as Promise<{ user: User | null }>;
       })
       .then((data) => {
-        if (!cancelled) setUser(data.user);
+        if (!cancelled) setUser(data.user ?? null);
       })
       .catch((err: unknown) => {
         // StrictMode / unmount: no marcar logout ni terminar bootstrap.
