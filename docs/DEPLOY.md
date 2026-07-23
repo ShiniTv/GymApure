@@ -142,6 +142,7 @@ Configura en Render Dashboard → Environment:
 | `SMTP_USER`                      | Recomendada  | `soporte.gymapure@gmail.com`                                                            |
 | `SMTP_PASS`                      | Recomendada  | Contraseña de aplicación Google (sin espacios)                                          |
 | `SMTP_FROM`                      | Recomendada  | `GymApure <soporte.gymapure@gmail.com>`                                                 |
+| `ADMIN_NOTIFY_EMAILS`            | Recomendada  | CSV de correos admin para alertas (pago pendiente de revisión)                          |
 | `VAPID_PUBLIC_KEY`               | Opcional*    | Clave pública Web Push (`npx web-push generate-vapid-keys`)                             |
 | `VAPID_PRIVATE_KEY`              | Opcional*    | Clave privada Web Push (solo servidor; no en `VITE_*`)                                  |
 | `VAPID_SUBJECT`                  | Opcional*    | `mailto:soporte.gymapure@gmail.com`                                                     |
@@ -168,7 +169,13 @@ curl -sS https://<tu-app>.onrender.com/api/health/ops -b cookies.txt
 
 Debe incluir `"email": { "configured": true }`.
 
-Correos que usa SMTP: bienvenida, recuperar contraseña, pago aprobado/rechazado, walk-in. Los avisos de vencimiento van al chat in-app, no por correo.
+Correos que usa SMTP: bienvenida, walk-in (crear contraseña), recuperar contraseña, pago aprobado/rechazado, avisos de membresía por vencer/vencida (además de chat e in-app). Con `ADMIN_NOTIFY_EMAILS` (CSV), el staff recibe alerta cuando un cliente reporta un pago pendiente.
+
+Prueba manual de plantillas (con SMTP local):
+
+```powershell
+npx tsx scripts/test/test-smtp-send.ts tu@correo.com all
+```
 
 > **Importante:** Las variables `VITE_*` se embeben en el build. Si las añades después del primer deploy, haz **Manual Deploy → Clear build cache**.
 

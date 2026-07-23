@@ -35,7 +35,7 @@ El job de avisos de vencimiento (`POST /api/settings/expiry/run`) acepta `CRON_S
 
 ### Avisos de vencimiento
 
-El cron de vencimientos envía mensajes automáticos al chat del miembro (no correo por defecto). Configurable en **Configuración → Alertas**.
+El cron de vencimientos envía mensajes automáticos al chat del miembro, notificación in-app y, si SMTP está configurado, correo transaccional. Configurable en **Configuración → Alertas**.
 
 ---
 

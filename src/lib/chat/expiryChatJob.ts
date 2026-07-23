@@ -5,6 +5,7 @@ import { postSystemMessage } from './systemMessages.ts';
 import { BRAND } from '../../config/brand.ts';
 import { notifyMembershipExpiry } from './eventMessages.ts';
 import { mapWithConcurrency } from '../runInBatches.ts';
+import { membershipExpiredEmail, membershipExpiringEmail, sendEmail } from '../email.ts';
 
 export interface ExpiryJobResult {
   markedExpired: number;
@@ -14,6 +15,7 @@ export interface ExpiryJobResult {
 
 interface NotifyTarget extends ExpiringSubscription {
   subscription_id: number;
+  email: string | null;
 }
 
 const NOTIFY_CONCURRENCY = 8;
@@ -60,6 +62,7 @@ async function getNotifyTargets(days: number): Promise<NotifyTarget[]> {
     `SELECT DISTINCT ON (u.id)
       u.id AS user_id,
       u.full_name,
+      u.email,
       u.cedula,
       s.id AS subscription_id,
       m.name AS membership_name,
@@ -84,6 +87,7 @@ async function getRecentlyExpiredTargets(): Promise<NotifyTarget[]> {
     `SELECT DISTINCT ON (u.id)
       u.id AS user_id,
       u.full_name,
+      u.email,
       u.cedula,
       s.id AS subscription_id,
       m.name AS membership_name,
@@ -99,6 +103,23 @@ async function getRecentlyExpiredTargets(): Promise<NotifyTarget[]> {
      ORDER BY u.id, s.end_date DESC`
   );
   return rows;
+}
+
+async function sendExpiryEmail(
+  target: NotifyTarget,
+  kind: 'expiring_soon' | 'expired'
+): Promise<boolean> {
+  const to = target.email?.trim();
+  if (!to) return false;
+  try {
+    const content =
+      kind === 'expiring_soon'
+        ? membershipExpiringEmail(target.full_name, target.days_remaining, target.membership_name)
+        : membershipExpiredEmail(target.full_name, target.membership_name);
+    return await sendEmail({ to, ...content });
+  } catch {
+    return false;
+  }
 }
 
 async function notifyExpiringSoon(
@@ -129,7 +150,8 @@ async function notifyExpiringSoon(
     endDate: target.end_date,
     alertDays,
   });
-  return sent || notificationSent ? 'sent' : 'skipped';
+  const emailSent = await sendExpiryEmail(target, 'expiring_soon');
+  return sent || notificationSent || emailSent ? 'sent' : 'skipped';
 }
 
 async function notifyExpired(
@@ -160,7 +182,8 @@ async function notifyExpired(
     endDate: target.end_date,
     alertDays,
   });
-  return sent || notificationSent ? 'sent' : 'skipped';
+  const emailSent = await sendExpiryEmail(target, 'expired');
+  return sent || notificationSent || emailSent ? 'sent' : 'skipped';
 }
 
 export async function runExpiryJob(): Promise<ExpiryJobResult> {

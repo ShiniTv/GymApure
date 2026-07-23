@@ -73,7 +73,8 @@ Bucket `payment-proofs` (privado). Solo acceso vía API autenticada.
 ## Notificaciones
 
 - Pago aprobado/rechazado: notificación in-app y correo (si SMTP configurado).
-- Vencimiento de membresía: chat in-app (no correo por defecto).
+- Pago reportado (pendiente): alerta por correo a `ADMIN_NOTIFY_EMAILS` (si está definido) además de notificación in-app al staff.
+- Vencimiento de membresía: chat in-app, notificación y correo (si SMTP configurado).
 
 ---
 

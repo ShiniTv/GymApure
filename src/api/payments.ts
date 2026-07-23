@@ -19,7 +19,13 @@ import {
   notifyPaymentRejected,
   notifyPaymentReported,
 } from '../lib/chat/eventMessages.ts';
-import { sendEmail, paymentApprovedEmail, paymentRejectedEmail } from '../lib/email.ts';
+import {
+  adminPaymentReportedEmail,
+  notifyAdmins,
+  paymentApprovedEmail,
+  paymentRejectedEmail,
+  sendEmail,
+} from '../lib/email.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { BS_PAYMENT_METHODS, getActiveUsdRate, roundBsAmount } from '../lib/exchangeRate.ts';
 import { parsePaginationQuery, parseSearchQuery, type PaginatedResult } from '../lib/pagination.ts';
@@ -231,6 +237,26 @@ router.post(
       void notifyPaymentReported(paymentId, user_id, Number(amount_usd)).catch((err) => {
         console.error('[notify] payment reported', err);
       });
+      void (async () => {
+        try {
+          const userRes = await query<{ full_name: string; email: string | null }>(
+            'SELECT full_name, email FROM users WHERE id = $1',
+            [user_id]
+          );
+          const member = userRes.rows[0];
+          if (!member) return;
+          await notifyAdmins(
+            adminPaymentReportedEmail({
+              memberName: member.full_name,
+              memberEmail: member.email,
+              amountUsd: Number(amount_usd),
+              paymentId,
+            })
+          );
+        } catch (err) {
+          console.error('[notify] admin payment email', err);
+        }
+      })();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error interno';
       res.status(500).json({ error: message });
@@ -300,8 +326,7 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
         if (user?.email) {
           await sendEmail({
             to: user.email,
-            subject: 'Pago aprobado — GymApure',
-            html: paymentApprovedEmail(user.full_name, approvedAmount, membershipName),
+            ...paymentApprovedEmail(user.full_name, approvedAmount, membershipName),
           });
         }
       } catch {
@@ -362,8 +387,7 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
         if (user?.email) {
           await sendEmail({
             to: user.email,
-            subject: 'Pago rechazado — GymApure',
-            html: paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd), reason),
+            ...paymentRejectedEmail(user.full_name, Number(rows[0].amount_usd), reason),
           });
         }
       } catch {

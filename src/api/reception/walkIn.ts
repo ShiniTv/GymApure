@@ -196,8 +196,7 @@ export async function walkInHandler(req: AuthRequest, res: Response): Promise<vo
     try {
       emailSent = await sendEmail({
         to: normalizedEmail,
-        subject: 'Bienvenido a GymApure — crea tu contraseña',
-        html: walkInWelcomeEmail(data.full_name, passwordSetupUrl, result.membershipName),
+        ...walkInWelcomeEmail(data.full_name, passwordSetupUrl, result.membershipName),
       });
       if (!emailSent) {
         logger.error('Walk-in: no se pudo enviar correo de bienvenida', {
