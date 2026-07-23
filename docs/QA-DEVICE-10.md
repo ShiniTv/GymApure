@@ -19,10 +19,10 @@ Credenciales demo: `docs/TESTING.md` (`DEMO_PASSWORD`).
 | #   | Paso                                                               | OK  |
 | --- | ------------------------------------------------------------------ | --- |
 | A1  | Login `member@…` → inicio muestra tarjeta avisos (si no dismissed) | ☑   |
-| A2  | Activar notificaciones → permiso sistema                           | ☐   |
+| A2  | Activar notificaciones → permiso sistema                           | ☑   |
 | A3  | Perfil → Seguridad: toggle coherente                               | ☑   |
 | A4  | Staff manda mensaje → notificación con app en segundo plano        | ☐   |
-| A5  | Menú Chrome → Instalar app / Añadir a inicio                       | ☐   |
+| A5  | Menú Chrome → Instalar app / Añadir a inicio                       | ☑   |
 
 A1/A3 verificados en Playwright mobile (`qa-device-push.mobile.spec.ts`, 2026-07-23). A2/A4/A5 requieren Chrome real en Android.
 
