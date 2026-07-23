@@ -212,7 +212,9 @@ router.post(
 
 router.post(
   '/logout',
-  requireCsrf,
+  // Logout is safe to allow without CSRF: worst case an attacker ends the session.
+  // Requiring CSRF caused 403 noise and left the auth cookie uncleared when the
+  // double-submit token was missing in the browser.
   asyncHandler(async (req, res) => {
     const token = req.cookies.token;
     if (token) {

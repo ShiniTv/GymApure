@@ -10,6 +10,7 @@ const CSRF_EXEMPT_PREFIXES = [
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/mfa/verify-login',
+  '/api/auth/logout',
   '/api/auth/config',
   '/api/health',
   '/api/settings/expiry/run',

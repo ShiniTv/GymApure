@@ -113,9 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    apiFetch('/api/auth/logout', { method: 'POST' })
-      .then(() => logoutLocal())
-      .catch(() => logoutLocal());
+    void apiFetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      logoutLocal();
+    });
   }, [logoutLocal]);
 
   const value = useMemo(

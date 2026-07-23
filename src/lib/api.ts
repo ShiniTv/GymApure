@@ -12,6 +12,8 @@ function readCsrfTokenFromDocument(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+type ApiFetchInit = RequestInit & { __csrfRetry?: boolean };
+
 function withCsrfHeaders(init: RequestInit = {}): RequestInit {
   const method = (init.method ?? 'GET').toUpperCase();
   if (!MUTATING_METHODS.has(method)) return init;
@@ -24,6 +26,19 @@ function withCsrfHeaders(init: RequestInit = {}): RequestInit {
     headers.set(CSRF_HEADER_NAME, token);
   }
   return { ...init, headers };
+}
+
+async function refreshCsrfCookie(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    await fetch('/api/auth/me', { credentials: 'include' });
+  } catch {
+    // Caller may still get a CSRF 403; retry path handles that once.
+  }
+}
+
+function isCsrfFailureBody(body: { error?: string }): boolean {
+  return typeof body.error === 'string' && /csrf/i.test(body.error);
 }
 
 let authBootstrapComplete = false;
@@ -47,29 +62,50 @@ function shouldHandleUnauthorized(input: RequestInfo | URL): boolean {
   );
 }
 
-export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetch(input, { credentials: 'include', ...withCsrfHeaders(init) }).then(async (res) => {
-    if (
-      res.status === 401 &&
-      authBootstrapComplete &&
-      onUnauthorized &&
-      shouldHandleUnauthorized(input)
-    ) {
-      onUnauthorized();
-    }
-    if (res.status === 403 && typeof window !== 'undefined') {
-      try {
-        const clone = res.clone();
-        const body = (await clone.json()) as { mfa_setup_required?: boolean };
-        if (body.mfa_setup_required && !window.location.pathname.startsWith('/security')) {
-          window.location.assign('/security');
-        }
-      } catch {
-        // ignore non-JSON bodies
+export async function apiFetch(
+  input: RequestInfo | URL,
+  init: ApiFetchInit = {}
+): Promise<Response> {
+  const method = (init.method ?? 'GET').toUpperCase();
+  const isMutating = MUTATING_METHODS.has(method);
+
+  if (
+    isMutating &&
+    typeof document !== 'undefined' &&
+    !readCsrfTokenFromDocument() &&
+    !init.__csrfRetry
+  ) {
+    await refreshCsrfCookie();
+  }
+
+  const res = await fetch(input, { credentials: 'include', ...withCsrfHeaders(init) });
+
+  if (
+    res.status === 401 &&
+    authBootstrapComplete &&
+    onUnauthorized &&
+    shouldHandleUnauthorized(input)
+  ) {
+    onUnauthorized();
+  }
+
+  if (res.status === 403 && typeof window !== 'undefined') {
+    try {
+      const body = (await res.clone().json()) as { mfa_setup_required?: boolean; error?: string };
+      if (body.mfa_setup_required && !window.location.pathname.startsWith('/security')) {
+        window.location.assign('/security');
+        return res;
       }
+      if (isMutating && !init.__csrfRetry && isCsrfFailureBody(body)) {
+        await refreshCsrfCookie();
+        return await apiFetch(input, { ...init, __csrfRetry: true });
+      }
+    } catch {
+      // ignore non-JSON bodies
     }
-    return res;
-  });
+  }
+
+  return res;
 }
 
 export async function apiFetchWithRetry(

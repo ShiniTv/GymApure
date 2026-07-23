@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'gymapure-static-v11';
+const STATIC_CACHE = 'gymapure-static-v12';
 const OFFLINE_URL = '/offline.html';
 const REST_TAG = 'workout-rest';
 
