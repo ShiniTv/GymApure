@@ -29,7 +29,7 @@ export async function getOrCreateConversation(memberId: number): Promise<ChatCon
   );
   const member = memberRows[0];
   if (member?.role !== 'member') {
-    throw new Error('Miembro no encontrado');
+    throw Object.assign(new Error('Miembro no encontrado'), { status: 404 });
   }
 
   const { rows: existing } = await query<ChatConversationRow>(
@@ -39,13 +39,24 @@ export async function getOrCreateConversation(memberId: number): Promise<ChatCon
   );
   if (existing[0]) return mapConversationRow(existing[0]);
 
-  const { rows: created } = await query<ChatConversationRow>(
-    `INSERT INTO chat_conversations (member_id)
-     VALUES ($1)
-     RETURNING id, member_id, last_message_at::text, created_at::text`,
-    [normalizedMemberId]
-  );
-  return mapConversationRow(created[0]);
+  try {
+    const { rows: created } = await query<ChatConversationRow>(
+      `INSERT INTO chat_conversations (member_id)
+       VALUES ($1)
+       ON CONFLICT (member_id) DO UPDATE SET member_id = EXCLUDED.member_id
+       RETURNING id, member_id, last_message_at::text, created_at::text`,
+      [normalizedMemberId]
+    );
+    return mapConversationRow(created[0]);
+  } catch (err) {
+    const { rows: again } = await query<ChatConversationRow>(
+      `SELECT id, member_id, last_message_at::text, created_at::text
+       FROM chat_conversations WHERE member_id = $1`,
+      [normalizedMemberId]
+    );
+    if (again[0]) return mapConversationRow(again[0]);
+    throw err;
+  }
 }
 
 export async function getConversationById(
@@ -224,7 +235,13 @@ export async function getMemberConversationSummary(
      WHERE c.id = $1`,
     [conversation.id]
   );
-  return mapConversationListItem(rows[0]);
+  const row = rows[0];
+  if (!row) {
+    throw Object.assign(new Error('No se pudo cargar la conversación del miembro'), {
+      status: 500,
+    });
+  }
+  return mapConversationListItem(row);
 }
 
 export async function touchConversation(conversationId: number): Promise<void> {

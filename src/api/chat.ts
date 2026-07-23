@@ -74,8 +74,14 @@ router.get('/conversations', authorize(STAFF_ROLES), async (req: AuthRequest, re
 });
 
 router.get('/conversations/mine', authorize(['member']), async (req: AuthRequest, res) => {
-  const summary = await getMemberConversationSummary(toDbId(req.user!.id));
-  res.json(summary);
+  try {
+    const summary = await getMemberConversationSummary(toDbId(req.user!.id));
+    res.json(summary);
+  } catch (err) {
+    const status = (err as { status?: number }).status ?? 500;
+    const message = err instanceof Error ? err.message : 'Error al cargar conversación';
+    res.status(status).json({ error: message });
+  }
 });
 
 router.post(

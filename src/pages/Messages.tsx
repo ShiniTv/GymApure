@@ -978,7 +978,14 @@ function StaffChatView() {
 
 function MemberChatView() {
   usePageTitle('Mensajes');
-  const { data: conversation, isPending, isError, isFetching, refetch } = useMemberChatQuery(true);
+  const {
+    data: conversation,
+    isPending,
+    isError,
+    isFetching,
+    error,
+    refetch,
+  } = useMemberChatQuery(true);
   const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
     conversation?.id ?? null,
     conversation?.id != null
@@ -1001,7 +1008,8 @@ function MemberChatView() {
     );
   }
 
-  if (isError || conversation == null) {
+  if (isError || conversation == null || !Number.isFinite(Number(conversation.id))) {
+    const detail = toDisplayErrorMessage(error, '');
     return (
       <div className="page-stack-tight">
         <PageHeader
@@ -1019,7 +1027,9 @@ function MemberChatView() {
           title={isError ? 'No se pudieron cargar los mensajes' : 'Sin chat disponible'}
           description={
             isError
-              ? 'Revisa tu conexión e inténtalo de nuevo.'
+              ? detail && detail !== 'Error inesperado'
+                ? detail
+                : 'Revisa tu conexión e inténtalo de nuevo.'
               : 'Aún no tienes conversación con el gym. Contacta recepción si necesitas ayuda.'
           }
           action={

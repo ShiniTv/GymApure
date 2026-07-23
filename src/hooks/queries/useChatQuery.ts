@@ -95,7 +95,11 @@ async function fetchConversations(
 
 async function fetchMemberConversation(): Promise<ChatConversationListItem> {
   const res = await apiFetch('/api/chat/conversations/mine');
-  return parseJsonResponse<ChatConversationListItem>(res);
+  const data = await parseJsonResponse<ChatConversationListItem>(res);
+  if (data == null || !Number.isFinite(Number(data.id))) {
+    throw new Error('Conversación inválida');
+  }
+  return data;
 }
 
 async function fetchMessages(
