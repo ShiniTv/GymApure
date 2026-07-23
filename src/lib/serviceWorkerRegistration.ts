@@ -6,7 +6,7 @@ export function registerServiceWorkerWhenReady(): void {
   const schedule = () => {
     registered = true;
     navigator.serviceWorker
-      .register('/sw.js')
+      .register('/sw.js', { updateViaCache: 'none' })
       .then((registration) => registration.update().then(() => registration))
       .catch(() => {
         registered = false;

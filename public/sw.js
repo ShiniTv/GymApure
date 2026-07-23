@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'gymapure-static-v10';
+const STATIC_CACHE = 'gymapure-static-v11';
 const OFFLINE_URL = '/offline.html';
 const REST_TAG = 'workout-rest';
 
@@ -8,6 +8,8 @@ const STATIC_ASSETS = [
   '/manifest.webmanifest',
   '/favicon.svg',
 ];
+
+const PRECACHE_PATHS = new Set(STATIC_ASSETS);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,13 +33,18 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (request.method !== 'GET') {
+  // Never hijack non-GET or cross-origin traffic.
+  if (request.method !== 'GET' || url.origin !== self.location.origin) {
     return;
   }
 
-  // API — network only (avoid stale authenticated responses)
+  // API must bypass the SW entirely (auth cookies, no stale JSON, no DevTools noise).
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Chrome may issue only-if-cached probes; re-fetching them yields net::ERR_CACHE_MISS.
+  if (request.cache === 'only-if-cached') {
     return;
   }
 
@@ -47,36 +54,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Bundled assets must always come from the network after deploys.
-  if (
-    request.destination === 'script' ||
-    request.destination === 'style' ||
-    url.pathname.startsWith('/assets/')
-  ) {
-    event.respondWith(fetch(request));
+  // Shell assets we precache — serve cache-first for offline/install reliability.
+  if (PRECACHE_PATHS.has(url.pathname)) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Navigations — network first, fallback to offline page only.
-  if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
+  // Navigations / HTML documents — network first, offline page fallback.
+  // Do not wrap scripts, styles, hashed /assets/*, or misc GETs in respondWith(fetch):
+  // that catch-all caused net::ERR_CACHE_MISS (e.g. /login) under DevTools / cache modes.
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(networkOnlyWithOfflineFallback(request));
     return;
   }
-
-  // Everything else — network first
-  event.respondWith(
-    fetch(request).catch(async () => {
-      const cached = await caches.match(request);
-      return cached ?? new Response('', { status: 504, statusText: 'Offline' });
-    })
-  );
 });
 
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
   try {
-    const response = await fetch(request);
+    const response = await safeFetch(request);
     if (isCacheableResponse(response)) {
       const cache = await caches.open(STATIC_CACHE);
       cache.put(request, response.clone());
@@ -87,18 +84,21 @@ async function cacheFirst(request) {
   }
 }
 
-async function networkFirst(request) {
+async function networkOnlyWithOfflineFallback(request) {
   try {
-    const response = await fetch(request);
-    if (isCacheableResponse(response)) {
-      const cache = await caches.open(STATIC_CACHE);
-      cache.put(request, response.clone());
-    }
-    return response;
+    return await safeFetch(request);
   } catch {
-    const cached = await caches.match(request);
-    return cached ?? new Response('', { status: 504, statusText: 'Offline' });
+    const offline = await caches.match(OFFLINE_URL);
+    return offline ?? new Response('Offline', { status: 503, statusText: 'Offline' });
   }
+}
+
+/** Re-issue fetch without propagating only-if-cached (ERR_CACHE_MISS). */
+function safeFetch(request) {
+  if (request.cache === 'only-if-cached') {
+    return fetch(request, { cache: 'default' });
+  }
+  return fetch(request);
 }
 
 function isCacheableResponse(response) {
