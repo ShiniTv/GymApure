@@ -47,8 +47,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       });
 
-      s.on('message:new', () => {
-        queryClient.invalidateQueries({ queryKey: ['chat-unread'] });
+      s.on('message:new', (payload?: { conversationId?: number }) => {
+        void queryClient.invalidateQueries({ queryKey: ['chat'] });
+        const conversationId = payload?.conversationId;
+        if (conversationId != null) {
+          void queryClient.invalidateQueries({
+            queryKey: ['chat', 'messages', conversationId],
+          });
+        }
       });
 
       s.on('stats:updated', () => {

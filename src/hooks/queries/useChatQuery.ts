@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { useSocket } from '../../context/SocketContext';
 
-const CHAT_POLL_CONNECTED_MS = false as const;
-const CHAT_POLL_DISCONNECTED_MS = 15_000;
+const CHAT_POLL_CONNECTED_MS = 30_000;
+const CHAT_POLL_DISCONNECTED_MS = 8_000;
 
 function chatPollInterval(isConnected: boolean): number | false {
   return isConnected ? CHAT_POLL_CONNECTED_MS : CHAT_POLL_DISCONNECTED_MS;

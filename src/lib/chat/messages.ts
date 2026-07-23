@@ -1,11 +1,21 @@
 import { query } from '../../db/index.ts';
 import { toDbId } from '../ids.ts';
 import { isStaffRole } from '../roles.ts';
-import { touchConversation } from './conversations.ts';
+import { touchConversation, getConversationById } from './conversations.ts';
+import { emitChatMessageNew } from '../wsServer.ts';
 import type { ChatMessageDto, ChatMessageRow } from './types.ts';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
+
+async function notifyConversationUpdate(conversationId: number): Promise<void> {
+  const conversation = await getConversationById(conversationId);
+  if (!conversation) return;
+  emitChatMessageNew({
+    conversationId: toDbId(conversation.id),
+    memberId: toDbId(conversation.member_id),
+  });
+}
 
 function mapMessageRow(
   row: ChatMessageRow & {
@@ -114,7 +124,9 @@ export async function sendTextMessage(
   );
 
   await touchConversation(conversationId);
-  return mapMessageRow(rows[0], toDbId(senderId));
+  const mapped = mapMessageRow(rows[0], toDbId(senderId));
+  void notifyConversationUpdate(conversationId);
+  return mapped;
 }
 
 export async function editTextMessage(
@@ -159,7 +171,9 @@ export async function editTextMessage(
   }
 
   await touchConversation(conversationId);
-  return mapMessageRow(rows[0], toDbId(editorId));
+  const mapped = mapMessageRow(rows[0], toDbId(editorId));
+  void notifyConversationUpdate(conversationId);
+  return mapped;
 }
 
 export async function deleteTextMessage(
@@ -190,6 +204,7 @@ export async function deleteTextMessage(
      WHERE c.id = $1`,
     [toDbId(conversationId)]
   );
+  void notifyConversationUpdate(conversationId);
 }
 
 export async function insertSystemMessage(
@@ -219,7 +234,9 @@ export async function insertSystemMessage(
   );
 
   await touchConversation(conversationId);
-  return mapMessageRow(rows[0], -1);
+  const mapped = mapMessageRow(rows[0], -1);
+  void notifyConversationUpdate(conversationId);
+  return mapped;
 }
 
 export async function markConversationRead(

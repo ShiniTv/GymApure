@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import cookie from 'cookie';
 import { isOriginAllowed } from '../api/middleware/cors.ts';
 import { verifySessionToken } from './sessionAuth.ts';
+import { isStaffRole } from './roles.ts';
 import { logger } from './logger.ts';
 
 let io: Server | null = null;
@@ -54,7 +55,8 @@ export function initWebSocket(httpServer: HttpServer) {
 
     socket.join(`user:${userId}`);
 
-    if (userRole === 'admin' || userRole === 'receptionist') {
+    // Trainers need chat realtime too (not only admin/reception).
+    if (userRole && isStaffRole(userRole)) {
       socket.join('staff');
     }
   });
@@ -73,4 +75,10 @@ export function emitToUser(userId: number | string, event: string, data: unknown
 
 export function emitToStaff(event: string, data: unknown) {
   io?.to('staff').emit(event, data);
+}
+
+/** Notify member + all connected staff that a conversation has a new/updated message. */
+export function emitChatMessageNew(payload: { conversationId: number; memberId: number }) {
+  emitToUser(payload.memberId, 'message:new', payload);
+  emitToStaff('message:new', payload);
 }
