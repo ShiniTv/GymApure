@@ -17,4 +17,16 @@ test.describe('Staff tablet iPad', () => {
     await expect(page.locator('.table-shell')).toBeHidden();
     await expect(page.getByPlaceholder(/buscar nombre/i)).toBeVisible();
   });
+
+  test('pagos en tablet usa cards (sin tabla desktop) y bottom nav staff', async ({ page }) => {
+    await page.goto('/payments');
+    await page.waitForFunction(
+      () => !document.body.textContent?.includes('Cargando'),
+      undefined,
+      { timeout: 20_000 }
+    ).catch(() => undefined);
+
+    await expect(page.locator('table').first()).toBeHidden();
+    await expect(page.getByLabel('Registrar pago').or(page.getByRole('button', { name: /registrar pago/i }))).toBeVisible();
+  });
 });

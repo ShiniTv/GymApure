@@ -35,14 +35,18 @@ Credenciales demo: `docs/TESTING.md` (`DEMO_PASSWORD`).
 
 ## Escritorio — latencia percibida
 
-| #   | Paso                                                 | OK  |
-| --- | ---------------------------------------------------- | --- |
-| D1  | Login admin → Panel: skeleton, no texto “Cargando…”  | ☐   |
-| D2  | Hover sidebar Miembros → abrir: lista casi inmediata | ☐   |
-| D3  | Hover Pagos → cola pendientes precargada             | ☐   |
-| D4  | Miembros/Pagos desktop: click fila → rail lateral    | ☐   |
-| D5  | Reportes: preview de filas al seleccionar tarjeta    | ☐   |
-| D6  | Settings xl: nav lateral con anclas                  | ☐   |
+| #   | Paso                                                                             | OK  |
+| --- | -------------------------------------------------------------------------------- | --- |
+| D1  | Login admin → Panel: skeleton, no texto “Cargando…”                              | ☐   |
+| D2  | Hover sidebar Miembros → abrir: lista casi inmediata                             | ☐   |
+| D3  | Hover Pagos → cola pendientes precargada                                         | ☐   |
+| D4  | Miembros/Pagos desktop: click fila → rail lateral                                | ☐   |
+| D5  | Reportes: preview de filas al seleccionar tarjeta                                | ☐   |
+| D6  | Settings xl: nav lateral con anclas                                              | ☐   |
+| D7  | `/exercises`: expandir → video + ejecución a ancho de fila (no columna estrecha) | ☐   |
+
+Cobertura auto (con `npm run db:restore-demo` + `npm run test:ux:browser`):  
+`trainer-exercises.desktop.spec.ts`, `staff-payments-approve.desktop.spec.ts`, `tablet-staff.tablet.spec.ts`.
 
 ## Al cerrar
 
