@@ -35,20 +35,22 @@ Credenciales demo: `docs/TESTING.md` (`DEMO_PASSWORD`).
 
 ## Escritorio — latencia percibida
 
+Ejecutado 2026-07-23 con Playwright (`tests/ux/qa-device-desktop.desktop.spec.ts`) contra demo local.
+
 | #   | Paso                                                                             | OK  |
 | --- | -------------------------------------------------------------------------------- | --- |
-| D1  | Login admin → Panel: skeleton, no texto “Cargando…”                              | ☐   |
-| D2  | Hover sidebar Miembros → abrir: lista casi inmediata                             | ☐   |
-| D3  | Hover Pagos → cola pendientes precargada                                         | ☐   |
-| D4  | Miembros/Pagos desktop: click fila → rail lateral                                | ☐   |
-| D5  | Reportes: preview de filas al seleccionar tarjeta                                | ☐   |
-| D6  | Settings xl: nav lateral con anclas                                              | ☐   |
-| D7  | `/exercises`: expandir → video + ejecución a ancho de fila (no columna estrecha) | ☐   |
+| D1  | Login admin → Panel: skeleton, no texto “Cargando…”                              | ☑   |
+| D2  | Hover sidebar Miembros → abrir: lista casi inmediata                             | ☑   |
+| D3  | Hover Pagos → cola pendientes precargada                                         | ☑   |
+| D4  | Miembros/Pagos desktop: click fila → rail lateral                                | ☑   |
+| D5  | Reportes: preview de filas al seleccionar tarjeta                                | ☑   |
+| D6  | Settings xl: nav lateral con anclas                                              | ☑   |
+| D7  | `/exercises`: expandir → video + ejecución a ancho de fila (no columna estrecha) | ☑   |
 
 Cobertura auto (con `npm run db:restore-demo` + `npm run test:ux:browser`):  
-`trainer-exercises.desktop.spec.ts`, `staff-payments-approve.desktop.spec.ts`, `tablet-staff.tablet.spec.ts`.
+`qa-device-desktop.desktop.spec.ts`, `trainer-exercises.desktop.spec.ts`, `staff-payments-approve.desktop.spec.ts`, `tablet-staff.tablet.spec.ts`.
 
 ## Al cerrar
 
-- [ ] Filas UX-QA push/PWA marcadas o con nota de OS
-- [ ] Si índices aún no están en prod: `npm run db:migrate:prod` (confirmación explícita)
+- [ ] Filas UX-QA push/PWA marcadas o con nota de OS _(pendiente: Android / iPhone reales)_
+- [x] Índices en prod: migración `20260723120000_users_list_and_paused_indexes` aplicada
