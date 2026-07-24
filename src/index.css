@@ -55,6 +55,26 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes auth-ken-burns {
+    from {
+      transform: scale(1.05);
+    }
+
+    to {
+      transform: scale(1.12);
+    }
+  }
+
+  /* Superficie del formulario en auth split (lg+) */
+  .auth-form-card {
+    @apply border-zinc-200/90 bg-white shadow-xl shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900/90 dark:shadow-black/40;
+    @apply ring-brand/10 ring-1;
+  }
+
+  .auth-form-card-accent {
+    @apply from-brand via-brand/70 absolute inset-x-0 top-0 h-1 rounded-t-[inherit] bg-gradient-to-r to-transparent;
+  }
 }
 
 /* Base Styles */

@@ -4,7 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Label, PasswordInput, Alert } from '../components/ui';
+import AuthFormSurface from '../components/AuthFormSurface';
+import { Button, Label, PasswordInput, Alert } from '../components/ui';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -50,17 +51,14 @@ export default function ResetPassword() {
 
   return (
     <AuthShell layout="split">
-      <Card
-        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
-        padding="md"
-      >
+      <AuthFormSurface>
         <AuthBrandHeader
           subtitle="Nueva contraseña"
           formHint="Elige una contraseña segura"
           splitAware
         />
 
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form className="form-stack mt-2 lg:mt-8" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
           {success && <Alert variant="success">{success}</Alert>}
 
@@ -95,12 +93,12 @@ export default function ResetPassword() {
 
         <Link
           to="/login"
-          className="hover:text-brand mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors"
+          className="hover:text-brand mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio de sesión
         </Link>
-      </Card>
+      </AuthFormSurface>
     </AuthShell>
   );
 }

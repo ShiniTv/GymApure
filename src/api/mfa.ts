@@ -21,6 +21,7 @@ import {
   verifyMfaChallengeToken,
   verifyMfaToken,
 } from '../lib/mfa.ts';
+import { issueTrustedMfaDevice, MFA_TRUST_DAYS } from '../lib/mfaTrustedDevice.ts';
 
 const router = asyncRouter();
 
@@ -40,6 +41,7 @@ router.post(
     const schema = z.object({
       mfa_challenge_token: z.string().min(1),
       code: z.string().trim().min(6).max(8),
+      trust_device: z.boolean().optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
@@ -73,9 +75,18 @@ router.post(
       return;
     }
 
+    if (parsed.data.trust_device) {
+      await issueTrustedMfaDevice(res, challenge.userId);
+    }
+
     res.cookie('token', session.token, authCookieOptions);
     setCsrfCookie(res);
-    await logAudit(challenge.userId, 'auth.login', { ip: clientIp, mfa: true });
+    await logAudit(challenge.userId, 'auth.login', {
+      ip: clientIp,
+      mfa: true,
+      mfa_trusted_device: Boolean(parsed.data.trust_device),
+      trust_days: parsed.data.trust_device ? MFA_TRUST_DAYS : undefined,
+    });
 
     res.json({
       user: {

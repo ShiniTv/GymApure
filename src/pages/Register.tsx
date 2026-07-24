@@ -6,9 +6,9 @@ import { APP_HOME } from '../lib/roles';
 import { User, Mail, CreditCard, Phone } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
+import AuthFormSurface from '../components/AuthFormSurface';
 import {
   Button,
-  Card,
   Input,
   Label,
   PasswordInput,
@@ -105,7 +105,7 @@ export default function Register() {
 
   return (
     <AuthShell layout="split" backLink={{ to: '/login', label: 'Volver al login' }}>
-      <Card className="page-stack mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0" padding="md">
+      <AuthFormSurface compact>
         <AuthBrandHeader
           subtitle="Crea tu cuenta de miembro"
           formHint="Registro en dos pasos"
@@ -113,7 +113,7 @@ export default function Register() {
         />
 
         <ol
-          className="mb-6 flex items-center gap-1 text-xs font-semibold"
+          className="mb-6 flex items-center gap-1 text-xs font-semibold lg:mt-6"
           aria-label="Pasos del registro"
         >
           {STEPS.map((label, i) => (
@@ -345,7 +345,7 @@ export default function Register() {
             </Link>
           </p>
         </form>
-      </Card>
+      </AuthFormSurface>
     </AuthShell>
   );
 }

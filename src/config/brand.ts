@@ -8,6 +8,8 @@ export const BRAND = {
   heroHeadline: 'Gestiona tu gimnasio sin Excel ni WhatsApp',
   heroSubheadline: 'Membresías, acceso, recepción y reportes en un solo panel.',
   ogImage: '/og-image.svg',
+  /** Full-bleed atmosphere for auth split panel (lg+). */
+  authAtmosphere: '/auth-atmosphere.jpg',
   logo: {
     light: '/logo-mark-light.jpg',
     dark: '/logo-mark-dark.jpg',

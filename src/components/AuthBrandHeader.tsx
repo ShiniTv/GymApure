@@ -43,11 +43,16 @@ export default function AuthBrandHeader({
 
       {splitAware && subtitle && (
         <div className="hidden lg:block lg:text-left">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+          <p className="text-brand mb-3 text-[11px] font-semibold tracking-[0.16em] uppercase">
+            Acceso seguro
+          </p>
+          <h1 className="font-display text-[1.75rem] leading-tight font-extrabold tracking-tight text-zinc-900 xl:text-[2rem] dark:text-white">
             {subtitle}
           </h1>
           {formHint && (
-            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">{formHint}</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+              {formHint}
+            </p>
           )}
         </div>
       )}

@@ -2,6 +2,43 @@
 
 Repetir tras cambios de UI. Nav móvil actualizado julio 2026.
 
+## Auth / Login — móvil · tablet · desktop
+
+Rutas: `/login`, `/forgot-password`, `/reset-password`, `/register`.
+
+### Todos los viewports
+
+- [ ] Sin scroll horizontal; theme toggle usable
+- [ ] Validación vacía: bordes rojos + mensajes de campo
+- [ ] Credenciales incorrectas → Alert
+- [ ] 3 fallos → countdown lockout + campos deshabilitados
+- [ ] Forgot: envía y muestra éxito; Reset: requiere `?token=`
+- [ ] Password: mostrar/ocultar alcanzable con teclado
+
+### Móvil 390×844
+
+- [ ] Card centrada con logo + GymApure; sin panel de marketing
+- [ ] Touch targets ≥44px; composer/teclado no rompe layout
+
+### Tablet 834×1194
+
+- [ ] Card más ancha (`max-w-lg` ≈512px); sin panel marketing (portrait)
+
+### Desktop ≥1024 / 1440×900
+
+- [ ] Split: panel marca (foto atmósfera + headline) | formulario
+- [ ] Formulario: título “Inicia sesión…” (sin logo duplicado)
+- [ ] Staff con MFA: paso código + checkbox “Confiar en este dispositivo 30 días”
+- [ ] Dispositivo confiable: segundo login sin pedir MFA (misma cookie)
+
+### Comandos auth
+
+```powershell
+npx playwright test tests/ux/auth-login-adaptive.spec.ts tests/ux/auth-login-adaptive.desktop.spec.ts tests/ux/auth-login-adaptive.tablet.spec.ts tests/ux/auth-login-lockout.spec.ts tests/ux/auth-forgot.spec.ts
+npx tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-login-lockout.ts
+npx tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-mfa-trusted-device.ts
+```
+
 ## Móvil 390×844 — Cliente (`member@gym.com`)
 
 - [ ] Sin scroll horizontal

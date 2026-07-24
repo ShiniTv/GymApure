@@ -264,18 +264,21 @@ Si el BCV no responde, el admin puede ingresar un override manual en **Configura
 3. Pulsa **Configurar MFA** → escanea el QR con Google Authenticator, Authy u otra app TOTP
 4. Introduce el código de 6 dígitos y activa
 5. A partir de entonces, el login pedirá email + contraseña + código MFA (solo si MFA está activo)
+6. Opcional: marca **Confiar en este dispositivo por 30 días** para no pedir MFA en ese navegador
 
 **CSRF:** las rutas protegidas con mutaciones exigen cookie `csrf_token` + header `X-CSRF-Token`. El frontend lo envía automáticamente; no requiere configuración extra en Render same-origin.
 
 API relacionada (referencia):
 
-| Método | Ruta                         | Auth                                           |
-| ------ | ---------------------------- | ---------------------------------------------- |
-| `GET`  | `/api/auth/mfa/status`       | Sesión staff                                   |
-| `POST` | `/api/auth/mfa/setup`        | Sesión staff                                   |
-| `POST` | `/api/auth/mfa/enable`       | Sesión staff                                   |
-| `POST` | `/api/auth/mfa/disable`      | Sesión staff + contraseña + código             |
-| `POST` | `/api/auth/mfa/verify-login` | Público (tras login con `mfa_challenge_token`) |
+| Método | Ruta                         | Auth                                                                         |
+| ------ | ---------------------------- | ---------------------------------------------------------------------------- |
+| `GET`  | `/api/auth/mfa/status`       | Sesión staff                                                                 |
+| `POST` | `/api/auth/mfa/setup`        | Sesión staff                                                                 |
+| `POST` | `/api/auth/mfa/enable`       | Sesión staff                                                                 |
+| `POST` | `/api/auth/mfa/disable`      | Sesión staff + contraseña + código                                           |
+| `POST` | `/api/auth/mfa/verify-login` | Público (tras login con `mfa_challenge_token`; body opcional `trust_device`) |
+
+> **Passkeys / WebAuthn:** no implementado aún; el equivalente operativo actual es dispositivo confiable (cookie httpOnly + Redis/memoria, 30 días).
 
 ### Walk-in sin contraseñas en API
 
