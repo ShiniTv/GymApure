@@ -26,7 +26,7 @@ test.describe('Recepción — pagos en mostrador', () => {
     // Trainer demo sin membresía (V-00000001 no existe → "Usuario no encontrado")
     await cedulaInput.fill('V-87654321');
     await page.getByRole('button', { name: /buscar/i }).click();
-    await expect(page.getByRole('link', { name: /registrar pago/i })).toBeVisible({
+    await expect(page.getByRole('link', { name: /^pago$/i })).toBeVisible({
       timeout: 15_000,
     });
   });

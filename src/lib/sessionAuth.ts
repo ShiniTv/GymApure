@@ -3,7 +3,7 @@ import { query } from '../db/index.ts';
 import { JWT_EXPIRES_IN, JWT_SECRET, type JwtUserPayload } from '../config/jwt.ts';
 import {
   getCachedSessionUserAsync,
-  invalidateSessionUserCache,
+  invalidateSessionUserCacheAsync,
   setCachedSessionUser,
 } from './sessionUserCache.ts';
 
@@ -126,7 +126,7 @@ export async function verifySessionToken(token: string): Promise<SessionVerifyRe
 }
 
 export async function bumpUserTokenVersion(userId: number): Promise<number | null> {
-  invalidateSessionUserCache(userId);
+  await invalidateSessionUserCacheAsync(userId);
 
   const { rows } = await query<{ token_version: number | string }>(
     'UPDATE users SET token_version = token_version + 1 WHERE id = $1 RETURNING token_version',
@@ -143,7 +143,7 @@ export type CreateLoginSessionResult =
 
 /** Bumps token_version and signs a fresh JWT (single active session policy). */
 export async function createLoginSession(userId: number): Promise<CreateLoginSessionResult> {
-  invalidateSessionUserCache(userId);
+  await invalidateSessionUserCacheAsync(userId);
 
   const { rows } = await query<{
     id: number | string;

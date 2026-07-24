@@ -30,7 +30,7 @@ test.describe('Trainer nutrición overview', () => {
     await page.goto('/members');
     await waitForMain(page);
 
-    const nutritionButton = page.getByRole('button', { name: 'Plan nutricional' }).first();
+    const nutritionButton = page.getByRole('button', { name: 'Nutrición' }).first();
     await expect(nutritionButton).toBeVisible({ timeout: 15_000 });
     await nutritionButton.click();
 
