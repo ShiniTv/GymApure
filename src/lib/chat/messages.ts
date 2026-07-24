@@ -96,18 +96,31 @@ export async function listMessages(
 export async function sendTextMessage(
   conversationId: number,
   senderId: number,
-  body: string
+  body: string,
+  attachment?: { url: string; mime: string; name: string } | null
 ): Promise<ChatMessageDto> {
   const trimmed = body.trim();
-  if (!trimmed) {
+  if (!trimmed && !attachment) {
     throw new Error('El mensaje no puede estar vacío');
   }
+
+  const metadata = attachment
+    ? {
+        attachment: {
+          url: attachment.url,
+          mime: attachment.mime,
+          name: attachment.name,
+        },
+      }
+    : {};
+
+  const storedBody = trimmed || (attachment ? 'Imagen' : '');
 
   const { rows } = await query<
     ChatMessageRow & { sender_name: string | null; sender_role: string | null }
   >(
-    `INSERT INTO chat_messages (conversation_id, sender_id, body, kind, event_type)
-     VALUES ($1, $2, $3, 'text', 'manual')
+    `INSERT INTO chat_messages (conversation_id, sender_id, body, kind, event_type, metadata)
+     VALUES ($1, $2, $3, 'text', 'manual', $4::jsonb)
      RETURNING
        id,
        conversation_id,
@@ -121,7 +134,7 @@ export async function sendTextMessage(
        created_at::text,
        (SELECT full_name FROM users WHERE id = $2) AS sender_name,
        (SELECT role FROM users WHERE id = $2) AS sender_role`,
-    [conversationId, toDbId(senderId), trimmed]
+    [conversationId, toDbId(senderId), storedBody, JSON.stringify(metadata)]
   );
 
   await touchConversation(conversationId);
@@ -182,7 +195,29 @@ export async function deleteTextMessage(
   messageId: number,
   deleterId: number
 ): Promise<void> {
-  const { rowCount } = await query(
+  const { rows } = await query<{ metadata: Record<string, unknown> | null }>(
+    `SELECT metadata FROM chat_messages
+     WHERE id = $2
+       AND conversation_id = $1
+       AND sender_id = $3
+       AND kind = 'text'
+       AND event_type = 'manual'`,
+    [toDbId(conversationId), toDbId(messageId), toDbId(deleterId)]
+  );
+
+  if (!rows[0]) {
+    throw Object.assign(new Error('No se puede eliminar este mensaje'), { status: 403 });
+  }
+
+  const attachmentUrl =
+    rows[0].metadata &&
+    typeof rows[0].metadata === 'object' &&
+    rows[0].metadata.attachment &&
+    typeof (rows[0].metadata.attachment as { url?: unknown }).url === 'string'
+      ? (rows[0].metadata.attachment as { url: string }).url
+      : null;
+
+  await query(
     `DELETE FROM chat_messages
      WHERE id = $2
        AND conversation_id = $1
@@ -192,8 +227,13 @@ export async function deleteTextMessage(
     [toDbId(conversationId), toDbId(messageId), toDbId(deleterId)]
   );
 
-  if (!rowCount) {
-    throw Object.assign(new Error('No se puede eliminar este mensaje'), { status: 403 });
+  if (attachmentUrl) {
+    try {
+      const { deleteChatAttachment } = await import('./attachments.ts');
+      await deleteChatAttachment(attachmentUrl);
+    } catch {
+      /* best-effort cleanup */
+    }
   }
 
   await query(

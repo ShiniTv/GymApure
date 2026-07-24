@@ -15,12 +15,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     if (!user) {
       socketRef.current?.disconnect();
       socketRef.current = null;
+      setSocket(null);
       setIsConnected(false);
       return;
     }
@@ -77,20 +79,20 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       });
 
       socketRef.current = s;
+      setSocket(s);
     });
 
     return () => {
       active = false;
       socketRef.current?.disconnect();
       socketRef.current = null;
+      setSocket(null);
       setIsConnected(false);
     };
   }, [user, queryClient]);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={{ socket, isConnected }}>{children}</SocketContext.Provider>
   );
 }
 

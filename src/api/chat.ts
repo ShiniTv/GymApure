@@ -16,11 +16,19 @@ import {
   editTextMessage,
   deleteTextMessage,
 } from '../lib/chat/messages.ts';
+import {
+  chatAttachmentApiPath,
+  localChatAttachmentPath,
+  storeChatAttachment,
+  streamChatAttachment,
+} from '../lib/chat/attachments.ts';
 import { getExpiryAlertDays } from '../lib/gymSettings.ts';
 import { sameUserId, toDbId } from '../lib/ids.ts';
 import { isStaffRole, STAFF_ROLES } from '../lib/roles.ts';
 import { trainerHasMemberAccess } from '../lib/trainerAccess.ts';
 import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
+import { chatAttachmentUpload } from '../lib/uploadStorage.ts';
+import { query } from '../db/index.ts';
 import {
   CHAT_STAFF_CHANNELS,
   isChatStaffChannel,
@@ -84,12 +92,14 @@ router.get('/unread-count', async (req: AuthRequest, res) => {
 router.get('/conversations', authorize(STAFF_ROLES), async (req: AuthRequest, res) => {
   const search = parseSearchQuery(req.query) || undefined;
   const expiringOnly = parseBooleanQuery(req.query.expiring);
+  const unreadOnly = parseBooleanQuery(req.query.unread);
   const { page, pageSize } = parsePaginationQuery(req.query, { pageSize: 50, maxPageSize: 100 });
   const channel = staffChannelFromRole(req.user!.role);
   const listOptions = {
     channel,
     ...(req.user!.role === 'trainer' ? { trainerId: toDbId(req.user!.id) } : {}),
     expiringOnly,
+    unreadOnly,
     alertDays: expiringOnly ? await getExpiryAlertDays() : undefined,
     page,
     pageSize,
@@ -177,18 +187,74 @@ router.get('/conversations/:id/messages', async (req: AuthRequest, res) => {
 });
 
 const sendSchema = z.object({
-  body: z.string().trim().min(1).max(4000),
+  body: z.string().trim().max(4000).optional().default(''),
 });
 
-router.post('/conversations/:id/messages', async (req: AuthRequest, res) => {
-  const conversationId = parseInt(req.params.id, 10);
-  if (!Number.isFinite(conversationId)) {
-    return res.status(400).json({ error: 'ID inválido' });
+function optionalChatAttachment(
+  req: AuthRequest,
+  res: import('express').Response,
+  next: import('express').NextFunction
+) {
+  const contentType = String(req.headers['content-type'] ?? '');
+  if (contentType.includes('multipart/form-data')) {
+    chatAttachmentUpload.single('attachment')(req, res, next);
+    return;
   }
+  next();
+}
 
-  const parsed = sendSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Mensaje inválido' });
+router.post(
+  '/conversations/:id/messages',
+  optionalChatAttachment,
+  async (req: AuthRequest, res) => {
+    const conversationId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(conversationId)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    const bodyRaw =
+      typeof req.body?.body === 'string'
+        ? req.body.body
+        : typeof req.body?.body === 'number'
+          ? String(req.body.body)
+          : '';
+    const parsed = sendSchema.safeParse({ body: bodyRaw });
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Mensaje inválido' });
+    }
+
+    try {
+      await assertConversationAccess(req, conversationId);
+    } catch (err) {
+      const status = (err as { status?: number }).status ?? 500;
+      const message = err instanceof Error ? err.message : 'Error';
+      return res.status(status).json({ error: message });
+    }
+
+    try {
+      let attachment: { url: string; mime: string; name: string } | null = null;
+      if (req.file) {
+        attachment = await storeChatAttachment(conversationId, req.file);
+      }
+      const message = await sendTextMessage(
+        conversationId,
+        toDbId(req.user!.id),
+        parsed.data.body,
+        attachment
+      );
+      res.status(201).json(message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al enviar';
+      res.status(400).json({ error: message });
+    }
+  }
+);
+
+router.get('/conversations/:id/attachments/:filename', async (req: AuthRequest, res) => {
+  const conversationId = parseInt(req.params.id, 10);
+  const filename = decodeURIComponent(String(req.params.filename ?? ''));
+  if (!Number.isFinite(conversationId) || !filename) {
+    return res.status(400).json({ error: 'ID inválido' });
   }
 
   try {
@@ -199,12 +265,43 @@ router.post('/conversations/:id/messages', async (req: AuthRequest, res) => {
     return res.status(status).json({ error: message });
   }
 
+  const localUrl = chatAttachmentApiPath(conversationId, filename);
+  const remoteUrl = `sbmedia:chat:${conversationId}/${filename}`;
+
   try {
-    const message = await sendTextMessage(conversationId, toDbId(req.user!.id), parsed.data.body);
-    res.status(201).json(message);
+    const { rows } = await query<{ metadata: Record<string, unknown> | null }>(
+      `SELECT metadata FROM chat_messages
+       WHERE conversation_id = $1
+         AND (
+           metadata -> 'attachment' ->> 'url' = $2
+           OR metadata -> 'attachment' ->> 'url' = $3
+         )
+       LIMIT 1`,
+      [toDbId(conversationId), localUrl, remoteUrl]
+    );
+
+    let storedUrl: string | null = null;
+    const meta = rows[0]?.metadata;
+    if (
+      meta &&
+      typeof meta === 'object' &&
+      meta.attachment &&
+      typeof (meta.attachment as { url?: unknown }).url === 'string'
+    ) {
+      storedUrl = (meta.attachment as { url: string }).url;
+    } else if (localChatAttachmentPath(conversationId, filename)) {
+      storedUrl = localUrl;
+    }
+
+    if (!storedUrl) {
+      return res.status(404).json({ error: 'Adjunto no encontrado' });
+    }
+
+    await streamChatAttachment(storedUrl, conversationId, res);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error al enviar';
-    res.status(400).json({ error: message });
+    const status = (err as { status?: number }).status ?? 500;
+    const message = err instanceof Error ? err.message : 'Error';
+    if (!res.headersSent) res.status(status).json({ error: message });
   }
 });
 
@@ -216,7 +313,7 @@ router.patch('/conversations/:id/messages/:messageId', async (req: AuthRequest, 
   }
 
   const parsed = sendSchema.safeParse(req.body);
-  if (!parsed.success) {
+  if (!parsed.success || !parsed.data.body.trim()) {
     return res.status(400).json({ error: 'Mensaje inválido' });
   }
 

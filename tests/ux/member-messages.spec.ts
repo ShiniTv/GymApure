@@ -7,12 +7,20 @@ test.describe('Member mensajes', () => {
     await page.goto('/messages');
   });
 
-  test('composer visible y no cubierto por bottom nav', async ({ page }) => {
+  test('selector de canales y composer sin tapar bottom nav', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /recepción/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /administración/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /entrenador/i }).first()).toBeVisible();
+
+    await page.getByRole('button', { name: /recepción/i }).first().click();
+    await expect(page).toHaveURL(/channel=receptionist/);
+
     const composer = page.getByPlaceholder(/escribe (un mensaje|a recepción)/i);
-    await expect(composer).toBeVisible();
+    await expect(composer).toBeVisible({ timeout: 15_000 });
 
     const nav = page.locator(memberBottomNav);
-    await expect(nav).toBeVisible();
+    const isMobileNav = await nav.isVisible().catch(() => false);
+    if (!isMobileNav) return;
 
     const composerBox = await composer.boundingBox();
     const navBox = await nav.boundingBox();

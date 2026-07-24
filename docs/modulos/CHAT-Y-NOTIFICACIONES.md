@@ -23,6 +23,14 @@ Los mensajes de un canal **no** aparecen en los otros. Admin no ve el hilo de re
 - WebSocket con rooms por rol (`staff:admin`, `staff:receptionist`, `staff:trainer`)
 - Badge de no leídos por canal (agregado en campana / sheet)
 - Historial persistente; identidad de conversación = `(member_id, channel)`
+- Staff: lista + hilo (móvil lista→hilo); en `xl` rail de contexto (membresía, atajos)
+- Filtros staff: Todos / No leídos / Por vencer
+- Member escritorio (`lg+`): canales | hilo lado a lado
+- Respuestas rápidas por rol; buscar dentro del hilo (staff)
+- Checks de envío/lectura (`read_at`)
+- Indicador “está escribiendo…” (WebSocket, room por conversación)
+- Adjuntos de imagen (JPG/PNG/WebP, máx. 5 MB) en el composer
+- Bucket Storage `chat-attachments` (o `uploads/chat` en local)
 
 ### Flujos
 

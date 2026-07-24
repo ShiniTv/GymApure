@@ -1,16 +1,49 @@
 import { type Server as HttpServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, type Socket } from 'socket.io';
 import cookie from 'cookie';
 import { isOriginAllowed } from '../api/middleware/cors.ts';
 import { verifySessionToken } from './sessionAuth.ts';
 import { isStaffRole } from './roles.ts';
 import { logger } from './logger.ts';
+import { getConversationById } from './chat/conversations.ts';
+import { trainerHasMemberAccess } from './trainerAccess.ts';
 import type { ChatStaffChannel } from './chat/types.ts';
+
+type AuthedSocket = Socket & { userId?: number; userRole?: string };
 
 let io: Server | null = null;
 
 function staffRoomForRole(role: string): string {
   return `staff:${role}`;
+}
+
+function conversationRoom(conversationId: number): string {
+  return `conversation:${conversationId}`;
+}
+
+async function canAccessConversationSocket(
+  socket: AuthedSocket,
+  conversationId: number
+): Promise<boolean> {
+  const userId = socket.userId;
+  const userRole = socket.userRole;
+  if (userId == null || !userRole) return false;
+
+  const conversation = await getConversationById(conversationId);
+  if (!conversation) return false;
+
+  if (userRole === 'member') {
+    return Number(conversation.member_id) === Number(userId);
+  }
+
+  if (!isStaffRole(userRole)) return false;
+  if (userRole !== conversation.channel) return false;
+
+  if (userRole === 'trainer') {
+    return trainerHasMemberAccess(userId, conversation.member_id);
+  }
+
+  return true;
 }
 
 export function initWebSocket(httpServer: HttpServer) {
@@ -45,8 +78,8 @@ export function initWebSocket(httpServer: HttpServer) {
           return;
         }
 
-        (socket as { userId?: number }).userId = result.user.id;
-        (socket as { userRole?: string }).userRole = result.user.role;
+        (socket as AuthedSocket).userId = result.user.id;
+        (socket as AuthedSocket).userRole = result.user.role;
         next();
       } catch {
         next(new Error('Autenticación fallida'));
@@ -54,15 +87,48 @@ export function initWebSocket(httpServer: HttpServer) {
     })();
   });
 
-  io.on('connection', (socket) => {
-    const userId = (socket as { userId?: number }).userId;
-    const userRole = (socket as { userRole?: string }).userRole;
+  io.on('connection', (rawSocket) => {
+    const socket = rawSocket as AuthedSocket;
+    const userId = socket.userId;
+    const userRole = socket.userRole;
 
     socket.join(`user:${userId}`);
 
     if (userRole && isStaffRole(userRole)) {
       socket.join(staffRoomForRole(userRole));
     }
+
+    socket.on('chat:join', (payload: { conversationId?: number }) => {
+      void (async () => {
+        const conversationId = Number(payload?.conversationId);
+        if (!Number.isFinite(conversationId)) return;
+        const allowed = await canAccessConversationSocket(socket, conversationId);
+        if (!allowed) return;
+        void socket.join(conversationRoom(conversationId));
+      })();
+    });
+
+    socket.on('chat:leave', (payload: { conversationId?: number }) => {
+      const conversationId = Number(payload?.conversationId);
+      if (!Number.isFinite(conversationId)) return;
+      void socket.leave(conversationRoom(conversationId));
+    });
+
+    socket.on('chat:typing', (payload: { conversationId?: number; isTyping?: boolean }) => {
+      void (async () => {
+        const conversationId = Number(payload?.conversationId);
+        if (!Number.isFinite(conversationId) || userId == null) return;
+        const allowed = await canAccessConversationSocket(socket, conversationId);
+        if (!allowed) return;
+
+        socket.to(conversationRoom(conversationId)).emit('chat:typing', {
+          conversationId,
+          userId,
+          role: userRole,
+          isTyping: Boolean(payload?.isTyping),
+        });
+      })();
+    });
   });
 
   logger.info('WebSocket server initialized');
@@ -96,4 +162,5 @@ export function emitChatMessageNew(payload: {
 }) {
   emitToUser(payload.memberId, 'message:new', payload);
   emitToStaffRole(payload.channel, 'message:new', payload);
+  io?.to(conversationRoom(payload.conversationId)).emit('message:new', payload);
 }

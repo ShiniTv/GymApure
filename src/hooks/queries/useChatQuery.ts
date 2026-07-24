@@ -21,6 +21,7 @@ export interface ChatConversationListItem {
   channel_label: string;
   member_name: string;
   member_cedula: string;
+  member_avatar: string | null;
   last_message_at: string;
   last_message_preview: string | null;
   last_message_kind: 'text' | 'system' | null;
@@ -53,6 +54,7 @@ export const chatUnreadKey = ['chat', 'unread'] as const;
 export const chatConversationsKey = (
   search?: string,
   expiringOnly?: boolean,
+  unreadOnly?: boolean,
   page?: number,
   pageSize?: number
 ) =>
@@ -61,6 +63,7 @@ export const chatConversationsKey = (
     'conversations',
     search ?? '',
     expiringOnly ?? false,
+    unreadOnly ?? false,
     page ?? 1,
     pageSize ?? 50,
   ] as const;
@@ -78,6 +81,7 @@ async function fetchUnreadCount(): Promise<number> {
 async function fetchConversations(
   search?: string,
   expiringOnly?: boolean,
+  unreadOnly?: boolean,
   page = 1,
   pageSize = 50
 ): Promise<{
@@ -89,6 +93,7 @@ async function fetchConversations(
   const qs = new URLSearchParams();
   if (search?.trim()) qs.set('q', search.trim());
   if (expiringOnly) qs.set('expiring', 'true');
+  if (unreadOnly) qs.set('unread', 'true');
   qs.set('page', String(page));
   qs.set('pageSize', String(pageSize));
   const res = await apiFetch(`/api/chat/conversations?${qs.toString()}`);
@@ -137,6 +142,7 @@ export function useChatUnreadQuery(enabled = true) {
 export function useChatConversationsQuery(
   search?: string,
   expiringOnly?: boolean,
+  unreadOnly?: boolean,
   enabled = true,
   page = 1,
   pageSize = 50
@@ -146,8 +152,8 @@ export function useChatConversationsQuery(
   const canList = enabled && user != null && isStaffRole(user.role);
 
   return useQuery({
-    queryKey: chatConversationsKey(search, expiringOnly, page, pageSize),
-    queryFn: () => fetchConversations(search, expiringOnly, page, pageSize),
+    queryKey: chatConversationsKey(search, expiringOnly, unreadOnly, page, pageSize),
+    queryFn: () => fetchConversations(search, expiringOnly, unreadOnly, page, pageSize),
     enabled: canList,
     refetchInterval: canList ? chatPollInterval(isConnected) : false,
   });
@@ -180,6 +186,8 @@ export function useChatMessagesQuery(conversationId: number | null, enabled = tr
 interface SendChatVariables {
   conversationId: number;
   body: string;
+  /** Image file (JPG/PNG/WebP) — sent as multipart. */
+  file?: File | null;
   /** When retrying a failed optimistic bubble, replace this temp id. */
   retryTempId?: number;
 }
@@ -203,7 +211,17 @@ function patchMessagesCache(
 export function useSendChatMessage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ conversationId, body }: SendChatVariables) => {
+    mutationFn: async ({ conversationId, body, file }: SendChatVariables) => {
+      if (file) {
+        const fd = new FormData();
+        fd.append('body', body);
+        fd.append('attachment', file);
+        const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`, {
+          method: 'POST',
+          body: fd,
+        });
+        return parseJsonResponse<ChatMessage>(res);
+      }
       const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -212,7 +230,7 @@ export function useSendChatMessage() {
       return parseJsonResponse<ChatMessage>(res);
     },
     onMutate: async (variables) => {
-      const { conversationId, body, retryTempId } = variables;
+      const { conversationId, body, file, retryTempId } = variables;
       await queryClient.cancelQueries({ queryKey: chatMessagesKey(conversationId) });
       const previous = queryClient.getQueryData<MessagesCache>(chatMessagesKey(conversationId));
       const tempId = retryTempId ?? -Date.now();
@@ -222,10 +240,19 @@ export function useSendChatMessage() {
         sender_id: null,
         sender_name: null,
         sender_role: null,
-        body,
+        body: body.trim() || (file ? 'Imagen' : ''),
         kind: 'text',
         event_type: 'manual',
-        metadata: {},
+        metadata: file
+          ? {
+              attachment: {
+                url: URL.createObjectURL(file),
+                mime: file.type,
+                name: file.name,
+                preview: true,
+              },
+            }
+          : {},
         read_at: null,
         edited_at: null,
         created_at: new Date().toISOString(),

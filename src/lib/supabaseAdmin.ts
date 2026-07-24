@@ -5,6 +5,7 @@ export const PAYMENT_PROOFS_BUCKET = 'payment-proofs';
 export const AVATARS_BUCKET = 'avatars';
 export const VIDEOS_BUCKET = 'exercise-videos';
 export const EQUIPMENT_PHOTOS_BUCKET = 'equipment-photos';
+export const CHAT_ATTACHMENTS_BUCKET = 'chat-attachments';
 export const STORAGE_PROOF_PREFIX = 'sb:';
 export const STORAGE_MEDIA_PREFIX = 'sbmedia:';
 

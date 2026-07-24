@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { format, isToday, isYesterday } from 'date-fns';
+import { format, isToday, isYesterday, isThisYear } from 'date-fns';
 import { dateLocale } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -22,6 +22,7 @@ import { CHAT_CHANNEL_LABELS, isChatStaffChannel } from '../lib/chat/types';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { getExpiryBadgeInfo } from '../lib/expiryUtils';
 import {
+  Avatar,
   Badge,
   Button,
   EmptyState,
@@ -43,14 +44,56 @@ import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';
 import { useToastOptional } from '../context/ToastContext';
 import { isStaffRole } from '../lib/roles';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
-import { Check, MessageSquare, Pencil, RotateCcw, Send, Trash2, UserPlus, X } from 'lucide-react';
+import {
+  Check,
+  CheckCheck,
+  CreditCard,
+  Dumbbell,
+  ImagePlus,
+  MessageSquare,
+  Pencil,
+  RotateCcw,
+  Search,
+  Send,
+  Trash2,
+  User,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import clsx from 'clsx';
+import { useChatTyping } from '../hooks/useChatTyping';
 
 interface MemberChatOption {
   id: number;
   full_name: string;
   cedula: string | null;
 }
+
+const RECEPTION_QUICK_REPLIES = [
+  '¿En qué podemos ayudarte?',
+  'Tu pago fue recibido. ¡Gracias!',
+  'Recuerda renovar tu membresía para seguir entrenando.',
+  'Pasa por el mostrador cuando puedas, te esperamos.',
+] as const;
+
+const TRAINER_QUICK_REPLIES = [
+  '¿Cómo te fue con la rutina?',
+  'Avísame si tienes alguna molestia al entrenar.',
+  'Tu nueva rutina ya está lista. ¡A entrenar!',
+] as const;
+
+const ADMIN_QUICK_REPLIES = [
+  'Hola, ¿en qué podemos ayudarte desde administración?',
+  'Recibido. Te respondemos en breve.',
+] as const;
+
+function quickRepliesForRole(role: string | undefined): readonly string[] {
+  if (role === 'receptionist') return RECEPTION_QUICK_REPLIES;
+  if (role === 'trainer') return TRAINER_QUICK_REPLIES;
+  if (role === 'admin') return ADMIN_QUICK_REPLIES;
+  return [];
+}
+
 function formatMessageTime(iso: string): string {
   try {
     return format(new Date(iso), 'HH:mm', { locale: dateLocale });
@@ -68,6 +111,45 @@ function formatMessageDay(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+function formatListTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (isToday(d)) return format(d, 'HH:mm', { locale: dateLocale });
+    if (isYesterday(d)) return 'Ayer';
+    if (isThisYear(d)) return format(d, 'd MMM', { locale: dateLocale });
+    return format(d, 'dd/MM/yy', { locale: dateLocale });
+  } catch {
+    return '';
+  }
+}
+
+function getMessageAttachment(
+  message: ChatMessage
+): { url: string; mime: string; name: string } | null {
+  const raw = message.metadata?.attachment;
+  if (!raw || typeof raw !== 'object') return null;
+  const att = raw as { url?: unknown; mime?: unknown; name?: unknown };
+  if (typeof att.url !== 'string' || !att.url) return null;
+  return {
+    url: att.url,
+    mime: typeof att.mime === 'string' ? att.mime : 'image/*',
+    name: typeof att.name === 'string' ? att.name : 'Imagen',
+  };
+}
+
+function resolveChatAttachmentSrc(url: string, conversationId: number): string {
+  if (url.startsWith('blob:') || url.startsWith('/api/') || url.startsWith('http')) return url;
+  if (url.startsWith('sbmedia:chat:')) {
+    const rest = url.slice('sbmedia:chat:'.length);
+    const slash = rest.indexOf('/');
+    if (slash > 0) {
+      const filename = rest.slice(slash + 1);
+      return `/api/chat/conversations/${conversationId}/attachments/${encodeURIComponent(filename)}`;
+    }
+  }
+  return url;
 }
 
 function sameCalendarDay(a: string, b: string): boolean {
@@ -189,6 +271,11 @@ const ChatBubble = memo(function ChatBubble({
   const isSystem = side === 'center';
   const manageable = canManageOwnMessage(message, user?.id, user?.role);
   const systemAction = isSystem ? systemMessageAction(message, user?.role) : null;
+  const attachment = getMessageAttachment(message);
+  const attachmentSrc = attachment
+    ? resolveChatAttachmentSrc(attachment.url, conversationId)
+    : null;
+  const showCaption = message.body.trim().length > 0 && message.body.trim() !== 'Imagen';
   const trimmedDraft = draft.trim();
   const canSave =
     trimmedDraft.length > 0 && trimmedDraft !== message.body.trim() && !editMessage.isPending;
@@ -369,11 +456,29 @@ const ChatBubble = memo(function ChatBubble({
             onTouchCancel={clearLongPress}
             onTouchMove={clearLongPress}
             aria-expanded={manageable ? actionsOpen : undefined}
-            aria-label={manageable ? 'Mensaje, toca para opciones' : undefined}
+            aria-label={manageable ? 'Mensaje, opciones disponibles' : undefined}
           >
-            <p className="text-[13px] leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
-              {message.body}
-            </p>
+            {attachmentSrc ? (
+              <a
+                href={attachmentSrc}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mb-1.5 block overflow-hidden rounded-xl"
+              >
+                <img
+                  src={attachmentSrc}
+                  alt={attachment?.name || 'Imagen adjunta'}
+                  className="max-h-56 max-w-full object-cover"
+                  loading="lazy"
+                />
+              </a>
+            ) : null}
+            {showCaption || !attachmentSrc ? (
+              <p className="text-[13px] leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
+                {message.body}
+              </p>
+            ) : null}
             <p
               className={clsx(
                 'mt-0.5 flex items-center justify-end gap-1 text-[10px] tabular-nums',
@@ -390,7 +495,13 @@ const ChatBubble = memo(function ChatBubble({
                     {formatMessageTime(message.created_at)}
                     {message.edited_at ? ' · editado' : ''}
                   </span>
-                  {isOutgoing ? <Check className="h-3 w-3 opacity-80" aria-hidden /> : null}
+                  {isOutgoing ? (
+                    message.read_at ? (
+                      <CheckCheck className="h-3.5 w-3.5 opacity-95" aria-label="Leído" />
+                    ) : (
+                      <Check className="h-3 w-3 opacity-80" aria-label="Enviado" />
+                    )
+                  ) : null}
                 </>
               )}
             </p>
@@ -490,35 +601,126 @@ function ChatComposer({
   conversationId,
   disabled,
   placeholder = 'Escribe un mensaje…',
+  quickReplies = [],
 }: {
   conversationId: number;
   disabled?: boolean;
   placeholder?: string;
+  quickReplies?: readonly string[];
 }) {
   const [body, setBody] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const sendMessage = useSendChatMessage();
   const toast = useToastOptional();
+  const { typingLabel, emitTyping } = useChatTyping(conversationId);
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const clearFile = () => {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleSend = () => {
     const trimmed = body.trim();
-    if (!trimmed || disabled) return;
+    if ((!trimmed && !file) || disabled) return;
+    const outgoingFile = file;
     setBody('');
-    void sendMessage.mutateAsync({ conversationId, body: trimmed }).catch((err) => {
-      toast?.error(toDisplayErrorMessage(err, 'No se pudo enviar el mensaje'));
-    });
+    clearFile();
+    emitTyping(false);
+    void sendMessage
+      .mutateAsync({ conversationId, body: trimmed, file: outgoingFile })
+      .catch((err) => {
+        toast?.error(toDisplayErrorMessage(err, 'No se pudo enviar el mensaje'));
+      });
   };
 
   return (
     <div className="shrink-0 border-t border-zinc-100/80 bg-transparent px-2 py-2 sm:bg-white sm:px-3 dark:border-zinc-800/80 dark:sm:bg-zinc-900">
-      <div className="flex w-full min-w-0 items-center gap-2">
+      {typingLabel ? (
+        <p className="mb-1.5 px-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+          {typingLabel}
+        </p>
+      ) : null}
+      {quickReplies.length > 0 ? (
+        <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {quickReplies.map((reply) => (
+            <button
+              key={reply}
+              type="button"
+              disabled={disabled}
+              onClick={() => setBody(reply)}
+              className="hover:border-brand/30 hover:bg-brand/5 shrink-0 rounded-full border border-zinc-200/80 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-300 dark:hover:text-white"
+            >
+              {reply.length > 42 ? `${reply.slice(0, 40)}…` : reply}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {previewUrl ? (
+        <div className="mb-2 flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-950/40">
+          <img src={previewUrl} alt="Vista previa" className="h-14 w-14 rounded-lg object-cover" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-zinc-700 dark:text-zinc-200">
+              {file?.name}
+            </p>
+            <p className="text-[10px] text-zinc-500">Se enviará con el mensaje</p>
+          </div>
+          <button
+            type="button"
+            onClick={clearFile}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-200/70 dark:hover:bg-zinc-800"
+            aria-label="Quitar imagen"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : null}
+      <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const next = e.target.files?.[0] ?? null;
+            if (!next) return;
+            if (next.size > 5 * 1024 * 1024) {
+              toast?.error('La imagen no puede superar 5 MB');
+              return;
+            }
+            setFile(next);
+          }}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          aria-label="Adjuntar imagen"
+        >
+          <ImagePlus className="h-4 w-4" />
+        </button>
         <textarea
           value={body}
           onChange={(e) => {
             setBody(e.target.value);
+            emitTyping(e.target.value.trim().length > 0);
           }}
           placeholder={placeholder}
           rows={1}
           disabled={disabled}
+          onBlur={() => emitTyping(false)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
@@ -536,7 +738,7 @@ function ChatComposer({
         <Button
           type="button"
           size="sm"
-          disabled={disabled || !body.trim()}
+          disabled={disabled || (!body.trim() && !file)}
           onClick={handleSend}
           className="h-10 w-10 shrink-0 rounded-full p-0"
           aria-label="Enviar mensaje"
@@ -560,6 +762,7 @@ const ConversationListItem = memo(function ConversationListItem({
   onSelect: () => void;
 }) {
   const expiryBadge = getExpiryBadgeInfo(item.days_remaining, alertDays);
+  const listTime = item.last_message_at ? formatListTime(item.last_message_at) : '';
 
   return (
     <button
@@ -572,31 +775,58 @@ const ConversationListItem = memo(function ConversationListItem({
           : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-            {item.member_name}
-          </p>
+      <div className="flex items-start gap-2.5">
+        <Avatar
+          src={item.member_avatar}
+          name={item.member_name}
+          size="sm"
+          className="mt-0.5 !h-9 !w-9 shrink-0 !text-[10px] !ring-1"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+              {item.member_name}
+            </p>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {listTime ? (
+                <span className="text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500">
+                  {listTime}
+                </span>
+              ) : null}
+              {item.unread_count > 0 ? (
+                <span className="nav-badge brand-solid">
+                  {item.unread_count > 99 ? '99+' : item.unread_count}
+                </span>
+              ) : null}
+            </div>
+          </div>
           {item.member_cedula ? (
-            <p className="mt-0.5 truncate text-[10px] text-zinc-400 dark:text-zinc-300">
+            <p className="mt-0.5 truncate text-[10px] text-zinc-400 dark:text-zinc-500">
               {item.member_cedula}
+              {item.membership_name ? ` · ${item.membership_name}` : ''}
+            </p>
+          ) : item.membership_name ? (
+            <p className="mt-0.5 truncate text-[10px] text-zinc-400 dark:text-zinc-500">
+              {item.membership_name}
             </p>
           ) : null}
+          {item.last_message_preview ? (
+            <p
+              className={clsx(
+                'mt-1 truncate text-xs',
+                item.unread_count > 0
+                  ? 'font-medium text-zinc-700 dark:text-zinc-200'
+                  : 'text-zinc-500 dark:text-zinc-400'
+              )}
+            >
+              {item.last_message_preview}
+            </p>
+          ) : null}
+          {expiryBadge ? (
+            <Badge className={clsx('mt-1.5', expiryBadge.className)}>{expiryBadge.label}</Badge>
+          ) : null}
         </div>
-        {item.unread_count > 0 && (
-          <span className="nav-badge brand-solid shrink-0">
-            {item.unread_count > 99 ? '99+' : item.unread_count}
-          </span>
-        )}
       </div>
-      {item.last_message_preview && (
-        <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
-          {item.last_message_preview}
-        </p>
-      )}
-      {expiryBadge && (
-        <Badge className={clsx('mt-2', expiryBadge.className)}>{expiryBadge.label}</Badge>
-      )}
     </button>
   );
 });
@@ -607,6 +837,8 @@ function StaffChatView() {
   const { user } = useAuth();
   const toast = useToastOptional();
   const isTrainer = user?.role === 'trainer';
+  const isReception = user?.role === 'receptionist';
+  const isAdmin = user?.role === 'admin';
   const staffChannelLabel =
     user?.role && isChatStaffChannel(user.role) ? CHAT_CHANNEL_LABELS[user.role] : 'Staff';
   const staffSubtitle = isTrainer
@@ -616,21 +848,28 @@ function StaffChatView() {
   const adminStats = useAdminStatsOptional();
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
   const [search, setSearch] = useState('');
-  const [expiringOnly, setExpiringOnly] = useState(false);
+  const [listFilter, setListFilter] = useState<'all' | 'unread' | 'expiring'>('all');
+  const expiringOnly = listFilter === 'expiring';
+  const unreadOnly = listFilter === 'unread';
   const [listPage, setListPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<ChatConversationListItem | null>(null);
   const [showChatOnMobile, setShowChatOnMobile] = useState(false);
   const [memberHits, setMemberHits] = useState<MemberChatOption[]>([]);
   const [memberHitsLoading, setMemberHitsLoading] = useState(false);
+  const [threadSearch, setThreadSearch] = useState('');
+  const [threadSearchOpen, setThreadSearchOpen] = useState(false);
   const openWithMember = useOpenChatWithMember();
   const markRead = useMarkChatRead();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
+  const quickReplies = quickRepliesForRole(user?.role);
 
   const memberParam = searchParams.get('member');
   const { data: conversationsPage, isPending: loadingList } = useChatConversationsQuery(
     search,
     expiringOnly,
+    unreadOnly,
     true,
     listPage,
     50
@@ -655,11 +894,11 @@ function StaffChatView() {
 
   useEffect(() => {
     setListPage(1);
-  }, [search, expiringOnly]);
+  }, [search, listFilter]);
 
   useEffect(() => {
     const q = debouncedSearch.trim();
-    if (q.length < 2 || expiringOnly) {
+    if (q.length < 2 || listFilter !== 'all') {
       setMemberHits([]);
       setMemberHitsLoading(false);
       return;
@@ -682,7 +921,7 @@ function StaffChatView() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, expiringOnly]);
+  }, [debouncedSearch, listFilter]);
 
   const startChatWithMember = useCallback(
     (memberId: number) => {
@@ -690,6 +929,7 @@ function StaffChatView() {
         .mutateAsync(memberId)
         .then((conversation) => {
           setSelectedId(conversation.id);
+          setSelectedSnapshot(conversation);
           setShowChatOnMobile(true);
           setSearch('');
           toast?.success('Chat abierto');
@@ -709,6 +949,8 @@ function StaffChatView() {
       .mutateAsync(memberId)
       .then((conversation) => {
         setSelectedId(conversation.id);
+        setSelectedSnapshot(conversation);
+        setShowChatOnMobile(true);
         setSearchParams({}, { replace: true });
       })
       .catch((err) => {
@@ -720,8 +962,15 @@ function StaffChatView() {
   useEffect(() => {
     if (selectedId == null && conversations.length > 0 && !memberParam) {
       setSelectedId(conversations[0].id);
+      setSelectedSnapshot(conversations[0]);
     }
   }, [conversations, selectedId, memberParam]);
+
+  useEffect(() => {
+    if (selectedId == null) return;
+    const fromList = conversations.find((c) => c.id === selectedId);
+    if (fromList) setSelectedSnapshot(fromList);
+  }, [conversations, selectedId]);
 
   useEffect(() => {
     if (selectedId != null) {
@@ -729,10 +978,28 @@ function StaffChatView() {
     }
   }, [selectedId]);
 
-  const selected = conversations.find((c) => c.id === selectedId) ?? null;
+  useEffect(() => {
+    setThreadSearch('');
+    setThreadSearchOpen(false);
+  }, [selectedId]);
+
+  const selected =
+    conversations.find((c) => c.id === selectedId) ??
+    (selectedSnapshot?.id === selectedId ? selectedSnapshot : null);
+
+  const staffMessages = messagesData?.messages ?? [];
+  const threadQuery = threadSearch.trim().toLowerCase();
+  const visibleStaffMessages = useMemo(() => {
+    if (!threadQuery) return staffMessages;
+    return staffMessages.filter((m) => m.body.toLowerCase().includes(threadQuery));
+  }, [staffMessages, threadQuery]);
+
+  const selectedExpiry = selected ? getExpiryBadgeInfo(selected.days_remaining, alertDays) : null;
 
   const handleSelectConversation = (id: number) => {
+    const item = conversations.find((c) => c.id === id) ?? null;
     setSelectedId(id);
+    if (item) setSelectedSnapshot(item);
     setShowChatOnMobile(true);
   };
 
@@ -749,16 +1016,20 @@ function StaffChatView() {
         <EmptyState
           compact
           icon={MessageSquare}
-          title={search.trim() ? 'Sin resultados' : 'Sin conversaciones'}
+          title={search.trim() || listFilter !== 'all' ? 'Sin resultados' : 'Sin conversaciones'}
           description={
             search.trim()
               ? 'No hay chats ni miembros que coincidan. Prueba otro nombre o cédula.'
-              : isTrainer
-                ? 'Aparecen cuando un cliente tuyo escribe o cuando abres el chat desde aquí buscando su nombre.'
-                : 'Busca un miembro arriba para iniciar un chat, o espera avisos automáticos.'
+              : listFilter === 'unread'
+                ? 'No hay mensajes sin leer en este canal.'
+                : listFilter === 'expiring'
+                  ? `Nadie por vencer en los próximos ${alertDays} días.`
+                  : isTrainer
+                    ? 'Aparecen cuando un cliente tuyo escribe o cuando abres el chat desde aquí buscando su nombre.'
+                    : 'Busca un miembro arriba para iniciar un chat, o espera avisos automáticos.'
           }
           action={
-            isTrainer && !search.trim() ? (
+            isTrainer && !search.trim() && listFilter === 'all' ? (
               <Button
                 size="sm"
                 variant="secondary"
@@ -841,71 +1112,241 @@ function StaffChatView() {
           <span className="hidden sm:inline">Solo clientes con rutina asignada por ti</span>
         </p>
       ) : null}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <SearchInput
-          containerClassName="min-w-0 flex-1"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-          }}
-          placeholder={isTrainer ? 'Buscar cliente…' : 'Buscar miembro…'}
-        />
-        <FilterChips
-          className="w-fit max-w-full shrink-0"
-          options={[
-            { value: '', label: 'Todos' },
-            { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-          ]}
-          value={expiringOnly ? 'expiring' : ''}
-          onChange={(v) => setExpiringOnly(v === 'expiring')}
-        />
-      </div>
+      <SearchInput
+        containerClassName="min-w-0 w-full"
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+        }}
+        placeholder={isTrainer ? 'Buscar cliente…' : 'Buscar miembro…'}
+      />
+      <FilterChips
+        className="w-fit max-w-full"
+        options={[
+          { value: 'all', label: 'Todos' },
+          { value: 'unread', label: 'No leídos' },
+          { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+        ]}
+        value={listFilter}
+        onChange={(v) => setListFilter((v as 'all' | 'unread' | 'expiring') || 'all')}
+      />
     </div>
   );
 
-  const staffMessages = messagesData?.messages ?? [];
+  const contextRail =
+    selected && selected.member_id > 0 ? (
+      <div className="hidden min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 xl:flex dark:border-zinc-800/80 dark:bg-zinc-900/50">
+        <div className="shrink-0 border-b border-zinc-100/80 px-3 py-3 dark:border-zinc-800/80">
+          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            Contexto
+          </p>
+        </div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <Avatar src={selected.member_avatar} name={selected.member_name} size="lg" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                {selected.member_name}
+              </p>
+              {selected.member_cedula ? (
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {selected.member_cedula}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <div className="space-y-2 rounded-xl bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+            <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Membresía
+            </p>
+            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+              {selected.membership_name ?? 'Sin plan activo'}
+            </p>
+            {selectedExpiry ? (
+              <Badge className={selectedExpiry.className}>{selectedExpiry.label}</Badge>
+            ) : selected.days_remaining != null ? (
+              <p className="text-xs text-zinc-500">{selected.days_remaining} días restantes</p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <p className="px-0.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Atajos
+            </p>
+            {(isAdmin || isReception) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() =>
+                  navigate(
+                    `/members?q=${encodeURIComponent(selected.member_cedula || selected.member_name)}`
+                  )
+                }
+              >
+                <User className="h-3.5 w-3.5" />
+                Ver en miembros
+              </Button>
+            )}
+            {(isAdmin || isReception) && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() => navigate('/payments?status=pending')}
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                Ir a pagos
+              </Button>
+            )}
+            {isTrainer && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() => navigate(`/members/${selected.member_id}/routines`)}
+              >
+                <Dumbbell className="h-3.5 w-3.5" />
+                Ver rutinas
+              </Button>
+            )}
+            {isTrainer && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() =>
+                  navigate(`/routines?view=calendar&assign=1&member=${selected.member_id}`)
+                }
+              >
+                <Dumbbell className="h-3.5 w-3.5" />
+                Asignar rutina
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() => navigate(`/members/${selected.member_id}/history`)}
+              >
+                <User className="h-3.5 w-3.5" />
+                Historial
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div className="hidden min-h-0 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200/80 p-4 xl:flex dark:border-zinc-800">
+        <EmptyState
+          compact
+          icon={User}
+          title="Sin contexto"
+          description="Selecciona un chat para ver membresía y atajos."
+          className="border-0 bg-transparent p-0 shadow-none"
+        />
+      </div>
+    );
 
   const chatThread = selected ? (
     <>
-      <div className="flex shrink-0 items-center gap-2 border-b border-zinc-100/80 px-2 py-2 sm:px-3 dark:border-zinc-800/80">
-        <button
-          type="button"
-          onClick={handleBackToList}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 md:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
-          aria-label="Volver a conversaciones"
-        >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+      <div className="flex shrink-0 flex-col gap-2 border-b border-zinc-100/80 px-2 py-2 sm:px-3 dark:border-zinc-800/80">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBackToList}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 md:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+            aria-label="Volver a conversaciones"
           >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-            {selected.member_name}
-          </p>
-          {selected.member_cedula ? (
-            <p className="hidden truncate text-[10px] text-zinc-500 sm:block dark:text-zinc-400">
-              {selected.member_cedula}
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <Avatar
+            src={selected.member_avatar}
+            name={selected.member_name}
+            size="sm"
+            className="!h-8 !w-8 shrink-0 !text-[10px] !ring-1"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+              {selected.member_name}
             </p>
-          ) : null}
+            <p className="hidden truncate text-[10px] text-zinc-500 sm:block dark:text-zinc-400">
+              {[selected.member_cedula, selected.membership_name].filter(Boolean).join(' · ') ||
+                'Miembro'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setThreadSearchOpen((open) => !open)}
+            className={clsx(
+              'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+              threadSearchOpen
+                ? 'bg-brand/10 text-brand'
+                : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+            )}
+            aria-label="Buscar en la conversación"
+            aria-pressed={threadSearchOpen}
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
+        {threadSearchOpen ? (
+          <SearchInput
+            containerClassName="w-full"
+            value={threadSearch}
+            onChange={(e) => setThreadSearch(e.target.value)}
+            placeholder="Buscar en este chat…"
+            autoFocus
+          />
+        ) : null}
+        {threadQuery && (
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+            {visibleStaffMessages.length === 0
+              ? 'Sin coincidencias'
+              : `${visibleStaffMessages.length} mensaje${visibleStaffMessages.length !== 1 ? 's' : ''}`}
+          </p>
+        )}
       </div>
       <div className="relative min-h-0 flex-1">
         {loadingMessages && !messagesData ? (
           <ChatBubbleSkeleton />
+        ) : staffMessages.length === 0 ? (
+          <div className="flex h-full items-center justify-center p-4">
+            <EmptyState
+              compact
+              variant="motivational"
+              icon={MessageSquare}
+              title={`Escribe a ${selected.member_name.split(' ')[0] || 'este miembro'}`}
+              description="Aún no hay mensajes en este chat. Envía el primero o usa una respuesta rápida."
+              className="border-0 bg-transparent p-0 shadow-none"
+            />
+          </div>
+        ) : visibleStaffMessages.length === 0 ? (
+          <div className="flex h-full items-center justify-center p-4">
+            <EmptyState
+              compact
+              icon={Search}
+              title="Sin coincidencias"
+              description="Prueba otra palabra o limpia la búsqueda."
+              className="border-0 bg-transparent p-0 shadow-none"
+            />
+          </div>
         ) : (
           <Virtuoso
             ref={virtuosoRef}
             style={{ height: '100%', width: '100%' }}
             className="absolute inset-0"
-            data={staffMessages}
+            data={visibleStaffMessages}
             itemContent={(index, message) => {
-              const prev = staffMessages[index - 1];
+              const prev = visibleStaffMessages[index - 1];
               const showDay = !prev || !sameCalendarDay(prev.created_at, message.created_at);
               return (
                 <div className="px-2.5 pt-1 sm:px-3">
@@ -914,11 +1355,11 @@ function StaffChatView() {
                 </div>
               );
             }}
-            followOutput="smooth"
+            followOutput={threadQuery ? false : 'smooth'}
           />
         )}
       </div>
-      <ChatComposer conversationId={selected.id} />
+      <ChatComposer conversationId={selected.id} quickReplies={quickReplies} />
     </>
   ) : (
     <div className="flex flex-1 flex-col items-center justify-center p-4">
@@ -926,7 +1367,7 @@ function StaffChatView() {
         compact
         icon={MessageSquare}
         title="Selecciona una conversación"
-        description="Elige un miembro de la lista."
+        description="Elige un miembro de la lista para chatear."
         className="border-0 bg-transparent p-0 shadow-none"
       />
     </div>
@@ -935,8 +1376,7 @@ function StaffChatView() {
   const threadOpenOnMobile = showChatOnMobile && selected != null;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      {/* —— Móvil: lista con scroll de página (sin Virtuoso / sin altura 0) —— */}
+    <div className="page-stack-tight mx-auto w-full max-w-[90rem]">
       <div className={clsx('space-y-3 md:hidden', threadOpenOnMobile && 'hidden')}>
         <PageHeader
           compact
@@ -952,14 +1392,12 @@ function StaffChatView() {
         <div className="space-y-0.5 pb-2">{renderConversationListBody()}</div>
       </div>
 
-      {/* —— Móvil: hilo a pantalla útil —— */}
       {threadOpenOnMobile ? (
         <div className="staff-chat-mobile-thread flex flex-col overflow-hidden md:hidden">
           {chatThread}
         </div>
       ) : null}
 
-      {/* —— Tablet / escritorio: dos paneles —— */}
       <div className="hidden md:block">
         <PageHeader
           compact
@@ -971,7 +1409,7 @@ function StaffChatView() {
           subtitle={staffSubtitle}
           action={<BackToDashboardLink />}
         />
-        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
+        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
           <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
             <div className="shrink-0 space-y-2 border-b border-zinc-100/80 p-3 dark:border-zinc-800/80">
               {listToolbar}
@@ -983,6 +1421,7 @@ function StaffChatView() {
           <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
             {chatThread}
           </div>
+          {contextRail}
         </div>
       </div>
     </div>
@@ -1014,6 +1453,52 @@ const MEMBER_CHANNEL_META: Record<
     emptyDescription: 'Aquí verás avisos de rutinas y podrás escribirle a tu entrenador.',
   },
 };
+
+function MemberChannelButton({
+  channel,
+  item,
+  selected,
+  onSelect,
+}: {
+  channel: ChatStaffChannel;
+  item: ChatConversationListItem | undefined;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const meta = MEMBER_CHANNEL_META[channel];
+  const unread = item?.unread_count ?? 0;
+  const listTime = item?.last_message_at ? formatListTime(item.last_message_at) : '';
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={clsx(
+        'flex w-full items-start justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        selected
+          ? 'border-brand/40 bg-brand/5'
+          : 'hover:border-brand/30 hover:bg-brand/5 dark:hover:border-brand/40 border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900/60'
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+            {CHAT_CHANNEL_LABELS[channel]}
+          </p>
+          {listTime ? (
+            <span className="shrink-0 text-[10px] text-zinc-400 tabular-nums">{listTime}</span>
+          ) : null}
+        </div>
+        <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+          {item?.last_message_preview?.trim() || meta.description}
+        </p>
+      </div>
+      {unread > 0 ? (
+        <span className="nav-badge brand-solid shrink-0">{unread > 99 ? '99+' : unread}</span>
+      ) : null}
+    </button>
+  );
+}
 
 function MemberChatView() {
   usePageTitle('Mensajes');
@@ -1109,6 +1594,82 @@ function MemberChatView() {
     setActiveConversation(null);
   };
 
+  const channelList = (
+    <div className="flex flex-col gap-2">
+      {MEMBER_CHANNEL_ORDER.map((channel) => (
+        <MemberChannelButton
+          key={channel}
+          channel={channel}
+          item={conversationByChannel.get(channel)}
+          selected={selectedChannel === channel}
+          onSelect={() => openChannelView(channel)}
+        />
+      ))}
+    </div>
+  );
+
+  const renderThreadBody = (channel: ChatStaffChannel) => {
+    const meta = MEMBER_CHANNEL_META[channel];
+    const conversation = activeConversation;
+    const messages = messagesData?.messages ?? [];
+    const messageCount = messages.length;
+    const loadingThread = openingChannel || (conversation == null && openChannel.isPending);
+
+    if (loadingThread || (loadingMessages && !messagesData)) {
+      return <ChatBubbleSkeleton />;
+    }
+    if (conversation == null) {
+      return (
+        <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
+          <EmptyState
+            icon={MessageSquare}
+            title="No se pudo abrir el chat"
+            description="Vuelve a la lista de canales e inténtalo de nuevo."
+            action={
+              <Button size="sm" variant="secondary" onClick={backToChannels}>
+                Volver
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+    if (messages.length === 0) {
+      return (
+        <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
+          <EmptyState
+            variant="motivational"
+            icon={MessageSquare}
+            title={meta.emptyTitle}
+            description={meta.emptyDescription}
+            className="border-0 bg-transparent p-0 shadow-none"
+          />
+        </div>
+      );
+    }
+    return (
+      <Virtuoso
+        ref={virtuosoRef}
+        style={{ height: '100%' }}
+        data={messages}
+        alignToBottom
+        initialTopMostItemIndex={Math.max(0, messageCount - 1)}
+        itemContent={(index, message) => {
+          const prev = messages[index - 1];
+          const showDay = !prev || !sameCalendarDay(prev.created_at, message.created_at);
+          return (
+            <div className="px-3 pt-1.5 sm:px-3.5">
+              {showDay ? <DaySeparator iso={message.created_at} /> : null}
+              <ChatBubble message={message} conversationId={conversation.id} />
+            </div>
+          );
+        }}
+        followOutput="smooth"
+        className="h-full"
+      />
+    );
+  };
+
   if (isPending) {
     return (
       <div className="page-stack-tight" aria-busy="true" aria-label="Cargando mensajes">
@@ -1156,136 +1717,97 @@ function MemberChatView() {
     );
   }
 
-  if (!selectedChannel) {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 sm:gap-3 lg:max-w-4xl">
-        <PageHeader
-          compact
-          title={
-            <>
-              Mensajes <span className="text-brand">con el gym</span>
-            </>
-          }
-          subtitle="Elige el chat: recepción, administración o entrenador"
-          action={<BackToDashboardLink />}
-        />
-        <div className="flex flex-col gap-2 px-1 sm:px-0">
-          {MEMBER_CHANNEL_ORDER.map((channel) => {
-            const item = conversationByChannel.get(channel);
-            const meta = MEMBER_CHANNEL_META[channel];
-            const unread = item?.unread_count ?? 0;
-            return (
-              <button
-                key={channel}
-                type="button"
-                onClick={() => openChannelView(channel)}
-                className="hover:border-brand/30 hover:bg-brand/5 dark:hover:border-brand/40 flex w-full items-start justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white px-3.5 py-3 text-left transition-colors dark:border-zinc-800 dark:bg-zinc-900/60"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    {CHAT_CHANNEL_LABELS[channel]}
-                  </p>
-                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                    {item?.last_message_preview?.trim() || meta.description}
-                  </p>
-                </div>
-                {unread > 0 ? (
-                  <span className="nav-badge brand-solid shrink-0">
-                    {unread > 99 ? '99+' : unread}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  const meta = MEMBER_CHANNEL_META[selectedChannel];
-  const conversation = activeConversation;
+  const meta = selectedChannel ? MEMBER_CHANNEL_META[selectedChannel] : null;
   const messages = messagesData?.messages ?? [];
   const messageCount = messages.length;
-  const loadingThread = openingChannel || (conversation == null && openChannel.isPending);
+  const loadingThread =
+    selectedChannel != null &&
+    (openingChannel || (activeConversation == null && openChannel.isPending));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 sm:gap-3 lg:max-w-4xl">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:gap-3">
       <PageHeader
         compact
         title={
-          <>
-            Chat con <span className="text-brand">{CHAT_CHANNEL_LABELS[selectedChannel]}</span>
-          </>
+          selectedChannel ? (
+            <>
+              Chat con <span className="text-brand">{CHAT_CHANNEL_LABELS[selectedChannel]}</span>
+            </>
+          ) : (
+            <>
+              Mensajes <span className="text-brand">con el gym</span>
+            </>
+          )
         }
         subtitle={
-          loadingMessages || loadingThread
-            ? undefined
-            : messageCount > 0
-              ? `${messageCount} mensaje${messageCount !== 1 ? 's' : ''}`
-              : meta.description
+          selectedChannel
+            ? loadingMessages || loadingThread
+              ? undefined
+              : messageCount > 0
+                ? `${messageCount} mensaje${messageCount !== 1 ? 's' : ''}`
+                : meta?.description
+            : 'Elige el chat: recepción, administración o entrenador'
         }
         action={
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={backToChannels}>
-              Canales
-            </Button>
+            {selectedChannel ? (
+              <Button size="sm" variant="secondary" className="lg:hidden" onClick={backToChannels}>
+                Canales
+              </Button>
+            ) : null}
             <BackToDashboardLink />
           </div>
         }
       />
 
-      <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden border-0 bg-transparent lg:rounded-2xl lg:border lg:border-zinc-200/60 lg:bg-gradient-to-b lg:from-zinc-50/90 lg:via-white/70 lg:to-zinc-50/50 dark:lg:border-zinc-800/70 dark:lg:from-zinc-950 dark:lg:via-zinc-950/85 dark:lg:to-zinc-900/40">
-        <div className="flex min-h-0 flex-1 flex-col">
-          {loadingThread || (loadingMessages && !messagesData) ? (
-            <ChatBubbleSkeleton />
-          ) : conversation == null ? (
-            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
+      {/* Móvil / tablet: un panel a la vez */}
+      <div className={clsx('lg:hidden', selectedChannel && 'hidden')}>{channelList}</div>
+
+      {selectedChannel ? (
+        <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden border-0 bg-transparent lg:hidden">
+          <div className="flex min-h-0 flex-1 flex-col">{renderThreadBody(selectedChannel)}</div>
+          {activeConversation != null ? (
+            <ChatComposer
+              conversationId={activeConversation.id}
+              placeholder={MEMBER_CHANNEL_META[selectedChannel].composer}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Escritorio: canales | hilo */}
+      <div className="member-chat-shell hidden min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+          <p className="px-2 py-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            Canales
+          </p>
+          {channelList}
+        </div>
+        <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/60 bg-gradient-to-b from-zinc-50/90 via-white/70 to-zinc-50/50 dark:border-zinc-800/70 dark:from-zinc-950 dark:via-zinc-950/85 dark:to-zinc-900/40">
+          {selectedChannel ? (
+            <>
+              <div className="flex min-h-0 flex-1 flex-col">
+                {renderThreadBody(selectedChannel)}
+              </div>
+              {activeConversation != null ? (
+                <ChatComposer
+                  conversationId={activeConversation.id}
+                  placeholder={MEMBER_CHANNEL_META[selectedChannel].composer}
+                />
+              ) : null}
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-6">
               <EmptyState
+                compact
                 icon={MessageSquare}
-                title="No se pudo abrir el chat"
-                description="Vuelve a la lista de canales e inténtalo de nuevo."
-                action={
-                  <Button size="sm" variant="secondary" onClick={backToChannels}>
-                    Volver
-                  </Button>
-                }
-              />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
-              <EmptyState
-                variant="motivational"
-                icon={MessageSquare}
-                title={meta.emptyTitle}
-                description={meta.emptyDescription}
+                title="Elige un canal"
+                description="Recepción, administración o entrenador — cada uno es un chat aparte."
                 className="border-0 bg-transparent p-0 shadow-none"
               />
             </div>
-          ) : (
-            <Virtuoso
-              ref={virtuosoRef}
-              style={{ height: '100%' }}
-              data={messages}
-              alignToBottom
-              initialTopMostItemIndex={Math.max(0, messageCount - 1)}
-              itemContent={(index, message) => {
-                const prev = messages[index - 1];
-                const showDay = !prev || !sameCalendarDay(prev.created_at, message.created_at);
-                return (
-                  <div className="px-3 pt-1.5 sm:px-3.5">
-                    {showDay ? <DaySeparator iso={message.created_at} /> : null}
-                    <ChatBubble message={message} conversationId={conversation.id} />
-                  </div>
-                );
-              }}
-              followOutput="smooth"
-              className="h-full"
-            />
           )}
         </div>
-        {conversation != null ? (
-          <ChatComposer conversationId={conversation.id} placeholder={meta.composer} />
-        ) : null}
       </div>
     </div>
   );

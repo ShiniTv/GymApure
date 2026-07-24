@@ -70,6 +70,7 @@ export interface ChatConversationListItem {
   channel_label: string;
   member_name: string;
   member_cedula: string;
+  member_avatar: string | null;
   last_message_at: string;
   last_message_preview: string | null;
   last_message_kind: ChatMessageKind | null;

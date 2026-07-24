@@ -26,6 +26,7 @@ function mapConversationListItem(row: ChatConversationListItem): ChatConversatio
     member_id: toDbId(row.member_id),
     channel: row.channel,
     channel_label: row.channel_label || CHAT_CHANNEL_LABELS[row.channel],
+    member_avatar: row.member_avatar ?? null,
     unread_count: toDbId(row.unread_count),
     days_remaining: row.days_remaining != null ? toDbId(row.days_remaining) : null,
   };
@@ -43,6 +44,7 @@ const LIST_ITEM_SELECT = `
        END AS channel_label,
        u.full_name AS member_name,
        u.cedula AS member_cedula,
+       u.profile_image AS member_avatar,
        c.last_message_at::text AS last_message_at,
        lm.body AS last_message_preview,
        lm.kind AS last_message_kind,
@@ -152,6 +154,7 @@ export async function listStaffConversations(
     channel: ChatStaffChannel;
     trainerId?: number;
     expiringOnly?: boolean;
+    unreadOnly?: boolean;
     alertDays?: number;
     page?: number;
     pageSize?: number;
@@ -195,6 +198,15 @@ export async function listStaffConversations(
         AND s.status = 'active'
         AND s.end_date >= CURRENT_DATE
         AND s.end_date <= CURRENT_DATE + $${params.length}::int
+    )`);
+  }
+
+  if (options?.unreadOnly) {
+    conditions.push(`EXISTS (
+      SELECT 1 FROM chat_messages m
+      WHERE m.conversation_id = c.id
+        AND m.read_at IS NULL
+        AND (m.sender_id IS NULL OR m.sender_id = c.member_id)
     )`);
   }
 

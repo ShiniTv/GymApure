@@ -10,8 +10,9 @@ const UPLOADS_ROOT = path.join(process.cwd(), 'uploads');
 const PROOFS_DIR = path.join(UPLOADS_ROOT, 'proofs');
 const VIDEOS_DIR = path.join(UPLOADS_ROOT, 'videos');
 const AVATARS_DIR = path.join(UPLOADS_ROOT, 'avatars');
+const CHAT_DIR = path.join(UPLOADS_ROOT, 'chat');
 
-for (const dir of [UPLOADS_ROOT, PROOFS_DIR, VIDEOS_DIR, AVATARS_DIR]) {
+for (const dir of [UPLOADS_ROOT, PROOFS_DIR, VIDEOS_DIR, AVATARS_DIR, CHAT_DIR]) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -114,6 +115,13 @@ export const avatarUpload = multer({
 
 /** Meal photo for AI analysis (memory only — not persisted). */
 export const foodImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: avatarFilter,
+});
+
+/** Chat image attachment (memory — stored via chat/attachments helper). */
+export const chatAttachmentUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: avatarFilter,

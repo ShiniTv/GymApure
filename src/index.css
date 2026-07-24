@@ -43,6 +43,18 @@
   .animate-page-enter {
     animation: page-enter 0.2s ease-out;
   }
+
+  @keyframes auth-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* Base Styles */
@@ -478,7 +490,7 @@ body,
    * leaving only ~8px above — content still looked glued to the island.
    */
   /* Icon + label tabs: icon circle + caption + py */
-  --nav-pill-height: 4.25rem;
+  --nav-pill-height: 4.5rem;
   --nav-pad-below-pill: 0.5rem;
   --nav-clearance-above-pill: 1.25rem;
   --reception-nav-pill-height: var(--nav-pill-height);
@@ -617,6 +629,12 @@ html.member-has-workout-fab .offline-banner-above-nav {
   height: calc(100dvh - 10.5rem - 4.75rem - env(safe-area-inset-bottom, 0px));
 }
 
+.member-chat-shell {
+  --chat-top-chrome: 11rem;
+  height: calc(100dvh - var(--chat-top-chrome) - env(safe-area-inset-bottom, 0px));
+  min-height: 22rem;
+}
+
 @media (min-width: 640px) {
   .member-chat-panel {
     height: calc(100dvh - 11rem - 4.75rem - env(safe-area-inset-bottom, 0px));
@@ -709,6 +727,15 @@ html.member-has-workout-fab .member-chat-panel {
   .trainer-main-pad .staff-chat-shell,
   .admin-main-pad .staff-chat-shell {
     height: calc(100dvh - 12rem);
+  }
+
+  .member-chat-shell {
+    --chat-top-chrome: 11.5rem;
+    height: calc(100dvh - 11.5rem);
+  }
+
+  .member-chat-shell .member-chat-panel {
+    height: 100%;
   }
 }
 
