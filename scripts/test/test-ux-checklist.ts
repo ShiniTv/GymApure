@@ -17,8 +17,11 @@ const TRAINER_EMAIL = 'trainer@gym.com';
 const UX_RESET_PASSWORD = 'UxResetTest123!';
 
 let cookie = '';
+let csrfToken = '';
 let passed = 0;
 let failed = 0;
+
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function ok(name: string, cond: boolean, detail?: string) {
   if (cond) {
@@ -31,12 +34,16 @@ function ok(name: string, cond: boolean, detail?: string) {
 }
 
 async function api(method: string, path: string, body?: unknown) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(cookie ? { Cookie: cookie } : {}),
+  };
+  if (csrfToken && MUTATING_METHODS.has(method)) {
+    headers['x-csrf-token'] = csrfToken;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
@@ -46,12 +53,36 @@ async function api(method: string, path: string, body?: unknown) {
 function saveCookie(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const fromArr = cookies.find((c) => c.startsWith('token='));
-  if (fromArr) cookie = fromArr.split(';')[0];
+  if (!cookies.length) return;
+
+  const jar = new Map<string, string>();
+  for (const part of cookie.split('; ').filter(Boolean)) {
+    const eq = part.indexOf('=');
+    if (eq > 0) jar.set(part.slice(0, eq), part.slice(eq + 1));
+  }
+
+  for (const entry of cookies) {
+    const first = entry.split(';')[0];
+    const eq = first.indexOf('=');
+    if (eq <= 0) continue;
+    const name = first.slice(0, eq);
+    const value = first.slice(eq + 1);
+    if (name !== 'token' && name !== 'csrf_token') continue;
+    if (!value) {
+      jar.delete(name);
+      if (name === 'csrf_token') csrfToken = '';
+    } else {
+      jar.set(name, value);
+      if (name === 'csrf_token') csrfToken = decodeURIComponent(value);
+    }
+  }
+
+  cookie = [...jar.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
 }
 
 async function loginAs(email: string, password: string) {
   cookie = '';
+  csrfToken = '';
   const { res, data } = await api('POST', '/api/auth/login', { email, password });
   saveCookie(res);
   return { res, data };
@@ -203,9 +234,17 @@ async function main() {
     ok('sesión descartable creada para DELETE', typeof disposableSessionId === 'number');
     if (disposableSessionId) {
       const del = await api('DELETE', `/api/workouts/sessions/${disposableSessionId}`);
-      ok('member DELETE /api/workouts/sessions/:id → 200', del.res.status === 200);
+      ok(
+        'member DELETE /api/workouts/sessions/:id → 200',
+        del.res.status === 200,
+        `status=${del.res.status} body=${JSON.stringify(del.data)}`
+      );
       const delAgain = await api('DELETE', `/api/workouts/sessions/${disposableSessionId}`);
-      ok('DELETE sesión inexistente → 404', delAgain.res.status === 404);
+      ok(
+        'DELETE sesión inexistente → 404',
+        delAgain.res.status === 404,
+        `status=${delAgain.res.status} body=${JSON.stringify(delAgain.data)}`
+      );
     }
   } else {
     ok('sesión descartable creada para DELETE', false, 'miembro sin rutina asignada');
