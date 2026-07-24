@@ -27,8 +27,8 @@ Opcional: [GitHub CLI](https://cli.github.com/) (`gh`) para PRs desde terminal.
 
 ````powershell
 # 1. Clonar
-git clone https://github.com/ShiniTv/caribean-gym.git
-cd caribean-gym
+git clone https://github.com/ShiniTv/GymApure.git
+cd GymApure
 
 # 2. Dependencias
 npm install
@@ -51,8 +51,8 @@ Abrir: **http://localhost:3000**
 ### Mac / Linux
 
 ```bash
-git clone https://github.com/ShiniTv/caribean-gym.git
-cd caribean-gym
+git clone https://github.com/ShiniTv/GymApure.git
+cd GymApure
 npm install
 npm run env:init
 npm run env:configure-dev -- <password>
@@ -274,13 +274,14 @@ caribean-gym/
 ├── supabase/migrations/   # SQL versionado (npm run db:migrate)
 ├── scripts/
 │   ├── db/                # Migraciones, reset, admin, entorno dev/prod
-│   ├── test/              # Checklists e integración API
+│   ├── test/              # Checklists e integración API (dominios activos)
 │   ├── deploy/            # Preflight, Lighthouse, bundle baseline
 │   ├── dev/               # run-with-env, utilidades locales
 │   ├── lib/               # Helpers compartidos (supabase-refs, auth tests)
-│   └── _archive/          # Legacy (sprints, SQLite)
+│   └── _archive/          # Legacy (sprint 1–3, SQLite) — ver README
+├── archive/               # Histórico versionado (+ evidencia UX local ignorada)
 ├── tests/ux/              # Playwright E2E
-└── docs/                  # Documentación (índice: docs/README.md)
+└── docs/                  # Documentación (índice: docs/README.md; QA en docs/qa/)
 ```
 
 **Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`, ref `sqjyxmbtgmiorckigrrg`); producción = **GymApure – Producción** (Render + `.env.prod`, ref `ffjwvlcwhyskddqqojnp`).
@@ -398,11 +399,11 @@ Resumen:
 
 ## 11. Documentación relacionada
 
-| Documento                                          | Contenido                                 |
-| -------------------------------------------------- | ----------------------------------------- |
-| [DEPLOY.md](./DEPLOY.md)                           | Producción: Supabase + Render + checklist |
-| [TESTING.md](./TESTING.md)                         | Pruebas, CI, datos demo                   |
-| [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md) | Revisión manual de UI                     |
+| Documento                                             | Contenido                                 |
+| ----------------------------------------------------- | ----------------------------------------- |
+| [DEPLOY.md](./DEPLOY.md)                              | Producción: Supabase + Render + checklist |
+| [TESTING.md](./TESTING.md)                            | Pruebas, CI, datos demo                   |
+| [QA-VISUAL-CHECKLIST.md](./qa/QA-VISUAL-CHECKLIST.md) | Revisión manual de UI                     |
 
 Tokens de diseño en código: `src/index.css`, `src/lib/typography.ts`, `src/components/ui/`.
 

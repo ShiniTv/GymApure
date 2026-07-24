@@ -62,8 +62,12 @@
 | [DESARROLLO.md](./DESARROLLO.md)                                             | Flujo diario de desarrollo, comandos, convenciones |
 | [DEPLOY.md](./DEPLOY.md)                                                     | Despliegue Render + Supabase producción            |
 | [TESTING.md](./TESTING.md)                                                   | Tests automatizados y CI                           |
-| [UX-QA.md](./UX-QA.md)                                                       | Matriz UX manual por rol/viewport                  |
-| [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md)                           | Checklist visual pre-release                       |
+| [UX-QA.md](./qa/UX-QA.md)                                                    | Matriz UX manual por rol/viewport                  |
+| [QA-VISUAL-CHECKLIST.md](./qa/QA-VISUAL-CHECKLIST.md)                        | Checklist visual pre-release                       |
+| [QA-DEVICE-10.md](./qa/QA-DEVICE-10.md)                                      | Checklist PWA / push en dispositivo real           |
+| [SMOKE-CHECKLIST-ROLES.md](./qa/SMOKE-CHECKLIST-ROLES.md)                    | Smoke manual por rol post-UI                       |
+| [MAPA-CARPETAS.md](./MAPA-CARPETAS.md)                                       | Mapa de carpetas del monorepo                      |
+| [tecnico/INVENTARIO-REPO.md](./tecnico/INVENTARIO-REPO.md)                   | Inventario de higiene del repositorio              |
 
 ---
 
@@ -75,9 +79,11 @@
 | `scripts/db/`          | Migraciones, reset, admin, entorno dev/prod |
 | `scripts/test/`        | Checklists e integración API                |
 | `scripts/deploy/`      | Preflight, Lighthouse, bundle baseline      |
+| `scripts/_archive/`    | Legacy (sprint 1–3, SQLite)                 |
+| `archive/`             | Histórico versionado + evidencia local      |
 | `supabase/migrations/` | Esquema SQL (fuente de verdad)              |
 | `tests/ux/`            | Playwright E2E                              |
-| `docs/`                | Esta documentación                          |
+| `docs/`                | Esta documentación (`qa/`, `manual/`, …)    |
 
 ---
 
@@ -103,19 +109,20 @@ npm run dev                               # servidor local con .env.dev
 
 ## Cuándo actualizar la documentación
 
-| Cambio en el código             | Actualizar                                            |
-| ------------------------------- | ----------------------------------------------------- |
-| Nueva migración SQL             | `tecnico/MIGRACIONES-Y-BD.md` + sección en DESARROLLO |
-| Nueva ruta o cambio de permisos | `DESARROLLO.md` §6 + manual del rol afectado          |
-| Nuevo módulo visible en UI      | `docs/modulos/` + manual admin si aplica              |
-| Cambio en nav móvil o layout    | `modulos/MOVIL-Y-PWA.md` + `QA-VISUAL-CHECKLIST.md`   |
-| Nueva variable de entorno       | `tecnico/VARIABLES-ENTORNO.md` + `.env.example`       |
-| Nuevo script npm                | `DESARROLLO.md` §5 + `TESTING.md` si es test          |
+| Cambio en el código             | Actualizar                                             |
+| ------------------------------- | ------------------------------------------------------ |
+| Nueva migración SQL             | `tecnico/MIGRACIONES-Y-BD.md` + sección en DESARROLLO  |
+| Nueva ruta o cambio de permisos | `DESARROLLO.md` §6 + manual del rol afectado           |
+| Nuevo módulo visible en UI      | `docs/modulos/` + manual admin si aplica               |
+| Cambio en nav móvil o layout    | `modulos/MOVIL-Y-PWA.md` + `qa/QA-VISUAL-CHECKLIST.md` |
+| Nueva variable de entorno       | `tecnico/VARIABLES-ENTORNO.md` + `.env.example`        |
+| Nuevo script npm                | `DESARROLLO.md` §5 + `TESTING.md` si es test           |
 
 ---
 
 ## Changelog de documentación
 
-| Fecha      | Cambios                                                                                          |
-| ---------- | ------------------------------------------------------------------------------------------------ |
-| 2026-07-09 | Estructura híbrida: manuales por rol, módulos, anexos técnicos, sincronización con código v2.5.0 |
+| Fecha      | Cambios                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| 2026-07-24 | Higiene repo: `docs/qa/`, mapa de carpetas, inventario, archivo histórico; dominios sprint 4–6 → `scripts/test/` |
+| 2026-07-09 | Estructura híbrida: manuales por rol, módulos, anexos técnicos, sincronización con código v2.5.0                 |

@@ -62,4 +62,4 @@ npm run test:classes-checklist
 - [Manual cliente](../manual/MANUAL-CLIENTE.md)
 - [Manual recepción](../manual/MANUAL-RECEPCION.md)
 - [Manual entrenador](../manual/MANUAL-ENTRENADOR.md)
-- [Smoke checklist roles](../SMOKE-CHECKLIST-ROLES.md)
+- [Smoke checklist roles](../qa/SMOKE-CHECKLIST-ROLES.md)

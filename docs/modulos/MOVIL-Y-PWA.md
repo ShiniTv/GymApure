@@ -94,7 +94,7 @@ Tras rotar claves VAPID, la app intenta re-suscribirse sola si el permiso sigue 
 
 ### Checklist QA en dispositivo real
 
-Usar build de producción (o preview `npm run build && npm run preview`) con VAPID configurado. Marcar en [UX-QA](../UX-QA.md) al cerrar.
+Usar build de producción (o preview `npm run build && npm run preview`) con VAPID configurado. Marcar en [UX-QA](../qa/UX-QA.md) al cerrar.
 
 **Android (Chrome)**
 
@@ -152,6 +152,6 @@ npm run test:ux:browser
 
 ## Enlaces
 
-- [UX-QA](../UX-QA.md)
-- [QA visual](../QA-VISUAL-CHECKLIST.md)
+- [UX-QA](../qa/UX-QA.md)
+- [QA visual](../qa/QA-VISUAL-CHECKLIST.md)
 - [Manual cliente](../manual/MANUAL-CLIENTE.md)

@@ -188,4 +188,4 @@ Antes de cleanup en producción:
 2. `npm run db:audit-storage:prod` y revisar huérfanos antes de `db:storage-cleanup --apply`.
 3. Despliegue Render solo tras merge + checklist de release (`scripts/deploy/release-checklist.ts`).
 
-Device QA push/PWA (Android bg / iPhone Add to Home) sigue en [QA-DEVICE-10.md](../QA-DEVICE-10.md). Staging: [STAGING.md](./STAGING.md).
+Device QA push/PWA (Android bg / iPhone Add to Home) sigue en [QA-DEVICE-10.md](../qa/QA-DEVICE-10.md). Staging: [STAGING.md](./STAGING.md).

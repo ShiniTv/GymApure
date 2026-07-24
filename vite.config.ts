@@ -13,12 +13,16 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    visualizer({
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-      open: false,
-    }),
+    ...(process.env.ANALYZE === '1'
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            open: false,
+          }),
+        ]
+      : []),
     ...(sentryAuthToken && sentryOrg && sentryProject
       ? [
           sentryVitePlugin({

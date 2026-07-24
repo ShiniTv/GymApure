@@ -20,3 +20,6 @@ playwright-report/
 playwright/.cache/
 .lighthouse/
 supabase/.temp/
+# Evidencia local de auditorías UX (PNG/JSON voluminosos)
+.cursor/ux-audit-evidence/
+archive/ux-audit-evidence/
