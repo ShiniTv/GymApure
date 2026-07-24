@@ -9,7 +9,7 @@ import { cn } from '../../lib/utils';
 
 export function Table({ className, children, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+    <div className="border-border/80 bg-surface overflow-x-auto rounded-xl border">
       <table className={cn('w-full text-left text-sm', className)} {...props}>
         {children}
       </table>
@@ -23,13 +23,7 @@ export function TableHead({
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead
-      className={cn(
-        'border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/50',
-        className
-      )}
-      {...props}
-    >
+    <thead className={cn('border-border/80 bg-surface-raised/70 border-b', className)} {...props}>
       {children}
     </thead>
   );
@@ -41,7 +35,7 @@ export function TableBody({
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={cn('divide-y divide-zinc-100 dark:divide-zinc-800', className)} {...props}>
+    <tbody className={cn('divide-border/60 divide-y', className)} {...props}>
       {children}
     </tbody>
   );
@@ -49,10 +43,7 @@ export function TableBody({
 
 export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr
-      className={cn('transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30', className)}
-      {...props}
-    >
+    <tr className={cn('hover:bg-surface-raised/70 transition-colors', className)} {...props}>
       {children}
     </tr>
   );
@@ -105,8 +96,9 @@ export function DataCard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'w-full space-y-1.5 rounded-xl border border-zinc-200/70 bg-white/80 p-3 text-left transition-colors sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50',
-        onClick && 'cursor-pointer',
+        'border-border/80 bg-surface w-full space-y-1.5 rounded-xl border p-3 text-left transition-[background-color,border-color,transform] sm:p-4',
+        onClick &&
+          'hover:border-brand/25 hover:bg-surface-raised/70 cursor-pointer active:scale-[0.99]',
         className
       )}
     >

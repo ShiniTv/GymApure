@@ -96,7 +96,7 @@ export function MemberDetailPanel({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
               aria-label="Cerrar ficha"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -124,7 +124,7 @@ export function MemberDetailPanel({
         {metaRows.map((row) => (
           <div
             key={row.label}
-            className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
+            className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2"
           >
             <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
               {row.label}
@@ -155,7 +155,7 @@ export function MemberDetailPanel({
               <button
                 type="button"
                 onClick={() => run(action)}
-                className="flex min-h-[3.25rem] w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl bg-zinc-50 px-2 py-2 text-center text-zinc-700 transition-colors hover:bg-zinc-100 active:scale-[0.98] dark:bg-zinc-800/50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="border-border/60 bg-surface-raised/50 text-text-secondary hover:border-brand/30 hover:bg-surface-overlay flex min-h-[3.25rem] w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center transition-[background-color,border-color,transform] active:scale-[0.98]"
               >
                 <action.icon
                   className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400"
@@ -169,7 +169,7 @@ export function MemberDetailPanel({
       )}
 
       {danger.length > 0 && (
-        <div className="mt-3 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+        <div className="border-border/70 mt-3 border-t pt-2">
           {danger.map((action) => (
             <button
               key={action.key}

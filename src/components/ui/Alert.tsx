@@ -11,17 +11,21 @@ interface AlertProps {
 }
 
 const variantMap: Record<AlertVariant, string> = {
-  error: 'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-500',
-  success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-  warning: 'border-orange-500/20 bg-orange-500/10 text-orange-700 dark:text-orange-400',
-  info: 'border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  error: 'border-danger/25 bg-danger/10 text-danger',
+  success: 'border-success/25 bg-success/10 text-success',
+  warning: 'border-warning/30 bg-warning/10 text-warning',
+  info: 'border-brand/25 bg-brand/10 text-brand',
 };
 
 export function Alert({ variant = 'error', children, className, title }: AlertProps) {
   return (
     <div
       role="alert"
-      className={cn('rounded-xl border p-3 text-sm', variantMap[variant], className)}
+      className={cn(
+        'rounded-lg border p-3 text-sm leading-relaxed',
+        variantMap[variant],
+        className
+      )}
     >
       {title && <p className="mb-1 font-semibold">{title}</p>}
       {children}

@@ -69,17 +69,12 @@ export function MemberHero({
   return (
     <Card
       padding="md"
-      rounded="2xl"
+      rounded="xl"
       className={cn(
-        'from-brand/[0.04] dark:from-brand/[0.07] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
+        'from-brand/[0.05] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
         className
       )}
     >
-      <div
-        className="bg-brand/8 pointer-events-none absolute -top-16 -right-16 h-36 w-36 rounded-full blur-3xl"
-        aria-hidden
-      />
-
       <div className="relative flex items-start gap-5">
         <div className="min-w-0 flex-1">
           <p className="text-brand text-[11px] font-medium tracking-[0.16em] uppercase">

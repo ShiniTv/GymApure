@@ -81,7 +81,12 @@ async function startServer() {
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co'],
                 mediaSrc: ["'self'", 'blob:', 'https://*.supabase.co'],
-                connectSrc: ["'self'", 'https://*.supabase.co'],
+                connectSrc: [
+                  "'self'",
+                  'https://*.supabase.co',
+                  'https://*.ingest.sentry.io',
+                  'https://*.ingest.us.sentry.io',
+                ],
                 fontSrc: ["'self'", 'https://fonts.gstatic.com'],
                 frameSrc: ["'self'", 'https://www.youtube.com', 'https://www.youtube-nocookie.com'],
                 frameAncestors: ["'none'"],

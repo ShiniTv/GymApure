@@ -4,9 +4,11 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import { queryClient } from './lib/queryClient.ts';
 import { loadBaseFonts } from './lib/fonts.ts';
+import { startWebVitalsReporting } from './lib/webVitals.ts';
 import './index.css';
 
 loadBaseFonts();
+startWebVitalsReporting();
 
 const CHUNK_RELOAD_KEY = 'cg-chunk-reload';
 const CHUNK_ERROR_RE =

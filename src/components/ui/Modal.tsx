@@ -135,7 +135,7 @@ export function Modal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
         aria-label="Cerrar diálogo"
         onClick={onClose}
       />
@@ -148,11 +148,11 @@ export function Modal({
           aria-describedby={contentId}
           tabIndex={-1}
           className={cn(
-            'my-auto w-full rounded-sheet border border-border bg-surface shadow-elevated transition-all duration-200',
-            visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
+            'border-border/80 bg-surface my-auto w-full rounded-2xl border shadow-[0_24px_80px_rgb(0_0_0_/_0.28)] transition-all duration-200 dark:border-zinc-700/80',
+            visible ? 'scale-100 opacity-100' : 'scale-[0.98] opacity-0',
             scrollable
               ? 'flex max-h-[90dvh] flex-col overflow-hidden'
-              : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-ds-4 sm:p-ds-5',
+              : 'scroll-area p-ds-4 sm:p-ds-5 max-h-[calc(100dvh-3rem)] overflow-y-auto',
             maxWidthMap[maxWidth],
             className
           )}
@@ -160,19 +160,19 @@ export function Modal({
           <div
             className={cn(
               'flex shrink-0 items-center justify-between gap-3',
-              scrollable ? 'border-b border-border px-ds-4 py-3 sm:px-ds-5' : 'mb-4'
+              scrollable ? 'border-border/80 px-ds-4 sm:px-ds-5 border-b py-3' : 'mb-5'
             )}
           >
             <h2
               id={titleId}
-              className="font-display text-base font-bold tracking-[-0.02em] text-text sm:text-lg"
+              className="text-text text-base font-semibold tracking-[-0.025em] sm:text-lg"
             >
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-overlay hover:text-text"
+              className="text-text-secondary hover:bg-surface-overlay hover:text-text shrink-0 rounded-md p-2 transition-colors"
               aria-label="Cerrar"
             >
               <X className="h-5 w-5" />

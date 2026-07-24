@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
-import AuthBrandHeader from '../components/AuthBrandHeader';
+import AuthLinearHeader from '../components/AuthLinearHeader';
 import { Button, Card, Label, PasswordInput, Alert } from '../components/ui';
 
 export default function ResetPassword() {
@@ -49,15 +49,11 @@ export default function ResetPassword() {
   };
 
   return (
-    <AuthShell layout="split">
-      <Card
-        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
-        padding="md"
-      >
-        <AuthBrandHeader
-          subtitle="Nueva contraseña"
-          formHint="Elige una contraseña segura"
-          splitAware
+    <AuthShell aesthetic="linear">
+      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+        <AuthLinearHeader
+          title="Nueva contraseña"
+          subtitle="Elige una contraseña segura para tu cuenta."
         />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
@@ -65,37 +61,48 @@ export default function ResetPassword() {
           {success && <Alert variant="success">{success}</Alert>}
 
           <div>
-            <Label htmlFor="password">Nueva contraseña</Label>
+            <Label className="auth-linear-label" htmlFor="password">
+              Nueva contraseña
+            </Label>
             <PasswordInput
               id="password"
               name="password"
               autoComplete="new-password"
               required
+              className="auth-linear-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
           <div>
-            <Label htmlFor="confirm_password">Confirmar contraseña</Label>
+            <Label className="auth-linear-label" htmlFor="confirm_password">
+              Confirmar contraseña
+            </Label>
             <PasswordInput
               id="confirm_password"
               name="confirm_password"
               autoComplete="new-password"
               required
+              className="auth-linear-field"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
 
-          <Button type="submit" className="w-full" loading={loading} disabled={!!success || !token}>
+          <Button
+            type="submit"
+            className="auth-linear-primary w-full"
+            loading={loading}
+            disabled={!!success || !token}
+          >
             Guardar contraseña
           </Button>
         </form>
 
         <Link
           to="/login"
-          className="hover:text-brand mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors"
+          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio de sesión

@@ -19,7 +19,7 @@ import { routePrefetchHandlers } from '../../lib/routePrefetch';
 
 const TODAY_LIST_CAP = 5;
 
-const SURFACE = 'bg-surface dark:bg-surface';
+const SURFACE = 'border-border/80 bg-surface';
 
 function MetricCell({
   label,
@@ -178,7 +178,7 @@ function TodayPanel({
                       </Link>
                       <Link
                         to={`/messages?member=${m.id}`}
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                        className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
                         aria-label={`Mensaje a ${m.full_name}`}
                       >
                         <MessageSquare className="h-3.5 w-3.5" />

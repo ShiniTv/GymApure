@@ -29,6 +29,7 @@ function DesktopAuthMarketing() {
 }
 interface AuthShellProps {
   variant?: 'auth' | 'kiosk' | 'kiosk-fullscreen';
+  aesthetic?: 'default' | 'linear';
   /**
    * `split` = panel de marca en lg+ + formulario (login/register/forgot/reset).
    * `centered` = card centrada (kiosk / casos estrechos).
@@ -44,6 +45,7 @@ interface AuthShellProps {
 
 export default function AuthShell({
   variant = 'auth',
+  aesthetic = 'default',
   layout = 'centered',
   wide = false,
   children,
@@ -56,8 +58,9 @@ export default function AuthShell({
   const isFullscreen = variant === 'kiosk-fullscreen';
   const isLight = theme === 'light';
   const useSplit = layout === 'split' && !isKiosk;
+  const isLinear = aesthetic === 'linear';
 
-  const themeToggle = !isFullscreen && (
+  const themeToggle = !isFullscreen && !isLinear && (
     <button
       type="button"
       onClick={toggleTheme}
@@ -120,7 +123,15 @@ export default function AuthShell({
         </Link>
       )}
 
-      <div className={cn(contentMax, useSplit && 'animate-[auth-fade-in_450ms_ease-out]')}>
+      <div
+        className={cn(
+          contentMax,
+          useSplit &&
+            (isLinear
+              ? 'animate-[auth-fade-in_200ms_ease-out]'
+              : 'animate-[auth-fade-in_450ms_ease-out]')
+        )}
+      >
         {children}
         {footer && !isFullscreen && <div className="mt-6">{footer}</div>}
       </div>
@@ -132,12 +143,62 @@ export default function AuthShell({
       <div
         className={cn(
           'relative min-h-dvh overflow-hidden transition-colors duration-300',
-          'to-brand/[0.05] bg-gradient-to-br from-zinc-50 via-zinc-50',
-          'dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
+          isLinear
+            ? 'auth-linear bg-[#09090b] text-zinc-100'
+            : 'to-brand/[0.05] bg-gradient-to-br from-zinc-50 via-zinc-50 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
           className
         )}
       >
-        <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden" aria-hidden>
+        {isLinear ? (
+          <div className="auth-linear-grid" aria-hidden />
+        ) : (
+          <div
+            className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden"
+            aria-hidden
+          >
+            <div
+              className={cn(
+                'absolute top-[-10%] left-[-10%] rounded-full',
+                isLight
+                  ? 'bg-brand/20 h-[45%] w-[45%] blur-[140px]'
+                  : 'bg-brand/10 h-[40%] w-[40%] blur-[120px]'
+              )}
+            />
+            <div
+              className={cn(
+                'absolute right-[-10%] bottom-[-10%] rounded-full',
+                isLight
+                  ? 'bg-brand/20 h-[45%] w-[45%] blur-[140px]'
+                  : 'bg-brand/10 h-[40%] w-[40%] blur-[120px]'
+              )}
+            />
+          </div>
+        )}
+
+        <div className="relative grid min-h-dvh lg:grid-cols-2">
+          <DesktopAuthMarketing />
+          {formColumn}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'relative flex min-h-dvh flex-col overflow-hidden transition-colors duration-300',
+        isLinear
+          ? 'auth-linear bg-[#09090b] text-zinc-100'
+          : 'to-brand/[0.05] bg-gradient-to-br from-zinc-50 via-zinc-50 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
+        isFullscreen ? 'items-stretch justify-start p-0' : 'items-center justify-center p-4',
+        isKiosk && !isFullscreen ? 'py-8' : '',
+        className
+      )}
+    >
+      {isLinear ? (
+        <div className="auth-linear-grid" aria-hidden />
+      ) : (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
           <div
             className={cn(
               'absolute top-[-10%] left-[-10%] rounded-full',
@@ -154,51 +215,14 @@ export default function AuthShell({
                 : 'bg-brand/10 h-[40%] w-[40%] blur-[120px]'
             )}
           />
+          {isLight && (
+            <div className="bg-brand/[0.08] absolute top-1/2 left-1/2 h-[50%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[160px]" />
+          )}
+          {isFullscreen && (
+            <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 opacity-90 dark:from-zinc-950 dark:via-zinc-900 dark:to-black" />
+          )}
         </div>
-
-        <div className="relative grid min-h-dvh lg:grid-cols-2">
-          <DesktopAuthMarketing />
-          {formColumn}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        'relative flex min-h-dvh flex-col overflow-hidden transition-colors duration-300',
-        'to-brand/[0.05] bg-gradient-to-br from-zinc-50 via-zinc-50',
-        'dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
-        isFullscreen ? 'items-stretch justify-start p-0' : 'items-center justify-center p-4',
-        isKiosk && !isFullscreen ? 'py-8' : '',
-        className
       )}
-    >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div
-          className={cn(
-            'absolute top-[-10%] left-[-10%] rounded-full',
-            isLight
-              ? 'bg-brand/20 h-[45%] w-[45%] blur-[140px]'
-              : 'bg-brand/10 h-[40%] w-[40%] blur-[120px]'
-          )}
-        />
-        <div
-          className={cn(
-            'absolute right-[-10%] bottom-[-10%] rounded-full',
-            isLight
-              ? 'bg-brand/20 h-[45%] w-[45%] blur-[140px]'
-              : 'bg-brand/10 h-[40%] w-[40%] blur-[120px]'
-          )}
-        />
-        {isLight && (
-          <div className="bg-brand/[0.08] absolute top-1/2 left-1/2 h-[50%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[160px]" />
-        )}
-        {isFullscreen && (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 opacity-90 dark:from-zinc-950 dark:via-zinc-900 dark:to-black" />
-        )}
-      </div>
 
       {!isFullscreen && (
         <div className="absolute top-4 right-4 left-4 z-20 flex items-center justify-between gap-4">

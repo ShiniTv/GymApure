@@ -17,20 +17,20 @@ const paddingMap = {
   lg: 'p-ds-5 sm:p-ds-6',
 };
 
-/** Figma card ≈20px; sheet-scale for 3xl. xl/2xl share the card token. */
+/** Compact, layered surfaces keep dense operational views readable. */
 const roundedMap = {
-  xl: 'rounded-card',
-  '2xl': 'rounded-card',
-  '3xl': 'rounded-sheet',
+  xl: 'rounded-xl',
+  '2xl': 'rounded-2xl',
+  '3xl': 'rounded-2xl',
 };
 
-const surface = 'bg-surface border border-border/70';
-const surfaceSoft = cn(surface, 'shadow-card dark:border-transparent dark:shadow-none');
+const surface = 'border border-border/75 bg-surface';
+const surfaceSoft = cn(surface, 'shadow-xs dark:border-border/80 dark:shadow-none');
 
 /** Light keeps a soft edge; dark separates via surface on deep bg */
 const variantMap = {
   default: surfaceSoft,
-  elevated: cn(surface, 'shadow-elevated dark:border-transparent dark:bg-surface-raised'),
+  elevated: cn(surface, 'shadow-elevated dark:border-border/80 dark:bg-surface-raised'),
   interactive: cn(
     surfaceSoft,
     'transition-[box-shadow,border-color,transform,opacity] duration-200',
@@ -52,7 +52,13 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={cn(variantMap[variant], roundedMap[rounded], paddingMap[padding], 'min-w-0', className)}
+      className={cn(
+        variantMap[variant],
+        roundedMap[rounded],
+        paddingMap[padding],
+        'min-w-0',
+        className
+      )}
       {...props}
     >
       {children}

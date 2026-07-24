@@ -51,7 +51,7 @@ export function PaginationBar({
   const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-zinc-100 px-4 py-3 sm:px-6 dark:border-zinc-800">
+    <div className="border-border/70 flex items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
       <p className="min-w-0 truncate text-xs font-medium text-zinc-400 dark:text-zinc-300">
         {total} {label} · Página {page} de {totalPages}
       </p>
@@ -61,8 +61,8 @@ export function PaginationBar({
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
-            'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+            'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors',
+            'text-text-secondary hover:bg-surface-overlay',
             'disabled:pointer-events-none disabled:opacity-30'
           )}
           aria-label="Página anterior"
@@ -84,10 +84,10 @@ export function PaginationBar({
               type="button"
               onClick={() => onPageChange(p)}
               className={cn(
-                'flex h-9 min-w-9 items-center justify-center rounded-xl px-1.5 text-sm font-semibold transition-colors',
+                'flex h-9 min-w-9 items-center justify-center rounded-lg px-1.5 text-sm font-semibold transition-colors',
                 p === page
                   ? 'bg-brand text-white shadow-sm dark:text-zinc-900'
-                  : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                  : 'text-text-secondary hover:bg-surface-overlay'
               )}
               aria-label={`Página ${p}`}
               aria-current={p === page ? 'page' : undefined}
@@ -102,8 +102,8 @@ export function PaginationBar({
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
-            'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+            'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition-colors',
+            'text-text-secondary hover:bg-surface-overlay',
             'disabled:pointer-events-none disabled:opacity-30'
           )}
           aria-label="Página siguiente"

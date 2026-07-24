@@ -2,6 +2,7 @@ import { queryClient } from './queryClient';
 import { apiFetch, parseJsonResponse } from './api';
 import { membersQueryKey } from '../hooks/queries/useMembersQuery';
 import { paymentsQueryKey } from '../hooks/queries/usePaymentsQuery';
+import type { UserRole } from './roles';
 
 const prefetched = new Set<string>();
 const dataPrefetched = new Set<string>();
@@ -85,6 +86,75 @@ export function prefetchRoute(href: string): void {
     void loader();
   }
   prefetchRouteData(path);
+}
+
+function canPrefetchAfterLogin(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const connection = (
+    navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    }
+  ).connection;
+
+  return !connection?.saveData && !['slow-2g', '2g'].includes(connection?.effectiveType ?? '');
+}
+
+function prefetchRoleStats(role: UserRole, userId: number): void {
+  if (role === 'admin') {
+    void queryClient.prefetchQuery({
+      queryKey: ['admin-stats'],
+      queryFn: async () => {
+        const res = await apiFetch('/api/stats/admin');
+        return parseJsonResponse(res);
+      },
+      staleTime: 45_000,
+    });
+    return;
+  }
+
+  if (role === 'member') {
+    void queryClient.prefetchQuery({
+      queryKey: ['member-stats', userId],
+      queryFn: async () => {
+        const res = await apiFetch('/api/stats/member');
+        return parseJsonResponse(res);
+      },
+      staleTime: 60_000,
+    });
+    return;
+  }
+
+  if (role === 'receptionist') {
+    void queryClient.prefetchQuery({
+      queryKey: ['reception-stats'],
+      queryFn: async () => {
+        const res = await apiFetch('/api/stats/reception');
+        return parseJsonResponse(res);
+      },
+      staleTime: 20_000,
+    });
+  }
+}
+
+/**
+ * Starts the authenticated chrome, safe destination and role-owned dashboard data
+ * in parallel. It never blocks navigation and is skipped on constrained networks.
+ */
+export function prefetchPostLogin({
+  destination,
+  role,
+  userId,
+}: {
+  destination: string;
+  role: UserRole;
+  userId: number;
+}): void {
+  if (!canPrefetchAfterLogin()) return;
+
+  void import('../components/AuthenticatedShell');
+  void import('../components/Layout');
+  prefetchRoute(destination);
+  prefetchRoleStats(role, userId);
 }
 
 export function routePrefetchHandlers(href: string) {

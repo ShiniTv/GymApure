@@ -94,11 +94,11 @@ export function PaymentActionModals({
                 </option>
               ))}
             </Select>
-            <div className="flex gap-4">
+            <div className="border-border/70 mt-2 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="ghost"
-                className="flex-1"
+                className="sm:min-w-28"
                 disabled={approving}
                 onClick={onCloseApprove}
               >
@@ -106,7 +106,7 @@ export function PaymentActionModals({
               </Button>
               <Button
                 type="button"
-                className="flex-1 bg-emerald-600 shadow-emerald-900/20 hover:bg-emerald-500"
+                className="sm:min-w-28"
                 loading={approving}
                 disabled={!selectedPlanId || approving}
                 onClick={onApprove}

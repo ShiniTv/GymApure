@@ -97,11 +97,19 @@ export function MemberSelfCheckInCard() {
   const inside = Boolean(state?.is_inside);
 
   return (
-    <Card padding="md" rounded="xl">
+    <Card
+      padding="md"
+      rounded="xl"
+      className={inside ? 'border-success/30 bg-success/[0.035]' : undefined}
+    >
       <div className="flex items-center gap-3.5">
+        <span
+          className={`h-2 w-2 shrink-0 rounded-full ${inside ? 'bg-success shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-success)_15%,transparent)]' : 'bg-text-muted/60'}`}
+          aria-hidden
+        />
         <div className="min-w-0 flex-1">
           <p className="text-text text-sm leading-snug font-medium">
-            {inside ? 'Dentro del gym' : 'Asistencia'}
+            {inside ? 'Dentro del gym' : 'Registrar asistencia'}
           </p>
           <p className="text-text-secondary mt-1 truncate text-[11px] leading-relaxed">
             {inside ? (

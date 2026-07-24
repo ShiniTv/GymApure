@@ -10,7 +10,7 @@ interface LogoProps {
 }
 
 /** Misma escala en ambos temas — el asset claro ya tiene la proporción correcta. */
-const LOGO_SCALE = 'scale-[1.08]';
+const LOGO_SCALE = 'scale-[1.03]';
 
 export default function Logo({
   className = 'h-8 w-8',
@@ -23,7 +23,7 @@ export default function Logo({
   return (
     <span
       aria-hidden="true"
-      className={cn('inline-flex shrink-0 overflow-hidden rounded-full', className)}
+      className={cn('brand-logo inline-flex shrink-0 overflow-hidden rounded-full', className)}
     >
       <img
         src={getBrandLogoSrc(logoMode)}

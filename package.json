@@ -30,6 +30,7 @@
     "test:ux": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-ux-checklist.ts",
     "test:ux:browser": "playwright test",
     "test:ux:browser:ui": "playwright test --ui",
+    "test:ux:visual": "playwright test --grep=@visual",
     "test:ux:visual-gaps": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-ux-visual-gaps.ts",
     "test:memberships-checkin": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-memberships-checkin.ts",
     "test:payments-checklist": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-payments-checklist.ts",
@@ -146,9 +147,11 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "web-push": "^3.6.7",
+    "web-vitals": "^6.0.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.0.0",
     "@playwright/test": "^1.61.1",
     "@sentry/vite-plugin": "^5.3.0",

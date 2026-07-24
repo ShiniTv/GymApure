@@ -27,7 +27,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
         aria-describedby={error ? errorId : undefined}
         className={cn(
           fieldClassName,
-          'bg-white pr-3 pl-10 shadow-sm dark:bg-zinc-900',
+          'border-border/80 bg-surface hover:border-brand/25 pr-3 pl-10 shadow-none',
           error ? 'border-red-500' : undefined,
           className
         )}

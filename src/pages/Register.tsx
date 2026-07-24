@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { APP_HOME } from '../lib/roles';
 import { User, Mail, CreditCard, Phone } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
-import AuthBrandHeader from '../components/AuthBrandHeader';
+import AuthLinearHeader from '../components/AuthLinearHeader';
 import {
   Button,
   Card,
@@ -104,13 +104,9 @@ export default function Register() {
   };
 
   return (
-    <AuthShell layout="split" backLink={{ to: '/login', label: 'Volver al login' }}>
-      <Card className="page-stack mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0" padding="md">
-        <AuthBrandHeader
-          subtitle="Crea tu cuenta de miembro"
-          formHint="Registro en dos pasos"
-          splitAware
-        />
+    <AuthShell aesthetic="linear">
+      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+        <AuthLinearHeader title="Crea tu cuenta" subtitle="Completa tus datos para comenzar." />
 
         <ol
           className="mb-6 flex items-center gap-1 text-xs font-semibold"
@@ -122,10 +118,10 @@ export default function Register() {
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
                   i < step
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-zinc-100 text-zinc-900'
                     : i === step
-                      ? 'brand-solid'
-                      : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-300'
+                      ? 'border border-zinc-500 bg-zinc-800 text-zinc-100'
+                      : 'bg-zinc-800 text-zinc-500'
                 )}
                 aria-hidden
               >
@@ -134,7 +130,7 @@ export default function Register() {
               <span
                 className={cn(
                   'hidden truncate sm:inline',
-                  i === step ? 'text-brand dark:text-brand' : 'text-zinc-500'
+                  i === step ? 'text-zinc-100' : 'text-zinc-500'
                 )}
                 aria-current={i === step ? 'step' : undefined}
               >
@@ -144,7 +140,7 @@ export default function Register() {
                 <div
                   className={cn(
                     'mx-1 hidden h-px flex-1 sm:block',
-                    i < step ? 'bg-emerald-500/50' : 'bg-zinc-200 dark:bg-zinc-700'
+                    i < step ? 'bg-zinc-300/50' : 'bg-zinc-700'
                   )}
                   aria-hidden
                 />
@@ -173,7 +169,9 @@ export default function Register() {
           {step === 0 ? (
             <div className="form-stack">
               <div>
-                <Label htmlFor="full_name">Nombre completo</Label>
+                <Label className="auth-linear-label" htmlFor="full_name">
+                  Nombre completo
+                </Label>
                 <Input
                   id="full_name"
                   type="text"
@@ -181,6 +179,7 @@ export default function Register() {
                   autoComplete="name"
                   leadingIcon={<User />}
                   placeholder="Juan Pérez"
+                  className="auth-linear-field"
                   value={formData.full_name}
                   error={fieldErrors.full_name}
                   onChange={(e) => {
@@ -192,7 +191,9 @@ export default function Register() {
               </div>
 
               <div>
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label className="auth-linear-label" htmlFor="email">
+                  Correo electrónico
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -200,6 +201,7 @@ export default function Register() {
                   autoComplete="email"
                   leadingIcon={<Mail />}
                   placeholder="correo@ejemplo.com"
+                  className="auth-linear-field"
                   value={formData.email}
                   error={fieldErrors.email}
                   onChange={(e) => {
@@ -211,13 +213,16 @@ export default function Register() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="cedula">Cédula</Label>
+                  <Label className="auth-linear-label" htmlFor="cedula">
+                    Cédula
+                  </Label>
                   <CedulaInput
                     id="cedula"
                     required
                     leadingIcon={<CreditCard />}
                     value={formData.cedula}
                     error={fieldErrors.cedula}
+                    className="auth-linear-field"
                     onChange={(value) => {
                       setFormData({ ...formData, cedula: value });
                       if (fieldErrors.cedula) setFieldErrors((prev) => ({ ...prev, cedula: '' }));
@@ -228,7 +233,7 @@ export default function Register() {
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="phone">
+                  <Label className="auth-linear-label" htmlFor="phone">
                     Teléfono{' '}
                     <span className="font-medium tracking-normal text-zinc-400 normal-case">
                       (opcional)
@@ -241,26 +246,30 @@ export default function Register() {
                     autoComplete="tel"
                     leadingIcon={<Phone />}
                     placeholder="+58 412…"
+                    className="auth-linear-field"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
+              <Button type="submit" className="auth-linear-primary w-full" size="lg">
                 Continuar
               </Button>
             </div>
           ) : (
             <div className="form-stack">
               <div>
-                <Label htmlFor="password">Contraseña</Label>
+                <Label className="auth-linear-label" htmlFor="password">
+                  Contraseña
+                </Label>
                 <PasswordInput
                   id="password"
                   required
                   minLength={8}
                   autoComplete="new-password"
                   placeholder="Ej: Gym2024!"
+                  className="auth-linear-field"
                   value={formData.password}
                   error={fieldErrors.password}
                   onChange={(e) => {
@@ -302,13 +311,16 @@ export default function Register() {
               </div>
 
               <div>
-                <Label htmlFor="confirm_password">Confirmar contraseña</Label>
+                <Label className="auth-linear-label" htmlFor="confirm_password">
+                  Confirmar contraseña
+                </Label>
                 <PasswordInput
                   id="confirm_password"
                   required
                   minLength={8}
                   autoComplete="new-password"
                   placeholder="Repite tu contraseña"
+                  className="auth-linear-field"
                   value={formData.confirm_password}
                   error={fieldErrors.confirm_password}
                   onChange={(e) => {
@@ -323,7 +335,7 @@ export default function Register() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="flex-1"
+                  className="auth-linear-secondary flex-1"
                   onClick={() => {
                     setStep(0);
                     setError('');
@@ -331,7 +343,12 @@ export default function Register() {
                 >
                   Atrás
                 </Button>
-                <Button type="submit" loading={loading} className="flex-1" size="lg">
+                <Button
+                  type="submit"
+                  loading={loading}
+                  className="auth-linear-primary flex-1"
+                  size="lg"
+                >
                   Crear cuenta
                 </Button>
               </div>
@@ -340,7 +357,7 @@ export default function Register() {
 
           <p className="text-center text-xs text-zinc-500">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="text-brand hover:text-brand font-semibold">
+            <Link to="/login" className="auth-linear-link font-medium transition-colors">
               Inicia sesión
             </Link>
           </p>

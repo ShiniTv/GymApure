@@ -13,7 +13,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 /**
  * Figma Mobile App UI — button primitives
- * - primary: solid success green CTA
+ * - primary: solid palette-aware CTA
  * - secondary: outline (pagination / secondary actions)
  * - tertiary: text-only
  * - ghost: alias of secondary (outline) for existing call sites
@@ -30,10 +30,10 @@ const outline = cn(
 
 const variants: Record<ButtonVariant, string> = {
   primary: cn(
-    'bg-success text-white shadow-md shadow-success/20',
-    'hover:bg-[color-mix(in_srgb,var(--color-success)_86%,white)]',
-    'active:bg-[color-mix(in_srgb,var(--color-success)_90%,black)]',
-    'focus-visible:ring-success/45',
+    'bg-brand text-white shadow-sm shadow-brand/20 dark:text-zinc-950',
+    'hover:bg-brand-hover',
+    'active:bg-[color-mix(in_srgb,var(--color-brand)_88%,black)]',
+    'focus-visible:ring-brand/45',
     'disabled:bg-surface-overlay disabled:text-text-muted disabled:shadow-none',
     'disabled:hover:bg-surface-overlay'
   ),
@@ -75,7 +75,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'inline-flex touch-manipulation items-center justify-center gap-2',
         typography.button,
         'tap-feedback transition-[background-color,border-color,color,box-shadow,transform,opacity] duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'focus-visible:ring-offset-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'disabled:cursor-not-allowed disabled:active:scale-100 disabled:active:opacity-100',
         variants[variant],
         sizes[size],

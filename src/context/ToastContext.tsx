@@ -21,19 +21,19 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantStyles: Record<ToastVariant, { container: string; icon: typeof CheckCircle }> = {
   success: {
-    container: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    container: 'border-emerald-400/25 text-emerald-300',
     icon: CheckCircle,
   },
   error: {
-    container: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
+    container: 'border-red-400/25 text-red-300',
     icon: XCircle,
   },
   warning: {
-    container: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+    container: 'border-amber-300/25 text-amber-200',
     icon: AlertTriangle,
   },
   info: {
-    container: 'border-brand/30 bg-brand/10 text-brand dark:text-brand',
+    container: 'border-sky-300/25 text-sky-200',
     icon: Info,
   },
 };
@@ -46,16 +46,18 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     <div
       role="alert"
       className={cn(
-        'animate-in fade-in slide-in-from-top-2 flex w-full max-w-sm min-w-0 items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-md',
+        'animate-in fade-in slide-in-from-top-2 flex w-full max-w-sm min-w-0 items-start gap-3 rounded-xl border bg-zinc-950/95 px-4 py-3 shadow-[0_16px_48px_rgb(0_0_0_/_0.35)] backdrop-blur-xl',
         style.container
       )}
     >
-      <Icon className="mt-0.5 h-5 w-5 shrink-0" />
-      <p className="flex-1 text-sm font-bold">{toast.message}</p>
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/8">
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+      <p className="flex-1 text-sm font-medium text-zinc-100">{toast.message}</p>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="rounded-lg p-1 opacity-70 transition-opacity hover:opacity-100"
+        className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-white/8 hover:text-white"
         aria-label="Cerrar"
       >
         <X className="h-4 w-4" />
@@ -94,7 +96,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed top-4 right-4 z-[100] flex flex-col gap-2"
+        className="pointer-events-none fixed top-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2"
         aria-live="polite"
       >
         {toasts.map((t) => (

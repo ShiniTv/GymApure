@@ -11,30 +11,27 @@ export async function assertLoginAdaptive(page: Page, project: string) {
   expect(tabIndex).toBeGreaterThanOrEqual(0);
 
   const m = await page.evaluate(() => {
-    const card = document.querySelector('[class*="rounded-2xl"]');
-    const marketing = document.querySelector('aside');
+    const card = document.querySelector('[data-testid="login-panel"]');
+    const marketing = document.querySelector('[data-testid="auth-marketing"]');
     const cardRect = card?.getBoundingClientRect();
     return {
       vw: innerWidth,
       cardWidth: cardRect?.width ?? 0,
-      marketingVisible: marketing
-        ? getComputedStyle(marketing).display !== 'none'
-        : false,
+      marketingVisible: marketing ? getComputedStyle(marketing).display !== 'none' : false,
     };
   });
 
   if (project === 'desktop') {
-    expect(m.marketingVisible).toBe(true);
+    expect(m.marketingVisible).toBe(false);
     expect(m.vw).toBeGreaterThanOrEqual(1024);
     expect(m.cardWidth).toBeGreaterThan(320);
-    await expect(page.getByRole('heading', { name: /inicia sesión/i })).toBeVisible();
-    await expect(page.getByText(/gestiona tu gimnasio/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^GymApure$/i })).toBeVisible();
   } else if (project === 'tablet') {
     expect(m.marketingVisible).toBe(false);
     expect(m.cardWidth).toBeGreaterThan(400);
   } else {
     expect(m.marketingVisible).toBe(false);
     expect(m.cardWidth).toBeGreaterThan(280);
-    await expect(page.getByRole('heading', { name: /GymApure|Gym/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^GymApure$/i })).toBeVisible();
   }
 }

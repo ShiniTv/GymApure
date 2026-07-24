@@ -8,7 +8,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'relative animate-pulse overflow-hidden rounded-xl bg-zinc-200 dark:bg-zinc-800',
+        'bg-surface-overlay/70 relative animate-pulse overflow-hidden rounded-xl',
         'after:animate-shimmer after:absolute after:inset-0 after:rounded-xl',
         className
       )}
@@ -18,7 +18,7 @@ export function Skeleton({ className }: SkeletonProps) {
 
 export function StatCardSkeleton() {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-border/80 bg-surface rounded-xl border p-4 shadow-xs sm:p-5">
       <div className="flex items-center justify-between">
         <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-24" />
@@ -32,7 +32,7 @@ export function StatCardSkeleton() {
 
 export function TableRowSkeleton({ cols = 5 }: { cols?: number }) {
   return (
-    <tr className="border-b border-zinc-100 dark:border-zinc-800">
+    <tr className="border-border/60 border-b">
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} className="px-4 py-3">
           <Skeleton className="h-4 w-full max-w-[120px]" />

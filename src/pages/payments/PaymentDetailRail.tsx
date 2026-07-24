@@ -44,7 +44,7 @@ export function PaymentDetailRail({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
           aria-label="Cerrar detalle"
         >
           <X className="h-4 w-4" aria-hidden />
@@ -59,7 +59,7 @@ export function PaymentDetailRail({
       </div>
 
       <dl className="mt-3 grid grid-cols-1 gap-2">
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
           <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
             Método
           </dt>
@@ -67,7 +67,7 @@ export function PaymentDetailRail({
             {formatPaymentMethod(payment.method)}
           </dd>
         </div>
-        <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
           <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
             Referencia
           </dt>

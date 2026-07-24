@@ -36,9 +36,9 @@ import { useMediaQuery } from '../../lib/useMediaQuery';
 
 const PAGE = 'page-stack stagger-fade-in mx-auto w-full max-w-5xl';
 const BANNER =
-  'flex flex-col justify-between gap-4 rounded-card px-ds-4 py-ds-4 sm:flex-row sm:items-center';
+  'flex flex-col justify-between gap-4 rounded-xl border px-ds-4 py-ds-4 sm:flex-row sm:items-center';
 const SURFACE_ROW =
-  'tap-feedback flex items-center gap-3.5 rounded-card bg-surface px-ds-4 py-ds-4 transition-[background-color,transform,opacity] duration-150';
+  'tap-feedback flex items-center gap-3.5 rounded-xl border border-border/80 bg-surface px-ds-4 py-ds-4 transition-[background-color,border-color,transform,opacity] duration-150 hover:border-brand/20';
 const ASSIGNMENT_UPCOMING =
   'bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border';
 const ASSIGNMENT_ENDING =

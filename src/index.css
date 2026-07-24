@@ -184,6 +184,123 @@ body,
 
 /* Typography utilities — Figma scale (h1 / h2 / base / small) + letter-spacing */
 @layer components {
+  /* Brand mark adapts to the selected palette without recoloring the logo asset. */
+  .brand-logo {
+    border: 1px solid color-mix(in srgb, var(--color-brand) 38%, var(--color-border));
+    background: transparent;
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-brand) 8%, transparent),
+      0 6px 18px color-mix(in srgb, var(--color-brand) 16%, transparent);
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .brand-logo > img {
+    border-radius: inherit;
+  }
+
+  .dark .brand-logo {
+    border-color: color-mix(in srgb, var(--color-brand) 45%, rgb(255 255 255 / 16%));
+    background: transparent;
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-brand) 10%, transparent),
+      0 8px 24px rgb(0 0 0 / 0.32);
+  }
+
+  /* Authentication — dark, restrained surface inspired by Linear's visual language. */
+  .auth-linear {
+    color-scheme: dark;
+  }
+
+  .auth-linear-grid {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    opacity: 0.32;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+
+  .auth-linear-marketing {
+    border-right: 1px solid rgb(255 255 255 / 0.08);
+    background: #111113;
+  }
+
+  .auth-linear-panel {
+    border: 1px solid rgb(255 255 255 / 0.12) !important;
+    border-radius: 1rem;
+    background: rgb(24 24 27 / 0.92) !important;
+    box-shadow: 0 20px 80px rgb(0 0 0 / 0.35);
+  }
+
+  .auth-linear-header {
+    text-align: center;
+  }
+
+  .auth-linear .auth-linear-label {
+    color: #a1a1aa;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .auth-linear .auth-linear-field {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    border-radius: 0.625rem;
+    background: rgb(9 9 11 / 0.64) !important;
+    color: #fafafa !important;
+    box-shadow: none !important;
+  }
+
+  .auth-linear .auth-linear-field:hover {
+    border-color: rgb(255 255 255 / 0.2);
+  }
+
+  .auth-linear .auth-linear-field:focus {
+    border-color: rgb(255 255 255 / 0.42);
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.1);
+  }
+
+  .auth-linear .auth-linear-primary {
+    border: 1px solid rgb(255 255 255 / 0.16) !important;
+    border-radius: 0.625rem;
+    background: #fafafa !important;
+    color: #18181b !important;
+    box-shadow: none !important;
+  }
+
+  .auth-linear .auth-linear-primary:hover {
+    background: #e4e4e7 !important;
+  }
+
+  .auth-linear .auth-linear-primary:focus-visible {
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.22);
+  }
+
+  .auth-linear .auth-linear-secondary {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    border-radius: 0.625rem;
+    background: transparent !important;
+    color: #d4d4d8 !important;
+  }
+
+  .auth-linear .auth-linear-secondary:hover {
+    background: rgb(255 255 255 / 0.06) !important;
+    color: #fff !important;
+  }
+
+  .auth-linear .auth-linear-link {
+    color: #a1a1aa;
+  }
+
+  .auth-linear .auth-linear-link:hover {
+    color: #fff;
+  }
+
   .type-h1,
   .page-title {
     font-family: var(--font-display);
@@ -367,7 +484,7 @@ body,
   }
 
   .nav-section-label {
-    @apply mb-2.5 px-3 text-[10px] font-medium tracking-[0.16em] text-text-muted uppercase;
+    @apply text-text-muted mb-2.5 px-3 text-[10px] font-medium tracking-[0.16em] uppercase;
   }
 
   .nav-link {
@@ -386,7 +503,7 @@ body,
   }
 
   .nav-link-active {
-    @apply bg-brand/10 text-brand shadow-none dark:text-brand;
+    @apply bg-brand/10 text-brand dark:text-brand shadow-none;
   }
 
   .nav-link-inactive {
@@ -805,7 +922,7 @@ body,
 }
 
 .member-bottom-nav-unread {
-  @apply absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-danger px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-bg;
+  @apply bg-danger ring-bg absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2;
 }
 
 .reception-main-pad {
@@ -1012,6 +1129,7 @@ html.member-has-workout-fab .member-chat-panel {
 @media (prefers-reduced-motion: reduce) {
   .animate-in,
   .animate-scan-line,
+  .auth-linear [class*='auth-fade-in'],
   .animate-shimmer,
   .fade-in,
   .slide-in-from-top-2,

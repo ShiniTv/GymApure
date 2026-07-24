@@ -26,6 +26,7 @@ import classRoutes from './classes.ts';
 import demoRequestRoutes from './demoRequests.ts';
 import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
+import webVitalsRoutes from './webVitals.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter } from './middleware/rateLimit.ts';
@@ -38,6 +39,7 @@ router.use(healthRoutes);
 // Auth: brute-force limiter only on login/register (see auth.ts), not /me /logout /csrf
 router.use('/auth', authRoutes);
 router.use('/demo-requests', apiRateLimiter, demoRequestRoutes);
+router.use('/telemetry/web-vitals', apiRateLimiter, webVitalsRoutes);
 
 // Cron jobs (CRON_SECRET or admin session — before global authenticate)
 router.use(apiRateLimiter, cronRoutes);

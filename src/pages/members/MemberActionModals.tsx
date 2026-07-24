@@ -75,10 +75,10 @@ export function MemberActionModals({
                 ? `¿Desactivar a ${toggleTarget.full_name}? No podrá hacer check-in ni acceder al sistema.`
                 : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
             </p>
-            <div className="flex gap-3">
+            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
-                className="flex-1"
+                className="sm:min-w-28"
                 onClick={onCloseToggle}
                 disabled={toggling}
               >
@@ -86,7 +86,7 @@ export function MemberActionModals({
               </Button>
               <Button
                 variant={toggleTarget.status === 'active' ? 'danger' : 'primary'}
-                className="flex-1"
+                className="sm:min-w-28"
                 onClick={onConfirmToggle}
                 disabled={toggling}
               >
@@ -140,13 +140,18 @@ export function MemberActionModals({
             {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
           </div>
         )}
-        <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={onCloseDelete} disabled={deleting}>
+        <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+          <Button
+            variant="ghost"
+            className="sm:min-w-28"
+            onClick={onCloseDelete}
+            disabled={deleting}
+          >
             Cancelar
           </Button>
           <Button
             variant="danger"
-            className="flex-1"
+            className="sm:min-w-28"
             onClick={onConfirmDelete}
             disabled={
               deleting ||
@@ -191,11 +196,11 @@ export function MemberActionModals({
               />
             </div>
             {pauseError && <p className="text-sm font-bold text-red-500">{pauseError}</p>}
-            <div className="flex gap-3">
+            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="ghost"
-                className="flex-1"
+                className="sm:min-w-28"
                 disabled={pausing}
                 onClick={onClosePause}
               >
@@ -203,7 +208,7 @@ export function MemberActionModals({
               </Button>
               <Button
                 type="button"
-                className="flex-1"
+                className="sm:min-w-28"
                 loading={pausing}
                 disabled={pauseReason.trim().length < 3 || pausing}
                 onClick={onConfirmPause}
@@ -236,17 +241,17 @@ export function MemberActionModals({
               value={editShiftValue}
               onChange={onEditShiftValueChange}
             />
-            <div className="flex gap-3">
+            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
-                className="flex-1"
+                className="sm:min-w-28"
                 onClick={onCloseEditShift}
                 disabled={savingShift}
               >
                 Cancelar
               </Button>
               <Button
-                className="flex-1"
+                className="sm:min-w-28"
                 onClick={onSaveShift}
                 disabled={savingShift || !editShiftValue}
               >

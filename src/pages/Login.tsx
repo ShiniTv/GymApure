@@ -4,9 +4,10 @@ import { useNavigate, Link, Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../lib/roles';
 import { safeReturnPath } from '../lib/safeReturnPath';
+import { prefetchPostLogin } from '../lib/routePrefetch';
 import { Mail, ShieldCheck } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
-import AuthBrandHeader from '../components/AuthBrandHeader';
+import AuthLinearHeader from '../components/AuthLinearHeader';
 import { Button, Card, Input, Label, PasswordInput, Alert } from '../components/ui';
 
 interface LoginUser {
@@ -108,8 +109,10 @@ export default function Login() {
   const isLocked = remainingSeconds > 0;
 
   const completeLogin = (loginUser: LoginUser) => {
+    const destination = safeReturnPath(from, loginUser.role);
     login(loginUser);
-    navigate(safeReturnPath(from, loginUser.role));
+    prefetchPostLogin({ destination, role: loginUser.role, userId: loginUser.id });
+    navigate(destination);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,19 +198,19 @@ export default function Login() {
   };
 
   return (
-    <AuthShell layout="split">
+    <AuthShell aesthetic="linear">
       <Card
-        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
-        padding="md"
+        className="auth-linear-panel page-stack w-full p-6 sm:p-8"
+        data-testid="login-panel"
+        padding="none"
       >
-        <AuthBrandHeader
-          subtitle={mfaChallenge ? 'Verificación en dos pasos' : 'Inicia sesión en tu cuenta'}
-          formHint={
+        <AuthLinearHeader
+          title={mfaChallenge ? 'Verifica tu identidad' : 'GymApure'}
+          subtitle={
             mfaChallenge
-              ? 'Introduce el código de tu app autenticadora'
-              : 'Accede con tu cuenta del gimnasio'
+              ? 'Introduce el código de tu aplicación autenticadora.'
+              : 'Inicia sesión en tu cuenta'
           }
-          splitAware
         />
 
         {mfaChallenge ? (
@@ -215,7 +218,9 @@ export default function Login() {
             {error && <Alert variant="error">{error}</Alert>}
 
             <div>
-              <Label htmlFor="mfa_code">Código MFA</Label>
+              <Label className="auth-linear-label" htmlFor="mfa_code">
+                Código MFA
+              </Label>
               <Input
                 id="mfa_code"
                 name="mfa_code"
@@ -226,18 +231,24 @@ export default function Login() {
                 required
                 leadingIcon={<ShieldCheck />}
                 placeholder="000000"
+                className="auth-linear-field"
                 value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" loading={loading}>
+            <Button
+              type="submit"
+              className="auth-linear-primary w-full"
+              size="lg"
+              loading={loading}
+            >
               Verificar
             </Button>
 
             <button
               type="button"
-              className="text-center text-xs font-semibold text-zinc-500 transition-colors hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="text-center text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-200"
               onClick={() => {
                 setMfaChallenge(null);
                 setMfaCode('');
@@ -261,7 +272,9 @@ export default function Login() {
             )}
 
             <div>
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label className="auth-linear-label" htmlFor="email">
+                Correo electrónico
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -271,6 +284,7 @@ export default function Login() {
                 disabled={isLocked}
                 leadingIcon={<Mail />}
                 placeholder="correo@ejemplo.com"
+                className="auth-linear-field"
                 value={email}
                 error={fieldErrors.email}
                 onChange={(e) => {
@@ -280,7 +294,9 @@ export default function Login() {
               />
             </div>
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label className="auth-linear-label" htmlFor="password">
+                Contraseña
+              </Label>
               <PasswordInput
                 id="password"
                 name="password"
@@ -288,6 +304,7 @@ export default function Login() {
                 required
                 disabled={isLocked}
                 placeholder="Tu contraseña"
+                className="auth-linear-field"
                 value={password}
                 error={fieldErrors.password}
                 onChange={(e) => {
@@ -300,7 +317,7 @@ export default function Login() {
             <p className="text-right">
               <Link
                 to="/forgot-password"
-                className="text-brand hover:text-brand text-xs font-semibold"
+                className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100"
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -308,7 +325,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="auth-linear-primary w-full"
               size="lg"
               loading={loading}
               disabled={isLocked}
@@ -317,9 +334,12 @@ export default function Login() {
             </Button>
 
             {registerAllowed && (
-              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-center text-xs text-zinc-500">
                 ¿No tienes una cuenta?{' '}
-                <Link to="/register" className="text-brand hover:text-brand font-semibold">
+                <Link
+                  to="/register"
+                  className="font-medium text-zinc-300 transition-colors hover:text-white"
+                >
                   Regístrate aquí
                 </Link>
               </p>

@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
-import AuthBrandHeader from '../components/AuthBrandHeader';
+import AuthLinearHeader from '../components/AuthLinearHeader';
 import { Button, Card, Input, Label, Alert } from '../components/ui';
 
 export default function ForgotPassword() {
@@ -33,15 +33,11 @@ export default function ForgotPassword() {
   };
 
   return (
-    <AuthShell layout="split">
-      <Card
-        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
-        padding="md"
-      >
-        <AuthBrandHeader
-          subtitle="Recuperar contraseña"
-          formHint="Te enviaremos un enlace a tu correo"
-          splitAware
+    <AuthShell aesthetic="linear">
+      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+        <AuthLinearHeader
+          title="Recupera tu acceso"
+          subtitle="Te enviaremos un enlace seguro a tu correo."
         />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
@@ -59,7 +55,9 @@ export default function ForgotPassword() {
           )}
 
           <div>
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label className="auth-linear-label" htmlFor="email">
+              Correo electrónico
+            </Label>
             <Input
               id="email"
               name="email"
@@ -68,19 +66,25 @@ export default function ForgotPassword() {
               required
               leadingIcon={<Mail />}
               placeholder="correo@ejemplo.com"
+              className="auth-linear-field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          <Button type="submit" className="w-full" loading={loading} disabled={!!success}>
+          <Button
+            type="submit"
+            className="auth-linear-primary w-full"
+            loading={loading}
+            disabled={!!success}
+          >
             Enviar enlace
           </Button>
         </form>
 
         <Link
           to="/login"
-          className="hover:text-brand mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-500 transition-colors"
+          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio de sesión

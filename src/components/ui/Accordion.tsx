@@ -24,10 +24,10 @@ export function AccordionItem({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border transition-colors duration-200',
+        'bg-surface overflow-hidden rounded-xl border transition-colors duration-200',
         open
           ? 'border-brand/30 border-l-brand/50 dark:border-brand/25 border-l-2'
-          : 'border-zinc-200 dark:border-zinc-800',
+          : 'border-border/80 dark:border-border/80',
         className
       )}
     >
@@ -35,7 +35,7 @@ export function AccordionItem({
         id={buttonId}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="focus-visible:ring-brand/50 flex w-full items-center justify-between gap-3 bg-zinc-50/80 px-5 py-4 text-left transition-colors hover:bg-zinc-100/80 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60"
+        className="focus-visible:ring-brand/50 bg-surface-raised/60 hover:bg-surface-overlay/70 flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
         aria-expanded={open}
         aria-controls={panelId}
       >
@@ -51,7 +51,7 @@ export function AccordionItem({
         />
       </button>
       {open && (
-        <div id={panelId} role="region" aria-labelledby={buttonId} className="p-5 pt-2">
+        <div id={panelId} role="region" aria-labelledby={buttonId} className="p-4 pt-2">
           {children}
         </div>
       )}

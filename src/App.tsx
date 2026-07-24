@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
 import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
 import { loadAppFonts } from './lib/fonts';
+import Login from './pages/Login';
 
 const PUBLIC_AUTH_PATHS = new Set([
   '/',
@@ -54,7 +55,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const NotificationsPage = lazy(() => import('./pages/Notifications'));
 const Reception = lazy(() => import('./pages/Reception'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
-const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -84,6 +84,7 @@ function PageLoader() {
   return (
     <div
       className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8"
+      role="status"
       aria-busy="true"
       aria-label="Cargando página"
     >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Plus, Check, X, CreditCard } from 'lucide-react';
+import { Plus, Check, X, CreditCard, Clock, DollarSign, List } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatMoney } from '../lib/utils';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -17,6 +17,7 @@ import {
   EmptyState,
   SearchInput,
   ListRowSkeleton,
+  StatCard,
   TableRowSkeleton,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -370,7 +371,7 @@ export default function Payments() {
                   <BackToDashboardLink />
                   <Button
                     size="sm"
-                    className="h-10 min-h-10 shrink-0 rounded-xl px-3 whitespace-nowrap sm:px-4"
+                    className="h-10 min-h-10 shrink-0 px-3 whitespace-nowrap sm:px-4"
                     onClick={() => openRegisterModal()}
                     aria-label="Reportar pago"
                   >
@@ -383,7 +384,7 @@ export default function Payments() {
                   <BackToDashboardLink />
                   <Button
                     size="sm"
-                    className="h-10 min-h-10 shrink-0 rounded-xl px-3"
+                    className="h-10 min-h-10 shrink-0 px-3"
                     onClick={() => openRegisterModal()}
                     aria-label="Registrar pago"
                   >
@@ -400,38 +401,25 @@ export default function Payments() {
 
         {isStaffPayment && adminStats?.stats && (
           <div className="hidden grid-cols-4 gap-3 lg:grid lg:gap-4">
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                Pendientes
-              </p>
-              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-                {adminStats.stats.pendingPayments}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                &gt;2 días
-              </p>
-              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-                {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                Ingresos mes
-              </p>
-              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-                {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
-                En lista
-              </p>
-              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-                {total}
-              </p>
-            </div>
+            <StatCard
+              title="Pendientes"
+              value={adminStats.stats.pendingPayments}
+              icon={CreditCard}
+              minimal
+            />
+            <StatCard
+              title=">2 días"
+              value={adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
+              icon={Clock}
+              minimal
+            />
+            <StatCard
+              title="Ingresos mes"
+              value={formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
+              icon={DollarSign}
+              minimal
+            />
+            <StatCard title="En lista" value={total} icon={List} minimal />
           </div>
         )}
 

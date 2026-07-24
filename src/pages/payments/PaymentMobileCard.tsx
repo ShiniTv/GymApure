@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Badge } from '../../components/ui';
+import { Badge, Card } from '../../components/ui';
 import type { Payment } from './helpers';
 import {
   formatPaymentDate,
@@ -28,7 +28,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
 }: PaymentMobileCardProps) {
   if (!isStaff) {
     return (
-      <div className="rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+      <Card padding="sm" rounded="xl" className="px-3 py-2.5">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -81,12 +81,12 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
             </button>
           ) : null}
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="px-3 py-2.5">
+    <Card padding="sm" rounded="xl" className="px-3 py-2.5">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
@@ -182,6 +182,6 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
           </Badge>
         </div>
       </div>
-    </div>
+    </Card>
   );
 });
