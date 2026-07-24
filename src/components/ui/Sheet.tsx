@@ -1,4 +1,12 @@
-import { useEffect, useRef, useId, useCallback, useState, type ReactNode, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useRef,
+  useId,
+  useCallback,
+  useState,
+  type ReactNode,
+  type CSSProperties,
+} from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
@@ -74,43 +82,47 @@ export function Sheet({
     if (e.key === 'Escape') onCloseRef.current();
   }, []);
 
+  // Re-run when `mounted` flips true so focus/trap attach after exit-anim remount.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
     document.addEventListener('keydown', handleKeyDown);
 
     const sheet = sheetRef.current;
-    if (sheet) {
-      const focusables = sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      requestAnimationFrame(() => first?.focus());
-
-      const trapFocus = (e: KeyboardEvent) => {
-        if (e.key !== 'Tab' || focusables.length === 0) return;
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      };
-      document.addEventListener('keydown', trapFocus);
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.removeEventListener('keydown', trapFocus);
-      };
+    if (!sheet) {
+      return () => document.removeEventListener('keydown', handleKeyDown);
     }
 
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleKeyDown]);
+    const getFocusables = () =>
+      sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+
+    requestAnimationFrame(() => getFocusables()[0]?.focus());
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusables = getFocusables();
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener('keydown', trapFocus);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', trapFocus);
+    };
+  }, [open, mounted, handleKeyDown]);
 
   if (!mounted) return null;
 
   const backdropZ = zIndex - 1;
   const hideClass = hideFrom === 'lg' ? 'lg:hidden' : '';
-  const slideClosed =
-    side === 'bottom' ? 'translate-y-[110%]' : 'translate-y-[-110%]';
+  const slideClosed = side === 'bottom' ? 'translate-y-[110%]' : 'translate-y-[-110%]';
 
   return (
     <div className={hideClass}>
@@ -141,7 +153,7 @@ export function Sheet({
       >
         <div
           className={cn(
-            'rounded-sheet border border-border bg-surface-raised shadow-sheet',
+            'rounded-sheet border-border bg-surface-raised shadow-sheet border',
             compact ? 'p-2.5' : 'p-ds-3',
             side === 'bottom' && 'mb-2',
             scrollable && 'flex max-h-[min(78dvh,calc(100dvh-7rem))] flex-col',
@@ -150,7 +162,7 @@ export function Sheet({
         >
           {showHandle && side === 'bottom' ? (
             <div className="flex justify-center pb-1" aria-hidden>
-              <div className="h-1 w-8 rounded-full bg-surface-overlay" />
+              <div className="bg-surface-overlay h-1 w-8 rounded-full" />
             </div>
           ) : null}
           {title && (
@@ -172,7 +184,7 @@ export function Sheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="tap-feedback rounded-lg p-1.5 text-text-muted hover:bg-surface-overlay hover:text-text-secondary"
+                className="tap-feedback text-text-muted hover:bg-surface-overlay hover:text-text-secondary rounded-lg p-1.5"
                 aria-label={closeLabel}
               >
                 <X className="h-4 w-4" />
