@@ -63,6 +63,16 @@ export const memberBottomNav = 'nav[aria-label="Navegación principal"]';
 export const memberWorkoutFab = 'a.member-bottom-nav-fab[aria-label="Entrenar"]';
 export const receptionBottomNav = 'nav[aria-label="Navegación recepción"]';
 
+const DEMO_SEED_HINT =
+  'Ejecuta `npm run db:restore-demo` contra la BD de desarrollo antes de test:ux:browser.';
+
+/** Falla el spec si falta seed demo (no usar test.skip: enmascara CI verde). */
+export function assertDemoSeed(condition: unknown, detail: string): asserts condition {
+  if (!condition) {
+    throw new Error(`${detail} ${DEMO_SEED_HINT}`);
+  }
+}
+
 /** Espera a que /routines termine de cargar y devuelve la tarjeta de rutina o null. */
 export async function getMemberRoutineCard(page: Page) {
   await page.waitForFunction(
@@ -81,11 +91,11 @@ export async function getMemberRoutineCard(page: Page) {
   return (await card.isVisible()) ? card : null;
 }
 
-/** Rutinas → expandir → Empezar entrenamiento. Devuelve false si no hay rutina demo. */
-export async function goToActiveWorkout(page: Page): Promise<boolean> {
+/** Rutinas → expandir → Empezar entrenamiento. Exige rutina demo sembrada. */
+export async function goToActiveWorkout(page: Page): Promise<void> {
   await page.goto('/routines');
   const routineCard = await getMemberRoutineCard(page);
-  if (!routineCard) return false;
+  assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
   await routineCard.click();
   const startBtn = page.getByRole('button', {
@@ -94,7 +104,6 @@ export async function goToActiveWorkout(page: Page): Promise<boolean> {
   await expect(startBtn).toBeVisible({ timeout: 10_000 });
   await startBtn.click();
   await page.waitForURL(/\/workout\//, { timeout: 15_000 });
-  return true;
 }
 
 /** El FAB de entrenar debe estar centrado horizontalmente (±4px). */

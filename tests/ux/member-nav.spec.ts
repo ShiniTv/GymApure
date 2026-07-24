@@ -13,12 +13,7 @@ test.describe('Member bottom nav', () => {
     await page.goto('/routines');
     await expect(page.locator(memberBottomNav)).toBeVisible();
 
-    const started = await goToActiveWorkout(page);
-    if (!started) {
-      test.skip(true, 'Sin rutinas asignadas en demo');
-      return;
-    }
-
+    await goToActiveWorkout(page);
     await expect(page.locator(memberBottomNav)).toBeHidden();
   });
 });

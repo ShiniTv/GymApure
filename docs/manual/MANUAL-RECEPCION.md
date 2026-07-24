@@ -47,13 +47,13 @@ Guía para el rol **receptionist** (recepcionista / mostrador).
 
 ### Móvil (bottom nav)
 
-| Tab      | Destino                                   |
-| -------- | ----------------------------------------- |
-| Inicio   | `/reception`                              |
-| Miembros | `/members`                                |
-| Pagos    | `/payments`                               |
-| Mensajes | `/messages`                               |
-| Más      | Tablet, Clases, Equipamiento, MFA, Perfil |
+| Tab (aria-label) | Destino                                   |
+| ---------------- | ----------------------------------------- |
+| Acceso           | Mostrador / check-in                      |
+| Miembros         | `/members`                                |
+| Pagos            | `/payments`                               |
+| Mensajes         | `/messages`                               |
+| Más              | Tablet, Clases, Equipamiento, MFA, Perfil |
 
 ---
 

@@ -2,7 +2,7 @@
 
 Matriz manual por rol y viewport. Complementa las suites automatizadas (`npm run test:ux`, `npm run test:ux:browser`).
 
-**Última revisión:** 2026-07-19 (shell móvil: isla unificada, header flotante, sin hamburger en todos los roles, Admin Más con secciones)
+**Última revisión:** 2026-07-24 (bottom nav icon-only + aria-label; Playwright exige seed demo)
 
 ## Setup
 
@@ -24,7 +24,7 @@ npm run dev
 
 | #   | Flujo                 | Criterio                                                                                                    | Auto    | Resultado                             |
 | --- | --------------------- | ----------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------- |
-| 1   | Bottom nav            | Pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`                                        | Browser | ☑                                     |
+| 1   | Bottom nav            | Pill **icon-only** + `aria-label` en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`           | Browser | ☑                                     |
 | 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                                     | Browser | ☑                                     |
 | 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto                          | Browser | ☑                                     |
 | 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                                      | Browser | ☑                                     |
@@ -169,7 +169,7 @@ npm run test:ux
 
 - ~~Skeleton en dashboards staff (sustituir flash CARGANDO)~~ — skeletons en panel, rutinas, mensajes, pagos, workout
 - ~~CI opcional: job `ux-browser`~~ — ya corre en `.github/workflows/ci.yml` junto a `test:ux`
-- Bottom nav icon-only con `aria-label` (sin texto visible) en todos los roles
+- ~~Bottom nav icon-only con `aria-label` (sin texto visible) en todos los roles~~ — pill compartida member + staff
 - Descanso / push: código listo (`PushOnboardingCard`, `restTimerNotifications`); falta verificación manual en dispositivo real (Android/iOS)
 
 **Hecho en revisión full-stack:** PTR en KPIs de recepción; Nutrición en pill principal (Mensajes en Más); FAB en `/nutrition`; Acceso en pill de recepción; EmptyState nutrición con icono utensilios; MemberQuickSheet; homes alerts-first; recepción counter-default móvil.

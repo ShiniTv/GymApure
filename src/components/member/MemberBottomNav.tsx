@@ -229,7 +229,7 @@ export function MemberBottomNav() {
                       type="button"
                       onClick={() => setMoreOpen((v) => !v)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={
@@ -252,9 +252,6 @@ export function MemberBottomNav() {
                           </span>
                         )}
                       </span>
-                      <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
-                        {item.name}
-                      </span>
                     </button>
                   </li>
                 ) : (
@@ -263,7 +260,7 @@ export function MemberBottomNav() {
                       to={item.href}
                       {...routePrefetchHandlers(item.href)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -283,9 +280,6 @@ export function MemberBottomNav() {
                             {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
-                      </span>
-                      <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
-                        {item.name}
                       </span>
                     </Link>
                   </li>

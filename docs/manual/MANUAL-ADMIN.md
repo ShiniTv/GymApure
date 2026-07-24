@@ -14,10 +14,11 @@ Guía de uso diario para el rol **admin** en GymApure.
 - Configurar alertas, tipo de cambio BCV, notificaciones
 - Ver reportes, auditoría y asistencia global
 - Gestionar equipamiento, entrenadores y zonas
-- Ver overview de nutrición
+- Revisar **Solicitudes demo** (`/demo-leads`) desde Supervisión / Más
 
 ### No debe hacer
 
+- Asignar planes de nutrición (eso lo hace el entrenador en `/nutrition-overview`)
 - Usar `db:restore-demo` ni scripts de base de datos en producción
 - Compartir credenciales de admin o `SUPABASE_SERVICE_ROLE_KEY`
 - Editar SQL directo en Supabase sin migración versionada

@@ -13,12 +13,7 @@ test.describe('Member workout pager móvil', () => {
   });
 
   test('nav oculta y pager inferior visible sin solapamiento', async ({ page }) => {
-    const started = await goToActiveWorkout(page);
-    if (!started) {
-      test.skip(true, 'Sin rutinas asignadas en demo');
-      return;
-    }
-
+    await goToActiveWorkout(page);
     await expect(page.locator(memberBottomNav)).toBeHidden();
 
     const pager = page.locator('.md\\:hidden.fixed.bottom-0').first();

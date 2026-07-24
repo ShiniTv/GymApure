@@ -178,9 +178,14 @@ _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producci
 | subscriptions | 187   | 136 kB |
 | payments      | 128   | 112 kB |
 
-### Pendiente manual
+### Pendiente manual (ops — no bloquea desarrollo)
 
-- Ejecutar `npm run db:migrate:prod` para aplicar `storage_objects_rls` (requiere owner de `storage.objects`; el MCP no puede aplicarla)
-- Ejecutar `npm run db:audit-storage:prod` con credenciales locales para auditar buckets Storage
-- Revisar storage huérfanos antes de `db:storage-cleanup --apply` en prod (prod tiene **76** referencias de video en DB)
-- Desplegar en Render tras merge del PR #5
+Snapshot histórico del 2026-07-11 (entonces ~42 migraciones). Hoy el repo tiene **56** SQL en `supabase/migrations/`.
+
+Antes de cleanup en producción:
+
+1. Confirmar `npm run db:migrate:prod` al día (incluye `storage_objects_rls` si aún no está).
+2. `npm run db:audit-storage:prod` y revisar huérfanos antes de `db:storage-cleanup --apply`.
+3. Despliegue Render solo tras merge + checklist de release (`scripts/deploy/release-checklist.ts`).
+
+Device QA push/PWA (Android bg / iPhone Add to Home) sigue en [QA-DEVICE-10.md](../QA-DEVICE-10.md). Staging: [STAGING.md](./STAGING.md).

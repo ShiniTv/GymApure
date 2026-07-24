@@ -240,12 +240,13 @@ Fuente: `src/App.tsx`. Manuales detallados en [docs/manual/](./manual/).
 | `/reservas`              | —     | —            | —             | ✓           |
 | `/routines`              | ✓     | —            | ✓             | ✓ (propias) |
 | `/exercises`             | ✓     | —            | ✓             | ✓           |
-| `/nutrition-overview`    | ✓     | —            | ✓             | —           |
+| `/nutrition-overview`    | —     | —            | ✓             | —           |
 | `/nutrition`             | —     | —            | —             | ✓           |
 | `/workout/:id`           | —     | —            | —             | ✓           |
 | `/history`               | —     | —            | —             | ✓           |
 | `/members/:id/routines`  | ✓     | —            | ✓             | —           |
-| `/members/:id/nutrition` | ✓     | —            | ✓             | —           |
+| `/members/:id/nutrition` | —     | —            | ✓             | —           |
+| `/demo-leads`            | ✓     | —            | —             | —           |
 | `/members/:id/history`   | ✓     | —            | ✓             | —           |
 | `/profile`               | ✓     | ✓            | ✓             | ✓           |
 

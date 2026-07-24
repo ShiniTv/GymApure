@@ -489,8 +489,8 @@ body,
    * Previous bug: 1rem was treated as “full stack gap” but 0.5rem is under the pill,
    * leaving only ~8px above — content still looked glued to the island.
    */
-  /* Icon + label tabs: icon circle + caption + py */
-  --nav-pill-height: 4.5rem;
+  /* Icon-only tabs: icon circle + py (labels vía aria-label) */
+  --nav-pill-height: 3.75rem;
   --nav-pad-below-pill: 0.5rem;
   --nav-clearance-above-pill: 1.25rem;
   --reception-nav-pill-height: var(--nav-pill-height);

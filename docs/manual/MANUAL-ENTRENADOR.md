@@ -33,9 +33,9 @@ Guía para el rol **trainer** (entrenador).
 
 ## Navegación móvil
 
-Bottom nav entrenador (visible con drawer cerrado):
+Bottom nav entrenador (visible con drawer cerrado; **icon-only** + `aria-label`):
 
-- Inicio, Miembros, Rutinas, Mensajes (según configuración actual)
+- **Panel**, **Miembros**, **Rutinas**, **Mensajes** + **Más** (Nutrición, asignaciones, Clases, …)
 
 Al abrir drawer lateral: footer pegado al fondo; bottom nav se oculta.
 

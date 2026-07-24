@@ -1,10 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { UtensilsCrossed, ChevronRight, Plus } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import {
-  useNutritionOverviewQuery,
-  useTrainerNutritionOverviewQuery,
-} from '../hooks/queries/useNutritionQuery';
+import { useTrainerNutritionOverviewQuery } from '../hooks/queries/useNutritionQuery';
 import {
   Button,
   Card,
@@ -28,13 +24,9 @@ function adherenceBadgeClass(percent: number): string {
 }
 
 export default function NutritionOverview() {
-  const { user } = useAuth();
-  const isTrainer = user?.role === 'trainer';
-  usePageTitle(isTrainer ? 'Nutrición' : 'Nutrición — resumen');
+  usePageTitle('Nutrición');
 
-  const adminQuery = useNutritionOverviewQuery(!isTrainer);
-  const trainerQuery = useTrainerNutritionOverviewQuery(isTrainer);
-  const { data, isPending: loading } = isTrainer ? trainerQuery : adminQuery;
+  const { data, isPending: loading } = useTrainerNutritionOverviewQuery(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
@@ -76,11 +68,8 @@ export default function NutritionOverview() {
     });
   }, [data?.members, search, filter]);
 
-  const withoutPlan = isTrainer && data && 'without_plan' in data ? data.without_plan! : 0;
-  const assignedTotal =
-    isTrainer && data && 'assigned_total' in data
-      ? data.assigned_total!
-      : (data?.members.length ?? 0);
+  const withoutPlan = data?.without_plan ?? 0;
+  const assignedTotal = data?.assigned_total ?? data?.members.length ?? 0;
 
   return (
     <div className="page-stack-tight mx-auto w-full max-w-7xl">
@@ -88,21 +77,11 @@ export default function NutritionOverview() {
         compact
         showTitleOnMobile
         title={
-          isTrainer ? (
-            <>
-              Nutrición de <span className="text-brand">mis clientes</span>
-            </>
-          ) : (
-            <>
-              Nutrición <span className="text-brand">general</span>
-            </>
-          )
+          <>
+            Nutrición de <span className="text-brand">mis clientes</span>
+          </>
         }
-        subtitle={
-          isTrainer
-            ? 'Quién tiene plan, quién no, y adherencia de los últimos 7 días.'
-            : 'Adherencia agregada de los últimos 7 días por miembro con plan activo.'
-        }
+        subtitle="Quién tiene plan, quién no, y adherencia de los últimos 7 días."
         action={<BackToDashboardLink />}
       />
 
@@ -113,12 +92,8 @@ export default function NutritionOverview() {
       ) : !data || assignedTotal === 0 ? (
         <EmptyState
           icon={UtensilsCrossed}
-          title={isTrainer ? 'Sin miembros asignados' : 'Sin planes activos'}
-          description={
-            isTrainer
-              ? 'Cuando tengas clientes asignados, aquí verás su estado nutricional.'
-              : 'Asigna planes nutricionales desde la ficha de cada miembro.'
-          }
+          title="Sin miembros asignados"
+          description="Cuando tengas clientes asignados, aquí verás su estado nutricional."
           action={
             <Link to="/members">
               <Button size="sm">Ir a miembros</Button>
@@ -127,33 +102,25 @@ export default function NutritionOverview() {
         />
       ) : (
         <>
-          <div
-            className={cn('grid gap-3', isTrainer ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3')}
-          >
-            {isTrainer && (
-              <Card padding="sm" rounded="xl">
-                <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
-                  Clientes
-                </p>
-                <p className="text-2xl font-black text-zinc-900 dark:text-white">{assignedTotal}</p>
-              </Card>
-            )}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Card padding="sm" rounded="xl">
+              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                Clientes
+              </p>
+              <p className="text-2xl font-black text-zinc-900 dark:text-white">{assignedTotal}</p>
+            </Card>
             <Card padding="sm" rounded="xl">
               <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                 Con plan
               </p>
               <p className="text-2xl font-black text-zinc-900 dark:text-white">{data.with_plan}</p>
             </Card>
-            {isTrainer ? (
-              <Card padding="sm" rounded="xl">
-                <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
-                  Sin plan
-                </p>
-                <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
-                  {withoutPlan}
-                </p>
-              </Card>
-            ) : null}
+            <Card padding="sm" rounded="xl">
+              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                Sin plan
+              </p>
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{withoutPlan}</p>
+            </Card>
             <Card padding="sm" rounded="xl">
               <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                 Registrando
@@ -162,40 +129,27 @@ export default function NutritionOverview() {
                 {data.logging_active}
               </p>
             </Card>
-            {!isTrainer && (
-              <Card padding="sm" rounded="xl">
-                <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
-                  Periodo
-                </p>
-                <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
-                  {data.period_days}d
-                </p>
-              </Card>
-            )}
           </div>
 
-          {isTrainer && (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <SearchInput
-                containerClassName="min-w-0 flex-1"
-                placeholder="Buscar cliente…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <FilterChips
-                className="w-fit max-w-full shrink-0"
-                options={[
-                  { value: 'all', label: 'Todos' },
-                  { value: 'without', label: 'Sin plan' },
-                  { value: 'with', label: 'Con plan' },
-                ]}
-                value={filter}
-                onChange={(v) => updateFilter(v as 'all' | 'with' | 'without')}
-              />
-            </div>
-          )}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <SearchInput
+              containerClassName="min-w-0 flex-1"
+              placeholder="Buscar cliente…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <FilterChips
+              className="w-fit max-w-full shrink-0"
+              options={[
+                { value: 'all', label: 'Todos' },
+                { value: 'without', label: 'Sin plan' },
+                { value: 'with', label: 'Con plan' },
+              ]}
+              value={filter}
+              onChange={(v) => updateFilter(v as 'all' | 'with' | 'without')}
+            />
+          </div>
 
-          {/* Mobile / tablet cards */}
           <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:hidden">
             {members.length === 0 ? (
               <EmptyState
@@ -211,9 +165,7 @@ export default function NutritionOverview() {
                   <Card key={member.user_id} padding="sm" rounded="xl">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2.5">
-                        {isTrainer && (
-                          <Avatar name={member.full_name} size="sm" className="shrink-0" />
-                        )}
+                        <Avatar name={member.full_name} size="sm" className="shrink-0" />
                         <div className="min-w-0">
                           <p className="truncate font-bold text-zinc-900 dark:text-white">
                             {member.full_name}
@@ -267,7 +219,6 @@ export default function NutritionOverview() {
             )}
           </div>
 
-          {/* Desktop table */}
           <Card padding="none" rounded="xl" className="hidden overflow-hidden lg:block">
             {members.length === 0 ? (
               <EmptyState

@@ -85,17 +85,6 @@ export interface NutritionOverview {
   assigned_total?: number;
 }
 
-export function useNutritionOverviewQuery(enabled = true) {
-  return useQuery({
-    queryKey: ['nutrition', 'admin', 'overview'],
-    queryFn: async () => {
-      const res = await apiFetch('/api/admin/overview');
-      return parseJsonResponse<NutritionOverview>(res);
-    },
-    enabled,
-  });
-}
-
 export function useTrainerNutritionOverviewQuery(enabled = true) {
   return useQuery({
     queryKey: ['nutrition', 'trainer', 'overview'],

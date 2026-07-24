@@ -14,6 +14,7 @@ import {
   CalendarDays,
   ShieldCheck,
   Fingerprint,
+  UsersRound,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -44,6 +45,7 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Reportes', href: '/reports', icon: FileSpreadsheet },
       { name: 'Auditoría', href: '/audit-logs', icon: ScrollText },
       { name: 'Mensajes', href: '/messages', icon: MessageSquare },
+      { name: 'Solicitudes demo', href: '/demo-leads', icon: UsersRound },
     ],
   },
   {

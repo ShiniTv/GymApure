@@ -17,7 +17,7 @@ Comportamiento de la interfaz móvil, navegación inferior y aplicación instala
 
 ### Bottom nav pill
 
-Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**. Cada tab muestra icono + etiqueta corta visible.
+Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**. Pill **icon-only** con `aria-label` (sin caption visible).
 
 ### Sheet Más
 

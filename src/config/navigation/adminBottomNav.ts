@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Fingerprint,
   LogIn,
+  UsersRound,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -42,6 +43,7 @@ export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
   { name: 'Reportes', href: '/reports', icon: FileSpreadsheet, section: 'Finanzas' },
   { name: 'Auditoría', href: '/audit-logs', icon: ScrollText, section: 'Supervisión' },
+  { name: 'Solicitudes demo', href: '/demo-leads', icon: UsersRound, section: 'Supervisión' },
   { name: 'Configuración', href: '/settings', icon: Settings2, section: 'Cuenta' },
   { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },

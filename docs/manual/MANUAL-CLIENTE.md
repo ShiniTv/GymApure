@@ -53,7 +53,7 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 
 ### FAB "Entrenar"
 
-Botón flotante central visible en Inicio, Rutinas y Biblioteca. Oculto en Nutrición y durante entrenamiento activo.
+Botón flotante central visible en **Rutinas**, **Biblioteca** y **Nutrición**. Oculto en Inicio (el hero ya tiene el CTA) y durante entrenamiento activo.
 
 ---
 

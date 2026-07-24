@@ -45,6 +45,7 @@ Debug: `npm run test:ux:browser:ui`
 ### Member — mobile
 
 - Bottom nav pill en `/`, `/routines`, `/nutrition`; **oculta** en `/workout/:id`
+- Tabs de pill **icon-only** con `aria-label` (sin caption visible); accesibles por nombre
 - Rutinas: tap → expandir → Empezar entrenamiento
 - Workout activo: pager inferior sin solapar nav
 - Mensajes: composer visible, no tapado por pill
@@ -52,7 +53,7 @@ Debug: `npm run test:ux:browser:ui`
 
 ### Recepción — mobile
 
-- 4 tabs: Acceso (mostrador), Miembros, Pagos, Mensajes
+- 4 tabs icon-only: Acceso (mostrador), Miembros, Pagos, Mensajes (+ Más)
 - Check-in: tab Acceso / CTA mostrador → counter access; atajo tablet → `/check-in?kiosk=1` solo como ruta documentada (copy UI sin “Kiosk”)
 
 ### Admin / Trainer — desktop

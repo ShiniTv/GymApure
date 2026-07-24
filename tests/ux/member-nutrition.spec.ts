@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, demoPassword, MEMBER_EMAIL } from './helpers';
+import { login, demoPassword, MEMBER_EMAIL, assertDemoSeed } from './helpers';
 
 async function waitForNutrition(page: import('@playwright/test').Page) {
   await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
@@ -42,10 +42,10 @@ test.describe('Member nutrición', () => {
 
   test('abre modal de registro manual', async ({ page }) => {
     const empty = page.getByText(/sin plan nutricional/i);
-    if (await empty.isVisible().catch(() => false)) {
-      test.skip(true, 'Sin plan nutricional en demo para member@gym.com');
-      return;
-    }
+    assertDemoSeed(
+      !(await empty.isVisible().catch(() => false)),
+      'Sin plan nutricional en demo para member@gym.com.'
+    );
 
     await page.getByRole('button', { name: /registrar/i }).first().click();
     await expect(page.getByText(/registrar comida/i).first()).toBeVisible();

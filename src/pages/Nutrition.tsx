@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -10,6 +10,7 @@ import {
   Beef,
   Wheat,
   Droplet,
+  Camera,
 } from 'lucide-react';
 import {
   Button,
@@ -53,14 +54,27 @@ const emptyMealForm = {
   fat_g: '',
 };
 
+interface FoodAnalysisPreview {
+  description: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  confidence?: number;
+  warnings?: string[];
+}
+
 export default function Nutrition() {
   const { user } = useAuth();
   const invalidate = useInvalidateNutrition();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
   const [showMealModal, setShowMealModal] = useState(false);
   const [editingLog, setEditingLog] = useState<NutritionLogEntry | null>(null);
   const [mealForm, setMealForm] = useState(emptyMealForm);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisHints, setAnalysisHints] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   const { data: plan, isPending: planLoading } = useNutritionPlanQuery(user?.id);
@@ -75,6 +89,7 @@ export default function Nutrition() {
   const openAddMeal = () => {
     setEditingLog(null);
     setMealForm(emptyMealForm);
+    setAnalysisHints([]);
     setError('');
     setShowMealModal(true);
   };
@@ -89,8 +104,45 @@ export default function Nutrition() {
       carbs_g: String(log.carbs_g),
       fat_g: String(log.fat_g),
     });
+    setAnalysisHints([]);
     setError('');
     setShowMealModal(true);
+  };
+
+  const applyAnalysis = (analysis: FoodAnalysisPreview) => {
+    setMealForm((prev) => ({
+      ...prev,
+      description: analysis.description || prev.description,
+      calories: String(Math.round(analysis.calories) || 0),
+      protein_g: String(analysis.protein_g ?? 0),
+      carbs_g: String(analysis.carbs_g ?? 0),
+      fat_g: String(analysis.fat_g ?? 0),
+    }));
+    const hints: string[] = [];
+    if (typeof analysis.confidence === 'number') {
+      hints.push(`Confianza estimada: ${Math.round(analysis.confidence * 100)}%`);
+    }
+    if (analysis.warnings?.length) hints.push(...analysis.warnings);
+    hints.push('Revisa y ajusta los macros antes de guardar.');
+    setAnalysisHints(hints);
+  };
+
+  const handleAnalyzePhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setAnalyzing(true);
+    setError('');
+    try {
+      const body = new FormData();
+      body.append('photo', file);
+      const res = await apiFetch('/api/nutrition/analyze-food', { method: 'POST', body });
+      const analysis = await parseJsonResponse<FoodAnalysisPreview>(res);
+      applyAnalysis(analysis);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo analizar la foto');
+    } finally {
+      setAnalyzing(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
   };
 
   const handleSaveMeal = async (e: FormEvent) => {
@@ -350,11 +402,41 @@ export default function Nutrition() {
 
       <Modal
         open={showMealModal}
-        onClose={() => !saving && setShowMealModal(false)}
+        onClose={() => !saving && !analyzing && setShowMealModal(false)}
         title={editingLog ? 'Editar comida' : 'Registrar comida'}
         maxWidth="md"
       >
         {error && <p className="mb-3 text-xs text-red-500">{error}</p>}
+        {!editingLog && (
+          <div className="mb-3">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => void handleAnalyzePhoto(e.target.files?.[0])}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-11 w-full gap-2"
+              loading={analyzing}
+              disabled={saving}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              <Camera className="h-4 w-4" />
+              Analizar foto
+            </Button>
+            {analysisHints.length > 0 && (
+              <ul className="mt-2 space-y-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                {analysisHints.map((hint) => (
+                  <li key={hint}>{hint}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSaveMeal} className="form-stack">
           <div>
             <Label>Tipo</Label>
@@ -425,11 +507,15 @@ export default function Nutrition() {
               type="button"
               variant="ghost"
               onClick={() => setShowMealModal(false)}
-              disabled={saving}
+              disabled={saving || analyzing}
             >
               Cancelar
             </Button>
-            <Button type="submit" loading={saving} disabled={!mealForm.description.trim()}>
+            <Button
+              type="submit"
+              loading={saving}
+              disabled={analyzing || !mealForm.description.trim()}
+            >
               Guardar
             </Button>
           </div>

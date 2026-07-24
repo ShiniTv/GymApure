@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { login, demoPassword, MEMBER_EMAIL, getMemberRoutineCard } from './helpers';
+import {
+  login,
+  demoPassword,
+  MEMBER_EMAIL,
+  getMemberRoutineCard,
+  assertDemoSeed,
+} from './helpers';
 
 test.describe('Member rutinas preview', () => {
   test.beforeEach(async ({ page }) => {
@@ -9,10 +15,7 @@ test.describe('Member rutinas preview', () => {
 
   test('muestra CTA de entrenamiento sin salir de /routines', async ({ page }) => {
     const routineCard = await getMemberRoutineCard(page);
-    if (!routineCard) {
-      test.skip(true, 'Sin rutinas asignadas en demo');
-      return;
-    }
+    assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
     await expect(
       page.getByRole('button', { name: /entrenar|continuar|completada hoy/i })

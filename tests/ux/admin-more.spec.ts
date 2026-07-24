@@ -21,6 +21,7 @@ test.describe('Admin sheet Más', () => {
 
     await expect(sheet.getByRole('link', { name: /mostrador/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /auditoría/i })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /solicitudes demo/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /mi perfil/i })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /^nutrición$/i })).toHaveCount(0);

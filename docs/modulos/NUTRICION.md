@@ -1,8 +1,8 @@
 # Nutrición
 
-Planes nutricionales asignados por entrenador/admin al miembro, con seguimiento diario de macros y registro de comidas (manual o por foto con IA).
+Planes nutricionales asignados por el entrenador al miembro, con seguimiento diario de macros y registro de comidas (manual o por foto con IA).
 
-**Rutas:** `/nutrition` (miembro), `/nutrition-overview` (admin/entrenador), `/members/:id/nutrition` (entrenador)
+**Rutas:** `/nutrition` (miembro), `/nutrition-overview` (entrenador), `/members/:id/nutrition` (entrenador)
 
 ---
 
@@ -42,10 +42,10 @@ Planes nutricionales asignados por entrenador/admin al miembro, con seguimiento 
 
 ---
 
-## Flujo: admin / entrenador overview
+## Flujo: overview del entrenador
 
-1. **Nutrición overview** (`/nutrition-overview`).
-2. Vista de miembros con plan y adherencia reciente.
+1. **Nutrición** (`/nutrition-overview`) — solo clientes asignados.
+2. Filtros: todos / con plan / sin plan; adherencia de los últimos 7 días.
 
 ---
 
@@ -54,9 +54,11 @@ Planes nutricionales asignados por entrenador/admin al miembro, con seguimiento 
 | Acción                     | admin | trainer       | member |
 | -------------------------- | ----- | ------------- | ------ |
 | Ver propio plan / logs     | —     | —             | ✓      |
-| Editar plan de miembro     | ✓     | ✓ (asignados) | —      |
-| Overview global / clientes | ✓     | ✓ (asignados) | —      |
+| Editar plan de miembro     | —     | ✓ (asignados) | —      |
+| Overview de clientes       | —     | ✓ (asignados) | —      |
 | Analizar foto de comida    | —     | —             | ✓      |
+
+> Nota: `GET /api/admin/overview` permanece en API por compatibilidad, pero la UI de overview es solo entrenador.
 
 ---
 

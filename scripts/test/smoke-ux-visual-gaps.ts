@@ -68,10 +68,8 @@ async function main() {
     const page = await context.newPage();
     await login(page, MEMBER_EMAIL, pwd);
     await waitAppReady(page);
-    const started = await goToActiveWorkout(page);
-    if (!started) {
-      ok('Workout layout: rutina demo → workout', false, 'sin rutina demo');
-    } else {
+    try {
+      await goToActiveWorkout(page);
       await waitAppReady(page);
       const vp = page.viewportSize();
       const box = await page.locator('main').boundingBox();
@@ -83,6 +81,12 @@ async function main() {
       ok(
         'Workout: bottom nav oculta',
         !(await page.locator(memberBottomNav).isVisible().catch(() => false))
+      );
+    } catch (err) {
+      ok(
+        'Workout layout: rutina demo → workout',
+        false,
+        err instanceof Error ? err.message : String(err)
       );
     }
     await context.close();
