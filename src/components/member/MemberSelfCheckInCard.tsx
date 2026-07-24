@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
-import { Button, Input, Label, Skeleton } from '../ui';
+import { Button, Card, Input, Label, Skeleton } from '../ui';
 import { useToastOptional } from '../../context/ToastContext';
 
 interface MeAttendance {
@@ -78,30 +78,32 @@ export function MemberSelfCheckInCard() {
 
   if (loading) {
     return (
-      <div
-        className="flex items-center gap-3 rounded-xl border border-zinc-200/70 px-3 py-2 dark:border-zinc-800"
+      <Card
+        padding="md"
+        rounded="xl"
+        className="flex items-center gap-3.5"
         aria-busy="true"
         aria-label="Cargando asistencia"
       >
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1 space-y-2">
           <Skeleton className="h-3.5 w-28" />
           <Skeleton className="h-3 w-40" />
         </div>
-        <Skeleton className="h-8 w-24 rounded-lg" />
-      </div>
+        <Skeleton className="h-9 w-24 rounded-lg" />
+      </Card>
     );
   }
 
   const inside = Boolean(state?.is_inside);
 
   return (
-    <div className="rounded-xl border border-zinc-200/70 px-3 py-2 dark:border-zinc-800">
-      <div className="flex items-center gap-3">
+    <Card padding="md" rounded="xl">
+      <div className="flex items-center gap-3.5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-zinc-900 dark:text-white">
+          <p className="text-sm font-medium leading-snug text-text">
             {inside ? 'Dentro del gym' : 'Asistencia'}
           </p>
-          <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 truncate text-[11px] leading-relaxed text-text-secondary">
             {inside ? (
               'Registra la salida al irte'
             ) : pinRequired ? (
@@ -120,7 +122,7 @@ export function MemberSelfCheckInCard() {
           <Button
             size="sm"
             variant="ghost"
-            className="h-9 shrink-0 px-2.5"
+            className="h-10 shrink-0 px-3"
             loading={busy}
             onClick={() => void act('out')}
           >
@@ -131,7 +133,7 @@ export function MemberSelfCheckInCard() {
           <Button
             size="sm"
             variant="ghost"
-            className="h-9 shrink-0 px-2.5"
+            className="h-10 shrink-0 px-3"
             loading={busy}
             disabled={pinRequired && !pin.trim()}
             onClick={() => void act('in')}
@@ -142,7 +144,7 @@ export function MemberSelfCheckInCard() {
         )}
       </div>
       {!inside && pinRequired && (
-        <div className="mt-2 max-w-[11rem]">
+        <div className="mt-3 max-w-[11rem]">
           <Label htmlFor="self-check-in-pin" className="sr-only">
             PIN de presencia
           </Label>
@@ -153,10 +155,10 @@ export function MemberSelfCheckInCard() {
             placeholder="PIN del día"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="h-8 text-sm"
+            className="h-9 text-sm"
           />
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -26,7 +26,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
       scrollable
     >
       <div className="space-y-5">
-        <p className="-mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="-mt-2 text-sm text-text-secondary">
           Elige cómo quieres ver GymApure. Puedes cambiarlo cuando quieras en tu perfil.
         </p>
         <div className="text-brand flex items-center gap-2">
@@ -43,7 +43,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
               className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
                 theme === 'light'
                   ? 'border-brand bg-brand/5 text-brand'
-                  : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800'
+                  : 'border-zinc-200 hover:border-zinc-300'
               }`}
             >
               <Sun className="h-4 w-4" />
@@ -55,7 +55,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
               className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
                 theme === 'dark'
                   ? 'border-brand bg-brand/5 text-brand'
-                  : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800'
+                  : 'border-zinc-200 hover:border-zinc-300'
               }`}
             >
               <Moon className="h-4 w-4" />

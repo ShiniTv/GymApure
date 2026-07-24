@@ -2,29 +2,90 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens — GymApure */
+/*
+ * Design tokens — GymApure Mobile (Figma: Mobile App UI)
+ * Source: https://www.figma.com/design/WwEtNcIqpDNxYZx4ZpiE7m/Mobile-App-UI
+ * Pixel-sampled dark mode; light values are inverted companions for desktop/staff.
+ */
 @theme {
+  /* —— Typography —— */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --color-brand: #18181b;
-  --color-brand-hover: #27272a;
-  --color-warning: #f97316;
-  --color-warning-hover: #ea580c;
-  --color-check-out: #2563eb;
-  --color-check-out-hover: #3b82f6;
+
+  --text-h1: 1.75rem; /* 28px — large titles */
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 1.25rem; /* 20px — section / card titles */
+  --text-h2--line-height: 1.25;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+
+  --text-base: 1rem; /* 16px — body */
+  --text-base--line-height: 1.5;
+  --text-base--letter-spacing: -0.011em;
+  --text-base--font-weight: 400;
+
+  --text-small: 0.75rem; /* 12px — labels / meta */
+  --text-small--line-height: 1.35;
+  --text-small--letter-spacing: 0.01em;
+  --text-small--font-weight: 500;
+
+  /* —— Brand & status (Figma dark accents) —— */
+  --color-brand: #0c98ff;
+  --color-brand-hover: #3aadff;
+  --color-secondary: #704ca8;
+  --color-secondary-hover: #8b6bc4;
+  --color-warning: #b49c44;
+  --color-warning-hover: #c9b35a;
+  --color-check-out: #0c98ff;
+  --color-check-out-hover: #3aadff;
+  --color-success: #14b05c;
+  --color-danger: #ff5c5c;
+  --color-info: #0c98ff;
+
+  /* —— Surfaces (light defaults; dark overrides in :root / .dark) —— */
+  --color-bg: #f4f4f5;
+  --color-bg-elevated: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-dark: #18181b;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
-  --chart-accent: #18181b;
+  --color-surface-raised: #f4f4f5;
+  --color-surface-overlay: #e4e4e7;
+  --color-surface-dark: #141414;
+  --color-border: #e4e4e7;
+  --color-border-subtle: #f4f4f5;
+
+  --color-text: #18181b;
+  --color-text-secondary: #71717a;
+  --color-text-muted: #a1a1aa;
+  --color-text-inverse: #ffffff;
+
+  --chart-accent: #0c98ff;
+
+  /* —— Spacing scale (8px base, Figma gutters 16 / pad 16–20) —— */
+  --spacing-ds-1: 0.25rem; /* 4 */
+  --spacing-ds-2: 0.5rem; /* 8 */
+  --spacing-ds-3: 0.75rem; /* 12 */
+  --spacing-ds-4: 1rem; /* 16 — screen gutter / card pad */
+  --spacing-ds-5: 1.25rem; /* 20 — comfortable card pad */
+  --spacing-ds-6: 1.5rem; /* 24 — section gap */
+  --spacing-ds-8: 2rem; /* 32 — block gap */
+
+  /* —— Radii (native rounded finish) —— */
+  --radius-chip: 0.75rem; /* 12 */
+  --radius-input: 1rem; /* 16 */
+  --radius-button: 1rem; /* 16 — use rounded-full for pills */
+  --radius-card: 1.25rem; /* 20 */
+  --radius-sheet: 1.75rem; /* 28 — bottom sheets */
+  --radius-pill: 9999px;
+
+  /* —— Elevation —— */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --radius-card: 1rem;
-  --radius-input: 0.75rem;
-  --radius-button: 0.75rem;
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.45);
+
   --touch-min: 44px;
   --touch-comfort: 48px;
 }
@@ -59,23 +120,54 @@
 
 /* Base Styles */
 @layer base {
-  body {
-    @apply bg-zinc-50 text-zinc-900 transition-colors duration-300;
+  :root {
+    --color-bg: #f4f4f5;
+    --color-bg-elevated: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-raised: #f4f4f5;
+    --color-surface-overlay: #e4e4e7;
+    --color-border: #e4e4e7;
+    --color-border-subtle: #f4f4f5;
+    --color-text: #18181b;
+    --color-text-secondary: #71717a;
+    --color-text-muted: #a1a1aa;
   }
 
-  .dark body {
-    @apply bg-zinc-950 text-zinc-100;
+  .dark {
+    /* Figma Mobile App UI — dark mode surfaces */
+    --color-bg: #0c0c0c;
+    --color-bg-elevated: #141414;
+    --color-surface: #1c1c1c;
+    --color-surface-raised: #242424;
+    --color-surface-overlay: #2c2c2c;
+    --color-surface-dark: #141414;
+    --color-border: #2c2c2c;
+    --color-border-subtle: #242424;
+    --color-text: #ffffff;
+    --color-text-secondary: #808080;
+    --color-text-muted: #646464;
+    --color-text-inverse: #0c0c0c;
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.35);
+    --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.45);
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    letter-spacing: -0.011em;
+    @apply transition-colors duration-300;
   }
 
   .dark body,
   .dark .recharts-default-tooltip {
-    --chart-accent: #fafafa;
+    --chart-accent: #0c98ff;
   }
 
   /* Native select dropdowns: keep option text readable in dark mode */
   .dark select option {
-    background-color: #27272a;
-    color: #fafafa;
+    background-color: #242424;
+    color: #ffffff;
   }
 }
 
@@ -90,30 +182,129 @@ body,
     color 0.2s ease;
 }
 
-/* Typography utilities — titles bold; forms/body readable */
+/* Typography utilities — Figma scale (h1 / h2 / base / small) + letter-spacing */
 @layer components {
+  .type-h1,
   .page-title {
-    @apply text-xl leading-tight font-bold tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl dark:text-white;
+    font-family: var(--font-display);
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+    letter-spacing: var(--text-h1--letter-spacing);
+    font-weight: var(--text-h1--font-weight);
+    color: var(--color-text);
+  }
+
+  @media (min-width: 640px) {
+    .page-title {
+      font-size: 1.875rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-title {
+      font-size: 2rem;
+    }
+  }
+
+  .type-h2,
+  .card-title {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+    font-weight: var(--text-h2--font-weight);
+    color: var(--color-text);
+  }
+
+  .type-base,
+  .body-text {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    letter-spacing: var(--text-base--letter-spacing);
+    font-weight: var(--text-base--font-weight);
+    color: var(--color-text-secondary);
+  }
+
+  .type-small {
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    letter-spacing: var(--text-small--letter-spacing);
+    font-weight: var(--text-small--font-weight);
+    color: var(--color-text-muted);
   }
 
   .page-subtitle {
-    @apply mt-0.5 text-xs font-medium text-zinc-500 sm:mt-1 sm:text-sm dark:text-zinc-400;
+    margin-top: 0.125rem;
+    font-size: var(--text-small);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 640px) {
+    .page-subtitle {
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+    }
   }
 
   .section-title {
-    @apply text-sm font-semibold text-zinc-500 dark:text-zinc-400;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-text-secondary);
   }
 
   .label-caps {
-    @apply text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400;
+    font-size: var(--text-small);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
   }
 
   .stat-value {
-    @apply text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+  }
+
+  @media (min-width: 640px) {
+    .stat-value {
+      font-size: 1.875rem;
+    }
   }
 
   .stat-label {
-    @apply text-xs font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400;
+    font-size: var(--text-small);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .surface-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Dark: separate with surface tone, not hairline borders */
+  .dark .surface-card {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .surface-raised {
+    background-color: var(--color-surface-raised);
+    border-radius: var(--radius-card);
+  }
+
+  .surface-sheet {
+    background-color: var(--color-surface-raised);
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+    box-shadow: var(--shadow-sheet);
   }
 
   .page-stack {
@@ -142,7 +333,7 @@ body,
   }
 
   .page-stack-tight {
-    @apply space-y-3 sm:space-y-4;
+    @apply space-y-4 sm:space-y-5;
   }
 
   .form-stack {
@@ -159,39 +350,56 @@ body,
   }
 
   .table-shell {
-    @apply overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-card);
   }
 
-  /* Sidebar / navigation */
+  /* Sidebar / navigation — Figma: airy gaps, subtle section caps */
   .nav-stack {
-    @apply flex flex-col gap-0.5;
+    @apply flex flex-col gap-1;
+  }
+
+  .nav-section {
+    @apply mb-ds-5 last:mb-0;
+  }
+
+  .nav-section-label {
+    @apply mb-2.5 px-3 text-[10px] font-medium tracking-[0.16em] text-text-muted uppercase;
   }
 
   .nav-link {
-    @apply flex min-h-9 touch-manipulation items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors;
+    @apply flex min-h-10 touch-manipulation items-center gap-3 rounded-xl px-3 py-2.5 text-sm leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
+  }
+
+  .nav-link:active {
+    transform: scale(0.98);
+    opacity: 0.85;
   }
 
   @media (max-width: 1023px) {
     .nav-link-mobile {
-      @apply min-h-11 py-2;
+      @apply min-h-12 py-3;
     }
   }
 
   .nav-link-active {
-    @apply bg-brand/10 text-brand dark:text-brand shadow-sm;
+    @apply bg-brand/10 text-brand shadow-none dark:text-brand;
   }
 
   .nav-link-inactive {
-    @apply text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white;
+    @apply text-text-secondary hover:bg-surface-overlay hover:text-text;
   }
 
   .nav-badge {
     @apply flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[9px] leading-none font-bold;
   }
 
-  /* Filled brand surfaces — light bg in dark mode needs dark foreground */
+  /* Filled brand surfaces — Figma primary is saturated blue; keep light on-brand text */
   .brand-solid {
-    @apply bg-brand text-white dark:text-zinc-900;
+    @apply bg-brand text-white;
   }
 
   .brand-solid-hover {
@@ -251,7 +459,7 @@ body,
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #0c0c0c;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -344,46 +552,58 @@ body,
   }
 }
 
+/* Press feedback — buttons, nav links, menu tiles (respects reduced-motion via global rule) */
+.tap-feedback {
+  transition-property: transform, opacity;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.tap-feedback:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .stagger-fade-in > * {
-    animation: slide-up 0.2s ease-out both;
+    animation: slide-up 0.28s ease-out both;
   }
 
   .stagger-fade-in > *:nth-child(1) {
     animation-delay: 0ms;
   }
   .stagger-fade-in > *:nth-child(2) {
-    animation-delay: 40ms;
+    animation-delay: 45ms;
   }
   .stagger-fade-in > *:nth-child(3) {
-    animation-delay: 80ms;
+    animation-delay: 90ms;
   }
   .stagger-fade-in > *:nth-child(4) {
-    animation-delay: 120ms;
+    animation-delay: 135ms;
   }
   .stagger-fade-in > *:nth-child(5) {
-    animation-delay: 160ms;
+    animation-delay: 180ms;
   }
   .stagger-fade-in > *:nth-child(6) {
-    animation-delay: 200ms;
+    animation-delay: 225ms;
   }
   .stagger-fade-in > *:nth-child(7) {
-    animation-delay: 240ms;
+    animation-delay: 270ms;
   }
   .stagger-fade-in > *:nth-child(8) {
-    animation-delay: 280ms;
+    animation-delay: 315ms;
   }
   .stagger-fade-in > *:nth-child(9) {
-    animation-delay: 320ms;
-  }
-  .stagger-fade-in > *:nth-child(10) {
     animation-delay: 360ms;
   }
+  .stagger-fade-in > *:nth-child(10) {
+    animation-delay: 405ms;
+  }
   .stagger-fade-in > *:nth-child(11) {
-    animation-delay: 400ms;
+    animation-delay: 450ms;
   }
   .stagger-fade-in > *:nth-child(12) {
-    animation-delay: 440ms;
+    animation-delay: 495ms;
   }
 }
 
@@ -532,12 +752,12 @@ body,
   );
 }
 
-/* Shared glass surface: top island + bottom nav pill */
+/* Shared glass surface: top island + bottom nav pill (Figma chrome) */
 .mobile-chrome-glass,
 .member-bottom-nav-pill {
-  border: 1px solid rgb(228 228 231 / 0.8);
-  background: rgb(255 255 255 / 0.92);
-  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
+  backdrop-filter: blur(16px);
   box-shadow:
     0 4px 24px rgb(0 0 0 / 0.08),
     0 1px 2px rgb(0 0 0 / 0.04);
@@ -545,20 +765,20 @@ body,
 
 .dark .mobile-chrome-glass,
 .dark .member-bottom-nav-pill {
-  border-color: rgb(39 39 42 / 0.9);
-  background: rgb(9 9 11 / 0.92);
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
   box-shadow:
-    0 4px 24px rgb(0 0 0 / 0.35),
-    0 1px 2px rgb(0 0 0 / 0.2);
+    0 4px 24px rgb(0 0 0 / 0.45),
+    0 1px 2px rgb(0 0 0 / 0.25);
 }
 
 .member-bottom-nav-pill {
-  border-radius: 9999px;
+  border-radius: var(--radius-pill);
 }
 
 /* Compensates fixed mobile header island so content clears it */
 .mobile-top-pad {
-  padding-top: calc(var(--mobile-top-chrome) + 0.75rem) !important;
+  padding-top: calc(var(--mobile-top-chrome) + 1rem) !important;
 }
 
 @media (min-width: 1024px) {
@@ -582,6 +802,10 @@ body,
 
 .member-bottom-nav-tab-icon--active {
   @apply bg-brand text-white;
+}
+
+.member-bottom-nav-unread {
+  @apply absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-danger px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-bg;
 }
 
 .reception-main-pad {

@@ -35,7 +35,7 @@ export function ProgressRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className="text-zinc-200/90 dark:text-zinc-800"
+            className="text-border"
           />
           <circle
             cx={size / 2}
@@ -51,15 +51,15 @@ export function ProgressRing({
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+          <p className="text-sm font-bold text-text tabular-nums">
             {value}
-            <span className="font-semibold text-zinc-400"> / {max}</span>
+            <span className="font-semibold text-text-muted"> / {max}</span>
           </p>
         </div>
       </div>
-      <p className="mt-1.5 text-[11px] font-semibold text-zinc-600 dark:text-zinc-300">{label}</p>
+      <p className="mt-1.5 text-[11px] font-semibold text-text-secondary">{label}</p>
       {sublabel && (
-        <p className="text-[10px] leading-none text-zinc-500 dark:text-zinc-400">{sublabel}</p>
+        <p className="text-[10px] leading-none text-text-secondary">{sublabel}</p>
       )}
     </div>
   );

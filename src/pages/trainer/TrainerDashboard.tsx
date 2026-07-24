@@ -19,7 +19,7 @@ import { routePrefetchHandlers } from '../../lib/routePrefetch';
 
 const TODAY_LIST_CAP = 5;
 
-const SURFACE = 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
+const SURFACE = 'bg-surface dark:bg-surface';
 
 function MetricCell({
   label,
@@ -61,7 +61,7 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="inline-flex h-9 shrink-0 touch-manipulation items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/60 px-3 text-[12px] font-semibold text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50 lg:h-10 lg:px-3.5 lg:text-[13px] dark:border-zinc-700/80 dark:bg-zinc-900/40 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-900/70"
+      className="inline-flex h-10 shrink-0 touch-manipulation items-center gap-2 rounded-pill bg-surface px-3.5 text-[12px] font-medium leading-snug text-text-secondary transition-colors hover:bg-surface-raised lg:h-11 lg:px-4 lg:text-[13px]"
     >
       <Icon className="text-brand h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
       {label}
@@ -262,15 +262,15 @@ function ActivityPanel({
       </h2>
       {loading ? (
         <div
-          className={cn('flex-1 space-y-0 overflow-hidden rounded-xl border p-3 lg:p-4', SURFACE)}
+          className={cn('flex-1 space-y-0 overflow-hidden rounded-card p-ds-4', SURFACE)}
         >
           <Skeleton className="h-10 w-full" />
           <Skeleton className="mt-2 h-10 w-full" />
           <Skeleton className="mt-2 hidden h-10 w-full lg:block" />
         </div>
       ) : !activities?.length ? (
-        <div className={cn('flex-1 rounded-xl border px-3 py-4 lg:px-4 lg:py-5', SURFACE)}>
-          <p className="text-[12px] text-zinc-500 lg:text-[13px] dark:text-zinc-400">
+        <div className={cn('flex-1 rounded-card px-ds-4 py-ds-5', SURFACE)}>
+          <p className="text-[12px] leading-relaxed text-text-secondary lg:text-[13px]">
             Cuando entrenen, verás sus sesiones aquí.{' '}
             <button
               type="button"
@@ -282,7 +282,7 @@ function ActivityPanel({
           </p>
         </div>
       ) : (
-        <ul className={cn('flex-1 overflow-hidden rounded-xl border', SURFACE)}>
+        <ul className={cn('flex-1 overflow-hidden rounded-card', SURFACE)}>
           {activities.map((activity, i) => (
             <li key={`${activity.user_id}-${activity.start_time}`}>
               <Link
@@ -334,7 +334,7 @@ export default function TrainerDashboard() {
 
   if (isError) {
     return (
-      <div className="page-stack-tight">
+      <div className="page-stack">
         <PageHeader
           compact
           title={
@@ -358,7 +358,7 @@ export default function TrainerDashboard() {
   }
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl">
+    <div className="page-stack mx-auto w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl">
       <PageHeader
         compact
         title={
@@ -376,7 +376,7 @@ export default function TrainerDashboard() {
 
       <div
         className={cn(
-          'grid grid-cols-2 overflow-hidden rounded-xl border sm:grid-cols-4 sm:divide-x sm:divide-zinc-200/80 dark:sm:divide-zinc-800/80',
+          'grid grid-cols-2 overflow-hidden rounded-card bg-surface sm:grid-cols-4 sm:divide-x sm:divide-border/40',
           SURFACE
         )}
       >

@@ -36,7 +36,9 @@ import { routePrefetchHandlers } from '../lib/routePrefetch';
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
 const iconBtnClass =
-  'inline-flex items-center justify-center h-10 w-10 rounded-full text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
+  'inline-flex items-center justify-center h-10 w-10 rounded-full text-text-secondary hover:bg-surface-overlay transition-[background-color,transform,opacity] duration-150 touch-manipulation tap-feedback';
+
+const SIDEBAR_MOTION_MS = 300;
 
 export default function Layout() {
   useAppFonts();
@@ -51,6 +53,8 @@ export default function Layout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarBackdropMounted, setSidebarBackdropMounted] = useState(false);
+  const [sidebarBackdropVisible, setSidebarBackdropVisible] = useState(false);
   const touchStartX = useRef(0);
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
@@ -135,6 +139,20 @@ export default function Layout() {
 
   useScrollLock(isSidebarOpen);
 
+  useEffect(() => {
+    if (isSidebarOpen) {
+      setSidebarBackdropMounted(true);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setSidebarBackdropVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+
+    setSidebarBackdropVisible(false);
+    const timer = window.setTimeout(() => setSidebarBackdropMounted(false), SIDEBAR_MOTION_MS);
+    return () => window.clearTimeout(timer);
+  }, [isSidebarOpen]);
+
   const brandMark = <BrandName variant="split" />;
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
@@ -145,7 +163,7 @@ export default function Layout() {
   return (
     <MobileShellProvider hideBackToDashboard={hideBackToDashboard}>
       <div
-        className="min-h-dvh bg-zinc-50 font-sans text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-100"
+        className="min-h-dvh bg-bg font-sans text-text transition-colors duration-300"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -156,17 +174,17 @@ export default function Layout() {
           Saltar al contenido
         </a>
         {/* Mobile Header — fixed glass island (content scrolls underneath) */}
-        <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-3 pt-2.5 pb-2 lg:hidden">
-          <div className="mobile-chrome-glass pointer-events-auto flex h-12 items-center justify-between gap-2 rounded-2xl px-2.5">
+        <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
+          <div className="mobile-chrome-glass pointer-events-auto flex h-12 items-center justify-between gap-2 rounded-card px-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <Logo className="h-8 w-8 shrink-0" />
               <div className="min-w-0">
                 {currentPage ? (
                   <>
-                    <p className="truncate text-sm leading-tight font-bold text-zinc-900 dark:text-white">
+                    <p className="truncate text-sm leading-tight font-bold tracking-[-0.02em] text-text">
                       {mobileHeaderTitle}
                     </p>
-                    <p className="truncate text-[10px] leading-tight font-medium text-zinc-400 dark:text-zinc-300">
+                    <p className="truncate text-[10px] leading-tight font-medium text-text-muted">
                       {BRAND.name}
                     </p>
                   </>
@@ -194,21 +212,22 @@ export default function Layout() {
           {/* Sidebar */}
           <aside
             className={clsx(
-              'fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r border-zinc-200 bg-white transition-all duration-200 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900',
+              'fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden bg-bg-elevated transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             )}
+            style={{ transitionDuration: `${SIDEBAR_MOTION_MS}ms` }}
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
-              <div className="hidden h-14 shrink-0 items-center justify-center border-b border-zinc-200 lg:flex dark:border-zinc-800">
+              <div className="hidden h-16 shrink-0 items-center justify-center lg:flex">
                 <button
                   type="button"
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-overlay"
                   aria-label="Expandir menú"
                   title="Expandir menú"
                 >
@@ -216,11 +235,11 @@ export default function Layout() {
                 </button>
               </div>
             ) : (
-              <div className="hidden h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-3 lg:flex dark:border-zinc-800">
+              <div className="hidden h-16 shrink-0 items-center gap-3 px-4 lg:flex">
                 <Logo className="h-8 w-8 shrink-0" />
                 <div className="overflow-hidden whitespace-nowrap transition-opacity duration-200">
                   {brandMark}
-                  <p className="mt-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                  <p className="mt-0.5 text-[10px] font-medium tracking-[0.06em] text-text-muted">
                     {portalTitle}
                   </p>
                 </div>
@@ -230,7 +249,7 @@ export default function Layout() {
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-overlay"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
@@ -240,11 +259,11 @@ export default function Layout() {
             )}
 
             {!sidebarCollapsed && (
-              <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-3 lg:hidden dark:border-zinc-800">
+              <div className="flex h-16 shrink-0 items-center gap-3 px-4 lg:hidden">
                 <Logo className="h-8 w-8 shrink-0" />
                 <div className="min-w-0 flex-1">
                   {brandMark}
-                  <p className="mt-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                  <p className="mt-0.5 text-[10px] font-medium tracking-[0.06em] text-text-muted">
                     {portalTitle}
                   </p>
                 </div>
@@ -254,16 +273,14 @@ export default function Layout() {
             <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
-                  'nav-stack scroll-area min-h-0 flex-1 py-2.5 lg:py-3',
-                  sidebarCollapsed ? 'px-0' : 'px-2.5'
+                  'nav-stack scroll-area min-h-0 flex-1 py-4 lg:py-5',
+                  sidebarCollapsed ? 'px-1.5' : 'px-3'
                 )}
               >
                 {allFiltered.map((section) => (
-                  <div key={section.name} className="mb-2">
+                  <div key={section.name} className="nav-section">
                     {!sidebarCollapsed && (
-                      <p className="mt-1 mb-1 px-2.5 text-[10px] font-bold tracking-widest text-zinc-400 uppercase dark:text-zinc-500">
-                        {section.name}
-                      </p>
+                      <p className="nav-section-label">{section.name}</p>
                     )}
                     {section.items.map((item) => {
                       const isActive = isNavActive(item.href);
@@ -324,21 +341,21 @@ export default function Layout() {
 
               <div
                 className={clsx(
-                  'shrink-0 space-y-0.5 border-t border-zinc-200 dark:border-zinc-800',
-                  sidebarCollapsed ? 'px-0 py-2' : 'px-2.5 py-2.5',
+                  'shrink-0 space-y-1 bg-bg/40',
+                  sidebarCollapsed ? 'px-1.5 py-3' : 'px-3 py-4',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isAdminMobileShell && 'pb-[env(safe-area-inset-bottom)]',
-                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-2.5'
+                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-4'
                 )}
               >
                 {!sidebarCollapsed && (
-                  <div className="hidden pb-1 lg:block">
+                  <div className="hidden pb-2 lg:block">
                     <InstallPrompt />
                   </div>
                 )}
                 {sidebarCollapsed && (
-                  <div className="hidden justify-center pb-1 lg:flex">
+                  <div className="hidden justify-center pb-2 lg:flex">
                     <NotificationBell compact />
                   </div>
                 )}
@@ -375,7 +392,7 @@ export default function Layout() {
                     setIsSidebarOpen(false);
                   }}
                   className={clsx(
-                    'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800',
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-overlay',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}
@@ -388,10 +405,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                      <p className="truncate text-sm font-medium leading-snug text-text">
                         {user?.name}
                       </p>
-                      <p className="mt-0.5 truncate text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 truncate text-[10px] font-medium tracking-[0.04em] text-text-muted">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>
@@ -402,7 +419,7 @@ export default function Layout() {
                   type="button"
                   onClick={requestLogout}
                   className={clsx(
-                    'nav-link w-full text-zinc-500 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-400',
+                    'nav-link text-text-secondary hover:bg-danger/10 hover:text-danger w-full',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? 'Cerrar sesión' : undefined}
@@ -418,7 +435,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-zinc-50 p-3 transition-colors duration-300 sm:p-5 lg:p-8 dark:bg-zinc-950',
+              'h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-bg p-4 transition-colors duration-300 sm:p-6 lg:p-8',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
@@ -458,16 +475,19 @@ export default function Layout() {
           />
         )}
 
-        {isSidebarOpen && (
-          <div
+        {sidebarBackdropMounted && (
+          <button
+            type="button"
             className={clsx(
-              'fixed inset-0 bg-black/50 lg:hidden',
-              isMobileShell ? 'z-[55]' : 'z-30'
+              'fixed inset-0 bg-black/50 transition-opacity ease-in-out lg:hidden',
+              isMobileShell ? 'z-[55]' : 'z-30',
+              sidebarBackdropVisible ? 'opacity-100' : 'opacity-0'
             )}
+            style={{ transitionDuration: `${SIDEBAR_MOTION_MS}ms` }}
             onClick={() => {
               setIsSidebarOpen(false);
             }}
-            aria-hidden
+            aria-label="Cerrar menú lateral"
           />
         )}
       </div>

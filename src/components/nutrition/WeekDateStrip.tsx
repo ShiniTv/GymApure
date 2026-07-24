@@ -60,8 +60,8 @@ export function WeekDateStrip({
                   className={cn(
                     'text-[10px] font-medium tracking-wide transition-colors',
                     selected
-                      ? 'text-zinc-800 dark:text-zinc-100'
-                      : 'text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-400'
+                      ? 'text-text'
+                      : 'text-text-muted group-hover:text-text-secondary'
                   )}
                 >
                   {dayLetter}
@@ -70,10 +70,10 @@ export function WeekDateStrip({
                   className={cn(
                     'relative flex h-8 w-8 items-center justify-center text-[13px] font-semibold tabular-nums transition-all duration-200',
                     selected
-                      ? 'rounded-full bg-zinc-900 text-white shadow-[0_0_0_4px_rgb(24_24_27/0.06)] dark:bg-white dark:text-zinc-900 dark:shadow-[0_0_0_4px_rgb(255_255_255/0.08)]'
+                      ? 'rounded-full bg-brand text-white shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-brand)_18%,transparent)]'
                       : isToday
-                        ? 'rounded-full text-zinc-700 ring-1 ring-zinc-300 ring-inset dark:text-zinc-200 dark:ring-zinc-600'
-                        : 'rounded-full text-zinc-500 dark:text-zinc-400'
+                        ? 'rounded-full text-text ring-1 ring-border ring-inset'
+                        : 'rounded-full text-text-secondary'
                   )}
                 >
                   {dayNum}

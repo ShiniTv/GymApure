@@ -3,6 +3,14 @@ export const PALETTE_STORAGE_KEY = 'gymapure-palette';
 export const THEME_ONBOARDING_KEY = 'gymapure-theme-onboarding-done';
 
 export const PALETTES = {
+  sky: {
+    id: 'sky',
+    label: 'Cielo',
+    description: 'Azul eléctrico del Mobile App UI (Figma)',
+    swatch: { light: '#0c98ff', dark: '#0c98ff' },
+    brand: { light: '#0c98ff', lightHover: '#0284c7', dark: '#0c98ff', darkHover: '#3aadff' },
+    chartAccent: { light: '#0c98ff', dark: '#0c98ff' },
+  },
   monochrome: {
     id: 'monochrome',
     label: 'Monocromo',
@@ -74,7 +82,7 @@ export type Appearance = 'light' | 'dark';
 
 export const PALETTE_IDS = Object.keys(PALETTES) as PaletteId[];
 export const PALETTE_LIST = Object.values(PALETTES);
-export const DEFAULT_PALETTE: PaletteId = 'ember';
+export const DEFAULT_PALETTE: PaletteId = 'sky';
 export const DEFAULT_APPEARANCE: Appearance = 'dark';
 
 function getStorage() {
@@ -131,7 +139,7 @@ export function getPaletteCssVars(appearance: Appearance, palette: PaletteId) {
 }
 
 export function getThemeColorMeta(appearance: Appearance, palette: PaletteId): string {
-  if (appearance === 'dark') return '#18181b';
+  if (appearance === 'dark') return '#0c0c0c';
   return PALETTES[palette].swatch.light;
 }
 

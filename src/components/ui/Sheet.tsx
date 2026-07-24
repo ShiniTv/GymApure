@@ -1,7 +1,9 @@
-import { useEffect, useRef, useId, useCallback, type ReactNode, type CSSProperties } from 'react';
+import { useEffect, useRef, useId, useCallback, useState, type ReactNode, type CSSProperties } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
+
+const EXIT_MS = 280;
 
 interface SheetProps {
   open: boolean;
@@ -49,8 +51,24 @@ export function Sheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
 
   useScrollLock(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+
+    setVisible(false);
+    const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [open]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onCloseRef.current();
@@ -87,17 +105,23 @@ export function Sheet({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, handleKeyDown]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   const backdropZ = zIndex - 1;
   const hideClass = hideFrom === 'lg' ? 'lg:hidden' : '';
+  const slideClosed =
+    side === 'bottom' ? 'translate-y-[110%]' : 'translate-y-[-110%]';
 
   return (
     <div className={hideClass}>
-      <div
-        className="fixed inset-0 bg-black/40 transition-opacity"
-        style={{ zIndex: backdropZ }}
-        aria-hidden
+      <button
+        type="button"
+        className={cn(
+          'fixed inset-0 bg-black/40 transition-opacity ease-in-out',
+          visible ? 'opacity-100' : 'opacity-0'
+        )}
+        style={{ zIndex: backdropZ, transitionDuration: `${EXIT_MS}ms` }}
+        aria-label={closeLabel}
         onClick={onClose}
       />
       <div
@@ -107,17 +131,18 @@ export function Sheet({
         aria-labelledby={title ? titleId : undefined}
         aria-label={!title ? ariaLabel : undefined}
         className={cn(
-          'fixed right-0 left-0 px-3 transition-transform duration-200 ease-out',
+          'fixed right-0 left-0 px-3 transition-transform ease-in-out',
           side === 'bottom' && !panelStyle?.bottom && 'bottom-0',
           side === 'top' && 'top-14',
+          visible ? 'translate-y-0' : slideClosed,
           className
         )}
-        style={{ zIndex, ...panelStyle }}
+        style={{ zIndex, transitionDuration: `${EXIT_MS}ms`, ...panelStyle }}
       >
         <div
           className={cn(
-            'rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900',
-            compact ? 'p-2.5' : 'p-3',
+            'rounded-sheet border border-border bg-surface-raised shadow-sheet',
+            compact ? 'p-2.5' : 'p-ds-3',
             side === 'bottom' && 'mb-2',
             scrollable && 'flex max-h-[min(78dvh,calc(100dvh-7rem))] flex-col',
             cardClassName
@@ -125,7 +150,7 @@ export function Sheet({
         >
           {showHandle && side === 'bottom' ? (
             <div className="flex justify-center pb-1" aria-hidden>
-              <div className="h-1 w-8 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+              <div className="h-1 w-8 rounded-full bg-surface-overlay" />
             </div>
           ) : null}
           {title && (
@@ -138,7 +163,7 @@ export function Sheet({
               <h2
                 id={titleId}
                 className={cn(
-                  'text-zinc-900 dark:text-white',
+                  'text-text tracking-[-0.02em]',
                   compact ? 'text-sm font-semibold' : 'text-sm font-bold'
                 )}
               >
@@ -147,7 +172,7 @@ export function Sheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="tap-feedback rounded-lg p-1.5 text-text-muted hover:bg-surface-overlay hover:text-text-secondary"
                 aria-label={closeLabel}
               >
                 <X className="h-4 w-4" />

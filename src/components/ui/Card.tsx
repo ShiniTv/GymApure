@@ -12,20 +12,34 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const paddingMap = {
   none: '',
-  sm: 'p-3 sm:p-4',
-  md: 'p-4 sm:p-6',
-  lg: 'p-5 sm:p-8',
+  sm: 'p-ds-4',
+  md: 'p-ds-4 sm:p-ds-5',
+  lg: 'p-ds-5 sm:p-ds-6',
 };
-const roundedMap = { xl: 'rounded-xl', '2xl': 'rounded-2xl', '3xl': 'rounded-3xl' };
 
+/** Figma card ≈20px; sheet-scale for 3xl. xl/2xl share the card token. */
+const roundedMap = {
+  xl: 'rounded-card',
+  '2xl': 'rounded-card',
+  '3xl': 'rounded-sheet',
+};
+
+const surface = 'bg-surface border border-border/70';
+const surfaceSoft = cn(surface, 'shadow-card dark:border-transparent dark:shadow-none');
+
+/** Light keeps a soft edge; dark separates via surface on deep bg */
 const variantMap = {
-  default: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm',
-  elevated: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md',
-  interactive:
-    'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-brand/20',
-  dashed:
-    'bg-white dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 shadow-sm',
-  alert: 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm',
+  default: surfaceSoft,
+  elevated: cn(surface, 'shadow-elevated dark:border-transparent dark:bg-surface-raised'),
+  interactive: cn(
+    surfaceSoft,
+    'transition-[box-shadow,border-color,transform,opacity] duration-200',
+    'hover:shadow-elevated hover:border-brand/20 active:scale-[0.99] active:opacity-90',
+    'dark:hover:bg-surface-raised'
+  ),
+  dashed: 'bg-surface border border-dashed border-border/80 dark:border-border/40',
+  /** Alias of default — kept for call-site compatibility */
+  alert: surfaceSoft,
 };
 
 export function Card({
@@ -38,13 +52,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={cn(
-        variantMap[variant],
-        roundedMap[rounded],
-        paddingMap[padding],
-        'min-w-0',
-        className
-      )}
+      className={cn(variantMap[variant], roundedMap[rounded], paddingMap[padding], 'min-w-0', className)}
       {...props}
     >
       {children}
