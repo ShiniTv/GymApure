@@ -203,7 +203,7 @@ export default function Payments() {
     }
     if (deepLinkLookupAttempted.current === paymentIdRaw) return;
     deepLinkLookupAttempted.current = paymentIdRaw;
-    void apiFetch('/api/payments?status=pending&page=1&limit=50')
+    void apiFetch('/api/payments?status=pending&page=1&limit=100')
       .then((res) => parseJsonResponse<{ items: Payment[] }>(res))
       .then(({ items }) => {
         const pendingPayment = items.find((payment) => payment.id === paymentId);
@@ -689,6 +689,11 @@ export default function Payments() {
                             >
                               <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
                                 ${payment.amount_usd}
+                                {formatPaymentBsLine(payment) ? (
+                                  <p className="mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                                    {formatPaymentBsLine(payment)}
+                                  </p>
+                                ) : null}
                               </td>
                               <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
                                 {formatPaymentDate(payment.created_at)}
@@ -835,6 +840,11 @@ export default function Payments() {
                               </td>
                               <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
                                 ${payment.amount_usd}
+                                {formatPaymentBsLine(payment) ? (
+                                  <p className="mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                                    {formatPaymentBsLine(payment)}
+                                  </p>
+                                ) : null}
                               </td>
                               <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
                                 {formatPaymentMethod(payment.method)}
@@ -868,6 +878,11 @@ export default function Payments() {
                                   >
                                     {paymentStatusLabel(payment.status)}
                                   </Badge>
+                                  {isPendingOlderThanDays(payment) ? (
+                                    <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                                      &gt;2 días
+                                    </span>
+                                  ) : null}
                                   {isStaffPayment && payment.status === 'pending' && (
                                     <>
                                       <button

@@ -56,6 +56,7 @@ export function PaymentActionModals({
   const previewWithFrame =
     !!proofPreview && (isPdfProofUrl(proofPreview.proof_url) || previewAsFrame);
   const approveBsLine = approveTarget ? formatPaymentBsLine(approveTarget) : null;
+  const rejectBsLine = rejectTarget ? formatPaymentBsLine(rejectTarget) : null;
   const proofBsLine = proofPreview ? formatPaymentBsLine(proofPreview) : null;
 
   return (
@@ -146,6 +147,9 @@ export function PaymentActionModals({
               ¿Rechazar el pago de <strong>{rejectTarget.user_name}</strong> por $
               {rejectTarget.amount_usd}?
             </p>
+            {rejectBsLine ? (
+              <p className="-mt-3 mb-4 text-xs text-zinc-500 dark:text-zinc-400">{rejectBsLine}</p>
+            ) : null}
             <Label htmlFor="reject-reason">Motivo</Label>
             <Textarea
               id="reject-reason"

@@ -6,7 +6,7 @@ export interface Payment {
   user_name: string;
   amount_usd: number;
   amount_bs: number | null;
-  exchange_rate?: number | null;
+  exchange_rate: number | null;
   method: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
