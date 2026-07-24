@@ -1,5 +1,5 @@
 /**
- * Smoke visual de gaps manuales de docs/UX-QA.md (#6, footer drawer, T2–T3, trainer nav).
+ * Smoke visual de gaps manuales de docs/qa/UX-QA.md (#6, footer drawer, T2–T3, trainer nav).
  * Requiere: npm run db:restore-demo + npm run dev
  */
 import { chromium, devices } from '@playwright/test';

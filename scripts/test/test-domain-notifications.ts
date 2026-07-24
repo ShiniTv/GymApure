@@ -1,6 +1,7 @@
 /**
- * Prueba Sprint 6: chat in-app y settings de vencimiento.
+ * Dominio notificaciones (ex Sprint 6): chat in-app y settings de vencimiento.
  * Requiere servidor en marcha y DEMO_PASSWORD (.env.dev).
+ * Alias histórico: npm run test:sprint6
  */
 import { loadEnvForScripts } from '../dev/load-env-file.ts';
 

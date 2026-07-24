@@ -35,14 +35,14 @@ Guía para GymApure en producción. El proyecto Supabase de producción actual e
 
 ### 3. Aplicar migraciones
 
-En tu máquina, crea un `.env` temporal **solo para prod** (no lo commitees):
+En tu máquina, usa **`.env.prod`** (no lo commitees; plantilla: `.env.prod.example`):
 
 ```powershell
 # Generar secretos
 openssl rand -base64 48   # JWT_SECRET
 openssl rand -base64 32   # CRON_SECRET
 
-# .env (valores de producción)
+# .env.prod (valores de producción)
 JWT_SECRET=<el valor generado>
 CRON_SECRET=<el valor generado>
 DATABASE_URL=postgresql://postgres.[REF]:[PASS]@...pooler.supabase.com:6543/postgres
@@ -53,12 +53,12 @@ NODE_ENV=production
 Ejecuta:
 
 ```powershell
-npm run deploy:preflight
+npm run deploy:preflight:prod
 npm run deploy:release -- --run
 # Cuando staging OK:
 npm run db:migrate:prod
 # o: npm run deploy:release -- --run --migrate-prod
-npm run db:health
+npm run db:health:prod
 ```
 
 `db:health` debe reportar **RLS OK** y sin problemas críticos.
@@ -73,10 +73,10 @@ Migraciones de seguridad recientes (aplicar en cada release que las incluya):
 ### 4. Crear administrador inicial
 
 ```powershell
-npm run db:create-admin
+npm run db:create-admin:prod
 ```
 
-O define en `.env`:
+O define en `.env.prod`:
 
 ```
 ADMIN_FULL_NAME=Tu Nombre

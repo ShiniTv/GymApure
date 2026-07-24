@@ -2,14 +2,14 @@
 name: gymapure-ux-playwright
 description: >-
   Valida UX de GymApure por rol y viewport: test:ux, Playwright (mobile iPhone 14,
-  desktop, tablet iPad), y criterios de docs/UX-QA.md (bottom nav, workout, check-in,
+  desktop, tablet iPad), y criterios de docs/qa/UX-QA.md (bottom nav, workout, check-in,
   copy ES). Usar al cambiar UI, navegación, layout, workout activo, recepción tablet,
   o cuando el usuario pida QA visual / Playwright.
 ---
 
 # GymApure — UX / Playwright
 
-Refs: `docs/UX-QA.md`, `docs/TESTING.md`, `docs/QA-VISUAL-CHECKLIST.md`.
+Refs: `docs/qa/UX-QA.md`, `docs/TESTING.md`, `docs/qa/QA-VISUAL-CHECKLIST.md`.
 
 ## Setup
 

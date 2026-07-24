@@ -1,6 +1,7 @@
 /**
- * Prueba Sprint 5: check-out recepción y reportes CSV.
+ * Dominio chat/reportes (ex Sprint 5): check-out recepción y reportes CSV.
  * Requiere servidor en marcha y DEMO_PASSWORD en .env.
+ * Alias histórico: npm run test:sprint5
  */
 import 'dotenv/config';
 import { loginReceptionStaff, receptionCheckIn, receptionCheckOut } from '../lib/test-reception-auth.ts';

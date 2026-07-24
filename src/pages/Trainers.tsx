@@ -34,7 +34,6 @@ import {
   type TrainerLevel,
   type TrainingShift,
 } from '../lib/trainingShift';
-import { passwordSchema } from '../lib/passwordSchema';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -102,7 +101,7 @@ export default function Trainers() {
     setErrors({});
   };
 
-  const validateCreate = () => {
+  const validateCreate = async () => {
     const next: Record<string, string> = {};
     if (!form.full_name.trim() || form.full_name.trim().length < 3) {
       next.full_name = 'Nombre requerido (mín. 3 caracteres)';
@@ -111,6 +110,7 @@ export default function Trainers() {
       next.email = 'Email inválido';
     }
     if (!form.cedula.trim()) next.cedula = 'Cédula requerida';
+    const { passwordSchema } = await import('../lib/passwordSchema');
     const passwordResult = passwordSchema.safeParse(form.password);
     if (!passwordResult.success) {
       next.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';
@@ -122,7 +122,7 @@ export default function Trainers() {
   };
 
   const handleCreate = async () => {
-    if (!validateCreate()) return;
+    if (!(await validateCreate())) return;
     setSaving(true);
     try {
       const res = await apiFetch('/api/trainers', {

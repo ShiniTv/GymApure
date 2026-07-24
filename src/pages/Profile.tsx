@@ -55,8 +55,6 @@ import {
   MEMBER_UI_ALERT_DAYS,
   shouldShowExpiryAlert,
 } from '../lib/expiryUtils';
-
-const ProfileWeightChart = lazy(() => import('../components/ProfileWeightChart'));
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
@@ -69,12 +67,20 @@ import {
 } from '../hooks/queries/useProfileQuery';
 import { StatMini } from './profile/StatMini';
 import ThemePalettePicker from '../components/ThemePalettePicker';
-import { MemberBadgeModal } from '../components/member/MemberBadgeModal';
 import { MemberBadgeCard, type MemberBadgeData } from '../components/member/MemberBadgeCard';
-import { MemberBadgeScanView } from '../components/member/MemberBadgeScanView';
 import { useTrainerMeQuery } from '../hooks/queries/useTrainersQuery';
 import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../lib/trainingShift';
+
+const ProfileWeightChart = lazy(() => import('../components/ProfileWeightChart'));
+const MemberBadgeModal = lazy(() =>
+  import('../components/member/MemberBadgeModal').then((m) => ({ default: m.MemberBadgeModal }))
+);
+const MemberBadgeScanView = lazy(() =>
+  import('../components/member/MemberBadgeScanView').then((m) => ({
+    default: m.MemberBadgeScanView,
+  }))
+);
 
 /** Demo/legacy rows sometimes store meters (e.g. 1.75); UI expects cm. */
 function heightCmForForm(height: number | null | undefined): string {
@@ -1221,22 +1227,23 @@ export default function Profile() {
         </div>
       </Modal>
 
-      <MemberBadgeModal
-        open={showBadgeModal}
-        onClose={() => {
-          setShowBadgeModal(false);
-        }}
-        member={badgeMember}
-      />
-
-      {badgeMember && (
-        <MemberBadgeScanView
-          open={showScanView}
-          onClose={() => setShowScanView(false)}
+      <Suspense fallback={null}>
+        <MemberBadgeModal
+          open={showBadgeModal}
+          onClose={() => {
+            setShowBadgeModal(false);
+          }}
           member={badgeMember}
         />
-      )}
 
+        {badgeMember && (
+          <MemberBadgeScanView
+            open={showScanView}
+            onClose={() => setShowScanView(false)}
+            member={badgeMember}
+          />
+        )}
+      </Suspense>
       <Modal
         open={isAddingMeasurement}
         onClose={() => {
