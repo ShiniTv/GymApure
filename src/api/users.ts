@@ -196,6 +196,17 @@ router.get(
 
       conditions.push(`status = 'active'`);
 
+      if (req.user!.role === 'trainer') {
+        params.push(req.user!.id);
+        conditions.push(`id IN (
+          SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $${params.length}
+          UNION
+          SELECT DISTINCT ur.user_id FROM user_routines ur
+          JOIN routines r ON r.id = ur.routine_id
+          WHERE r.trainer_id = $${params.length}
+        )`);
+      }
+
       if (search) {
         const pattern = toLikeContainsPattern(search);
         if (pattern) {
@@ -245,7 +256,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
     const alertDays = await getExpiryAlertDays();
     const listOptions =
       req.user!.role === 'trainer'
-        ? { membersOnly: true, activeOnly: true }
+        ? { membersOnly: true, activeOnly: true, trainerId: req.user!.id }
         : req.user!.role === 'receptionist'
           ? { membersOnly: true }
           : undefined;
@@ -904,6 +915,10 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
          ON CONFLICT (user_id) DO NOTHING`,
         [newUserId, level, specialty, shift]
       );
+    }
+
+    if (req.user!.role === 'trainer' && assignedRole === 'member') {
+      await ensureTrainerMemberAssignment(req.user!.id, newUserId, req.user!.id);
     }
 
     await logAudit(req.user!.id, 'user.create', {
