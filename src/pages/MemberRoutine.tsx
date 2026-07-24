@@ -41,6 +41,8 @@ import {
 } from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { AssignRoutineForm } from '../components/routines/AssignRoutineForm';
+import { MemberProgressPanel } from './memberRoutine/MemberProgressPanel';
+import { MemberCoachNotesPanel } from './memberRoutine/MemberCoachNotesPanel';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -136,7 +138,9 @@ export default function MemberRoutine() {
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
-  const [coachingTab, setCoachingTab] = useState<'rutinas' | 'perfil' | 'mediciones'>('rutinas');
+  const [coachingTab, setCoachingTab] = useState<
+    'rutinas' | 'progreso' | 'notas' | 'perfil' | 'mediciones'
+  >('rutinas');
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [routineMenuId, setRoutineMenuId] = useState<number | null>(null);
   const moreMenuAnchorRef = useRef<HTMLButtonElement>(null);
@@ -837,6 +841,8 @@ export default function MemberRoutine() {
         onChange={setCoachingTab}
         options={[
           { value: 'rutinas', label: 'Rutinas' },
+          { value: 'progreso', label: 'Progreso' },
+          { value: 'notas', label: 'Notas' },
           { value: 'perfil', label: 'Perfil' },
           { value: 'mediciones', label: 'Mediciones' },
         ]}
@@ -1550,6 +1556,12 @@ export default function MemberRoutine() {
           </Button>
         </div>
       </Modal>
+
+      {coachingTab === 'progreso' && id ? (
+        <MemberProgressPanel memberId={parseInt(id, 10)} />
+      ) : null}
+
+      {coachingTab === 'notas' && id ? <MemberCoachNotesPanel memberId={parseInt(id, 10)} /> : null}
 
       {coachingTab === 'rutinas' && (
         <div className="space-y-2.5">
