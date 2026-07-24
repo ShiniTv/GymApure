@@ -62,6 +62,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useChatTyping } from '../hooks/useChatTyping';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 interface MemberChatOption {
   id: number;
@@ -1503,6 +1504,7 @@ function MemberChannelButton({
 function MemberChatView() {
   usePageTitle('Mensajes');
   const toast = useToastOptional();
+  const { isDesktop } = useBreakpoint();
   const [searchParams, setSearchParams] = useSearchParams();
   const channelParam = searchParams.get('channel');
   const selectedChannel = channelParam && isChatStaffChannel(channelParam) ? channelParam : null;
@@ -1751,7 +1753,12 @@ function MemberChatView() {
         action={
           <div className="flex items-center gap-2">
             {selectedChannel ? (
-              <Button size="sm" variant="secondary" className="lg:hidden" onClick={backToChannels}>
+              <Button
+                size="sm"
+                variant="secondary"
+                className={isDesktop ? 'hidden' : undefined}
+                onClick={backToChannels}
+              >
                 Canales
               </Button>
             ) : null}
@@ -1761,31 +1768,11 @@ function MemberChatView() {
       />
 
       {/* Móvil / tablet: un panel a la vez */}
-      <div className={clsx('lg:hidden', selectedChannel && 'hidden')}>{channelList}</div>
-
-      {selectedChannel ? (
-        <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden border-0 bg-transparent lg:hidden">
-          <div className="flex min-h-0 flex-1 flex-col">{renderThreadBody(selectedChannel)}</div>
-          {activeConversation != null ? (
-            <ChatComposer
-              conversationId={activeConversation.id}
-              placeholder={MEMBER_CHANNEL_META[selectedChannel].composer}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* Escritorio: canales | hilo */}
-      <div className="member-chat-shell hidden min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid">
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-          <p className="px-2 py-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
-            Canales
-          </p>
-          {channelList}
-        </div>
-        <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/60 bg-gradient-to-b from-zinc-50/90 via-white/70 to-zinc-50/50 dark:border-zinc-800/70 dark:from-zinc-950 dark:via-zinc-950/85 dark:to-zinc-900/40">
+      {!isDesktop ? (
+        <>
+          <div className={clsx(selectedChannel && 'hidden')}>{channelList}</div>
           {selectedChannel ? (
-            <>
+            <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden border-0 bg-transparent">
               <div className="flex min-h-0 flex-1 flex-col">
                 {renderThreadBody(selectedChannel)}
               </div>
@@ -1795,20 +1782,44 @@ function MemberChatView() {
                   placeholder={MEMBER_CHANNEL_META[selectedChannel].composer}
                 />
               ) : null}
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center p-6">
-              <EmptyState
-                compact
-                icon={MessageSquare}
-                title="Elige un canal"
-                description="Recepción, administración o entrenador — cada uno es un chat aparte."
-                className="border-0 bg-transparent p-0 shadow-none"
-              />
             </div>
-          )}
+          ) : null}
+        </>
+      ) : (
+        <div className="member-chat-shell grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+            <p className="px-2 py-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+              Canales
+            </p>
+            {channelList}
+          </div>
+          <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/60 bg-gradient-to-b from-zinc-50/90 via-white/70 to-zinc-50/50 dark:border-zinc-800/70 dark:from-zinc-950 dark:via-zinc-950/85 dark:to-zinc-900/40">
+            {selectedChannel ? (
+              <>
+                <div className="flex min-h-0 flex-1 flex-col">
+                  {renderThreadBody(selectedChannel)}
+                </div>
+                {activeConversation != null ? (
+                  <ChatComposer
+                    conversationId={activeConversation.id}
+                    placeholder={MEMBER_CHANNEL_META[selectedChannel].composer}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <div className="flex flex-1 items-center justify-center p-6">
+                <EmptyState
+                  compact
+                  icon={MessageSquare}
+                  title="Elige un canal"
+                  description="Recepción, administración o entrenador — cada uno es un chat aparte."
+                  className="border-0 bg-transparent p-0 shadow-none"
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
