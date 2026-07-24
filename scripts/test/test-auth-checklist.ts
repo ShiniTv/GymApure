@@ -47,21 +47,39 @@ async function api(method: string, path: string, body?: unknown) {
   return { res, data };
 }
 
+function cookiePair(entry: string): { name: string; value: string } | null {
+  const first = entry.split(';')[0];
+  const eq = first.indexOf('=');
+  if (eq <= 0) return null;
+  return { name: first.slice(0, eq), value: first.slice(eq + 1) };
+}
+
 function saveCookie(res: Response) {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const parts: string[] = [];
+  if (!cookies.length) return;
+
+  const jar = new Map<string, string>();
+  for (const part of cookie.split('; ').filter(Boolean)) {
+    const eq = part.indexOf('=');
+    if (eq > 0) jar.set(part.slice(0, eq), part.slice(eq + 1));
+  }
+
   for (const entry of cookies) {
-    if (entry.startsWith('token=')) {
-      parts.push(entry.split(';')[0]);
-    }
-    if (entry.startsWith('csrf_token=')) {
-      const raw = entry.split(';')[0].slice('csrf_token='.length);
-      csrfToken = decodeURIComponent(raw);
-      parts.push(entry.split(';')[0]);
+    const pair = cookiePair(entry);
+    if (!pair) continue;
+    if (pair.name === 'token' || pair.name === 'csrf_token') {
+      if (!pair.value) {
+        jar.delete(pair.name);
+        if (pair.name === 'csrf_token') csrfToken = '';
+      } else {
+        jar.set(pair.name, pair.value);
+        if (pair.name === 'csrf_token') csrfToken = decodeURIComponent(pair.value);
+      }
     }
   }
-  if (parts.length) cookie = parts.join('; ');
+
+  cookie = [...jar.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
 }
 
 async function main() {
@@ -133,6 +151,13 @@ async function main() {
 
   const logoutRes = await api('POST', '/api/auth/logout');
   ok('Logout → 200', logoutRes.res.status === 200);
+
+  // Logout bumps token_version; the previous JWT must be rejected (same as change-password).
+  const afterLogoutStale = await api('GET', '/api/auth/me');
+  ok('Cookie invalidada tras logout', afterLogoutStale.res.status === 401);
+
+  // Apply Set-Cookie clears (browser jar) → anonymous probe is 200 + user null.
+  saveCookie(logoutRes.res);
   const afterLogout = await api('GET', '/api/auth/me');
   ok(
     'Tras logout → /me anónimo (200, user null)',
