@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { BRAND } from '../config/brand';
 import { Button, Input, Label, Textarea } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';

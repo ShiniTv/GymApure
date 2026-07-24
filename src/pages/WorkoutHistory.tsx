@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { Calendar, Clock, Dumbbell, ArrowLeft, Play, Trash2, Trophy } from 'lucide-react';
 import { format, parseISO } from 'date-fns';

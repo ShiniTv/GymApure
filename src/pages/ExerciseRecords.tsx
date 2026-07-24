@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, lazy, Suspense } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router';
 import { format, parseISO } from 'date-fns';
 import { ArrowLeft, Dumbbell, Plus, Search, Trash2, Trophy, TrendingUp } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../lib/api';

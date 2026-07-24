@@ -8,7 +8,7 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
 import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
 import type { UserRole } from '../lib/roles';

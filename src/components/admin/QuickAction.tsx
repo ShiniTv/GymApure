@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { queryClient } from '../../lib/queryClient';
@@ -87,7 +87,7 @@ export function QuickAction({
       onMouseEnter={maybePrefetch}
       onFocus={maybePrefetch}
       className={cn(
-        'group hover:border-brand/20 relative touch-manipulation rounded-xl border border-zinc-200 bg-white transition-[box-shadow,border-color,transform,opacity] duration-150 tap-feedback hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900',
+        'group hover:border-brand/20 tap-feedback relative touch-manipulation rounded-xl border border-zinc-200 bg-white transition-[box-shadow,border-color,transform,opacity] duration-150 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900',
         iconOnlyMobile
           ? 'flex max-sm:min-h-[56px] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:px-1 max-sm:py-2 sm:min-h-[56px] sm:flex-row sm:items-center sm:gap-2.5 sm:p-3'
           : cn(

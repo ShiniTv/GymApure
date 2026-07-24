@@ -1,5 +1,5 @@
 import { Flame, Dumbbell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
@@ -71,7 +71,7 @@ export function MemberHero({
       padding="md"
       rounded="2xl"
       className={cn(
-        'from-brand/[0.04] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent dark:from-brand/[0.07]',
+        'from-brand/[0.04] dark:from-brand/[0.07] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
         className
       )}
     >
@@ -86,7 +86,7 @@ export function MemberHero({
             {getGreeting()}
           </p>
           <h2 className="type-h1 mt-2 truncate text-[1.65rem] sm:text-3xl">{firstName}</h2>
-          <p className="mt-2 truncate text-sm leading-relaxed text-text-secondary">
+          <p className="text-text-secondary mt-2 truncate text-sm leading-relaxed">
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
@@ -101,8 +101,8 @@ export function MemberHero({
           )}
 
           {workoutStreak > 0 && (
-            <div className={cn(statusPill, 'streak-badge gap-1.5 bg-success/10')}>
-              <Flame className="h-3.5 w-3.5 text-success" aria-hidden />
+            <div className={cn(statusPill, 'streak-badge bg-success/10 gap-1.5')}>
+              <Flame className="text-success h-3.5 w-3.5" aria-hidden />
               <span className="text-success">
                 Racha {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
               </span>

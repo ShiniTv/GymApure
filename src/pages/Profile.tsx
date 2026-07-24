@@ -25,7 +25,7 @@ import {
   ChevronDown,
   MessageCircle,
 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import {
   Button,
   Card,

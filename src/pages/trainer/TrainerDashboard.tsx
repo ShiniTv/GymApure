@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import {
   Users,
   AlertTriangle,
@@ -61,7 +61,7 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="inline-flex h-10 shrink-0 touch-manipulation items-center gap-2 rounded-pill bg-surface px-3.5 text-[12px] font-medium leading-snug text-text-secondary transition-colors hover:bg-surface-raised lg:h-11 lg:px-4 lg:text-[13px]"
+      className="rounded-pill bg-surface text-text-secondary hover:bg-surface-raised inline-flex h-10 shrink-0 touch-manipulation items-center gap-2 px-3.5 text-[12px] leading-snug font-medium transition-colors lg:h-11 lg:px-4 lg:text-[13px]"
     >
       <Icon className="text-brand h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
       {label}
@@ -261,16 +261,14 @@ function ActivityPanel({
         Actividad reciente
       </h2>
       {loading ? (
-        <div
-          className={cn('flex-1 space-y-0 overflow-hidden rounded-card p-ds-4', SURFACE)}
-        >
+        <div className={cn('rounded-card p-ds-4 flex-1 space-y-0 overflow-hidden', SURFACE)}>
           <Skeleton className="h-10 w-full" />
           <Skeleton className="mt-2 h-10 w-full" />
           <Skeleton className="mt-2 hidden h-10 w-full lg:block" />
         </div>
       ) : !activities?.length ? (
-        <div className={cn('flex-1 rounded-card px-ds-4 py-ds-5', SURFACE)}>
-          <p className="text-[12px] leading-relaxed text-text-secondary lg:text-[13px]">
+        <div className={cn('rounded-card px-ds-4 py-ds-5 flex-1', SURFACE)}>
+          <p className="text-text-secondary text-[12px] leading-relaxed lg:text-[13px]">
             Cuando entrenen, verás sus sesiones aquí.{' '}
             <button
               type="button"
@@ -282,7 +280,7 @@ function ActivityPanel({
           </p>
         </div>
       ) : (
-        <ul className={cn('flex-1 overflow-hidden rounded-card', SURFACE)}>
+        <ul className={cn('rounded-card flex-1 overflow-hidden', SURFACE)}>
           {activities.map((activity, i) => (
             <li key={`${activity.user_id}-${activity.start_time}`}>
               <Link
@@ -376,7 +374,7 @@ export default function TrainerDashboard() {
 
       <div
         className={cn(
-          'grid grid-cols-2 overflow-hidden rounded-card bg-surface sm:grid-cols-4 sm:divide-x sm:divide-border/40',
+          'rounded-card bg-surface sm:divide-border/40 grid grid-cols-2 overflow-hidden sm:grid-cols-4 sm:divide-x',
           SURFACE
         )}
       >

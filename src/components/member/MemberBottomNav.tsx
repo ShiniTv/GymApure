@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { Dumbbell, LogOut } from 'lucide-react';
 import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
 import { Sheet } from '../ui';
@@ -117,17 +117,17 @@ export function MemberBottomNav() {
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-[-0.02em] text-text">
+            <p className="text-text truncate text-sm font-semibold tracking-[-0.02em]">
               Hola, {first}
             </p>
-            <p className="text-[11px] text-text-secondary">Tu cuenta y atajos</p>
+            <p className="text-text-secondary text-[11px]">Tu cuenta y atajos</p>
           </div>
         </div>
 
         <div className="space-y-2.5">
           {moreSections.map((section) => (
             <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="mb-1 px-0.5 text-[10px] font-semibold tracking-[0.06em] text-text-muted uppercase">
+              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -175,7 +175,7 @@ export function MemberBottomNav() {
                         </span>
                         <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
                         {unreadLabel ? (
-                          <span className="text-[9px] leading-none font-medium text-text-muted">
+                          <span className="text-text-muted text-[9px] leading-none font-medium">
                             {unreadLabel}
                           </span>
                         ) : null}
@@ -188,14 +188,14 @@ export function MemberBottomNav() {
           ))}
         </div>
 
-        <div className="mt-2.5 border-t border-border pt-1.5">
+        <div className="border-border mt-2.5 border-t pt-1.5">
           <button
             type="button"
             onClick={() => {
               closeMore();
               requestLogout();
             }}
-            className="text-danger hover:bg-danger/10 flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-card px-2.5 py-2 text-[13px] font-medium transition-[background-color,transform,opacity] duration-150 tap-feedback"
+            className="text-danger hover:bg-danger/10 rounded-card tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 px-2.5 py-2 text-[13px] font-medium transition-[background-color,transform,opacity] duration-150"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Cerrar sesión
@@ -214,7 +214,7 @@ export function MemberBottomNav() {
             className="member-bottom-nav-fab pointer-events-auto absolute touch-manipulation"
             aria-label="Entrenar"
           >
-            <span className="brand-solid flex h-full w-full items-center justify-center rounded-full shadow-lg ring-2 ring-bg transition-[transform,opacity] duration-150 tap-feedback">
+            <span className="brand-solid ring-bg tap-feedback flex h-full w-full items-center justify-center rounded-full shadow-lg ring-2 transition-[transform,opacity] duration-150">
               <Dumbbell className="h-5 w-5 text-white" aria-hidden />
             </span>
           </Link>

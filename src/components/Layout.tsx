@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { useProfileQuery } from '../hooks/queries/useProfileQuery';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -163,7 +163,7 @@ export default function Layout() {
   return (
     <MobileShellProvider hideBackToDashboard={hideBackToDashboard}>
       <div
-        className="min-h-dvh bg-bg font-sans text-text transition-colors duration-300"
+        className="bg-bg text-text min-h-dvh font-sans transition-colors duration-300"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -175,16 +175,16 @@ export default function Layout() {
         </a>
         {/* Mobile Header — fixed glass island (content scrolls underneath) */}
         <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
-          <div className="mobile-chrome-glass pointer-events-auto flex h-12 items-center justify-between gap-2 rounded-card px-3">
+          <div className="mobile-chrome-glass rounded-card pointer-events-auto flex h-12 items-center justify-between gap-2 px-3">
             <div className="flex min-w-0 items-center gap-2.5">
               <Logo className="h-8 w-8 shrink-0" />
               <div className="min-w-0">
                 {currentPage ? (
                   <>
-                    <p className="truncate text-sm leading-tight font-bold tracking-[-0.02em] text-text">
+                    <p className="text-text truncate text-sm leading-tight font-bold tracking-[-0.02em]">
                       {mobileHeaderTitle}
                     </p>
-                    <p className="truncate text-[10px] leading-tight font-medium text-text-muted">
+                    <p className="text-text-muted truncate text-[10px] leading-tight font-medium">
                       {BRAND.name}
                     </p>
                   </>
@@ -212,7 +212,7 @@ export default function Layout() {
           {/* Sidebar */}
           <aside
             className={clsx(
-              'fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden bg-bg-elevated transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
+              'bg-bg-elevated fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -227,7 +227,7 @@ export default function Layout() {
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-surface-overlay"
+                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors"
                   aria-label="Expandir menú"
                   title="Expandir menú"
                 >
@@ -239,7 +239,7 @@ export default function Layout() {
                 <Logo className="h-8 w-8 shrink-0" />
                 <div className="overflow-hidden whitespace-nowrap transition-opacity duration-200">
                   {brandMark}
-                  <p className="mt-0.5 text-[10px] font-medium tracking-[0.06em] text-text-muted">
+                  <p className="text-text-muted mt-0.5 text-[10px] font-medium tracking-[0.06em]">
                     {portalTitle}
                   </p>
                 </div>
@@ -249,7 +249,7 @@ export default function Layout() {
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-overlay"
+                  className="text-text-muted hover:bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
@@ -263,7 +263,7 @@ export default function Layout() {
                 <Logo className="h-8 w-8 shrink-0" />
                 <div className="min-w-0 flex-1">
                   {brandMark}
-                  <p className="mt-0.5 text-[10px] font-medium tracking-[0.06em] text-text-muted">
+                  <p className="text-text-muted mt-0.5 text-[10px] font-medium tracking-[0.06em]">
                     {portalTitle}
                   </p>
                 </div>
@@ -279,9 +279,7 @@ export default function Layout() {
               >
                 {allFiltered.map((section) => (
                   <div key={section.name} className="nav-section">
-                    {!sidebarCollapsed && (
-                      <p className="nav-section-label">{section.name}</p>
-                    )}
+                    {!sidebarCollapsed && <p className="nav-section-label">{section.name}</p>}
                     {section.items.map((item) => {
                       const isActive = isNavActive(item.href);
                       return (
@@ -341,7 +339,7 @@ export default function Layout() {
 
               <div
                 className={clsx(
-                  'shrink-0 space-y-1 bg-bg/40',
+                  'bg-bg/40 shrink-0 space-y-1',
                   sidebarCollapsed ? 'px-1.5 py-3' : 'px-3 py-4',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
@@ -392,7 +390,7 @@ export default function Layout() {
                     setIsSidebarOpen(false);
                   }}
                   className={clsx(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-surface-overlay',
+                    'hover:bg-surface-overlay flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}
@@ -405,10 +403,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium leading-snug text-text">
+                      <p className="text-text truncate text-sm leading-snug font-medium">
                         {user?.name}
                       </p>
-                      <p className="mt-1 truncate text-[10px] font-medium tracking-[0.04em] text-text-muted">
+                      <p className="text-text-muted mt-1 truncate text-[10px] font-medium tracking-[0.04em]">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>
@@ -435,7 +433,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto bg-bg p-4 transition-colors duration-300 sm:p-6 lg:p-8',
+              'bg-bg h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto p-4 transition-colors duration-300 sm:p-6 lg:p-8',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
 import { Button, Card, Input, Label, Skeleton } from '../ui';
@@ -100,10 +100,10 @@ export function MemberSelfCheckInCard() {
     <Card padding="md" rounded="xl">
       <div className="flex items-center gap-3.5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-snug text-text">
+          <p className="text-text text-sm leading-snug font-medium">
             {inside ? 'Dentro del gym' : 'Asistencia'}
           </p>
-          <p className="mt-1 truncate text-[11px] leading-relaxed text-text-secondary">
+          <p className="text-text-secondary mt-1 truncate text-[11px] leading-relaxed">
             {inside ? (
               'Registra la salida al irte'
             ) : pinRequired ? (

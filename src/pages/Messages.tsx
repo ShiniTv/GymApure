@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router';
 import { format, isToday, isYesterday, isThisYear } from 'date-fns';
 import { dateLocale } from '../lib/dateLocale';
 import { useAuth } from '../context/AuthContext';

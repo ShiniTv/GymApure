@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {

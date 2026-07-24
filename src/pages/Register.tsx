@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { APP_HOME } from '../lib/roles';
 import { User, Mail, CreditCard, Phone } from 'lucide-react';

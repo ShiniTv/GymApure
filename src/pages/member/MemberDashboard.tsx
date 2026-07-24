@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { useState, type ReactNode } from 'react';
 import { format, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
 import { parseDateOnly } from '../../lib/dates';
@@ -45,12 +45,12 @@ const ASSIGNMENT_ENDING =
   'flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5';
 const LINK_BRAND = 'text-brand inline-block text-xs font-bold hover:underline';
 
-type AssignmentRow = {
+interface AssignmentRow {
   id: number;
   name: string;
   start_date?: string | null;
   end_date?: string | null;
-};
+}
 
 function AssignmentListItem({
   row,
@@ -75,13 +75,16 @@ function AssignmentListItem({
       )}
     >
       <div className="min-w-0">
-        <p className={cn('truncate text-text', compact ? 'text-sm font-semibold' : 'font-semibold')}>
+        <p
+          className={cn('text-text truncate', compact ? 'text-sm font-semibold' : 'font-semibold')}
+        >
           {row.name}
         </p>
         {dateValue && (
-          <p className={cn('text-text-secondary', compact ? 'mt-0.5 text-[11px]' : 'mt-0.5 text-xs')}>
-            {dateLabel}{' '}
-            {format(parseDateOnly(dateValue), 'dd MMM yyyy', { locale: es })}
+          <p
+            className={cn('text-text-secondary', compact ? 'mt-0.5 text-[11px]' : 'mt-0.5 text-xs')}
+          >
+            {dateLabel} {format(parseDateOnly(dateValue), 'dd MMM yyyy', { locale: es })}
           </p>
         )}
       </div>
@@ -184,8 +187,8 @@ export default function MemberDashboard() {
 
       {!sub && pending === 0 && (
         <Card padding="md" rounded="xl" className="bg-brand/5 dark:bg-brand/[0.08]">
-          <h3 className="text-sm font-bold text-text">Activa tu membresía</h3>
-          <ol className="mt-4 space-y-3 text-xs leading-relaxed text-text-secondary">
+          <h3 className="text-text text-sm font-bold">Activa tu membresía</h3>
+          <ol className="text-text-secondary mt-4 space-y-3 text-xs leading-relaxed">
             <li>
               <span className="text-brand font-semibold">1.</span> Elige un plan al reportar el pago
             </li>
@@ -246,21 +249,21 @@ export default function MemberDashboard() {
                 <Dumbbell className="text-brand h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-snug text-text">Ver rutinas</p>
-                <p className="mt-1 truncate text-[11px] leading-relaxed text-text-secondary">
+                <p className="text-text text-sm leading-snug font-semibold">Ver rutinas</p>
+                <p className="text-text-secondary mt-1 truncate text-[11px] leading-relaxed">
                   {routine.name} · {routine.exercise_count} ejercicios
                 </p>
               </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" aria-hidden />
+              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
           ) : (
             <Link to="/messages" className={SURFACE_ROW}>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-overlay">
-                <Dumbbell className="h-4 w-4 text-text-muted" />
+              <div className="bg-surface-overlay flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                <Dumbbell className="text-text-muted h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-snug text-text">Sin rutina aún</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+                <p className="text-text text-sm leading-snug font-semibold">Sin rutina aún</p>
+                <p className="text-text-secondary mt-1 text-[11px] leading-relaxed">
                   Escribe a tu entrenador
                 </p>
               </div>
@@ -268,7 +271,7 @@ export default function MemberDashboard() {
           )}
 
           <Card padding="md" rounded="xl">
-            <h3 className="text-sm font-semibold text-text">Membresía</h3>
+            <h3 className="text-text text-sm font-semibold">Membresía</h3>
             {sub ? (
               <>
                 <p
@@ -279,12 +282,12 @@ export default function MemberDashboard() {
                 >
                   {sub.membership_name}
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
+                <p className="text-text-secondary mt-1.5 text-xs leading-relaxed">
                   {formatRemainingDaysShort(sub.days_remaining)}
                   {' · '}
                   Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
                 </p>
-                <div className="mt-4 h-2 w-full rounded-full bg-surface-overlay">
+                <div className="bg-surface-overlay mt-4 h-2 w-full rounded-full">
                   <div
                     className="h-2 rounded-full transition-[width,background-color] duration-500"
                     style={{
@@ -301,7 +304,7 @@ export default function MemberDashboard() {
               </>
             ) : (
               <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-xs text-text-secondary">Sin membresía activa</p>
+                <p className="text-text-secondary text-xs">Sin membresía activa</p>
                 <Button size="sm" variant="ghost" onClick={() => navigate('/payments')}>
                   Reportar pago
                 </Button>
@@ -320,8 +323,8 @@ export default function MemberDashboard() {
                     <Dumbbell className="text-brand h-6 w-6" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-xl font-bold text-text">{routine.name}</p>
-                    <p className="mt-1 text-xs text-text-secondary">
+                    <p className="text-text truncate text-xl font-bold">{routine.name}</p>
+                    <p className="text-text-secondary mt-1 text-xs">
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                     </p>
                   </div>
@@ -339,12 +342,12 @@ export default function MemberDashboard() {
                       : 'Empezar entrenamiento'}
                 </Button>
                 {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
-                  <p className="mt-2 text-center text-xs text-text-secondary">
+                  <p className="text-text-secondary mt-2 text-center text-xs">
                     Tienes un entrenamiento en curso. Puedes retomarlo cuando quieras.
                   </p>
                 )}
                 {primaryRoutineCompletedToday && (
-                  <p className="mt-2 text-center text-xs text-text-secondary">
+                  <p className="text-text-secondary mt-2 text-center text-xs">
                     Ya entrenaste esta rutina hoy. Vuelve mañana.
                   </p>
                 )}
@@ -381,12 +384,12 @@ export default function MemberDashboard() {
                 >
                   {sub.membership_name}
                 </p>
-                <p className="mt-2 text-sm text-text-secondary">
+                <p className="text-text-secondary mt-2 text-sm">
                   {formatRemainingDaysShort(sub.days_remaining)}
                   {' · '}
                   Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
                 </p>
-                <div className="mt-4 h-3 w-full rounded-full bg-surface-overlay">
+                <div className="bg-surface-overlay mt-4 h-3 w-full rounded-full">
                   <div
                     className="h-3 rounded-full transition-[width,background-color] duration-500"
                     style={{
@@ -471,18 +474,18 @@ export default function MemberDashboard() {
             onClick={() => setMoreOpen((v) => !v)}
             aria-expanded={moreOpen}
           >
-            <span className="text-sm font-bold text-text">Más de tu plan</span>
+            <span className="text-text text-sm font-bold">Más de tu plan</span>
             {moreOpen ? (
-              <ChevronUp className="h-4 w-4 text-text-muted" />
+              <ChevronUp className="text-text-muted h-4 w-4" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-text-muted" />
+              <ChevronDown className="text-text-muted h-4 w-4" />
             )}
           </button>
           <Collapse open={moreOpen}>
             <div className="mt-3 space-y-3">
               {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-text-secondary">Próximas asignaciones</p>
+                  <p className="text-text-secondary text-xs font-semibold">Próximas asignaciones</p>
                   {upcomingRoutines.map((r) => {
                     const row = r as AssignmentRow;
                     return (
@@ -518,13 +521,13 @@ export default function MemberDashboard() {
               )}
               {memberStats?.lastWorkout && (
                 <div>
-                  <p className="mb-1 text-xs font-semibold text-text-secondary">
+                  <p className="text-text-secondary mb-1 text-xs font-semibold">
                     Último entrenamiento
                   </p>
-                  <p className="text-sm font-bold text-text">
+                  <p className="text-text text-sm font-bold">
                     {memberStats.lastWorkout.routine_name}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-text-secondary">
+                  <p className="text-text-secondary mt-0.5 text-[11px]">
                     {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
                       locale: es,
                     })}
@@ -579,8 +582,8 @@ export default function MemberDashboard() {
           {memberStats?.lastWorkout && (
             <Card padding="sm" rounded="2xl" className="md:p-5">
               <h3 className="section-title mb-3">Último entrenamiento</h3>
-              <p className="font-bold text-text">{memberStats.lastWorkout.routine_name}</p>
-              <p className="mt-1 text-xs text-text-secondary">
+              <p className="text-text font-bold">{memberStats.lastWorkout.routine_name}</p>
+              <p className="text-text-secondary mt-1 text-xs">
                 {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
                   locale: es,
                 })}

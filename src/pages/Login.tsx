@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { useNavigate, Link, Navigate, useLocation } from 'react-router-dom';
+import { useNavigate, Link, Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../lib/roles';
 import { safeReturnPath } from '../lib/safeReturnPath';

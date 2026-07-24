@@ -1,5 +1,5 @@
 import { useCallback, lazy, Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';

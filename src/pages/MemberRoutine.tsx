@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
 import {
   Dumbbell,
   Calendar,

@@ -9,7 +9,7 @@ import {
 } from '../hooks/queries/useRoutinesQuery';
 import { useTrainersQuery } from '../hooks/queries/useTrainersQuery';
 import { useExercisesCatalogQuery } from '../hooks/queries/useExercisesQuery';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';

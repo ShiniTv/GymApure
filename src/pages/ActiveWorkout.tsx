@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse, ApiError, isNetworkError } from '../lib/api';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
@@ -1035,7 +1035,7 @@ export default function ActiveWorkout() {
         items={[{ label: 'Rutinas', href: '/routines' }, { label: routine.name }]}
       />
 
-      <div className="sticky top-0 z-10 -mx-3 border-b border-border bg-bg/95 px-3 backdrop-blur-sm sm:-mx-0 sm:px-0">
+      <div className="border-border bg-bg/95 sticky top-0 z-10 -mx-3 border-b px-3 backdrop-blur-sm sm:-mx-0 sm:px-0">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <button
@@ -1047,7 +1047,7 @@ export default function ActiveWorkout() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div className="min-w-0">
-              <h1 className="truncate text-sm font-bold tracking-[-0.02em] text-text sm:text-base md:text-lg">
+              <h1 className="text-text truncate text-sm font-bold tracking-[-0.02em] sm:text-base md:text-lg">
                 {routine.name}
               </h1>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
@@ -1063,14 +1063,14 @@ export default function ActiveWorkout() {
                 {isPaused ? (
                   <span
                     className={cn(
-                      'rounded-full bg-surface-overlay px-2 py-0.5 text-[10px] font-medium text-text-secondary transition-all',
+                      'bg-surface-overlay text-text-secondary rounded-full px-2 py-0.5 text-[10px] font-medium transition-all',
                       pausePulse ? 'animate-pulse' : ''
                     )}
                   >
                     Pausado
                   </span>
                 ) : null}
-                <span className="hidden text-[10px] font-medium text-text-secondary sm:inline">
+                <span className="text-text-secondary hidden text-[10px] font-medium sm:inline">
                   {completedCount}/{routine.exercises.length} ejercicios
                 </span>
               </div>
@@ -1113,7 +1113,7 @@ export default function ActiveWorkout() {
                 type="button"
                 role="menuitem"
                 disabled={!sessionId || isResetting}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10 disabled:opacity-60"
+                className="text-danger hover:bg-danger/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm disabled:opacity-60"
                 onClick={() => {
                   setResetMenuOpen(false);
                   resetProgress();
@@ -1127,7 +1127,10 @@ export default function ActiveWorkout() {
               type="button"
               onClick={resetProgress}
               disabled={!sessionId || isResetting}
-              className={cn(workoutIconBtn, 'hidden text-text-muted hover:text-text-secondary sm:inline-flex')}
+              className={cn(
+                workoutIconBtn,
+                'text-text-muted hover:text-text-secondary hidden sm:inline-flex'
+              )}
               aria-label="Reiniciar sesión"
               title="Reiniciar"
             >
@@ -1144,7 +1147,7 @@ export default function ActiveWorkout() {
           </div>
         </div>
         <div className="pb-2.5">
-          <div className="mb-1 flex items-center justify-between text-[10px] font-medium text-text-secondary sm:hidden">
+          <div className="text-text-secondary mb-1 flex items-center justify-between text-[10px] font-medium sm:hidden">
             <span>Progreso</span>
             <span className="text-brand">{progressPct}%</span>
           </div>
@@ -1279,7 +1282,7 @@ export default function ActiveWorkout() {
 
       {isMobileFocus && !isResting && routine.exercises.length > 1 && (
         <nav
-          className="fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-bg p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden"
+          className="border-border bg-bg fixed right-0 bottom-0 left-0 z-40 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden"
           aria-label="Paginación de ejercicios"
         >
           <div className="mx-auto flex max-w-lg items-center gap-3">
@@ -1296,7 +1299,7 @@ export default function ActiveWorkout() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div className="min-w-0 flex-1 text-center">
-              <p className="truncate text-xs text-text-secondary">
+              <p className="text-text-secondary truncate text-xs">
                 {routine.exercises[focusedIndex]?.name}
               </p>
               <p className="text-brand text-sm font-semibold">
@@ -1317,7 +1320,9 @@ export default function ActiveWorkout() {
                     <span
                       className={cn(
                         'rounded-full transition-all',
-                        i === focusedIndex ? 'bg-brand h-2.5 w-5' : 'h-2.5 w-2.5 bg-surface-overlay',
+                        i === focusedIndex
+                          ? 'bg-brand h-2.5 w-5'
+                          : 'bg-surface-overlay h-2.5 w-2.5',
                         completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
                       )}
                     />
@@ -1347,7 +1352,7 @@ export default function ActiveWorkout() {
             key={exercise.id}
             id={`active-workout-exercise-${exercise.id}`}
             className={cn(
-              'rounded-card border border-border bg-surface p-3 shadow-card transition-all sm:p-4 md:p-6',
+              'rounded-card border-border bg-surface shadow-card border p-3 transition-all sm:p-4 md:p-6',
               completedExercises[exercise.id]
                 ? 'scale-[0.98] opacity-50 ring-2 ring-emerald-500/50'
                 : '',
@@ -1356,13 +1361,13 @@ export default function ActiveWorkout() {
           >
             <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h3 className="flex min-w-0 items-center gap-3 text-lg font-bold text-text">
+                <h3 className="text-text flex min-w-0 items-center gap-3 text-lg font-bold">
                   <span className="brand-solid flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold not-italic">
                     {index + 1}
                   </span>
                   <span className="truncate">{exercise.name}</span>
                 </h3>
-                <p className="mt-2 text-sm font-medium text-text-secondary">
+                <p className="text-text-secondary mt-2 text-sm font-medium">
                   {formatMuscleGroupLabel(exercise.muscle_group)} · Descanso:{' '}
                   {exercise.rest_seconds}s
                 </p>
@@ -1393,9 +1398,7 @@ export default function ActiveWorkout() {
             {(exercise.description || exercise.execution || exercise.video_url) && (
               <div className="mb-4 space-y-3">
                 {exercise.description && (
-                  <p className="text-xs text-text-secondary italic">
-                    "{exercise.description}"
-                  </p>
+                  <p className="text-text-secondary text-xs italic">"{exercise.description}"</p>
                 )}
 
                 <div className="flex flex-wrap gap-2">
@@ -1449,7 +1452,7 @@ export default function ActiveWorkout() {
                     <div className="w-full pt-1">
                       <Suspense
                         fallback={
-                          <div className="h-40 animate-pulse rounded-xl bg-surface-overlay" />
+                          <div className="bg-surface-overlay h-40 animate-pulse rounded-xl" />
                         }
                       >
                         <ExerciseVideoPlayer
@@ -1465,7 +1468,7 @@ export default function ActiveWorkout() {
             )}
 
             <div className="space-y-4">
-              <div className="grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] gap-2 px-1 text-center text-[11px] font-semibold text-text-muted sm:grid-cols-10 sm:gap-3 sm:px-2">
+              <div className="text-text-muted grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] gap-2 px-1 text-center text-[11px] font-semibold sm:grid-cols-10 sm:gap-3 sm:px-2">
                 <div className="sm:col-span-2">Serie</div>
                 <div className="sm:col-span-3">kg</div>
                 <div className="sm:col-span-3">Reps</div>
@@ -1489,7 +1492,7 @@ export default function ActiveWorkout() {
                     className={`grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] items-center gap-2 rounded-2xl p-1.5 transition-all sm:grid-cols-10 sm:gap-3 ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-surface-overlay/40'}`}
                   >
                     <div className="flex justify-center sm:col-span-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-sm font-semibold text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white">
+                      <span className="border-border bg-surface flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-semibold text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white">
                         {setNum}
                       </span>
                     </div>
@@ -1515,7 +1518,7 @@ export default function ActiveWorkout() {
                         aria-label={`Peso serie ${setNum}`}
                       />
                       {lastHintLabel ? (
-                        <p className="mt-0.5 truncate text-center text-[10px] text-text-muted dark:text-text-secondary">
+                        <p className="text-text-muted dark:text-text-secondary mt-0.5 truncate text-center text-[10px]">
                           {lastHintLabel}
                         </p>
                       ) : null}
@@ -1559,7 +1562,7 @@ export default function ActiveWorkout() {
                         <button
                           type="button"
                           onClick={() => void toggleSetComplete(exercise.id, setNum)}
-                          className="hover:text-brand hover:border-brand flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface p-0 text-text-muted shadow-sm transition-all dark:bg-zinc-800 "
+                          className="hover:text-brand hover:border-brand border-border bg-surface text-text-muted flex h-9 w-9 items-center justify-center rounded-lg border p-0 shadow-sm transition-all dark:bg-zinc-800"
                           aria-label={`Marcar serie ${setNum} como hecha`}
                         >
                           <CheckCircle className="h-5 w-5" />
@@ -1575,7 +1578,7 @@ export default function ActiveWorkout() {
                   <button
                     type="button"
                     onClick={() => handleRemoveLastSet(exercise.id)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text-muted shadow-sm transition-all hover:border-red-200 hover:text-red-600 dark:bg-zinc-800  dark:hover:border-red-500/30 dark:hover:text-red-400"
+                    className="border-border bg-surface text-text-muted flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition-all hover:border-red-200 hover:text-red-600 dark:bg-zinc-800 dark:hover:border-red-500/30 dark:hover:text-red-400"
                     aria-label="Eliminar última serie"
                     title="Eliminar última serie"
                   >
@@ -1589,7 +1592,7 @@ export default function ActiveWorkout() {
                 onClick={() => {
                   handleAddSet(exercise.id);
                 }}
-                className="hover:text-brand hover:bg-brand/5 hover:border-brand/50 mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-2.5 text-xs font-medium text-text-muted transition-all"
+                className="hover:text-brand hover:bg-brand/5 hover:border-brand/50 border-border text-text-muted mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed py-2.5 text-xs font-medium transition-all"
               >
                 <Plus className="h-4 w-4" />
                 Añadir Serie
@@ -1612,21 +1615,19 @@ export default function ActiveWorkout() {
           <div className="brand-solid ring-brand/10 mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-4">
             <CheckCircle className="h-8 w-8" />
           </div>
-          <p className="text-sm font-semibold text-text">
-            ¿Completaste tu rutina exitosamente?
-          </p>
+          <p className="text-text text-sm font-semibold">¿Completaste tu rutina exitosamente?</p>
           <div className="mt-3 flex items-center justify-center gap-2 text-[11px]">
             <span className="bg-brand/10 text-brand rounded-full px-2.5 py-1 font-semibold">
               {formatTime(timer)}
             </span>
-            <span className="rounded-full bg-surface-overlay px-2.5 py-1 font-medium text-text-secondary">
+            <span className="bg-surface-overlay text-text-secondary rounded-full px-2.5 py-1 font-medium">
               {completedCount}/{routine.exercises.length} ejercicios
             </span>
           </div>
-          <div className="mt-3 rounded-xl border border-border bg-surface-raised/80 px-3 py-2">
-            <p className="text-[11px] font-medium text-text-secondary">
+          <div className="border-border bg-surface-raised/80 mt-3 rounded-xl border px-3 py-2">
+            <p className="text-text-secondary text-[11px] font-medium">
               {completedSets} serie{completedSets === 1 ? '' : 's'} registradas
-              <span className="mx-2 text-text-muted">·</span>
+              <span className="text-text-muted mx-2">·</span>
               {totalVolumeKg.toLocaleString('es-VE')} kg de volumen total
             </p>
           </div>
@@ -1658,15 +1659,15 @@ export default function ActiveWorkout() {
             type="button"
             onClick={() => void confirmFinish(false)}
             disabled={isSubmittingFinish}
-            className="group flex w-full items-center justify-between rounded-xl border border-border bg-surface-raised px-4 py-4 transition-all hover:border-border disabled:opacity-60"
+            className="group border-border bg-surface-raised hover:border-border flex w-full items-center justify-between rounded-xl border px-4 py-4 transition-all disabled:opacity-60"
           >
             <div className="text-left">
-              <p className="font-semibold text-text-secondary">No completamente</p>
-              <p className="mt-0.5 text-xs font-medium text-text-muted">
+              <p className="text-text-secondary font-semibold">No completamente</p>
+              <p className="text-text-muted mt-0.5 text-xs font-medium">
                 Faltaron algunos ejercicios
               </p>
             </div>
-            <div className="h-2.5 w-2.5 rounded-full bg-surface-overlay transition-all group-hover:bg-text-muted" />
+            <div className="bg-surface-overlay group-hover:bg-text-muted h-2.5 w-2.5 rounded-full transition-all" />
           </button>
 
           <Button
@@ -1690,7 +1691,7 @@ export default function ActiveWorkout() {
         }}
         title="Descartar y reiniciar"
       >
-        <p className="mb-6 text-sm text-text-secondary">
+        <p className="text-text-secondary mb-6 text-sm">
           Se eliminará esta sesión incompleta (no quedará en el historial) y podrás empezar de cero.
         </p>
         <div className="flex gap-4">

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 import { CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { NotificationItem } from '../../lib/notifications/types';

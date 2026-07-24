@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
 import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown, ArrowLeft } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import { APP_VERSION } from '../lib/appVersion';
