@@ -1,20 +1,22 @@
 /**
- * Importa ejercicios predeterminados del sistema desde un CSV + carpeta de videos.
+ * Importa ejercicios predeterminados del sistema desde un CSV (+ carpeta de videos opcional).
  *
  * Requisitos:
- *   - FFmpeg/ffprobe en PATH (o FFMPEG_PATH en .env)
- *   - DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ *   - DATABASE_URL
+ *   - Con video: FFmpeg/ffprobe (o FFMPEG_PATH), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ *   - Sin video: --allow-missing-video (no exige carpeta de videos ni FFmpeg)
  *
  * Uso:
  *   npx tsx scripts/db/seed-system-exercises.ts --csv scripts/db/data/system-exercises.csv --videos "C:\ruta\videos"
  *   npx tsx scripts/db/seed-system-exercises.ts --dry-run
  *   npx tsx scripts/db/seed-system-exercises.ts --skip-existing
+ *   npx tsx scripts/db/seed-system-exercises.ts --skip-existing --allow-missing-video
  */
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { readFileSync } from 'node:fs';
-import { query } from '../../src/db/index.ts';
+import { query, pool } from '../../src/db/index.ts';
 import { assertNotProductionDatabase } from '../lib/db-env-guard.ts';
 import { MUSCLE_GROUPS } from '../../src/lib/exerciseMuscleGroups.ts';
 import { optimizeExerciseVideo, isFfmpegAvailable, VideoValidationError } from '../../src/lib/videoOptimizer.ts';
@@ -37,11 +39,14 @@ function parseArgs(argv: string[]) {
   const args: Record<string, string | boolean> = {
     dryRun: false,
     skipExisting: false,
+    allowMissingVideo: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
+    if (arg === '--') continue;
     if (arg === '--dry-run') args.dryRun = true;
     else if (arg === '--skip-existing') args.skipExisting = true;
+    else if (arg === '--allow-missing-video') args.allowMissingVideo = true;
     else if (arg === '--csv' && argv[i + 1]) args.csv = argv[++i];
     else if (arg === '--videos' && argv[i + 1]) args.videos = argv[++i];
   }
@@ -106,6 +111,17 @@ async function exerciseExistsByName(name: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+async function insertExerciseWithoutVideo(row: CsvRow): Promise<void> {
+  await query(
+    `INSERT INTO exercises (
+       name, muscle_group, description, execution, video_url, video_poster_url,
+       is_system, owner_trainer_id, forked_from_id
+     )
+     VALUES ($1, $2, $3, $4, NULL, NULL, true, NULL, NULL)`,
+    [row.name, row.muscle_group, row.description || null, row.execution || null]
+  );
+}
+
 async function main() {
   assertNotProductionDatabase({ scriptName: 'db:seed-system-exercises' });
 
@@ -117,24 +133,10 @@ async function main() {
     path.join(process.env.HOME ?? process.env.USERPROFILE ?? '', 'Desktop', 'Multimedia_Caribean-Gym');
   const dryRun = Boolean(args.dryRun);
   const skipExisting = Boolean(args.skipExisting);
+  const allowMissingVideo = Boolean(args.allowMissingVideo);
 
   if (!fs.existsSync(csvPath)) {
     console.error(`CSV no encontrado: ${csvPath}`);
-    process.exit(1);
-  }
-  if (!fs.existsSync(videosDir)) {
-    console.error(`Carpeta de videos no encontrada: ${videosDir}`);
-    process.exit(1);
-  }
-
-  if (!dryRun && !isSupabaseStorageConfigured()) {
-    console.error('Supabase Storage no configurado. Define SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY.');
-    process.exit(1);
-  }
-
-  const ffmpegOk = await isFfmpegAvailable();
-  if (!ffmpegOk) {
-    console.error('FFmpeg no disponible. Instálalo o define FFMPEG_PATH en .env');
     process.exit(1);
   }
 
@@ -144,27 +146,63 @@ async function main() {
     process.exit(1);
   }
 
+  const videosDirExists = fs.existsSync(videosDir);
+  const needsVideoPath = (row: CsvRow) => Boolean(row.filename.trim());
+  const rowsWithVideoFile = rows.filter(
+    (row) => needsVideoPath(row) && videosDirExists && fs.existsSync(path.join(videosDir, row.filename))
+  );
+  const willUploadAnyVideo = rowsWithVideoFile.length > 0 && !dryRun;
+
+  if (!allowMissingVideo && !videosDirExists) {
+    console.error(`Carpeta de videos no encontrada: ${videosDir}`);
+    console.error('Usa --allow-missing-video para sembrar sin multimedia.');
+    process.exit(1);
+  }
+
+  if (willUploadAnyVideo) {
+    if (!isSupabaseStorageConfigured()) {
+      console.error('Supabase Storage no configurado. Define SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY.');
+      process.exit(1);
+    }
+    const ffmpegOk = await isFfmpegAvailable();
+    if (!ffmpegOk) {
+      console.error('FFmpeg no disponible. Instálalo o define FFMPEG_PATH en .env');
+      process.exit(1);
+    }
+  } else if (!dryRun && !allowMissingVideo) {
+    // All rows expected to have videos but none found on disk — fail early.
+    const missingAny = rows.some((row) => !row.filename.trim() || !videosDirExists);
+    if (missingAny) {
+      console.error('Hay filas sin video. Usa --allow-missing-video o provee los .mp4.');
+      process.exit(1);
+    }
+  }
+
   const allowedGroups = new Set<string>(MUSCLE_GROUPS);
   let ok = 0;
   let skipped = 0;
   let failed = 0;
 
   console.log(`Procesando ${rows.length} ejercicios${dryRun ? ' (dry-run)' : ''}…`);
-  console.log(`Videos: ${videosDir}`);
-  console.log(`CSV: ${csvPath}\n`);
+  console.log(`Videos: ${videosDirExists ? videosDir : '(no requerida / no encontrada)'}`);
+  console.log(`CSV: ${csvPath}`);
+  console.log(`skip-existing: ${skipExisting}`);
+  console.log(`allow-missing-video: ${allowMissingVideo}\n`);
 
   for (const row of rows) {
-    const label = `${row.name} (${row.filename})`;
+    const label = row.filename ? `${row.name} (${row.filename})` : `${row.name} (sin video)`;
 
-    if (!allowedGroups.has(row.muscle_group)) {
-      console.error(`  FAIL ${label} — grupo muscular inválido: ${row.muscle_group}`);
+    if (!row.name.trim() || row.name === 'name') {
+      if (row.name === 'name' && row.muscle_group === 'muscle_group') {
+        continue; // cabecera CSV duplicada
+      }
+      console.error(`  FAIL fila sin nombre`);
       failed++;
       continue;
     }
 
-    const videoPath = path.join(videosDir, row.filename);
-    if (!fs.existsSync(videoPath)) {
-      console.error(`  FAIL ${label} — archivo no encontrado`);
+    if (!allowedGroups.has(row.muscle_group)) {
+      console.error(`  FAIL ${label} — grupo muscular inválido: ${row.muscle_group}`);
       failed++;
       continue;
     }
@@ -175,14 +213,34 @@ async function main() {
       continue;
     }
 
+    const videoPath = row.filename.trim() ? path.join(videosDir, row.filename) : '';
+    const hasVideoFile = Boolean(videoPath && fs.existsSync(videoPath));
+
+    if (!hasVideoFile && !allowMissingVideo) {
+      console.error(`  FAIL ${label} — archivo no encontrado`);
+      failed++;
+      continue;
+    }
+
     if (dryRun) {
-      const sizeMb = (fs.statSync(videoPath).size / (1024 * 1024)).toFixed(1);
-      console.log(`  OK   ${label} — ${sizeMb} MB (sin subir)`);
+      if (hasVideoFile) {
+        const sizeMb = (fs.statSync(videoPath).size / (1024 * 1024)).toFixed(1);
+        console.log(`  OK   ${label} — ${sizeMb} MB (sin subir)`);
+      } else {
+        console.log(`  OK   ${label} — sin video (INSERT NULL)`);
+      }
       ok++;
       continue;
     }
 
     try {
+      if (!hasVideoFile) {
+        await insertExerciseWithoutVideo(row);
+        console.log(`  OK   ${label} — insertado sin video`);
+        ok++;
+        continue;
+      }
+
       const input = fs.readFileSync(videoPath);
       const optimized = await optimizeExerciseVideo(input, 'video/mp4');
       const { videoUrl, posterUrl } = await uploadExerciseMedia(
@@ -217,10 +275,16 @@ async function main() {
   }
 
   console.log(`\nResumen: ${ok} ok, ${skipped} omitidos, ${failed} fallidos`);
+  await pool.end();
   if (failed > 0) process.exit(1);
 }
 
-main().catch((err: unknown) => {
+main().catch(async (err: unknown) => {
   console.error(err);
+  try {
+    await pool.end();
+  } catch {
+    /* ignore */
+  }
   process.exit(1);
 });

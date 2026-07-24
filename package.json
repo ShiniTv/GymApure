@@ -93,7 +93,7 @@
     "db:restore-demo": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/restore-demo-users.ts",
     "db:purge-demo": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/purge-demo-data.ts",
     "db:purge-demo:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/purge-demo-data.ts -- --yes --allow-prod",
-    "db:seed-system-exercises": "tsx scripts/db/seed-system-exercises.ts",
+    "db:seed-system-exercises": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/seed-system-exercises.ts",
     "db:seed-system-exercises:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/seed-system-exercises.ts -- --allow-prod",
     "deploy:preflight:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/deploy/deploy-preflight.ts",
     "db:generate-system-exercises-csv": "tsx scripts/db/generate-system-exercises-csv.ts",

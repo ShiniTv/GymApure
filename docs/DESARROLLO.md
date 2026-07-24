@@ -141,22 +141,23 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 
 ### Base de datos
 
-| Comando                            | Qué hace                                                                          |
-| ---------------------------------- | --------------------------------------------------------------------------------- |
-| `npm run db:migrate`               | Aplica migraciones SQL pendientes                                                 |
-| `npm run db:health`                | Comprueba conexión a Postgres                                                     |
-| `npm run db:create-admin`          | Crea/actualiza cuenta admin                                                       |
-| `npm run db:reset-data`            | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin` |
-| `npm run db:restore-demo`          | **Solo tests/CI** — usuarios demo ficticios                                       |
-| `npm run db:migrate-from-sqlite`   | Migración única desde `gym.db` legacy                                             |
-| `npm run db:migrate:dev`           | Migrar contra `.env.dev`                                                          |
-| `npm run db:migrate:prod`          | Migrar contra `.env.prod`                                                         |
-| `npm run db:setup:dev`             | Migrar + health + activar `.env.dev`                                              |
-| `npm run db:seed-system-exercises` | Sembrar catálogo de ejercicios del sistema                                        |
-| `npm run env:configure-dev`        | Reconfigurar `.env.dev` tras cambio de contraseña (GymApure – Desarrollo)         |
-| `npm run env:configure-prod`       | Reconfigurar `.env.prod` y obtener `DATABASE_URL` para Render                     |
-| `npm run db:verify-isolation`      | Verificar que dev y prod no están cruzados                                        |
-| `npm run deploy:preflight`         | Validar `.env` antes de migrar/desplegar producción                               |
+| Comando                                                                     | Qué hace                                                                                             |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run db:migrate`                                                        | Aplica migraciones SQL pendientes                                                                    |
+| `npm run db:health`                                                         | Comprueba conexión a Postgres                                                                        |
+| `npm run db:create-admin`                                                   | Crea/actualiza cuenta admin                                                                          |
+| `npm run db:reset-data`                                                     | Vacía usuarios y datos operativos (deja esquema intacto). Luego `db:create-admin`                    |
+| `npm run db:restore-demo`                                                   | **Solo tests/CI** — usuarios demo ficticios                                                          |
+| `npm run db:migrate-from-sqlite`                                            | Migración única desde `gym.db` legacy                                                                |
+| `npm run db:migrate:dev`                                                    | Migrar contra `.env.dev`                                                                             |
+| `npm run db:migrate:prod`                                                   | Migrar contra `.env.prod`                                                                            |
+| `npm run db:setup:dev`                                                      | Migrar + health + activar `.env.dev`                                                                 |
+| `npm run db:seed-system-exercises`                                          | Sembrar catálogo de ejercicios del sistema                                                           |
+| `npm run db:seed-system-exercises -- --skip-existing --allow-missing-video` | Sembrar catálogo sin exigir videos (útil para ampliar nombres/guías primero; luego subís multimedia) |
+| `npm run env:configure-dev`                                                 | Reconfigurar `.env.dev` tras cambio de contraseña (GymApure – Desarrollo)                            |
+| `npm run env:configure-prod`                                                | Reconfigurar `.env.prod` y obtener `DATABASE_URL` para Render                                        |
+| `npm run db:verify-isolation`                                               | Verificar que dev y prod no están cruzados                                                           |
+| `npm run deploy:preflight`                                                  | Validar `.env` antes de migrar/desplegar producción                                                  |
 
 ### Pruebas (servidor en marcha salvo `verify:local-e2e`)
 
