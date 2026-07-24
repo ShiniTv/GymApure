@@ -199,7 +199,7 @@ export function MemberDetailRail({ member, alertDays, actions, onClose }: Member
     <Card
       padding="sm"
       rounded="xl"
-      className="sticky top-3 hidden max-h-[calc(100vh-6rem)] overflow-y-auto lg:block"
+      className="sticky top-3 hidden max-h-[calc(100vh-6rem)] overflow-y-auto md:block"
     >
       <MemberDetailPanel
         member={member}

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { UtensilsCrossed, ChevronRight, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -19,7 +19,7 @@ import {
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { cn } from '../lib/utils';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 function adherenceBadgeClass(percent: number): string {
   if (percent >= 75) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
@@ -36,8 +36,31 @@ export default function NutritionOverview() {
   const trainerQuery = useTrainerNutritionOverviewQuery(isTrainer);
   const { data, isPending: loading } = isTrainer ? trainerQuery : adminQuery;
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'with' | 'without'>('all');
+  const [filter, setFilter] = useState<'all' | 'with' | 'without'>(() => {
+    const raw = searchParams.get('filter');
+    return raw === 'with' || raw === 'without' ? raw : 'all';
+  });
+
+  useEffect(() => {
+    const raw = searchParams.get('filter');
+    const next = raw === 'with' || raw === 'without' ? raw : 'all';
+    setFilter((prev) => (prev === next ? prev : next));
+  }, [searchParams]);
+
+  const updateFilter = (value: 'all' | 'with' | 'without') => {
+    setFilter(value);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === 'all') next.delete('filter');
+        else next.set('filter', value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const members = useMemo(() => {
     const list = data?.members ?? [];
@@ -167,7 +190,7 @@ export default function NutritionOverview() {
                   { value: 'with', label: 'Con plan' },
                 ]}
                 value={filter}
-                onChange={(v) => setFilter(v as 'all' | 'with' | 'without')}
+                onChange={(v) => updateFilter(v as 'all' | 'with' | 'without')}
               />
             </div>
           )}

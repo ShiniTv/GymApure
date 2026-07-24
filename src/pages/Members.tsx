@@ -64,7 +64,9 @@ const NO_PLAN_ALERT_DISMISS_KEY = 'gymapure_members_no_plan_alert_dismissed';
 export default function Members() {
   const { user } = useAuth();
   usePageTitle('Miembros');
-  const { isDesktop } = useBreakpoint();
+  const { isDesktop, isTablet } = useBreakpoint();
+  /** Tablet+desktop: ficha en rail lateral. Solo móvil usa sheet modal. */
+  const showDetailRail = isDesktop || isTablet;
   const adminStats = useAdminStatsOptional();
   const invalidateMembers = useInvalidateMembers();
   const invalidateMemberOptions = useInvalidateMemberOptions();
@@ -943,9 +945,9 @@ export default function Members() {
         ) : (
           <div
             className={cn(
-              isDesktop &&
+              showDetailRail &&
                 detailMember &&
-                'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-4'
+                'md:grid md:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] md:items-start md:gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]'
             )}
           >
             <div className="min-w-0">
@@ -997,7 +999,12 @@ export default function Members() {
                 }
                 mobileClassName=""
                 mobileWrapper={(children) => (
-                  <StaggerContainer className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                  <StaggerContainer
+                    className={cn(
+                      'grid grid-cols-1 gap-2.5',
+                      showDetailRail && detailMember ? 'md:grid-cols-1' : 'md:grid-cols-2'
+                    )}
+                  >
                     {children}
                   </StaggerContainer>
                 )}
@@ -1050,7 +1057,7 @@ export default function Members() {
                 label="usuarios"
               />
             </div>
-            {isDesktop && detailMember ? (
+            {showDetailRail && detailMember ? (
               <MemberDetailRail
                 member={detailMember}
                 alertDays={alertDays}
@@ -1118,7 +1125,7 @@ export default function Members() {
 
         <MemberQuickSheet
           member={detailMember}
-          open={!!detailMember && !isDesktop}
+          open={!!detailMember && !showDetailRail}
           onClose={() => setDetailMember(null)}
           alertDays={alertDays}
           actions={detailMember ? buildQuickActions(detailMember) : []}

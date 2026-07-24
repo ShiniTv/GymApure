@@ -104,5 +104,6 @@ export function useTrainerNutritionOverviewQuery(enabled = true) {
       return parseJsonResponse<NutritionOverview>(res);
     },
     enabled,
+    staleTime: 60_000,
   });
 }

@@ -225,10 +225,14 @@ export default function WorkoutHistory() {
   }, [fetchHistory]);
 
   useEffect(() => {
-    if (!isMemberSelf) return;
+    if (!userIdToFetch) return;
+    const canLoadProgress = isMemberSelf || user?.role === 'trainer' || user?.role === 'admin';
+    if (!canLoadProgress) return;
+
     let cancelled = false;
     setProgressLoading(true);
-    void apiFetch('/api/workouts/progress')
+    const url = isMemberSelf ? '/api/workouts/progress' : `/api/users/${userIdToFetch}/progress`;
+    void apiFetch(url)
       .then((res) => parseJsonResponse<WorkoutProgress>(res))
       .then((data) => {
         if (!cancelled) setProgress(data);
@@ -242,7 +246,7 @@ export default function WorkoutHistory() {
     return () => {
       cancelled = true;
     };
-  }, [isMemberSelf]);
+  }, [isMemberSelf, userIdToFetch, user?.role]);
 
   const {
     pullDistance: historyPullDistance,
@@ -514,7 +518,7 @@ export default function WorkoutHistory() {
               className="flex h-full flex-col border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
             >
               <div className="mb-3">
-                <h3 className="section-title">Tu actividad</h3>
+                <h3 className="section-title">{isMemberSelf ? 'Tu actividad' : 'Actividad'}</h3>
                 <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
                   Sesiones y ritmo de la semana
                 </p>
@@ -564,7 +568,7 @@ export default function WorkoutHistory() {
                     {progressLoading
                       ? 'Cargando tendencia de las últimas 8 semanas…'
                       : progress && progress.goal_completion_percent > 0
-                        ? `Volumen y peso máximo · ${progress.goal_completion_percent}% de tu meta semanal`
+                        ? `Volumen y peso máximo · ${progress.goal_completion_percent}% de la meta semanal`
                         : 'Volumen y peso máximo · últimas 8 semanas'}
                   </p>
                 </div>
@@ -630,7 +634,10 @@ export default function WorkoutHistory() {
               Sesiones registradas
             </h3>
             <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-              Toca una sesión para ver detalle y series
+              <span className="lg:hidden">Toca una sesión para ver detalle y series</span>
+              <span className="hidden lg:inline">
+                Selecciona una sesión para ver detalle y series
+              </span>
             </p>
           </div>
         )}

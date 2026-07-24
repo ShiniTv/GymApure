@@ -87,13 +87,6 @@ export const MemberTableRow = memo(function MemberTableRow({
         className: 'hover:text-brand hover:bg-brand/10',
       },
       {
-        key: 'history',
-        label: 'Historial',
-        icon: History,
-        onClick: () => navigate(`/members/${member.id}/history`),
-        className: 'hover:bg-blue-500/10 hover:text-blue-500',
-      },
-      {
         key: 'nutrition',
         label: 'Nutrición',
         icon: UtensilsCrossed,
@@ -106,6 +99,13 @@ export const MemberTableRow = memo(function MemberTableRow({
         icon: MessageSquare,
         onClick: () => navigate(`/messages?member=${member.id}`),
         className: 'hover:text-brand hover:bg-brand/10',
+      },
+      {
+        key: 'history',
+        label: 'Historial',
+        icon: History,
+        onClick: () => navigate(`/members/${member.id}/history`),
+        className: 'hover:bg-blue-500/10 hover:text-blue-500',
       }
     );
   }
@@ -173,8 +173,8 @@ export const MemberTableRow = memo(function MemberTableRow({
     });
   }
 
-  const primaryActions = actions.slice(0, 2);
-  const overflowActions = actions.slice(2);
+  const primaryActions = actions.slice(0, isTrainer ? 3 : 2);
+  const overflowActions = actions.slice(isTrainer ? 3 : 2);
 
   return (
     <tr
@@ -259,7 +259,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         </Badge>
       </td>
       <td className="px-4 py-2.5 text-right lg:px-5" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end gap-0.5">
+        <div className="flex flex-wrap items-center justify-end gap-1">
           {primaryActions.map((action) => (
             <button
               key={action.key}
@@ -267,13 +267,18 @@ export const MemberTableRow = memo(function MemberTableRow({
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg p-1.5 text-zinc-400 transition-colors disabled:opacity-50 dark:text-zinc-300',
+                'inline-flex min-h-9 items-center justify-center gap-1 rounded-lg p-1.5 text-zinc-400 transition-colors disabled:opacity-50 dark:text-zinc-300',
+                isTrainer && 'lg:min-w-0 lg:gap-1.5 lg:px-2 lg:py-1.5',
+                !isTrainer && 'min-w-9',
                 action.className
               )}
               title={action.label}
               aria-label={action.label}
             >
-              <action.icon className="h-4 w-4" />
+              <action.icon className="h-4 w-4 shrink-0" />
+              {isTrainer ? (
+                <span className="hidden text-[11px] font-semibold lg:inline">{action.label}</span>
+              ) : null}
             </button>
           ))}
           {overflowActions.length > 0 && (

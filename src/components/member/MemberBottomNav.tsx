@@ -252,7 +252,7 @@ export function MemberBottomNav() {
                           </span>
                         )}
                       </span>
-                      <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                      <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
                         {item.name}
                       </span>
                     </button>
@@ -284,7 +284,7 @@ export function MemberBottomNav() {
                           </span>
                         )}
                       </span>
-                      <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                      <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
                         {item.name}
                       </span>
                     </Link>

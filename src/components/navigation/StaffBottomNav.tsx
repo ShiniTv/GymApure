@@ -207,7 +207,7 @@ export function StaffBottomNav({
                       type="button"
                       onClick={() => setMoreOpen((open) => !open)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.25rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
+                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -222,7 +222,7 @@ export function StaffBottomNav({
                       >
                         <item.icon className="h-5 w-5" aria-hidden />
                       </span>
-                      <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                      <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
                         {item.name}
                       </span>
                     </button>
@@ -236,7 +236,7 @@ export function StaffBottomNav({
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
-                      'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.25rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
+                      'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 transition-colors',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
                     aria-label={item.name}
@@ -257,7 +257,7 @@ export function StaffBottomNav({
                         </span>
                       )}
                     </span>
-                    <span className="max-w-full truncate text-[9px] leading-none font-semibold tracking-tight">
+                    <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
                       {item.name}
                     </span>
                   </Link>

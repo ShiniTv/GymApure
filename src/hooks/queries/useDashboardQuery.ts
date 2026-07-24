@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiFetchWithRetry, parseJsonResponse } from '../../lib/api';
 
 export interface TrainerStatsResponse {
@@ -50,7 +50,8 @@ export function useTrainerStatsQuery(enabled = true) {
     queryKey: ['trainer-stats'],
     queryFn: fetchTrainerStats,
     enabled,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
     retry: 1,
   });
 }
