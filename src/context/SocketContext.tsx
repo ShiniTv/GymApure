@@ -47,6 +47,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       s.on('payment:updated', () => {
         queryClient.invalidateQueries({ queryKey: ['payments'] });
         queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['reception-stats'] });
       });
 
       s.on('message:new', (payload?: { conversationId?: number }) => {
@@ -66,6 +67,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       s.on('stats:updated', () => {
         queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
         queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['reception-stats'] });
       });
 
       s.on('notification:new', () => {

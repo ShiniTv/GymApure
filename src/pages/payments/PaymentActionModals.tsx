@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Button, Label, Modal, Select, Textarea } from '../../components/ui';
 import { paymentProofUrl } from '../../lib/api';
-import type { Payment } from './helpers';
+import { formatPaymentBsLine, isPdfProofUrl, type Payment } from './helpers';
 
 export interface PaymentPlanOption {
   id: number;
@@ -50,6 +51,13 @@ export function PaymentActionModals({
   proofPreview,
   onCloseProof,
 }: PaymentActionModalsProps) {
+  const [previewAsFrame, setPreviewAsFrame] = useState(false);
+  const proofUrl = proofPreview ? paymentProofUrl(proofPreview.id) : '';
+  const previewWithFrame =
+    !!proofPreview && (isPdfProofUrl(proofPreview.proof_url) || previewAsFrame);
+  const approveBsLine = approveTarget ? formatPaymentBsLine(approveTarget) : null;
+  const proofBsLine = proofPreview ? formatPaymentBsLine(proofPreview) : null;
+
   return (
     <>
       <Modal
@@ -65,10 +73,15 @@ export function PaymentActionModals({
         {approveTarget && (
           <>
             <div className="mb-6 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                {approveTarget.user_name} — ${approveTarget.amount_usd}
-                {approveTarget.reference ? ` · Ref: ${approveTarget.reference}` : ''}
-              </p>
+              <div>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {approveTarget.user_name} — ${approveTarget.amount_usd}
+                  {approveTarget.reference ? ` · Ref: ${approveTarget.reference}` : ''}
+                </p>
+                {approveBsLine ? (
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{approveBsLine}</p>
+                ) : null}
+              </div>
               {approveTarget.proof_url ? (
                 <a
                   href={paymentProofUrl(approveTarget.id)}
@@ -144,7 +157,11 @@ export function PaymentActionModals({
               placeholder="Ej. Comprobante ilegible o referencia no coincide"
               required
             />
-            {actionError && <p className="mb-4 text-sm font-bold text-red-500">{actionError}</p>}
+            {actionError && (
+              <p className="mb-4 text-sm font-bold text-red-500" role="alert">
+                {actionError}
+              </p>
+            )}
             <div className="flex gap-4">
               <Button
                 type="button"
@@ -172,7 +189,10 @@ export function PaymentActionModals({
 
       <Modal
         open={!!proofPreview}
-        onClose={onCloseProof}
+        onClose={() => {
+          setPreviewAsFrame(false);
+          onCloseProof();
+        }}
         title="Comprobante de pago"
         maxWidth="2xl"
         scrollable
@@ -184,17 +204,29 @@ export function PaymentActionModals({
               {proofPreview.amount_usd}
               {proofPreview.reference ? ` · Ref: ${proofPreview.reference}` : ''}
             </p>
+            {proofBsLine ? (
+              <p className="mb-4 -mt-2 text-xs text-zinc-500 dark:text-zinc-400">{proofBsLine}</p>
+            ) : null}
             <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
-              <img
-                src={paymentProofUrl(proofPreview.id)}
-                alt="Comprobante de pago"
-                loading="lazy"
-                className="mx-auto max-h-[min(70dvh,640px)] w-full object-contain"
-              />
+              {previewWithFrame ? (
+                <iframe
+                  src={proofUrl}
+                  title="Comprobante de pago"
+                  className="h-[min(70dvh,640px)] w-full bg-white"
+                />
+              ) : (
+                <img
+                  src={proofUrl}
+                  alt="Comprobante de pago"
+                  loading="lazy"
+                  onError={() => setPreviewAsFrame(true)}
+                  className="mx-auto max-h-[min(70dvh,640px)] w-full object-contain"
+                />
+              )}
             </div>
             <div className="mt-4 flex justify-end">
               <a
-                href={paymentProofUrl(proofPreview.id)}
+                href={proofUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand hover:text-brand text-xs font-semibold"

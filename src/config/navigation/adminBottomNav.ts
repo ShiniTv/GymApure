@@ -22,7 +22,7 @@ import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes
 export const ADMIN_PRIMARY_TABS: StaffBottomNavTab[] = [
   { name: 'Panel', href: '/panel', icon: LayoutDashboard },
   { name: 'Miembros', href: '/members', icon: Users },
-  { name: 'Pagos', href: '/payments', icon: CreditCard },
+  { name: 'Pagos', href: '/payments', icon: CreditCard, showPendingPaymentsBadge: true },
   { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];

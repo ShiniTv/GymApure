@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { Plus, Check, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -22,12 +22,15 @@ import {
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePaymentsQuery';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
 import {
   formatPaymentDate,
+  formatPaymentBsLine,
   formatPaymentMethod,
+  isPendingOlderThanDays,
   paymentStatusLabel,
   paymentStatusVariant,
   type Payment,
@@ -41,6 +44,7 @@ import { PaymentDetailRail } from './payments/PaymentDetailRail';
 import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegisterModal';
 import { cn } from '../lib/utils';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+import { useReceptionStatsQuery } from '../hooks/queries/useReceptionStatsQuery';
 
 export default function Payments() {
   const { user } = useAuth();
@@ -50,14 +54,27 @@ export default function Payments() {
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
   const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
+  const isReceptionist = user?.role === 'receptionist';
   const showStaffMobileChrome = isStaffPayment && isMobileShell;
   const invalidatePayments = useInvalidatePayments();
+  const queryClient = useQueryClient();
+  const { data: receptionStats, refetch: refetchReceptionStats } =
+    useReceptionStatsQuery(isReceptionist);
+  const pendingPaymentsCount = receptionStats?.pendingPayments ?? adminStats?.stats?.pendingPayments;
+
+  const refreshPaymentStats = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['reception-stats'] });
+    await Promise.all([
+      adminStats?.refresh(),
+      memberStats?.refresh(),
+      isReceptionist ? refetchReceptionStats() : Promise.resolve(),
+    ]);
+  }, [queryClient, adminStats, memberStats, isReceptionist, refetchReceptionStats]);
 
   const onRefreshPayments = useCallback(async () => {
     invalidatePayments();
-    await adminStats?.refresh();
-    await memberStats?.refresh();
-  }, [invalidatePayments, adminStats, memberStats]);
+    await refreshPaymentStats();
+  }, [invalidatePayments, refreshPaymentStats]);
   const {
     pullDistance: pullPayments,
     isRefreshing: refreshingPayments,
@@ -132,6 +149,7 @@ export default function Payments() {
   const [rejecting, setRejecting] = useState(false);
   const [searchParams] = useSearchParams();
   const toast = useToastOptional();
+  const deepLinkLookupAttempted = useRef<string | null>(null);
 
   useEffect(() => {
     if (!selectedPayment) return;
@@ -177,11 +195,23 @@ export default function Payments() {
     const paymentIdRaw = searchParams.get('paymentId');
     if (!paymentIdRaw) return;
     const paymentId = parseInt(paymentIdRaw, 10);
-    if (Number.isNaN(paymentId) || payments.length === 0) return;
+    if (Number.isNaN(paymentId)) return;
     const target = payments.find((p) => p.id === paymentId && p.status === 'pending');
     if (target) {
       openApproveModal(target);
+      return;
     }
+    if (deepLinkLookupAttempted.current === paymentIdRaw) return;
+    deepLinkLookupAttempted.current = paymentIdRaw;
+    void apiFetch('/api/payments?status=pending&page=1&limit=50')
+      .then((res) => parseJsonResponse<{ items: Payment[] }>(res))
+      .then(({ items }) => {
+        const pendingPayment = items.find((payment) => payment.id === paymentId);
+        if (pendingPayment) openApproveModal(pendingPayment);
+      })
+      .catch(() => {
+        // Keep the queue usable if deep-link lookup fails.
+      });
   }, [searchParams, payments, isStaffPayment]);
 
   useEffect(() => {
@@ -270,8 +300,7 @@ export default function Payments() {
 
       closeRegisterModal();
       void apiFetchPayments();
-      await adminStats?.refresh();
-      await memberStats?.refresh();
+      await refreshPaymentStats();
       toast?.success(
         isStaffPayment ? 'Pago registrado correctamente' : 'Pago reportado correctamente'
       );
@@ -309,7 +338,7 @@ export default function Payments() {
       setApproveTarget(null);
       setSelectedPlanId('');
       apiFetchPayments();
-      await adminStats?.refresh();
+      await refreshPaymentStats();
       toast?.success('Pago aprobado');
     } catch (err) {
       toast?.error(err instanceof Error ? err.message : 'No se pudo aprobar');
@@ -337,7 +366,7 @@ export default function Payments() {
       setRejectTarget(null);
       setRejectReason('');
       apiFetchPayments();
-      await adminStats?.refresh();
+      await refreshPaymentStats();
       toast?.success('Pago rechazado');
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'No se pudo rechazar');
@@ -398,7 +427,7 @@ export default function Payments() {
           />
         )}
 
-        {isStaffPayment && adminStats?.stats && (
+        {user?.role === 'admin' && adminStats?.stats && (
           <div className="hidden grid-cols-4 gap-3 lg:grid lg:gap-4">
             <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
               <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
@@ -422,6 +451,26 @@ export default function Payments() {
               </p>
               <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
                 {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                En lista
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {total}
+              </p>
+            </div>
+          </div>
+        )}
+        {isReceptionist && receptionStats && (
+          <div className="hidden grid-cols-2 gap-3 lg:grid lg:gap-4">
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Pendientes
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {receptionStats.pendingPayments}
               </p>
             </div>
             <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
@@ -500,7 +549,7 @@ export default function Payments() {
                 {
                   value: 'pending',
                   label: 'Pendientes',
-                  count: adminStats?.stats?.pendingPayments,
+                  count: pendingPaymentsCount,
                 },
                 { value: 'approved', label: 'Aprobados' },
                 { value: 'rejected', label: 'Rechazados' },
@@ -716,81 +765,19 @@ export default function Payments() {
                     ) : (
                       <div className="grid grid-cols-1 gap-2 px-1 py-1 md:grid-cols-2">
                         {payments.map((payment) => (
-                          <div
+                          <PaymentMobileCard
                             key={payment.id}
-                            className="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-brand text-base leading-none font-bold tabular-nums">
-                                    ${payment.amount_usd}
-                                  </p>
-                                  <Badge
-                                    variant={paymentStatusVariant(payment.status)}
-                                    className="px-1.5 py-0 text-[9px]"
-                                  >
-                                    {paymentStatusLabel(payment.status)}
-                                  </Badge>
-                                </div>
-                                <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
-                                  Miembro
-                                </p>
-                                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                                  {payment.user_name}
-                                </p>
-                                <p className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                                  <time dateTime={payment.created_at}>
-                                    {formatPaymentDate(payment.created_at)}
-                                  </time>
-                                  <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                                  <span className="capitalize">
-                                    {formatPaymentMethod(payment.method)}
-                                  </span>
-                                </p>
-                                {payment.reference ? (
-                                  <p
-                                    className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
-                                    title={payment.reference}
-                                  >
-                                    Ref. {payment.reference}
-                                  </p>
-                                ) : null}
-                              </div>
-                              {payment.proof_url ? (
-                                <ProofPreviewButton
-                                  onClick={() => setProofPreview(payment)}
-                                  className="h-9 w-9 shrink-0"
-                                />
-                              ) : null}
-                            </div>
-                            {isStaffPayment && payment.status === 'pending' ? (
-                              <div className="mt-2.5 flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openApproveModal(payment)}
-                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-emerald-500/35 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
-                                >
-                                  <Check className="h-4 w-4" />
-                                  Aprobar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setRejectReason('');
-                                    setActionError('');
-                                    setRejectTarget(payment);
-                                  }}
-                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-red-500/35 bg-red-500/5 text-red-600 hover:bg-red-500/15 dark:text-red-400"
-                                >
-                                  <X className="h-4 w-4" />
-                                  Rechazar
-                                </Button>
-                              </div>
-                            ) : null}
-                          </div>
+                            payment={payment}
+                            isStaff
+                            showActions
+                            onApprove={openApproveModal}
+                            onReject={(target) => {
+                              setRejectReason('');
+                              setActionError('');
+                              setRejectTarget(target);
+                            }}
+                            onProofPreview={setProofPreview}
+                          />
                         ))}
                       </div>
                     )}

@@ -2,7 +2,9 @@ import { Badge, Button, Card } from '../../components/ui';
 import { Check, X } from 'lucide-react';
 import {
   formatPaymentDate,
+  formatPaymentBsLine,
   formatPaymentMethod,
+  isPendingOlderThanDays,
   paymentStatusLabel,
   paymentStatusVariant,
   type Payment,
@@ -56,7 +58,17 @@ export function PaymentDetailRail({
         <Badge variant={paymentStatusVariant(payment.status)} className="text-[10px]">
           {paymentStatusLabel(payment.status)}
         </Badge>
+        {isPendingOlderThanDays(payment) ? (
+          <Badge variant="warning" className="text-[10px]">
+            &gt;2 días
+          </Badge>
+        ) : null}
       </div>
+      {formatPaymentBsLine(payment) ? (
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          {formatPaymentBsLine(payment)}
+        </p>
+      ) : null}
 
       <dl className="mt-3 grid grid-cols-1 gap-2">
         <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">

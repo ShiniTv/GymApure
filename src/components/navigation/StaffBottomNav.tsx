@@ -3,6 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
+import { useAuth } from '../../context/AuthContext';
+import { useAdminStatsOptional } from '../../context/AdminStatsContext';
+import { useReceptionStatsQuery } from '../../hooks/queries/useReceptionStatsQuery';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
 import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
 import { Sheet } from '../ui';
@@ -37,6 +40,11 @@ export function StaffBottomNav({
   greetingSubtitle = 'Atajos y cuenta',
 }: StaffBottomNavProps) {
   const location = useLocation();
+  const { user } = useAuth();
+  const adminStats = useAdminStatsOptional();
+  const isReceptionist = user?.role === 'receptionist';
+  const { data: receptionStats } = useReceptionStatsQuery(isReceptionist);
+  const pendingPayments = receptionStats?.pendingPayments ?? adminStats?.stats?.pendingPayments;
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
   const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -133,6 +141,10 @@ export function StaffBottomNav({
                         ? '1 sin leer'
                         : `${chatUnread > 99 ? '99+' : chatUnread} sin leer`
                       : null;
+                  const pendingPaymentsLabel =
+                    item.showPendingPaymentsBadge && pendingPayments
+                      ? `${pendingPayments > 99 ? '99+' : pendingPayments} pagos pendientes`
+                      : null;
                   return (
                     <li key={item.href}>
                       <Link
@@ -146,7 +158,13 @@ export function StaffBottomNav({
                             : 'border-zinc-200/70 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800/50'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
-                        aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}
+                        aria-label={
+                          unreadLabel
+                            ? `${item.name}, ${unreadLabel}`
+                            : pendingPaymentsLabel
+                              ? `${item.name}, ${pendingPaymentsLabel}`
+                              : item.name
+                        }
                       >
                         {itemActive ? (
                           <span
@@ -161,6 +179,11 @@ export function StaffBottomNav({
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
+                          {item.showPendingPaymentsBadge && pendingPayments ? (
+                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                              {pendingPayments > 99 ? '99+' : pendingPayments}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
                       </Link>
@@ -256,6 +279,11 @@ export function StaffBottomNav({
                           {chatUnread > 99 ? '99+' : chatUnread}
                         </span>
                       )}
+                      {item.showPendingPaymentsBadge && pendingPayments ? (
+                        <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                          {pendingPayments > 99 ? '99+' : pendingPayments}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="max-w-full truncate text-[10px] leading-tight font-semibold tracking-tight">
                       {item.name}
