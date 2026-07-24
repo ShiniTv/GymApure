@@ -182,6 +182,7 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 | `npm run test:ux:browser`               | Playwright E2E (mobile + desktop + tablet)     |
 | `npm run lighthouse:ci`                 | Baseline Lighthouse (login)                    |
 | `npm run bundle:baseline`               | Tamaño de bundle (tracking)                    |
+| `ANALYZE=1 npm run build`               | Genera `dist/stats.html` (visualizer; no CI)   |
 
 Detalle: [TESTING.md](./TESTING.md)
 

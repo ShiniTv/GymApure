@@ -53,18 +53,35 @@ export default defineConfig({
     ],
   },
   build: {
+    target: 'es2022',
+    cssCodeSplit: true,
     chunkSizeWarningLimit: 300,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router'],
-          charts: ['recharts'],
-          icons: ['lucide-react'],
-          query: ['@tanstack/react-query'],
-          dateFns: ['date-fns'],
-          supabase: ['@supabase/supabase-js'],
-          qrcode: ['html5-qrcode'],
-          socket: ['socket.io-client'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          const normalized = id.replace(/\\/g, '/');
+          if (normalized.includes('recharts') || normalized.includes('/d3-')) return 'charts';
+          if (normalized.includes('html5-qrcode')) return 'qr-scanner';
+          if (normalized.includes('react-qr-code') || normalized.includes('/qrcode/')) {
+            return 'qr-display';
+          }
+          if (normalized.includes('lucide-react')) return 'icons';
+          if (normalized.includes('@tanstack')) return 'query';
+          if (normalized.includes('date-fns')) return 'dateFns';
+          if (normalized.includes('@supabase')) return 'supabase';
+          if (normalized.includes('socket.io')) return 'socket';
+          if (normalized.includes('/zod/') || normalized.endsWith('/zod') || normalized.includes('/zod/lib/')) {
+            return 'zod';
+          }
+          if (
+            normalized.includes('/node_modules/react/') ||
+            normalized.includes('/node_modules/react-dom/') ||
+            normalized.includes('/node_modules/react-router/') ||
+            normalized.includes('/node_modules/scheduler/')
+          ) {
+            return 'vendor';
+          }
         },
       },
     },
