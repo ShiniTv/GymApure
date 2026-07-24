@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Dumbbell,
   Calendar,
@@ -92,9 +92,23 @@ import type {
 
 export default function MemberRoutine() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
+  type CoachingTab = 'rutinas' | 'progreso' | 'notas' | 'perfil' | 'mediciones';
+  const parseCoachingTab = (raw: string | null): CoachingTab | null => {
+    if (
+      raw === 'progreso' ||
+      raw === 'notas' ||
+      raw === 'perfil' ||
+      raw === 'mediciones' ||
+      raw === 'rutinas'
+    ) {
+      return raw;
+    }
+    return null;
+  };
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [member, setMember] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -138,9 +152,27 @@ export default function MemberRoutine() {
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
-  const [coachingTab, setCoachingTab] = useState<
-    'rutinas' | 'progreso' | 'notas' | 'perfil' | 'mediciones'
-  >('rutinas');
+  const [coachingTab, setCoachingTab] = useState<CoachingTab>(
+    () => parseCoachingTab(searchParams.get('tab')) ?? 'rutinas'
+  );
+
+  useEffect(() => {
+    const next = parseCoachingTab(searchParams.get('tab'));
+    if (next) setCoachingTab(next);
+  }, [searchParams]);
+
+  const changeCoachingTab = (tab: CoachingTab) => {
+    setCoachingTab(tab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === 'rutinas') next.delete('tab');
+        else next.set('tab', tab);
+        return next;
+      },
+      { replace: true }
+    );
+  };
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [routineMenuId, setRoutineMenuId] = useState<number | null>(null);
   const moreMenuAnchorRef = useRef<HTMLButtonElement>(null);
@@ -568,7 +600,7 @@ export default function MemberRoutine() {
         message: 'Hay alertas de salud: revisa limitaciones antes de entrenar.',
         actionLabel: 'Ver salud',
         run: () => {
-          setCoachingTab('perfil');
+          changeCoachingTab('perfil');
         },
       };
     }
@@ -598,7 +630,7 @@ export default function MemberRoutine() {
         message: 'Aún no hay mediciones de progreso.',
         actionLabel: 'Registrar',
         run: () => {
-          setCoachingTab('mediciones');
+          changeCoachingTab('mediciones');
           setIsAddingMeasurement(true);
         },
       };
@@ -838,7 +870,7 @@ export default function MemberRoutine() {
         variant="compact"
         layout="wrap"
         value={coachingTab}
-        onChange={setCoachingTab}
+        onChange={changeCoachingTab}
         options={[
           { value: 'rutinas', label: 'Rutinas' },
           { value: 'progreso', label: 'Progreso' },
@@ -901,7 +933,7 @@ export default function MemberRoutine() {
                     type="button"
                     className="text-brand mt-0.5 text-[10px] font-medium hover:underline"
                     onClick={() => {
-                      setCoachingTab('mediciones');
+                      changeCoachingTab('mediciones');
                     }}
                   >
                     Ver mediciones

@@ -27,6 +27,6 @@ test.describe('Staff tablet iPad', () => {
     ).catch(() => undefined);
 
     await expect(page.locator('table').first()).toBeHidden();
-    await expect(page.getByLabel('Registrar pago').or(page.getByRole('button', { name: /registrar pago/i }))).toBeVisible();
+    await expect(page.getByLabel('Registrar pago').first()).toBeVisible();
   });
 });

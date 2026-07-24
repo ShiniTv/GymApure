@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from 'react';
-import { Plus, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { Plus, ChevronLeft, ChevronRight, UserPlus, Dumbbell, Users } from 'lucide-react';
 import {
   format,
   addMonths,
@@ -18,6 +18,23 @@ import { Button, Badge } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import type { CalendarAssignment } from './types';
 
+export const ASSIGN_DND_MIME = 'application/x-gymapure-assign';
+
+export interface AssignDragPayload {
+  kind: 'routine' | 'member';
+  id: number;
+}
+
+export interface CalendarPaletteRoutine {
+  id: number;
+  name: string;
+}
+
+export interface CalendarPaletteMember {
+  id: number;
+  full_name: string;
+}
+
 export interface RoutinesCalendarViewProps {
   currentDate: Date;
   setCurrentDate: (date: Date) => void;
@@ -28,6 +45,10 @@ export interface RoutinesCalendarViewProps {
   onAssignDirect: () => void;
   onAssignOnDay: (dateStr: string) => void;
   onNavigateToMemberRoutines: (memberId: number) => void;
+  /** Desktop drag sources for assign-on-drop */
+  paletteRoutines?: CalendarPaletteRoutine[];
+  paletteMembers?: CalendarPaletteMember[];
+  onDropAssign?: (dateStr: string, payload: AssignDragPayload) => void;
 }
 
 function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
@@ -40,6 +61,31 @@ const SWIPE_THRESHOLD_PX = 48;
 const LIGHT =
   'rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
 
+function parseAssignDrag(dataTransfer: DataTransfer): AssignDragPayload | null {
+  const raw = dataTransfer.getData(ASSIGN_DND_MIME) || dataTransfer.getData('text/plain');
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as AssignDragPayload;
+    if (
+      (parsed.kind === 'routine' || parsed.kind === 'member') &&
+      typeof parsed.id === 'number' &&
+      Number.isFinite(parsed.id)
+    ) {
+      return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function setAssignDrag(dataTransfer: DataTransfer, payload: AssignDragPayload) {
+  const raw = JSON.stringify(payload);
+  dataTransfer.setData(ASSIGN_DND_MIME, raw);
+  dataTransfer.setData('text/plain', raw);
+  dataTransfer.effectAllowed = 'copy';
+}
+
 export function RoutinesCalendarView({
   currentDate,
   setCurrentDate,
@@ -50,8 +96,13 @@ export function RoutinesCalendarView({
   onAssignDirect,
   onAssignOnDay,
   onNavigateToMemberRoutines,
+  paletteRoutines = [],
+  paletteMembers = [],
+  onDropAssign,
 }: RoutinesCalendarViewProps) {
   const touchStartX = useRef<number | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+  const canDrop = Boolean(onDropAssign);
 
   const selectedDayStr = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : null;
   const selectedDayAssignments = selectedDayStr ? assignmentsByDay[selectedDayStr] || [] : [];
@@ -99,6 +150,24 @@ export function RoutinesCalendarView({
     shiftWeek(deltaX < 0 ? 'next' : 'prev');
   };
 
+  const handleDayDragOver = (e: React.DragEvent, dateStr: string) => {
+    if (!canDrop) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOverDay(dateStr);
+  };
+
+  const handleDayDrop = (e: React.DragEvent, dateStr: string) => {
+    if (!canDrop || !onDropAssign) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverDay(null);
+    const payload = parseAssignDrag(e.dataTransfer);
+    if (payload) onDropAssign(dateStr, payload);
+  };
+
+  const showPalette = canDrop && (paletteRoutines.length > 0 || paletteMembers.length > 0);
+
   return (
     <div className="space-y-2.5">
       {/* Header: month label + week nav + ghost assign */}
@@ -113,6 +182,12 @@ export function RoutinesCalendarView({
               : `Semana del ${format(weekStart, 'd MMM', { locale: es })}`}
             {' · '}
             {weekAssignmentCount} asignación{weekAssignmentCount !== 1 ? 'es' : ''}
+            {showPalette ? (
+              <span className="hidden text-zinc-400 lg:inline">
+                {' '}
+                · Arrastra rutina o miembro a un día
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
@@ -144,6 +219,46 @@ export function RoutinesCalendarView({
           </Button>
         </div>
       </div>
+
+      {showPalette ? (
+        <div className={cn(LIGHT, 'hidden space-y-2 p-2.5 lg:block')}>
+          <p className="px-0.5 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            Arrastra a un día para asignar
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {paletteRoutines.slice(0, 8).map((r) => (
+              <button
+                key={`r-${r.id}`}
+                type="button"
+                draggable
+                onDragStart={(e) => {
+                  setAssignDrag(e.dataTransfer, { kind: 'routine', id: r.id });
+                }}
+                className="border-brand/20 bg-brand/5 inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold text-zinc-800 active:cursor-grabbing dark:text-zinc-100"
+                title={`Arrastrar rutina «${r.name}»`}
+              >
+                <Dumbbell className="text-brand h-3 w-3 shrink-0" aria-hidden />
+                <span className="truncate">{r.name}</span>
+              </button>
+            ))}
+            {paletteMembers.slice(0, 8).map((m) => (
+              <button
+                key={`m-${m.id}`}
+                type="button"
+                draggable
+                onDragStart={(e) => {
+                  setAssignDrag(e.dataTransfer, { kind: 'member', id: m.id });
+                }}
+                className="inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
+                title={`Arrastrar miembro «${m.full_name}»`}
+              >
+                <Users className="h-3 w-3 shrink-0 text-zinc-400" aria-hidden />
+                <span className="truncate">{m.full_name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Desktop month grid — xl+ */}
       <div className={cn(LIGHT, 'hidden overflow-hidden xl:block')}>
@@ -196,10 +311,16 @@ export function RoutinesCalendarView({
                       setSelectedDay(day);
                     }
                   }}
+                  onDragOver={(e) => handleDayDragOver(e, dateStr)}
+                  onDragLeave={() => {
+                    setDragOverDay((prev) => (prev === dateStr ? null : prev));
+                  }}
+                  onDrop={(e) => handleDayDrop(e, dateStr)}
                   className={cn(
                     'group relative min-h-[100px] cursor-pointer border-t border-l border-zinc-100 bg-white p-1.5 transition-all dark:border-zinc-800 dark:bg-zinc-900',
                     isOtherMonth && 'opacity-30',
-                    isSelected && 'bg-brand/5 dark:bg-brand/10'
+                    isSelected && 'bg-brand/5 dark:bg-brand/10',
+                    dragOverDay === dateStr && 'bg-brand/15 ring-brand/40 ring-2 ring-inset'
                   )}
                 >
                   <div className="flex items-start justify-between">
@@ -282,12 +403,18 @@ export function RoutinesCalendarView({
                 key={dateStr}
                 type="button"
                 onClick={() => setSelectedDay(day)}
+                onDragOver={(e) => handleDayDragOver(e, dateStr)}
+                onDragLeave={() => {
+                  setDragOverDay((prev) => (prev === dateStr ? null : prev));
+                }}
+                onDrop={(e) => handleDayDrop(e, dateStr)}
                 className={cn(
                   'flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors',
                   isSelected
                     ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
                     : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50',
-                  isOtherMonth && 'opacity-45'
+                  isOtherMonth && 'opacity-45',
+                  dragOverDay === dateStr && 'bg-brand/20 ring-brand/50 ring-2'
                 )}
                 aria-pressed={isSelected || undefined}
                 aria-label={`${format(day, 'EEEE d', { locale: es })}${count ? `, ${count} asignaciones` : ''}`}
@@ -317,7 +444,19 @@ export function RoutinesCalendarView({
 
       {/* Selected day detail */}
       {selectedDay && (
-        <div className={cn(LIGHT, 'animate-in fade-in p-3 duration-150')}>
+        <div
+          className={cn(
+            LIGHT,
+            'animate-in fade-in p-3 duration-150',
+            dragOverDay === format(selectedDay, 'yyyy-MM-dd') && 'ring-brand/40 ring-2'
+          )}
+          onDragOver={(e) => handleDayDragOver(e, format(selectedDay, 'yyyy-MM-dd'))}
+          onDragLeave={() => {
+            const dateStr = format(selectedDay, 'yyyy-MM-dd');
+            setDragOverDay((prev) => (prev === dateStr ? null : prev));
+          }}
+          onDrop={(e) => handleDayDrop(e, format(selectedDay, 'yyyy-MM-dd'))}
+        >
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h3 className="truncate text-sm font-semibold text-zinc-900 capitalize dark:text-white">
