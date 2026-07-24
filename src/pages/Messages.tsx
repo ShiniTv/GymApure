@@ -49,15 +49,19 @@ import {
   CheckCheck,
   CreditCard,
   Dumbbell,
+  History,
   ImagePlus,
   MessageSquare,
+  NotebookPen,
   Pencil,
   RotateCcw,
   Search,
   Send,
   Trash2,
+  Trophy,
   User,
   UserPlus,
+  UtensilsCrossed,
   X,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -1136,7 +1140,7 @@ function StaffChatView() {
 
   const contextRail =
     selected && selected.member_id > 0 ? (
-      <div className="hidden min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 xl:flex dark:border-zinc-800/80 dark:bg-zinc-900/50">
+      <div className="hidden min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 lg:flex dark:border-zinc-800/80 dark:bg-zinc-900/50">
         <div className="shrink-0 border-b border-zinc-100/80 px-3 py-3 dark:border-zinc-800/80">
           <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
             Contexto
@@ -1200,28 +1204,64 @@ function StaffChatView() {
               </Button>
             )}
             {isTrainer && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full justify-start gap-2"
-                onClick={() => navigate(`/members/${selected.member_id}/routines`)}
-              >
-                <Dumbbell className="h-3.5 w-3.5" />
-                Ver rutinas
-              </Button>
-            )}
-            {isTrainer && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full justify-start gap-2"
-                onClick={() =>
-                  navigate(`/routines?view=calendar&assign=1&member=${selected.member_id}`)
-                }
-              >
-                <Dumbbell className="h-3.5 w-3.5" />
-                Asignar rutina
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate(`/members/${selected.member_id}/routines`)}
+                >
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  Ver rutinas
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() =>
+                    navigate(`/routines?view=calendar&assign=1&member=${selected.member_id}`)
+                  }
+                >
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  Asignar rutina
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate(`/members/${selected.member_id}/nutrition`)}
+                >
+                  <UtensilsCrossed className="h-3.5 w-3.5" />
+                  Nutrición
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate(`/members/${selected.member_id}/history`)}
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Historial
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate(`/members/${selected.member_id}/routines?tab=progreso`)}
+                >
+                  <Trophy className="h-3.5 w-3.5" />
+                  Progreso
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate(`/members/${selected.member_id}/routines?tab=notas`)}
+                >
+                  <NotebookPen className="h-3.5 w-3.5" />
+                  Notas coach
+                </Button>
+              </>
             )}
             {isAdmin && (
               <Button
@@ -1230,7 +1270,7 @@ function StaffChatView() {
                 className="w-full justify-start gap-2"
                 onClick={() => navigate(`/members/${selected.member_id}/history`)}
               >
-                <User className="h-3.5 w-3.5" />
+                <History className="h-3.5 w-3.5" />
                 Historial
               </Button>
             )}
@@ -1238,7 +1278,7 @@ function StaffChatView() {
         </div>
       </div>
     ) : (
-      <div className="hidden min-h-0 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200/80 p-4 xl:flex dark:border-zinc-800">
+      <div className="hidden min-h-0 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200/80 p-4 lg:flex dark:border-zinc-800">
         <EmptyState
           compact
           icon={User}
@@ -1410,7 +1450,7 @@ function StaffChatView() {
           subtitle={staffSubtitle}
           action={<BackToDashboardLink />}
         />
-        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
+        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)_minmax(200px,240px)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
           <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
             <div className="shrink-0 space-y-2 border-b border-zinc-100/80 p-3 dark:border-zinc-800/80">
               {listToolbar}
