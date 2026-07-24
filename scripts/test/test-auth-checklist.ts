@@ -187,13 +187,16 @@ async function main() {
     email: lockoutEmail,
     password: 'wrong-password',
   });
-  ok('3er intento fallido → 401', lockFail3.res.status === 401);
+  ok(
+    '3er intento fallido dispara bloqueo → 429',
+    lockFail3.res.status === 429 && typeof lockFail3.data.locked_until === 'number'
+  );
 
   const lockBlocked = await api('POST', '/api/auth/login', {
     email: lockoutEmail,
     password: 'wrong-password',
   });
-  ok('4to intento tras 3 fallos → 429', lockBlocked.res.status === 429);
+  ok('Intento mientras bloqueado → 429', lockBlocked.res.status === 429);
 
   cookie = '';
   const receptionLogin = await api('POST', '/api/auth/login', {

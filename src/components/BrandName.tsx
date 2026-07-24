@@ -27,7 +27,9 @@ export default function BrandName({
   if (variant === 'hero') {
     return (
       <span className={cn('font-display font-extrabold tracking-tight', className)}>
-        <span className="text-zinc-900 dark:text-white">{BRAND.nameParts.primary}</span>
+        <span className={onDark ? 'text-white' : 'text-zinc-900 dark:text-white'}>
+          {BRAND.nameParts.primary}
+        </span>
         <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
           {BRAND.nameParts.accent}
         </span>

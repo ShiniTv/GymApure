@@ -104,9 +104,13 @@ export default function Register() {
   };
 
   return (
-    <AuthShell backLink={{ to: '/login', label: 'Volver al login' }}>
-      <Card className="page-stack mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
-        <AuthBrandHeader subtitle="Crea tu cuenta de miembro" />
+    <AuthShell layout="split" backLink={{ to: '/login', label: 'Volver al login' }}>
+      <Card className="page-stack mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0" padding="md">
+        <AuthBrandHeader
+          subtitle="Crea tu cuenta de miembro"
+          formHint="Registro en dos pasos"
+          splitAware
+        />
 
         <ol
           className="mb-6 flex items-center gap-1 text-xs font-semibold"

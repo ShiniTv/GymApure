@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Label, PasswordInput, Spinner, Alert } from '../components/ui';
+import { Button, Card, Label, PasswordInput, Alert } from '../components/ui';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -49,9 +49,16 @@ export default function ResetPassword() {
   };
 
   return (
-    <AuthShell>
-      <Card className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
-        <AuthBrandHeader subtitle="Nueva contraseña" />
+    <AuthShell layout="split">
+      <Card
+        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
+        padding="md"
+      >
+        <AuthBrandHeader
+          subtitle="Nueva contraseña"
+          formHint="Elige una contraseña segura"
+          splitAware
+        />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
@@ -81,8 +88,8 @@ export default function ResetPassword() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || !!success || !token}>
-            {loading ? <Spinner className="h-4 w-4" /> : 'Guardar contraseña'}
+          <Button type="submit" className="w-full" loading={loading} disabled={!!success || !token}>
+            Guardar contraseña
           </Button>
         </form>
 

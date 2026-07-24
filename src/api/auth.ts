@@ -31,12 +31,13 @@ import {
 } from '../lib/passwordSetupToken.ts';
 import { logger } from '../lib/logger.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
-import { checkLoginBlock, recordLoginAttempt, LOGIN_BLOCK_MINUTES } from '../lib/loginLockout.ts';
+import { getLoginLockUntil, recordLoginAttempt, lockoutPayload } from '../lib/loginLockout.ts';
 import { authRateLimiter, forgotPasswordRateLimiter } from './middleware/rateLimit.ts';
 import { hashPassword, passwordHashNeedsRehash, verifyPassword } from '../lib/passwordHash.ts';
 import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import { requireCsrf } from './middleware/csrf.ts';
 import mfaRoutes from './mfa.ts';
+import { getUserMfaState, isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
 
 const router = asyncRouter();
 
@@ -47,7 +48,7 @@ router.get(
   })
 );
 
-/** MFA endpoints retained for a future re-enable; login no longer requires TOTP. */
+/** MFA challenge at login when staff has MFA enabled; setup at /security. */
 router.use('/mfa', mfaRoutes);
 
 router.post(
@@ -64,10 +65,9 @@ router.post(
     const normalizedEmail = email.toLowerCase();
     const clientIp = req.ip ?? req.socket.remoteAddress ?? 'unknown';
 
-    if (await checkLoginBlock(normalizedEmail)) {
-      res.status(429).json({
-        error: `Demasiados intentos. Cuenta bloqueada por ${LOGIN_BLOCK_MINUTES} minutos.`,
-      });
+    const existingLock = await getLoginLockUntil(normalizedEmail);
+    if (existingLock) {
+      res.status(429).json(lockoutPayload(existingLock));
       return;
     }
 
@@ -86,23 +86,31 @@ router.post(
     const user = rows[0];
 
     if (!user || !(await verifyPassword(password, user.password))) {
-      await recordLoginAttempt(normalizedEmail, false);
+      const lockedUntil = await recordLoginAttempt(normalizedEmail, false);
       await logAudit(null, 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
         reason: 'invalid_credentials',
       });
+      if (lockedUntil) {
+        res.status(429).json(lockoutPayload(lockedUntil));
+        return;
+      }
       res.status(401).json({ error: 'Credenciales incorrectas' });
       return;
     }
 
     if (user.status !== 'active') {
-      await recordLoginAttempt(normalizedEmail, false);
+      const lockedUntil = await recordLoginAttempt(normalizedEmail, false);
       await logAudit(Number(user.id), 'auth.login_failed', {
         email: normalizedEmail,
         ip: clientIp,
         reason: 'inactive_account',
       });
+      if (lockedUntil) {
+        res.status(429).json(lockoutPayload(lockedUntil));
+        return;
+      }
       res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
       return;
     }
@@ -114,6 +122,19 @@ router.post(
     if (passwordHashNeedsRehash(user.password)) {
       const upgradedHash = await hashPassword(password);
       await query('UPDATE users SET password = $1 WHERE id = $2', [upgradedHash, userId]);
+    }
+
+    if (isMfaStaffRole(user.role)) {
+      const mfaState = await getUserMfaState(userId);
+      if (mfaState.mfa_enabled && mfaState.mfa_secret) {
+        const mfa_challenge_token = signMfaChallengeToken(userId, user.email, user.role);
+        await logAudit(userId, 'auth.mfa_challenge', { ip: clientIp });
+        res.json({
+          mfa_required: true,
+          mfa_challenge_token,
+        });
+        return;
+      }
     }
 
     emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });

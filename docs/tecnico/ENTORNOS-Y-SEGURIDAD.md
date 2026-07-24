@@ -89,7 +89,7 @@ npm run db:create-admin:prod  # solo si no hay admin
 - Check-in **solo** con personal autenticado (admin/recepcionista). No existe API pública de kiosk.
 - Entrenadores solo ven miembros **asignados** (protección IDOR).
 - Contraseñas nuevas: bcrypt cost **12**; rehash automático al login si el hash es legacy (cost 10).
-- MFA TOTP para staff (`admin`, `receptionist`, `trainer`) en `/security`.
+- MFA TOTP para staff (`admin`, `receptionist`, `trainer`) en `/security`. Si está activo, el login pide el código tras email/contraseña.
 - CSRF double-submit en todas las rutas protegidas con mutaciones.
 - Opcional: `ENABLE_HIBP_CHECK=true` rechaza contraseñas conocidas en filtraciones públicas.
 

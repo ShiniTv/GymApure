@@ -209,8 +209,8 @@ npm run test:smoke
 Con datos demo **no** disponibles en prod, las suites E2E completas requieren usuarios reales. Prueba manualmente:
 
 - [ ] Login con cuenta admin
-- [ ] **MFA:** activar en **Seguridad MFA** (`/security`) con Google Authenticator / Authy
-- [ ] Login admin con código MFA (si está activo)
+- [ ] **MFA:** activar en **Seguridad MFA** (`/security`) con Google Authenticator / Authy; el próximo login pedirá el código TOTP
+- [ ] Login staff con MFA activo: email + contraseña → código MFA
 - [ ] Crear un miembro
 - [ ] Walk-in: verificar que si falla el correo se muestra **enlace** (no contraseña en texto plano)
 - [ ] Registrar pago con comprobante (verificar archivo en Supabase Storage)

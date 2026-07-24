@@ -4,7 +4,7 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, Spinner, Alert } from '../components/ui';
+import { Button, Card, Input, Label, Alert } from '../components/ui';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -33,9 +33,16 @@ export default function ForgotPassword() {
   };
 
   return (
-    <AuthShell>
-      <Card className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10" padding="md">
-        <AuthBrandHeader subtitle="Recuperar contraseña" />
+    <AuthShell layout="split">
+      <Card
+        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
+        padding="md"
+      >
+        <AuthBrandHeader
+          subtitle="Recuperar contraseña"
+          formHint="Te enviaremos un enlace a tu correo"
+          splitAware
+        />
 
         <form className="form-stack" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
@@ -66,8 +73,8 @@ export default function ForgotPassword() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading || !!success}>
-            {loading ? <Spinner className="h-4 w-4" /> : 'Enviar enlace'}
+          <Button type="submit" className="w-full" loading={loading} disabled={!!success}>
+            Enviar enlace
           </Button>
         </form>
 

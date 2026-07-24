@@ -15,25 +15,26 @@ interface LoginAttemptEntry {
 
 const memoryAttempts = new Map<string, LoginAttemptEntry>();
 
-function memoryCheckBlock(email: string): boolean {
+function memoryGetLockUntil(email: string): number | null {
   const entry = memoryAttempts.get(email);
-  if (!entry) return false;
+  if (!entry) return null;
 
   const now = Date.now();
   if (entry.lockedUntil != null && now < entry.lockedUntil) {
-    return true;
+    return entry.lockedUntil;
   }
 
   if (now >= entry.windowExpires) {
     memoryAttempts.delete(email);
   }
-  return false;
+  return null;
 }
 
-function memoryRecordAttempt(email: string, success: boolean) {
+/** Returns lockedUntil epoch ms when this failure triggers or extends a lock. */
+function memoryRecordAttempt(email: string, success: boolean): number | null {
   if (success) {
     memoryAttempts.delete(email);
-    return;
+    return null;
   }
 
   const now = Date.now();
@@ -44,37 +45,48 @@ function memoryRecordAttempt(email: string, success: boolean) {
       count: 1,
       windowExpires: now + LOGIN_WINDOW_MINUTES * 60 * 1000,
     });
-    return;
+    return null;
   }
 
   entry.count += 1;
   if (entry.count >= MAX_LOGIN_ATTEMPTS) {
     entry.lockedUntil = now + LOGIN_BLOCK_MINUTES * 60 * 1000;
+    return entry.lockedUntil;
   }
+  return null;
 }
 
-export async function checkLoginBlock(email: string): Promise<boolean> {
+/** Epoch ms until which login is blocked, or null if not locked. */
+export async function getLoginLockUntil(email: string): Promise<number | null> {
   const normalizedEmail = email.toLowerCase();
   const lockKey = `${LOCK_PREFIX}${normalizedEmail}`;
   const lockedUntilRaw = await redisGet(lockKey);
   if (lockedUntilRaw) {
     const lockedUntil = Number(lockedUntilRaw);
     if (!Number.isNaN(lockedUntil) && Date.now() < lockedUntil) {
-      return true;
+      return lockedUntil;
     }
     await redisDel(lockKey);
   }
 
-  return memoryCheckBlock(normalizedEmail);
+  return memoryGetLockUntil(normalizedEmail);
 }
 
-export async function recordLoginAttempt(email: string, success: boolean): Promise<void> {
+export async function checkLoginBlock(email: string): Promise<boolean> {
+  return (await getLoginLockUntil(email)) != null;
+}
+
+/**
+ * Record success (clears lock) or failure.
+ * On failure that triggers lock, returns lockedUntil epoch ms.
+ */
+export async function recordLoginAttempt(email: string, success: boolean): Promise<number | null> {
   const normalizedEmail = email.toLowerCase();
   if (success) {
     memoryAttempts.delete(normalizedEmail);
     await redisDel(`${LOGIN_PREFIX}${normalizedEmail}`);
     await redisDel(`${LOCK_PREFIX}${normalizedEmail}`);
-    return;
+    return null;
   }
 
   const attemptKey = `${LOGIN_PREFIX}${normalizedEmail}`;
@@ -87,9 +99,24 @@ export async function recordLoginAttempt(email: string, success: boolean): Promi
         String(lockedUntil),
         LOGIN_BLOCK_MINUTES * 60
       );
+      return lockedUntil;
     }
-    return;
+    return null;
   }
 
-  memoryRecordAttempt(normalizedEmail, false);
+  return memoryRecordAttempt(normalizedEmail, false);
+}
+
+export function lockoutPayload(lockedUntil: number): {
+  error: string;
+  locked_until: number;
+  retry_after_seconds: number;
+} {
+  const retryAfterSeconds = Math.max(1, Math.ceil((lockedUntil - Date.now()) / 1000));
+  const minutes = Math.max(1, Math.ceil(retryAfterSeconds / 60));
+  return {
+    error: `Demasiados intentos. Cuenta bloqueada. Inténtalo de nuevo en ${minutes} min.`,
+    locked_until: lockedUntil,
+    retry_after_seconds: retryAfterSeconds,
+  };
 }
