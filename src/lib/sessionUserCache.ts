@@ -79,7 +79,16 @@ export function setCachedSessionUser(user: DbSessionUser): void {
 export function invalidateSessionUserCache(userId: number): void {
   cache.delete(userId);
   if (isRedisConfigured()) {
+    // Best-effort sync path for callers that cannot await; prefer invalidateSessionUserCacheAsync.
     void redisDel(redisKey(userId));
+  }
+}
+
+/** Clears memory + Redis before token_version bumps so stale sessions cannot rehydrate. */
+export async function invalidateSessionUserCacheAsync(userId: number): Promise<void> {
+  cache.delete(userId);
+  if (isRedisConfigured()) {
+    await redisDel(redisKey(userId));
   }
 }
 
