@@ -3,8 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
-import AuthenticatedShell from './components/AuthenticatedShell';
-import { SocketProvider } from './context/SocketContext';
 import { DashboardSkeleton } from './components/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
@@ -30,8 +28,7 @@ function reportBoundaryError(error: Error) {
     });
 }
 
-const CheckIn = lazy(() => import('./pages/CheckIn'));
-
+const AuthenticatedShell = lazy(() => import('./components/AuthenticatedShell'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Members = lazy(() => import('./pages/Members'));
@@ -67,6 +64,22 @@ const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
 const SolicitarDemo = lazy(() => import('./pages/SolicitarDemo'));
 const DemoLeads = lazy(() => import('./pages/DemoLeads'));
 
+/** Check-in needs sockets without pulling SocketProvider into the login entry graph. */
+const CheckInRoute = lazy(() =>
+  Promise.all([import('./pages/CheckIn'), import('./context/SocketContext')]).then(
+    ([checkIn, socket]) => ({
+      default: function CheckInWithSocket() {
+        const { SocketProvider } = socket;
+        const Page = checkIn.default;
+        return (
+          <SocketProvider>
+            <Page />
+          </SocketProvider>
+        );
+      },
+    })
+  )
+);
 function PageLoader() {
   return (
     <div
@@ -167,15 +180,13 @@ function AppRoutes() {
             path="/check-in"
             element={
               <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
-                <SocketProvider>
-                  <ErrorBoundary
-                    onError={(error) => {
-                      reportBoundaryError(error);
-                    }}
-                  >
-                    <CheckIn />
-                  </ErrorBoundary>
-                </SocketProvider>
+                <ErrorBoundary
+                  onError={(error) => {
+                    reportBoundaryError(error);
+                  }}
+                >
+                  <CheckInRoute />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
