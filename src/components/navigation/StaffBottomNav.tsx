@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
@@ -140,7 +140,7 @@ export function StaffBottomNav({
                         {...routePrefetchHandlers(item.href)}
                         onClick={closeMore}
                         className={clsx(
-                          'relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center transition-transform active:scale-[0.98]',
+                          'tap-feedback relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center transition-[transform,opacity,background-color] duration-150',
                           itemActive
                             ? 'border-brand/40 bg-brand/10 text-brand'
                             : 'border-zinc-200/70 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800/50'
@@ -179,7 +179,7 @@ export function StaffBottomNav({
               closeMore();
               requestLogout();
             }}
-            className="flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-500/10 active:scale-[0.99] dark:text-red-400"
+            className="tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-[background-color,transform,opacity] duration-150 hover:bg-red-500/10 dark:text-red-400"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Cerrar sesión
@@ -207,7 +207,7 @@ export function StaffBottomNav({
                       type="button"
                       onClick={() => setMoreOpen((open) => !open)}
                       className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
+                        'tap-feedback inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150',
                         active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                       )}
                       aria-label={item.name}
@@ -233,7 +233,7 @@ export function StaffBottomNav({
                     to={item.href}
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
-                      'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
+                      'tap-feedback inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150',
                       active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
                     )}
                     aria-label={

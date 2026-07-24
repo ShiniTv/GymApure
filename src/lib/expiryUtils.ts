@@ -39,27 +39,27 @@ export function expiryBannerClasses(severity: ExpirySeverity) {
   switch (severity) {
     case 'critical':
       return {
-        container: 'border-red-500/30 bg-red-500/10',
+        container: 'bg-red-500/10',
         text: 'text-red-700 dark:text-red-400',
         link: 'text-red-800 dark:text-red-300',
         badge: 'bg-red-500/10 text-red-600 dark:text-red-500',
-        itemBorder: 'border-red-500/20 bg-red-500/5',
+        itemBorder: 'bg-red-500/5',
       };
     case 'warning':
       return {
-        container: 'border-orange-500/30 bg-orange-500/10',
+        container: 'bg-orange-500/10',
         text: 'text-orange-700 dark:text-orange-400',
         link: 'text-orange-800 dark:text-orange-300',
         badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-500',
-        itemBorder: 'border-orange-500/20 bg-orange-500/5',
+        itemBorder: 'bg-orange-500/5',
       };
     default:
       return {
-        container: 'border-zinc-200 dark:border-zinc-800',
-        text: 'text-zinc-600 dark:text-zinc-300',
+        container: 'bg-surface',
+        text: 'text-text-secondary',
         link: 'text-orange-600 dark:text-orange-500',
-        badge: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500',
-        itemBorder: 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30',
+        badge: 'bg-surface-overlay text-text-muted',
+        itemBorder: 'bg-surface-raised',
       };
   }
 }

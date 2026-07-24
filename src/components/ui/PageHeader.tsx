@@ -49,7 +49,7 @@ export function PageHeader({
               typography.pageSubtitle,
               compact && 'text-[11px]',
               hideTitleOnMobile &&
-                'max-lg:text-sm max-lg:leading-snug max-lg:font-medium max-lg:text-zinc-600 dark:max-lg:text-zinc-300 dark:max-lg:text-zinc-400'
+                'max-lg:text-sm max-lg:leading-snug max-lg:font-medium max-lg:text-text-secondary'
             )}
           >
             {subtitle}
@@ -59,7 +59,7 @@ export function PageHeader({
       {(badge || action) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 self-center sm:gap-3">
           {badge && (
-            <div className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-500 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            <div className="rounded-chip border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary shadow-card">
               {badge}
             </div>
           )}

@@ -51,10 +51,11 @@ export function EmptyState({
     <Card
       padding={compact ? 'sm' : 'md'}
       rounded="xl"
+      variant="dashed"
       className={cn(
-        'border-dashed text-center',
+        'text-center',
         isMotivational && 'from-brand/5 border-brand/20 bg-gradient-to-b to-transparent',
-        compact && 'border-zinc-200/70 py-6 dark:border-zinc-800/70',
+        compact && 'border-border/70 py-6',
         className
       )}
     >
@@ -62,24 +63,21 @@ export function EmptyState({
         <MotivationalIllustration />
       ) : (
         <Icon
-          className={cn(
-            'mx-auto text-zinc-300 dark:text-zinc-600',
-            compact ? 'mb-2.5 h-8 w-8' : 'mb-4 h-12 w-12'
-          )}
+          className={cn('mx-auto text-text-muted', compact ? 'mb-2.5 h-8 w-8' : 'mb-4 h-12 w-12')}
         />
       )}
-      <p
+      <h3
         className={cn(
-          'font-semibold text-zinc-700 dark:text-zinc-200',
+          'font-semibold tracking-[-0.01em] text-text',
           compact ? 'text-[13px]' : 'text-sm'
         )}
       >
         {title}
-      </p>
+      </h3>
       {description && (
         <p
           className={cn(
-            'mx-auto text-zinc-500 dark:text-zinc-400',
+            'mx-auto text-text-secondary',
             compact ? 'mt-1 max-w-xs text-[11px] leading-snug' : 'mt-1.5 max-w-sm text-xs'
           )}
         >

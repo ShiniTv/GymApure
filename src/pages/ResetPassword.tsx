@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';

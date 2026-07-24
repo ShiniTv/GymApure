@@ -41,7 +41,7 @@ export default defineConfig({
       'react',
       'react-dom',
       'react/jsx-dev-runtime',
-      'react-router-dom',
+      'react-router',
       '@tanstack/react-query',
       'lucide-react',
       'clsx',
@@ -53,7 +53,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['react', 'react-dom', 'react-router'],
           charts: ['recharts'],
           icons: ['lucide-react'],
           query: ['@tanstack/react-query'],

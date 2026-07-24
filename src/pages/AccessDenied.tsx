@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ShieldAlert, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDefaultRouteForRole, PORTAL_TITLES, type UserRole } from '../lib/roles';

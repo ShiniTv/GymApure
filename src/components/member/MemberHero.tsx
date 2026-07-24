@@ -1,5 +1,5 @@
 import { Flame, Dumbbell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
@@ -12,6 +12,9 @@ function getGreeting(): string {
   if (hour < 19) return 'Buenas tardes';
   return 'Buenas noches';
 }
+
+const statusPill =
+  'mt-3.5 inline-flex max-w-full items-center rounded-pill px-2.5 py-1 text-[11px] font-semibold';
 
 interface MemberHeroProps {
   name: string;
@@ -68,7 +71,7 @@ export function MemberHero({
       padding="md"
       rounded="2xl"
       className={cn(
-        'border-brand/15 from-brand/[0.04] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
+        'from-brand/[0.04] dark:from-brand/[0.07] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
         className
       )}
     >
@@ -77,34 +80,30 @@ export function MemberHero({
         aria-hidden
       />
 
-      <div className="relative flex items-start gap-4">
+      <div className="relative flex items-start gap-5">
         <div className="min-w-0 flex-1">
-          <p className="text-brand text-[11px] font-semibold tracking-[0.14em] uppercase">
+          <p className="text-brand text-[11px] font-medium tracking-[0.16em] uppercase">
             {getGreeting()}
           </p>
-          <h2 className="mt-1 truncate text-[1.65rem] leading-tight font-bold tracking-tight text-zinc-900 sm:text-3xl dark:text-white">
-            {firstName}
-          </h2>
-          <p className="mt-1 truncate text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="type-h1 mt-2 truncate text-[1.65rem] sm:text-3xl">{firstName}</h2>
+          <p className="text-text-secondary mt-2 truncate text-sm leading-relaxed">
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
           {routineInProgress && !routineCompletedToday && (
-            <span className="mt-2.5 inline-flex max-w-full items-center rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-200">
+            <span className={cn(statusPill, 'bg-warning/10 text-warning')}>
               Entrenamiento en curso
             </span>
           )}
 
           {routineCompletedToday && (
-            <span className="mt-2.5 inline-flex max-w-full items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-              Completada hoy
-            </span>
+            <span className={cn(statusPill, 'bg-success/10 text-success')}>Completada hoy</span>
           )}
 
           {workoutStreak > 0 && (
-            <div className="streak-badge mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1">
-              <Flame className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden />
-              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+            <div className={cn(statusPill, 'streak-badge bg-success/10 gap-1.5')}>
+              <Flame className="text-success h-3.5 w-3.5" aria-hidden />
+              <span className="text-success">
                 Racha {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
               </span>
             </div>
@@ -124,7 +123,7 @@ export function MemberHero({
 
       <Button
         size="sm"
-        className="relative mt-4 w-full shadow-sm sm:mt-5 sm:w-auto"
+        className="relative mt-5 w-full shadow-sm sm:mt-6 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
         onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
         onMouseEnter={() => {

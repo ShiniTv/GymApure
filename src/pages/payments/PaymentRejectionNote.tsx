@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 export function PaymentRejectionNote({ reason }: { reason?: string | null }) {
   return (

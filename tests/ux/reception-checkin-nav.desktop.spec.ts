@@ -10,7 +10,7 @@ test.describe('Recepción sidebar Mostrador', () => {
     await page.goto('/reception');
     await expect(page.locator(receptionBottomNav)).toBeHidden();
 
-    await page.getByRole('link', { name: 'Mostrador', exact: true }).click();
+    await page.getByRole('link', { name: 'Mostrador', exact: true }).first().click();
     await expect(page).toHaveURL(/\/reception\?mode=counter&tab=access/);
   });
 });

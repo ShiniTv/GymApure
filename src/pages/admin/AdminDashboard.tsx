@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { useAdminStats } from '../../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../../lib/expiryUtils';
 import {

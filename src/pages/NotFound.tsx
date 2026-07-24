@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Home, Dumbbell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDefaultRouteForRole } from '../lib/roles';

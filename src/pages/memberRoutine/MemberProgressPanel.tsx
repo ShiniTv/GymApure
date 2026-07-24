@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Trophy, History, ChevronRight } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Spinner } from '../../components/ui';
 import { useMemberProgressQuery } from '../../hooks/queries/useCoachNotesQuery';

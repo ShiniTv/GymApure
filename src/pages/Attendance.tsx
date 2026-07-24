@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
   Fingerprint,

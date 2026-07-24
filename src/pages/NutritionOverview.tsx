@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import { UtensilsCrossed, ChevronRight, Plus } from 'lucide-react';
 import { useTrainerNutritionOverviewQuery } from '../hooks/queries/useNutritionQuery';
 import {
@@ -119,7 +119,9 @@ export default function NutritionOverview() {
               <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
                 Sin plan
               </p>
-              <p className="text-2xl font-black text-amber-600 dark:text-amber-400">{withoutPlan}</p>
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                {withoutPlan}
+              </p>
             </Card>
             <Card padding="sm" rounded="xl">
               <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">

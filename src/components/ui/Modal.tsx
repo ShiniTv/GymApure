@@ -148,11 +148,11 @@ export function Modal({
           aria-describedby={contentId}
           tabIndex={-1}
           className={cn(
-            'my-auto w-full rounded-2xl border border-zinc-200 bg-white shadow-2xl transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900',
+            'my-auto w-full rounded-sheet border border-border bg-surface shadow-elevated transition-all duration-200',
             visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
             scrollable
               ? 'flex max-h-[90dvh] flex-col overflow-hidden'
-              : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-4 sm:p-5',
+              : 'scroll-area max-h-[calc(100dvh-3rem)] overflow-y-auto p-ds-4 sm:p-ds-5',
             maxWidthMap[maxWidth],
             className
           )}
@@ -160,21 +160,19 @@ export function Modal({
           <div
             className={cn(
               'flex shrink-0 items-center justify-between gap-3',
-              scrollable
-                ? 'border-b border-zinc-100 px-4 py-3 sm:px-5 dark:border-zinc-800'
-                : 'mb-4'
+              scrollable ? 'border-b border-border px-ds-4 py-3 sm:px-ds-5' : 'mb-4'
             )}
           >
             <h2
               id={titleId}
-              className="font-display text-base font-bold text-zinc-900 sm:text-lg dark:text-white"
+              className="font-display text-base font-bold tracking-[-0.02em] text-text sm:text-lg"
             >
               {title}
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+              className="shrink-0 rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-overlay hover:text-text"
               aria-label="Cerrar"
             >
               <X className="h-5 w-5" />

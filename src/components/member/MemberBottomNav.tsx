@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { Dumbbell, LogOut } from 'lucide-react';
-import clsx from 'clsx';
 import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
 import { Sheet } from '../ui';
 import { useAuth } from '../../context/AuthContext';
@@ -14,8 +13,15 @@ import {
   type MemberMoreItem,
 } from '../../config/navigation/memberBottomNav';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
+import { cn } from '../../lib/utils';
 
 const FAB_ROOT_CLASS = 'member-has-workout-fab';
+
+const tabClass =
+  'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150 tap-feedback';
+
+const moreItemClass =
+  'relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-card px-2 py-2.5 text-center transition-[transform,opacity,background-color] duration-150 tap-feedback';
 
 function memberDisplayName(name: string | undefined): { first: string; initials: string } {
   const trimmed = name?.trim() || 'Miembro';
@@ -99,7 +105,6 @@ export function MemberBottomNav() {
         side="bottom"
         panelStyle={sheetBottomStyle}
         zIndex={46}
-        className="px-3"
         cardClassName="mx-auto max-w-md shadow-lg"
         showHandle
         compact
@@ -112,17 +117,17 @@ export function MemberBottomNav() {
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+            <p className="text-text truncate text-sm font-semibold tracking-[-0.02em]">
               Hola, {first}
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Tu cuenta y atajos</p>
+            <p className="text-text-secondary text-[11px]">Tu cuenta y atajos</p>
           </div>
         </div>
 
         <div className="space-y-2.5">
           {moreSections.map((section) => (
             <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="mb-1 px-0.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -145,11 +150,11 @@ export function MemberBottomNav() {
                         to={item.href}
                         {...routePrefetchHandlers(item.href)}
                         onClick={closeMore}
-                        className={clsx(
-                          'relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-2 py-2.5 text-center transition-transform active:scale-[0.98]',
+                        className={cn(
+                          moreItemClass,
                           itemActive
                             ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
-                            : 'bg-zinc-50/80 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800/40 dark:text-zinc-200 dark:hover:bg-zinc-800/70'
+                            : 'bg-surface-overlay/60 text-text hover:bg-surface-overlay'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
                         aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}
@@ -163,14 +168,14 @@ export function MemberBottomNav() {
                         <span className="relative inline-flex">
                           <item.icon className="h-5 w-5" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            <span className="member-bottom-nav-unread">
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
                         </span>
                         <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
                         {unreadLabel ? (
-                          <span className="text-[9px] leading-none font-medium text-zinc-400 dark:text-zinc-500">
+                          <span className="text-text-muted text-[9px] leading-none font-medium">
                             {unreadLabel}
                           </span>
                         ) : null}
@@ -183,14 +188,14 @@ export function MemberBottomNav() {
           ))}
         </div>
 
-        <div className="mt-2.5 border-t border-zinc-100 pt-1.5 dark:border-zinc-800">
+        <div className="border-border mt-2.5 border-t pt-1.5">
           <button
             type="button"
             onClick={() => {
               closeMore();
               requestLogout();
             }}
-            className="flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-500/10 active:scale-[0.99] dark:text-red-400"
+            className="text-danger hover:bg-danger/10 rounded-card tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 px-2.5 py-2 text-[13px] font-medium transition-[background-color,transform,opacity] duration-150"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Cerrar sesión
@@ -198,7 +203,10 @@ export function MemberBottomNav() {
         </div>
       </Sheet>
 
-      <div className="member-bottom-nav pointer-events-none fixed right-0 bottom-0 left-0 z-50 px-4 lg:hidden">
+      <nav
+        className="member-bottom-nav pointer-events-none fixed right-0 bottom-0 left-0 z-50 px-4 lg:hidden"
+        aria-label="Navegación principal"
+      >
         {showWorkoutFab && !moreOpen && (
           <Link
             to={workoutHref}
@@ -206,16 +214,13 @@ export function MemberBottomNav() {
             className="member-bottom-nav-fab pointer-events-auto absolute touch-manipulation"
             aria-label="Entrenar"
           >
-            <span className="brand-solid flex h-full w-full items-center justify-center rounded-full shadow-lg ring-2 ring-white/90 transition-transform active:scale-95 dark:ring-zinc-950/90">
+            <span className="brand-solid ring-bg tap-feedback flex h-full w-full items-center justify-center rounded-full shadow-lg ring-2 transition-[transform,opacity] duration-150">
               <Dumbbell className="h-5 w-5 text-white" aria-hidden />
             </span>
           </Link>
         )}
 
-        <nav
-          className="member-bottom-nav-pill pointer-events-auto relative mx-auto max-w-md"
-          aria-label="Navegación principal"
-        >
+        <div className="member-bottom-nav-pill pointer-events-auto relative mx-auto max-w-md">
           <ul className="flex items-stretch justify-around px-2 py-1.5">
             {MEMBER_PRIMARY_TABS.map((item, index) => {
               const active = isTabActive(item.href, item.action);
@@ -228,10 +233,7 @@ export function MemberBottomNav() {
                       ref={moreButtonRef}
                       type="button"
                       onClick={() => setMoreOpen((v) => !v)}
-                      className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
-                        active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
-                      )}
+                      className={cn(tabClass, active ? 'text-brand' : 'text-text-secondary')}
                       aria-label={
                         chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
                       }
@@ -239,7 +241,7 @@ export function MemberBottomNav() {
                     >
                       <span className="relative">
                         <span
-                          className={clsx(
+                          className={cn(
                             'member-bottom-nav-tab-icon',
                             (active || moreOpen) && 'member-bottom-nav-tab-icon--active'
                           )}
@@ -247,7 +249,7 @@ export function MemberBottomNav() {
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {chatUnread > 0 && (
-                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                          <span className="member-bottom-nav-unread">
                             {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
@@ -259,16 +261,13 @@ export function MemberBottomNav() {
                     <Link
                       to={item.href}
                       {...routePrefetchHandlers(item.href)}
-                      className={clsx(
-                        'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-colors',
-                        active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
-                      )}
+                      className={cn(tabClass, active ? 'text-brand' : 'text-text-secondary')}
                       aria-label={item.name}
                       aria-current={active ? 'page' : undefined}
                     >
                       <span className="relative">
                         <span
-                          className={clsx(
+                          className={cn(
                             'member-bottom-nav-tab-icon',
                             active && 'member-bottom-nav-tab-icon--active'
                           )}
@@ -276,7 +275,7 @@ export function MemberBottomNav() {
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {item.showUnreadBadge && chatUnread > 0 && (
-                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                          <span className="member-bottom-nav-unread">
                             {chatUnread > 99 ? '99+' : chatUnread}
                           </span>
                         )}
@@ -295,8 +294,8 @@ export function MemberBottomNav() {
               );
             })}
           </ul>
-        </nav>
-      </div>
+        </div>
+      </nav>
 
       <LogoutConfirmModal {...logoutConfirmProps} />
     </>

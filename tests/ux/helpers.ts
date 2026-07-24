@@ -99,7 +99,7 @@ export async function goToActiveWorkout(page: Page): Promise<void> {
 
   await routineCard.click();
   const startBtn = page.getByRole('button', {
-    name: /empezar entrenamiento|continuar entrenamiento/i,
+    name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|entrenar ahora)$/i,
   });
   await expect(startBtn).toBeVisible({ timeout: 10_000 });
   await startBtn.click();

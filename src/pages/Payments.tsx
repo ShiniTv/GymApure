@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatMoney } from '../lib/utils';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router';
 import {
   Button,
   Card,
