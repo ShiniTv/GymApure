@@ -1,8 +1,8 @@
 /**
  * Verifica el flujo de asignación de rutinas (entrenador → miembro).
- * Uso: npm run dev && tsx scripts/verify-routine-assign.ts
+ * Uso: npm run test:routine-assign (servidor en marcha)
  */
-import { loadEnvForScripts } from './dev/load-env-file.ts';
+import { loadEnvForScripts } from '../dev/load-env-file.ts';
 
 loadEnvForScripts();
 

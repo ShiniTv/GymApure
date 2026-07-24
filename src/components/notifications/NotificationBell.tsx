@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation } from 'react-router';
 import { Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { useNotificationItems } from '../../hooks/useNotificationItems';
 import { formatNotificationBadgeCount } from '../../lib/notifications/types';
-import { NotificationPanel } from './NotificationPanel';
 
+const NotificationPanel = lazy(() =>
+  import('./NotificationPanel').then((m) => ({ default: m.NotificationPanel }))
+);
 const defaultBtnClass =
   'relative inline-flex items-center justify-center h-11 w-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
 
@@ -59,14 +61,17 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
           )}
         </span>
       </button>
-
-      <NotificationPanel
-        open={open}
-        onClose={() => setOpen(false)}
-        persistedItems={persistedItems}
-        liveItems={liveItems}
-        isLoading={isLoading}
-      />
+      {open ? (
+        <Suspense fallback={null}>
+          <NotificationPanel
+            open={open}
+            onClose={() => setOpen(false)}
+            persistedItems={persistedItems}
+            liveItems={liveItems}
+            isLoading={isLoading}
+          />
+        </Suspense>
+      ) : null}{' '}
     </>
   );
 }

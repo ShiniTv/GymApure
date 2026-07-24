@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import {
   Search,
@@ -54,11 +54,14 @@ import { StaggerContainer, StaggerItem } from '../components/animations';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
-import { MemberBadgeModal, type MemberBadgeData } from '../components/member/MemberBadgeModal';
+import type { MemberBadgeData } from '../components/member/MemberBadgeCard';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { passwordSchema } from '../lib/passwordSchema';
 import { type TrainingShift } from '../lib/trainingShift';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+
+const MemberBadgeModal = lazy(() =>
+  import('../components/member/MemberBadgeModal').then((m) => ({ default: m.MemberBadgeModal }))
+);
 
 const NO_PLAN_ALERT_DISMISS_KEY = 'gymapure_members_no_plan_alert_dismissed';
 export default function Members() {
@@ -260,7 +263,7 @@ export default function Members() {
     }
   }, [searchParams, members, loading, openAssignSubscription, setSearchParams]);
 
-  const validateForm = () => {
+  const validateForm = async () => {
     const newErrors: Record<string, string> = {};
 
     if (!newMember.full_name.trim()) {
@@ -282,6 +285,7 @@ export default function Members() {
     if (!newMember.password) {
       newErrors.password = 'La contraseña es obligatoria';
     } else {
+      const { passwordSchema } = await import('../lib/passwordSchema');
       const passwordResult = passwordSchema.safeParse(newMember.password);
       if (!passwordResult.success) {
         newErrors.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';
@@ -297,7 +301,7 @@ export default function Members() {
   };
 
   const handleAddMember = async () => {
-    if (!validateForm()) return;
+    if (!(await validateForm())) return;
 
     try {
       const res = await apiFetch('/api/users', {
@@ -1115,14 +1119,15 @@ export default function Members() {
           onSaveShift={saveMemberShift}
         />
 
-        <MemberBadgeModal
-          open={!!badgeTarget}
-          onClose={() => {
-            setBadgeTarget(null);
-          }}
-          member={badgeTarget}
-        />
-
+        <Suspense fallback={null}>
+          <MemberBadgeModal
+            open={!!badgeTarget}
+            onClose={() => {
+              setBadgeTarget(null);
+            }}
+            member={badgeTarget}
+          />
+        </Suspense>
         <MemberQuickSheet
           member={detailMember}
           open={!!detailMember && !showDetailRail}

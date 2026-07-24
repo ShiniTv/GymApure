@@ -17,7 +17,6 @@ import {
   Alert,
 } from '../components/ui';
 import { cn } from '../lib/utils';
-import { passwordSchema } from '../lib/passwordSchema';
 
 const STEPS = ['Datos personales', 'Credenciales'] as const;
 
@@ -60,6 +59,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
     const next: Record<string, string> = {};
+    const { passwordSchema } = await import('../lib/passwordSchema');
     const passwordResult = passwordSchema.safeParse(formData.password);
     if (!passwordResult.success) {
       next.password = passwordResult.error.issues[0]?.message || 'Contraseña inválida';

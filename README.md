@@ -38,52 +38,19 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas, equipam
 
 Instalación paso a paso, comandos y estructura del código: **[docs/DESARROLLO.md](docs/DESARROLLO.md)**
 
-Resumen rápido:
+Resumen rápido (flujo canónico con **`.env.dev`**):
 
 ```bash
 npm install
+npm run env:init
+npm run env:configure-dev -- <password>
+npm run db:setup:dev
+npm run db:create-admin:dev
+npm run env:check
+npm run dev
 ```
 
-2. Copiar variables de entorno:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Editar `.env`:
-
-   - **JWT_SECRET:** genera un secreto aleatorio de al menos 32 caracteres:
-     ```bash
-     openssl rand -base64 48
-     ```
-   - **DATABASE_URL:** cadena de conexión de Supabase (modo Transaction / puerto 6543).
-   - **DEMO_PASSWORD:** contraseña para cuentas demo en desarrollo y tests (mín. 12 caracteres).
-
-4. Aplicar migraciones de base de datos:
-
-   ```bash
-   npm run db:migrate
-   ```
-
-   Este comando aplica automáticamente todos los archivos en `supabase/migrations/` que aún no se hayan ejecutado. Solo necesitas correrlo **una vez** después de actualizar el código (o al configurar el proyecto por primera vez).
-
-   > Si prefieres hacerlo manualmente: abre el SQL Editor de Supabase y pega los archivos de `supabase/migrations/` en orden alfabético.
-
-5. Crear la primera cuenta administrador:
-
-   ```bash
-   npm run db:create-admin
-   ```
-
-   Indica nombre, email y contraseña (mín. 8 caracteres). También puedes definir `ADMIN_FULL_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env` para modo no interactivo.
-
-6. Arrancar en desarrollo:
-
-   ```bash
-   npm run dev
-   ```
-
-   La app queda en `http://localhost:3000` (o el `PORT` definido en `.env`).
+La app queda en `http://localhost:3000`. Detalle y variables: **[docs/DESARROLLO.md](docs/DESARROLLO.md)** y **[docs/tecnico/VARIABLES-ENTORNO.md](docs/tecnico/VARIABLES-ENTORNO.md)**.
 
 ## Scripts
 
@@ -101,7 +68,7 @@ npm install
 | `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy                           |
 | `npm run db:create-admin`        | Crea o actualiza la cuenta administrador inicial                |
 | `npm run db:restore-demo`        | Solo CI/tests automáticos — cuentas demo ficticias              |
-| `npm run deploy:preflight`       | Valida `.env` antes de migrar/desplegar a producción            |
+| `npm run deploy:preflight:prod`  | Valida `.env.prod` antes de migrar/desplegar a producción       |
 
 > Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**  
 > **Despliegue a producción (Render + Supabase):** **[docs/DEPLOY.md](docs/DEPLOY.md)**

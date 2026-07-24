@@ -1,6 +1,7 @@
 /**
- * Prueba Sprint 4: alertas de vencimiento y cambio de contraseña.
+ * Dominio core (ex Sprint 4): alertas de vencimiento y cambio de contraseña.
  * Requiere servidor en marcha y DEMO_PASSWORD (.env.dev).
+ * Alias histórico: npm run test:sprint4
  */
 import { loadEnvForScripts } from '../dev/load-env-file.ts';
 

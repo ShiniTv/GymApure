@@ -52,4 +52,4 @@ npm run test:trainer-shifts
 
 - [Manual administrador](../manual/MANUAL-ADMIN.md)
 - [Manual entrenador](../manual/MANUAL-ENTRENADOR.md)
-- [Evaluación: asignación explícita trainer↔miembro](./TRAINER-MEMBER-ASSIGNMENTS-EVAL.md)
+- [Evaluación histórica (archivada): asignación trainer↔miembro](../../archive/docs/TRAINER-MEMBER-ASSIGNMENTS-EVAL.md)

@@ -1,10 +1,32 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
-import AuthMarketingPanel from './AuthMarketingPanel';
 
+const AuthMarketingPanel = lazy(() => import('./AuthMarketingPanel'));
+
+function DesktopAuthMarketing() {
+  const [enabled, setEnabled] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = () => setEnabled(mq.matches);
+    onChange();
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  if (!enabled) return null;
+
+  return (
+    <Suspense fallback={<div className="hidden bg-zinc-950 lg:block" aria-hidden />}>
+      <AuthMarketingPanel />
+    </Suspense>
+  );
+}
 interface AuthShellProps {
   variant?: 'auth' | 'kiosk' | 'kiosk-fullscreen';
   /**
@@ -135,7 +157,7 @@ export default function AuthShell({
         </div>
 
         <div className="relative grid min-h-dvh lg:grid-cols-2">
-          <AuthMarketingPanel />
+          <DesktopAuthMarketing />
           {formColumn}
         </div>
       </div>

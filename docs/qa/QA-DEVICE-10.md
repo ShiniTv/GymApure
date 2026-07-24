@@ -1,6 +1,6 @@
 # Checklist device — PWA / Push / latencia percibida
 
-Complementa [MOVIL-Y-PWA.md](./modulos/MOVIL-Y-PWA.md) y [UX-QA.md](./UX-QA.md).  
+Complementa [MOVIL-Y-PWA.md](../modulos/MOVIL-Y-PWA.md) y [UX-QA.md](./UX-QA.md).  
 Objetivo: cerrar el último tramo a 10/10 con evidencia en dispositivo real.
 
 ## Prep (PC)

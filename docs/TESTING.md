@@ -4,8 +4,8 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 
 ## Requisitos previos
 
-1. `.env` con `JWT_SECRET`, `DATABASE_URL` y `DEMO_PASSWORD` (mín. 12 caracteres).
-2. Base de datos migrada: `npm run db:migrate`
+1. `.env.dev` con `JWT_SECRET`, `DATABASE_URL` y `DEMO_PASSWORD` (mín. 12 caracteres). Verificar: `npm run env:check`.
+2. Base de datos migrada: `npm run db:migrate:dev`
 3. Datos demo para la mayoría de suites: `npm run db:restore-demo`
 4. Admin de checklist (solo `test:auth-checklist` / `test:e2e`):
 
@@ -33,7 +33,7 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `npm run lint`                     | TypeScript strict (`tsc --noEmit`)                                           | No         |
 | `npm run build`                    | Build Vite + bundle Express                                                  | No         |
 | `npm run test:smoke`               | Health, login, RBAC básico, kiosk eliminado, check-in recepción              | Sí         |
-| `npm run test:integration`         | Smoke + sprint 4/5/6 (alertas, pagos, notificaciones)                        | Sí         |
+| `npm run test:integration`         | Smoke + dominios core/chat/notificaciones (ex sprint 4/5/6)                  | Sí         |
 | `npm run test:security-checklist`  | Fases 1–3: sesiones, IDOR trainers, rutinas filtradas                        | Sí         |
 | `npm run test:auth-checklist`      | Registro, cambio de contraseña, invalidación JWT                             | Sí         |
 | `npm run test:reception-checklist` | Panel recepción, walk-in, lookup                                             | Sí         |
@@ -43,18 +43,19 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `npm run test:ux:browser:ui`       | Playwright con UI de depuración                                              | Sí         |
 | `npm run verify:local-e2e`         | Levanta `dev`, espera `/api/health`, ejecuta `test:e2e`                      | Automático |
 
-### Sprints individuales (debug)
+### Dominios y sprints (debug)
 
-| Comando                         | Enfoque                                |
-| ------------------------------- | -------------------------------------- |
-| `test:sprint1` … `test:sprint3` | RBAC, trainer, mediciones              |
-| `test:sprint4`                  | Alertas de vencimiento                 |
-| `test:sprint5`                  | Pagos y membresías                     |
-| `test:sprint6`                  | Chat in-app y settings de vencimiento  |
-| `test:exchange-rate`            | Tasa BCV: lectura, override, historial |
-| `test:trainer-shifts`           | Perfiles entrenador, turnos, filtros   |
-| `test:routine-exercises`        | Prescripción por serie en rutinas      |
-| `test:alerts`                   | Panel alertas y notificaciones usuario |
+| Comando                                      | Enfoque                                                   |
+| -------------------------------------------- | --------------------------------------------------------- |
+| `test:sprint1` … `test:sprint3`              | Legacy en `scripts/_archive/` (RBAC, trainer, mediciones) |
+| `test:domain-core` / `test:sprint4`          | Alertas de vencimiento y cambio de contraseña             |
+| `test:domain-chat` / `test:sprint5`          | Check-out recepción y reportes CSV                        |
+| `test:domain-notifications` / `test:sprint6` | Chat in-app y settings de vencimiento                     |
+| `test:routine-assign`                        | Asignación de rutina entrenador → miembro                 |
+| `test:exchange-rate`                         | Tasa BCV: lectura, override, historial                    |
+| `test:trainer-shifts`                        | Perfiles entrenador, turnos, filtros                      |
+| `test:routine-exercises`                     | Prescripción por serie en rutinas                         |
+| `test:alerts`                                | Panel alertas y notificaciones usuario                    |
 
 Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:classes-checklist`, `test:pagination-contracts`, `test:alerts`, `test:exchange-rate`, `test:trainer-shifts`, `test:routine-exercises`.
 
@@ -62,11 +63,11 @@ Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checki
 
 ### Pruebas UX
 
-| Recurso                       | Descripción                                                                                              |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
-| [`docs/UX-QA.md`](./UX-QA.md) | Checklist manual por rol/viewport                                                                        |
-| `npm run test:ux`             | Automatización API de flujos UX críticos                                                                 |
-| `npm run test:ux:browser`     | E2E Playwright (proyectos `mobile`, `desktop`, `tablet`); primera vez: `npx playwright install chromium` |
+| Recurso                             | Descripción                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [`docs/qa/UX-QA.md`](./qa/UX-QA.md) | Checklist manual por rol/viewport                                                                        |
+| `npm run test:ux`                   | Automatización API de flujos UX críticos                                                                 |
+| `npm run test:ux:browser`           | E2E Playwright (proyectos `mobile`, `desktop`, `tablet`); primera vez: `npx playwright install chromium` |
 
 Verificación UX local recomendada:
 
@@ -123,7 +124,7 @@ En Windows, si `verify:local-e2e` falla al matar procesos, detén `npm run dev` 
 | `trainer@gym.com`      | trainer      | Rutinas, IDOR tests                               |
 | `member@gym.com`       | member       | Cédula `V-11223344`, rutina demo con 2 ejercicios |
 
-Contraseña de todas: valor de `DEMO_PASSWORD` en `.env`.
+Contraseña de todas: valor de `DEMO_PASSWORD` en `.env.dev`.
 
 ---
 
@@ -150,7 +151,7 @@ Contraseña de todas: valor de `DEMO_PASSWORD` en `.env`.
 
 ## Limitaciones
 
-- Revisión visual completa: [`UX-QA.md`](./UX-QA.md) y [`QA-VISUAL-CHECKLIST.md`](./QA-VISUAL-CHECKLIST.md).
+- Revisión visual completa: [`UX-QA.md`](./qa/UX-QA.md) y [`QA-VISUAL-CHECKLIST.md`](./qa/QA-VISUAL-CHECKLIST.md).
 - Playwright cubre flujos móviles críticos, no toda la UI.
 - Los tests crean usuarios temporales con emails `@test.local`; no usar en producción.
 - Rate limiting en producción puede hacer fallar suites repetidas muy rápido; en CI `NODE_ENV=production` aplica límites reales.

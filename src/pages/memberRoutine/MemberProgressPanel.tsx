@@ -1,12 +1,14 @@
 import { Link } from 'react-router';
 import { Trophy, History, ChevronRight } from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { Badge, Button, Card, EmptyState, Spinner } from '../../components/ui';
 import { useMemberProgressQuery } from '../../hooks/queries/useCoachNotesQuery';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { ExerciseRecordSummary } from '../../lib/exerciseRecords';
-import WorkoutHistoryCharts from '../../components/workout/WorkoutHistoryCharts';
 import { cn } from '../../lib/utils';
+
+const WorkoutHistoryCharts = lazy(() => import('../../components/workout/WorkoutHistoryCharts'));
 
 interface MemberProgressPanelProps {
   memberId: number;
@@ -100,7 +102,15 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
           <h3 className="mb-2 text-[13px] font-semibold text-zinc-900 dark:text-white">
             Volumen · 8 semanas
           </h3>
-          <WorkoutHistoryCharts weeks={progress.weeks} />
+          <Suspense
+            fallback={
+              <div className="flex h-40 items-center justify-center">
+                <Spinner />
+              </div>
+            }
+          >
+            <WorkoutHistoryCharts weeks={progress.weeks} />
+          </Suspense>
         </Card>
       ) : null}
 

@@ -16,7 +16,7 @@ npm run dev
 - **Desktop:** ventana ≥ 1024px
 - **Tablet (iPad):** 834×1194 — proyecto Playwright `tablet`
 
-**Credenciales demo:** ver [`TESTING.md`](./TESTING.md) (`DEMO_PASSWORD` en `.env`).
+**Credenciales demo:** ver [`TESTING.md`](../TESTING.md) (`DEMO_PASSWORD` en `.env`).
 
 ---
 

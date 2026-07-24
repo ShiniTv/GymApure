@@ -58,7 +58,7 @@ function main() {
   console.log(`Delta: ${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}%`);
 
   if (deltaPct > MAX_REGRESSION_PCT) {
-    console.error(`Bundle grew more than ${MAX_REGRESSION_PCT}% — review dist/stats.html`);
+    console.error(`Bundle grew more than ${MAX_REGRESSION_PCT}% — review with ANALYZE=1 npm run build (dist/stats.html)`);
     process.exit(1);
   }
 }
