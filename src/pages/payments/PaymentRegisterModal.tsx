@@ -237,6 +237,11 @@ export function PaymentRegisterModal({
                 Seleccionado: {file.name}
               </p>
             )}
+            {!file ? (
+              <p className="mt-2 rounded-lg border border-amber-300/70 bg-amber-50 px-2.5 py-2 text-xs font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                Sin comprobante: la revisión puede tardar más o rechazarse.
+              </p>
+            ) : null}
           </div>
         </div>
 

@@ -22,7 +22,7 @@ export const RECEPTION_COUNTER_HREF = '/reception?mode=counter&tab=access';
 export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
   { name: 'Acceso', href: RECEPTION_COUNTER_HREF, icon: Fingerprint },
   { name: 'Miembros', href: '/members', icon: Users },
-  { name: 'Pagos', href: '/payments', icon: CreditCard },
+  { name: 'Pagos', href: '/payments', icon: CreditCard, showPendingPaymentsBadge: true },
   { name: 'Mensajes', href: '/messages', icon: MessageSquare, showUnreadBadge: true },
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];

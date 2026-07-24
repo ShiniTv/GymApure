@@ -5,6 +5,7 @@ export interface StaffBottomNavTab {
   href: string;
   icon: LucideIcon;
   showUnreadBadge?: boolean;
+  showPendingPaymentsBadge?: boolean;
   action?: 'more';
 }
 
@@ -13,6 +14,7 @@ export interface StaffBottomNavMoreItem {
   href: string;
   icon: LucideIcon;
   showUnreadBadge?: boolean;
+  showPendingPaymentsBadge?: boolean;
   /** Optional section label; renders a header when it changes from the previous item */
   section?: string;
 }
