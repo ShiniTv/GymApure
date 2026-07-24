@@ -5,8 +5,13 @@ import { isOriginAllowed } from '../api/middleware/cors.ts';
 import { verifySessionToken } from './sessionAuth.ts';
 import { isStaffRole } from './roles.ts';
 import { logger } from './logger.ts';
+import type { ChatStaffChannel } from './chat/types.ts';
 
 let io: Server | null = null;
+
+function staffRoomForRole(role: string): string {
+  return `staff:${role}`;
+}
 
 export function initWebSocket(httpServer: HttpServer) {
   io = new Server(httpServer, {
@@ -55,9 +60,8 @@ export function initWebSocket(httpServer: HttpServer) {
 
     socket.join(`user:${userId}`);
 
-    // Trainers need chat realtime too (not only admin/reception).
     if (userRole && isStaffRole(userRole)) {
-      socket.join('staff');
+      socket.join(staffRoomForRole(userRole));
     }
   });
 
@@ -73,12 +77,23 @@ export function emitToUser(userId: number | string, event: string, data: unknown
   io?.to(`user:${userId}`).emit(event, data);
 }
 
-export function emitToStaff(event: string, data: unknown) {
-  io?.to('staff').emit(event, data);
+export function emitToStaffRole(role: ChatStaffChannel | string, event: string, data: unknown) {
+  io?.to(staffRoomForRole(role)).emit(event, data);
 }
 
-/** Notify member + all connected staff that a conversation has a new/updated message. */
-export function emitChatMessageNew(payload: { conversationId: number; memberId: number }) {
+/** @deprecated Prefer emitToStaffRole — kept for any legacy callers. */
+export function emitToStaff(event: string, data: unknown) {
+  emitToStaffRole('admin', event, data);
+  emitToStaffRole('receptionist', event, data);
+  emitToStaffRole('trainer', event, data);
+}
+
+/** Notify member + staff connected on the conversation's channel. */
+export function emitChatMessageNew(payload: {
+  conversationId: number;
+  memberId: number;
+  channel: ChatStaffChannel;
+}) {
   emitToUser(payload.memberId, 'message:new', payload);
-  emitToStaff('message:new', payload);
+  emitToStaffRole(payload.channel, 'message:new', payload);
 }

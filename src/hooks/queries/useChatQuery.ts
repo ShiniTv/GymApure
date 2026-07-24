@@ -3,6 +3,7 @@ import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { useSocket } from '../../context/SocketContext';
 import { useAuth } from '../../context/AuthContext';
 import { isStaffRole } from '../../lib/roles';
+import type { ChatStaffChannel } from '../../lib/chat/types';
 
 const CHAT_POLL_CONNECTED_MS = 30_000;
 const CHAT_POLL_DISCONNECTED_MS = 8_000;
@@ -11,9 +12,13 @@ function chatPollInterval(isConnected: boolean): number | false {
   return isConnected ? CHAT_POLL_CONNECTED_MS : CHAT_POLL_DISCONNECTED_MS;
 }
 
+export type { ChatStaffChannel };
+
 export interface ChatConversationListItem {
   id: number;
   member_id: number;
+  channel: ChatStaffChannel;
+  channel_label: string;
   member_name: string;
   member_cedula: string;
   last_message_at: string;
@@ -95,13 +100,10 @@ async function fetchConversations(
   }>(res);
 }
 
-async function fetchMemberConversation(): Promise<ChatConversationListItem> {
+async function fetchMemberConversations(): Promise<ChatConversationListItem[]> {
   const res = await apiFetch('/api/chat/conversations/mine');
-  const data = await parseJsonResponse<ChatConversationListItem>(res);
-  if (data == null || !Number.isFinite(Number(data.id))) {
-    throw new Error('Conversación inválida');
-  }
-  return data;
+  const data = await parseJsonResponse<{ items: ChatConversationListItem[] }>(res);
+  return Array.isArray(data.items) ? data.items : [];
 }
 
 async function fetchMessages(
@@ -113,6 +115,11 @@ async function fetchMessages(
 
 async function openConversationWithMember(memberId: number): Promise<ChatConversationListItem> {
   const res = await apiFetch(`/api/chat/conversations/with/${memberId}`, { method: 'POST' });
+  return parseJsonResponse<ChatConversationListItem>(res);
+}
+
+async function openMemberChannel(channel: ChatStaffChannel): Promise<ChatConversationListItem> {
+  const res = await apiFetch(`/api/chat/conversations/channel/${channel}`, { method: 'POST' });
   return parseJsonResponse<ChatConversationListItem>(res);
 }
 
@@ -153,7 +160,7 @@ export function useMemberChatQuery(enabled = true) {
 
   return useQuery({
     queryKey: chatMineKey,
-    queryFn: fetchMemberConversation,
+    queryFn: fetchMemberConversations,
     enabled: canLoad,
     refetchInterval: canLoad ? chatPollInterval(isConnected) : false,
   });
@@ -335,6 +342,16 @@ export function useOpenChatWithMember() {
     mutationFn: openConversationWithMember,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+    },
+  });
+}
+
+export function useOpenMemberChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: openMemberChannel,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chatMineKey });
     },
   });
 }

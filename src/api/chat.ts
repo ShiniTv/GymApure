@@ -5,6 +5,7 @@ import {
   getConversationById,
   getMemberConversationSummary,
   getOrCreateConversation,
+  listMemberConversations,
   listStaffConversations,
 } from '../lib/chat/conversations.ts';
 import {
@@ -20,8 +21,20 @@ import { sameUserId, toDbId } from '../lib/ids.ts';
 import { isStaffRole, STAFF_ROLES } from '../lib/roles.ts';
 import { trainerHasMemberAccess } from '../lib/trainerAccess.ts';
 import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
+import {
+  CHAT_STAFF_CHANNELS,
+  isChatStaffChannel,
+  type ChatStaffChannel,
+} from '../lib/chat/types.ts';
 
 const router = asyncRouter();
+
+function staffChannelFromRole(role: string): ChatStaffChannel {
+  if (!isChatStaffChannel(role)) {
+    throw Object.assign(new Error('Rol de staff sin canal de chat'), { status: 403 });
+  }
+  return role;
+}
 
 async function assertTrainerMemberAccess(req: AuthRequest, memberId: number): Promise<void> {
   if (req.user!.role !== 'trainer') return;
@@ -34,23 +47,33 @@ async function assertTrainerMemberAccess(req: AuthRequest, memberId: number): Pr
 async function assertConversationAccess(
   req: AuthRequest,
   conversationId: number
-): Promise<{ memberId: number }> {
+): Promise<{ memberId: number; channel: ChatStaffChannel }> {
   const conversation = await getConversationById(conversationId);
   if (!conversation) {
     throw Object.assign(new Error('Conversación no encontrada'), { status: 404 });
   }
 
   const role = req.user!.role;
-  if (role === 'member' && !sameUserId(req.user!.id, conversation.member_id)) {
+  if (role === 'member') {
+    if (!sameUserId(req.user!.id, conversation.member_id)) {
+      throw Object.assign(new Error('Permisos insuficientes'), { status: 403 });
+    }
+    return { memberId: conversation.member_id, channel: conversation.channel };
+  }
+
+  if (!isStaffRole(role)) {
     throw Object.assign(new Error('Permisos insuficientes'), { status: 403 });
   }
-  if (!isStaffRole(role) && role !== 'member') {
-    throw Object.assign(new Error('Permisos insuficientes'), { status: 403 });
+
+  if (role !== conversation.channel) {
+    throw Object.assign(new Error('Esta conversación pertenece a otro canal de staff'), {
+      status: 403,
+    });
   }
 
   await assertTrainerMemberAccess(req, conversation.member_id);
 
-  return { memberId: conversation.member_id };
+  return { memberId: conversation.member_id, channel: conversation.channel };
 }
 
 router.get('/unread-count', async (req: AuthRequest, res) => {
@@ -62,7 +85,9 @@ router.get('/conversations', authorize(STAFF_ROLES), async (req: AuthRequest, re
   const search = parseSearchQuery(req.query) || undefined;
   const expiringOnly = parseBooleanQuery(req.query.expiring);
   const { page, pageSize } = parsePaginationQuery(req.query, { pageSize: 50, maxPageSize: 100 });
+  const channel = staffChannelFromRole(req.user!.role);
   const listOptions = {
+    channel,
     ...(req.user!.role === 'trainer' ? { trainerId: toDbId(req.user!.id) } : {}),
     expiringOnly,
     alertDays: expiringOnly ? await getExpiryAlertDays() : undefined,
@@ -75,14 +100,37 @@ router.get('/conversations', authorize(STAFF_ROLES), async (req: AuthRequest, re
 
 router.get('/conversations/mine', authorize(['member']), async (req: AuthRequest, res) => {
   try {
-    const summary = await getMemberConversationSummary(toDbId(req.user!.id));
-    res.json(summary);
+    const items = await listMemberConversations(toDbId(req.user!.id));
+    res.json({ items });
   } catch (err) {
     const status = (err as { status?: number }).status ?? 500;
-    const message = err instanceof Error ? err.message : 'Error al cargar conversación';
+    const message = err instanceof Error ? err.message : 'Error al cargar conversaciones';
     res.status(status).json({ error: message });
   }
 });
+
+router.post(
+  '/conversations/channel/:channel',
+  authorize(['member']),
+  async (req: AuthRequest, res) => {
+    const channelParam = String(req.params.channel ?? '');
+    if (!isChatStaffChannel(channelParam)) {
+      return res.status(400).json({
+        error: `Canal inválido. Usa: ${CHAT_STAFF_CHANNELS.join(', ')}`,
+      });
+    }
+
+    try {
+      const conversation = await getOrCreateConversation(toDbId(req.user!.id), channelParam);
+      const summary = await getMemberConversationSummary(toDbId(req.user!.id), channelParam);
+      res.json({ ...conversation, ...summary, id: conversation.id });
+    } catch (err) {
+      const status = (err as { status?: number }).status ?? 500;
+      const message = err instanceof Error ? err.message : 'Error';
+      return res.status(status).json({ error: message });
+    }
+  }
+);
 
 router.post(
   '/conversations/with/:memberId',
@@ -101,8 +149,9 @@ router.post(
       return res.status(status).json({ error: message });
     }
 
-    const conversation = await getOrCreateConversation(memberId);
-    const summary = await getMemberConversationSummary(memberId);
+    const channel = staffChannelFromRole(req.user!.role);
+    const conversation = await getOrCreateConversation(memberId, channel);
+    const summary = await getMemberConversationSummary(memberId, channel);
     res.json({ ...conversation, ...summary, id: conversation.id });
   }
 );
@@ -225,7 +274,7 @@ router.post('/conversations/:id/read', async (req: AuthRequest, res) => {
     return res.status(400).json({ error: 'ID inválido' });
   }
 
-  let access: { memberId: number };
+  let access: { memberId: number; channel: ChatStaffChannel };
   try {
     access = await assertConversationAccess(req, conversationId);
   } catch (err) {

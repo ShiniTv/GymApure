@@ -12,10 +12,13 @@ import {
   useMarkChatRead,
   useMemberChatQuery,
   useOpenChatWithMember,
+  useOpenMemberChannel,
   useSendChatMessage,
   type ChatConversationListItem,
   type ChatMessage,
+  type ChatStaffChannel,
 } from '../hooks/queries/useChatQuery';
+import { CHAT_CHANNEL_LABELS, isChatStaffChannel } from '../lib/chat/types';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { getExpiryBadgeInfo } from '../lib/expiryUtils';
 import {
@@ -341,6 +344,11 @@ const ChatBubble = memo(function ChatBubble({
             isOutgoing ? 'items-end' : 'items-start'
           )}
         >
+          {!isOutgoing && message.sender_name ? (
+            <p className="px-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+              {message.sender_name}
+            </p>
+          ) : null}
           <button
             type="button"
             className={clsx(
@@ -599,6 +607,11 @@ function StaffChatView() {
   const { user } = useAuth();
   const toast = useToastOptional();
   const isTrainer = user?.role === 'trainer';
+  const staffChannelLabel =
+    user?.role && isChatStaffChannel(user.role) ? CHAT_CHANNEL_LABELS[user.role] : 'Staff';
+  const staffSubtitle = isTrainer
+    ? 'Canal entrenador: solo tus clientes asignados'
+    : `Canal ${staffChannelLabel.toLowerCase()}: solo este rol ve estos chats`;
   const [searchParams, setSearchParams] = useSearchParams();
   const adminStats = useAdminStatsOptional();
   const alertDays = adminStats?.stats?.expiryAlertDays ?? 7;
@@ -932,7 +945,7 @@ function StaffChatView() {
               Mensajes <span className="text-brand">del gym</span>
             </>
           }
-          subtitle={isTrainer ? undefined : 'Chat con clientes y avisos del gym'}
+          subtitle={staffSubtitle}
           action={<BackToDashboardLink />}
         />
         {listToolbar}
@@ -955,7 +968,7 @@ function StaffChatView() {
               Mensajes <span className="text-brand">del gym</span>
             </>
           }
-          subtitle={isTrainer ? undefined : 'Chat con clientes y avisos del gym'}
+          subtitle={staffSubtitle}
           action={<BackToDashboardLink />}
         />
         <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)]">
@@ -976,39 +989,136 @@ function StaffChatView() {
   );
 }
 
+const MEMBER_CHANNEL_ORDER: ChatStaffChannel[] = ['receptionist', 'admin', 'trainer'];
+
+const MEMBER_CHANNEL_META: Record<
+  ChatStaffChannel,
+  { description: string; composer: string; emptyTitle: string; emptyDescription: string }
+> = {
+  receptionist: {
+    description: 'Pagos, membresía y mostrador',
+    composer: 'Escribe a recepción…',
+    emptyTitle: 'Chat con recepción',
+    emptyDescription: 'Avisos de pagos y membresía. Escribe aquí para el mostrador.',
+  },
+  admin: {
+    description: 'Consultas con administración',
+    composer: 'Escribe a administración…',
+    emptyTitle: 'Chat con administración',
+    emptyDescription: 'Mensajes directos con el equipo administrativo del gym.',
+  },
+  trainer: {
+    description: 'Rutinas y coaching',
+    composer: 'Escribe a tu entrenador…',
+    emptyTitle: 'Chat con tu entrenador',
+    emptyDescription: 'Aquí verás avisos de rutinas y podrás escribirle a tu entrenador.',
+  },
+};
+
 function MemberChatView() {
   usePageTitle('Mensajes');
+  const toast = useToastOptional();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const channelParam = searchParams.get('channel');
+  const selectedChannel = channelParam && isChatStaffChannel(channelParam) ? channelParam : null;
+
   const {
-    data: conversation,
+    data: conversations = [],
     isPending,
     isError,
     isFetching,
     error,
     refetch,
   } = useMemberChatQuery(true);
-  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
-    conversation?.id ?? null,
-    conversation?.id != null
-  );
+  const openChannel = useOpenMemberChannel();
   const markRead = useMarkChatRead();
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [activeConversation, setActiveConversation] = useState<ChatConversationListItem | null>(
+    null
+  );
+  const [openingChannel, setOpeningChannel] = useState(false);
+  const openingForRef = useRef<ChatStaffChannel | null>(null);
+
+  const conversationByChannel = useMemo(() => {
+    const map = new Map<ChatStaffChannel, ChatConversationListItem>();
+    for (const item of conversations) {
+      if (isChatStaffChannel(item.channel)) map.set(item.channel, item);
+    }
+    return map;
+  }, [conversations]);
 
   useEffect(() => {
-    if (conversation?.id != null) {
-      markRead.mutate(conversation.id);
+    if (!selectedChannel) {
+      openingForRef.current = null;
+      setActiveConversation(null);
+      setOpeningChannel(false);
+      return;
     }
-  }, [conversation?.id, messagesData?.messages.length]);
+
+    const existing = conversationByChannel.get(selectedChannel);
+    if (existing) {
+      setActiveConversation(existing);
+      openingForRef.current = selectedChannel;
+      setOpeningChannel(false);
+      return;
+    }
+
+    if (openingForRef.current === selectedChannel) return;
+    openingForRef.current = selectedChannel;
+
+    let cancelled = false;
+    setOpeningChannel(true);
+    void openChannel
+      .mutateAsync(selectedChannel)
+      .then((created) => {
+        if (!cancelled) setActiveConversation(created);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          openingForRef.current = null;
+          toast?.error(toDisplayErrorMessage(err, 'No se pudo abrir el chat'));
+          setSearchParams({}, { replace: true });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setOpeningChannel(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChannel, conversationByChannel, openChannel, toast, setSearchParams]);
+
+  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
+    activeConversation?.id ?? null,
+    activeConversation?.id != null
+  );
+
+  useEffect(() => {
+    if (activeConversation?.id != null) {
+      markRead.mutate(activeConversation.id);
+    }
+  }, [activeConversation?.id, messagesData?.messages.length]);
+
+  const openChannelView = (channel: ChatStaffChannel) => {
+    setSearchParams({ channel }, { replace: false });
+  };
+
+  const backToChannels = () => {
+    setSearchParams({}, { replace: false });
+    setActiveConversation(null);
+  };
 
   if (isPending) {
     return (
       <div className="page-stack-tight" aria-busy="true" aria-label="Cargando mensajes">
         <Skeleton className="mx-4 h-8 w-48" />
-        <ChatBubbleSkeleton rows={8} />
+        <ListRowSkeleton rows={3} />
       </div>
     );
   }
 
-  if (isError || conversation == null || !Number.isFinite(Number(conversation.id))) {
+  if (isError) {
     const detail = toDisplayErrorMessage(error, '');
     return (
       <div className="page-stack-tight">
@@ -1019,23 +1129,21 @@ function MemberChatView() {
               Mensajes <span className="text-brand">con el gym</span>
             </>
           }
-          subtitle="Avisos de membresía, pagos y rutinas"
+          subtitle="Elige con quién quieres hablar"
           action={<BackToDashboardLink />}
         />
         <EmptyState
           icon={MessageSquare}
-          title={isError ? 'No se pudieron cargar los mensajes' : 'Sin chat disponible'}
+          title="No se pudieron cargar los mensajes"
           description={
-            isError
-              ? detail && detail !== 'Error inesperado'
-                ? detail
-                : 'Revisa tu conexión e inténtalo de nuevo.'
-              : 'Aún no tienes conversación con el gym. Contacta recepción si necesitas ayuda.'
+            detail && detail !== 'Error inesperado'
+              ? detail
+              : 'Revisa tu conexión e inténtalo de nuevo.'
           }
           action={
             <Button
               size="sm"
-              variant={isError ? 'primary' : 'secondary'}
+              variant="primary"
               className="min-h-[var(--touch-min)]"
               disabled={isFetching}
               onClick={() => void refetch()}
@@ -1048,8 +1156,57 @@ function MemberChatView() {
     );
   }
 
+  if (!selectedChannel) {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 sm:gap-3 lg:max-w-4xl">
+        <PageHeader
+          compact
+          title={
+            <>
+              Mensajes <span className="text-brand">con el gym</span>
+            </>
+          }
+          subtitle="Elige el chat: recepción, administración o entrenador"
+          action={<BackToDashboardLink />}
+        />
+        <div className="flex flex-col gap-2 px-1 sm:px-0">
+          {MEMBER_CHANNEL_ORDER.map((channel) => {
+            const item = conversationByChannel.get(channel);
+            const meta = MEMBER_CHANNEL_META[channel];
+            const unread = item?.unread_count ?? 0;
+            return (
+              <button
+                key={channel}
+                type="button"
+                onClick={() => openChannelView(channel)}
+                className="hover:border-brand/30 hover:bg-brand/5 dark:hover:border-brand/40 flex w-full items-start justify-between gap-3 rounded-xl border border-zinc-200/80 bg-white px-3.5 py-3 text-left transition-colors dark:border-zinc-800 dark:bg-zinc-900/60"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    {CHAT_CHANNEL_LABELS[channel]}
+                  </p>
+                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                    {item?.last_message_preview?.trim() || meta.description}
+                  </p>
+                </div>
+                {unread > 0 ? (
+                  <span className="nav-badge brand-solid shrink-0">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const meta = MEMBER_CHANNEL_META[selectedChannel];
+  const conversation = activeConversation;
   const messages = messagesData?.messages ?? [];
   const messageCount = messages.length;
+  const loadingThread = openingChannel || (conversation == null && openChannel.isPending);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 sm:gap-3 lg:max-w-4xl">
@@ -1057,30 +1214,50 @@ function MemberChatView() {
         compact
         title={
           <>
-            Mensajes <span className="text-brand">con el gym</span>
+            Chat con <span className="text-brand">{CHAT_CHANNEL_LABELS[selectedChannel]}</span>
           </>
         }
         subtitle={
-          loadingMessages
+          loadingMessages || loadingThread
             ? undefined
             : messageCount > 0
               ? `${messageCount} mensaje${messageCount !== 1 ? 's' : ''}`
-              : undefined
+              : meta.description
         }
-        action={<BackToDashboardLink />}
+        action={
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={backToChannels}>
+              Canales
+            </Button>
+            <BackToDashboardLink />
+          </div>
+        }
       />
 
       <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden border-0 bg-transparent lg:rounded-2xl lg:border lg:border-zinc-200/60 lg:bg-gradient-to-b lg:from-zinc-50/90 lg:via-white/70 lg:to-zinc-50/50 dark:lg:border-zinc-800/70 dark:lg:from-zinc-950 dark:lg:via-zinc-950/85 dark:lg:to-zinc-900/40">
         <div className="flex min-h-0 flex-1 flex-col">
-          {loadingMessages && !messagesData ? (
+          {loadingThread || (loadingMessages && !messagesData) ? (
             <ChatBubbleSkeleton />
-          ) : messagesData && messages.length === 0 ? (
+          ) : conversation == null ? (
+            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
+              <EmptyState
+                icon={MessageSquare}
+                title="No se pudo abrir el chat"
+                description="Vuelve a la lista de canales e inténtalo de nuevo."
+                action={
+                  <Button size="sm" variant="secondary" onClick={backToChannels}>
+                    Volver
+                  </Button>
+                }
+              />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
               <EmptyState
                 variant="motivational"
                 icon={MessageSquare}
-                title="Tu bandeja con el gym"
-                description="Aquí verás avisos de membresía y pagos. También puedes escribirle al staff desde abajo."
+                title={meta.emptyTitle}
+                description={meta.emptyDescription}
                 className="border-0 bg-transparent p-0 shadow-none"
               />
             </div>
@@ -1106,7 +1283,9 @@ function MemberChatView() {
             />
           )}
         </div>
-        <ChatComposer conversationId={conversation.id} placeholder="Escribe a recepción…" />
+        {conversation != null ? (
+          <ChatComposer conversationId={conversation.id} placeholder={meta.composer} />
+        ) : null}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { query } from '../../db/index.ts';
 import { getOrCreateConversation } from './conversations.ts';
 import { insertSystemMessage } from './messages.ts';
-import type { ChatEventType, ChatSystemAlertType } from './types.ts';
+import { channelForSystemEvent, type ChatStaffChannel, type ChatSystemAlertType } from './types.ts';
 
 export interface PostSystemMessageOptions {
   memberId: number;
@@ -11,6 +11,8 @@ export interface PostSystemMessageOptions {
   subscriptionId?: number | null;
   metadataKey?: string | null;
   daysRemaining?: number | null;
+  /** Override inferred channel; omit to use event→channel map. */
+  channel?: ChatStaffChannel;
 }
 
 async function wasLogged(
@@ -70,6 +72,11 @@ async function logSystemMessage(options: PostSystemMessageOptions): Promise<void
 }
 
 export async function postSystemMessage(options: PostSystemMessageOptions): Promise<boolean> {
+  const channel = options.channel ?? channelForSystemEvent(options.eventType);
+  if (channel == null) {
+    return false;
+  }
+
   const already = await wasLogged(options.eventType, {
     subscriptionId: options.subscriptionId,
     memberId: options.memberId,
@@ -77,11 +84,11 @@ export async function postSystemMessage(options: PostSystemMessageOptions): Prom
   });
   if (already) return false;
 
-  const conversation = await getOrCreateConversation(options.memberId);
+  const conversation = await getOrCreateConversation(options.memberId, channel);
   await insertSystemMessage(
     conversation.id,
     options.body,
-    options.eventType as Exclude<ChatEventType, 'manual'>,
+    options.eventType,
     options.metadata ?? {}
   );
   await logSystemMessage(options);

@@ -14,6 +14,7 @@ async function notifyConversationUpdate(conversationId: number): Promise<void> {
   emitChatMessageNew({
     conversationId: toDbId(conversation.id),
     memberId: toDbId(conversation.member_id),
+    channel: conversation.channel,
   });
 }
 
@@ -292,7 +293,8 @@ export async function getUnreadCountForUser(userId: number, role: string): Promi
         `SELECT COUNT(*)::int AS count
          FROM chat_messages m
          JOIN chat_conversations c ON c.id = m.conversation_id
-         WHERE m.read_at IS NULL
+         WHERE c.channel = 'trainer'
+           AND m.read_at IS NULL
            AND (m.sender_id IS NULL OR m.sender_id = c.member_id)
            AND c.member_id IN (
              SELECT DISTINCT ur.user_id FROM user_routines ur
@@ -308,8 +310,10 @@ export async function getUnreadCountForUser(userId: number, role: string): Promi
       `SELECT COUNT(*)::int AS count
        FROM chat_messages m
        JOIN chat_conversations c ON c.id = m.conversation_id
-       WHERE m.read_at IS NULL
-         AND (m.sender_id IS NULL OR m.sender_id = c.member_id)`
+       WHERE c.channel = $1
+         AND m.read_at IS NULL
+         AND (m.sender_id IS NULL OR m.sender_id = c.member_id)`,
+      [role]
     );
     return rows[0]?.count ?? 0;
   }

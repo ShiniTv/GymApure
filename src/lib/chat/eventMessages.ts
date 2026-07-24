@@ -25,16 +25,7 @@ export async function notifyPaymentReported(
   const fullName = await fetchMemberName(userId);
   if (!fullName) return;
 
-  const body = `${fullName} reportó un pago de $${amountUsd} USD (ID #${paymentId}). Revisa el panel de pagos para aprobarlo.`;
-
-  await postSystemMessage({
-    memberId: userId,
-    eventType: 'payment_reported',
-    body,
-    metadataKey: String(paymentId),
-    metadata: { payment_id: paymentId, amount_usd: amountUsd },
-  });
-
+  // payment_reported is staff-facing; keep in-app notifications only (no chat insert).
   void createStaffNotification({
     type: 'payment_reported',
     title: 'Nuevo pago reportado',

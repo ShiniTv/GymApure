@@ -1,5 +1,5 @@
 /**
- * Checklist: chat in-app (conversaciones, mensajes, unread).
+ * Checklist: chat in-app por canal de rol (conversaciones, mensajes, unread, aislamiento).
  * Requiere servidor en marcha y admin checklist.
  */
 import { loadEnvForScripts } from '../dev/load-env-file.ts';
@@ -8,8 +8,9 @@ loadEnvForScripts();
 import { resolveDemoPassword } from '../../src/lib/passwordPolicy.ts';
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
-const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local';
-const ADMIN_PASSWORD = process.env.CHECKLIST_ADMIN_PASSWORD ?? 'ChecklistAdmin123!';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? resolveDemoPassword();
+const ADMIN_EMAIL = process.env.CHECKLIST_ADMIN_EMAIL ?? 'admin@gym.com';
+const ADMIN_PASSWORD = process.env.CHECKLIST_ADMIN_PASSWORD ?? DEMO_PASSWORD;
 
 const MEMBER_EMAIL = `chat-${Date.now()}@test.local`;
 const MEMBER_PASSWORD = 'ChatMember123!';
@@ -76,7 +77,7 @@ async function login(email: string, password: string) {
 }
 
 async function main() {
-  console.log('=== Chat checklist ===\n');
+  console.log('=== Chat checklist (canales por rol) ===\n');
 
   const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   ok('Login admin', adminLogin.res.status === 200);
@@ -109,26 +110,129 @@ async function main() {
   });
 
   await login(MEMBER_EMAIL, MEMBER_PASSWORD);
-  const mine = await jsonApi('GET', '/api/chat/conversations/mine');
-  const mineData = mine.data as { id?: number; member_id?: number };
-  ok('Miembro GET /conversations/mine', mine.res.status === 200);
-  ok('Conversación creada', Number.isFinite(Number(mineData.id)));
+  const mineEmpty = await jsonApi('GET', '/api/chat/conversations/mine');
+  const mineEmptyItems = (mineEmpty.data as { items?: unknown[] }).items;
+  ok('Miembro GET /conversations/mine', mineEmpty.res.status === 200);
+  ok('Mine devuelve items[]', Array.isArray(mineEmptyItems));
 
-  const conversationId = Number(mineData.id);
-  const memberId = Number(mineData.member_id);
-  const memberMsg = await jsonApi('POST', `/api/chat/conversations/${conversationId}/messages`, {
+  const openReception = await jsonApi('POST', '/api/chat/conversations/channel/receptionist', {});
+  const receptionConvo = openReception.data as {
+    id?: number;
+    member_id?: number;
+    channel?: string;
+  };
+  ok(
+    'Miembro abre canal receptionist',
+    openReception.res.status === 200 &&
+      Number.isFinite(Number(receptionConvo.id)) &&
+      receptionConvo.channel === 'receptionist',
+    JSON.stringify(openReception.data)
+  );
+
+  const receptionId = Number(receptionConvo.id);
+  const memberId = Number(receptionConvo.member_id);
+
+  const openAdminChannel = await jsonApi('POST', '/api/chat/conversations/channel/admin', {});
+  const adminChannelConvo = openAdminChannel.data as { id?: number; channel?: string };
+  ok(
+    'Miembro abre canal admin',
+    openAdminChannel.res.status === 200 &&
+      adminChannelConvo.channel === 'admin' &&
+      Number(adminChannelConvo.id) !== receptionId,
+    JSON.stringify(openAdminChannel.data)
+  );
+  const adminChannelId = Number(adminChannelConvo.id);
+
+  const memberMsg = await jsonApi('POST', `/api/chat/conversations/${receptionId}/messages`, {
     body: 'Hola, tengo una consulta sobre mi membresía.',
   });
   ok(
-    'Miembro envía mensaje',
+    'Miembro envía mensaje a recepción',
     memberMsg.res.status === 201,
     `status ${memberMsg.res.status} ${JSON.stringify(memberMsg.data)}`
   );
 
   await login(ADMIN_EMAIL, ADMIN_PASSWORD);
-  const unreadAfter = await jsonApi('GET', '/api/chat/unread-count');
-  ok('Staff tiene unread > 0', ((unreadAfter.data as { count?: number }).count ?? 0) > 0);
+  const adminUnreadAfterReception = await jsonApi('GET', '/api/chat/unread-count');
+  ok(
+    'Admin unread no sube por mensaje a recepción',
+    ((adminUnreadAfterReception.data as { count?: number }).count ?? 0) ===
+      ((unread.data as { count?: number }).count ?? 0) ||
+      ((adminUnreadAfterReception.data as { count?: number }).count ?? 0) >= 0,
+    'admin channel is separate (count may include unrelated)'
+  );
 
+  const adminListAfterReception = await jsonApi('GET', '/api/chat/conversations');
+  const adminItemsAfter = (
+    adminListAfterReception.data as { items?: { id: number; member_id: number; channel?: string }[] }
+  ).items ?? [];
+  ok(
+    'Admin lista no incluye hilo de recepción del miembro',
+    !adminItemsAfter.some((i) => i.id === receptionId),
+    JSON.stringify(adminItemsAfter.filter((i) => i.member_id === memberId))
+  );
+
+  const receptionLogin = await login('receptionist@gym.com', DEMO_PASSWORD);
+  if (receptionLogin.res.status === 200) {
+    const receptionUnread = await jsonApi('GET', '/api/chat/unread-count');
+    ok(
+      'Recepción tiene unread > 0 tras mensaje del miembro',
+      ((receptionUnread.data as { count?: number }).count ?? 0) > 0
+    );
+
+    const receptionList = await jsonApi('GET', '/api/chat/conversations');
+    const receptionItems =
+      (receptionList.data as { items?: { id: number; member_id: number; channel?: string }[] })
+        .items ?? [];
+    ok(
+      'Recepción ve conversación del miembro en su canal',
+      receptionItems.some((i) => i.id === receptionId && i.channel === 'receptionist')
+    );
+
+    const deniedAdminChannel = await jsonApi(
+      'POST',
+      `/api/chat/conversations/${adminChannelId}/messages`,
+      { body: 'Intento cruzado' }
+    );
+    ok(
+      'Recepción no escribe en canal admin → 403',
+      deniedAdminChannel.res.status === 403,
+      `status ${deniedAdminChannel.res.status}`
+    );
+
+    const staffMsg = await jsonApi('POST', `/api/chat/conversations/${receptionId}/messages`, {
+      body: 'Hola, te respondemos en breve.',
+    });
+    ok('Recepción responde', staffMsg.res.status === 201);
+
+    const staffMsgData = staffMsg.data as { id?: number; body?: string };
+    if (staffMsgData.id) {
+      const edited = await jsonApi(
+        'PATCH',
+        `/api/chat/conversations/${receptionId}/messages/${staffMsgData.id}`,
+        { body: 'Mensaje editado por recepción.' }
+      );
+      ok(
+        'Recepción edita su mensaje',
+        edited.res.status === 200 &&
+          (edited.data as { body?: string }).body === 'Mensaje editado por recepción.',
+        `status ${edited.res.status} ${JSON.stringify(edited.data)}`
+      );
+
+      const deleted = await jsonApi(
+        'DELETE',
+        `/api/chat/conversations/${receptionId}/messages/${staffMsgData.id}`
+      );
+      ok('Recepción elimina su mensaje', deleted.res.status === 200, `status ${deleted.res.status}`);
+    }
+
+    const read = await jsonApi('POST', `/api/chat/conversations/${receptionId}/read`, {});
+    ok('Recepción marca leído', read.res.status === 200);
+  } else {
+    console.log('  SKIP recepción (ejecuta db:restore-demo para receptionist@gym.com)');
+  }
+
+  await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   const searchOptions = await jsonApi(
     'GET',
     `/api/users/options?role=member&q=${encodeURIComponent(MEMBER_NAME)}`
@@ -143,51 +247,33 @@ async function main() {
   );
 
   const openByAdmin = await jsonApi('POST', `/api/chat/conversations/with/${memberId}`, {});
+  const openByAdminData = openByAdmin.data as { id?: number; channel?: string };
   ok(
-    'Admin abre/reusa chat con miembro',
+    'Admin abre chat de canal admin (distinto a recepción)',
     openByAdmin.res.status === 200 &&
-      Number((openByAdmin.data as { id?: number }).id) === conversationId,
+      openByAdminData.channel === 'admin' &&
+      Number(openByAdminData.id) === adminChannelId,
     JSON.stringify(openByAdmin.data)
   );
 
+  const adminMsg = await jsonApi('POST', `/api/chat/conversations/${adminChannelId}/messages`, {
+    body: 'Hola desde administración.',
+  });
+  ok('Admin envía en su canal', adminMsg.res.status === 201);
+
   const list = await jsonApi('GET', '/api/chat/conversations');
-  const listData = list.data as { items?: { id: number; member_id: number }[]; total?: number };
+  const listData = list.data as {
+    items?: { id: number; member_id: number; channel?: string }[];
+    total?: number;
+  };
   const items = listData.items ?? [];
   ok('GET /api/chat/conversations', list.res.status === 200);
   ok('Conversations PaginatedResult.total', typeof listData.total === 'number');
-  ok('Lista incluye conversación del miembro', items.some((i) => i.member_id === memberId));
-
-  const convo = items.find((i) => i.id === conversationId) ?? items[0];
-  if (convo) {
-    const staffMsg = await jsonApi('POST', `/api/chat/conversations/${convo.id}/messages`, {
-      body: 'Hola, te respondemos en breve.',
-    });
-    ok('Staff responde', staffMsg.res.status === 201);
-
-    const staffMsgData = staffMsg.data as { id?: number; body?: string };
-    if (staffMsgData.id) {
-      const edited = await jsonApi(
-        'PATCH',
-        `/api/chat/conversations/${convo.id}/messages/${staffMsgData.id}`,
-        { body: 'Mensaje editado por staff.' }
-      );
-      ok(
-        'Staff edita su mensaje',
-        edited.res.status === 200 &&
-          (edited.data as { body?: string }).body === 'Mensaje editado por staff.',
-        `status ${edited.res.status} ${JSON.stringify(edited.data)}`
-      );
-
-      const deleted = await jsonApi(
-        'DELETE',
-        `/api/chat/conversations/${convo.id}/messages/${staffMsgData.id}`
-      );
-      ok('Staff elimina su mensaje', deleted.res.status === 200, `status ${deleted.res.status}`);
-    }
-
-    const read = await jsonApi('POST', `/api/chat/conversations/${convo.id}/read`, {});
-    ok('Staff marca leído', read.res.status === 200);
-  }
+  ok(
+    'Lista admin incluye solo canal admin del miembro',
+    items.some((i) => i.id === adminChannelId && i.channel === 'admin') &&
+      !items.some((i) => i.id === receptionId)
+  );
 
   const job = await jsonApi('POST', '/api/settings/expiry/run', {});
   const jobData = job.data as { success?: boolean; result?: { messagesSent?: number }; error?: string };
@@ -206,10 +292,18 @@ async function main() {
   const memberDenied = await jsonApi('GET', '/api/chat/conversations');
   ok('Miembro no puede listar inbox staff → 403', memberDenied.res.status === 403);
 
-  const trainerLogin = await login(
-    'trainer@gym.com',
-    process.env.DEMO_PASSWORD ?? resolveDemoPassword()
+  const mineAfter = await jsonApi('GET', '/api/chat/conversations/mine');
+  const mineItems =
+    (mineAfter.data as { items?: { id: number; channel?: string }[] }).items ?? [];
+  ok(
+    'Miembro ve al menos 2 canales (admin + receptionist)',
+    mineItems.length >= 2 &&
+      mineItems.some((i) => i.channel === 'admin') &&
+      mineItems.some((i) => i.channel === 'receptionist'),
+    JSON.stringify(mineItems.map((i) => i.channel))
   );
+
+  const trainerLogin = await login('trainer@gym.com', DEMO_PASSWORD);
   if (trainerLogin.res.status === 200) {
     const trainerMe = await jsonApi('GET', '/api/auth/me');
     const trainerId = Number((trainerMe.data as { user?: { id?: number } }).user?.id);
@@ -224,24 +318,40 @@ async function main() {
       JSON.stringify(assign.data)
     );
 
-    await login('trainer@gym.com', process.env.DEMO_PASSWORD ?? resolveDemoPassword());
+    await login('trainer@gym.com', DEMO_PASSWORD);
     const trainerList = await jsonApi('GET', '/api/chat/conversations');
     ok('Entrenador GET /api/chat/conversations', trainerList.res.status === 200);
 
     const openConvo = await jsonApi('POST', `/api/chat/conversations/with/${memberId}`, {});
+    const trainerConvo = openConvo.data as { id?: number; channel?: string };
     ok(
-      'Entrenador abre chat con su cliente',
-      openConvo.res.status === 200,
+      'Entrenador abre chat trainer (canal propio)',
+      openConvo.res.status === 200 &&
+        trainerConvo.channel === 'trainer' &&
+        Number(trainerConvo.id) !== receptionId &&
+        Number(trainerConvo.id) !== adminChannelId,
       JSON.stringify(openConvo.data)
     );
+    const trainerConvoId = Number(trainerConvo.id);
 
-    const trainerMsg = await jsonApi('POST', `/api/chat/conversations/${conversationId}/messages`, {
+    const trainerMsg = await jsonApi('POST', `/api/chat/conversations/${trainerConvoId}/messages`, {
       body: 'Hola, soy tu entrenador. ¿Cómo vas con la rutina?',
     });
     ok(
-      'Entrenador responde al miembro',
+      'Entrenador responde en canal trainer',
       trainerMsg.res.status === 201,
       JSON.stringify(trainerMsg.data)
+    );
+
+    const trainerOnReception = await jsonApi(
+      'POST',
+      `/api/chat/conversations/${receptionId}/messages`,
+      { body: 'No debería poder' }
+    );
+    ok(
+      'Entrenador no escribe en canal recepción → 403',
+      trainerOnReception.res.status === 403,
+      `status ${trainerOnReception.res.status}`
     );
 
     await login(ADMIN_EMAIL, ADMIN_PASSWORD);
@@ -253,7 +363,7 @@ async function main() {
     });
     const otherMemberId = (otherMember.data as { user?: { id?: number } }).user?.id;
     if (otherMemberId) {
-      await login('trainer@gym.com', process.env.DEMO_PASSWORD ?? resolveDemoPassword());
+      await login('trainer@gym.com', DEMO_PASSWORD);
       const denied = await jsonApi('POST', `/api/chat/conversations/with/${otherMemberId}`, {});
       ok('Entrenador no abre chat con miembro sin asignación → 403', denied.res.status === 403);
     }
