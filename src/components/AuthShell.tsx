@@ -39,7 +39,13 @@ export default function AuthShell({
     <button
       type="button"
       onClick={toggleTheme}
-      className="rounded-xl p-2.5 text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+      className={cn(
+        'rounded-xl p-2.5 transition-colors',
+        'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white',
+        useSplit
+          ? 'border border-zinc-200/90 bg-white/90 shadow-sm backdrop-blur-sm hover:bg-white dark:border-zinc-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-800'
+          : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
+      )}
       title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
       aria-label={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
     >
@@ -56,7 +62,8 @@ export default function AuthShell({
         : wide
           ? 'max-w-2xl'
           : useSplit
-            ? 'max-w-md md:max-w-lg lg:max-w-md'
+            ? // Formulario deliberadamente contenido; la columna da aire alrededor
+              'max-w-md md:max-w-lg lg:max-w-[22.5rem] xl:max-w-[24rem]'
             : 'max-w-md md:max-w-lg'
   );
 
@@ -65,14 +72,19 @@ export default function AuthShell({
       className={cn(
         'relative flex w-full flex-col',
         useSplit
-          ? 'min-h-dvh items-center justify-center p-4 sm:p-6 lg:p-10'
+          ? cn(
+              'min-h-dvh bg-zinc-50 dark:bg-zinc-950',
+              'items-center justify-center p-4 sm:p-6',
+              // Desktop: ancla el form hacia el borde del split (no isla centrada)
+              'lg:items-stretch lg:justify-stretch lg:p-0'
+            )
           : isFullscreen
             ? 'min-h-dvh'
             : 'items-center justify-center'
       )}
     >
       {useSplit && (
-        <div className="absolute top-4 right-4 left-4 z-20 flex items-center justify-between gap-4 lg:left-auto">
+        <div className="absolute top-4 right-4 left-4 z-20 flex items-center justify-between gap-4 lg:right-6 lg:left-auto xl:right-10">
           {backLink ? (
             <Link
               to={backLink.to}
@@ -91,16 +103,29 @@ export default function AuthShell({
       {useSplit && backLink && (
         <Link
           to={backLink.to}
-          className="absolute top-4 left-4 z-20 hidden items-center gap-2 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900 lg:flex dark:text-zinc-400 dark:hover:text-white"
+          className="absolute top-5 left-[12%] z-20 hidden items-center gap-2 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900 lg:flex xl:left-[14%] dark:text-zinc-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4 shrink-0" />
           {backLink.label}
         </Link>
       )}
 
-      <div className={cn(contentMax, useSplit && 'animate-[auth-fade-in_450ms_ease-out]')}>
-        {children}
-        {footer && !isFullscreen && <div className="mt-6">{footer}</div>}
+      <div
+        className={cn(
+          useSplit &&
+            'flex w-full flex-1 flex-col justify-center lg:pr-[10%] lg:pl-[12%] xl:pr-[12%] xl:pl-[14%]',
+          !useSplit && contentMax
+        )}
+      >
+        <div
+          className={cn(
+            useSplit ? contentMax : undefined,
+            useSplit && 'animate-[auth-fade-in_450ms_ease-out]'
+          )}
+        >
+          {children}
+          {footer && !isFullscreen && <div className="mt-6">{footer}</div>}
+        </div>
       </div>
     </div>
   );
@@ -134,9 +159,20 @@ export default function AuthShell({
           />
         </div>
 
-        <div className="relative grid min-h-dvh lg:grid-cols-2">
+        {/* Marca ~57% / formulario ~43% — el hero gana presencia */}
+        <div className="relative grid min-h-dvh lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <AuthMarketingPanel />
-          {formColumn}
+          <div className="relative min-h-dvh border-zinc-200 lg:border-l dark:border-zinc-800">
+            <div
+              className="pointer-events-none absolute inset-0 hidden lg:block"
+              style={{
+                background:
+                  'radial-gradient(ellipse 70% 45% at 100% 0%, color-mix(in srgb, var(--color-brand) 12%, transparent), transparent 55%)',
+              }}
+              aria-hidden
+            />
+            {formColumn}
+          </div>
         </div>
       </div>
     );

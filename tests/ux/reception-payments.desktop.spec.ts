@@ -40,7 +40,7 @@ test.describe('Recepción — pagos en mostrador', () => {
     await expect(cedulaInput).toBeVisible();
     await cedulaInput.fill('V-87654321');
     await page.getByLabel('Buscar').click();
-    await expect(page.getByRole('link', { name: /registrar pago/i })).toBeVisible({
+    await expect(page.getByRole('link', { name: /^pago$/i })).toBeVisible({
       timeout: 15_000,
     });
   });

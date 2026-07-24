@@ -33,6 +33,7 @@ function totalGzip(sizes: Record<string, number>): number {
 }
 
 function main() {
+  const writeBaseline = process.argv.includes('--write');
   const sizes = collectJsSizes();
   const total = totalGzip(sizes);
   const payload = {
@@ -41,9 +42,11 @@ function main() {
     files: sizes,
   };
 
-  if (!fs.existsSync(BASELINE_PATH)) {
+  if (!fs.existsSync(BASELINE_PATH) || writeBaseline) {
     fs.writeFileSync(BASELINE_PATH, JSON.stringify(payload, null, 2));
-    console.log(`Baseline created — total JS gzip: ${(total / 1024).toFixed(1)} KB`);
+    console.log(
+      `Baseline ${writeBaseline ? 'updated' : 'created'} — total JS gzip: ${(total / 1024).toFixed(1)} KB`
+    );
     return;
   }
 
@@ -59,6 +62,7 @@ function main() {
 
   if (deltaPct > MAX_REGRESSION_PCT) {
     console.error(`Bundle grew more than ${MAX_REGRESSION_PCT}% — review dist/stats.html`);
+    console.error('Si el crecimiento es intencional: npm run build && npm run bundle:baseline -- --write');
     process.exit(1);
   }
 }

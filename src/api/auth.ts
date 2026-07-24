@@ -38,6 +38,7 @@ import { clearCsrfCookie, setCsrfCookie } from '../lib/csrf.ts';
 import { requireCsrf } from './middleware/csrf.ts';
 import mfaRoutes from './mfa.ts';
 import { getUserMfaState, isMfaStaffRole, signMfaChallengeToken } from '../lib/mfa.ts';
+import { isTrustedMfaDevice, MFA_TRUSTED_COOKIE } from '../lib/mfaTrustedDevice.ts';
 
 const router = asyncRouter();
 
@@ -127,6 +128,36 @@ router.post(
     if (isMfaStaffRole(user.role)) {
       const mfaState = await getUserMfaState(userId);
       if (mfaState.mfa_enabled && mfaState.mfa_secret) {
+        const trustedToken =
+          typeof req.cookies?.[MFA_TRUSTED_COOKIE] === 'string'
+            ? req.cookies[MFA_TRUSTED_COOKIE]
+            : undefined;
+        if (await isTrustedMfaDevice(userId, trustedToken)) {
+          emitToUser(userId, 'session:revoked', { reason: 'login_elsewhere' });
+          const session = await createLoginSession(userId);
+          if (session.type === 'failure') {
+            res.status(403).json({ error: 'Cuenta inactiva. Contacta al administrador.' });
+            return;
+          }
+          res.cookie('token', session.token, authCookieOptions);
+          setCsrfCookie(res);
+          await logAudit(userId, 'auth.login', {
+            ip: clientIp,
+            mfa: true,
+            mfa_trusted_device: true,
+            previous_sessions_invalidated: true,
+          });
+          res.json({
+            user: {
+              id: userId,
+              email: session.user.email,
+              role: session.user.role,
+              name: session.user.full_name,
+            },
+          });
+          return;
+        }
+
         const mfa_challenge_token = signMfaChallengeToken(userId, user.email, user.role);
         await logAudit(userId, 'auth.mfa_challenge', { ip: clientIp });
         res.json({

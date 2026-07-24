@@ -98,6 +98,7 @@ Ver [ENTRENADORES-Y-TURNOS.md](../modulos/ENTRENADORES-Y-TURNOS.md).
 1. **Seguridad MFA** (`/security`) o **Perfil → Seguridad → Configurar MFA**.
 2. Escanea el QR con una app TOTP y activa con el código de 6 dígitos.
 3. En el próximo login se pedirá el código.
+4. Puedes marcar **Confiar en este dispositivo** (30 días) para no repetir el código en ese navegador.
 
 ### Reportes y auditoría
 

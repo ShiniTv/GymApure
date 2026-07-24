@@ -60,6 +60,7 @@
     "db:health:staging": "tsx scripts/dev/run-with-env.ts .env.staging scripts/db/db-health.ts",
     "db:create-admin:staging": "tsx scripts/dev/run-with-env.ts .env.staging scripts/db/create-admin.ts",
     "test:smoke:staging": "tsx scripts/dev/run-with-env.ts .env.staging scripts/test/smoke-api.ts",
+    "test:mfa-trusted-device": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-mfa-trusted-device.ts",
     "security:audit-mfa:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/audit-staff-mfa.ts",
     "security:audit-mfa:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/audit-staff-mfa.ts -- --allow-prod",
     "security:audit-mfa:staging": "tsx scripts/dev/run-with-env.ts .env.staging scripts/db/audit-staff-mfa.ts",

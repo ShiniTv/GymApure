@@ -7,7 +7,8 @@ import { safeReturnPath } from '../lib/safeReturnPath';
 import { Mail, ShieldCheck } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
-import { Button, Card, Input, Label, PasswordInput, Alert } from '../components/ui';
+import AuthFormSurface from '../components/AuthFormSurface';
+import { Button, Input, Label, PasswordInput, Alert } from '../components/ui';
 
 interface LoginUser {
   id: number;
@@ -29,6 +30,8 @@ interface LoginApiResponse {
   mfa_challenge_token?: string;
 }
 
+const EMAIL_STORAGE_KEY = 'gymapure:login-email';
+
 function formatCountdown(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
@@ -46,7 +49,13 @@ function resolveLockedUntil(data: LoginApiResponse): number | null {
 }
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem(EMAIL_STORAGE_KEY) ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -56,6 +65,7 @@ export default function Login() {
   const [now, setNow] = useState(() => Date.now());
   const [mfaChallenge, setMfaChallenge] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
+  const [trustDevice, setTrustDevice] = useState(true);
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,7 +117,16 @@ export default function Login() {
     lockedUntil && lockedUntil > now ? Math.max(0, Math.ceil((lockedUntil - now) / 1000)) : 0;
   const isLocked = remainingSeconds > 0;
 
+  const rememberEmail = (value: string) => {
+    try {
+      localStorage.setItem(EMAIL_STORAGE_KEY, value.trim());
+    } catch {
+      /* ignore quota / private mode */
+    }
+  };
+
   const completeLogin = (loginUser: LoginUser) => {
+    rememberEmail(email);
     login(loginUser);
     navigate(safeReturnPath(from, loginUser.role));
   };
@@ -144,6 +163,7 @@ export default function Login() {
       }
 
       if (data.mfa_required && data.mfa_challenge_token) {
+        rememberEmail(email);
         setMfaChallenge(data.mfa_challenge_token);
         setMfaCode('');
         setError('');
@@ -177,7 +197,11 @@ export default function Login() {
       const res = await apiFetch('/api/auth/mfa/verify-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mfa_challenge_token: mfaChallenge, code }),
+        body: JSON.stringify({
+          mfa_challenge_token: mfaChallenge,
+          code,
+          trust_device: trustDevice,
+        }),
       });
       const data = await parseJsonSafe<{ user?: LoginUser; error?: string }>(res);
       if (!res.ok) {
@@ -196,10 +220,7 @@ export default function Login() {
 
   return (
     <AuthShell layout="split">
-      <Card
-        className="page-stack-loose mt-8 w-full rounded-2xl shadow-xl sm:mt-10 lg:mt-0"
-        padding="md"
-      >
+      <AuthFormSurface>
         <AuthBrandHeader
           subtitle={mfaChallenge ? 'Verificación en dos pasos' : 'Inicia sesión en tu cuenta'}
           formHint={
@@ -211,7 +232,7 @@ export default function Login() {
         />
 
         {mfaChallenge ? (
-          <form className="form-stack" onSubmit={handleMfaSubmit} noValidate>
+          <form className="form-stack mt-2 lg:mt-8" onSubmit={handleMfaSubmit} noValidate>
             {error && <Alert variant="error">{error}</Alert>}
 
             <div>
@@ -231,6 +252,21 @@ export default function Login() {
               />
             </div>
 
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                className="border-brand text-brand focus-visible:ring-brand mt-0.5 h-4 w-4 rounded focus-visible:ring-2"
+                checked={trustDevice}
+                onChange={(e) => setTrustDevice(e.target.checked)}
+              />
+              <span>
+                Confiar en este dispositivo por 30 días
+                <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">
+                  No pediremos el código MFA en este navegador
+                </span>
+              </span>
+            </label>
+
             <Button type="submit" className="w-full" size="lg" loading={loading}>
               Verificar
             </Button>
@@ -248,7 +284,7 @@ export default function Login() {
             </button>
           </form>
         ) : (
-          <form className="form-stack" onSubmit={handleSubmit} noValidate>
+          <form className="form-stack mt-2 lg:mt-8" onSubmit={handleSubmit} noValidate>
             {isLocked ? (
               <Alert variant="error">
                 <p>Demasiados intentos fallidos.</p>
@@ -280,7 +316,17 @@ export default function Login() {
               />
             </div>
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <div className="mb-1 flex items-center justify-between gap-3">
+                <Label htmlFor="password" className="mb-0">
+                  Contraseña
+                </Label>
+                <Link
+                  to="/forgot-password"
+                  className="text-brand hover:text-brand-hover text-xs font-semibold transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
               <PasswordInput
                 id="password"
                 name="password"
@@ -297,18 +343,9 @@ export default function Login() {
               />
             </div>
 
-            <p className="text-right">
-              <Link
-                to="/forgot-password"
-                className="text-brand hover:text-brand text-xs font-semibold"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </p>
-
             <Button
               type="submit"
-              className="w-full"
+              className="mt-1 w-full"
               size="lg"
               loading={loading}
               disabled={isLocked}
@@ -317,16 +354,21 @@ export default function Login() {
             </Button>
 
             {registerAllowed && (
-              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-                ¿No tienes una cuenta?{' '}
-                <Link to="/register" className="text-brand hover:text-brand font-semibold">
-                  Regístrate aquí
-                </Link>
-              </p>
+              <div className="border-zinc-200/80 pt-1 text-center lg:mt-2 lg:border-t lg:pt-6 lg:text-left dark:border-zinc-800">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  ¿No tienes una cuenta?{' '}
+                  <Link
+                    to="/register"
+                    className="text-brand hover:text-brand-hover font-semibold transition-colors"
+                  >
+                    Regístrate aquí
+                  </Link>
+                </p>
+              </div>
             )}
           </form>
         )}
-      </Card>
+      </AuthFormSurface>
     </AuthShell>
   );
 }

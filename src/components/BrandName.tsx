@@ -30,9 +30,7 @@ export default function BrandName({
         <span className={onDark ? 'text-white' : 'text-zinc-900 dark:text-white'}>
           {BRAND.nameParts.primary}
         </span>
-        <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-          {BRAND.nameParts.accent}
-        </span>
+        <span className="text-brand">{BRAND.nameParts.accent}</span>
       </span>
     );
   }
