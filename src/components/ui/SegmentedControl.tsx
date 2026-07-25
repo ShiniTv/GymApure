@@ -146,7 +146,7 @@ export function SegmentedControl<T extends string>({
                   ? cn(
                       'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
                       active
-                        ? 'bg-brand/10 text-brand'
+                        ? 'bg-brand/10 dark:text-brand text-[#0066b3]'
                         : 'bg-transparent text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                     )
                   : cn(
@@ -154,7 +154,7 @@ export function SegmentedControl<T extends string>({
                         ? 'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
                         : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
                       active
-                        ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
+                        ? 'dark:text-brand bg-white text-[#0066b3] shadow-sm dark:bg-zinc-700'
                         : 'text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300'
                     )
             )}
@@ -168,8 +168,8 @@ export function SegmentedControl<T extends string>({
                 className={cn(
                   'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
                   active
-                    ? 'bg-brand/15 text-brand dark:text-brand'
-                    : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                    ? 'dark:bg-brand/15 dark:text-brand bg-[#0066b3]/15 text-[#0066b3]'
+                    : 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-400'
                 )}
               >
                 {option.count > 99 ? '99+' : option.count}
