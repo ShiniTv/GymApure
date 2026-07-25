@@ -474,21 +474,21 @@ body,
     box-shadow: var(--shadow-card);
   }
 
-  /* Sidebar / navigation — Figma: airy gaps, subtle section caps */
+  /* Sidebar / navigation — compact density, clear gaps between items */
   .nav-stack {
     @apply flex flex-col gap-1;
   }
 
   .nav-section {
-    @apply mb-ds-5 last:mb-0;
+    @apply mb-ds-4 flex flex-col gap-1 last:mb-0;
   }
 
   .nav-section-label {
-    @apply text-text-muted mb-2.5 px-3 text-[10px] font-medium tracking-[0.16em] uppercase;
+    @apply text-text-muted mb-1.5 px-2.5 text-[10px] font-medium tracking-[0.14em] uppercase;
   }
 
   .nav-link {
-    @apply flex min-h-10 touch-manipulation items-center gap-3 rounded-xl px-3 py-2.5 text-sm leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
+    @apply flex min-h-9 touch-manipulation items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
   }
 
   .nav-link:active {
@@ -498,7 +498,7 @@ body,
 
   @media (max-width: 1023px) {
     .nav-link-mobile {
-      @apply min-h-12 py-3;
+      @apply min-h-11 gap-3 px-3 py-2.5 text-sm;
     }
   }
 

@@ -1,7 +1,13 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { z } from 'zod';
 import { authorize, AuthRequest } from './middleware/auth.ts';
-import { getExpirySettings, updateExpirySettings } from '../lib/gymSettings.ts';
+import {
+  CHAT_MESSAGE_RETENTION_OPTIONS,
+  getChatRetentionSettings,
+  getExpirySettings,
+  updateChatRetentionSettings,
+  updateExpirySettings,
+} from '../lib/gymSettings.ts';
 import { getCheckInPinSettings, updateCheckInPinSettings } from '../lib/checkInPin.ts';
 import {
   clearManualUsdOverride,
@@ -17,6 +23,15 @@ const router = asyncRouter();
 
 const expirySettingsSchema = z.object({
   expiry_alert_days: z.coerce.number().int().min(1).max(90).optional(),
+});
+
+const chatRetentionSettingsSchema = z.object({
+  chat_message_retention_days: z.coerce
+    .number()
+    .int()
+    .refine((v) => (CHAT_MESSAGE_RETENTION_OPTIONS as readonly number[]).includes(v), {
+      message: 'Retención inválida (0, 30, 60, 90 o 180 días)',
+    }),
 });
 
 const exchangeRateSettingsSchema = z.object({
@@ -50,6 +65,32 @@ router.put('/expiry', authorize(['admin']), async (req: AuthRequest, res) => {
     const settings = await updateExpirySettings(parsed.data);
     invalidateAdminStatsCache();
     await logAudit(req.user!.id, 'settings.expiry.update', parsed.data);
+    res.json(settings);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/chat-retention', authorize(['admin']), async (_req, res) => {
+  try {
+    const settings = await getChatRetentionSettings();
+    res.json(settings);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.put('/chat-retention', authorize(['admin']), async (req: AuthRequest, res) => {
+  const parsed = chatRetentionSettingsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const settings = await updateChatRetentionSettings(parsed.data);
+    await logAudit(req.user!.id, 'settings.chat_retention.update', parsed.data);
     res.json(settings);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

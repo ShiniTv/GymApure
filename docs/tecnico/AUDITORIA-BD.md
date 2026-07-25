@@ -67,13 +67,14 @@ npm run db:audit:prod
 
 ### Retención (job diario UTC)
 
-| Tabla                         | Retención default      | Variable                            |
-| ----------------------------- | ---------------------- | ----------------------------------- |
-| `audit_logs`                  | 90 días                | `AUDIT_LOG_RETENTION_DAYS`          |
-| `chat_system_log`             | 180 días               | `EXPIRY_NOTIF_LOG_RETENTION_DAYS`   |
-| `user_notifications` (leídas) | 90 días                | `READ_NOTIFICATIONS_RETENTION_DAYS` |
-| `password_reset_tokens`       | 7 días                 | `RESET_TOKEN_RETENTION_DAYS`        |
-| `push_subscriptions`          | 90 días sin actualizar | `PUSH_SUBSCRIPTION_RETENTION_DAYS`  |
+| Tabla                         | Retención default       | Variable                            |
+| ----------------------------- | ----------------------- | ----------------------------------- |
+| `audit_logs`                  | 90 días                 | `AUDIT_LOG_RETENTION_DAYS`          |
+| `chat_system_log`             | 180 días                | `EXPIRY_NOTIF_LOG_RETENTION_DAYS`   |
+| `chat_messages`               | 90 días (o desactivado) | Configuración → Retención del chat  |
+| `user_notifications` (leídas) | 90 días                 | `READ_NOTIFICATIONS_RETENTION_DAYS` |
+| `password_reset_tokens`       | 7 días                  | `RESET_TOKEN_RETENTION_DAYS`        |
+| `push_subscriptions`          | 90 días sin actualizar  | `PUSH_SUBSCRIPTION_RETENTION_DAYS`  |
 
 ---
 

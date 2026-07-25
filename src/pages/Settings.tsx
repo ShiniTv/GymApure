@@ -12,6 +12,7 @@ import {
   DollarSign,
   RefreshCw,
   Fingerprint,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Button,
@@ -22,6 +23,7 @@ import {
   Badge,
   Skeleton,
   BackToDashboardLink,
+  Select,
 } from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -29,6 +31,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 const SETTINGS_NAV = [
   { id: 'notificaciones-push', label: 'Notificaciones push' },
   { id: 'avisos-membresia', label: 'Avisos de membresía' },
+  { id: 'retencion-chat', label: 'Retención del chat' },
   { id: 'pin-presencia', label: 'PIN de presencia' },
   { id: 'tasa-usd', label: 'Tasa USD (BCV)' },
   { id: 'salud-operativa', label: 'Salud operativa' },
@@ -37,6 +40,18 @@ const SETTINGS_NAV = [
 interface ExpirySettingsForm {
   expiry_alert_days: number;
 }
+
+interface ChatRetentionForm {
+  chat_message_retention_days: number;
+}
+
+const CHAT_RETENTION_OPTIONS = [
+  { value: 0, label: 'No borrar automáticamente' },
+  { value: 30, label: '30 días' },
+  { value: 60, label: '60 días' },
+  { value: 90, label: '90 días' },
+  { value: 180, label: '180 días' },
+] as const;
 
 interface ExchangeRateAdminView {
   active: {
@@ -101,6 +116,7 @@ export default function Settings() {
   usePageTitle('Configuración');
   const adminStats = useAdminStats();
   const [expirySettings, setExpirySettings] = useState<ExpirySettingsForm | null>(null);
+  const [chatRetention, setChatRetention] = useState<ChatRetentionForm | null>(null);
   const [checkInPinForm, setCheckInPinForm] = useState({
     check_in_pin: '',
     require_self_check_in_pin: false,
@@ -136,6 +152,15 @@ export default function Settings() {
         setSettingsLoadError(true);
       })
       .finally(() => setSettingsLoading(false));
+
+    apiFetch('/api/settings/chat-retention')
+      .then((res) => parseJsonResponse<ChatRetentionForm>(res))
+      .then((data) => {
+        setChatRetention(data);
+      })
+      .catch(() => {
+        setChatRetention(null);
+      });
 
     apiFetch('/api/settings/check-in-pin')
       .then((res) =>
@@ -221,6 +246,33 @@ export default function Settings() {
       setSettingsMessageTone('success');
       setSettingsMessage('Configuración guardada');
       await adminStats.refresh();
+    } catch (err) {
+      setSettingsMessageTone('error');
+      setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar'));
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const saveChatRetention = async () => {
+    if (!chatRetention) return;
+    setSettingsSaving(true);
+    setSettingsMessage('');
+    try {
+      const res = await apiFetch('/api/settings/chat-retention', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chatRetention),
+      });
+      const data = await parseJsonResponse<ChatRetentionForm & { error?: string }>(res);
+      if (!res.ok) throw new Error(data.error || 'Error al guardar');
+      setChatRetention(data);
+      setSettingsMessageTone('success');
+      setSettingsMessage(
+        data.chat_message_retention_days === 0
+          ? 'Retención del chat desactivada'
+          : `El chat se limpiará automáticamente tras ${data.chat_message_retention_days} días`
+      );
     } catch (err) {
       setSettingsMessageTone('error');
       setSettingsMessage(toDisplayErrorMessage(err, 'Error al guardar'));
@@ -556,6 +608,73 @@ export default function Settings() {
                       })
                     }
                   />
+                </div>
+
+                {settingsMessage && (
+                  <p
+                    className={`mt-3 text-[11px] leading-snug font-bold ${
+                      settingsMessageTone === 'success'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : settingsMessageTone === 'info'
+                          ? 'text-sky-600 dark:text-sky-400'
+                          : 'text-red-600 dark:text-red-400'
+                    }`}
+                  >
+                    {settingsMessage}
+                  </p>
+                )}
+              </Card>
+            )}
+
+            {chatRetention && (
+              <Card
+                id="retencion-chat"
+                padding="sm"
+                rounded="xl"
+                className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
+              >
+                <div className="mb-2.5 flex min-w-0 items-center gap-2">
+                  <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+                    <MessageSquare className="text-brand h-4 w-4 shrink-0" />
+                    <span className="truncate">Retención del chat</span>
+                  </h2>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+                    onClick={() => void saveChatRetention()}
+                    disabled={settingsSaving}
+                    aria-label="Guardar retención del chat"
+                    title="Guardar"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
+                  Borra mensajes antiguos (y adjuntos) en el mantenimiento diario. Las
+                  conversaciones se conservan vacías.
+                </p>
+
+                <div className="max-w-xs">
+                  <Label htmlFor="chat_message_retention_days" className="text-[11px]">
+                    Conservar mensajes durante
+                  </Label>
+                  <Select
+                    id="chat_message_retention_days"
+                    value={String(chatRetention.chat_message_retention_days)}
+                    onChange={(e) =>
+                      setChatRetention({
+                        chat_message_retention_days: parseInt(e.target.value, 10) || 0,
+                      })
+                    }
+                  >
+                    {CHAT_RETENTION_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
 
                 {settingsMessage && (
