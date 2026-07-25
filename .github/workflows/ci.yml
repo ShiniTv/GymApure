@@ -43,8 +43,8 @@ jobs:
       CRON_SECRET: ci-test-cron-secret-min-16-chars
       DEMO_PASSWORD: Ci-demo-pass-12!
       ALLOW_PUBLIC_REGISTER: 'true'
-      # http — CI sirve sin TLS; https rompe cookies Secure y confunde redirects.
-      PUBLIC_APP_URL: http://localhost:3000
+      # HTTPS en el valor (validación prod); el server CI escucha HTTP y cookies Secure van off (CI=true).
+      PUBLIC_APP_URL: https://localhost:3000
 
     steps:
       - uses: actions/checkout@v4
