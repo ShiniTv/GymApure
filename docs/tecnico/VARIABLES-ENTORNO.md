@@ -52,6 +52,8 @@ Referencia completa basada en [`.env.example`](../../.env.example). Plantilla co
 | `ALLOW_PUBLIC_REGISTER` | `true` permite `/register` (dev); desactivado en prod                   |
 | `CORS_ORIGINS`          | Orígenes separados por coma si API y frontend en hosts distintos        |
 | `ENABLE_HIBP_CHECK`     | `true` rechaza contraseñas filtradas (Have I Been Pwned, HTTPS)         |
+| `REQUIRE_MFA_FOR_STAFF` | `true` obliga MFA staff; por defecto `false` (opcional en `/security`)  |
+| `MFA_ENCRYPTION_KEY`    | Base64 32 bytes o hex 64 chars; cifra `mfa_secret` (fallback JWT)       |
 | `REDIS_URL`             | Rate limit y bloqueo de login distribuido (recomendado multi-instancia) |
 
 ### CSRF (todas las mutaciones protegidas)

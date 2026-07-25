@@ -6,8 +6,8 @@ import { getUserMfaState, isMfaStaffRole } from '../../lib/mfa.ts';
 
 /**
  * Bloquea rutas protegidas para staff sin MFA cuando REQUIRE_MFA_FOR_STAFF=true.
- * Por defecto MFA es opcional y este middleware NO se monta en el router.
- * La configuración MFA sigue en /api/auth/mfa/* y la UI en /security.
+ * Montado siempre; el flag de env decide si aplica. Setup MFA vive en /api/auth/mfa/*
+ * (antes de este middleware) y la UI en /security.
  */
 export const enforceMfaForStaff = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction) => {

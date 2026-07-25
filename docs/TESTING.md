@@ -31,6 +31,7 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | Comando                            | Qué valida                                                                   | Servidor   |
 | ---------------------------------- | ---------------------------------------------------------------------------- | ---------- |
 | `npm run lint`                     | TypeScript strict (`tsc --noEmit`)                                           | No         |
+| `npm run test:unit`                | Vitest (crypto MFA, set prescription, …)                                     | No         |
 | `npm run build`                    | Build Vite + bundle Express                                                  | No         |
 | `npm run test:smoke`               | Health, login, RBAC básico, kiosk eliminado, check-in recepción              | Sí         |
 | `npm run test:integration`         | Smoke + dominios core/chat/notificaciones (ex sprint 4/5/6)                  | Sí         |
@@ -39,7 +40,7 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `npm run test:reception-checklist` | Panel recepción, walk-in, lookup                                             | Sí         |
 | `npm run test:e2e`                 | **Suite completa CI** (integration + security + auth + reception)            | Sí         |
 | `npm run test:ux`                  | UX API: forgot/reset, `workoutsThisWeek`, RBAC admin/member/trainer          | Sí         |
-| `npm run test:ux:browser`          | Playwright: 19 specs (mobile iPhone 14 + desktop 1280px + tablet iPad 834px) | Sí         |
+| `npm run test:ux:browser`          | Playwright: 43 specs (mobile iPhone 14 + desktop 1280px + tablet iPad 834px) | Sí         |
 | `npm run test:ux:browser:ui`       | Playwright con UI de depuración                                              | Sí         |
 | `npm run verify:local-e2e`         | Levanta `dev`, espera `/api/health`, ejecuta `test:e2e`                      | Automático |
 

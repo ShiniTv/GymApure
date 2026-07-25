@@ -31,6 +31,7 @@ import appointmentRoutes from './appointments.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter } from './middleware/rateLimit.ts';
+import { enforceMfaForStaff } from './middleware/enforceMfa.ts';
 
 const router = asyncRouter();
 
@@ -49,7 +50,8 @@ router.use(apiRateLimiter, cronRoutes);
 router.use(apiRateLimiter);
 router.use(authenticate);
 router.use(csrfProtection);
-// MFA is optional for staff (available at /security). Do not mount enforceMfaForStaff.
+// When REQUIRE_MFA_FOR_STAFF=true, staff must enroll at /security before other APIs.
+router.use(enforceMfaForStaff);
 
 router.use('/users', userRoutes);
 router.use('/appointments', appointmentRoutes);

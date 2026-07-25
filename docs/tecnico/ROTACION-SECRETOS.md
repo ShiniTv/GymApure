@@ -107,6 +107,24 @@ Si Redis no está configurado, el servidor usa memoria local (aceptable en insta
 
 ---
 
+## MFA_ENCRYPTION_KEY
+
+**Impacto:** secretos TOTP (`users.mfa_secret`) cifrados at-rest. Rotar invalida la lectura de secretos ya cifrados con la clave anterior (staff debe re-enrolar MFA).
+
+| Paso | Acción                                                                  |
+| ---- | ----------------------------------------------------------------------- |
+| 1    | `openssl rand -base64 32`                                               |
+| 2    | Actualizar `MFA_ENCRYPTION_KEY` en Render (y `.env.prod` local)         |
+| 3    | Redeploy                                                                |
+| 4    | Pedir a staff con MFA que reconfigure en `/security` (disable + enable) |
+| 5    | `npm run security:audit-mfa:prod`                                       |
+
+Si la variable no está definida, el servidor deriva una clave de `JWT_SECRET` (compatible, pero rotar JWT también afecta MFA cifrado derivado).
+
+**Nunca** loguear `mfa_secret` ni la clave de cifrado.
+
+---
+
 ## VAPID (push notifications)
 
 Rotar con `npx web-push generate-vapid-keys`; actualizar `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`. Los clientes deben re-suscribirse tras el cambio.

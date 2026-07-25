@@ -10,6 +10,7 @@
     "start": "node dist/server.cjs",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
+    "test:unit": "vitest run",
     "test:smoke": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-api.ts",
     "test:smoke:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-api.ts",
     "test:integration": "npm run test:smoke && npm run test:domain-core && npm run test:domain-chat && npm run test:domain-notifications",
@@ -189,7 +190,8 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.0.0",
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "vitest": "^3.2.7"
   },
   "lint-staged": {
     "server.ts": [

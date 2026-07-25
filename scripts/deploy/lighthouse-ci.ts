@@ -40,9 +40,9 @@ const TARGETS: LighthouseTarget[] = [
 const AUTH_PANEL_TARGET: LighthouseTarget = {
   path: '/panel',
   label: 'panel',
-  perfMin: 0.7,
+  perfMin: 0.72,
   a11yMin: 0.9,
-  lcpMaxMs: 3500,
+  lcpMaxMs: 3200,
   /** Soft gate: warns loudly; set LIGHTHOUSE_PANEL_STRICT=1 to fail CI. */
   advisory: process.env.LIGHTHOUSE_PANEL_STRICT !== '1',
 };

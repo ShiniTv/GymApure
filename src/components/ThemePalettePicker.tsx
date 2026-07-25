@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { DEFAULT_PALETTE, PALETTE_LIST } from '../config/themes';
+import { DEFAULT_PALETTE, FEATURED_PALETTE_LIST } from '../config/themes';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
 
@@ -13,7 +13,7 @@ export default function ThemePalettePicker() {
         aria-label="Paleta de colores"
         className="grid grid-cols-2 gap-2.5 sm:grid-cols-4"
       >
-        {PALETTE_LIST.map((item) => {
+        {FEATURED_PALETTE_LIST.map((item) => {
           const isActive = palette === item.id;
           return (
             <button

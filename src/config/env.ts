@@ -43,6 +43,8 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
   ENABLE_HIBP_CHECK: z.string().optional(),
   REQUIRE_MFA_FOR_STAFF: z.string().optional(),
+  /** Base64 (32 bytes) or hex (64 chars). Optional — falls back to derived JWT_SECRET. */
+  MFA_ENCRYPTION_KEY: z.string().optional(),
   PUBLIC_APP_URL: z.string().url().optional(),
   /** Optional — food photo analysis. Never expose to the frontend. */
   GEMINI_API_KEY: z.string().min(10).optional(),

@@ -80,8 +80,12 @@ export const PALETTES = {
 export type PaletteId = keyof typeof PALETTES;
 export type Appearance = 'light' | 'dark';
 
+/** Primary presets shown in the picker (reduces brand sprawl). Others remain valid if already stored. */
+export const FEATURED_PALETTE_IDS: PaletteId[] = ['sky', 'monochrome', 'ember', 'ocean'];
+
 export const PALETTE_IDS = Object.keys(PALETTES) as PaletteId[];
 export const PALETTE_LIST = Object.values(PALETTES);
+export const FEATURED_PALETTE_LIST = FEATURED_PALETTE_IDS.map((id) => PALETTES[id]);
 export const DEFAULT_PALETTE: PaletteId = 'sky';
 export const DEFAULT_APPEARANCE: Appearance = 'dark';
 

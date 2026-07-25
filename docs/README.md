@@ -68,6 +68,10 @@
 | [SMOKE-CHECKLIST-ROLES.md](./qa/SMOKE-CHECKLIST-ROLES.md)                    | Smoke manual por rol post-UI                       |
 | [MAPA-CARPETAS.md](./MAPA-CARPETAS.md)                                       | Mapa de carpetas del monorepo                      |
 | [tecnico/INVENTARIO-REPO.md](./tecnico/INVENTARIO-REPO.md)                   | Inventario de higiene del repositorio              |
+| [tecnico/SCORECARD-CALIDAD.md](./tecnico/SCORECARD-CALIDAD.md)               | Scorecard 1–10 y ruta hacia 10/10                  |
+| [tecnico/INVENTARIO-DEUDA.md](./tecnico/INVENTARIO-DEUDA.md)                 | God-files, React Query gaps, checklist deuda       |
+| [tecnico/RUNBOOK-INCIDENTES.md](./tecnico/RUNBOOK-INCIDENTES.md)             | Incidentes: sesión, Redis, BCV, Storage, MFA       |
+| [tecnico/SENTRY-Y-ALERTAS.md](./tecnico/SENTRY-Y-ALERTAS.md)                 | DSN, alertas &lt;15 min, release health            |
 
 ---
 

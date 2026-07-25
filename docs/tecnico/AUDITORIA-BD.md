@@ -155,7 +155,7 @@ _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producci
 1. Migración `drop_demo_requests` — tabla huérfana eliminada en ambos entornos
 2. Migración `cleanup_legacy_settings` — columna `image_url` eliminada; keys legacy purgadas
 3. Migración `ensure_rls_lockdown_all_tables` — política `backend_only` en **todas** las tablas public
-4. `schema_migrations` actualizado a **39** archivos en ambos entornos
+4. `schema_migrations` debe igualar los **71** archivos en `supabase/migrations/` (verificar con `db:health`)
 5. Tokens de reset expirados purgados en dev (prod: 0 tokens)
 
 ### Estado post-remediación
@@ -180,7 +180,7 @@ _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producci
 
 ### Pendiente manual (ops — no bloquea desarrollo)
 
-Snapshot histórico del 2026-07-11 (entonces ~42 migraciones). Hoy el repo tiene **56** SQL en `supabase/migrations/`.
+Snapshot histórico del 2026-07-11 (entonces ~42 migraciones). Hoy el repo tiene **71** SQL en `supabase/migrations/` (2026-07-25).
 
 Antes de cleanup en producción:
 

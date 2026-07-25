@@ -127,7 +127,7 @@ npm run dev
 | `reception-checkin-nav.desktop`, `trainer-nutrition.desktop`, `copy-es.desktop`                                                                                                                                                                                                            | desktop           |
 | `tablet-staff.tablet`                                                                                                                                                                                                                                                                      | tablet (834×1194) |
 
-**Total:** 19 archivos spec, ~34 casos de prueba (mobile + desktop + tablet).
+**Total:** 43 archivos spec bajo `tests/ux/` (proyectos mobile + desktop + tablet).
 
 Gaps manuales: `npm run test:ux:visual-gaps` (requiere `dev` + `db:restore-demo`).
 

@@ -1,20 +1,22 @@
 import { useMemo, useState } from 'react';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, format, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
-import { CalendarDays, Clock } from 'lucide-react';
+import { CalendarDays, Clock, Users } from 'lucide-react';
 import {
   Button,
-  Card,
   EmptyState,
   PageHeader,
   Spinner,
   Badge,
   BackToDashboardLink,
+  SegmentedControl,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 
 export interface ClassSessionRow {
   id: number;
@@ -33,6 +35,8 @@ export interface ClassSessionRow {
   my_booking_id: number | null;
 }
 
+type FilterTab = 'all' | 'mine';
+
 async function fetchSessions(from: string, to: string): Promise<ClassSessionRow[]> {
   const qs = new URLSearchParams({ from, to });
   const res = await apiFetch(`/api/classes/sessions?${qs}`);
@@ -44,6 +48,7 @@ export default function Reservas() {
   const toast = useToastOptional();
   const queryClient = useQueryClient();
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<FilterTab>('all');
 
   const range = useMemo(() => {
     const from = new Date();
@@ -62,6 +67,19 @@ export default function Reservas() {
   });
 
   const upcoming = sessions.filter((s) => s.status === 'scheduled');
+  const mine = upcoming.filter((s) => s.has_booked || s.has_waitlisted);
+  const visible = filter === 'mine' ? mine : upcoming;
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, ClassSessionRow[]>();
+    for (const session of visible) {
+      const dayKey = format(startOfDay(parseISO(session.starts_at)), 'yyyy-MM-dd');
+      const list = map.get(dayKey) ?? [];
+      list.push(session);
+      map.set(dayKey, list);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [visible]);
 
   const handleBook = async (sessionId: number) => {
     setBusyId(sessionId);
@@ -115,6 +133,16 @@ export default function Reservas() {
         action={<BackToDashboardLink />}
       />
 
+      <SegmentedControl
+        ariaLabel="Filtrar reservas"
+        value={filter}
+        onChange={(v) => setFilter(v)}
+        options={[
+          { value: 'all', label: `Próximas (${upcoming.length})` },
+          { value: 'mine', label: `Mías (${mine.length})` },
+        ]}
+      />
+
       {isPending ? (
         <div className="flex justify-center py-8">
           <Spinner />
@@ -130,72 +158,96 @@ export default function Reservas() {
             </Button>
           }
         />
-      ) : upcoming.length === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title="No hay clases programadas"
-          description="Cuando el gym publique sesiones, podrás reservar aquí."
+          title={filter === 'mine' ? 'Aún no tienes reservas' : 'No hay clases programadas'}
+          description={
+            filter === 'mine'
+              ? 'Elige una clase en Próximas y reserva tu cupo.'
+              : 'Cuando el gym publique sesiones, podrás reservar aquí.'
+          }
+          action={
+            filter === 'mine' ? (
+              <Button variant="secondary" onClick={() => setFilter('all')}>
+                Ver próximas clases
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
-          {upcoming.map((session) => {
-            const starts = parseISO(session.starts_at);
-            const ends = parseISO(session.ends_at);
-            const spotsLeft = Math.max(0, session.capacity - session.booked_count);
-            const full = spotsLeft === 0;
+        <div className="space-y-6">
+          {grouped.map(([dayKey, daySessions]) => {
+            const dayDate = parseISO(dayKey);
+            const label = isSameDay(dayDate, new Date())
+              ? 'Hoy'
+              : format(dayDate, "EEEE d 'de' MMMM", { locale: es });
             return (
-              <Card key={session.id} padding="md" rounded="xl">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-base font-bold text-zinc-900 dark:text-white">
-                        {session.class_type_name}
-                      </h3>
-                      {session.has_booked && <Badge variant="success">Reservada</Badge>}
-                      {session.has_waitlisted && <Badge variant="warning">En espera</Badge>}
-                      {full && !session.has_booked && !session.has_waitlisted && (
-                        <Badge variant="warning">Sin cupo</Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {format(starts, 'EEE d MMM · HH:mm', { locale: es })}
-                        {' – '}
-                        {format(ends, 'HH:mm', { locale: es })}
-                      </span>
-                      {session.instructor_name && <span>· {session.instructor_name}</span>}
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {session.booked_count}/{session.capacity} cupos
-                      </span>
-                      {session.waitlisted_count > 0 && (
-                        <span>· {session.waitlisted_count} en espera</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    {(session.has_booked || session.has_waitlisted) && session.my_booking_id ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        loading={busyId === session.my_booking_id}
-                        onClick={() => void handleCancel(session.my_booking_id!)}
+              <section key={dayKey} className="space-y-3">
+                <h2 className={cn(typography.sectionTitle, 'capitalize')}>{label}</h2>
+                <ul className="divide-border border-border divide-y border-y">
+                  {daySessions.map((session) => {
+                    const starts = parseISO(session.starts_at);
+                    const ends = parseISO(session.ends_at);
+                    const spotsLeft = Math.max(0, session.capacity - session.booked_count);
+                    const full = spotsLeft === 0;
+                    return (
+                      <li
+                        key={session.id}
+                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        Cancelar
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        loading={busyId === session.id}
-                        onClick={() => void handleBook(session.id)}
-                      >
-                        {full ? 'Unirme a lista' : 'Reservar'}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
+                        <div className="min-w-0 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className={cn(typography.cardTitle, 'truncate text-base')}>
+                              {session.class_type_name}
+                            </h3>
+                            {session.has_booked && <Badge variant="success">Reservada</Badge>}
+                            {session.has_waitlisted && <Badge variant="warning">En espera</Badge>}
+                            {full && !session.has_booked && !session.has_waitlisted && (
+                              <Badge variant="warning">Sin cupo</Badge>
+                            )}
+                          </div>
+                          <p className="text-text-secondary flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" aria-hidden />
+                              {format(starts, 'HH:mm', { locale: es })} –{' '}
+                              {format(ends, 'HH:mm', { locale: es })}
+                            </span>
+                            {session.instructor_name && <span>{session.instructor_name}</span>}
+                            <span className="inline-flex items-center gap-1">
+                              <Users className="h-3.5 w-3.5" aria-hidden />
+                              {session.booked_count}/{session.capacity} cupos
+                              {session.waitlisted_count > 0 &&
+                                ` · ${session.waitlisted_count} en espera`}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          {(session.has_booked || session.has_waitlisted) &&
+                          session.my_booking_id ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              loading={busyId === session.my_booking_id}
+                              onClick={() => void handleCancel(session.my_booking_id!)}
+                            >
+                              Cancelar
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              loading={busyId === session.id}
+                              onClick={() => void handleBook(session.id)}
+                            >
+                              {full ? 'Lista de espera' : 'Reservar'}
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             );
           })}
         </div>

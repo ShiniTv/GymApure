@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { env } from '../config/env.ts';
 import { query } from '../db/index.ts';
 import type { UserRole } from './roles.ts';
+import { decryptMfaSecret, encryptMfaSecret } from './mfaCrypto.ts';
 
 const MFA_ISSUER = 'GymApure';
 const MFA_CHALLENGE_TTL_SECONDS = 5 * 60;
@@ -69,20 +70,20 @@ export async function getUserMfaState(userId: number): Promise<{
   const row = rows[0];
   return {
     mfa_enabled: Boolean(row?.mfa_enabled),
-    mfa_secret: row?.mfa_secret ?? null,
+    mfa_secret: decryptMfaSecret(row?.mfa_secret ?? null),
   };
 }
 
 export async function savePendingMfaSecret(userId: number, secret: string): Promise<void> {
   await query('UPDATE users SET mfa_secret = $1, mfa_enabled = false WHERE id = $2', [
-    secret,
+    encryptMfaSecret(secret),
     userId,
   ]);
 }
 
 export async function enableMfa(userId: number, secret: string): Promise<void> {
   await query('UPDATE users SET mfa_secret = $1, mfa_enabled = true WHERE id = $2', [
-    secret,
+    encryptMfaSecret(secret),
     userId,
   ]);
 }

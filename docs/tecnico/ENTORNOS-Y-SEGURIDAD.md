@@ -151,17 +151,17 @@ Ver [CHECKLIST-SEGURIDAD-REPO.md](./CHECKLIST-SEGURIDAD-REPO.md).
 
 Ver [STAGING.md](./STAGING.md) — tercer entorno para validar migraciones antes de prod.
 
-### MFA obligatorio (producción)
+### MFA (opcional por defecto)
 
-MFA es **opcional**: el staff puede activarlo en `/security`. Solo si se define `REQUIRE_MFA_FOR_STAFF=true` (y se monta `enforceMfaForStaff`) se bloquean APIs al staff sin MFA.
+MFA TOTP está disponible en `/security` para staff. Por defecto **no** es obligatorio (`REQUIRE_MFA_FOR_STAFF=false` en `render.yaml` y ejemplos). El middleware `enforceMfaForStaff` está montado pero solo bloquea cuando el flag es `true`.
 
-Antes de activar en prod:
+Cuando quieras endurecer producción:
 
-```powershell
-npm run security:audit-mfa:prod -- --allow-prod
-```
+1. Enrolar admin/recepción/entrenadores en **Seguridad MFA**.
+2. Poner `REQUIRE_MFA_FOR_STAFF=true` en Render y redeploy.
+3. Auditar: `npm run security:audit-mfa:prod -- --allow-prod`
 
-Cada admin, recepcionista y entrenador debe activar MFA en **Seguridad MFA**.
+Los secretos TOTP se guardan cifrados (`MFA_ENCRYPTION_KEY` o derivado de `JWT_SECRET`) aunque MFA sea opcional.
 
 ---
 

@@ -26,6 +26,8 @@ Credenciales demo: `docs/TESTING.md` (`DEMO_PASSWORD`).
 
 A1/A3 verificados en Playwright mobile (`qa-device-push.mobile.spec.ts`, 2026-07-23). A2/A4/A5 requieren Chrome real en Android.
 
+**PWA nombre:** el manifest usa **GymApure** (no “Caribean Gym”). Tras instalar, el icono/nombre en el launcher debe coincidir.
+
 ## iPhone — Safari 16.4+
 
 | #   | Paso                                                                        | OK  |
