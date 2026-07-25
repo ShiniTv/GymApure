@@ -17,6 +17,7 @@ export interface NutritionPlan {
   id: number;
   user_id: number;
   trainer_id: number;
+  training_block_id: number | null;
   title: string;
   calories_target: number;
   protein_target_g: number;
@@ -77,11 +78,7 @@ export function sumLogEntries(entries: NutritionLogEntry[]): MacroTotals {
   );
 }
 
-export function getMacroStatus(
-  consumed: number,
-  target: number,
-  margin: number
-): MacroStatus {
+export function getMacroStatus(consumed: number, target: number, margin: number): MacroStatus {
   if (target <= 0) return 'no_target';
   const low = target - margin;
   const high = target + margin;
@@ -118,7 +115,9 @@ export function adherencePercent(plan: NutritionPlan, totals: MacroTotals): numb
     getPlanMacroStatus(plan, totals, 'carbs'),
     getPlanMacroStatus(plan, totals, 'fat'),
   ];
-  const onTrack = statuses.filter((s) => s === 'on_track' || s === 'near_low' || s === 'near_high').length;
+  const onTrack = statuses.filter(
+    (s) => s === 'on_track' || s === 'near_low' || s === 'near_high'
+  ).length;
   return Math.round((onTrack / 4) * 100);
 }
 
@@ -153,16 +152,32 @@ export function macroStatusColorClass(status: MacroStatus): string {
   }
 }
 
-export function macroHint(
-  plan: NutritionPlan,
-  totals: MacroTotals,
-  key: MacroKey
-): string | null {
+export function macroHint(plan: NutritionPlan, totals: MacroTotals, key: MacroKey): string | null {
   const config = {
-    calories: { consumed: totals.calories, target: plan.calories_target, margin: plan.calories_margin, unit: 'kcal' },
-    protein: { consumed: totals.protein, target: plan.protein_target_g, margin: plan.protein_margin_g, unit: 'g P' },
-    carbs: { consumed: totals.carbs, target: plan.carbs_target_g, margin: plan.carbs_margin_g, unit: 'g C' },
-    fat: { consumed: totals.fat, target: plan.fat_target_g, margin: plan.fat_margin_g, unit: 'g G' },
+    calories: {
+      consumed: totals.calories,
+      target: plan.calories_target,
+      margin: plan.calories_margin,
+      unit: 'kcal',
+    },
+    protein: {
+      consumed: totals.protein,
+      target: plan.protein_target_g,
+      margin: plan.protein_margin_g,
+      unit: 'g P',
+    },
+    carbs: {
+      consumed: totals.carbs,
+      target: plan.carbs_target_g,
+      margin: plan.carbs_margin_g,
+      unit: 'g C',
+    },
+    fat: {
+      consumed: totals.fat,
+      target: plan.fat_target_g,
+      margin: plan.fat_margin_g,
+      unit: 'g G',
+    },
   }[key];
 
   const status = getMacroStatus(config.consumed, config.target, config.margin);

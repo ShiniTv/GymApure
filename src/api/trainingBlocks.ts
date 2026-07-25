@@ -27,7 +27,8 @@ export function mountTrainingBlockRoutes(router: Router): void {
       const memberId = Number(req.params.id);
       const { rows } = await query(
         `SELECT id, member_id, trainer_id, name, objective, start_date::text, end_date::text,
-                status, intensity_method, notes, approved_at::text, created_at::text, updated_at::text
+                status, intensity_method, notes, approved_at::text, last_reviewed_at::text,
+                created_at::text, updated_at::text
          FROM member_training_blocks WHERE member_id = $1
          ORDER BY start_date DESC`,
         [memberId]
@@ -60,7 +61,8 @@ export function mountTrainingBlockRoutes(router: Router): void {
            member_id, trainer_id, name, objective, start_date, end_date, intensity_method, notes
          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, member_id, trainer_id, name, objective, start_date::text, end_date::text,
-                   status, intensity_method, notes, approved_at::text, created_at::text, updated_at::text`,
+                   status, intensity_method, notes, approved_at::text, last_reviewed_at::text,
+                   created_at::text, updated_at::text`,
         [
           memberId,
           req.user!.id,
@@ -99,14 +101,44 @@ export function mountTrainingBlockRoutes(router: Router): void {
       }
       const { rows } = await query(
         `UPDATE member_training_blocks
-         SET status = $1, approved_at = CASE WHEN $1 = 'active' THEN NOW() ELSE approved_at END,
+         SET status = $1,
+             approved_at = CASE WHEN $1 = 'active' THEN NOW() ELSE approved_at END,
+             last_reviewed_at = CASE WHEN $1 = 'active' THEN NOW() ELSE last_reviewed_at END,
              updated_at = NOW()
          WHERE id = $2 AND member_id = $3
-         RETURNING id, status, approved_at::text`,
+         RETURNING id, status, approved_at::text, last_reviewed_at::text`,
         [parsed.data.status, blockId, memberId]
       );
       if (!rows[0]) {
         res.status(404).json({ error: 'Bloque no encontrado' });
+        return;
+      }
+      res.json(rows[0]);
+    })
+  );
+
+  router.patch(
+    '/:id/training-blocks/:blockId/review',
+    authorize(['trainer', 'admin']),
+    requireMemberAccess('id', 'admin'),
+    asyncHandler(async (req: AuthRequest, res) => {
+      const memberId = Number(req.params.id);
+      const blockId = Number(req.params.blockId);
+      if (!Number.isSafeInteger(memberId) || !Number.isSafeInteger(blockId)) {
+        res.status(400).json({ error: 'ID inválido' });
+        return;
+      }
+      const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
+      const { rows } = await query(
+        `UPDATE member_training_blocks
+         SET last_reviewed_at = NOW(), updated_at = NOW()
+         WHERE id = $1 AND member_id = $2 AND status = 'active'
+           AND ($3::bigint IS NULL OR trainer_id = $3)
+         RETURNING id, last_reviewed_at::text`,
+        [blockId, memberId, trainerId]
+      );
+      if (!rows[0]) {
+        res.status(404).json({ error: 'Bloque activo no encontrado' });
         return;
       }
       res.json(rows[0]);

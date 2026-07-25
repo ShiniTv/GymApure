@@ -37,6 +37,7 @@ const defaultPlanForm = {
   carbs_margin_g: '15',
   fat_margin_g: '10',
   notes: '',
+  training_block_id: '',
 };
 
 export default function MemberNutrition() {
@@ -55,6 +56,9 @@ export default function MemberNutrition() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [trainingBlocks, setTrainingBlocks] = useState<
+    { id: number; name: string; status: string; objective: string }[]
+  >([]);
 
   const { data: plan, isPending: planLoading } = useNutritionPlanQuery(
     Number.isNaN(memberId) ? undefined : memberId
@@ -79,6 +83,18 @@ export default function MemberNutrition() {
   }, [memberId]);
 
   useEffect(() => {
+    if (Number.isNaN(memberId)) return;
+    void apiFetch(`/api/users/${memberId}/training-blocks`)
+      .then((response) =>
+        parseJsonResponse<{ id: number; name: string; status: string; objective: string }[]>(
+          response
+        )
+      )
+      .then(setTrainingBlocks)
+      .catch(() => setTrainingBlocks([]));
+  }, [memberId]);
+
+  useEffect(() => {
     if (!plan) return;
     setPlanForm({
       title: plan.title,
@@ -91,6 +107,7 @@ export default function MemberNutrition() {
       carbs_margin_g: String(plan.carbs_margin_g),
       fat_margin_g: String(plan.fat_margin_g),
       notes: plan.notes ?? '',
+      training_block_id: plan.training_block_id?.toString() ?? '',
     });
   }, [plan]);
 
@@ -115,6 +132,7 @@ export default function MemberNutrition() {
           carbs_margin_g: parseInt(planForm.carbs_margin_g, 10),
           fat_margin_g: parseInt(planForm.fat_margin_g, 10),
           notes: planForm.notes.trim() || null,
+          training_block_id: planForm.training_block_id ? Number(planForm.training_block_id) : null,
         }),
       });
       await parseJsonResponse(res);
@@ -237,6 +255,23 @@ export default function MemberNutrition() {
                 onChange={(e) => setPlanForm({ ...planForm, title: e.target.value })}
                 required
               />
+            </div>
+            <div>
+              <Label>Bloque de entrenamiento</Label>
+              <select
+                value={planForm.training_block_id}
+                onChange={(e) => setPlanForm({ ...planForm, training_block_id: e.target.value })}
+                className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                <option value="">Sin bloque específico</option>
+                {trainingBlocks
+                  .filter((block) => block.status === 'active' || block.status === 'planned')
+                  .map((block) => (
+                    <option key={block.id} value={block.id}>
+                      {block.name} · {block.objective}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div>

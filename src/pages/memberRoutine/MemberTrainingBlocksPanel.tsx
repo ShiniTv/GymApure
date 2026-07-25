@@ -12,6 +12,14 @@ interface TrainingBlock {
   status: 'planned' | 'active' | 'completed' | 'archived';
   intensity_method: 'manual' | 'rpe_rir' | 'percent_1rm' | 'double_progression';
   notes: string | null;
+  approved_at: string | null;
+  last_reviewed_at: string | null;
+}
+
+function isReviewDue(block: TrainingBlock) {
+  if (block.status !== 'active') return false;
+  const lastReview = block.last_reviewed_at ?? block.approved_at;
+  return lastReview ? Date.now() - new Date(lastReview).getTime() >= 7 * 86_400_000 : true;
 }
 
 export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
@@ -69,6 +77,24 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
       toast?.success('Estado del bloque actualizado');
     } catch (error) {
       toast?.error(error instanceof Error ? error.message : 'No se pudo actualizar el bloque');
+    }
+  };
+
+  const markReviewed = async (blockId: number) => {
+    try {
+      const response = await apiFetch(`/api/users/${memberId}/training-blocks/${blockId}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const updated = await parseJsonResponse<{ id: number; last_reviewed_at: string }>(response);
+      setBlocks((current) =>
+        current.map((block) =>
+          block.id === updated.id ? { ...block, last_reviewed_at: updated.last_reviewed_at } : block
+        )
+      );
+      toast?.success('Revisión del bloque registrada');
+    } catch (error) {
+      toast?.error(error instanceof Error ? error.message : 'No se pudo registrar la revisión');
     }
   };
 
@@ -145,6 +171,15 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             {block.intensity_method.replaceAll('_', ' ')} · {block.status}
           </p>
+          {block.status === 'active' && (
+            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              {isReviewDue(block)
+                ? 'Revisión pendiente'
+                : `Última revisión: ${new Date(
+                    block.last_reviewed_at ?? block.approved_at ?? Date.now()
+                  ).toLocaleDateString('es-VE')}`}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {block.status !== 'active' && (
               <Button
@@ -153,6 +188,11 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
                 onClick={() => void updateStatus(block.id, 'active')}
               >
                 Activar
+              </Button>
+            )}
+            {isReviewDue(block) && (
+              <Button size="sm" variant="secondary" onClick={() => void markReviewed(block.id)}>
+                Marcar revisado
               </Button>
             )}
             {block.status === 'active' && (

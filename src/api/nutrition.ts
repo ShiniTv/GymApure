@@ -34,6 +34,7 @@ const planSchema = z
     protein_margin_g: z.number().int().min(0).max(200).optional(),
     carbs_margin_g: z.number().int().min(0).max(200).optional(),
     fat_margin_g: z.number().int().min(0).max(200).optional(),
+    training_block_id: z.number().int().positive().nullable().optional(),
     notes: z.string().max(2000).nullable().optional(),
     start_date: z
       .string()
@@ -90,6 +91,7 @@ function rowToPlan(row: Record<string, unknown>): NutritionPlan {
     id: Number(row.id),
     user_id: Number(row.user_id),
     trainer_id: Number(row.trainer_id),
+    training_block_id: row.training_block_id != null ? Number(row.training_block_id) : null,
     title: String(row.title),
     calories_target: Number(row.calories_target),
     protein_target_g: Number(row.protein_target_g),
@@ -183,18 +185,30 @@ router.put(
 
     const data = parsed.data;
     const trainerId = req.user!.id;
+    if (data.training_block_id != null) {
+      const { rows: blocks } = await query(
+        `SELECT id FROM member_training_blocks
+         WHERE id = $1 AND member_id = $2 AND trainer_id = $3`,
+        [data.training_block_id, userId, trainerId]
+      );
+      if (!blocks[0]) {
+        res.status(400).json({ error: 'El bloque no corresponde a este cliente' });
+        return;
+      }
+    }
 
     const { rows } = await query(
       `INSERT INTO nutrition_plans (
-        user_id, trainer_id, title,
+        user_id, trainer_id, training_block_id, title,
         calories_target, protein_target_g, carbs_target_g, fat_target_g,
         calories_margin, protein_margin_g, carbs_margin_g, fat_margin_g,
         notes, start_date, end_date, is_active, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true, NOW()
       )
       ON CONFLICT (user_id) DO UPDATE SET
         trainer_id = EXCLUDED.trainer_id,
+        training_block_id = EXCLUDED.training_block_id,
         title = EXCLUDED.title,
         calories_target = EXCLUDED.calories_target,
         protein_target_g = EXCLUDED.protein_target_g,
@@ -213,6 +227,7 @@ router.put(
       [
         userId,
         trainerId,
+        data.training_block_id ?? null,
         data.title ?? 'Plan nutricional',
         data.calories_target,
         data.protein_target_g,
@@ -583,6 +598,7 @@ router.get(
         id: 0,
         user_id: member.user_id,
         trainer_id: 0,
+        training_block_id: null,
         title: member.plan_title,
         calories_target: member.calories_target,
         protein_target_g: member.protein_target_g,
@@ -751,6 +767,7 @@ router.get(
         id: 0,
         user_id: member.user_id,
         trainer_id: trainerId,
+        training_block_id: null,
         title: member.plan_title!,
         calories_target: member.calories_target ?? 0,
         protein_target_g: member.protein_target_g ?? 0,

@@ -15,7 +15,7 @@ interface EndingTrainingBlock {
   member_id: number;
   member_name: string;
   name: string;
-  end_date: string;
+  review_due_at: string;
 }
 
 export async function runTrainerAppointmentReminders(): Promise<{
@@ -48,12 +48,14 @@ export async function runTrainerAppointmentReminders(): Promise<{
     ),
     query<EndingTrainingBlock>(
       `SELECT b.id, b.trainer_id, b.member_id, member.full_name AS member_name,
-              b.name, b.end_date::text
+              b.name,
+              (COALESCE(b.last_reviewed_at, b.approved_at) + INTERVAL '7 days')::text AS review_due_at
        FROM member_training_blocks b
        JOIN users member ON member.id = b.member_id
        JOIN users trainer ON trainer.id = b.trainer_id
        WHERE b.status = 'active'
-         AND b.end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + 7
+         AND b.approved_at IS NOT NULL
+         AND COALESCE(b.last_reviewed_at, b.approved_at) <= NOW() - INTERVAL '7 days'
          AND trainer.role = 'trainer'
          AND trainer.status = 'active'
          AND EXISTS (
@@ -64,7 +66,7 @@ export async function runTrainerAppointmentReminders(): Promise<{
            JOIN routines r ON r.id = ur.routine_id
            WHERE ur.user_id = b.member_id AND r.trainer_id = b.trainer_id
          )
-       ORDER BY b.end_date ASC
+       ORDER BY COALESCE(b.last_reviewed_at, b.approved_at) ASC
        LIMIT 100`
     ),
   ]);
@@ -98,15 +100,15 @@ export async function runTrainerAppointmentReminders(): Promise<{
     const created = await createUserNotification({
       userId: block.trainer_id,
       type: 'training_block_review',
-      title: 'Bloque próximo a revisión',
-      body: `${block.name} de ${block.member_name} finaliza el ${block.end_date}`,
+      title: 'Revisión de bloque pendiente',
+      body: `Revisa progresiones de ${block.name} (${block.member_name})`,
       href: `/members/${block.member_id}/routines?tab=bloques`,
-      severity: 'info',
-      dedupeKey: `training-block-review:${block.id}:${block.end_date}`,
+      severity: 'warning',
+      dedupeKey: `training-block-review:${block.id}:${block.review_due_at}`,
       metadata: {
         training_block_id: block.id,
         member_id: block.member_id,
-        end_date: block.end_date,
+        review_due_at: block.review_due_at,
       },
     });
     if (created) blockSent++;
