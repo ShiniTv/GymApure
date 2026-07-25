@@ -48,7 +48,7 @@ export function StaffBottomNav({
 
   const closeMore = () => {
     setMoreOpen(false);
-    moreButtonRef.current?.focus();
+    requestAnimationFrame(() => moreButtonRef.current?.focus());
   };
 
   useEffect(() => {
