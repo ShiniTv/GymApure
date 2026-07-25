@@ -101,7 +101,9 @@ function parseEnv(): Env {
     }
 
     const publicUrl = data.PUBLIC_APP_URL?.trim() ?? '';
-    if (!publicUrl.startsWith('https://')) {
+    const isCi = process.env.CI === 'true';
+    // CI corre `npm start` (NODE_ENV=production) sobre http://localhost — permitir http ahí.
+    if (!publicUrl.startsWith('https://') && !(isCi && publicUrl.startsWith('http://'))) {
       logger.error('PUBLIC_APP_URL es obligatorio en producción (URL HTTPS del sitio)', {});
       process.exit(1);
     }

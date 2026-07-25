@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { getDefaultRouteForRole, type UserRole } from '../../src/lib/roles';
 
 export const MEMBER_EMAIL = 'member@gym.com';
 export const ADMIN_EMAIL = 'admin@gym.com';
@@ -16,8 +17,12 @@ export function demoPassword(): string {
 
 /** Evita el modal de tema en primer login de miembro (bloquea clics en E2E). */
 export async function skipThemeOnboarding(page: Page) {
-  await page.evaluate((key) => {
-    localStorage.setItem(key, '1');
+  await page.addInitScript((key) => {
+    try {
+      localStorage.setItem(key, '1');
+    } catch {
+      /* ignore */
+    }
   }, THEME_ONBOARDING_KEY);
 }
 
@@ -29,28 +34,42 @@ export async function dismissThemeOnboardingIfPresent(page: Page) {
   }
 }
 
-/** Login vía UI. Requiere npm run db:restore-demo previo. */
+/**
+ * Login estable para specs (API + cookie de contexto).
+ * Evita el flaky del formulario SPA en CI (waitForURL / POST colgado en Chromium).
+ * Requiere npm run db:restore-demo previo.
+ */
 export async function login(page: Page, email: string, password: string) {
-  await page.goto('/login');
   await skipThemeOnboarding(page);
-  await page.locator('#email').fill(email);
-  await page.locator('#password').fill(password);
-  await page.getByRole('button', { name: /entrar/i }).click();
 
-  const leftLogin = page.waitForURL((url) => !url.pathname.startsWith('/login'), {
-    timeout: 30_000,
+  const response = await page.request.post('/api/auth/login', {
+    data: { email, password },
+    failOnStatusCode: false,
+    timeout: 20_000,
   });
-  const rateLimited = page
-    .getByRole('alert')
-    .filter({ hasText: /demasiados intentos/i })
-    .waitFor({ state: 'visible', timeout: 30_000 })
-    .then(() => {
-      throw new Error(
-        'Login rate-limited (Demasiados intentos). Reinicia el server o espera la ventana de 15 min.'
-      );
-    });
 
-  await Promise.race([leftLogin, rateLimited]);
+  if (!response.ok()) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Login HTTP ${response.status()}: ${body.slice(0, 200)}`);
+  }
+
+  const data = (await response.json()) as {
+    mfa_required?: boolean;
+    user?: { role?: string };
+  };
+  if (data.mfa_required) {
+    throw new Error('Login requiere MFA; el helper E2E no completa el desafío.');
+  }
+  if (!data.user?.role) {
+    throw new Error('Login sin usuario en la respuesta');
+  }
+
+  const destination = getDefaultRouteForRole(data.user.role as UserRole);
+  await page.goto(destination, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'), {
+    timeout: 15_000,
+    waitUntil: 'commit',
+  });
   await dismissThemeOnboardingIfPresent(page);
 }
 

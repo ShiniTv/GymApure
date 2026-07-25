@@ -57,8 +57,8 @@
   --color-border-subtle: #f4f4f5;
 
   --color-text: #18181b;
-  --color-text-secondary: #71717a;
-  --color-text-muted: #a1a1aa;
+  --color-text-secondary: #52525b;
+  --color-text-muted: #71717a;
   --color-text-inverse: #ffffff;
 
   --chart-accent: #0c98ff;
@@ -129,8 +129,8 @@
     --color-border: #e4e4e7;
     --color-border-subtle: #f4f4f5;
     --color-text: #18181b;
-    --color-text-secondary: #71717a;
-    --color-text-muted: #a1a1aa;
+    --color-text-secondary: #52525b;
+    --color-text-muted: #71717a;
   }
 
   .dark {

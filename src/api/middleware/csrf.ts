@@ -15,6 +15,7 @@ const CSRF_EXEMPT_PREFIXES = [
   '/api/health',
   '/api/settings/expiry/run',
   '/api/exchange-rate/refresh',
+  '/api/trainer-reminders/run',
 ];
 
 function isCsrfExempt(path: string): boolean {

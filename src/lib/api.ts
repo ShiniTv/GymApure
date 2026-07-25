@@ -6,6 +6,43 @@ const CSRF_COOKIE_NAME = 'csrf_token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+/** Mirrors server CSRF exemptions — no bootstrap /me before these POSTs. */
+const CSRF_EXEMPT_PATH_PREFIXES = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/mfa/verify-login',
+  '/api/auth/logout',
+];
+
+function requestPathname(input: RequestInfo | URL): string {
+  if (typeof input === 'string') {
+    try {
+      return new URL(input, typeof window !== 'undefined' ? window.location.origin : 'http://local')
+        .pathname;
+    } catch {
+      return input;
+    }
+  }
+  if (input instanceof URL) return input.pathname;
+  try {
+    return new URL(
+      input.url,
+      typeof window !== 'undefined' ? window.location.origin : 'http://local'
+    ).pathname;
+  } catch {
+    return input.url;
+  }
+}
+
+function isCsrfExemptPath(input: RequestInfo | URL): boolean {
+  const path = requestPathname(input);
+  return CSRF_EXEMPT_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+}
+
 function readCsrfTokenFromDocument(): string | null {
   if (typeof document === 'undefined') return null;
   const match = new RegExp(`(?:^|; )${CSRF_COOKIE_NAME}=([^;]*)`).exec(document.cookie);
@@ -30,10 +67,14 @@ function withCsrfHeaders(init: RequestInit = {}): RequestInit {
 
 async function refreshCsrfCookie(): Promise<void> {
   if (typeof window === 'undefined') return;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 5_000);
   try {
-    await fetch('/api/auth/me', { credentials: 'include' });
+    await fetch('/api/auth/me', { credentials: 'include', signal: controller.signal });
   } catch {
     // Caller may still get a CSRF 403; retry path handles that once.
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
@@ -73,7 +114,8 @@ export async function apiFetch(
     isMutating &&
     typeof document !== 'undefined' &&
     !readCsrfTokenFromDocument() &&
-    !init.__csrfRetry
+    !init.__csrfRetry &&
+    !isCsrfExemptPath(input)
   ) {
     await refreshCsrfCookie();
   }

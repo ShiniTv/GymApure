@@ -11,6 +11,7 @@ const DEMO_PASSWORD = process.env.DEMO_PASSWORD?.trim() || 'DemoGym2024!';
 const WEIGHT_SUGGESTION = 'Top sep con 85% RM';
 
 let trainerCookie = '';
+let csrfToken = '';
 let createdRoutineId: number | null = null;
 let createdRoutineExerciseId: number | null = null;
 
@@ -25,6 +26,9 @@ async function api(
     headers: {
       'Content-Type': 'application/json',
       ...(cookie ? { Cookie: cookie } : {}),
+      ...(cookie && ['POST', 'PUT', 'DELETE'].includes(method) && csrfToken
+        ? { 'x-csrf-token': csrfToken }
+        : {}),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -33,10 +37,16 @@ async function api(
 }
 
 function saveCookie(res: Response): string {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
-  const token = cookies.find((c) => c.startsWith('token='));
-  return token ? token.split(';')[0] : '';
+  const cookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const authCookies: string[] = [];
+  for (const cookie of cookies) {
+    if (cookie.startsWith('token=')) authCookies.push(cookie.split(';')[0]);
+    if (cookie.startsWith('csrf_token=')) {
+      csrfToken = decodeURIComponent(cookie.split(';')[0].slice('csrf_token='.length));
+      authCookies.push(cookie.split(';')[0]);
+    }
+  }
+  return authCookies.join('; ');
 }
 
 function ok(label: string, pass: boolean) {
@@ -51,7 +61,7 @@ async function loginTrainer(): Promise<boolean> {
   });
   if (res.status !== 200) return false;
   trainerCookie = saveCookie(res);
-  return Boolean(trainerCookie);
+  return Boolean(trainerCookie && csrfToken);
 }
 
 async function cleanup() {
@@ -119,7 +129,12 @@ async function main() {
   }
   createdRoutineExerciseId = Number(addExercise.data.id);
 
-  const getRoutine = await api('GET', `/api/routines/${createdRoutineId}`, undefined, trainerCookie);
+  const getRoutine = await api(
+    'GET',
+    `/api/routines/${createdRoutineId}`,
+    undefined,
+    trainerCookie
+  );
   ok('GET routine after add', getRoutine.res.status === 200);
   const routineExercises = (getRoutine.data.exercises ?? []) as Array<{
     weight_suggestion: string | null;

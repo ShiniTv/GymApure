@@ -326,6 +326,9 @@ export default function TrainerDashboard() {
   const inactiveMembers = stats?.inactiveMembers ?? [];
   const withoutRoutines = stats?.membersWithoutRoutines ?? 0;
   const withoutNutritionPlan = nutritionOverview?.without_plan ?? 0;
+  const withoutAssessment = stats?.membersWithoutAssessment ?? [];
+  const staleCheckins = stats?.staleCheckins ?? [];
+  const recoveryAlerts = stats?.recoveryAlerts ?? [];
   const firstName = user?.name?.split(/\s+/)[0] ?? 'entrenador';
   const loading = isPending && !stats;
   const todayQuiet = !loading && trainingToday.length === 0 && inactiveMembers.length === 0;
@@ -408,6 +411,9 @@ export default function TrainerDashboard() {
 
       {(withoutRoutines > 0 ||
         withoutNutritionPlan > 0 ||
+        withoutAssessment.length > 0 ||
+        staleCheckins.length > 0 ||
+        recoveryAlerts.length > 0 ||
         (stats?.expiringMembers?.length ?? 0) > 0) && (
         <div className="space-y-1.5">
           <p className="px-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
@@ -446,6 +452,83 @@ export default function TrainerDashboard() {
                 <ChevronRight className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               </Link>
             )}
+            {withoutAssessment.map((member) => (
+              <Link
+                key={`assessment-${member.id}`}
+                to={`/members/${member.id}/routines?tab=coaching`}
+                className="flex items-center justify-between gap-2 rounded-xl border border-violet-500/20 bg-violet-500/5 px-3 py-2.5 transition-colors hover:bg-violet-500/10 lg:px-4 lg:py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    {member.full_name}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Falta evaluación de entrenamiento
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
+              </Link>
+            ))}
+            {staleCheckins.map((member) => (
+              <div
+                key={`checkin-${member.id}`}
+                className="flex items-center justify-between gap-2 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 transition-colors hover:bg-sky-500/10 lg:px-4 lg:py-3"
+              >
+                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    {member.full_name}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Check-in pendiente · {member.days_since}d
+                  </p>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    to={`/members/${member.id}/routines?tab=coaching`}
+                    className="rounded-lg bg-sky-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-sky-700"
+                  >
+                    Registrar
+                  </Link>
+                  <Link
+                    to={`/messages?member=${member.id}`}
+                    aria-label={`Enviar mensaje a ${member.full_name}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-700 hover:bg-sky-500/10 dark:text-sky-300"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+            {recoveryAlerts.map((member) => (
+              <div
+                key={`recovery-${member.id}`}
+                className="flex items-center justify-between gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-2.5 transition-colors hover:bg-rose-500/10 lg:px-4 lg:py-3"
+              >
+                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+                    {member.full_name}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Recuperación: molestias {member.discomfort}/5 · energía {member.energy}/5
+                  </p>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    to={`/members/${member.id}/routines?tab=agenda`}
+                    className="rounded-lg bg-rose-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-rose-700"
+                  >
+                    Agendar 1:1
+                  </Link>
+                  <Link
+                    to={`/messages?member=${member.id}`}
+                    aria-label={`Enviar mensaje a ${member.full_name}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-700 hover:bg-rose-500/10 dark:text-rose-300"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
             {(stats?.expiringMembers ?? []).map((m) => (
               <Link
                 key={m.id}

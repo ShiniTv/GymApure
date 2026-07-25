@@ -38,6 +38,42 @@ async function fetchLastSessionLogs(userId: number, routineId: number) {
   return rows;
 }
 
+router.post(
+  '/sessions/:id/feedback',
+  authorize(['member']),
+  requireWorkoutSessionAccess,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const sessionId = Number(req.params.id);
+    const { exertion, energy, discomfort, notes } = req.body ?? {};
+    if (
+      !Number.isInteger(exertion) ||
+      exertion < 1 ||
+      exertion > 10 ||
+      !Number.isInteger(energy) ||
+      energy < 1 ||
+      energy > 5 ||
+      !Number.isInteger(discomfort) ||
+      discomfort < 1 ||
+      discomfort > 5 ||
+      (notes != null && (typeof notes !== 'string' || notes.trim().length > 1000))
+    ) {
+      res.status(400).json({ error: 'Feedback inválido' });
+      return;
+    }
+    const { rows } = await query(
+      `INSERT INTO workout_feedback (
+         workout_session_id, user_id, exertion, energy, discomfort, notes, updated_at
+       ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (workout_session_id) DO UPDATE SET
+         exertion = EXCLUDED.exertion, energy = EXCLUDED.energy,
+         discomfort = EXCLUDED.discomfort, notes = EXCLUDED.notes, updated_at = NOW()
+       RETURNING workout_session_id, exertion, energy, discomfort, notes, created_at::text, updated_at::text`,
+      [sessionId, req.user!.id, exertion, energy, discomfort, notes?.trim() || null]
+    );
+    res.json(rows[0]);
+  })
+);
+
 router.get(
   '/active',
   authorize(['member']),

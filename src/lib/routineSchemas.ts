@@ -17,6 +17,12 @@ export const assignRoutineSchema = z.object({
   routine_id: z.coerce.number().int().positive('Rutina inválida'),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha de inicio inválida'),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha de fin inválida'),
+  scheduled_weekdays: z
+    .array(z.coerce.number().int().min(1).max(7))
+    .min(1, 'Selecciona al menos un día')
+    .max(7)
+    .refine((days) => new Set(days).size === days.length, 'No repitas días')
+    .optional(),
 });
 
 export const routineExerciseSchema = z.object({

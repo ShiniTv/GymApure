@@ -2,11 +2,12 @@ import { expect, type Page } from '@playwright/test';
 
 /** Shared assertions for login adaptive layout across mobile / tablet / desktop projects. */
 export async function assertLoginAdaptive(page: Page, project: string) {
-  await page.goto('/login');
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('button', { name: /^Entrar$/i })).toBeVisible();
 
   const show = page.getByRole('button', { name: /mostrar contraseña/i });
   await expect(show).toBeVisible();
+  await expect(show).toBeEnabled();
   const tabIndex = await show.evaluate((el) => (el as HTMLButtonElement).tabIndex);
   expect(tabIndex).toBeGreaterThanOrEqual(0);
 

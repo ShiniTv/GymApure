@@ -30,6 +30,21 @@ export interface TrainerStatsResponse {
     full_name: string;
     check_in_time: string;
   }[];
+  membersWithoutAssessment?: {
+    id: number;
+    full_name: string;
+  }[];
+  staleCheckins?: {
+    id: number;
+    full_name: string;
+    days_since: number;
+  }[];
+  recoveryAlerts?: {
+    id: number;
+    full_name: string;
+    discomfort: number;
+    energy: number;
+  }[];
   expiryAlertDays?: number;
 }
 
