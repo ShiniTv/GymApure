@@ -19,7 +19,7 @@
 
 ### Avances aplicados en esta iteración
 
-- MFA staff montado + cifrado `mfa_secret`; trainer access solo por assignment; checklist IDOR ampliado
+- MFA disponible + cifrado `mfa_secret` (obligatorio solo si `REQUIRE_MFA_FOR_STAFF=true`); trainer access por assignment; checklist IDOR ampliado
 - React Query en Reception + ActiveWorkout; Vitest + CI domain checklists
 - Landing `/`, manifest GymApure, demo con tokens, Reservas elevadas, palettes featured
 - Runbooks Sentry/incidentes/PII; Lighthouse panel budgets más estrictos (advisory)

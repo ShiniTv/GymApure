@@ -29,7 +29,7 @@ services:
       - key: PUBLIC_APP_URL
         value: https://caribean-gym.onrender.com
       - key: REQUIRE_MFA_FOR_STAFF
-        value: 'true'
+        value: 'false'
       - key: ENABLE_HIBP_CHECK
         value: 'true'
       - key: MFA_ENCRYPTION_KEY

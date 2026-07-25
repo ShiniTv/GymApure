@@ -59,15 +59,17 @@ La app **sigue sirviendo** sin Redis (memoria local). En multi-instancia, restau
 
 ---
 
-## 5. MFA bloquea al staff (REQUIRE_MFA_FOR_STAFF=true)
+## 5. MFA bloquea al staff (solo si REQUIRE_MFA_FOR_STAFF=true)
+
+Por defecto MFA es **opcional**. Este incidente solo aplica si activaste el flag.
 
 **Síntomas:** 403 `mfa_setup_required`; redirect a `/security`.
 
-| Paso | Acción                                                                             |
-| ---- | ---------------------------------------------------------------------------------- |
-| 1    | Staff completa enrolamiento en `/security`                                         |
-| 2    | Si perdió el autenticador: admin desactiva MFA vía SQL/proceso interno y re-enrola |
-| 3    | Temporal: `REQUIRE_MFA_FOR_STAFF=false` + redeploy (solo emergencia; documentar)   |
+| Paso | Acción                                                                               |
+| ---- | ------------------------------------------------------------------------------------ |
+| 1    | Staff completa enrolamiento en `/security`                                           |
+| 2    | Si perdió el autenticador: admin desactiva MFA vía SQL/proceso interno y re-enrola   |
+| 3    | Temporal: `REQUIRE_MFA_FOR_STAFF=false` + redeploy (emergencia o fase de desarrollo) |
 
 ---
 
