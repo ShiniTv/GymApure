@@ -9,12 +9,15 @@ pg.types.setTypeParser(20, (value) => parseInt(value, 10));
 
 const SLOW_QUERY_MS = parseInt(process.env.SLOW_QUERY_MS ?? '2000', 10);
 
+const isCI = process.env.CI === 'true';
+
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
-  connectionTimeoutMillis: env.NODE_ENV === 'development' ? 30_000 : 10_000,
+  // CI: ráfagas de Playwright + bcrypt necesitan más margen antes de fallar la cola del pool.
+  connectionTimeoutMillis: isCI || env.NODE_ENV === 'development' ? 30_000 : 10_000,
   ssl: getPgSslConfig(env.DATABASE_URL),
 });
 

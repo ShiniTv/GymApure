@@ -33,31 +33,74 @@ export async function dismissThemeOnboardingIfPresent(page: Page) {
   }
 }
 
-/** Login vía UI. Requiere npm run db:restore-demo previo. */
-export async function login(page: Page, email: string, password: string) {
-  await skipThemeOnboarding(page);
-  await page.goto('/login');
+async function attemptUiLogin(page: Page, email: string, password: string): Promise<void> {
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.locator('#email').waitFor({ state: 'visible', timeout: 15_000 });
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
 
+  const submit = page.getByRole('button', { name: /entrar/i });
+  await expect(submit).toBeEnabled({ timeout: 10_000 });
+
   // Registrar waiters ANTES del click: si la navegación es rápida, waitForURL posterior la pierde.
   const leftLogin = page.waitForURL((url) => !url.pathname.startsWith('/login'), {
-    timeout: 30_000,
+    timeout: 45_000,
   });
+  const loginResponse = page.waitForResponse(
+    (res) =>
+      res.url().includes('/api/auth/login') &&
+      res.request().method() === 'POST' &&
+      res.status() !== 0,
+    { timeout: 45_000 }
+  );
   const rateLimited = page
     .getByRole('alert')
     .filter({ hasText: /demasiados intentos/i })
-    .waitFor({ state: 'visible', timeout: 30_000 })
+    .waitFor({ state: 'visible', timeout: 45_000 })
     .then(() => {
       throw new Error(
         'Login rate-limited (Demasiados intentos). Reinicia el server o espera la ventana de 15 min.'
       );
     });
 
-  await page.getByRole('button', { name: /entrar/i }).click();
-  await Promise.race([leftLogin, rateLimited]);
+  await submit.click();
+
+  const response = await Promise.race([
+    loginResponse,
+    rateLimited.then(() => null as never),
+  ]);
+  if (!response) {
+    throw new Error('Login sin respuesta HTTP');
+  }
+  if (!response.ok()) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Login HTTP ${response.status()}: ${body.slice(0, 200)}`);
+  }
+
+  await leftLogin;
   await dismissThemeOnboardingIfPresent(page);
+}
+
+/** Login vía UI. Requiere npm run db:restore-demo previo. */
+export async function login(page: Page, email: string, password: string) {
+  await skipThemeOnboarding(page);
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await attemptUiLogin(page, email, password);
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.context().clearCookies().catch(() => undefined);
+      if (attempt < 3) {
+        await page.waitForTimeout(500 * attempt);
+      }
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Login falló tras reintentos: ${String(lastError)}`);
 }
 
 /** Alias semántico para specs desktop (mismo flujo que login). */

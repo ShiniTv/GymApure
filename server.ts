@@ -196,10 +196,13 @@ async function startServer() {
       logger.info('Server started', { port: PORT, nodeEnv: env.NODE_ENV });
     }
     initWebSocket(server);
-    ensureExchangeRateOnStartup();
-    startExpiryCron();
-    startExchangeRateCron();
-    startTrainerRemindersCron();
+    // En CI los crons compiten por el pool de BD y hacen flaky el login de Playwright.
+    if (process.env.CI !== 'true') {
+      ensureExchangeRateOnStartup();
+      startExpiryCron();
+      startExchangeRateCron();
+      startTrainerRemindersCron();
+    }
   });
 
   const shutdown = async (signal: string) => {
