@@ -12,6 +12,7 @@ export interface AssignRoutineFormValue {
   routine_id: string;
   start_date: string;
   end_date: string;
+  scheduled_weekdays?: number[];
 }
 
 interface AssignRoutineOption {
@@ -195,6 +196,53 @@ export function AssignRoutineForm({
           </p>
         )}
       </div>
+
+      {!singleDay && (
+        <fieldset>
+          <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Días programados
+          </legend>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              ['L', 'Lunes'],
+              ['M', 'Martes'],
+              ['X', 'Miércoles'],
+              ['J', 'Jueves'],
+              ['V', 'Viernes'],
+              ['S', 'Sábado'],
+              ['D', 'Domingo'],
+            ].map(([short, label], index) => {
+              const day = index + 1;
+              const selected = value.scheduled_weekdays?.includes(day) ?? false;
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={selected}
+                  title={label}
+                  onClick={() => {
+                    const current = value.scheduled_weekdays ?? [];
+                    const scheduled_weekdays = selected
+                      ? current.filter((item) => item !== day)
+                      : [...current, day].sort((a, b) => a - b);
+                    onChange({ ...value, scheduled_weekdays });
+                  }}
+                  className={`h-9 w-9 rounded-full text-xs font-semibold transition-colors ${
+                    selected
+                      ? 'bg-brand text-white'
+                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  {short}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+            Opcional. Si no eliges días, la rutina seguirá disponible todos los días.
+          </p>
+        </fieldset>
+      )}
 
       <Button
         className="min-h-11 w-full"

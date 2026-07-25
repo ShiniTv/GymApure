@@ -17,6 +17,9 @@ export interface MemberStats {
     difficulty: string;
     assigned_at: string;
     exercise_count: number;
+    scheduled_weekdays?: number[] | null;
+    training_block_name?: string | null;
+    training_block_objective?: string | null;
   } | null;
   assignedRoutinesCount: number;
   pendingPayments: number;

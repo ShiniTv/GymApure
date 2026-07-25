@@ -442,6 +442,58 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
              LIMIT 12`,
             [trainerId]
           ),
+          query<{ id: number; full_name: string }>(
+            `SELECT u.id, u.full_name
+             FROM users u
+             WHERE u.id IN (
+               SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+               UNION
+               SELECT ur.user_id FROM user_routines ur
+               JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+             )
+               AND NOT EXISTS (
+                 SELECT 1 FROM member_training_assessments assessment
+                 WHERE assessment.member_id = u.id
+               )
+             ORDER BY u.full_name ASC
+             LIMIT 8`,
+            [trainerId]
+          ),
+          query<{ id: number; full_name: string; days_since: number }>(
+            `SELECT u.id, u.full_name,
+                    COALESCE((CURRENT_DATE - MAX(checkin.week_of)), 999)::int AS days_since
+             FROM users u
+             LEFT JOIN member_weekly_checkins checkin ON checkin.member_id = u.id
+             WHERE u.id IN (
+               SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+               UNION
+               SELECT ur.user_id FROM user_routines ur
+               JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+             )
+             GROUP BY u.id, u.full_name
+             HAVING COALESCE(MAX(checkin.week_of), DATE '1970-01-01')
+                    < CURRENT_DATE - INTERVAL '7 days'
+             ORDER BY days_since DESC, u.full_name ASC
+             LIMIT 8`,
+            [trainerId]
+          ),
+          query<{ id: number; full_name: string; discomfort: number; energy: number }>(
+            `SELECT DISTINCT ON (u.id) u.id, u.full_name, feedback.discomfort, feedback.energy
+             FROM workout_feedback feedback
+             JOIN workout_sessions ws ON ws.id = feedback.workout_session_id
+             JOIN users u ON u.id = ws.user_id
+             WHERE (feedback.discomfort >= 4 OR feedback.energy <= 2)
+               AND (
+                 u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+                 OR u.id IN (
+                   SELECT ur.user_id FROM user_routines ur
+                   JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+                 )
+               )
+             ORDER BY u.id, feedback.updated_at DESC
+             LIMIT 8`,
+            [trainerId]
+          ),
         ])
       : Promise.resolve(null);
 
@@ -489,6 +541,9 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const expiringMembers = trainerExtras ? trainerExtras[1].rows : [];
     const inactiveMembers = trainerExtras ? trainerExtras[2].rows : [];
     const trainingToday = trainerExtras ? trainerExtras[3].rows : [];
+    const membersWithoutAssessment = trainerExtras ? trainerExtras[4].rows : [];
+    const staleCheckins = trainerExtras ? trainerExtras[5].rows : [];
+    const recoveryAlerts = trainerExtras ? trainerExtras[6].rows : [];
 
     res.json({
       totalMembers: parseInt(totalMembers.rows[0]?.count || '0', 10),
@@ -501,6 +556,9 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       expiringMembers,
       inactiveMembers,
       trainingToday,
+      membersWithoutAssessment,
+      staleCheckins,
+      recoveryAlerts,
       expiryAlertDays: alertDays,
     });
   } catch (err: unknown) {
@@ -529,9 +587,12 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
         `SELECT r.id, r.name, r.difficulty, ur.assigned_at, ur.start_date, ur.end_date,
+                ur.scheduled_weekdays, block.name AS training_block_name,
+                block.objective AS training_block_objective,
                 COALESCE(ec.exercise_count, 0)::int AS exercise_count
          FROM user_routines ur
          JOIN routines r ON r.id = ur.routine_id
+         LEFT JOIN member_training_blocks block ON block.id = ur.training_block_id
          LEFT JOIN (
            SELECT routine_id, COUNT(*)::int AS exercise_count
            FROM routine_exercises

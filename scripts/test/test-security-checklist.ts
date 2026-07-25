@@ -52,8 +52,7 @@ async function api(
 }
 
 function saveCookies(res: Response) {
-  const cookies =
-    typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+  const cookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
   const parts: string[] = [];
   for (const entry of cookies) {
     if (entry.startsWith('token=')) {
@@ -120,8 +119,7 @@ async function main() {
     ok('Member solo ve rutinas asignadas (array)', Array.isArray(memberList));
     ok(
       'Member tiene rutina demo asignada',
-      Array.isArray(memberList) &&
-        memberList.some((r) => r.name === 'Demo CI Routine'),
+      Array.isArray(memberList) && memberList.some((r) => r.name === 'Demo CI Routine'),
       'Ejecuta npm run db:restore-demo para crear la asignación demo'
     );
 
@@ -158,6 +156,39 @@ async function main() {
       `status ${allowedProfile.res.status}`
     );
 
+    const assessmentRead = await api('GET', `/api/users/${memberId}/training-assessment`);
+    ok('Trainer lee evaluación de miembro asignado → 200', assessmentRead.res.status === 200);
+    const assessmentWrite = await api('PUT', `/api/users/${memberId}/training-assessment`, {
+      primary_goal: 'Mejorar fuerza',
+      experience_level: 'intermediate',
+      preferences: 'Entrenar por la tarde',
+      equipment_access: 'Gimnasio completo',
+      mobility_notes: 'Movilidad de tobillo limitada',
+      coaching_notes: 'Progresión gradual',
+    });
+    ok('Trainer guarda evaluación de miembro asignado → 200', assessmentWrite.res.status === 200);
+
+    const checkinsRead = await api('GET', `/api/users/${memberId}/weekly-checkins`);
+    ok('Trainer lee check-ins de miembro asignado → 200', checkinsRead.res.status === 200);
+    const checkinWrite = await api('PUT', `/api/users/${memberId}/weekly-checkins`, {
+      energy: 4,
+      sleep_quality: 3,
+      stress_level: 2,
+      soreness_level: 2,
+      adherence_score: 4,
+      notes: 'Buena respuesta al plan',
+    });
+    ok('Trainer guarda check-in de miembro asignado → 200', checkinWrite.res.status === 200);
+
+    if (isolatedId) {
+      const blockedAssessment = await api('GET', `/api/users/${isolatedId}/training-assessment`);
+      ok(
+        'Trainer sin acceso a evaluación de miembro no asignado → 403',
+        blockedAssessment.res.status === 403,
+        `status ${blockedAssessment.res.status}`
+      );
+    }
+
     const trainerRoutines = await api('GET', '/api/routines?all=1');
     const trainerList = trainerRoutines.data as { trainer_id?: number }[];
     const trainerAuth = await api('GET', '/api/auth/me');
@@ -167,6 +198,34 @@ async function main() {
         'Trainer solo ve sus rutinas',
         trainerList.every((r) => Number(r.trainer_id) === trainerId)
       );
+    }
+    const firstRoutineId = Number((trainerList[0] as { id?: number } | undefined)?.id);
+    if (firstRoutineId) {
+      const routineDetail = await api('GET', `/api/routines/${firstRoutineId}`);
+      const exercises =
+        (routineDetail.data as { exercises?: Array<{ id?: number }> }).exercises ?? [];
+      const firstExerciseId = Number(exercises[0]?.id);
+      if (firstExerciseId) {
+        const loadSuggestion = await api(
+          'GET',
+          `/api/users/${memberId}/exercise-load-suggestion?exercise_id=${firstExerciseId}&routine_id=${firstRoutineId}`
+        );
+        ok(
+          'Trainer consulta sugerencia de carga de miembro asignado → 200',
+          loadSuggestion.res.status === 200
+        );
+        if (isolatedId) {
+          const blockedSuggestion = await api(
+            'GET',
+            `/api/users/${isolatedId}/exercise-load-suggestion?exercise_id=${firstExerciseId}&routine_id=${firstRoutineId}`
+          );
+          ok(
+            'Trainer sin acceso a sugerencia de carga de miembro no asignado → 403',
+            blockedSuggestion.res.status === 403,
+            `status ${blockedSuggestion.res.status}`
+          );
+        }
+      }
     }
   } else {
     console.log('  SKIP IDOR/rutinas (member@gym.com no encontrado — db:restore-demo)');
@@ -270,12 +329,9 @@ async function main() {
     const cronNoSecret = await api('POST', '/api/settings/expiry/run');
     ok('Cron sin secret ni sesión → 403', cronNoSecret.res.status === 403);
 
-    const cronBadSecret = await api(
-      'POST',
-      '/api/settings/expiry/run',
-      undefined,
-      { 'x-cron-secret': 'definitely-wrong-cron-secret-value' }
-    );
+    const cronBadSecret = await api('POST', '/api/settings/expiry/run', undefined, {
+      'x-cron-secret': 'definitely-wrong-cron-secret-value',
+    });
     ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
 
     if (process.env.CRON_SECRET) {

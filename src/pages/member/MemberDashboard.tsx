@@ -126,6 +126,9 @@ export default function MemberDashboard() {
   const primaryRoutineInProgress = routine
     ? (memberStats?.activeSessions?.some((s) => s.routine_id === routine.id) ?? false)
     : false;
+  const todayWeekday = new Date().getDay() || 7;
+  const routineScheduledToday =
+    !routine?.scheduled_weekdays?.length || routine.scheduled_weekdays.includes(todayWeekday);
   const subscriptionBarStyle = getSubscriptionBarStyle(memberStats?.remainingPercent ?? 0);
 
   if (statsError && !memberStats) {
@@ -251,7 +254,7 @@ export default function MemberDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-semibold">Ver rutinas</p>
                 <p className="text-text-secondary mt-1 truncate text-[11px] leading-relaxed">
-                  {routine.name} · {routine.exercise_count} ejercicios
+                  {routineScheduledToday ? 'Hoy toca' : 'Próximo día de rutina'} · {routine.name}
                 </p>
               </div>
               <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
@@ -325,21 +328,32 @@ export default function MemberDashboard() {
                   <div className="min-w-0">
                     <p className="text-text truncate text-xl font-bold">{routine.name}</p>
                     <p className="text-text-secondary mt-1 text-xs">
+                      {routineScheduledToday ? 'Hoy toca' : 'No está programada para hoy'} ·{' '}
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                     </p>
+                    {routine.training_block_name && (
+                      <p className="text-brand mt-1 text-[11px] font-semibold">
+                        Bloque: {routine.training_block_name}
+                        {routine.training_block_objective
+                          ? ` · ${routine.training_block_objective}`
+                          : ''}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button
                   size="sm"
                   className="mt-3 w-full shadow-sm"
-                  disabled={primaryRoutineCompletedToday}
+                  disabled={primaryRoutineCompletedToday || !routineScheduledToday}
                   onClick={() => navigate(`/workout/${routine.id}`)}
                 >
-                  {primaryRoutineCompletedToday
-                    ? 'Completada hoy'
-                    : primaryRoutineInProgress
-                      ? 'Continuar entrenamiento'
-                      : 'Empezar entrenamiento'}
+                  {!routineScheduledToday
+                    ? 'Descanso programado'
+                    : primaryRoutineCompletedToday
+                      ? 'Completada hoy'
+                      : primaryRoutineInProgress
+                        ? 'Continuar entrenamiento'
+                        : 'Empezar entrenamiento'}
                 </Button>
                 {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
                   <p className="text-text-secondary mt-2 text-center text-xs">

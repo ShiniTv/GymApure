@@ -27,6 +27,7 @@ import demoRequestRoutes from './demoRequests.ts';
 import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
 import webVitalsRoutes from './webVitals.ts';
+import appointmentRoutes from './appointments.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter } from './middleware/rateLimit.ts';
@@ -51,6 +52,7 @@ router.use(csrfProtection);
 // MFA is optional for staff (available at /security). Do not mount enforceMfaForStaff.
 
 router.use('/users', userRoutes);
+router.use('/appointments', appointmentRoutes);
 router.use('/trainers', trainerRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/exchange-rate', exchangeRateRoutes);

@@ -40,6 +40,8 @@ import { isTrainingShift } from '../lib/trainingShift.ts';
 import { mountHealthProfileRoutes } from './healthProfile.ts';
 import { mountExerciseRecordRoutes } from './exerciseRecords.ts';
 import { mountCoachNoteRoutes } from './coachNotes.ts';
+import { mountTrainerCoachingRoutes } from './trainerCoaching.ts';
+import { mountTrainingBlockRoutes } from './trainingBlocks.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
 import { assignRoutineSchema } from '../lib/routineSchemas.ts';
 import {
@@ -493,7 +495,7 @@ router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, 
     const params = req.user!.role === 'trainer' ? [req.params.id, req.user!.id] : [req.params.id];
 
     const { rows } = await query(
-      `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date,
+      `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date, ur.scheduled_weekdays,
               COALESCE(ec.exercise_count, 0)::int AS exercise_count,
               preview.exercise_preview
        FROM routines r
@@ -738,7 +740,7 @@ router.post(
       return;
     }
 
-    const { routine_id, start_date, end_date } = parsed.data;
+    const { routine_id, start_date, end_date, scheduled_weekdays } = parsed.data;
     if (start_date > end_date) {
       res.status(400).json({
         error: 'La fecha de inicio debe ser anterior o igual a la de fin',
@@ -770,10 +772,11 @@ router.post(
     if (existing.rows.length > 0) {
       const { rows } = await query<{ id: number }>(
         `UPDATE user_routines
-         SET start_date = $1, end_date = $2, assigned_by = $3, assigned_at = NOW()
-         WHERE user_id = $4 AND routine_id = $5
+         SET start_date = $1, end_date = $2, scheduled_weekdays = $3,
+             assigned_by = $4, assigned_at = NOW()
+         WHERE user_id = $5 AND routine_id = $6
          RETURNING id`,
-        [start_date, end_date, assigned_by, memberId, routine_id]
+        [start_date, end_date, scheduled_weekdays ?? null, assigned_by, memberId, routine_id]
       );
       res.json({ id: rows[0].id, success: true, updated: true });
 
@@ -786,10 +789,12 @@ router.post(
     }
 
     const { rows } = await query<{ id: number }>(
-      `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO user_routines (
+         user_id, routine_id, assigned_by, start_date, end_date, scheduled_weekdays
+       )
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
-      [memberId, routine_id, assigned_by, start_date, end_date]
+      [memberId, routine_id, assigned_by, start_date, end_date, scheduled_weekdays ?? null]
     );
     res.json({ id: rows[0].id, success: true, updated: false });
 
@@ -1224,5 +1229,7 @@ router.get(
 mountHealthProfileRoutes(router);
 mountExerciseRecordRoutes(router);
 mountCoachNoteRoutes(router);
+mountTrainerCoachingRoutes(router);
+mountTrainingBlockRoutes(router);
 
 export default router;

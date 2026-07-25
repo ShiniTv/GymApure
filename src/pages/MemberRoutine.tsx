@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Trophy,
   Minus,
+  Copy,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -43,6 +45,8 @@ import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { AssignRoutineForm } from '../components/routines/AssignRoutineForm';
 import { MemberProgressPanel } from './memberRoutine/MemberProgressPanel';
 import { MemberCoachNotesPanel } from './memberRoutine/MemberCoachNotesPanel';
+import { MemberCoachingPanel } from './memberRoutine/MemberCoachingPanel';
+import { MemberTrainingBlocksPanel } from './memberRoutine/MemberTrainingBlocksPanel';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -96,11 +100,14 @@ export default function MemberRoutine() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToastOptional();
-  type CoachingTab = 'rutinas' | 'progreso' | 'notas' | 'perfil' | 'mediciones';
+  type CoachingTab =
+    'rutinas' | 'progreso' | 'bloques' | 'notas' | 'coaching' | 'perfil' | 'mediciones';
   const parseCoachingTab = (raw: string | null): CoachingTab | null => {
     if (
       raw === 'progreso' ||
+      raw === 'bloques' ||
       raw === 'notas' ||
+      raw === 'coaching' ||
       raw === 'perfil' ||
       raw === 'mediciones' ||
       raw === 'rutinas'
@@ -132,6 +139,7 @@ export default function MemberRoutine() {
     routine_id: '',
     start_date: format(new Date(), 'yyyy-MM-dd'),
     end_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    scheduled_weekdays: [] as number[],
   });
 
   // Create/Edit Routine State
@@ -144,11 +152,24 @@ export default function MemberRoutine() {
     routineId: number;
     exercise: Exercise;
   } | null>(null);
+  const [substitutionTarget, setSubstitutionTarget] = useState<{
+    routineId: number;
+    exercise: Exercise;
+  } | null>(null);
+  const [substitutionExerciseId, setSubstitutionExerciseId] = useState('');
+  const [substitutionReason, setSubstitutionReason] = useState('');
+  const [substitutingExercise, setSubstitutingExercise] = useState(false);
 
   // Exercise Management State
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [loadSuggestion, setLoadSuggestion] = useState<{
+    last_session: { weight: number; reps: number; completed_at: string } | null;
+    rm_test: { weight: number; reps: number; estimated_1rm_kg: number } | null;
+    estimated_1rm_kg: number | null;
+  } | null>(null);
+  const [loadingLoadSuggestion, setLoadingLoadSuggestion] = useState(false);
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
@@ -381,6 +402,7 @@ export default function MemberRoutine() {
           assigned_by: user.id,
           start_date: assignForm.start_date,
           end_date: assignForm.end_date,
+          scheduled_weekdays: assignForm.scheduled_weekdays,
         }),
       });
 
@@ -453,6 +475,21 @@ export default function MemberRoutine() {
       await refreshUserRoutines();
     } catch (err) {
       clientLogger.error('Failed to update member routine', err);
+    }
+  };
+
+  const handleCloneRoutine = async (routine: Routine) => {
+    try {
+      const response = await apiFetch(`/api/routines/${routine.id}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const cloned = await parseJsonResponse<{ name: string }>(response);
+      toast?.success(`${cloned.name} guardada en tu biblioteca`);
+    } catch (err) {
+      clientLogger.error('Failed to clone routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo duplicar la rutina');
     }
   };
 
@@ -529,6 +566,52 @@ export default function MemberRoutine() {
     }
   };
 
+  const openEditExercise = async (routineId: number, exercise: Exercise) => {
+    const nextExercise = {
+      ...exercise,
+      set_prescription:
+        exercise.set_prescription ?? deriveSetPrescription(exercise.sets, exercise.reps),
+    };
+    setEditingExercise(nextExercise);
+    setLoadSuggestion(null);
+    setIsEditingExercise(true);
+    setLoadingLoadSuggestion(true);
+    try {
+      const response = await apiFetch(
+        `/api/users/${id}/exercise-load-suggestion?exercise_id=${exercise.id}&routine_id=${routineId}`
+      );
+      setLoadSuggestion(
+        await parseJsonResponse<{
+          last_session: { weight: number; reps: number; completed_at: string } | null;
+          rm_test: { weight: number; reps: number; estimated_1rm_kg: number } | null;
+          estimated_1rm_kg: number | null;
+        }>(response)
+      );
+    } catch (err) {
+      clientLogger.warn('Failed to load exercise suggestion', { err });
+    } finally {
+      setLoadingLoadSuggestion(false);
+    }
+  };
+
+  const applyLastSessionLoad = () => {
+    if (!loadSuggestion?.last_session) return;
+    const { weight, reps } = loadSuggestion.last_session;
+    setEditingExercise((current) =>
+      current
+        ? {
+            ...current,
+            reps,
+            set_prescription: deriveSetPrescription(
+              current.sets,
+              reps,
+              current.set_prescription
+            ).map((set) => ({ ...set, reps, weight_kg: weight })),
+          }
+        : current
+    );
+  };
+
   const confirmDeleteExercise = async () => {
     if (!deleteExerciseTarget) return;
     const { routineId, exercise } = deleteExerciseTarget;
@@ -544,6 +627,41 @@ export default function MemberRoutine() {
       await refreshRoutineExercises(routineId);
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
+    }
+  };
+
+  const openSubstitution = (routineId: number, exercise: Exercise) => {
+    setSubstitutionTarget({ routineId, exercise });
+    setSubstitutionExerciseId('');
+    setSubstitutionReason('');
+    apiFetchAvailableExercises();
+  };
+
+  const handleSubstitution = async () => {
+    if (!substitutionTarget || !substitutionExerciseId || substitutionReason.trim().length < 2)
+      return;
+    setSubstitutingExercise(true);
+    try {
+      const response = await apiFetch(
+        `/api/routines/${substitutionTarget.routineId}/exercises/${substitutionTarget.exercise.routine_exercise_id}/substitute`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exercise_id: Number(substitutionExerciseId),
+            reason: substitutionReason,
+          }),
+        }
+      );
+      const result = await parseJsonResponse<{ exercise: { name: string } }>(response);
+      await refreshRoutineExercises(substitutionTarget.routineId);
+      setSubstitutionTarget(null);
+      toast?.success(`Sustituido por ${result.exercise.name}`);
+    } catch (err) {
+      clientLogger.error('Failed to substitute routine exercise', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo sustituir el ejercicio');
+    } finally {
+      setSubstitutingExercise(false);
     }
   };
 
@@ -874,6 +992,8 @@ export default function MemberRoutine() {
         options={[
           { value: 'rutinas', label: 'Rutinas' },
           { value: 'progreso', label: 'Progreso' },
+          { value: 'bloques', label: 'Bloques' },
+          { value: 'coaching', label: 'Coaching' },
           { value: 'notas', label: 'Notas' },
           { value: 'perfil', label: 'Perfil' },
           { value: 'mediciones', label: 'Mediciones' },
@@ -1398,6 +1518,64 @@ export default function MemberRoutine() {
       </Modal>
 
       <Modal
+        open={!!substitutionTarget}
+        onClose={() => {
+          setSubstitutionTarget(null);
+        }}
+        title={
+          substitutionTarget
+            ? `Sustituir ${substitutionTarget.exercise.name}`
+            : 'Sustituir ejercicio'
+        }
+        maxWidth="xl"
+        scrollable
+      >
+        {substitutionTarget && (
+          <div className="space-y-4">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Solo se muestran ejercicios del grupo{' '}
+              <strong>{substitutionTarget.exercise.muscle_group}</strong> para conservar la
+              intención del programa. Revisa las limitaciones de salud antes de confirmar.
+            </p>
+            <ExercisePicker
+              label="Ejercicio sustituto"
+              exercises={availableExercises.filter(
+                (exercise) =>
+                  exercise.id !== substitutionTarget.exercise.id &&
+                  exercise.muscle_group.toLowerCase() ===
+                    substitutionTarget.exercise.muscle_group.toLowerCase()
+              )}
+              value={substitutionExerciseId}
+              onChange={setSubstitutionExerciseId}
+              placeholder="Buscar alternativa compatible..."
+            />
+            <div>
+              <Label htmlFor="substitution-reason">Motivo de la sustitución</Label>
+              <textarea
+                id="substitution-reason"
+                value={substitutionReason}
+                onChange={(event) => setSubstitutionReason(event.target.value)}
+                className="mt-1 min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                placeholder="Ej: limitación de rodilla; se conserva el patrón de empuje"
+                maxLength={500}
+              />
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => void handleSubstitution()}
+              disabled={
+                !substitutionExerciseId ||
+                substitutionReason.trim().length < 2 ||
+                substitutingExercise
+              }
+            >
+              {substitutingExercise ? 'Sustituyendo…' : 'Confirmar sustitución'}
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
         open={isAddingExercise}
         onClose={() => {
           setIsAddingExercise(false);
@@ -1463,6 +1641,7 @@ export default function MemberRoutine() {
         open={isEditingExercise && !!editingExercise}
         onClose={() => {
           setIsEditingExercise(false);
+          setLoadSuggestion(null);
         }}
         initialFocus="dialog"
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
@@ -1471,6 +1650,46 @@ export default function MemberRoutine() {
       >
         {editingExercise && (
           <div className="space-y-4">
+            <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2.5">
+              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
+                Referencia de carga
+              </p>
+              {loadingLoadSuggestion ? (
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Consultando historial…
+                </p>
+              ) : loadSuggestion?.last_session ? (
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                    Última sesión:{' '}
+                    <strong>
+                      {loadSuggestion.last_session.weight} kg × {loadSuggestion.last_session.reps}
+                    </strong>
+                    {loadSuggestion.estimated_1rm_kg != null
+                      ? ` · 1RM estimado ${loadSuggestion.estimated_1rm_kg} kg`
+                      : ''}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 px-2.5 text-xs"
+                    onClick={applyLastSessionLoad}
+                  >
+                    Aplicar última sesión
+                  </Button>
+                </div>
+              ) : loadSuggestion?.estimated_1rm_kg != null ? (
+                <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300">
+                  1RM estimado: <strong>{loadSuggestion.estimated_1rm_kg} kg</strong>. Define la
+                  intensidad según el objetivo del bloque.
+                </p>
+              ) : (
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Sin sesiones previas ni pruebas RM registradas para este ejercicio.
+                </p>
+              )}
+            </div>
             <RoutineExercisePrescriptionFields
               formKey={`edit-${editingExercise.routine_exercise_id}`}
               value={editingExercise}
@@ -1524,7 +1743,9 @@ export default function MemberRoutine() {
       >
         <AssignRoutineForm
           value={assignForm}
-          onChange={setAssignForm}
+          onChange={(next) =>
+            setAssignForm({ ...next, scheduled_weekdays: next.scheduled_weekdays ?? [] })
+          }
           onSubmit={handleAssignRoutine}
           routines={availableRoutines}
           memberIdFixed={id}
@@ -1594,6 +1815,14 @@ export default function MemberRoutine() {
       ) : null}
 
       {coachingTab === 'notas' && id ? <MemberCoachNotesPanel memberId={parseInt(id, 10)} /> : null}
+
+      {coachingTab === 'coaching' && id ? (
+        <MemberCoachingPanel memberId={parseInt(id, 10)} />
+      ) : null}
+
+      {coachingTab === 'bloques' && id ? (
+        <MemberTrainingBlocksPanel memberId={parseInt(id, 10)} />
+      ) : null}
 
       {coachingTab === 'rutinas' && (
         <div className="space-y-2.5">
@@ -1747,6 +1976,18 @@ export default function MemberRoutine() {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
+                            void handleCloneRoutine(routine);
+                          }}
+                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                          aria-label={`Duplicar ${routine.name}`}
+                          title="Duplicar en biblioteca"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setUnassignTarget(routine);
                           }}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
@@ -1865,19 +2106,20 @@ export default function MemberRoutine() {
                             <div className="flex shrink-0 gap-0.5">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setEditingExercise({
-                                    ...exercise,
-                                    set_prescription:
-                                      exercise.set_prescription ??
-                                      deriveSetPrescription(exercise.sets, exercise.reps),
-                                  });
-                                  setIsEditingExercise(true);
-                                }}
+                                onClick={() => void openEditExercise(routine.id, exercise)}
                                 className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
                                 aria-label={`Editar ${exercise.name}`}
                               >
                                 <Edit className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openSubstitution(routine.id, exercise)}
+                                className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                                aria-label={`Sustituir ${exercise.name}`}
+                                title="Sustituir"
+                              >
+                                <ArrowLeftRight className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 type="button"

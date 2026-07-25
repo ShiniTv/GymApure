@@ -1,5 +1,6 @@
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import type { PoolClient } from 'pg';
+import { z } from 'zod';
 import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { logger } from '../lib/logger.ts';
@@ -14,6 +15,13 @@ import { parseBooleanQuery, parsePaginationQuery } from '../lib/pagination.ts';
 const router = asyncRouter();
 
 const ROUTINES_ALL_MAX = 200;
+const cloneRoutineSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional(),
+});
+const substituteExerciseSchema = z.object({
+  exercise_id: z.coerce.number().int().positive(),
+  reason: z.string().trim().min(2, 'Indica el motivo').max(500),
+});
 
 interface AssignmentRow {
   user_id: number;
@@ -298,6 +306,124 @@ router.post('/', authorize(['trainer', 'admin']), async (req: AuthRequest, res) 
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.post('/:id/clone', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
+  const sourceRoutineId = parseInt(req.params.id, 10);
+  if (!Number.isSafeInteger(sourceRoutineId) || sourceRoutineId <= 0) {
+    return res.status(400).json({ error: 'ID de rutina inválido' });
+  }
+  const parsed = cloneRoutineSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: formatZodError(parsed.error) });
+
+  const trainerId = await getRoutineTrainerId(sourceRoutineId);
+  if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return res.status(403).json({ error: 'No tienes permiso para duplicar esta rutina' });
+  }
+
+  try {
+    const routine = await withTransaction(async (client: PoolClient) => {
+      const source = await client.query<{ name: string; difficulty: string }>(
+        'SELECT name, difficulty FROM routines WHERE id = $1',
+        [sourceRoutineId]
+      );
+      const sourceRoutine = source.rows[0];
+      if (!sourceRoutine) throw new Error('Rutina no encontrada');
+
+      const name = parsed.data.name ?? `${sourceRoutine.name} (copia)`;
+      const created = await client.query<{ id: number; name: string; difficulty: string }>(
+        `INSERT INTO routines (name, difficulty, trainer_id)
+         VALUES ($1, $2, $3) RETURNING id, name, difficulty`,
+        [name, sourceRoutine.difficulty, req.user!.role === 'trainer' ? req.user!.id : trainerId]
+      );
+      const routineId = created.rows[0].id;
+      await client.query(
+        `INSERT INTO routine_exercises (
+           routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
+         )
+         SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
+         FROM routine_exercises WHERE routine_id = $2 ORDER BY id`,
+        [routineId, sourceRoutineId]
+      );
+      return created.rows[0];
+    });
+    res.status(201).json({ ...routine, success: true });
+  } catch (err: unknown) {
+    logger.error('Clone routine error', { error: getErrorMessage(err) });
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+router.post(
+  '/:id/exercises/:routineExerciseId/substitute',
+  authorize(['trainer', 'admin']),
+  async (req: AuthRequest, res) => {
+    const routineId = parseInt(req.params.id, 10);
+    const routineExerciseId = parseInt(req.params.routineExerciseId, 10);
+    if (!Number.isSafeInteger(routineId) || !Number.isSafeInteger(routineExerciseId)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+    const parsed = substituteExerciseSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: formatZodError(parsed.error) });
+
+    const trainerId = await getRoutineTrainerId(routineId);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+
+    try {
+      const replacement = await withTransaction(async (client: PoolClient) => {
+        const current = await client.query<{
+          exercise_id: number;
+          muscle_group: string;
+        }>(
+          `SELECT re.exercise_id, e.muscle_group
+           FROM routine_exercises re
+           JOIN exercises e ON e.id = re.exercise_id
+           WHERE re.id = $1 AND re.routine_id = $2`,
+          [routineExerciseId, routineId]
+        );
+        const source = current.rows[0];
+        if (!source) throw new Error('Ejercicio de rutina no encontrado');
+
+        const target = await client.query<{ id: number; name: string; muscle_group: string }>(
+          'SELECT id, name, muscle_group FROM exercises WHERE id = $1',
+          [parsed.data.exercise_id]
+        );
+        const targetExercise = target.rows[0];
+        if (!targetExercise) throw new Error('Ejercicio sustituto no encontrado');
+        if (targetExercise.id === source.exercise_id) {
+          throw new Error('Elige un ejercicio distinto');
+        }
+        if (targetExercise.muscle_group.toLowerCase() !== source.muscle_group.toLowerCase()) {
+          throw new Error('El sustituto debe trabajar el mismo grupo muscular');
+        }
+
+        await client.query('UPDATE routine_exercises SET exercise_id = $1 WHERE id = $2', [
+          targetExercise.id,
+          routineExerciseId,
+        ]);
+        await client.query(
+          `INSERT INTO routine_exercise_substitutions (
+             routine_exercise_id, previous_exercise_id, replacement_exercise_id, substituted_by, reason
+           ) VALUES ($1, $2, $3, $4, $5)`,
+          [
+            routineExerciseId,
+            source.exercise_id,
+            targetExercise.id,
+            req.user!.id,
+            parsed.data.reason,
+          ]
+        );
+        return targetExercise;
+      });
+      res.json({ success: true, exercise: replacement });
+    } catch (err: unknown) {
+      res.status(400).json({ error: getErrorMessage(err) });
+    }
+  }
+);
 
 router.put('/:id', authorize(['trainer', 'admin']), async (req: AuthRequest, res) => {
   const parsed = routineUpdateSchema.safeParse(req.body);
