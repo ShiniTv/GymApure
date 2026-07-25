@@ -365,11 +365,21 @@ async function main() {
     });
     ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
 
+    const trainerRemindersNoSecret = await api('POST', '/api/trainer-reminders/run');
+    ok(
+      'Recordatorios 1:1 sin secret ni admin → 403',
+      trainerRemindersNoSecret.res.status === 403
+    );
+
     if (process.env.CRON_SECRET) {
       const cronOk = await api('POST', '/api/settings/expiry/run', undefined, {
         'x-cron-secret': process.env.CRON_SECRET,
       });
       ok('Cron con CRON_SECRET válido → 200', cronOk.res.status === 200);
+      const trainerRemindersOk = await api('POST', '/api/trainer-reminders/run', undefined, {
+        'x-cron-secret': process.env.CRON_SECRET,
+      });
+      ok('Recordatorios 1:1 con CRON_SECRET válido → 200', trainerRemindersOk.res.status === 200);
     }
 
     // CSRF en rutas protegidas (dev o cuando CORS_ORIGINS está definido)

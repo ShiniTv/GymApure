@@ -6,6 +6,7 @@ import { runDbMaintenanceIfDue } from '../lib/dbMaintenance.ts';
 import { runExchangeRateRefreshNow } from '../jobs/exchangeRateCron.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { logAudit } from '../lib/audit.ts';
+import { runTrainerAppointmentReminders } from '../lib/trainerRemindersJob.ts';
 
 const router = asyncRouter();
 
@@ -38,6 +39,19 @@ router.post('/exchange-rate/refresh', authorizeCronOrAdmin, async (req: AuthRequ
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(502).json({ error: message });
+  }
+});
+
+router.post('/trainer-reminders/run', authorizeCronOrAdmin, async (req: AuthRequest, res) => {
+  try {
+    const result = await runTrainerAppointmentReminders();
+    if (req.user) {
+      await logAudit(req.user.id, 'trainer_reminders.run', result);
+    }
+    res.json({ success: true, result });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
   }
 });
 
