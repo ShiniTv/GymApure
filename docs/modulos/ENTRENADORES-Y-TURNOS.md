@@ -34,6 +34,19 @@ Los miembros pueden tener preferencia de turno (`training_shift`) para filtrado 
 
 ---
 
+## Sesiones 1:1
+
+Desde la ficha de un miembro asignado, el entrenador puede usar la pestaña **Agenda 1:1** para:
+
+1. Agendar una sesión individual con inicio, fin y objetivo.
+2. Vincularla opcionalmente al bloque de entrenamiento del cliente.
+3. Reprogramarla mientras esté agendada.
+4. Marcarla como completada, cancelada o no asistida.
+
+Las sesiones finalizadas no se reprograman: se conserva el registro para seguimiento. La agenda solo muestra y permite modificar sesiones de miembros a los que el entrenador mantiene acceso.
+
+---
+
 ## Seguridad
 
 Entrenadores **no** pueden acceder a datos de miembros no asignados. El backend valida con `requireMemberAccess`.

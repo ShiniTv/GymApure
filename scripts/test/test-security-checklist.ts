@@ -180,12 +180,43 @@ async function main() {
     });
     ok('Trainer guarda check-in de miembro asignado → 200', checkinWrite.res.status === 200);
 
+    const appointmentStart = new Date(Date.now() + 86_400_000).toISOString();
+    const appointmentEnd = new Date(Date.now() + 90_000_000).toISOString();
+    const appointmentCreate = await api('POST', '/api/appointments', {
+      member_id: memberId,
+      starts_at: appointmentStart,
+      ends_at: appointmentEnd,
+      notes: 'Prueba de agenda segura',
+    });
+    ok('Trainer agenda sesión 1:1 con miembro asignado → 201', appointmentCreate.res.status === 201);
+    const appointmentId = Number((appointmentCreate.data as { id?: number }).id);
+    if (appointmentId) {
+      const appointmentUpdate = await api('PATCH', `/api/appointments/${appointmentId}`, {
+        status: 'completed',
+      });
+      ok(
+        'Trainer completa su sesión 1:1 → 200',
+        appointmentUpdate.res.status === 200 &&
+          (appointmentUpdate.data as { status?: string }).status === 'completed'
+      );
+    }
+
     if (isolatedId) {
       const blockedAssessment = await api('GET', `/api/users/${isolatedId}/training-assessment`);
       ok(
         'Trainer sin acceso a evaluación de miembro no asignado → 403',
         blockedAssessment.res.status === 403,
         `status ${blockedAssessment.res.status}`
+      );
+      const blockedAppointment = await api('POST', '/api/appointments', {
+        member_id: isolatedId,
+        starts_at: appointmentStart,
+        ends_at: appointmentEnd,
+      });
+      ok(
+        'Trainer no agenda sesión 1:1 con miembro no asignado → 403',
+        blockedAppointment.res.status === 403,
+        `status ${blockedAppointment.res.status}`
       );
     }
 

@@ -47,6 +47,7 @@ import { MemberProgressPanel } from './memberRoutine/MemberProgressPanel';
 import { MemberCoachNotesPanel } from './memberRoutine/MemberCoachNotesPanel';
 import { MemberCoachingPanel } from './memberRoutine/MemberCoachingPanel';
 import { MemberTrainingBlocksPanel } from './memberRoutine/MemberTrainingBlocksPanel';
+import { MemberAppointmentsPanel } from './memberRoutine/MemberAppointmentsPanel';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -101,11 +102,12 @@ export default function MemberRoutine() {
   const { user } = useAuth();
   const toast = useToastOptional();
   type CoachingTab =
-    'rutinas' | 'progreso' | 'bloques' | 'notas' | 'coaching' | 'perfil' | 'mediciones';
+    'rutinas' | 'progreso' | 'bloques' | 'agenda' | 'notas' | 'coaching' | 'perfil' | 'mediciones';
   const parseCoachingTab = (raw: string | null): CoachingTab | null => {
     if (
       raw === 'progreso' ||
       raw === 'bloques' ||
+      raw === 'agenda' ||
       raw === 'notas' ||
       raw === 'coaching' ||
       raw === 'perfil' ||
@@ -993,6 +995,7 @@ export default function MemberRoutine() {
           { value: 'rutinas', label: 'Rutinas' },
           { value: 'progreso', label: 'Progreso' },
           { value: 'bloques', label: 'Bloques' },
+          { value: 'agenda', label: 'Agenda 1:1' },
           { value: 'coaching', label: 'Coaching' },
           { value: 'notas', label: 'Notas' },
           { value: 'perfil', label: 'Perfil' },
@@ -1822,6 +1825,10 @@ export default function MemberRoutine() {
 
       {coachingTab === 'bloques' && id ? (
         <MemberTrainingBlocksPanel memberId={parseInt(id, 10)} />
+      ) : null}
+
+      {coachingTab === 'agenda' && id ? (
+        <MemberAppointmentsPanel memberId={parseInt(id, 10)} />
       ) : null}
 
       {coachingTab === 'rutinas' && (
