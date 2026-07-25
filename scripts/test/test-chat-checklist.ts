@@ -100,6 +100,22 @@ async function main() {
     typeof s.expiry_alert_days === 'number' && s.notify_payment_events === undefined
   );
 
+  const retention = await jsonApi('GET', '/api/settings/chat-retention');
+  const r = retention.data as { chat_message_retention_days?: number };
+  ok('GET /api/settings/chat-retention', retention.res.status === 200);
+  ok(
+    'chat_message_retention_days es número',
+    typeof r.chat_message_retention_days === 'number'
+  );
+  const previousRetention = r.chat_message_retention_days ?? 90;
+  const putRetention = await jsonApi('PUT', '/api/settings/chat-retention', {
+    chat_message_retention_days: 60,
+  });
+  ok('PUT /api/settings/chat-retention', putRetention.res.status === 200);
+  await jsonApi('PUT', '/api/settings/chat-retention', {
+    chat_message_retention_days: previousRetention,
+  });
+
   cookie = '';
   csrfToken = '';
   await jsonApi('POST', '/api/auth/register', {

@@ -14,6 +14,9 @@ interface MacroRingProps {
   size?: number;
 }
 
+/** Extra SVG margin so Gaussian blur / stroke AA are not clipped by the viewBox. */
+const GLOW_PAD = 10;
+
 function useAnimatedPct(targetPct: number, durationMs = 900) {
   const [pct, setPct] = useState(0);
   const pctRef = useRef(0);
@@ -67,13 +70,30 @@ export function MacroRing({
   const targetPct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0;
   const pct = useAnimatedPct(targetPct);
   const offset = circumference - (pct / 100) * circumference;
+  const svgSize = size + GLOW_PAD * 2;
+  const cx = svgSize / 2;
+  const cy = svgSize / 2;
 
   return (
-    <div className={cn('flex flex-col items-center gap-1.5', className)}>
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90" aria-hidden>
+    <div className={cn('flex flex-col items-center gap-1.5 overflow-visible', className)}>
+      <div className="relative overflow-visible" style={{ width: size, height: size }}>
+        <svg
+          width={svgSize}
+          height={svgSize}
+          viewBox={`0 0 ${svgSize} ${svgSize}`}
+          className="pointer-events-none absolute -rotate-90 overflow-visible"
+          style={{ left: -GLOW_PAD, top: -GLOW_PAD }}
+          aria-hidden
+        >
           <defs>
-            <filter id={`macro-glow-${glowId}`} x="-50%" y="-50%" width="200%" height="200%">
+            <filter
+              id={`macro-glow-${glowId}`}
+              x="-80%"
+              y="-80%"
+              width="260%"
+              height="260%"
+              filterUnits="objectBoundingBox"
+            >
               <feGaussianBlur stdDeviation="2.2" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -82,8 +102,8 @@ export function MacroRing({
             </filter>
           </defs>
           <circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={cx}
+            cy={cy}
             r={radius}
             fill="none"
             stroke="currentColor"
@@ -91,8 +111,8 @@ export function MacroRing({
             className={trackClass}
           />
           <circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={cx}
+            cy={cy}
             r={radius}
             fill="none"
             stroke={glowColor}

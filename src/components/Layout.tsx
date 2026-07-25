@@ -156,7 +156,7 @@ export default function Layout() {
   const brandMark = <BrandName variant="split" />;
   const mobileHeaderTitle = currentPage ?? BRAND.name;
 
-  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,17.5rem)] lg:w-60';
+  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16.5rem)] lg:w-56';
   const hideBackToDashboard =
     showMemberBottomNav || showReceptionBottomNav || showTrainerBottomNav || showAdminBottomNav;
 
@@ -273,8 +273,8 @@ export default function Layout() {
             <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
-                  'nav-stack scroll-area min-h-0 flex-1 py-4 lg:py-5',
-                  sidebarCollapsed ? 'px-1.5' : 'px-3'
+                  'nav-stack scroll-area min-h-0 flex-1 py-3 lg:py-4',
+                  sidebarCollapsed ? 'px-1.5' : 'px-2.5'
                 )}
               >
                 {allFiltered.map((section) => (
@@ -340,11 +340,11 @@ export default function Layout() {
               <div
                 className={clsx(
                   'bg-bg/40 shrink-0 space-y-1',
-                  sidebarCollapsed ? 'px-1.5 py-3' : 'px-3 py-4',
+                  sidebarCollapsed ? 'px-1.5 py-3' : 'px-2.5 py-3',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isAdminMobileShell && 'pb-[env(safe-area-inset-bottom)]',
-                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-4'
+                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-3'
                 )}
               >
                 {!sidebarCollapsed && (
@@ -390,7 +390,7 @@ export default function Layout() {
                     setIsSidebarOpen(false);
                   }}
                   className={clsx(
-                    'hover:bg-surface-overlay flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors',
+                    'hover:bg-surface-overlay flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}

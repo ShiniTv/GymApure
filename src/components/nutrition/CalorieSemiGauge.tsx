@@ -11,6 +11,10 @@ interface CalorieSemiGaugeProps {
   className?: string;
 }
 
+/** Padding so glow blur and round caps at arc tips are not clipped. */
+const PAD_X = 14;
+const PAD_Y = 12;
+
 function useAnimatedValue(target: number, durationMs = 900) {
   const [value, setValue] = useState(0);
   const valueRef = useRef(0);
@@ -69,22 +73,32 @@ export function CalorieSemiGauge({ consumed, target, date, className }: CalorieS
     : format(dateObj, 'MMM d', { locale: es });
 
   const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
+  const vbX = -PAD_X;
+  const vbY = -PAD_Y;
+  const vbW = width + PAD_X * 2;
+  const vbH = height + PAD_Y * 2;
 
   return (
     <div
-      className={cn('relative mx-auto w-full max-w-[280px]', className)}
+      className={cn('relative mx-auto w-full max-w-[280px] overflow-visible', className)}
       role="img"
       aria-label={`Calorías: ${Math.round(consumed)} de ${target}`}
     >
+      {/* Expanded viewBox leaves room for blur + round caps without clipping */}
       <svg
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full"
+        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        className="h-auto w-full overflow-visible"
         aria-hidden
       >
         <defs>
-          <filter id={`cal-glow-${glowId}`} x="-50%" y="-50%" width="200%" height="200%">
+          <filter
+            id={`cal-glow-${glowId}`}
+            x="-80%"
+            y="-80%"
+            width="260%"
+            height="260%"
+            filterUnits="objectBoundingBox"
+          >
             <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />

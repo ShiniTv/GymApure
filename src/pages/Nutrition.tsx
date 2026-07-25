@@ -270,11 +270,15 @@ export default function Nutrition() {
         }
       />
 
-      <WeekDateStrip selectedDate={selectedDate} onSelect={setSelectedDate} className="px-1" />
+      <WeekDateStrip
+        selectedDate={selectedDate}
+        onSelect={setSelectedDate}
+        className="overflow-visible px-1"
+      />
 
       <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:items-stretch md:gap-4 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
-        <div className="space-y-2">
-          <section className="pt-3 sm:pt-2 md:pt-0">
+        <div className="space-y-2 overflow-visible">
+          <section className="overflow-visible pt-3 sm:pt-2 md:pt-0">
             <CalorieSemiGauge
               consumed={totals.calories}
               target={plan.calories_target}
@@ -282,7 +286,7 @@ export default function Nutrition() {
             />
           </section>
 
-          <section className="mx-auto grid max-w-sm grid-cols-3 justify-items-center gap-1 px-1 pt-2 pb-1 md:max-w-none md:pt-1">
+          <section className="mx-auto grid max-w-sm grid-cols-3 justify-items-center gap-3 overflow-visible px-2 pt-3 pb-3 md:max-w-none md:pt-2">
             <MacroRing
               label="Proteína"
               consumed={totals.protein}

@@ -14,7 +14,7 @@ function getGreeting(): string {
 }
 
 const statusPill =
-  'mt-3.5 inline-flex max-w-full items-center rounded-pill px-2.5 py-1 text-[11px] font-semibold';
+  'inline-flex max-w-full items-center rounded-pill px-2.5 py-1 text-[11px] font-semibold';
 
 interface MemberHeroProps {
   name: string;
@@ -85,24 +85,30 @@ export function MemberHero({
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
-          {routineInProgress && !routineCompletedToday && (
-            <span className={cn(statusPill, 'bg-warning/10 text-warning')}>
-              Entrenamiento en curso
-            </span>
-          )}
+          {(routineInProgress && !routineCompletedToday) ||
+          routineCompletedToday ||
+          workoutStreak > 0 ? (
+            <div className="mt-3.5 flex flex-wrap items-center gap-2">
+              {routineInProgress && !routineCompletedToday && (
+                <span className={cn(statusPill, 'bg-warning/10 text-warning')}>
+                  Entrenamiento en curso
+                </span>
+              )}
 
-          {routineCompletedToday && (
-            <span className={cn(statusPill, 'bg-success/10 text-success')}>Completada hoy</span>
-          )}
+              {routineCompletedToday && (
+                <span className={cn(statusPill, 'bg-success/10 text-success')}>Completada hoy</span>
+              )}
 
-          {workoutStreak > 0 && (
-            <div className={cn(statusPill, 'streak-badge bg-success/10 gap-1.5')}>
-              <Flame className="text-success h-3.5 w-3.5" aria-hidden />
-              <span className="text-success">
-                Racha {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
-              </span>
+              {workoutStreak > 0 && (
+                <div className={cn(statusPill, 'streak-badge bg-success/10 gap-1.5')}>
+                  <Flame className="text-success h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="text-success">
+                    Racha {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
 
         <ProgressRing

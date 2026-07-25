@@ -52,13 +52,16 @@ Antes de migrar prod: `npm run deploy:preflight` + `npm run db:verify-isolation`
 
 El job en `src/lib/dbMaintenance.ts` purga automáticamente:
 
-| Tabla                         | Default  | Variable de entorno                 |
+| Tabla                         | Default  | Variable de entorno / ajuste        |
 | ----------------------------- | -------- | ----------------------------------- |
 | `audit_logs`                  | 90 días  | `AUDIT_LOG_RETENTION_DAYS`          |
 | `chat_system_log`             | 180 días | `EXPIRY_NOTIF_LOG_RETENTION_DAYS`   |
+| `chat_messages`               | 90 días  | Configuración → Retención del chat  |
 | `user_notifications` (leídas) | 90 días  | `READ_NOTIFICATIONS_RETENTION_DAYS` |
 | `password_reset_tokens`       | 7 días   | `RESET_TOKEN_RETENTION_DAYS`        |
 | `push_subscriptions`          | 90 días  | `PUSH_SUBSCRIPTION_RETENTION_DAYS`  |
+
+`chat_messages`: `0` = no auto-borrar. Opciones admin: 30 / 60 / 90 / 180.
 
 Ver [AUDITORIA-BD.md](./AUDITORIA-BD.md) para checklist completo.
 

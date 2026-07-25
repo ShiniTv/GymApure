@@ -49,6 +49,7 @@ El endpoint público `GET /api/health` **no** expone configuración interna. `GE
 | ----------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
 | Logs de auditoría       | `AUDIT_LOG_RETENTION_DAYS` (90)                   | Cron diario del servidor                                   |
 | Logs avisos vencimiento | `EXPIRY_NOTIF_LOG_RETENTION_DAYS` (180)           | Idem                                                       |
+| Mensajes de chat        | 90 días (ajustable en Configuración)              | Purga diaria; opción “no borrar”                           |
 | Cuenta de usuario       | Hasta baja manual                                 | `DELETE` admin en Miembros o script controlado             |
 | Comprobantes de pago    | Mientras exista el pago                           | Borrado en cascada al eliminar pago (según implementación) |
 | Sesiones JWT            | Cookie httpOnly; invalidación por `token_version` | Logout, cambio de contraseña, suspensión                   |
