@@ -32,13 +32,13 @@ async function buildStore(): Promise<Store | undefined> {
 
 /** Login / register: limit brute-force attempts per IP. */
 export let authRateLimiter = createLimiter({
-  max: strictLimits ? 20 : 500,
+  max: isCI ? 50_000 : strictLimits ? 20 : 500,
   message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
 });
 
 /** General API traffic per IP (authenticated routes). */
 export let apiRateLimiter = createLimiter({
-  max: strictLimits ? 300 : 5000,
+  max: isCI ? 100_000 : strictLimits ? 300 : 5000,
   message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
 });
 
@@ -80,14 +80,14 @@ export async function initRateLimiters(): Promise<void> {
 
   authRateLimiter = createLimiter(
     {
-      max: strictLimits ? 20 : 500,
+      max: isCI ? 50_000 : strictLimits ? 20 : 500,
       message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
     },
     store
   );
   apiRateLimiter = createLimiter(
     {
-      max: strictLimits ? 300 : 5000,
+      max: isCI ? 100_000 : strictLimits ? 300 : 5000,
       message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
     },
     store

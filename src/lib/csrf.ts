@@ -9,7 +9,7 @@ const CSRF_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 
 export const csrfCookieOptions: CookieOptions = {
   httpOnly: false,
-  secure: env.NODE_ENV === 'production',
+  secure: env.NODE_ENV === 'production' && process.env.CI !== 'true',
   sameSite: 'lax',
   path: '/',
   maxAge: CSRF_MAX_AGE_MS,
@@ -17,7 +17,7 @@ export const csrfCookieOptions: CookieOptions = {
 
 export const clearCsrfCookieOptions: CookieOptions = {
   httpOnly: false,
-  secure: env.NODE_ENV === 'production',
+  secure: env.NODE_ENV === 'production' && process.env.CI !== 'true',
   sameSite: 'lax',
   path: '/',
 };

@@ -13,6 +13,7 @@ async function expectNoAccessibilityViolations(page: import('@playwright/test').
 test.describe('Auditoría WCAG AA', () => {
   test('login público no presenta violaciones WCAG AA', async ({ page }) => {
     await page.goto('/login');
+    await expect(page.getByTestId('login-panel')).toBeVisible();
     await expectNoAccessibilityViolations(page);
   });
 

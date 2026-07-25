@@ -16,8 +16,12 @@ export function demoPassword(): string {
 
 /** Evita el modal de tema en primer login de miembro (bloquea clics en E2E). */
 export async function skipThemeOnboarding(page: Page) {
-  await page.evaluate((key) => {
-    localStorage.setItem(key, '1');
+  await page.addInitScript((key) => {
+    try {
+      localStorage.setItem(key, '1');
+    } catch {
+      /* ignore */
+    }
   }, THEME_ONBOARDING_KEY);
 }
 
@@ -31,12 +35,13 @@ export async function dismissThemeOnboardingIfPresent(page: Page) {
 
 /** Login vía UI. Requiere npm run db:restore-demo previo. */
 export async function login(page: Page, email: string, password: string) {
-  await page.goto('/login');
   await skipThemeOnboarding(page);
+  await page.goto('/login');
+  await page.locator('#email').waitFor({ state: 'visible', timeout: 15_000 });
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
-  await page.getByRole('button', { name: /entrar/i }).click();
 
+  // Registrar waiters ANTES del click: si la navegación es rápida, waitForURL posterior la pierde.
   const leftLogin = page.waitForURL((url) => !url.pathname.startsWith('/login'), {
     timeout: 30_000,
   });
@@ -50,6 +55,7 @@ export async function login(page: Page, email: string, password: string) {
       );
     });
 
+  await page.getByRole('button', { name: /entrar/i }).click();
   await Promise.race([leftLogin, rateLimited]);
   await dismissThemeOnboardingIfPresent(page);
 }
