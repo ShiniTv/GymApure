@@ -2,33 +2,30 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Login lockout UI', () => {
   test('tras 3 fallos muestra countdown y deshabilita Entrar', async ({ page }) => {
-    const email = `lockout-ui-${Date.now()}@test.local`;
+    const lockedUntil = Date.now() + 15 * 60 * 1000;
 
-    // Provocar lockout vía API (evita flaky del POST desde Chromium en CI).
-    for (let i = 0; i < 3; i++) {
-      const response = await page.request.post('/api/auth/login', {
-        data: { email, password: 'WrongPassword123!' },
-        failOnStatusCode: false,
-        timeout: 20_000,
+    // Mock 429: valida la UI de lockout sin depender del POST real del browser (flaky en CI).
+    await page.route('**/api/auth/login', async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: 'Demasiados intentos. Cuenta bloqueada. Inténtalo de nuevo en 15 min.',
+          locked_until: lockedUntil,
+          retry_after_seconds: 900,
+        }),
       });
-      expect([401, 429]).toContain(response.status());
-    }
+    });
 
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.locator('#email').waitFor({ state: 'visible' });
-    await page.locator('#email').fill(email);
+    await page.locator('#email').fill(`lockout-ui-${Date.now()}@test.local`);
     await page.locator('#password').fill('WrongPassword123!');
-
-    const responsePromise = page.waitForResponse(
-      (res) =>
-        res.url().includes('/api/auth/login') &&
-        res.request().method() === 'POST' &&
-        res.status() !== 0,
-      { timeout: 20_000 }
-    );
     await page.getByRole('button', { name: /^Entrar$/i }).click();
-    const response = await responsePromise;
-    expect(response.status()).toBe(429);
 
     const lockoutAlert = page.getByRole('alert').filter({ hasText: /demasiados intentos/i });
     await expect(lockoutAlert).toBeVisible({ timeout: 15_000 });

@@ -25,6 +25,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+    // Prod build registers SW; mid-test claim/reload destroys Playwright execution contexts in CI.
+    serviceWorkers: 'block',
   },
   projects: [
     {

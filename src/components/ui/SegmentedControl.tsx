@@ -140,14 +140,14 @@ export function SegmentedControl<T extends string>({
                     'rounded-xl py-3 text-xs font-semibold',
                     active
                       ? accentActive[accent]
-                      : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                      : 'text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
                   )
                 : scroll
                   ? cn(
                       'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
                       active
                         ? 'bg-brand/10 text-brand'
-                        : 'bg-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                        : 'bg-transparent text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                     )
                   : cn(
                       isCompact
@@ -155,7 +155,7 @@ export function SegmentedControl<T extends string>({
                         : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
                       active
                         ? 'text-brand dark:text-brand bg-white shadow-sm dark:bg-zinc-700'
-                        : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+                        : 'text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300'
                     )
             )}
           >
