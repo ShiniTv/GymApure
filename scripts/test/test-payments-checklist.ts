@@ -104,6 +104,24 @@ async function main() {
   const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   ok('Login admin', adminLogin.res.status === 200);
 
+  // CI / fresh DBs may lack a scraped BCV rate — seed a manual override for the suite.
+  let rateRes = await jsonApi('GET', '/api/exchange-rate');
+  let activeRate = Number((rateRes.data as { rate?: number }).rate);
+  if (!(rateRes.res.status === 200 && activeRate > 0)) {
+    const seeded = await jsonApi('PUT', '/api/settings/exchange-rate', {
+      override_rate: 36.5,
+      override_note: 'payments-checklist seed',
+    });
+    ok(
+      'Sembrar tasa BCV de prueba',
+      seeded.res.status === 200,
+      `status=${seeded.res.status}`
+    );
+    rateRes = await jsonApi('GET', '/api/exchange-rate');
+    activeRate = Number((rateRes.data as { rate?: number }).rate);
+  }
+  ok('GET tasa BCV activa', rateRes.res.status === 200 && activeRate > 0, `rate=${activeRate}`);
+
   let plans = await jsonApi('GET', '/api/memberships');
   let planList = plans.data as { id: number; price_usd: number }[];
   ok('GET planes de membresía', plans.res.status === 200 && Array.isArray(planList));
@@ -136,12 +154,6 @@ async function main() {
 
   await login(MEMBER_APPROVE_EMAIL, MEMBER_PASSWORD);
 
-  const rateRes = await jsonApi('GET', '/api/exchange-rate');
-  ok(
-    'GET tasa BCV activa',
-    rateRes.res.status === 200 && (rateRes.data as { rate?: number }).rate! > 0
-  );
-  const activeRate = (rateRes.data as { rate: number }).rate;
   const expectedBs = Math.round(30 * activeRate * 100) / 100;
 
   const meBefore = await jsonApi('GET', '/api/auth/me');
