@@ -66,6 +66,8 @@
     "security:audit-mfa:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/audit-staff-mfa.ts",
     "security:audit-mfa:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/audit-staff-mfa.ts -- --allow-prod",
     "security:audit-mfa:staging": "tsx scripts/dev/run-with-env.ts .env.staging scripts/db/audit-staff-mfa.ts",
+    "security:reencrypt-mfa:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/reencrypt-mfa-secrets.ts",
+    "security:reencrypt-mfa:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/reencrypt-mfa-secrets.ts -- --allow-prod",
     "db:audit-fks": "tsx scripts/db/audit-unindexed-fks.ts",
     "db:audit-fks:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/audit-unindexed-fks.ts",
     "db:backup-check": "tsx scripts/db/verify-backup-readiness.ts",

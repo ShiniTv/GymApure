@@ -1,6 +1,6 @@
 # Datos personales y privacidad operativa
 
-Guía para el tratamiento de datos personales en GymApure (Caribean Gym): qué se almacena, quién accede y cuánto tiempo se conserva.
+Guía para el tratamiento de datos personales en GymApure: qué se almacena, quién accede y cuánto tiempo se conserva.
 
 ---
 

@@ -10,53 +10,54 @@ const ctaPrimary = cn(
 );
 const ctaSecondary = cn(
   typography.button,
-  'inline-flex h-12 min-h-[var(--touch-min)] items-center justify-center rounded-button border border-border bg-transparent px-6 text-text transition-colors hover:bg-surface-overlay'
+  'inline-flex h-12 min-h-[var(--touch-min)] items-center justify-center rounded-button border border-white/25 bg-black/35 px-6 text-white backdrop-blur-sm transition-colors hover:bg-black/50'
 );
 
 /**
- * Public landing — one composition: brand hero, one headline, support line, CTAs.
+ * Public landing — one composition: full-bleed gym photo, brand hero, one CTA group.
  */
 export default function Landing() {
   usePageTitle(BRAND.pageTitle);
 
   return (
-    <div className="bg-bg text-text relative flex min-h-dvh flex-col overflow-hidden">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+      <img
+        src="/landing-hero-gym.png"
+        alt=""
+        className="landing-hero-img absolute inset-0 h-full w-full object-cover"
+        decoding="async"
+        fetchPriority="high"
+      />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_oklab,var(--color-brand)_28%,transparent),_transparent_55%)]"
+        className="absolute inset-0 bg-gradient-to-b from-zinc-950/55 via-zinc-950/50 to-zinc-950/90"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-50"
-        style={{
-          backgroundImage:
-            'linear-gradient(to bottom, transparent 40%, var(--color-bg) 95%), url(/og-image.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_oklab,#0c98ff_22%,transparent),_transparent_55%)]"
         aria-hidden
       />
 
       <header className="relative z-10 flex items-center justify-between px-4 py-5 sm:px-8">
-        <p className="font-display text-xl font-bold tracking-tight sm:text-2xl">
-          <span className="text-text">{BRAND.nameParts.primary}</span>
+        <p className="landing-brand font-display text-2xl font-bold tracking-tight sm:text-3xl">
+          <span className="text-white">{BRAND.nameParts.primary}</span>
           <span className="text-brand">{BRAND.nameParts.accent}</span>
         </p>
         <Link
           to="/login"
-          className="text-text-secondary hover:text-text text-sm font-semibold underline-offset-4 hover:underline"
+          className="text-sm font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline"
         >
           Iniciar sesión
         </Link>
       </header>
 
-      <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 pb-16 sm:px-8">
-        <h1 className="font-display text-text text-4xl leading-[1.1] font-bold tracking-[-0.03em] sm:text-5xl lg:text-6xl">
+      <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col justify-end px-4 pb-16 sm:justify-center sm:px-8 sm:pb-20">
+        <h1 className="landing-headline font-display text-4xl leading-[1.08] font-bold tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl">
           {BRAND.heroHeadline}
         </h1>
-        <p className="text-text-secondary mt-4 max-w-xl text-base sm:text-lg">
+        <p className="landing-support mt-4 max-w-xl text-base text-white/75 sm:text-lg">
           {BRAND.heroSubheadline}
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="landing-ctas mt-8 flex flex-wrap items-center gap-3">
           <Link to="/solicitar-demo" className={ctaPrimary}>
             Solicitar demo
           </Link>

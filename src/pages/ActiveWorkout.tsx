@@ -42,7 +42,6 @@ import {
   getLastSetHint,
   lastSessionLogMap,
   resolveSetValues,
-  type LastSessionSetLog,
 } from './activeWorkout/setValues';
 import {
   ExerciseExecutionSteps,
@@ -79,6 +78,12 @@ import {
   useWorkoutRoutineQuery,
   type WorkoutRoutine,
 } from '../hooks/queries/useWorkoutRoutineQuery';
+import {
+  useDiscardWorkoutMutation,
+  useFinishWorkoutMutation,
+  useLogWorkoutSetMutation,
+  useStartWorkoutMutation,
+} from '../hooks/queries/useWorkoutMutations';
 import { useQueryClient } from '@tanstack/react-query';
 
 const ExercisePicker = lazy(() =>
@@ -98,13 +103,6 @@ interface LogEntry {
   weight: string;
   reps: string;
   completed: boolean;
-}
-
-interface SessionLogResponse {
-  exercise_id: number;
-  set_number: number;
-  weight: number;
-  reps: number;
 }
 
 function restStorageKey(sessionId: number): string {
@@ -137,6 +135,10 @@ export default function ActiveWorkout() {
   const toast = useToastOptional();
   const memberStatsCtx = useMemberStatsOptional();
   const queryClient = useQueryClient();
+  const startWorkoutMutation = useStartWorkoutMutation();
+  const logWorkoutSetMutation = useLogWorkoutSetMutation();
+  const finishWorkoutMutation = useFinishWorkoutMutation();
+  const discardWorkoutMutation = useDiscardWorkoutMutation();
 
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -603,17 +605,10 @@ export default function ActiveWorkout() {
     if (!user || !routine || isStartingRef.current || routineBlockedToday) return;
     isStartingRef.current = true;
     try {
-      const res = await apiFetch('/api/workouts/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, routine_id: routineId }),
+      const data = await startWorkoutMutation.mutateAsync({
+        userId: user.id,
+        routineId,
       });
-      const data = await parseJsonResponse<{
-        id: number;
-        start_time?: string;
-        logs?: SessionLogResponse[];
-        last_session_logs?: LastSessionSetLog[];
-      }>(res);
       setSessionId(data.id);
       setLastSessionLogs(lastSessionLogMap(data.last_session_logs ?? []));
 
@@ -739,16 +734,12 @@ export default function ActiveWorkout() {
 
     // Send to API
     try {
-      await apiFetch('/api/workouts/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          exercise_id: exerciseId,
-          set_number: setNum,
-          weight,
-          reps,
-        }),
+      await logWorkoutSetMutation.mutateAsync({
+        session_id: sessionId,
+        exercise_id: exerciseId,
+        set_number: setNum,
+        weight,
+        reps,
       });
 
       hapticLight();
@@ -834,16 +825,11 @@ export default function ActiveWorkout() {
           return;
         }
       }
-      const res = await apiFetch('/api/workouts/finish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          success,
-        }),
+      await finishWorkoutMutation.mutateAsync({
+        sessionId,
+        success,
+        routineId: routineId ?? undefined,
       });
-
-      await parseJsonResponse(res);
       clearWorkoutLogQueueForSession(sessionId);
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
@@ -899,12 +885,10 @@ export default function ActiveWorkout() {
     setSessionError(null);
     try {
       if (sessionId) {
-        const res = await apiFetch('/api/workouts/discard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session_id: sessionId }),
+        await discardWorkoutMutation.mutateAsync({
+          sessionId,
+          routineId: routineId ?? undefined,
         });
-        await parseJsonResponse(res);
         clearWorkoutLogQueueForSession(sessionId);
         localStorage.removeItem(`active_workout_logs_${sessionId}`);
         localStorage.removeItem(`active_workout_sets_${sessionId}`);

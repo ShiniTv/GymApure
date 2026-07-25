@@ -5,6 +5,7 @@ import { parseDateOnly } from '../../lib/dates';
 import { dateLocale as es } from '../../lib/dateLocale';
 import {
   AlertTriangle,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -438,7 +439,7 @@ export default function MemberDashboard() {
         </div>
       )}
 
-      <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         <QuickAction
           compact
           iconOnlyMobile
@@ -446,6 +447,15 @@ export default function MemberDashboard() {
           icon={Dumbbell}
           title="Rutinas"
           description="Asignaciones activas"
+          tone="blue"
+        />
+        <QuickAction
+          compact
+          iconOnlyMobile
+          to="/reservas"
+          icon={CalendarDays}
+          title="Reservas"
+          description="Clases grupales"
           tone="blue"
         />
         <QuickAction

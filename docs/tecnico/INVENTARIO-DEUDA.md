@@ -1,32 +1,44 @@
-# Inventario de deuda — ruta 10/10
+# Inventario de deuda — ruta ~9.5/10
 
-Snapshot 2026-07-25. Orden de ataque alineado a Fases 1–4.
+Snapshot re-eval 2026-07-25. MFA opcional (no es deuda).
 
-## God-files (partir / hooks)
+## Fase A — GTM / UX
 
-| Archivo                       | ~KB | Acción                              |
-| ----------------------------- | --- | ----------------------------------- |
-| `src/pages/MemberRoutine.tsx` | 86  | Ya tiene paneles; seguir extrayendo |
-| `src/pages/Messages.tsx`      | 66  | Extraer lista/composer              |
-| `src/pages/ActiveWorkout.tsx` | 63  | Hook Query + tipos/helpers          |
-| `src/pages/Profile.tsx`       | 52  | Tabs ya parciales                   |
-| `src/api/users.ts`            | 40  | Sub-routers de dominio              |
+- [x] Pack PWA PNG + screenshots + theme_color
+- [x] Landing brand-first (foto + motion)
+- [x] Tokens contraste AA + axe staff sin disable color-contrast
+- [x] Reservas discovery (Inicio) + chips por día
+- [x] Scorecard re-eval
 
-## React Query gaps
+## Fase B — Modular
 
-Páginas con `apiFetch` dominante sin hook dedicado: ActiveWorkout, Reception, Equipment, Attendance, CheckIn, AuditLogs, Reports, Memberships, DemoLeads, MfaSecurity (aceptable).
+- [x] Partir MemberRoutine / Messages (composer + measurements)
+- [x] Mutations RQ: workout / reception / equipment
+- [x] Empezar split `src/api/users/listHelpers.ts`
 
-## Seguridad
+## Fase C — Calidad
 
-- [x] Montar `enforceMfaForStaff` (env-gated)
-- [x] Cifrar `mfa_secret` at-rest
-- [x] Acotar `trainerHasMemberAccess` a assignments
-- [x] Ampliar checklist IDOR (nutrition/files/classes)
+- [x] Vitest dominio (11 archivos)
+- [x] Checklists dominio en CI
+- [x] CI: pages no importan `lib/server`
 
-## UX / marca
+## Fase D — Ops
 
-- [x] Manifest nombre GymApure
-- [x] Landing pública
-- [x] SolicitarDemo con tokens de marca
-- [x] Reservas más ricas
-- [x] Palettes reducidas (featured 4)
+- [x] Script re-encrypt MFA + docs `MFA_ENCRYPTION_KEY`
+- [x] Staging / backup / Sentry checklist (`OPS-VERIFY-CHECKLIST.md`)
+- [x] QA-DEVICE-10 plantilla de evidencia (cierre en dispositivo físico)
+
+## Pendiente operativo (humano / Render)
+
+- Configurar `MFA_ENCRYPTION_KEY` en Render y correr `security:reencrypt-mfa:prod` si hay secrets legacy
+- Completar filas device en `docs/qa/QA-DEVICE-10.md` con evidencia real
+- Verificar Sentry DSN + alerta live
+
+## God-files (seguir partiendo en iteraciones)
+
+| Archivo             | Estado                      |
+| ------------------- | --------------------------- |
+| `Messages.tsx`      | Composer extraído           |
+| `MemberRoutine.tsx` | Measurements panel extraído |
+| `ActiveWorkout.tsx` | Mutations en hooks          |
+| `src/api/users.ts`  | `listHelpers` extraído      |

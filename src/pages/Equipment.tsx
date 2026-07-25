@@ -45,7 +45,11 @@ import {
   useEquipmentInventoryQuery,
   useEquipmentVendorsQuery,
   useEquipmentZonesQuery,
+  useCreateEquipmentEventMutation,
+  useCreateEquipmentMutation,
+  useDeleteEquipmentMutation,
   useInvalidateEquipment,
+  useUpdateEquipmentMutation,
 } from '../hooks/queries/useEquipmentQuery';
 import { cn } from '../lib/utils';
 import { EquipmentListCard } from './equipment/EquipmentListCard';
@@ -61,6 +65,10 @@ export default function Equipment() {
   const isAdmin = user?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
   const { invalidateInventory, invalidateMeta, invalidateDetail } = useInvalidateEquipment();
+  const createEquipmentMutation = useCreateEquipmentMutation();
+  const updateEquipmentMutation = useUpdateEquipmentMutation();
+  const deleteEquipmentMutation = useDeleteEquipmentMutation();
+  const createEquipmentEventMutation = useCreateEquipmentEventMutation();
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -287,12 +295,7 @@ export default function Equipment() {
     }
     setAddSaving(true);
     try {
-      const res = await apiFetch('/api/equipment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const created = await parseJsonResponse<EquipmentItem>(res);
+      const created = await createEquipmentMutation.mutateAsync(payload);
       if (addPhotoFile) {
         const formData = new FormData();
         formData.append('photo', addPhotoFile);
@@ -323,12 +326,10 @@ export default function Equipment() {
     if (!detail) return;
     setReportError('');
     try {
-      const res = await apiFetch(`/api/equipment/${detail.id}/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: reportText.trim(), event_type: 'report' }),
+      await createEquipmentEventMutation.mutateAsync({
+        equipmentId: detail.id,
+        payload: { description: reportText.trim(), event_type: 'report' },
       });
-      await parseJsonResponse(res);
       setReportOpen(false);
       setReportText('');
       await Promise.all([loadInventory(), loadDetail(detail.id)]);
@@ -339,12 +340,10 @@ export default function Equipment() {
 
   const handleStatusChange = async (status: EquipmentStatus) => {
     if (!detail || !isAdmin) return;
-    const res = await apiFetch(`/api/equipment/${detail.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+    await updateEquipmentMutation.mutateAsync({
+      id: detail.id,
+      payload: { status },
     });
-    await parseJsonResponse(res);
     await Promise.all([loadInventory(), loadDetail(detail.id)]);
   };
 
@@ -400,12 +399,10 @@ export default function Equipment() {
       return;
     }
     try {
-      const res = await apiFetch(`/api/equipment/${detail.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      await updateEquipmentMutation.mutateAsync({
+        id: detail.id,
+        payload,
       });
-      await parseJsonResponse(res);
       setEditOpen(false);
       await Promise.all([loadInventory(), loadDetail(detail.id)]);
     } catch (err) {
@@ -420,8 +417,7 @@ export default function Equipment() {
     setDeleteError('');
     setDeleting(true);
     try {
-      const res = await apiFetch(`/api/equipment/${detail.id}`, { method: 'DELETE' });
-      await parseJsonResponse(res);
+      await deleteEquipmentMutation.mutateAsync(detail.id);
       setDeleteOpen(false);
       closeDetail();
       await loadInventory();
@@ -463,12 +459,10 @@ export default function Equipment() {
     if (repairForm.performed_at) payload.performed_at = repairForm.performed_at;
     if (repairForm.new_status) payload.new_status = repairForm.new_status;
     try {
-      const res = await apiFetch(`/api/equipment/${detail.id}/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      await createEquipmentEventMutation.mutateAsync({
+        equipmentId: detail.id,
+        payload,
       });
-      await parseJsonResponse(res);
       setRepairOpen(false);
       setRepairForm(emptyRepairForm);
       await Promise.all([loadInventory(), loadDetail(detail.id)]);

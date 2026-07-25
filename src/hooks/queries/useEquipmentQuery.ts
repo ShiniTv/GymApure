@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type {
   CatalogItem,
@@ -134,4 +134,74 @@ export function useInvalidateEquipment() {
     },
     invalidateDetail: (id: number) => qc.invalidateQueries({ queryKey: equipmentDetailKey(id) }),
   };
+}
+
+export function useCreateEquipmentMutation() {
+  const { invalidateInventory } = useInvalidateEquipment();
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const response = await apiFetch('/api/equipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse<EquipmentItem>(response);
+    },
+    onSuccess: () => invalidateInventory(),
+  });
+}
+
+export function useUpdateEquipmentMutation() {
+  const { invalidateInventory, invalidateDetail } = useInvalidateEquipment();
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: Record<string, unknown> }) => {
+      const response = await apiFetch(`/api/equipment/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse<EquipmentItem>(response);
+    },
+    onSuccess: async (_data, variables) => {
+      await Promise.all([invalidateInventory(), invalidateDetail(variables.id)]);
+    },
+  });
+}
+
+export function useDeleteEquipmentMutation() {
+  const queryClient = useQueryClient();
+  const { invalidateInventory } = useInvalidateEquipment();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiFetch(`/api/equipment/${id}`, { method: 'DELETE' });
+      return parseJsonResponse(response);
+    },
+    onSuccess: async (_data, id) => {
+      queryClient.removeQueries({ queryKey: equipmentDetailKey(id) });
+      await invalidateInventory();
+    },
+  });
+}
+
+export function useCreateEquipmentEventMutation() {
+  const { invalidateInventory, invalidateDetail } = useInvalidateEquipment();
+  return useMutation({
+    mutationFn: async ({
+      equipmentId,
+      payload,
+    }: {
+      equipmentId: number;
+      payload: Record<string, unknown>;
+    }) => {
+      const response = await apiFetch(`/api/equipment/${equipmentId}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse<MaintenanceEvent>(response);
+    },
+    onSuccess: async (_data, variables) => {
+      await Promise.all([invalidateInventory(), invalidateDetail(variables.equipmentId)]);
+    },
+  });
 }

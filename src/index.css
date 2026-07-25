@@ -57,8 +57,8 @@
   --color-border-subtle: #f4f4f5;
 
   --color-text: #18181b;
-  --color-text-secondary: #52525b;
-  --color-text-muted: #71717a;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted: #52525b;
   --color-text-inverse: #ffffff;
 
   --chart-accent: #0c98ff;
@@ -105,6 +105,56 @@
     animation: page-enter 0.2s ease-out;
   }
 
+  @keyframes landing-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes landing-kenburns {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.06);
+    }
+  }
+
+  .landing-hero-img {
+    animation: landing-kenburns 18s ease-out forwards;
+  }
+
+  .landing-brand {
+    animation: landing-rise 0.55s ease-out both;
+  }
+
+  .landing-headline {
+    animation: landing-rise 0.65s ease-out 0.08s both;
+  }
+
+  .landing-support {
+    animation: landing-rise 0.65s ease-out 0.16s both;
+  }
+
+  .landing-ctas {
+    animation: landing-rise 0.65s ease-out 0.24s both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-hero-img,
+    .landing-brand,
+    .landing-headline,
+    .landing-support,
+    .landing-ctas {
+      animation: none;
+    }
+  }
+
   @keyframes auth-fade-in {
     from {
       opacity: 0;
@@ -129,8 +179,9 @@
     --color-border: #e4e4e7;
     --color-border-subtle: #f4f4f5;
     --color-text: #18181b;
-    --color-text-secondary: #52525b;
-    --color-text-muted: #71717a;
+    /* AA: secondary/muted ≥4.5:1 on light surfaces */
+    --color-text-secondary: #3f3f46;
+    --color-text-muted: #52525b;
   }
 
   .dark {
@@ -144,8 +195,9 @@
     --color-border: #2c2c2c;
     --color-border-subtle: #242424;
     --color-text: #ffffff;
-    --color-text-secondary: #808080;
-    --color-text-muted: #646464;
+    /* AA: lighten secondary/muted on near-black (was failing ~3:1) */
+    --color-text-secondary: #c4c4c8;
+    --color-text-muted: #a1a1aa;
     --color-text-inverse: #0c0c0c;
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.35);
     --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.45);

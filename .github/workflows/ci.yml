@@ -61,6 +61,9 @@ jobs:
 
       - run: npm run lint
 
+      - name: Enforce client/server import boundary
+        run: "! grep -R --include='*.tsx' --include='*.ts' -E \"from ['\\\"].*lib/server\" src/pages"
+
       - run: npm run test:unit
 
       - run: npm run build
@@ -132,5 +135,10 @@ jobs:
           npm run test:pagination-contracts
           npm run test:ux
           npm run test:ux:browser
+          npm run test:chat-checklist
+          npm run test:classes-checklist
+          npm run test:memberships-checkin
+          npm run test:routine-exercises
+          npm run test:exchange-rate
           LIGHTHOUSE_AUTH_PANEL=1 DEMO_PASSWORD="${{ env.DEMO_PASSWORD }}" npm run lighthouse:ci
           kill "$SERVER_PID" 2>/dev/null || true
