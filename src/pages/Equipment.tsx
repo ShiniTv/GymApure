@@ -39,36 +39,29 @@ import {
   SearchInput,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
+import {
+  useEquipmentCatalogQuery,
+  useEquipmentDetailQuery,
+  useEquipmentInventoryQuery,
+  useEquipmentVendorsQuery,
+  useEquipmentZonesQuery,
+  useInvalidateEquipment,
+} from '../hooks/queries/useEquipmentQuery';
 import { cn } from '../lib/utils';
 import { EquipmentListCard } from './equipment/EquipmentListCard';
 import { EquipmentConfigModal } from './equipment/EquipmentConfigModal';
 import { EquipmentDetailModal } from './equipment/EquipmentDetailModal';
 import { EquipmentAddModal } from './equipment/EquipmentAddModal';
 import { emptyEquipmentForm, emptyRepairForm, isInspectionDue } from './equipment/formDefaults';
-import type {
-  AddStep,
-  CatalogItem,
-  ConfigTab,
-  EquipmentBootstrap,
-  EquipmentItem,
-  LayoutView,
-  MaintenanceEvent,
-  Vendor,
-  Zone,
-} from './equipment/types';
+import type { AddStep, CatalogItem, ConfigTab, EquipmentItem, LayoutView } from './equipment/types';
 
 export default function Equipment() {
   usePageTitle('Equipamiento');
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
+  const { invalidateInventory, invalidateMeta, invalidateDetail } = useInvalidateEquipment();
 
-  const [allItems, setAllItems] = useState<EquipmentItem[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [bootstrapError, setBootstrapError] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -96,9 +89,24 @@ export default function Equipment() {
   const [duplicateExistingId, setDuplicateExistingId] = useState<number | null>(null);
 
   const detailId = searchParams.get('detail');
-  const [detail, setDetail] = useState<EquipmentItem | null>(null);
-  const [events, setEvents] = useState<MaintenanceEvent[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const detailIdNum = detailId ? Number(detailId) : null;
+
+  const {
+    data: allItems = [],
+    isPending: inventoryPending,
+    isError: inventoryError,
+    refetch: refetchInventory,
+  } = useEquipmentInventoryQuery(debouncedSearch);
+  const { data: zones = [] } = useEquipmentZonesQuery();
+  const { data: catalog = [] } = useEquipmentCatalogQuery();
+  const { data: vendors = [] } = useEquipmentVendorsQuery(Boolean(isAdmin));
+  const { data: detailPayload, isPending: detailLoading } = useEquipmentDetailQuery(
+    detailIdNum != null && Number.isFinite(detailIdNum) ? detailIdNum : null
+  );
+  const detail = detailPayload?.equipment ?? null;
+  const events = detailPayload?.events ?? [];
+  const loading = inventoryPending;
+  const bootstrapError = inventoryError;
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState('');
@@ -200,59 +208,25 @@ export default function Equipment() {
     return names;
   }, [allItems]);
 
-  const loadBootstrap = useCallback(async () => {
-    const res = await apiFetch('/api/equipment/bootstrap');
-    const data = await parseJsonResponse<EquipmentBootstrap>(res);
-    setZones(Array.isArray(data?.zones) ? data.zones : []);
-    setCatalog(Array.isArray(data?.catalog) ? data.catalog : []);
-    setVendors(Array.isArray(data?.vendors) ? data.vendors : []);
-    setAllItems(Array.isArray(data?.inventory) ? data.inventory : []);
-  }, []);
-
   const loadInventory = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (debouncedSearch.trim()) params.set('q', debouncedSearch.trim());
-    const res = await apiFetch(`/api/equipment?${params.toString()}`);
-    const data = await parseJsonResponse<EquipmentItem[]>(res);
-    setAllItems(Array.isArray(data) ? data : []);
-  }, [debouncedSearch]);
+    await invalidateInventory();
+  }, [invalidateInventory]);
 
   const loadMeta = useCallback(async () => {
-    const [zonesRes, catalogRes, vendorsRes] = await Promise.all([
-      apiFetch('/api/equipment/zones'),
-      apiFetch('/api/equipment/catalog'),
-      isAdmin ? apiFetch('/api/equipment/vendors') : Promise.resolve(null),
-    ]);
-    const zonesData = await parseJsonResponse<Zone[]>(zonesRes);
-    setZones(Array.isArray(zonesData) ? zonesData : []);
-    const catalogData = await parseJsonResponse<CatalogItem[]>(catalogRes);
-    setCatalog(Array.isArray(catalogData) ? catalogData : []);
-    if (vendorsRes) {
-      const vendorsData = await parseJsonResponse<Vendor[]>(vendorsRes);
-      setVendors(Array.isArray(vendorsData) ? vendorsData : []);
-    }
-  }, [isAdmin]);
+    await Promise.resolve(invalidateMeta());
+  }, [invalidateMeta]);
+
+  const loadDetail = useCallback(
+    async (id: number) => {
+      await invalidateDetail(id);
+    },
+    [invalidateDetail]
+  );
 
   const refreshBootstrap = useCallback(async () => {
-    setLoading(true);
-    setBootstrapError(false);
-    try {
-      await loadBootstrap();
-    } catch {
-      setBootstrapError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [loadBootstrap]);
-
-  useEffect(() => {
-    void refreshBootstrap();
-  }, [refreshBootstrap]);
-
-  useEffect(() => {
-    if (loading || bootstrapError) return;
-    void loadInventory();
-  }, [bootstrapError, debouncedSearch, loadInventory, loading]);
+    await Promise.all([invalidateInventory(), Promise.resolve(invalidateMeta())]);
+    await refetchInventory();
+  }, [invalidateInventory, invalidateMeta, refetchInventory]);
 
   useEffect(() => {
     if (!addPhotoFile) {
@@ -263,33 +237,6 @@ export default function Equipment() {
     setAddPhotoPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [addPhotoFile]);
-
-  const loadDetail = useCallback(async (id: number) => {
-    setDetailLoading(true);
-    try {
-      const res = await apiFetch(`/api/equipment/${id}`);
-      const data = await parseJsonResponse<{
-        equipment: EquipmentItem;
-        events: MaintenanceEvent[];
-      }>(res);
-      setDetail(data.equipment);
-      setEvents(Array.isArray(data.events) ? data.events : []);
-    } catch {
-      setDetail(null);
-      setEvents([]);
-    } finally {
-      setDetailLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (detailId) {
-      void loadDetail(Number(detailId));
-    } else {
-      setDetail(null);
-      setEvents([]);
-    }
-  }, [detailId, loadDetail]);
 
   const openDetail = (id: number) => {
     setSearchParams({ detail: String(id) });
