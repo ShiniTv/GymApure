@@ -7,9 +7,13 @@ export const CSRF_HEADER_NAME = 'x-csrf-token';
 
 const CSRF_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 
+const publicAppIsHttps = (env.PUBLIC_APP_URL ?? '').startsWith('https://');
+const secureCsrfCookie =
+  env.NODE_ENV === 'production' && process.env.CI !== 'true' && publicAppIsHttps;
+
 export const csrfCookieOptions: CookieOptions = {
   httpOnly: false,
-  secure: env.NODE_ENV === 'production' && process.env.CI !== 'true',
+  secure: secureCsrfCookie,
   sameSite: 'lax',
   path: '/',
   maxAge: CSRF_MAX_AGE_MS,
@@ -17,7 +21,7 @@ export const csrfCookieOptions: CookieOptions = {
 
 export const clearCsrfCookieOptions: CookieOptions = {
   httpOnly: false,
-  secure: env.NODE_ENV === 'production' && process.env.CI !== 'true',
+  secure: secureCsrfCookie,
   sameSite: 'lax',
   path: '/',
 };
