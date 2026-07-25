@@ -44,9 +44,7 @@ test.describe('Auditoría WCAG AA', () => {
     await login(page, ADMIN_EMAIL, demoPassword());
     await page.goto('/members', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('tablist', { name: /filtros/i })).toBeVisible({ timeout: 15_000 });
-    // color-contrast en staff lists aún tiene deuda de tokens de marca (#0c98ff);
-    // login + panel miembro sí corren contraste completo.
-    await expectNoAccessibilityViolations(page, { disableRules: ['color-contrast'] });
+    await expectNoAccessibilityViolations(page);
   });
 
   test('panel de entrenador no presenta violaciones WCAG AA', async ({ page }) => {

@@ -70,16 +70,37 @@ export default function Reservas() {
   const mine = upcoming.filter((s) => s.has_booked || s.has_waitlisted);
   const visible = filter === 'mine' ? mine : upcoming;
 
+  const dayChips = useMemo(() => {
+    const days: { key: string; label: string; count: number }[] = [];
+    const today = startOfDay(new Date());
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(today, i);
+      const key = format(d, 'yyyy-MM-dd');
+      const count = upcoming.filter(
+        (s) => format(startOfDay(parseISO(s.starts_at)), 'yyyy-MM-dd') === key
+      ).length;
+      days.push({
+        key,
+        label: i === 0 ? 'Hoy' : format(d, 'EEE d', { locale: es }),
+        count,
+      });
+    }
+    return days;
+  }, [upcoming]);
+
+  const [focusDay, setFocusDay] = useState<string | null>(null);
+
   const grouped = useMemo(() => {
     const map = new Map<string, ClassSessionRow[]>();
     for (const session of visible) {
       const dayKey = format(startOfDay(parseISO(session.starts_at)), 'yyyy-MM-dd');
+      if (focusDay && dayKey !== focusDay) continue;
       const list = map.get(dayKey) ?? [];
       list.push(session);
       map.set(dayKey, list);
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [visible]);
+  }, [visible, focusDay]);
 
   const handleBook = async (sessionId: number) => {
     setBusyId(sessionId);
@@ -142,6 +163,49 @@ export default function Reservas() {
           { value: 'mine', label: `Mías (${mine.length})` },
         ]}
       />
+
+      {filter === 'all' && !isPending && !isError ? (
+        <div
+          className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label="Días de la semana"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={focusDay === null}
+            onClick={() => setFocusDay(null)}
+            className={cn(
+              'rounded-pill shrink-0 border px-3 py-1.5 text-xs font-semibold transition-colors',
+              focusDay === null
+                ? 'border-brand/40 bg-brand/10 text-brand'
+                : 'border-border text-text-secondary hover:bg-surface-overlay'
+            )}
+          >
+            Todos
+          </button>
+          {dayChips.map((day) => (
+            <button
+              key={day.key}
+              type="button"
+              role="tab"
+              aria-selected={focusDay === day.key}
+              onClick={() => setFocusDay(day.key)}
+              className={cn(
+                'rounded-pill shrink-0 border px-3 py-1.5 text-xs font-semibold capitalize transition-colors',
+                focusDay === day.key
+                  ? 'border-brand/40 bg-brand/10 text-brand'
+                  : 'border-border text-text-secondary hover:bg-surface-overlay'
+              )}
+            >
+              {day.label}
+              {day.count > 0 ? (
+                <span className="text-text-muted ml-1 tabular-nums">({day.count})</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {isPending ? (
         <div className="flex justify-center py-8">

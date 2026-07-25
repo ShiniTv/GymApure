@@ -39,6 +39,37 @@ A1/A3 verificados en Playwright mobile (`qa-device-push.mobile.spec.ts`, 2026-07
 
 I1 cubierto por el mismo smoke (viewport iPhone 14). I2–I4 requieren dispositivo real.
 
+## Evidencia para cerrar A4 / I2–I4
+
+No marcar una fila como aprobada sin completar una evidencia real. Copiar esta plantilla por cada
+caso:
+
+```text
+Caso: A4 | I2 | I3 | I4
+Fecha/hora y zona:
+Responsable:
+Entorno + commit/release:
+Dispositivo y modelo:
+OS + versión:
+Navegador/PWA + versión:
+Estado inicial (permiso push, instalada/no instalada, sesión):
+Pasos ejecutados:
+Resultado observado:
+Resultado: PASS | FAIL | BLOCKED
+Evidencia: enlace a video/captura/log sin datos personales
+Incidencia (si FAIL/BLOCKED):
+```
+
+| Caso | CI / Playwright puede verificar                                    | Solo dispositivo real puede cerrar                                      |
+| ---- | ------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| A4   | Flujo web, registro de suscripción y copy/estado visible           | Entrega de notificación del sistema con Chrome Android en segundo plano |
+| I2   | Manifest, iconos, rutas y copy de instalación                      | Añadir a Inicio desde Safari y arranque real desde el icono             |
+| I3   | UI de Seguridad y llamadas esperadas con APIs simuladas            | Permiso y suscripción push en una PWA standalone iOS                    |
+| I4   | Copy condicional y ausencia de bloqueo en viewport iPhone simulado | Comportamiento en pestaña Safari real sin instalación                   |
+
+La cobertura CI reduce regresiones, pero no sustituye la evidencia device-only indicada en la
+última columna.
+
 ## Escritorio — latencia percibida
 
 Ejecutado 2026-07-23 con Playwright (`tests/ux/qa-device-desktop.desktop.spec.ts`) contra demo local.

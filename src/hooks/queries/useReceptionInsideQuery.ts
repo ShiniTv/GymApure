@@ -1,6 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch, parseJsonResponse } from '../../lib/api';
-import type { InsideMember } from '../../pages/reception/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiFetch, parseJsonResponse, parseJsonSafe } from '../../lib/api';
+import type {
+  AttendanceActionResult,
+  InsideMember,
+  LookupResult,
+} from '../../pages/reception/types';
 
 export interface ReceptionInsideData {
   count: number;
@@ -20,6 +24,49 @@ export function useReceptionInsideQuery(enabled = true) {
     staleTime: 15_000,
     refetchInterval: 45_000,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useReceptionLookupMutation() {
+  return useMutation({
+    mutationFn: async (cedula: string) => {
+      const response = await apiFetch(
+        `/api/reception/lookup?cedula=${encodeURIComponent(cedula.trim())}`
+      );
+      const data = await parseJsonSafe<LookupResult>(response);
+      if (response.ok && data) return data;
+      return {
+        found: false,
+        error:
+          data?.error || (response.ok ? 'Usuario no encontrado' : `Error HTTP ${response.status}`),
+      } satisfies LookupResult;
+    },
+  });
+}
+
+export function useReceptionAttendanceMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      action,
+      cedula,
+    }: {
+      action: 'check-in' | 'check-out';
+      cedula: string;
+    }) => {
+      const response = await apiFetch(`/api/reception/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cedula: cedula.trim() }),
+      });
+      return parseJsonResponse<AttendanceActionResult>(response);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['reception-inside'] }),
+        queryClient.invalidateQueries({ queryKey: ['reception-stats'] }),
+      ]);
+    },
   });
 }
 

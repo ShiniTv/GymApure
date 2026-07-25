@@ -48,6 +48,7 @@ import { MemberCoachNotesPanel } from './memberRoutine/MemberCoachNotesPanel';
 import { MemberCoachingPanel } from './memberRoutine/MemberCoachingPanel';
 import { MemberTrainingBlocksPanel } from './memberRoutine/MemberTrainingBlocksPanel';
 import { MemberAppointmentsPanel } from './memberRoutine/MemberAppointmentsPanel';
+import { MemberMeasurementsPanel } from './memberRoutine/MemberMeasurementsPanel';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -1294,192 +1295,16 @@ export default function MemberRoutine() {
       )}
 
       {coachingTab === 'mediciones' && (
-        <div className="space-y-2">
-          {(user?.role === 'admin' || user?.role === 'trainer') && measurements.length > 0 && (
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="h-8 gap-1 px-2.5 text-xs"
-                onClick={() => {
-                  setIsAddingMeasurement(true);
-                }}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Registrar
-              </Button>
-            </div>
-          )}
-          {measurements.length > 0 ? (
-            <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
-              {measurements.map((m, i) => {
-                const prev = measurements[i + 1];
-                const weightDelta =
-                  m.weight != null && prev?.weight != null
-                    ? Math.round((m.weight - prev.weight) * 10) / 10
-                    : null;
-                const extras = [
-                  m.waist != null ? `cintura ${m.waist}` : null,
-                  m.arm != null ? `brazo ${m.arm}` : null,
-                  m.leg != null ? `pierna ${m.leg}` : null,
-                ].filter(Boolean);
-                return (
-                  <div
-                    key={m.id}
-                    className={`flex items-start justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm ${
-                      i < measurements.length - 1
-                        ? 'border-b border-zinc-100 dark:border-zinc-800'
-                        : ''
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium text-zinc-600 dark:text-zinc-300">
-                        {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                      </p>
-                      {extras.length > 0 && (
-                        <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-                          {extras.join(' · ')} cm
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-right tabular-nums">
-                      {m.weight != null ? (
-                        <p className="font-semibold text-zinc-900 dark:text-white">
-                          {m.weight} kg
-                          {weightDelta != null && weightDelta !== 0 && (
-                            <span
-                              className={
-                                weightDelta < 0
-                                  ? 'ml-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400'
-                                  : 'ml-1 text-[10px] font-medium text-amber-600 dark:text-amber-400'
-                              }
-                            >
-                              {weightDelta > 0 ? '+' : ''}
-                              {weightDelta}
-                            </span>
-                          )}
-                        </p>
-                      ) : (
-                        <p className="text-zinc-400">—</p>
-                      )}
-                      {m.body_fat_percentage != null && (
-                        <p className="text-[10px] text-zinc-400">{m.body_fat_percentage}% grasa</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center dark:border-zinc-700">
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                Sin mediciones
-              </p>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Registra la primera para ver el progreso en Perfil.
-              </p>
-              {(user?.role === 'admin' || user?.role === 'trainer') && (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="mt-3 h-9 px-3 text-xs"
-                  onClick={() => {
-                    setIsAddingMeasurement(true);
-                  }}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Registrar
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        <MemberMeasurementsPanel
+          measurements={measurements}
+          canEdit={user?.role === 'admin' || user?.role === 'trainer'}
+          isAdding={isAddingMeasurement}
+          form={measurementForm}
+          onAddingChange={setIsAddingMeasurement}
+          onFormChange={setMeasurementForm}
+          onSubmit={handleAddMeasurement}
+        />
       )}
-
-      <Modal
-        open={isAddingMeasurement}
-        onClose={() => {
-          setIsAddingMeasurement(false);
-        }}
-        title="Nueva medición"
-        maxWidth="xl"
-        scrollable
-      >
-        <form onSubmit={handleAddMeasurement} className="space-y-4">
-          <div>
-            <Label>Fecha</Label>
-            <Input
-              type="date"
-              value={measurementForm.date}
-              onChange={(e) => {
-                setMeasurementForm({ ...measurementForm, date: e.target.value });
-              }}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="max-w-[8rem]">
-              <Label>Peso (kg)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.weight}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, weight: e.target.value });
-                }}
-              />
-            </div>
-            <div className="max-w-[8rem]">
-              <Label>Grasa (%)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.body_fat_percentage}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, body_fat_percentage: e.target.value });
-                }}
-              />
-            </div>
-            <div className="max-w-[8rem]">
-              <Label>Cintura (cm)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.waist}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, waist: e.target.value });
-                }}
-              />
-            </div>
-            <div className="max-w-[8rem]">
-              <Label>Brazo (cm)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.arm}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, arm: e.target.value });
-                }}
-              />
-            </div>
-            <div className="max-w-[8rem]">
-              <Label>Pierna (cm)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={measurementForm.leg}
-                onChange={(e) => {
-                  setMeasurementForm({ ...measurementForm, leg: e.target.value });
-                }}
-              />
-            </div>
-          </div>
-          <Button type="submit" className="w-full">
-            Guardar
-          </Button>
-        </form>
-      </Modal>
 
       <Modal
         open={isCreating || isEditing}

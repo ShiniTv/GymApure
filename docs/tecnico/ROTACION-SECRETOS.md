@@ -111,6 +111,11 @@ Si Redis no está configurado, el servidor usa memoria local (aceptable en insta
 
 **Impacto:** secretos TOTP (`users.mfa_secret`) cifrados at-rest. Rotar invalida la lectura de secretos ya cifrados con la clave anterior (staff debe re-enrolar MFA).
 
+`MFA_ENCRYPTION_KEY` debe configurarse como una clave de 32 bytes **independiente de
+`JWT_SECRET`**. No reutilizar el JWT ni depender de la derivación de compatibilidad en
+staging/producción. MFA continúa siendo opcional; esta clave protege los secretos de quienes lo
+activen.
+
 | Paso | Acción                                                                  |
 | ---- | ----------------------------------------------------------------------- |
 | 1    | `openssl rand -base64 32`                                               |
@@ -122,6 +127,24 @@ Si Redis no está configurado, el servidor usa memoria local (aceptable en insta
 Si la variable no está definida, el servidor deriva una clave de `JWT_SECRET` (compatible, pero rotar JWT también afecta MFA cifrado derivado).
 
 **Nunca** loguear `mfa_secret` ni la clave de cifrado.
+
+### Adopción sobre secretos legacy
+
+Después de configurar una clave dedicada por primera vez:
+
+```powershell
+# Desarrollo
+npm run security:reencrypt-mfa:dev
+
+# Producción: carga .env.prod y exige --allow-prod internamente
+npm run security:reencrypt-mfa:prod
+```
+
+El script solo selecciona valores no vacíos sin prefijo `enc:v1:`, cifra mediante la API
+`encryptMfaSecret` y actualiza cada fila si no cambió concurrentemente. Es idempotente y nunca
+imprime secretos. Para rotar una clave que ya cifró valores `enc:v1:`, se necesita conservar la
+clave anterior durante una migración específica o pedir re-enrolamiento; este script no puede
+descifrar con una clave ya retirada.
 
 ---
 

@@ -1,47 +1,36 @@
 # Scorecard de calidad — GymApure
 
 **Fecha baseline:** 2026-07-25  
+**Re-evaluación:** 2026-07-25 (ruta gym único; MFA **opcional**)
 **Alcance del 10/10:** gimnasio único VE/LATAM en producción (Render + Supabase). Multi-sede / Stripe / POS = Fase 5 a demanda.
 
 ## Notas por dimensión
 
-| Dimensión                 | Baseline | Meta post-ruta | Notas                                      |
-| ------------------------- | -------- | -------------- | ------------------------------------------ |
-| Producto / dominio        | 8.0      | 8.5            | Core profundo; Reservas/GTM más delgados   |
-| Arquitectura / ingeniería | 7.5      | 9.0            | React Query hot paths + god-files + Vitest |
-| Seguridad                 | 7.5      | 9.0            | MFA staff, secretos MFA cifrados, IDOR     |
-| Datos / ops / deploy      | 8.5      | 9.0            | Ya fuerte; runbooks + Sentry               |
-| UX / UI / design system   | 7.0      | 9.0            | Marca unificada, landing, Reservas         |
-| Calidad / tests           | 7.5      | 9.0            | Unit + CI domain checklists                |
-| Go-to-market / PWA        | 6.0      | 8.5            | Manifest GymApure, landing, demo tokens    |
+| Dimensión                 | Baseline | Re-eval | Meta ruta | Notas                                             |
+| ------------------------- | -------- | ------- | --------- | ------------------------------------------------- |
+| Producto / dominio        | 8.0      | 8.3     | 8.8       | Core profundo; Reservas discovery + día           |
+| Arquitectura / ingeniería | 7.5      | 8.0     | 9.5       | RQ hot reads; god-files + mutations pendientes    |
+| Seguridad                 | 7.5      | 8.5     | 9.3       | MFA opcional OK; cifrar key dedicada + re-encrypt |
+| Datos / ops / deploy      | 8.5      | 8.7     | 9.3       | Runbooks; staging/backup/Sentry a verificar       |
+| UX / UI / design system   | 7.0      | 7.6     | 9.2       | Landing foto + contraste AA; device QA abierto    |
+| Calidad / tests           | 7.5      | 8.1     | 9.3       | Vitest fino; checklists dominio → CI              |
+| Go-to-market / PWA        | 6.0      | 6.8     | 8.8       | PNG icons + screenshots; landing brand-first      |
 
-**Global baseline: 7.4 / 10** · **Tras implementación Fases 0–4 (2026-07-25): ~8.8 estimado** · **Techo ruta gym único: ~9.5**
+**Global baseline: 7.4 / 10** · **Re-eval: ~8.1 / 10** · **Tras Fases A–D (objetivo): ~9.4–9.5**
 
-### Avances aplicados en esta iteración
+### MFA (decisión de producto)
 
-- MFA disponible + cifrado `mfa_secret` (obligatorio solo si `REQUIRE_MFA_FOR_STAFF=true`); trainer access por assignment; checklist IDOR ampliado
-- React Query en Reception + ActiveWorkout; Vitest + CI domain checklists
-- Landing `/`, manifest GymApure, demo con tokens, Reservas elevadas, palettes featured
-- Runbooks Sentry/incidentes/PII; Lighthouse panel budgets más estrictos (advisory)
+MFA staff permanece **opcional** (`REQUIRE_MFA_FOR_STAFF=false`). No se puntúa como gap la ausencia de MFA obligatorio. Sí cuenta: cifrado at-rest, `MFA_ENCRYPTION_KEY` independiente de JWT, re-encrypt legacy.
 
-## Inventario técnico (2026-07-25)
+### Avances aplicados (ruta 9.5)
 
-| Métrica                       | Valor                                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------------------- |
-| Migraciones SQL               | 71                                                                                            |
-| Páginas TSX (`src/pages`)     | 71                                                                                            |
-| Specs Playwright (`tests/ux`) | 43                                                                                            |
-| Páginas con hooks/queries     | ~27                                                                                           |
-| God-files UI (>40 KB)         | MemberRoutine, Messages, ActiveWorkout, Profile, Equipment, WorkoutHistory, Payments, Members |
-| God-files API (>20 KB)        | users, stats, nutrition, trainerCoaching, equipment, classes, workouts, routines, reports     |
+- PWA: `icon-192/512` PNG + maskable, screenshots Chrome, `theme_color` alineado
+- Landing full-bleed gym + motion; contraste AA tokens; Reservas chip-día + CTA Inicio
+- React Query lecturas: Reception, ActiveWorkout, Equipment
+- Chat retención configurable (admin)
 
-### Hot paths pendientes de React Query (prioridad)
+## Inventario técnico
 
-1. `ActiveWorkout.tsx` — carga de rutina / ejercicios
-2. `Reception.tsx` — inside list + check-in PIN
-3. `Equipment.tsx`, `Attendance.tsx`
-4. `Messages.tsx` (parcial; ya usa chat query en parte)
-
-## Re-evaluación
-
-Re-puntuar este scorecard al cerrar cada fase (1–4). Actualizar fecha y notas; no borrar el baseline.
+Ver [INVENTARIO-DEUDA.md](./INVENTARIO-DEUDA.md). Actualizar este scorecard al cerrar cada fase A–D.
+Los gates mensuales de staging, backup, alertas y clave MFA se registran en
+[OPS-VERIFY-CHECKLIST.md](./OPS-VERIFY-CHECKLIST.md).

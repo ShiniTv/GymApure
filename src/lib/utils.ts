@@ -20,12 +20,13 @@ export function formatMoney(value: number): string {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  trainer: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  receptionist: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  member: 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400',
+  /* *-800 on tinted bg meets WCAG AA for 10px badges (was *-600 ~3:1) */
+  admin: 'bg-purple-500/10 text-purple-800 dark:text-purple-300',
+  trainer: 'bg-blue-500/10 text-blue-800 dark:text-blue-300',
+  receptionist: 'bg-amber-500/10 text-amber-800 dark:text-amber-300',
+  member: 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300',
 };
 
 export function roleBadgeClass(role: string): string {
-  return ROLE_COLORS[role] || 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400';
+  return ROLE_COLORS[role] || 'bg-zinc-500/10 text-zinc-700 dark:text-zinc-300';
 }

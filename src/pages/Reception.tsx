@@ -16,7 +16,7 @@ import {
   CreditCard,
   UserPlus,
 } from 'lucide-react';
-import { apiFetch, parseJsonResponse, parseJsonSafe, connectionOrApiError } from '../lib/api';
+import { apiFetch, parseJsonResponse, connectionOrApiError } from '../lib/api';
 import { Button, Card, Badge, Spinner, CedulaInput, Label } from '../components/ui';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
@@ -43,7 +43,9 @@ import { OnboardingStatus } from '../components/members/OnboardingStatus';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useCheckInPinQuery,
+  useReceptionAttendanceMutation,
   useReceptionInsideQuery,
+  useReceptionLookupMutation,
 } from '../hooks/queries/useReceptionInsideQuery';
 
 export default function Reception() {
@@ -87,6 +89,8 @@ export default function Reception() {
 
   const { data: checkInPin = null } = useCheckInPinQuery();
   const { data: insideData } = useReceptionInsideQuery();
+  const receptionLookupMutation = useReceptionLookupMutation();
+  const receptionAttendanceMutation = useReceptionAttendanceMutation();
   const inside = insideData?.members ?? [];
   const insideCount = insideData?.count ?? 0;
 
@@ -222,14 +226,13 @@ export default function Reception() {
         setMessageType('');
       }
       try {
-        const res = await apiFetch(`/api/reception/lookup?cedula=${encodeURIComponent(q)}`);
-        const data = await parseJsonSafe<LookupResult>(res);
-        if (res.ok && data?.found) {
+        const data = await receptionLookupMutation.mutateAsync(q);
+        if (data.found) {
           setLookup(data);
         } else {
           setLookup({
             found: false,
-            error: data?.error || (res.ok ? 'Usuario no encontrado' : `Error HTTP ${res.status}`),
+            error: data.error || 'Usuario no encontrado',
           });
         }
       } catch (err) {
@@ -238,7 +241,7 @@ export default function Reception() {
         setLookupLoading(false);
       }
     },
-    [cedula]
+    [cedula, receptionLookupMutation]
   );
 
   const formatAttendanceMessage = useCallback(
@@ -269,48 +272,21 @@ export default function Reception() {
       if (action === 'check-out') setCheckingOutCedula(q);
       setMessage('');
       try {
-        const res = await apiFetch(`/api/reception/${action}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cedula: q }),
+        const data = await receptionAttendanceMutation.mutateAsync({
+          action,
+          cedula: q,
         });
-        const data = await parseJsonResponse<AttendanceActionResult>(res);
-
-        if (res.ok) {
-          setMessageType('success');
-          setMessage(formatAttendanceMessage(action, data));
-          if (action === 'check-in' && !data.already_checked_in) {
-            queryClient.setQueryData(
-              ['reception-inside'],
-              (prev: { count: number; members: InsideMember[] } | undefined) =>
-                prev ? { ...prev, count: prev.count + 1 } : { count: 1, members: [] }
-            );
-          } else if (action === 'check-out' && !data.already_checked_out) {
-            queryClient.setQueryData(
-              ['reception-inside'],
-              (prev: { count: number; members: InsideMember[] } | undefined) => {
-                if (!prev) return { count: 0, members: [] };
-                return {
-                  count: Math.max(0, prev.count - 1),
-                  members: prev.members.filter((m) => m.cedula?.toUpperCase() !== q.toUpperCase()),
-                };
-              }
-            );
-          }
-          if (options?.clearInput) {
-            setCedula('');
-            setLookup(null);
-            setTimeout(() => cedulaRef.current?.focus(), 100);
-          } else if (q.toUpperCase() === lookup?.user?.cedula?.toUpperCase()) {
-            void doLookup(q, { preserveMessage: true });
-          }
-          void loadStats();
-          return true;
+        setMessageType('success');
+        setMessage(formatAttendanceMessage(action, data));
+        if (options?.clearInput) {
+          setCedula('');
+          setLookup(null);
+          setTimeout(() => cedulaRef.current?.focus(), 100);
+        } else if (q.toUpperCase() === lookup?.user?.cedula?.toUpperCase()) {
+          void doLookup(q, { preserveMessage: true });
         }
-
-        setMessageType('error');
-        setMessage(data.error || 'Operación fallida');
-        return false;
+        void loadStats();
+        return true;
       } catch {
         setMessageType('error');
         setMessage('Error de red');
@@ -320,7 +296,13 @@ export default function Reception() {
         setCheckingOutCedula(null);
       }
     },
-    [formatAttendanceMessage, loadStats, lookup?.user?.cedula, doLookup]
+    [
+      formatAttendanceMessage,
+      loadStats,
+      lookup?.user?.cedula,
+      doLookup,
+      receptionAttendanceMutation,
+    ]
   );
 
   const handleAction = useCallback(
