@@ -3,6 +3,7 @@ import { Button, Card, Input, Label, Spinner } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { useToastOptional } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced' | '';
 
@@ -25,6 +26,22 @@ interface Checkin {
   soreness_level: number | null;
   adherence_score: number | null;
   notes: string | null;
+}
+
+interface CoachingSuggestion {
+  id: number;
+  status: 'pending' | 'approved' | 'dismissed';
+  suggestion_type: 'load_increase' | 'load_decrease' | 'maintain' | 'deload';
+  routine_name: string;
+  exercise_name: string;
+  proposed_snapshot: {
+    sets: number;
+    reps: number;
+    rest_seconds: number | null;
+    weight_suggestion: string | null;
+  };
+  rationale: { message?: string };
+  trainer_note: string | null;
 }
 
 const initialAssessment = {
@@ -75,6 +92,7 @@ function ScoreField({
 }
 
 export function MemberCoachingPanel({ memberId }: { memberId: number }) {
+  const { user } = useAuth();
   const toast = useToastOptional();
   const [assessment, setAssessment] = useState(initialAssessment);
   const [checkin, setCheckin] = useState(initialCheckin);
@@ -82,6 +100,26 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
   const [loading, setLoading] = useState(true);
   const [savingAssessment, setSavingAssessment] = useState(false);
   const [savingCheckin, setSavingCheckin] = useState(false);
+  const [suggestions, setSuggestions] = useState<CoachingSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
+  const [reviewingSuggestionId, setReviewingSuggestionId] = useState<number | null>(null);
+  const isTrainer = user?.role === 'trainer';
+
+  const loadSuggestions = async () => {
+    if (!isTrainer) return;
+    setLoadingSuggestions(true);
+    try {
+      const response = await apiFetch(`/api/users/${memberId}/coaching-suggestions`);
+      const data = await parseJsonResponse<CoachingSuggestion[]>(response);
+      setSuggestions(Array.isArray(data) ? data : []);
+    } catch (error) {
+      clientLogger.error('Failed to load coaching suggestions', error);
+      toast?.error('No se pudieron cargar las sugerencias');
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -116,6 +154,10 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
   useEffect(() => {
     void load();
   }, [memberId]);
+
+  useEffect(() => {
+    void loadSuggestions();
+  }, [memberId, isTrainer]);
 
   const saveAssessment = async () => {
     setSavingAssessment(true);
@@ -157,6 +199,70 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
       toast?.error(error instanceof Error ? error.message : 'No se pudo guardar el check-in');
     } finally {
       setSavingCheckin(false);
+    }
+  };
+
+  const generateSuggestions = async () => {
+    setGeneratingSuggestions(true);
+    try {
+      const response = await apiFetch(`/api/users/${memberId}/coaching-suggestions/generate`, {
+        method: 'POST',
+      });
+      await parseJsonResponse(response);
+      await loadSuggestions();
+      toast?.success('Sugerencias actualizadas');
+    } catch (error) {
+      clientLogger.error('Failed to generate coaching suggestions', error);
+      toast?.error(error instanceof Error ? error.message : 'No se pudieron generar sugerencias');
+    } finally {
+      setGeneratingSuggestions(false);
+    }
+  };
+
+  const reviewSuggestion = async (
+    suggestion: CoachingSuggestion,
+    action: 'approve' | 'dismiss',
+    acknowledgeSharedRoutine = false
+  ) => {
+    setReviewingSuggestionId(suggestion.id);
+    try {
+      const response = await apiFetch(
+        `/api/users/${memberId}/coaching-suggestions/${suggestion.id}/${action}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acknowledge_shared_routine: acknowledgeSharedRoutine }),
+        }
+      );
+      const errorBody =
+        response.status === 409
+          ? ((await response
+              .clone()
+              .json()
+              .catch(() => ({}))) as { error?: string })
+          : null;
+      if (
+        response.status === 409 &&
+        action === 'approve' &&
+        !acknowledgeSharedRoutine &&
+        /rutina está compartida/i.test(errorBody?.error ?? '')
+      ) {
+        const confirmed = window.confirm(
+          'Esta rutina también está asignada a otros miembros. ¿Aplicar el ajuste para todos?'
+        );
+        if (confirmed) {
+          await reviewSuggestion(suggestion, action, true);
+        }
+        return;
+      }
+      await parseJsonResponse(response);
+      await loadSuggestions();
+      toast?.success(action === 'approve' ? 'Sugerencia aplicada' : 'Sugerencia descartada');
+    } catch (error) {
+      clientLogger.error('Failed to review coaching suggestion', error);
+      toast?.error(error instanceof Error ? error.message : 'No se pudo revisar la sugerencia');
+    } finally {
+      setReviewingSuggestionId(null);
     }
   };
 
@@ -348,6 +454,85 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
           </div>
         )}
       </Card>
+
+      {isTrainer && (
+        <Card padding="md" rounded="xl">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                Sugerencias de programación
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Basadas en el último check-in y feedback reciente. Requieren tu aprobación.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => void generateSuggestions()}
+              disabled={generatingSuggestions}
+            >
+              {generatingSuggestions ? 'Generando…' : 'Generar sugerencias'}
+            </Button>
+          </div>
+
+          {loadingSuggestions ? (
+            <div className="flex justify-center py-5">
+              <Spinner />
+            </div>
+          ) : suggestions.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+              Aún no hay sugerencias generadas.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {suggestions.map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium text-zinc-900 dark:text-white">
+                      {suggestion.exercise_name} · {suggestion.routine_name}
+                    </p>
+                    <span className="text-xs text-zinc-500 capitalize dark:text-zinc-400">
+                      {suggestion.status === 'pending' ? 'Pendiente' : suggestion.status}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+                    {suggestion.rationale.message ?? 'Revisar la sugerencia antes de aplicarla.'}
+                  </p>
+                  <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    Propuesta: {suggestion.proposed_snapshot.sets} series ×{' '}
+                    {suggestion.proposed_snapshot.reps} reps
+                    {suggestion.proposed_snapshot.weight_suggestion
+                      ? ` · ${suggestion.proposed_snapshot.weight_suggestion}`
+                      : ''}
+                  </p>
+                  {suggestion.status === 'pending' && (
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => void reviewSuggestion(suggestion, 'approve')}
+                        disabled={reviewingSuggestionId === suggestion.id}
+                      >
+                        Aprobar y aplicar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => void reviewSuggestion(suggestion, 'dismiss')}
+                        disabled={reviewingSuggestionId === suggestion.id}
+                      >
+                        Descartar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
