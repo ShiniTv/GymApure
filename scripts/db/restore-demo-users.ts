@@ -190,7 +190,13 @@ async function main() {
        )`,
       [memberId, routineId, trainerId]
     );
-    console.log('✓ Rutina demo asignada a member@gym.com (tests IDOR / rutinas)');
+    await query(
+      `INSERT INTO trainer_member_assignments (trainer_id, member_id, assigned_by)
+       VALUES ($1, $2, $1)
+       ON CONFLICT (trainer_id, member_id) DO NOTHING`,
+      [trainerId, memberId]
+    );
+    console.log('✓ Rutina demo + asignación trainer↔member para member@gym.com (tests IDOR)');
 
     const demoExercises = [
       { name: 'Demo Press Banca', muscle: 'chest' },

@@ -151,9 +151,50 @@ async function main() {
 
     const allowedProfile = await api('GET', `/api/users/${memberId}`);
     ok(
-      'Trainer accede a miembro con rutina asignada → 200',
+      'Trainer accede a miembro con asignación explícita → 200',
       allowedProfile.res.status === 200,
       `status ${allowedProfile.res.status}`
+    );
+
+    // --- IDOR edge: nutrición / archivos / citas ---
+    const nutritionPlan = await api('GET', `/api/users/${memberId}/nutrition/plan`);
+    ok(
+      'Trainer lee plan nutricional de miembro asignado → 200|404',
+      nutritionPlan.res.status === 200 || nutritionPlan.res.status === 404,
+      `status ${nutritionPlan.res.status}`
+    );
+    if (isolatedId) {
+      const blockedNutrition = await api('GET', `/api/users/${isolatedId}/nutrition/plan`);
+      ok(
+        'Trainer sin acceso a nutrición de no asignado → 403',
+        blockedNutrition.res.status === 403,
+        `status ${blockedNutrition.res.status}`
+      );
+    }
+
+    const appointmentsList = await api('GET', `/api/appointments?member_id=${memberId}`);
+    ok(
+      'Trainer lista citas de miembro asignado → 200',
+      appointmentsList.res.status === 200,
+      `status ${appointmentsList.res.status}`
+    );
+
+    cookie = '';
+    ok('Login member para files IDOR', await loginAs('member@gym.com'));
+    const memberFileProbe = await api('GET', '/api/files/avatars/nonexistent-avatar.jpg');
+    ok(
+      'Member file inexistente no filtra path → 404|403|400',
+      [400, 403, 404].includes(memberFileProbe.res.status),
+      `status ${memberFileProbe.res.status}`
+    );
+
+    cookie = '';
+    ok('Login trainer tras files IDOR', await loginAs('trainer@gym.com'));
+    const classSessions = await api('GET', '/api/classes/sessions');
+    ok(
+      'Trainer GET sesiones de clase → 200',
+      classSessions.res.status === 200,
+      `status ${classSessions.res.status}`
     );
 
     const assessmentRead = await api('GET', `/api/users/${memberId}/training-assessment`);

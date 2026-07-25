@@ -41,17 +41,20 @@ export default function SolicitarDemo() {
   };
 
   return (
-    <div className="min-h-dvh bg-zinc-950 text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(249,115,22,0.18),_transparent_55%)]" />
+    <div className="bg-bg text-text relative min-h-dvh">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_oklab,var(--color-brand)_22%,transparent),_transparent_55%)]"
+        aria-hidden
+      />
       <div className="relative mx-auto flex min-h-dvh max-w-5xl flex-col px-4 py-8 sm:px-6">
         <header className="mb-10 flex items-center justify-between gap-4">
-          <Link to="/login" className="text-lg font-bold tracking-tight">
-            <span className="text-white">{BRAND.nameParts.primary}</span>
-            <span className="text-orange-500">{BRAND.nameParts.accent}</span>
+          <Link to="/" className="font-display text-lg font-bold tracking-tight">
+            <span className="text-text">{BRAND.nameParts.primary}</span>
+            <span className="text-brand">{BRAND.nameParts.accent}</span>
           </Link>
           <Link
             to="/login"
-            className="text-sm font-semibold text-zinc-300 underline-offset-4 hover:text-white hover:underline"
+            className="text-text-secondary hover:text-text text-sm font-semibold underline-offset-4 hover:underline"
           >
             Iniciar sesión
           </Link>
@@ -59,33 +62,37 @@ export default function SolicitarDemo() {
 
         <main className="grid flex-1 gap-10 lg:grid-cols-2 lg:items-start">
           <section className="space-y-5">
-            <p className="text-sm font-semibold tracking-wide text-orange-400 uppercase">
+            <p className="text-brand text-sm font-semibold tracking-wide uppercase">
               Demo para gimnasios
             </p>
-            <h1 className="text-4xl leading-tight font-bold sm:text-5xl">{BRAND.heroHeadline}</h1>
-            <p className="max-w-md text-base text-zinc-400 sm:text-lg">{BRAND.heroSubheadline}</p>
-            <ul className="space-y-2 text-sm text-zinc-300">
+            <h1 className="font-display text-4xl leading-tight font-bold tracking-[-0.03em] sm:text-5xl">
+              {BRAND.heroHeadline}
+            </h1>
+            <p className="text-text-secondary max-w-md text-base sm:text-lg">
+              {BRAND.heroSubheadline}
+            </p>
+            <ul className="text-text-secondary space-y-2 text-sm">
               <li>Recepción, check-in y registro en mostrador en minutos</li>
               <li>Pagos con comprobante y tasa BCV</li>
               <li>Rutinas, clases y chat con miembros</li>
             </ul>
           </section>
 
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 sm:p-6">
+          <section className="rounded-card border-border bg-surface-raised/90 shadow-card border p-5 sm:p-6">
             {done ? (
               <div className="space-y-3 py-6 text-center">
-                <h2 className="text-xl font-bold">Solicitud enviada</h2>
-                <p className="text-sm text-zinc-400">
+                <h2 className="font-display text-xl font-bold">Solicitud enviada</h2>
+                <p className="text-text-secondary text-sm">
                   Gracias. Te contactaremos al correo indicado para coordinar la demo.
                 </p>
-                <Link to="/login" className="text-sm font-semibold text-orange-400 hover:underline">
+                <Link to="/login" className="text-brand text-sm font-semibold hover:underline">
                   Ir al login
                 </Link>
               </div>
             ) : (
               <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
-                <h2 className="mb-2 text-lg font-bold">Solicitar una demo</h2>
-                {error && <p className="text-sm text-red-400">{error}</p>}
+                <h2 className="font-display mb-2 text-lg font-bold">Solicitar una demo</h2>
+                {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
                 <div>
                   <Label htmlFor="contact_name">Tu nombre</Label>
                   <Input

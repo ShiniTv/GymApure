@@ -61,10 +61,20 @@ Para solicitudes de **derecho al olvido** en producción: exportar lo necesario,
 
 - Contraseñas: bcrypt cost **12** (rehash automático al iniciar sesión si el hash es legacy).
 - Sesión única por `token_version`; cookie `httpOnly` + `sameSite=lax`.
-- MFA TOTP obligatorio recomendado para `admin` y `receptionist` (`/security`).
+- MFA TOTP obligatorio en producción para staff (`REQUIRE_MFA_FOR_STAFF=true`); secretos cifrados at-rest (`MFA_ENCRYPTION_KEY` o derivado de `JWT_SECRET`).
 - CSRF double-submit cuando `CORS_ORIGINS` está configurado (despliegues cross-origin).
 - Storage con RLS en `storage.objects` (migración `20260711120100_storage_objects_rls.sql`).
 - Sentry frontend con `maskAllText` y `blockAllMedia` para reducir PII en errores.
+
+---
+
+## Checklist operativo PII (mensual)
+
+- [ ] Revisar accesos admin recientes en `audit_logs` (acciones sensibles).
+- [ ] Confirmar retención de auditoría (`AUDIT_LOG_RETENTION_DAYS`) y cron activo.
+- [ ] Sin `mfa_secret` ni service role en tickets/Sentry/logs.
+- [ ] Solicitudes de borrado atendidas y documentadas (sin PII en el detalle).
+- [ ] Backup Supabase prod verificado (`npm run db:backup-check` / Dashboard).
 
 ---
 
@@ -72,5 +82,7 @@ Para solicitudes de **derecho al olvido** en producción: exportar lo necesario,
 
 - [Entornos y seguridad](./ENTORNOS-Y-SEGURIDAD.md)
 - [Rotación de secretos](./ROTACION-SECRETOS.md)
+- [Runbook de incidentes](./RUNBOOK-INCIDENTES.md)
+- [Sentry y alertas](./SENTRY-Y-ALERTAS.md)
 - [Variables de entorno](./VARIABLES-ENTORNO.md)
 - [Despliegue](../DEPLOY.md)

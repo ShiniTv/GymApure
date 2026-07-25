@@ -19,22 +19,16 @@ export async function isActiveMember(memberId: number): Promise<boolean> {
 }
 
 /**
- * True when the trainer may access the member:
- * explicit assignment OR at least one routine assigned by this trainer.
+ * True when the trainer may access the member via explicit assignment only.
+ * Assigning a routine must call ensureTrainerMemberAssignment (see users API).
  */
 export async function trainerHasMemberAccess(
   trainerId: number,
   memberId: number
 ): Promise<boolean> {
   const { rows } = await query<{ ok: number }>(
-    `SELECT 1 AS ok WHERE EXISTS (
-       SELECT 1 FROM trainer_member_assignments
-       WHERE trainer_id = $2 AND member_id = $1
-     ) OR EXISTS (
-       SELECT 1 FROM user_routines ur
-       JOIN routines r ON r.id = ur.routine_id
-       WHERE ur.user_id = $1 AND r.trainer_id = $2
-     )
+    `SELECT 1 AS ok FROM trainer_member_assignments
+     WHERE trainer_id = $2 AND member_id = $1
      LIMIT 1`,
     [memberId, trainerId]
   );

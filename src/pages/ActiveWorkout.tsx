@@ -66,20 +66,20 @@ import {
   buildRoutineExercisePayload,
   defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
+import { buildPrescriptionLogSeeds, mergeWorkoutLogSeeds } from '../lib/setPrescription';
 import {
-  deriveSetPrescription,
-  parseSetPrescriptionFromApi,
-  buildPrescriptionLogSeeds,
-  mergeWorkoutLogSeeds,
-} from '../lib/setPrescription';
-import {
-  cacheWorkoutRoutine,
   clearWorkoutLogQueueForSession,
   enqueueWorkoutLog,
   flushWorkoutLogQueue,
   pendingWorkoutLogCount,
   readCachedWorkoutRoutine,
 } from '../lib/workoutOfflineQueue';
+import {
+  useWorkoutExerciseOptionsQuery,
+  useWorkoutRoutineQuery,
+  type WorkoutRoutine,
+} from '../hooks/queries/useWorkoutRoutineQuery';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ExercisePicker = lazy(() =>
   import('../components/exercise/ExercisePicker').then((m) => ({ default: m.ExercisePicker }))
@@ -90,27 +90,7 @@ const ExerciseVideoPlayer = lazy(() =>
   }))
 );
 
-interface Exercise {
-  id: number;
-  name: string;
-  muscle_group: string;
-  description?: string;
-  execution?: string;
-  video_url: string;
-  video_poster_url?: string | null;
-  sets: number;
-  reps: number;
-  rest_seconds: number;
-  weight_suggestion: string;
-  set_prescription?: import('../lib/setPrescription').SetPrescriptionRow[] | null;
-}
-
-interface Routine {
-  id: number;
-  name: string;
-  difficulty: string;
-  exercises: Exercise[];
-}
+type Routine = WorkoutRoutine;
 
 interface LogEntry {
   exercise_id: number;
@@ -118,12 +98,6 @@ interface LogEntry {
   weight: string;
   reps: string;
   completed: boolean;
-}
-
-interface ExerciseOption {
-  id: number;
-  name: string;
-  muscle_group: string;
 }
 
 interface SessionLogResponse {
@@ -162,6 +136,7 @@ export default function ActiveWorkout() {
   const { user } = useAuth();
   const toast = useToastOptional();
   const memberStatsCtx = useMemberStatsOptional();
+  const queryClient = useQueryClient();
 
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -209,6 +184,13 @@ export default function ActiveWorkout() {
 
   useWorkoutPageTitle(routine?.name);
 
+  const {
+    data: routineFromQuery,
+    isPending: routinePending,
+    isError: routineQueryError,
+    isFetched: routineFetched,
+  } = useWorkoutRoutineQuery(id);
+
   useEffect(() => {
     return () => {
       if (pausePulseTimeoutRef.current != null) {
@@ -219,46 +201,39 @@ export default function ActiveWorkout() {
 
   // Add Exercise State
   const [isAddingExercise, setIsAddingExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState<ExerciseOption[]>([]);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
 
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
+  const { data: availableExercises = [] } = useWorkoutExerciseOptionsQuery(isAddingExercise);
+
   useEffect(() => {
-    if (!id) return;
-    const cached = readCachedWorkoutRoutine(id);
-    if (cached) {
-      setRoutine(cached as Routine);
+    if (routineFromQuery) {
+      setRoutine(routineFromQuery);
       setFetchError(null);
       setLoading(false);
+      return;
     }
-    apiFetch(`/api/routines/${id}`)
-      .then((res) => parseJsonResponse<Routine>(res))
-      .then((data) => {
-        const exercises = (data.exercises ?? []).map((exercise) => ({
-          ...exercise,
-          set_prescription:
-            parseSetPrescriptionFromApi(exercise.set_prescription) ??
-            deriveSetPrescription(exercise.sets, exercise.reps),
-        }));
-        const normalized = { ...data, exercises };
-        setRoutine(normalized);
-        cacheWorkoutRoutine(id, normalized);
+    if (routinePending) {
+      setLoading(true);
+      return;
+    }
+    if (routineQueryError && routineFetched) {
+      const cached = id ? readCachedWorkoutRoutine(id) : null;
+      if (cached) {
+        setRoutine(cached as Routine);
         setFetchError(null);
         setLoading(false);
-      })
-      .catch((err) => {
-        clientLogger.error('Failed to fetch routine', err);
-        if (cached) {
-          toast?.success('Sin conexión: usando la última rutina guardada.');
-          return;
-        }
-        setRoutine(null);
-        setFetchError('No se pudo cargar la rutina. Verifica tu conexión e intenta de nuevo.');
-        setLoading(false);
-      });
-  }, [id, toast]);
+        toast?.success('Sin conexión: usando la última rutina guardada.');
+        return;
+      }
+      clientLogger.error('Failed to fetch routine', new Error('workout routine query failed'));
+      setRoutine(null);
+      setFetchError('No se pudo cargar la rutina. Verifica tu conexión e intenta de nuevo.');
+      setLoading(false);
+    }
+  }, [routineFromQuery, routinePending, routineQueryError, routineFetched, id, toast]);
 
   useEffect(() => {
     const refreshPending = () => setPendingSyncCount(pendingWorkoutLogCount(sessionId));
@@ -279,18 +254,6 @@ export default function ActiveWorkout() {
       window.clearInterval(interval);
     };
   }, [sessionId]);
-
-  useEffect(() => {
-    if (!isAddingExercise) return;
-    apiFetch('/api/exercises?all=1')
-      .then((res) => parseJsonResponse<ExerciseOption[]>(res))
-      .then((data) => {
-        setAvailableExercises(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
-        clientLogger.error('Failed to fetch exercises catalog', err);
-      });
-  }, [isAddingExercise]);
 
   useEffect(() => {
     if (isPaused) return;
@@ -543,14 +506,7 @@ export default function ActiveWorkout() {
 
   const reloadRoutine = () => {
     if (!id) return;
-    apiFetch(`/api/routines/${id}`)
-      .then((res) => parseJsonResponse<Routine>(res))
-      .then((data) => {
-        setRoutine(data);
-      })
-      .catch((err) => {
-        clientLogger.error('Failed to reload routine', err);
-      });
+    void queryClient.invalidateQueries({ queryKey: ['workout-routine', id] });
   };
 
   const handleAddExercise = async () => {

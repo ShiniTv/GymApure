@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { ADMIN_EMAIL, demoPassword, login, MEMBER_EMAIL } from './helpers';
+import { ADMIN_EMAIL, demoPassword, login, MEMBER_EMAIL, RECEPTION_EMAIL, TRAINER_EMAIL } from './helpers';
 
 async function expectNoAccessibilityViolations(
   page: import('@playwright/test').Page,
@@ -47,5 +47,17 @@ test.describe('Auditoría WCAG AA', () => {
     // color-contrast en staff lists aún tiene deuda de tokens de marca (#0c98ff);
     // login + panel miembro sí corren contraste completo.
     await expectNoAccessibilityViolations(page, { disableRules: ['color-contrast'] });
+  });
+
+  test('panel de entrenador no presenta violaciones WCAG AA', async ({ page }) => {
+    await login(page, TRAINER_EMAIL, demoPassword());
+    await page.goto('/panel');
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test('recepción no presenta violaciones WCAG AA', async ({ page }) => {
+    await login(page, RECEPTION_EMAIL, demoPassword());
+    await page.goto('/reception');
+    await expectNoAccessibilityViolations(page);
   });
 });

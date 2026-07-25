@@ -153,9 +153,11 @@ Ver [STAGING.md](./STAGING.md) — tercer entorno para validar migraciones antes
 
 ### MFA obligatorio (producción)
 
-MFA es **opcional**: el staff puede activarlo en `/security`. Solo si se define `REQUIRE_MFA_FOR_STAFF=true` (y se monta `enforceMfaForStaff`) se bloquean APIs al staff sin MFA.
+En producción (`render.yaml` / `.env.prod.example`): `REQUIRE_MFA_FOR_STAFF=true`. El middleware `enforceMfaForStaff` está montado; staff sin MFA recibe 403 `mfa_setup_required` y el cliente redirige a `/security`. En desarrollo/CI el flag suele ser `false`.
 
-Antes de activar en prod:
+Los secretos TOTP se guardan cifrados (`MFA_ENCRYPTION_KEY` o derivado de `JWT_SECRET`).
+
+Antes de activar / auditar en prod:
 
 ```powershell
 npm run security:audit-mfa:prod -- --allow-prod

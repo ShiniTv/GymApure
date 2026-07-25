@@ -40,10 +40,16 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useAuth } from '../context/AuthContext';
 import { OnboardingStatus } from '../components/members/OnboardingStatus';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useCheckInPinQuery,
+  useReceptionInsideQuery,
+} from '../hooks/queries/useReceptionInsideQuery';
 
 export default function Reception() {
   usePageTitle('Recepción');
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const isCounterMode = searchParams.get('mode') === 'counter';
   const tabParam = searchParams.get('tab');
@@ -62,8 +68,6 @@ export default function Reception() {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
-  const [inside, setInside] = useState<InsideMember[]>([]);
-  const [insideCount, setInsideCount] = useState(0);
   const [feedRefresh, setFeedRefresh] = useState(0);
   const [checkoutConfirm, setCheckoutConfirm] = useState<{ cedula: string; name: string } | null>(
     null
@@ -73,11 +77,6 @@ export default function Reception() {
   const [cedulaEditValue, setCedulaEditValue] = useState('');
   const [cedulaEditError, setCedulaEditError] = useState('');
   const [cedulaEditSaving, setCedulaEditSaving] = useState(false);
-  const [checkInPin, setCheckInPin] = useState<{
-    pin: string;
-    required: boolean;
-    configured: boolean;
-  } | null>(null);
   const [renewPrefill, setRenewPrefill] = useState<{
     id: number;
     full_name: string;
@@ -85,6 +84,11 @@ export default function Reception() {
   } | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const isMobileShell = useMediaQuery('(max-width: 1023px)');
+
+  const { data: checkInPin = null } = useCheckInPinQuery();
+  const { data: insideData } = useReceptionInsideQuery();
+  const inside = insideData?.members ?? [];
+  const insideCount = insideData?.count ?? 0;
 
   // Mobile defaults to counter (or last saved mode); desktop stays on summary home.
   useEffect(() => {
@@ -104,27 +108,6 @@ export default function Reception() {
       setSearchParams(next, { replace: true });
     }
   }, [isMobileShell, searchParams, setSearchParams]);
-
-  useEffect(() => {
-    void apiFetch('/api/settings/check-in-pin')
-      .then((res) =>
-        parseJsonResponse<{
-          check_in_pin?: string;
-          require_self_check_in_pin?: boolean;
-          pin_configured?: boolean;
-        }>(res)
-      )
-      .then((data) => {
-        setCheckInPin({
-          pin: data.check_in_pin ?? '',
-          required: Boolean(data.require_self_check_in_pin),
-          configured: Boolean(data.pin_configured ?? data.check_in_pin),
-        });
-      })
-      .catch(() => {
-        setCheckInPin(null);
-      });
-  }, []);
 
   const setCounterMode = (enabled: boolean) => {
     const next = new URLSearchParams(searchParams);
@@ -165,16 +148,13 @@ export default function Reception() {
 
   const loadStats = useCallback(async () => {
     try {
-      const insideRes = await apiFetch('/api/attendance/inside').then((r) =>
-        parseJsonResponse<{ count: number; members: InsideMember[] }>(r)
-      );
-      setInside(insideRes?.members ?? []);
-      setInsideCount(insideRes?.count ?? 0);
+      await queryClient.invalidateQueries({ queryKey: ['reception-inside'] });
+      await queryClient.invalidateQueries({ queryKey: ['reception-stats'] });
       setFeedRefresh((k) => k + 1);
     } catch {
       // Non-blocking
     }
-  }, []);
+  }, [queryClient]);
 
   const openCedulaEdit = () => {
     if (!lookup?.user) return;
@@ -300,10 +280,22 @@ export default function Reception() {
           setMessageType('success');
           setMessage(formatAttendanceMessage(action, data));
           if (action === 'check-in' && !data.already_checked_in) {
-            setInsideCount((c) => c + 1);
+            queryClient.setQueryData(
+              ['reception-inside'],
+              (prev: { count: number; members: InsideMember[] } | undefined) =>
+                prev ? { ...prev, count: prev.count + 1 } : { count: 1, members: [] }
+            );
           } else if (action === 'check-out' && !data.already_checked_out) {
-            setInsideCount((c) => Math.max(0, c - 1));
-            setInside((prev) => prev.filter((m) => m.cedula?.toUpperCase() !== q.toUpperCase()));
+            queryClient.setQueryData(
+              ['reception-inside'],
+              (prev: { count: number; members: InsideMember[] } | undefined) => {
+                if (!prev) return { count: 0, members: [] };
+                return {
+                  count: Math.max(0, prev.count - 1),
+                  members: prev.members.filter((m) => m.cedula?.toUpperCase() !== q.toUpperCase()),
+                };
+              }
+            );
           }
           if (options?.clearInput) {
             setCedula('');

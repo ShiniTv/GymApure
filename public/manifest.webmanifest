@@ -1,5 +1,5 @@
 {
-  "name": "Caribean Gym",
+  "name": "GymApure",
   "short_name": "GymApure",
   "description": "Gestión de membresías, rutinas, pagos y control de acceso para tu gimnasio.",
   "start_url": "/",
@@ -9,8 +9,8 @@
   "dir": "ltr",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#09090b",
-  "background_color": "#fafafa",
+  "theme_color": "#0c98ff",
+  "background_color": "#0c0c0c",
   "icons": [
     {
       "src": "/logo-mark-light.jpg",
@@ -22,7 +22,13 @@
       "src": "/logo-mark-light.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-mark-dark.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     },
     {
       "src": "/logo.svg",
