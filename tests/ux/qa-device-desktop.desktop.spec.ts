@@ -60,7 +60,7 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
       timeout: 20_000,
     });
 
-    const row = page.locator('tbody tr').first();
+    const row = page.locator('tbody tr').filter({ hasText: 'Cliente' }).first();
     await expect(row).toBeVisible({ timeout: 15_000 });
     await row.click();
 
