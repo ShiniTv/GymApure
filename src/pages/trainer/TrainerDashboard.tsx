@@ -470,38 +470,64 @@ export default function TrainerDashboard() {
               </Link>
             ))}
             {staleCheckins.map((member) => (
-              <Link
+              <div
                 key={`checkin-${member.id}`}
-                to={`/members/${member.id}/routines?tab=coaching`}
                 className="flex items-center justify-between gap-2 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 transition-colors hover:bg-sky-500/10 lg:px-4 lg:py-3"
               >
-                <div className="min-w-0">
+                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
                     {member.full_name}
                   </p>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     Check-in pendiente · {member.days_since}d
                   </p>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    to={`/members/${member.id}/routines?tab=coaching`}
+                    className="rounded-lg bg-sky-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-sky-700"
+                  >
+                    Registrar
+                  </Link>
+                  <Link
+                    to={`/messages?member=${member.id}`}
+                    aria-label={`Enviar mensaje a ${member.full_name}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-700 hover:bg-sky-500/10 dark:text-sky-300"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
-              </Link>
+              </div>
             ))}
             {recoveryAlerts.map((member) => (
-              <Link
+              <div
                 key={`recovery-${member.id}`}
-                to={`/members/${member.id}/routines?tab=coaching`}
                 className="flex items-center justify-between gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-2.5 transition-colors hover:bg-rose-500/10 lg:px-4 lg:py-3"
               >
-                <div className="min-w-0">
+                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
                     {member.full_name}
                   </p>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     Recuperación: molestias {member.discomfort}/5 · energía {member.energy}/5
                   </p>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    to={`/members/${member.id}/routines?tab=agenda`}
+                    className="rounded-lg bg-rose-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-rose-700"
+                  >
+                    Agendar 1:1
+                  </Link>
+                  <Link
+                    to={`/messages?member=${member.id}`}
+                    aria-label={`Enviar mensaje a ${member.full_name}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-700 hover:bg-rose-500/10 dark:text-rose-300"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
-              </Link>
+              </div>
             ))}
             {(stats?.expiringMembers ?? []).map((m) => (
               <Link
