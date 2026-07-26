@@ -13,6 +13,7 @@ describe('paymentDestinations', () => {
     expect(dest.pago_movil.enabled).toBe(true);
     expect(dest.pago_movil.phone).toBe('04121234567');
     expect(dest.transferencia.enabled).toBe(false);
+    expect(dest.usdt.enabled).toBe(false);
     expect(dest.efectivo_usd.denominations.length).toBeGreaterThan(0);
   });
 
@@ -30,6 +31,21 @@ describe('paymentDestinations', () => {
     const lines = formatDestinationLines('transferencia', dest);
     expect(lines.some((l) => l.includes('Alexis'))).toBe(true);
     expect(lines.some((l) => l.includes('Ahorro'))).toBe(true);
+  });
+
+  it('formatea líneas USDT Binance', () => {
+    const dest = normalizePaymentDestinations({
+      usdt: {
+        enabled: true,
+        binance_email: 'pt@mail.com',
+        binance_id: '12345678',
+        network: 'USDT TRC20',
+      },
+    });
+    const lines = formatDestinationLines('usdt', dest);
+    expect(lines.some((l) => l.includes('pt@mail.com'))).toBe(true);
+    expect(lines.some((l) => l.includes('12345678'))).toBe(true);
+    expect(lines.some((l) => l.includes('TRC20'))).toBe(true);
   });
 
   it('suma billetes de divisas', () => {

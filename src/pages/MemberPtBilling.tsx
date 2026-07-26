@@ -26,6 +26,7 @@ import {
   useReportTrainerInvoiceMutation,
   useTrainerDestinationsForMemberQuery,
   useTrainerInvoicesQuery,
+  useTrainerRateContextForMemberQuery,
   type TrainerInvoice,
 } from '../hooks/queries/useTrainerBillingQuery';
 
@@ -55,6 +56,7 @@ export default function MemberPtBilling() {
 
   const trainerId = reporting?.trainer_id ?? null;
   const { data: destinations } = useTrainerDestinationsForMemberQuery(trainerId, !!reporting);
+  const { data: rateCtx } = useTrainerRateContextForMemberQuery(trainerId, !!reporting);
 
   const pendingCount = useMemo(
     () => invoices.filter((i) => i.status === 'pending').length,
@@ -163,6 +165,17 @@ export default function MemberPtBilling() {
               <span className="text-text font-semibold">${reporting.amount_usd}</span>
               {reporting.trainer_name ? ` · ${reporting.trainer_name}` : ''}
             </p>
+            {rateCtx?.active_bs_per_usd ? (
+              <p className="text-text-muted text-xs">
+                ≈{' '}
+                {(reporting.amount_usd * rateCtx.active_bs_per_usd).toLocaleString('es-VE', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{' '}
+                Bs ({rateCtx.active_label}
+                {rateCtx.euro_rate_note ? ` · ${rateCtx.euro_rate_note}` : ''})
+              </p>
+            ) : null}
             <div>
               <Label>Método</Label>
               <Select

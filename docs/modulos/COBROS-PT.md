@@ -22,10 +22,11 @@ No usa la tabla `payments` ni los destinos de cobro del gym (`payment_destinatio
 ## Flujo entrenador
 
 1. **Más → Cobros PT** (o menú lateral).
-2. Publica **Mis datos de cobro (PT)** (pago móvil, transferencia, Zelle, efectivo USD).
-3. Opcional: guarda **tarifas** reutilizables.
-4. **Nuevo cobro** → elige cliente asignado, concepto y monto USD.
-5. Cuando el cliente reporta (referencia ± comprobante) → **Confirmar** o **Rechazar** (motivo obligatorio).
+2. Publica **Mis datos de cobro (PT)** (pago móvil, transferencia, Zelle, USDT/Binance, efectivo USD).
+3. Elige **tasa de referencia**: BCV (oficial del gym) o **tasa euro** (Bs por 1 USD, valor manual del entrenador).
+4. Opcional: guarda **tarifas** reutilizables.
+5. **Nuevo cobro** → elige cliente asignado, concepto y monto USD (se muestra equivalente en Bs).
+6. Cuando el cliente reporta (referencia ± comprobante) → **Confirmar** o **Rechazar** (motivo obligatorio).
 
 ---
 
@@ -33,7 +34,7 @@ No usa la tabla `payments` ni los destinos de cobro del gym (`payment_destinatio
 
 1. **Cuenta → Cobros PT**.
 2. Ve cobros pendientes de su entrenador.
-3. **Reportar pago** → elige método, ve datos del entrenador, referencia y comprobante opcional.
+3. **Reportar pago** → elige método (incluye USDT), ve datos del entrenador, equivalente Bs según su tasa, referencia y comprobante opcional.
 4. Espera confirmación del entrenador.
 
 ---
@@ -48,6 +49,9 @@ Base: `/api/trainer-billing`
 | PATCH    | `/offers/:id`                                     | trainer                                  |
 | GET/PUT  | `/destinations`                                   | trainer                                  |
 | GET      | `/destinations/:trainerId`                        | member (si asignado) o el propio trainer |
+| GET      | `/rate-context`                                   | trainer                                  |
+| GET      | `/rate-context/:trainerId`                        | member (si asignado)                     |
+| PUT      | `/rate-preference`                                | trainer                                  |
 | GET      | `/invoices`                                       | trainer \| member (solo los suyos)       |
 | POST     | `/invoices`                                       | trainer (solo asignados)                 |
 | POST     | `/invoices/:id/report`                            | member (multipart)                       |
@@ -56,6 +60,8 @@ Base: `/api/trainer-billing`
 | GET      | `/members`                                        | trainer (picker asignados)               |
 
 Admin/receptionist **no** tienen endpoints de montos PT a propósito.
+
+**Tasa euro:** preferencia del entrenador; no reemplaza el BCV de membresía del gym. El monto del cobro sigue en USD; solo cambia el equivalente en Bs mostrado.
 
 ---
 

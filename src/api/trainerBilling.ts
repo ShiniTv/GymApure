@@ -6,6 +6,8 @@ import { trainerHasMemberAccess } from '../lib/trainerAccess.ts';
 import {
   getTrainerPaymentDestinations,
   upsertTrainerPaymentDestinations,
+  getTrainerRateContext,
+  upsertTrainerRatePrefs,
 } from '../lib/trainerBilling.ts';
 import {
   normalizePaymentDestinations,
@@ -192,6 +194,60 @@ router.put('/destinations', authorize(['trainer']), async (req: AuthRequest, res
     })
   );
   res.json(next);
+});
+
+const ratePrefsSchema = z.object({
+  rate_preference: z.enum(['bcv', 'euro']),
+  euro_rate: z.coerce.number().positive().max(100_000).nullable().optional(),
+  euro_rate_note: z.string().trim().max(300).optional(),
+});
+
+/** Resolved Bs/USD context for PT invoices (BCV or trainer euro rate). */
+router.get('/rate-context', authorize(['trainer']), async (req: AuthRequest, res) => {
+  res.json(await getTrainerRateContext(req.user!.id));
+});
+
+router.get(
+  '/rate-context/:trainerId',
+  authorize(['member', 'trainer']),
+  async (req: AuthRequest, res) => {
+    const trainerId = Number(req.params.trainerId);
+    if (!Number.isFinite(trainerId)) {
+      res.status(400).json({ error: 'Entrenador inválido' });
+      return;
+    }
+    if (req.user!.role === 'trainer' && req.user!.id !== trainerId) {
+      res.status(403).json({ error: 'No autorizado' });
+      return;
+    }
+    if (req.user!.role === 'member') {
+      const ok = await trainerHasMemberAccess(trainerId, req.user!.id);
+      if (!ok) {
+        res.status(403).json({ error: 'No estás asignado a este entrenador' });
+        return;
+      }
+    }
+    res.json(await getTrainerRateContext(trainerId));
+  }
+);
+
+router.put('/rate-preference', authorize(['trainer']), async (req: AuthRequest, res) => {
+  const parsed = ratePrefsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+    return;
+  }
+  try {
+    await upsertTrainerRatePrefs(req.user!.id, {
+      rate_preference: parsed.data.rate_preference,
+      euro_rate: parsed.data.euro_rate ?? null,
+      euro_rate_note: parsed.data.euro_rate_note,
+    });
+    res.json(await getTrainerRateContext(req.user!.id));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'No se pudo guardar';
+    res.status(400).json({ error: message });
+  }
 });
 
 /** ——— Invoices ——— */

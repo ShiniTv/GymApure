@@ -22,6 +22,7 @@ const PAYMENT_METHODS = [
   { value: 'pago_movil', label: 'Pago móvil' },
   { value: 'transferencia', label: 'Transferencia' },
   { value: 'zelle', label: 'Zelle' },
+  { value: 'usdt', label: 'USDT (Binance)' },
 ] as const;
 
 export function ReceptionRenewPayWizard({
