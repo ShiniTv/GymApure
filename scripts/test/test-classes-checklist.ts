@@ -72,14 +72,6 @@ async function login(email: string, password: string) {
   return result;
 }
 
-function dayRangeIso() {
-  const from = new Date();
-  from.setHours(0, 0, 0, 0);
-  const to = new Date();
-  to.setHours(23, 59, 59, 999);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
-
 async function main() {
   console.log('=== Clases / reservas checklist ===\n');
 
@@ -109,8 +101,7 @@ async function main() {
   ok('GET entrenadores', trainers.res.status === 200 && trainerList.length > 0);
   const instructorId = trainerList[0]?.id;
 
-  const starts = new Date();
-  starts.setHours(starts.getHours() + 3, 0, 0, 0);
+  const starts = new Date(Date.now() + 90 * 60_000);
   const created = await jsonApi('POST', '/api/classes/sessions', {
     class_type_id: typeId,
     starts_at: starts.toISOString(),
@@ -125,7 +116,9 @@ async function main() {
   );
   const sessionId = Number((created.data as { id?: number }).id);
 
-  const { from, to } = dayRangeIso();
+  // Range must include the created session (calendar "today" breaks near UTC midnight).
+  const from = new Date(Date.now() - 60_000).toISOString();
+  const to = new Date(starts.getTime() + 60_000).toISOString();
   const todaySessions = await jsonApi(
     'GET',
     `/api/classes/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
