@@ -465,6 +465,9 @@ async function main() {
       `status ${adminPt.res.status}`
     );
 
+    cookie = '';
+    csrfToken = '';
+
     const publicHealth = await api('GET', '/api/health');
     const healthPayload = publicHealth.data as {
       status?: string;
@@ -482,17 +485,26 @@ async function main() {
     ok('GET /api/auth/config → 200', authConfig.res.status === 200);
 
     const cronNoSecret = await api('POST', '/api/settings/expiry/run');
-    ok('Cron sin secret ni sesión → 403', cronNoSecret.res.status === 403);
+    ok(
+      'Cron sin secret ni sesión → 401|403',
+      [401, 403].includes(cronNoSecret.res.status),
+      `status ${cronNoSecret.res.status}`
+    );
 
     const cronBadSecret = await api('POST', '/api/settings/expiry/run', undefined, {
       'x-cron-secret': 'definitely-wrong-cron-secret-value',
     });
-    ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
+    ok(
+      'Cron con secret inválido → 401|403',
+      [401, 403].includes(cronBadSecret.res.status),
+      `status ${cronBadSecret.res.status}`
+    );
 
     const trainerRemindersNoSecret = await api('POST', '/api/trainer-reminders/run');
     ok(
-      'Recordatorios 1:1 sin secret ni admin → 403',
-      trainerRemindersNoSecret.res.status === 403
+      'Recordatorios 1:1 sin secret ni admin → 401|403',
+      [401, 403].includes(trainerRemindersNoSecret.res.status),
+      `status ${trainerRemindersNoSecret.res.status}`
     );
 
     if (process.env.CRON_SECRET) {
