@@ -16,6 +16,7 @@ En **Configuración → Datos de cobro** el admin publica:
 | Pago móvil             | Teléfono, cédula, banco                         |
 | Transferencia          | Titular, cédula, banco, tipo y número de cuenta |
 | Zelle                  | Correo (+ nombre opcional)                      |
+| USDT (Binance)         | Correo Binance y/o ID, red/activo               |
 | Divisas (efectivo USD) | Denominaciones aceptadas                        |
 
 Al **reportar pago**, el miembro ve esos datos (y puede copiarlos). En efectivo USD puede indicar cantidad de billetes por denominación.

@@ -80,6 +80,15 @@ const paymentDestinationsSchema = z.object({
       notes: z.string().max(300).optional(),
     })
     .optional(),
+  usdt: z
+    .object({
+      enabled: z.boolean().optional(),
+      binance_email: z.string().max(120).optional(),
+      binance_id: z.string().max(40).optional(),
+      network: z.string().max(40).optional(),
+      notes: z.string().max(300).optional(),
+    })
+    .optional(),
   efectivo_usd: z
     .object({
       enabled: z.boolean().optional(),
@@ -118,6 +127,7 @@ router.put('/payment-destinations', authorize(['admin']), async (req: AuthReques
       pago_movil: { ...current.pago_movil, ...(parsed.data.pago_movil ?? {}) },
       transferencia: { ...current.transferencia, ...(parsed.data.transferencia ?? {}) },
       zelle: { ...current.zelle, ...(parsed.data.zelle ?? {}) },
+      usdt: { ...current.usdt, ...(parsed.data.usdt ?? {}) },
       efectivo_usd: { ...current.efectivo_usd, ...(parsed.data.efectivo_usd ?? {}) },
     }) satisfies PaymentDestinations;
     const settings = await updatePaymentDestinations(merged);
@@ -126,6 +136,7 @@ router.put('/payment-destinations', authorize(['admin']), async (req: AuthReques
         pago_movil: settings.pago_movil.enabled,
         transferencia: settings.transferencia.enabled,
         zelle: settings.zelle.enabled,
+        usdt: settings.usdt.enabled,
         efectivo_usd: settings.efectivo_usd.enabled,
       },
     });

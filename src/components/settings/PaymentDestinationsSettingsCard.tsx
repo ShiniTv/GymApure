@@ -276,6 +276,65 @@ export function PaymentDestinationsSettingsCard({
           </div>
         </section>
 
+        {/* USDT Binance */}
+        <section className="border-border space-y-2.5 border-t pt-4">
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              checked={form.usdt.enabled}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  usdt: { ...f.usdt, enabled: e.target.checked },
+                }))
+              }
+            />
+            {PAYMENT_METHOD_LABELS.usdt}
+          </label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div>
+              <Label className="text-[11px]">Correo Binance</Label>
+              <Input
+                type="email"
+                value={form.usdt.binance_email}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    usdt: { ...f.usdt, binance_email: e.target.value },
+                  }))
+                }
+                placeholder="correo@ejemplo.com"
+              />
+            </div>
+            <div>
+              <Label className="text-[11px]">Binance ID</Label>
+              <Input
+                value={form.usdt.binance_id}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    usdt: { ...f.usdt, binance_id: e.target.value },
+                  }))
+                }
+                placeholder="UID numérico"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label className="text-[11px]">Red / activo</Label>
+              <Input
+                value={form.usdt.network}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    usdt: { ...f.usdt, network: e.target.value },
+                  }))
+                }
+                placeholder="USDT · TRC20"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Divisas */}
         <section className="border-border space-y-2.5 border-t pt-4">
           <label className="flex items-center gap-2 text-sm font-semibold">

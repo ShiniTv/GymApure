@@ -216,3 +216,57 @@ export function useReportTrainerInvoiceMutation() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: [...rootKey, 'invoices'] }),
   });
 }
+
+export interface TrainerRateContext {
+  rate_preference: 'bcv' | 'euro';
+  euro_rate: number | null;
+  euro_rate_note: string;
+  active_bs_per_usd: number | null;
+  active_label: string;
+  bcv_bs_per_usd: number | null;
+}
+
+export function useTrainerRateContextQuery(enabled = true) {
+  return useQuery({
+    queryKey: [...rootKey, 'rate-context', 'mine'],
+    queryFn: async () => {
+      const res = await apiFetch('/api/trainer-billing/rate-context');
+      return parseJsonResponse<TrainerRateContext>(res);
+    },
+    enabled,
+  });
+}
+
+export function useTrainerRateContextForMemberQuery(trainerId: number | null, enabled = true) {
+  return useQuery({
+    queryKey: [...rootKey, 'rate-context', trainerId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/trainer-billing/rate-context/${trainerId}`);
+      return parseJsonResponse<TrainerRateContext>(res);
+    },
+    enabled: enabled && trainerId != null,
+  });
+}
+
+export function useUpdateTrainerRatePreferenceMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      rate_preference: 'bcv' | 'euro';
+      euro_rate?: number | null;
+      euro_rate_note?: string;
+    }) => {
+      const res = await apiFetch('/api/trainer-billing/rate-preference', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await parseJsonResponse<TrainerRateContext & { error?: string }>(res);
+      if (!res.ok) throw new Error(data.error ?? 'No se pudo guardar la tasa');
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.setQueryData([...rootKey, 'rate-context', 'mine'], data);
+    },
+  });
+}

@@ -124,18 +124,27 @@ async function main() {
       notes: '',
     },
     zelle: { enabled: true, email: 'cobros@gymapure.test', holder_name: 'GymApure', notes: '' },
+    usdt: {
+      enabled: true,
+      binance_email: 'usdt@gymapure.test',
+      binance_id: '99887766',
+      network: 'USDT TRC20',
+      notes: '',
+    },
     efectivo_usd: { enabled: true, denominations: [1, 5, 10, 20], notes: '' },
   });
   ok('PUT payment-destinations', destPut.res.status === 200);
   const destAfter = destPut.data as {
     pago_movil?: { phone?: string; enabled?: boolean };
     zelle?: { email?: string };
+    usdt?: { binance_id?: string };
   };
   ok(
     'Destinos guardados',
     destAfter.pago_movil?.enabled === true &&
       destAfter.pago_movil?.phone === '04121234567' &&
-      destAfter.zelle?.email === 'cobros@gymapure.test'
+      destAfter.zelle?.email === 'cobros@gymapure.test' &&
+      destAfter.usdt?.binance_id === '99887766'
   );
 
   // CI / fresh DBs may lack a scraped BCV rate — seed a manual override for the suite.

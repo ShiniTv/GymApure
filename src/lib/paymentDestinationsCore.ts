@@ -4,6 +4,7 @@ export const PAYMENT_METHOD_KEYS = [
   'pago_movil',
   'transferencia',
   'zelle',
+  'usdt',
   'efectivo_usd',
 ] as const;
 
@@ -13,6 +14,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethodKey, string> = {
   pago_movil: 'Pago móvil',
   transferencia: 'Transferencia',
   zelle: 'Zelle',
+  usdt: 'USDT (Binance)',
   efectivo_usd: 'Divisas (efectivo USD)',
 };
 
@@ -44,6 +46,16 @@ export interface ZelleDestination {
   notes: string;
 }
 
+export interface UsdtDestination {
+  enabled: boolean;
+  /** Binance account email and/or numeric UID — at least one when enabled */
+  binance_email: string;
+  binance_id: string;
+  /** e.g. TRC20 / network note for the payer */
+  network: string;
+  notes: string;
+}
+
 export interface EfectivoUsdDestination {
   enabled: boolean;
   /** Denominations the gym accepts / wants counted */
@@ -55,6 +67,7 @@ export interface PaymentDestinations {
   pago_movil: PagoMovilDestination;
   transferencia: TransferenciaDestination;
   zelle: ZelleDestination;
+  usdt: UsdtDestination;
   efectivo_usd: EfectivoUsdDestination;
 }
 
@@ -83,6 +96,14 @@ const emptyZelle = (): ZelleDestination => ({
   notes: '',
 });
 
+const emptyUsdt = (): UsdtDestination => ({
+  enabled: false,
+  binance_email: '',
+  binance_id: '',
+  network: 'USDT',
+  notes: '',
+});
+
 const emptyEfectivo = (): EfectivoUsdDestination => ({
   enabled: false,
   denominations: [...DEFAULT_USD_DENOMINATIONS],
@@ -94,6 +115,7 @@ export function defaultPaymentDestinations(): PaymentDestinations {
     pago_movil: emptyMovil(),
     transferencia: emptyTransfer(),
     zelle: emptyZelle(),
+    usdt: emptyUsdt(),
     efectivo_usd: emptyEfectivo(),
   };
 }
@@ -151,6 +173,15 @@ export function normalizePaymentDestinations(raw: unknown): PaymentDestinations 
     notes: asString(zelle.notes, 300),
   };
 
+  const usdt = (obj.usdt ?? {}) as Record<string, unknown>;
+  base.usdt = {
+    enabled: asBool(usdt.enabled),
+    binance_email: asString(usdt.binance_email, 120),
+    binance_id: asString(usdt.binance_id, 40),
+    network: asString(usdt.network, 40) || 'USDT',
+    notes: asString(usdt.notes, 300),
+  };
+
   const cash = (obj.efectivo_usd ?? {}) as Record<string, unknown>;
   base.efectivo_usd = {
     enabled: asBool(cash.enabled),
@@ -194,6 +225,15 @@ export function formatDestinationLines(
     if (!d.enabled) return lines;
     if (d.email) lines.push(`Correo Zelle: ${d.email}`);
     if (d.holder_name) lines.push(`Nombre: ${d.holder_name}`);
+    if (d.notes) lines.push(d.notes);
+    return lines;
+  }
+  if (method === 'usdt') {
+    const d = destinations.usdt;
+    if (!d.enabled) return lines;
+    if (d.binance_email) lines.push(`Binance (correo): ${d.binance_email}`);
+    if (d.binance_id) lines.push(`Binance ID: ${d.binance_id}`);
+    if (d.network) lines.push(`Red / activo: ${d.network}`);
     if (d.notes) lines.push(d.notes);
     return lines;
   }

@@ -30,7 +30,9 @@ import {
   useTrainerDestinationsQuery,
   useTrainerInvoicesQuery,
   useTrainerOffersQuery,
+  useTrainerRateContextQuery,
   useUpdateTrainerDestinationsMutation,
+  useUpdateTrainerRatePreferenceMutation,
 } from '../hooks/queries/useTrainerBillingQuery';
 
 function statusLabel(status: string) {
@@ -53,9 +55,11 @@ export default function TrainerPtBilling() {
   const { data: offers = [], isPending: loadingOffers } = useTrainerOffersQuery(true);
   const { data: invoices = [], isPending: loadingInvoices } = useTrainerInvoicesQuery(true);
   const { data: destinations } = useTrainerDestinationsQuery(true);
+  const { data: rateCtx } = useTrainerRateContextQuery(true);
   const createInvoice = useCreateTrainerInvoiceMutation();
   const createOffer = useCreateTrainerOfferMutation();
   const updateDest = useUpdateTrainerDestinationsMutation();
+  const updateRate = useUpdateTrainerRatePreferenceMutation();
   const confirmInv = useConfirmTrainerInvoiceMutation();
   const rejectInv = useRejectTrainerInvoiceMutation();
 
@@ -66,12 +70,22 @@ export default function TrainerPtBilling() {
   const [offerTitle, setOfferTitle] = useState('Sesión 1:1');
   const [offerPrice, setOfferPrice] = useState('');
   const [destForm, setDestForm] = useState<PaymentDestinations>(defaultPaymentDestinations());
+  const [ratePref, setRatePref] = useState<'bcv' | 'euro'>('bcv');
+  const [euroRate, setEuroRate] = useState('');
+  const [euroNote, setEuroNote] = useState('');
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     if (destinations) setDestForm(destinations);
   }, [destinations]);
+
+  useEffect(() => {
+    if (!rateCtx) return;
+    setRatePref(rateCtx.rate_preference);
+    setEuroRate(rateCtx.euro_rate != null ? String(rateCtx.euro_rate) : '');
+    setEuroNote(rateCtx.euro_rate_note);
+  }, [rateCtx]);
 
   const onCreateInvoice = async () => {
     try {
@@ -172,6 +186,15 @@ export default function TrainerPtBilling() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
+                {amount && rateCtx?.active_bs_per_usd ? (
+                  <p className="text-text-muted mt-1 text-[11px]">
+                    ≈{' '}
+                    {(Number(amount) * rateCtx.active_bs_per_usd).toLocaleString('es-VE', {
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    Bs ({rateCtx.active_label})
+                  </p>
+                ) : null}
               </div>
               <Button
                 onClick={() => void onCreateInvoice()}
@@ -390,6 +413,50 @@ export default function TrainerPtBilling() {
           <label className="flex items-center gap-2 text-xs font-semibold sm:col-span-2">
             <input
               type="checkbox"
+              checked={destForm.usdt.enabled}
+              onChange={(e) =>
+                setDestForm((f) => ({
+                  ...f,
+                  usdt: { ...f.usdt, enabled: e.target.checked },
+                }))
+              }
+            />
+            {PAYMENT_METHOD_LABELS.usdt}
+          </label>
+          <Input
+            placeholder="Correo Binance"
+            value={destForm.usdt.binance_email}
+            onChange={(e) =>
+              setDestForm((f) => ({
+                ...f,
+                usdt: { ...f.usdt, binance_email: e.target.value },
+              }))
+            }
+          />
+          <Input
+            placeholder="Binance ID"
+            value={destForm.usdt.binance_id}
+            onChange={(e) =>
+              setDestForm((f) => ({
+                ...f,
+                usdt: { ...f.usdt, binance_id: e.target.value },
+              }))
+            }
+          />
+          <Input
+            placeholder="Red / activo (ej. USDT TRC20)"
+            className="sm:col-span-2"
+            value={destForm.usdt.network}
+            onChange={(e) =>
+              setDestForm((f) => ({
+                ...f,
+                usdt: { ...f.usdt, network: e.target.value },
+              }))
+            }
+          />
+          <label className="flex items-center gap-2 text-xs font-semibold sm:col-span-2">
+            <input
+              type="checkbox"
               checked={destForm.efectivo_usd.enabled}
               onChange={(e) =>
                 setDestForm((f) => ({
@@ -429,6 +496,76 @@ export default function TrainerPtBilling() {
             ))}
           </div>
         </div>
+      </Card>
+
+      <Card padding="sm" rounded="xl" className="space-y-3 md:p-4">
+        <h2 className="text-sm font-bold">Tasa de referencia (Bs)</h2>
+        <p className="text-text-muted text-[11px]">
+          Solo para cobros PT. La membresía del gym sigue usando BCV. &quot;Tasa euro&quot; es tu
+          referencia en Bs por 1 USD (no convierte a euros).
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label>Preferencia</Label>
+            <Select
+              value={ratePref}
+              onChange={(e) => setRatePref(e.target.value as 'bcv' | 'euro')}
+            >
+              <option value="bcv">Tasa BCV (oficial del gym)</option>
+              <option value="euro">Tasa euro (manual)</option>
+            </Select>
+          </div>
+          {ratePref === 'euro' ? (
+            <div>
+              <Label>Bs por 1 USD (tasa euro)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={euroRate}
+                onChange={(e) => setEuroRate(e.target.value)}
+                placeholder="Ej. 85.50"
+              />
+            </div>
+          ) : (
+            <div className="flex items-end">
+              <p className="text-text-secondary text-xs">
+                {rateCtx?.bcv_bs_per_usd
+                  ? `BCV vigente: ${rateCtx.bcv_bs_per_usd.toLocaleString('es-VE')} Bs/USD`
+                  : 'Sin tasa BCV disponible aún'}
+              </p>
+            </div>
+          )}
+          {ratePref === 'euro' ? (
+            <div className="sm:col-span-2">
+              <Label>Nota (opcional)</Label>
+              <Input
+                value={euroNote}
+                onChange={(e) => setEuroNote(e.target.value)}
+                placeholder="Ej. tasa del día según tu referencia"
+              />
+            </div>
+          ) : null}
+        </div>
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={updateRate.isPending}
+          onClick={() => {
+            void updateRate
+              .mutateAsync({
+                rate_preference: ratePref,
+                euro_rate: ratePref === 'euro' ? Number(euroRate) : null,
+                euro_rate_note: euroNote,
+              })
+              .then(
+                () => toast?.success('Preferencia de tasa guardada'),
+                (err) => toast?.error(toDisplayErrorMessage(err))
+              );
+          }}
+        >
+          Guardar tasa
+        </Button>
       </Card>
 
       <Card padding="sm" rounded="xl" className="md:p-4">

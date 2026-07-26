@@ -26,6 +26,7 @@ export function formatPaymentMethod(method: string): string {
     pago_movil: 'Pago móvil',
     transferencia: 'Transferencia',
     zelle: 'Zelle',
+    usdt: 'USDT (Binance)',
     efectivo_usd: 'Divisas (USD)',
     efectivo: 'Efectivo',
   };
