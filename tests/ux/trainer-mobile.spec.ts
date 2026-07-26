@@ -31,7 +31,7 @@ test.describe('Entrenador móvil', () => {
     await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
     // Compact cards open MemberQuickSheet; primary is Ver rutinas or Asignar rutina
-    const firstCard = page.locator('button.w-full.text-left.rounded-xl.border').first();
+    const firstCard = page.locator('main button.w-full.text-left.border').first();
     await expect(firstCard).toBeVisible();
     await firstCard.click();
 
