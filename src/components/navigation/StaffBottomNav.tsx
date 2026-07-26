@@ -142,15 +142,15 @@ export function StaffBottomNav({
                         className={clsx(
                           'tap-feedback relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center transition-[transform,opacity,background-color] duration-150',
                           itemActive
-                            ? 'border-brand/40 bg-brand/10 text-brand'
-                            : 'border-zinc-200/70 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800/50'
+                            ? 'border-border bg-surface-overlay text-text'
+                            : 'border-border/60 text-text-secondary hover:bg-surface-overlay/60 hover:text-text bg-transparent'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
                         aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}
                       >
                         {itemActive ? (
                           <span
-                            className="bg-brand absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+                            className="bg-text-muted absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
                             aria-hidden
                           />
                         ) : null}
@@ -208,7 +208,7 @@ export function StaffBottomNav({
                       onClick={() => setMoreOpen((open) => !open)}
                       className={clsx(
                         'tap-feedback inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150',
-                        active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
+                        active ? 'text-text' : 'text-text-muted'
                       )}
                       aria-label={item.name}
                       aria-expanded={moreOpen}
@@ -234,7 +234,7 @@ export function StaffBottomNav({
                     {...routePrefetchHandlers(item.href)}
                     className={clsx(
                       'tap-feedback inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150',
-                      active ? 'text-brand' : 'text-zinc-500 dark:text-zinc-400'
+                      active ? 'text-text' : 'text-text-muted'
                     )}
                     aria-label={
                       item.showUnreadBadge && chatUnread > 0
