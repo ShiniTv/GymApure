@@ -10,6 +10,7 @@ import {
   CreditCard,
   UserCircle,
   CalendarDays,
+  Landmark,
 } from 'lucide-react';
 
 export interface MemberBottomTab {
@@ -51,6 +52,7 @@ export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
   { name: 'Historial', href: '/history', icon: History, section: 'Actividad' },
   { name: 'Biblioteca', href: '/exercises', icon: BookOpen, section: 'Entreno' },
   { name: 'Pagos', href: '/payments', icon: CreditCard, section: 'Cuenta' },
+  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 

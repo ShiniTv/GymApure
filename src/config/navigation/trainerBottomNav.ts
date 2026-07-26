@@ -12,6 +12,7 @@ import {
   Wrench,
   UtensilsCrossed,
   ShieldCheck,
+  Landmark,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -26,6 +27,7 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
 /** Sheet items — synced with secondary items in trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Miembros' },
+  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Miembros' },
   {
     name: 'Asignaciones',
     href: '/routines?view=assignments',

@@ -1,7 +1,14 @@
-import type { FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Upload } from 'lucide-react';
 import { Button, Input, Label, Modal, Select, Spinner } from '../../components/ui';
 import { formatBsRateLabel, type ExchangeRate } from '../../hooks/queries/useExchangeRateQuery';
+import { usePaymentDestinationsQuery } from '../../hooks/queries/usePaymentDestinationsQuery';
+import { PaymentDestinationHint } from '../../components/payments/PaymentDestinationHint';
+import {
+  formatDenominationBreakdown,
+  PAYMENT_METHOD_KEYS,
+  PAYMENT_METHOD_LABELS,
+} from '../../lib/paymentDestinationsCore';
 
 export interface PaymentMemberOption {
   id: number;
@@ -81,6 +88,24 @@ export function PaymentRegisterModal({
   onFileChange,
   submitting,
 }: PaymentRegisterModalProps) {
+  const { data: destinations } = usePaymentDestinationsQuery(open);
+  const [billCounts, setBillCounts] = useState<Record<number, number>>({});
+  const isCashUsd = method === 'efectivo_usd';
+  const cashDenoms = destinations?.efectivo_usd.denominations ?? [1, 5, 10, 20, 50, 100];
+
+  useEffect(() => {
+    if (!open) setBillCounts({});
+  }, [open]);
+
+  useEffect(() => {
+    if (!isCashUsd) return;
+    const { total, label } = formatDenominationBreakdown(billCounts);
+    if (total > 0) {
+      onAmountUsdChange(String(total));
+      if (label) onReferenceChange(`Efectivo USD: ${label}`);
+    }
+  }, [billCounts, isCashUsd, onAmountUsdChange, onReferenceChange]);
+
   return (
     <Modal
       open={open}
@@ -156,6 +181,7 @@ export function PaymentRegisterModal({
               className="text-xl font-semibold"
               value={amountUsd}
               error={fieldErrors.amount}
+              readOnly={isCashUsd && Object.values(billCounts).some((n) => n > 0)}
               onChange={(e) => {
                 onAmountUsdChange(e.target.value);
                 if (fieldErrors.amount) onClearFieldError('amount');
@@ -165,12 +191,50 @@ export function PaymentRegisterModal({
           </div>
           <div>
             <Label>Método</Label>
-            <Select value={method} onChange={(e) => onMethodChange(e.target.value)}>
-              <option value="pago_movil">Pago móvil</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="efectivo_usd">Efectivo USD</option>
+            <Select
+              value={method}
+              onChange={(e) => {
+                onMethodChange(e.target.value);
+                setBillCounts({});
+              }}
+            >
+              {PAYMENT_METHOD_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {PAYMENT_METHOD_LABELS[key]}
+                </option>
+              ))}
             </Select>
           </div>
+
+          <PaymentDestinationHint method={method} destinations={destinations} />
+
+          {isCashUsd && destinations?.efectivo_usd.enabled ? (
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Billetes (cantidad por denominación)</Label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {cashDenoms.map((denom) => (
+                  <div key={denom} className="flex items-center gap-2">
+                    <span className="text-text-secondary w-10 text-xs font-semibold">${denom}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      className="h-9"
+                      value={billCounts[denom] ?? 0}
+                      onChange={(e) => {
+                        const qty = Math.max(0, parseInt(e.target.value, 10) || 0);
+                        setBillCounts((prev) => ({ ...prev, [denom]: qty }));
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-text-muted text-[11px]">
+                El monto y la referencia se calculan con los billetes indicados.
+              </p>
+            </div>
+          ) : null}
+
           {needsBsRate && (
             <div className="sm:col-span-2">
               <Label>
@@ -202,7 +266,7 @@ export function PaymentRegisterModal({
             </div>
           )}
           <div className="sm:col-span-2">
-            <Label>Número de Referencia</Label>
+            <Label>{isCashUsd ? 'Detalle / referencia' : 'Número de Referencia'}</Label>
             <Input
               type="text"
               required
@@ -212,7 +276,7 @@ export function PaymentRegisterModal({
                 onReferenceChange(e.target.value);
                 if (fieldErrors.reference) onClearFieldError('reference');
               }}
-              placeholder="Referencia bancaria"
+              placeholder={isCashUsd ? 'Efectivo USD o nota de entrega' : 'Referencia bancaria'}
             />
           </div>
           <div className="sm:col-span-2">

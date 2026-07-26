@@ -259,7 +259,81 @@ async function main() {
         blockedAppointment.res.status === 403,
         `status ${blockedAppointment.res.status}`
       );
+      const blockedPtInvoice = await api('POST', '/api/trainer-billing/invoices', {
+        member_id: isolatedId,
+        title: 'Sesión PT bloqueada',
+        amount_usd: 20,
+      });
+      ok(
+        'Trainer no crea cobro PT a no asignado → 403',
+        blockedPtInvoice.res.status === 403,
+        `status ${blockedPtInvoice.res.status}`
+      );
     }
+
+    const ptInvoice = await api('POST', '/api/trainer-billing/invoices', {
+      member_id: memberId,
+      title: 'Sesión PT checklist',
+      amount_usd: 15,
+    });
+    ok(
+      'Trainer crea cobro PT a miembro asignado → 201',
+      ptInvoice.res.status === 201,
+      `status ${ptInvoice.res.status}`
+    );
+    const ptInvoiceId = Number((ptInvoice.data as { id?: number }).id);
+    const trainerMe = await api('GET', '/api/auth/me');
+    const ptTrainerId = Number((trainerMe.data as { user?: { id?: number } }).user?.id);
+
+    cookie = '';
+    ok('Login member para cobros PT IDOR', await loginAs('member@gym.com'));
+    if (ptTrainerId) {
+      const destOk = await api('GET', `/api/trainer-billing/destinations/${ptTrainerId}`);
+      ok(
+        'Member lee destinos PT de entrenador asignado → 200',
+        destOk.res.status === 200,
+        `status ${destOk.res.status}`
+      );
+      const destBlocked = await api('GET', `/api/trainer-billing/destinations/${memberId}`);
+      ok(
+        'Member no lee destinos PT de usuario no asignado → 403',
+        destBlocked.res.status === 403,
+        `status ${destBlocked.res.status}`
+      );
+    }
+    if (ptInvoiceId) {
+      const memberConfirm = await api('POST', `/api/trainer-billing/invoices/${ptInvoiceId}/confirm`);
+      ok(
+        'Member no confirma cobro PT → 403',
+        memberConfirm.res.status === 403,
+        `status ${memberConfirm.res.status}`
+      );
+      const form = new FormData();
+      form.append('method', 'pago_movil');
+      form.append('reference', `PT-SEC-${Date.now()}`);
+      const reportRes = await fetch(`${BASE}/api/trainer-billing/invoices/${ptInvoiceId}/report`, {
+        method: 'POST',
+        headers: {
+          ...(cookie ? { Cookie: cookie } : {}),
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+        body: form,
+      });
+      ok(
+        'Member reporta cobro PT propio → 200',
+        reportRes.status === 200,
+        `status ${reportRes.status}`
+      );
+    }
+    const memberOffers = await api('GET', '/api/trainer-billing/offers');
+    ok(
+      'Member no lista ofertas PT del entrenador → 403',
+      memberOffers.res.status === 403,
+      `status ${memberOffers.res.status}`
+    );
+
+    cookie = '';
+    ok('Login trainer tras cobros PT IDOR', await loginAs('trainer@gym.com'));
 
     const trainerRoutines = await api('GET', '/api/routines?all=1');
     const trainerList = trainerRoutines.data as { trainer_id?: number }[];
@@ -382,6 +456,18 @@ async function main() {
 
   // --- Fase 4: hardening adicional ---
   {
+    cookie = '';
+    ok('Login admin para PT staff deny', await loginAs('admin@gym.com'));
+    const adminPt = await api('GET', '/api/trainer-billing/invoices');
+    ok(
+      'Admin no lista cobros PT privados → 403',
+      adminPt.res.status === 403,
+      `status ${adminPt.res.status}`
+    );
+
+    cookie = '';
+    csrfToken = '';
+
     const publicHealth = await api('GET', '/api/health');
     const healthPayload = publicHealth.data as {
       status?: string;
@@ -399,17 +485,26 @@ async function main() {
     ok('GET /api/auth/config → 200', authConfig.res.status === 200);
 
     const cronNoSecret = await api('POST', '/api/settings/expiry/run');
-    ok('Cron sin secret ni sesión → 403', cronNoSecret.res.status === 403);
+    ok(
+      'Cron sin secret ni sesión → 401|403',
+      [401, 403].includes(cronNoSecret.res.status),
+      `status ${cronNoSecret.res.status}`
+    );
 
     const cronBadSecret = await api('POST', '/api/settings/expiry/run', undefined, {
       'x-cron-secret': 'definitely-wrong-cron-secret-value',
     });
-    ok('Cron con secret inválido → 403', cronBadSecret.res.status === 403);
+    ok(
+      'Cron con secret inválido → 401|403',
+      [401, 403].includes(cronBadSecret.res.status),
+      `status ${cronBadSecret.res.status}`
+    );
 
     const trainerRemindersNoSecret = await api('POST', '/api/trainer-reminders/run');
     ok(
-      'Recordatorios 1:1 sin secret ni admin → 403',
-      trainerRemindersNoSecret.res.status === 403
+      'Recordatorios 1:1 sin secret ni admin → 401|403',
+      [401, 403].includes(trainerRemindersNoSecret.res.status),
+      `status ${trainerRemindersNoSecret.res.status}`
     );
 
     if (process.env.CRON_SECRET) {

@@ -15,12 +15,14 @@ Guía para el rol **trainer** (entrenador).
 - Consultar historial de entrenamientos de sus miembros
 - Ver equipamiento y reportar mantenimiento
 - Mensajes con miembros y staff
+- Cobros PT privados con clientes asignados (`/pt-billing`) — aparte de la membresía del gym
 
 ### No puede hacer
 
 - Ver miembros no asignados (403)
-- Aprobar pagos, configurar sistema, ver reportes globales
+- Aprobar pagos de membresía, configurar sistema, ver reportes globales
 - Gestionar membresías o entrenadores
+- Ver destinos/cobros PT de otros entrenadores
 
 ---
 
@@ -35,7 +37,7 @@ Guía para el rol **trainer** (entrenador).
 
 Bottom nav entrenador (visible con drawer cerrado; **icon-only** + `aria-label`):
 
-- **Panel**, **Miembros**, **Rutinas**, **Mensajes** + **Más** (Nutrición, asignaciones, Clases, …)
+- **Panel**, **Miembros**, **Rutinas**, **Mensajes** + **Más** (Nutrición, Cobros PT, asignaciones, Clases, …)
 
 Al abrir drawer lateral: footer pegado al fondo; bottom nav se oculta.
 
@@ -69,6 +71,15 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 3. Define comidas, macros o notas según el formulario.
 
 Ver [NUTRICION.md](../modulos/NUTRICION.md).
+
+### Cobros PT (entrenamiento personalizado)
+
+1. **Más** → **Cobros PT** (`/pt-billing`).
+2. Publica tus **datos de cobro** (pago móvil, transferencia, etc.).
+3. Crea un cobro a un miembro asignado (monto USD).
+4. Cuando el cliente reporte → **Confirmar** o **Rechazar**.
+
+Esto es independiente de **Pagos** de membresía del gym. Detalle: [COBROS-PT.md](../modulos/COBROS-PT.md).
 
 ### Perfil de salud y metabolismo del miembro
 

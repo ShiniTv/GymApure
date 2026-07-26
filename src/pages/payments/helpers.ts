@@ -22,7 +22,14 @@ export function formatPaymentDate(iso: string): string {
 }
 
 export function formatPaymentMethod(method: string): string {
-  return method.replace(/_/g, ' ');
+  const labels: Record<string, string> = {
+    pago_movil: 'Pago móvil',
+    transferencia: 'Transferencia',
+    zelle: 'Zelle',
+    efectivo_usd: 'Divisas (USD)',
+    efectivo: 'Efectivo',
+  };
+  return labels[method] ?? method.replace(/_/g, ' ');
 }
 
 export function paymentStatusLabel(status: Payment['status']): string {

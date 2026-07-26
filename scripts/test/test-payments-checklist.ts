@@ -104,6 +104,40 @@ async function main() {
   const adminLogin = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
   ok('Login admin', adminLogin.res.status === 200);
 
+  const destGet = await jsonApi('GET', '/api/settings/payment-destinations');
+  ok('GET payment-destinations', destGet.res.status === 200);
+  const destPut = await jsonApi('PUT', '/api/settings/payment-destinations', {
+    pago_movil: {
+      enabled: true,
+      phone: '04121234567',
+      bank_name: 'Banesco',
+      holder_cedula: 'V-12345678',
+      notes: '',
+    },
+    transferencia: {
+      enabled: true,
+      bank_name: 'BDV',
+      account_number: '01020000000000000000',
+      account_type: 'corriente',
+      holder_name: 'Gym Apure CA',
+      holder_cedula: 'J-123',
+      notes: '',
+    },
+    zelle: { enabled: true, email: 'cobros@gymapure.test', holder_name: 'GymApure', notes: '' },
+    efectivo_usd: { enabled: true, denominations: [1, 5, 10, 20], notes: '' },
+  });
+  ok('PUT payment-destinations', destPut.res.status === 200);
+  const destAfter = destPut.data as {
+    pago_movil?: { phone?: string; enabled?: boolean };
+    zelle?: { email?: string };
+  };
+  ok(
+    'Destinos guardados',
+    destAfter.pago_movil?.enabled === true &&
+      destAfter.pago_movil?.phone === '04121234567' &&
+      destAfter.zelle?.email === 'cobros@gymapure.test'
+  );
+
   // CI / fresh DBs may lack a scraped BCV rate — seed a manual override for the suite.
   let rateRes = await jsonApi('GET', '/api/exchange-rate');
   let activeRate = Number((rateRes.data as { rate?: number }).rate);
