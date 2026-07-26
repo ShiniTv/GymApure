@@ -11,24 +11,24 @@ export function Label({ children, htmlFor, className }: LabelProps) {
   return (
     <label
       htmlFor={htmlFor}
-      className={cn('mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300', className)}
+      className={cn('text-text-secondary mb-1 block text-xs font-medium', className)}
     >
       {children}
     </label>
   );
 }
 
-/** Shared field styles for Input, Select, PasswordInput */
+/** Shared field styles for Input, Select, PasswordInput — Linear-quiet */
 export const fieldClassName = cn(
-  'w-full bg-zinc-50 dark:bg-zinc-800 border rounded-xl px-3 py-2.5',
-  'text-sm text-zinc-900 dark:text-white font-medium outline-none',
-  'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
+  'w-full bg-surface border rounded-[var(--radius-input)] px-3 py-2.5',
+  'text-sm text-text font-medium outline-none',
+  'placeholder:text-text-muted',
   'min-h-[var(--touch-min)]',
-  'focus:ring-[3px] focus:ring-brand/25 focus-visible:ring-[3px] focus-visible:ring-brand',
-  'focus:border-brand/50',
-  'transition-all duration-200',
-  'border-zinc-200 dark:border-zinc-700',
-  'dark:[color-scheme:dark]'
+  'focus:ring-[2px] focus:ring-border focus-visible:ring-[2px] focus-visible:ring-border',
+  'focus:border-border',
+  'transition-[border-color,box-shadow,background-color] duration-150',
+  'border-border/70 hover:border-border',
+  'dark:bg-bg dark:[color-scheme:dark]'
 );
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -47,7 +47,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className="w-full">
       <div className={cn(hasLeading && 'relative')}>
         {hasLeading && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 text-zinc-400 dark:text-zinc-300 [&>svg]:h-4 [&>svg]:w-4">
+          <div className="text-text-muted pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 [&>svg]:h-4 [&>svg]:w-4">
             {leadingIcon}
           </div>
         )}

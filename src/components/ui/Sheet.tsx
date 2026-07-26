@@ -153,7 +153,8 @@ export function Sheet({
       >
         <div
           className={cn(
-            'rounded-sheet border-border bg-surface-raised shadow-sheet border',
+            'border-border/60 bg-surface rounded-[var(--radius-sheet)] border shadow-none',
+            'dark:bg-surface-raised',
             compact ? 'p-2.5' : 'p-ds-3',
             side === 'bottom' && 'mb-2',
             scrollable && 'flex max-h-[min(78dvh,calc(100dvh-7rem))] flex-col',
@@ -176,7 +177,7 @@ export function Sheet({
                 id={titleId}
                 className={cn(
                   'text-text tracking-[-0.02em]',
-                  compact ? 'text-sm font-semibold' : 'text-sm font-bold'
+                  compact ? 'text-sm font-semibold' : 'text-[15px] font-semibold'
                 )}
               >
                 {title}
@@ -184,7 +185,7 @@ export function Sheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="tap-feedback text-text-muted hover:bg-surface-overlay hover:text-text-secondary rounded-lg p-1.5"
+                className="tap-feedback text-text-muted hover:bg-surface-overlay hover:text-text rounded-md p-1.5"
                 aria-label={closeLabel}
               >
                 <X className="h-4 w-4" />
