@@ -111,7 +111,7 @@ export function SegmentedControl<T extends string>({
           : scroll
             ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : cn(
-                'inline-flex flex-wrap gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100 p-0.5 dark:border-zinc-700 dark:bg-zinc-800',
+                'border-border/70 bg-surface-raised inline-flex flex-wrap gap-0.5 rounded-lg border p-0.5',
                 fullWidth ? 'w-full' : 'w-fit max-w-full'
               ),
         !scroll && className
@@ -133,7 +133,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'focus-visible:ring-brand/50 flex touch-manipulation items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
+              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
               fullWidth && !scroll && 'flex-1',
               isKiosk
                 ? cn(
@@ -146,16 +146,16 @@ export function SegmentedControl<T extends string>({
                   ? cn(
                       'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
                       active
-                        ? 'bg-brand/10 dark:text-brand text-[#0066b3]'
-                        : 'bg-transparent text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                        ? 'bg-surface-overlay text-text'
+                        : 'text-text-secondary hover:text-text bg-transparent'
                     )
                   : cn(
                       isCompact
-                        ? 'min-h-9 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
-                        : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-bold',
+                        ? 'min-h-8 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
+                        : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-semibold',
                       active
-                        ? 'dark:text-brand bg-white text-[#0066b3] shadow-sm dark:bg-zinc-700'
-                        : 'text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300'
+                        ? 'bg-surface text-text dark:bg-bg shadow-xs'
+                        : 'text-text-secondary hover:text-text'
                     )
             )}
           >
@@ -168,8 +168,8 @@ export function SegmentedControl<T extends string>({
                 className={cn(
                   'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
                   active
-                    ? 'dark:bg-brand/15 dark:text-brand bg-[#0066b3]/15 text-[#0066b3]'
-                    : 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-400'
+                    ? 'bg-surface-overlay text-text-secondary'
+                    : 'bg-surface-overlay/80 text-text-muted'
                 )}
               >
                 {option.count > 99 ? '99+' : option.count}
@@ -188,13 +188,13 @@ export function SegmentedControl<T extends string>({
       {canScrollLeft && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-zinc-50 to-transparent dark:from-zinc-950"
+          className="from-bg pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r to-transparent"
         />
       )}
       {canScrollRight && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-zinc-50 to-transparent dark:from-zinc-950"
+          className="from-bg pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l to-transparent"
         />
       )}
       {tablist}

@@ -74,18 +74,18 @@
   --spacing-ds-6: 1.5rem; /* 24 — section gap */
   --spacing-ds-8: 2rem; /* 32 — block gap */
 
-  /* —— Radii (native rounded finish) —— */
-  --radius-chip: 0.75rem; /* 12 */
-  --radius-input: 1rem; /* 16 */
-  --radius-button: 1rem; /* 16 — use rounded-full for pills */
-  --radius-card: 1.25rem; /* 20 */
-  --radius-sheet: 1.75rem; /* 28 — bottom sheets */
+  /* —— Radii (Linear-like panels; sheets stay softer) —— */
+  --radius-chip: 0.5rem; /* 8 */
+  --radius-input: 0.75rem; /* 12 */
+  --radius-button: 0.75rem; /* 12 */
+  --radius-card: 0.75rem; /* 12 — window panels */
+  --radius-sheet: 1.25rem; /* 20 — bottom sheets */
   --radius-pill: 9999px;
 
-  /* —— Elevation —— */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  /* —— Elevation (quieter; dark relies on surface tone) —— */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --shadow-card: none;
   --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.45);
 
   --touch-min: 44px;
@@ -201,8 +201,8 @@
     --color-text-secondary: #d4d4d8;
     --color-text-muted: #a1a1aa;
     --color-text-inverse: #09090b;
-    --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-    --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.45);
+    --shadow-card: none;
+    --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.35);
   }
 
   body {
@@ -361,7 +361,7 @@ body,
     font-size: var(--text-h1);
     line-height: var(--text-h1--line-height);
     letter-spacing: var(--text-h1--letter-spacing);
-    font-weight: var(--text-h1--font-weight);
+    font-weight: 600;
     color: var(--color-text);
   }
 
@@ -456,14 +456,14 @@ body,
 
   .surface-card {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
   }
 
-  /* Dark: separate with surface tone, not hairline borders */
+  /* Dark: hairline border — Linear window edge */
   .dark .surface-card {
-    border-color: transparent;
+    border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
     box-shadow: none;
   }
 
@@ -479,11 +479,11 @@ body,
   }
 
   .page-stack {
-    @apply space-y-4 sm:space-y-5 lg:space-y-6;
+    @apply space-y-3.5 sm:space-y-4 lg:space-y-5;
   }
 
   .page-stack-loose {
-    @apply space-y-5 sm:space-y-6 lg:space-y-8;
+    @apply space-y-5 sm:space-y-6 lg:space-y-7;
   }
 
   /* Constrain form / panel width so content does not stretch on tablet widths */
@@ -504,7 +504,7 @@ body,
   }
 
   .page-stack-tight {
-    @apply space-y-4 sm:space-y-5;
+    @apply space-y-3 sm:space-y-4;
   }
 
   .form-stack {
@@ -523,9 +523,13 @@ body,
   .table-shell {
     overflow: hidden;
     border-radius: var(--radius-card);
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
     background-color: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: none;
+  }
+
+  .dark .table-shell {
+    border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
   }
 
   /* App shell — Linear/Cursor chrome (sidebar vs canvas) */
