@@ -86,9 +86,9 @@ export function PaymentDestinationsSettingsCard({
         Datos que verá el miembro al reportar el pago de su membresía, según el método elegido.
       </p>
 
-      <div className="space-y-5">
+      <div className="grid gap-5 lg:grid-cols-2 lg:gap-x-6 lg:gap-y-5">
         {/* Pago móvil */}
-        <section className="border-border space-y-2.5 border-t pt-4 first:border-t-0 first:pt-0">
+        <section className="border-border space-y-2.5 border-t pt-4 first:border-t-0 first:pt-0 lg:rounded-xl lg:border lg:p-3.5 lg:pt-3.5 lg:first:border lg:first:pt-3.5">
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
@@ -146,7 +146,7 @@ export function PaymentDestinationsSettingsCard({
         </section>
 
         {/* Transferencia */}
-        <section className="border-border space-y-2.5 border-t pt-4">
+        <section className="border-border space-y-2.5 border-t pt-4 lg:rounded-xl lg:border lg:p-3.5 lg:pt-3.5">
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
@@ -232,7 +232,7 @@ export function PaymentDestinationsSettingsCard({
         </section>
 
         {/* Zelle */}
-        <section className="border-border space-y-2.5 border-t pt-4">
+        <section className="border-border space-y-2.5 border-t pt-4 lg:rounded-xl lg:border lg:p-3.5 lg:pt-3.5">
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
@@ -277,7 +277,7 @@ export function PaymentDestinationsSettingsCard({
         </section>
 
         {/* USDT Binance */}
-        <section className="border-border space-y-2.5 border-t pt-4">
+        <section className="border-border space-y-2.5 border-t pt-4 lg:rounded-xl lg:border lg:p-3.5 lg:pt-3.5">
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
@@ -336,7 +336,7 @@ export function PaymentDestinationsSettingsCard({
         </section>
 
         {/* Divisas */}
-        <section className="border-border space-y-2.5 border-t pt-4">
+        <section className="border-border space-y-2.5 border-t pt-4 lg:rounded-xl lg:border lg:p-3.5 lg:pt-3.5">
           <label className="flex items-center gap-2 text-sm font-semibold">
             <input
               type="checkbox"
