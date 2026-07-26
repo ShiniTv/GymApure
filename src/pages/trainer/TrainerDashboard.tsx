@@ -8,6 +8,10 @@ import {
   ChevronRight,
   MessageSquare,
   UtensilsCrossed,
+  Radio,
+  ClipboardCheck,
+  HeartPulse,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
@@ -32,13 +36,13 @@ function MetricCell({
 }) {
   return (
     <div className="min-w-0 px-3 py-2.5 text-center sm:px-4 sm:py-3 lg:px-5 lg:py-4 lg:text-left">
-      <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase lg:text-[11px] dark:text-zinc-400">
+      <p className="text-text-secondary text-[10px] font-medium tracking-wide uppercase lg:text-[11px]">
         {label}
       </p>
       {loading ? (
         <Skeleton className="mx-auto mt-1 h-7 w-9 lg:mx-0 lg:h-8 lg:w-10" />
       ) : (
-        <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums sm:text-2xl lg:text-[1.75rem] dark:text-white">
+        <p className="text-text mt-0.5 text-xl font-bold tabular-nums sm:text-2xl lg:text-[1.75rem]">
           {value}
         </p>
       )}
@@ -79,6 +83,7 @@ interface MemberMini {
   full_name: string;
   days_since?: number;
   check_in_time?: string;
+  started_at?: string;
 }
 
 function formatCheckIn(iso?: string): string | null {
@@ -90,17 +95,65 @@ function formatCheckIn(iso?: string): string | null {
   }
 }
 
+function AttentionSummaryLink({
+  to,
+  icon: Icon,
+  label,
+  count,
+  tone = 'brand',
+}: {
+  to: string;
+  icon: typeof Users;
+  label: string;
+  count: number;
+  tone?: 'brand' | 'amber' | 'violet' | 'sky' | 'rose' | 'red';
+}) {
+  const toneClass =
+    tone === 'amber'
+      ? 'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+      : tone === 'violet'
+        ? 'border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/10 text-violet-700 dark:text-violet-300'
+        : tone === 'sky'
+          ? 'border-sky-500/20 bg-sky-500/5 hover:bg-sky-500/10 text-sky-700 dark:text-sky-300'
+          : tone === 'rose'
+            ? 'border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-700 dark:text-rose-300'
+            : tone === 'red'
+              ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-300'
+              : 'bg-brand/5 border-brand/20 hover:bg-brand/10 text-brand';
+
+  return (
+    <Link
+      to={to}
+      className={cn(
+        'flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors lg:px-3.5 lg:py-3',
+        toneClass
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span className="text-text min-w-0 flex-1 truncate text-[12px] font-semibold lg:text-[13px]">
+        {label}
+      </span>
+      <span className="text-[11px] font-bold tabular-nums">{count}</span>
+      <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+    </Link>
+  );
+}
+
 function TodayPanel({
   loading,
   quiet,
   trainingToday,
+  remoteTraining,
   inactiveMembers,
 }: {
   loading: boolean;
   quiet: boolean;
   trainingToday: MemberMini[];
+  remoteTraining: MemberMini[];
   inactiveMembers: MemberMini[];
 }) {
+  const trainingCount = trainingToday.length + remoteTraining.length;
+
   return (
     <Card
       padding="sm"
@@ -108,10 +161,10 @@ function TodayPanel({
       className={cn(SURFACE, 'h-full lg:p-4', quiet && !loading ? 'py-3 lg:py-4' : undefined)}
     >
       <div className="mb-2.5 flex items-center justify-between gap-2 lg:mb-3">
-        <h2 className="text-[13px] font-semibold text-zinc-900 lg:text-sm dark:text-white">Hoy</h2>
-        {trainingToday.length > 0 ? (
+        <h2 className="text-text text-[13px] font-semibold lg:text-sm">Hoy</h2>
+        {trainingCount > 0 ? (
           <Badge variant="success" className="text-[10px]">
-            {trainingToday.length} en el gym
+            {trainingCount} entrenando
           </Badge>
         ) : null}
       </div>
@@ -123,78 +176,100 @@ function TodayPanel({
       ) : quiet ? (
         <div className="grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-zinc-100 lg:gap-0 dark:sm:divide-zinc-800">
           <div className="sm:pr-4 lg:pr-5">
-            <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              En el gym · 0
-            </p>
-            <p className="mt-1 text-[12px] text-zinc-500 lg:text-[13px] dark:text-zinc-400">
-              Nadie entrenando ahora
+            <p className="text-text-secondary text-[11px] font-semibold">Entrenando · 0</p>
+            <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
+              Nadie en gym ni remoto
             </p>
           </div>
-          <div className="border-t border-zinc-100 pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5 dark:border-zinc-800">
-            <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              Sin entrenar · ≥3d
-            </p>
-            <p className="mt-1 text-[12px] text-zinc-500 lg:text-[13px] dark:text-zinc-400">
+          <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
+            <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
+            <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
               Sin alertas de inactividad
             </p>
           </div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-zinc-100 dark:sm:divide-zinc-800">
-          <div className="sm:pr-4 lg:pr-5">
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                En el gym · {trainingToday.length}
-              </p>
-              {trainingToday.length > TODAY_LIST_CAP && (
-                <Link
-                  to="/members"
-                  className="text-brand text-[10px] font-semibold hover:underline"
-                >
-                  Ver todos
-                </Link>
+          <div className="space-y-3 sm:pr-4 lg:pr-5">
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <p className="text-text-secondary text-[11px] font-semibold">
+                  En el gym · {trainingToday.length}
+                </p>
+                {trainingToday.length > TODAY_LIST_CAP && (
+                  <Link
+                    to="/members"
+                    className="text-brand text-[10px] font-semibold hover:underline"
+                  >
+                    Ver todos
+                  </Link>
+                )}
+              </div>
+              {trainingToday.length === 0 ? (
+                <p className="text-text-secondary text-[12px]">Nadie en el gym</p>
+              ) : (
+                <ul className="space-y-0.5">
+                  {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
+                    const checkIn = formatCheckIn(m.check_in_time);
+                    return (
+                      <li key={`gym-${m.id}`} className="flex items-center gap-1">
+                        <Link
+                          to={`/members/${m.id}/routines`}
+                          className="hover:text-brand text-text flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
+                        >
+                          <span className="min-w-0 truncate">{m.full_name}</span>
+                          {checkIn ? (
+                            <span className="shrink-0 text-[10px] font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                              {checkIn}
+                            </span>
+                          ) : (
+                            <ChevronRight className="text-text-muted h-3.5 w-3.5 shrink-0" />
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
-            {trainingToday.length === 0 ? (
-              <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Nadie en el gym</p>
-            ) : (
-              <ul className="space-y-0.5">
-                {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
-                  const checkIn = formatCheckIn(m.check_in_time);
-                  return (
-                    <li key={m.id} className="flex items-center gap-1">
-                      <Link
-                        to={`/members/${m.id}/routines`}
-                        className="hover:text-brand flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium text-zinc-800 lg:py-2 lg:text-[13px] dark:text-zinc-200"
-                      >
-                        <span className="min-w-0 truncate">{m.full_name}</span>
-                        {checkIn ? (
-                          <span className="shrink-0 text-[10px] font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
-                            {checkIn}
-                          </span>
-                        ) : (
-                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                        )}
-                      </Link>
-                      <Link
-                        to={`/messages?member=${m.id}`}
-                        className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
-                        aria-label={`Mensaje a ${m.full_name}`}
-                      >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <p className="text-text-secondary flex items-center gap-1 text-[11px] font-semibold">
+                  <Radio className="h-3 w-3" aria-hidden />
+                  Remoto · {remoteTraining.length}
+                </p>
+              </div>
+              {remoteTraining.length === 0 ? (
+                <p className="text-text-secondary text-[12px]">Nadie en remoto</p>
+              ) : (
+                <ul className="space-y-0.5">
+                  {remoteTraining.slice(0, TODAY_LIST_CAP).map((m) => {
+                    const started = formatCheckIn(m.started_at);
+                    return (
+                      <li key={`remote-${m.id}`}>
+                        <Link
+                          to={`/members/${m.id}/routines`}
+                          className="hover:text-brand text-text flex min-w-0 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
+                        >
+                          <span className="min-w-0 truncate">{m.full_name}</span>
+                          {started ? (
+                            <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
+                              {started}
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
 
-          <div className="border-t border-zinc-100 pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5 dark:border-zinc-800">
+          <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                Sin entrenar · ≥3d
-              </p>
+              <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
               {inactiveMembers.length > TODAY_LIST_CAP && (
                 <Link
                   to="/members"
@@ -205,25 +280,23 @@ function TodayPanel({
               )}
             </div>
             {inactiveMembers.length === 0 ? (
-              <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
-                Sin alertas de inactividad
-              </p>
+              <p className="text-text-secondary text-[12px]">Sin alertas de inactividad</p>
             ) : (
               <ul className="space-y-0.5">
                 {inactiveMembers.slice(0, TODAY_LIST_CAP).map((m) => (
                   <li key={m.id} className="flex items-center gap-1">
                     <Link
-                      to={`/members/${m.id}/history`}
-                      className="hover:text-brand flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium text-zinc-800 lg:py-2 lg:text-[13px] dark:text-zinc-200"
+                      to={`/members/${m.id}/routines`}
+                      className="hover:text-brand text-text flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
                     >
-                      <span className="truncate">{m.full_name}</span>
-                      <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                      <span className="min-w-0 truncate">{m.full_name}</span>
+                      <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                         {m.days_since}d
                       </span>
                     </Link>
                     <Link
                       to={`/messages?member=${m.id}`}
-                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
                       aria-label={`Mensaje a ${m.full_name}`}
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
@@ -257,17 +330,17 @@ function ActivityPanel({
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <h2 className="mb-2 px-0.5 text-[13px] font-semibold text-zinc-900 lg:mb-3 lg:text-sm dark:text-white">
+      <h2 className="text-text mb-2 px-0.5 text-[13px] font-semibold lg:mb-3 lg:text-sm">
         Actividad reciente
       </h2>
       {loading ? (
-        <div className={cn('rounded-card p-ds-4 flex-1 space-y-0 overflow-hidden', SURFACE)}>
+        <div className={cn('rounded-card p-ds-4 flex-1 space-y-0 overflow-hidden border', SURFACE)}>
           <Skeleton className="h-10 w-full" />
           <Skeleton className="mt-2 h-10 w-full" />
           <Skeleton className="mt-2 hidden h-10 w-full lg:block" />
         </div>
       ) : !activities?.length ? (
-        <div className={cn('rounded-card px-ds-4 py-ds-5 flex-1', SURFACE)}>
+        <div className={cn('rounded-card px-ds-4 py-ds-5 flex-1 border', SURFACE)}>
           <p className="text-text-secondary text-[12px] leading-relaxed lg:text-[13px]">
             Cuando entrenen, verás sus sesiones aquí.{' '}
             <button
@@ -280,26 +353,26 @@ function ActivityPanel({
           </p>
         </div>
       ) : (
-        <ul className={cn('rounded-card flex-1 overflow-hidden', SURFACE)}>
+        <ul className={cn('rounded-card flex-1 overflow-hidden border', SURFACE)}>
           {activities.map((activity, i) => (
             <li key={`${activity.user_id}-${activity.start_time}`}>
               <Link
                 to={`/members/${activity.user_id}/history`}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-zinc-50 lg:px-4 lg:py-3 dark:hover:bg-zinc-800/40',
-                  i > 0 && 'border-t border-zinc-100/80 dark:border-zinc-800/80'
+                  'hover:bg-surface-raised/70 flex items-center gap-2.5 px-3 py-2.5 transition-colors lg:px-4 lg:py-3',
+                  i > 0 && 'border-border/60 border-t'
                 )}
               >
                 <Dumbbell className="text-brand h-3.5 w-3.5 shrink-0 lg:h-4 lg:w-4" aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
+                  <p className="text-text truncate text-[13px] font-semibold">
                     {activity.full_name}
                   </p>
-                  <p className="truncate text-[11px] text-zinc-500 lg:text-xs dark:text-zinc-400">
+                  <p className="text-text-secondary truncate text-[11px] lg:text-xs">
                     {activity.routine_name}
                   </p>
                 </div>
-                <span className="shrink-0 text-[11px] font-medium text-zinc-400 tabular-nums lg:text-xs dark:text-zinc-500">
+                <span className="text-text-muted shrink-0 text-[11px] font-medium tabular-nums lg:text-xs">
                   {new Date(activity.start_time).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -323,15 +396,30 @@ export default function TrainerDashboard() {
 
   const stats = trainerStats;
   const trainingToday = stats?.trainingToday ?? [];
+  const remoteTraining = stats?.remoteTrainingNow ?? [];
   const inactiveMembers = stats?.inactiveMembers ?? [];
   const withoutRoutines = stats?.membersWithoutRoutines ?? 0;
   const withoutNutritionPlan = nutritionOverview?.without_plan ?? 0;
-  const withoutAssessment = stats?.membersWithoutAssessment ?? [];
-  const staleCheckins = stats?.staleCheckins ?? [];
-  const recoveryAlerts = stats?.recoveryAlerts ?? [];
+  const withoutAssessmentCount = stats?.membersWithoutAssessment?.length ?? 0;
+  const staleCheckinsCount = stats?.staleCheckins?.length ?? 0;
+  const recoveryAlertsCount = stats?.recoveryAlerts?.length ?? 0;
+  const expiringCount = stats?.expiringMembers?.length ?? 0;
+  const remoteActive = stats?.remoteActiveNow ?? remoteTraining.length;
   const firstName = user?.name?.split(/\s+/)[0] ?? 'entrenador';
   const loading = isPending && !stats;
-  const todayQuiet = !loading && trainingToday.length === 0 && inactiveMembers.length === 0;
+  const todayQuiet =
+    !loading &&
+    trainingToday.length === 0 &&
+    remoteTraining.length === 0 &&
+    inactiveMembers.length === 0;
+
+  const hasAttention =
+    withoutRoutines > 0 ||
+    withoutNutritionPlan > 0 ||
+    withoutAssessmentCount > 0 ||
+    staleCheckinsCount > 0 ||
+    recoveryAlertsCount > 0 ||
+    expiringCount > 0;
 
   if (isError) {
     return (
@@ -369,8 +457,13 @@ export default function TrainerDashboard() {
         }
         subtitle="Actividad con tus miembros"
         action={
-          stats?.activeNow ? (
-            <Badge variant="success">{stats.activeNow} en el gym</Badge>
+          stats?.activeNow || remoteActive ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {stats?.activeNow ? (
+                <Badge variant="success">{stats.activeNow} en el gym</Badge>
+              ) : null}
+              {remoteActive > 0 ? <Badge variant="accent">{remoteActive} remoto</Badge> : null}
+            </div>
           ) : undefined
         }
       />
@@ -383,11 +476,11 @@ export default function TrainerDashboard() {
       >
         <MetricCell label="Miembros" value={stats?.assignedMembers ?? 0} loading={loading} />
         <MetricCell label="En gym" value={stats?.activeNow ?? 0} loading={loading} />
-        <div className="border-t border-zinc-200/80 sm:border-t-0 dark:border-zinc-800/80">
-          <MetricCell label="Hoy" value={stats?.todayWorkouts ?? 0} loading={loading} />
+        <div className="border-border/60 border-t sm:border-t-0">
+          <MetricCell label="Remoto" value={remoteActive} loading={loading} />
         </div>
-        <div className="border-t border-zinc-200/80 sm:border-t-0 dark:border-zinc-800/80">
-          <MetricCell label="Sin rutina" value={withoutRoutines} loading={loading} />
+        <div className="border-border/60 border-t sm:border-t-0">
+          <MetricCell label="Hoy" value={stats?.todayWorkouts ?? 0} loading={loading} />
         </div>
       </div>
 
@@ -409,153 +502,75 @@ export default function TrainerDashboard() {
         <ShortcutChip to="/messages" icon={MessageSquare} label="Mensajes" />
       </div>
 
-      {(withoutRoutines > 0 ||
-        withoutNutritionPlan > 0 ||
-        withoutAssessment.length > 0 ||
-        staleCheckins.length > 0 ||
-        recoveryAlerts.length > 0 ||
-        (stats?.expiringMembers?.length ?? 0) > 0) && (
+      {hasAttention && (
         <div className="space-y-1.5">
-          <p className="px-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <p className="text-text-secondary px-0.5 text-[11px] font-semibold tracking-wide uppercase">
             Atención
           </p>
-          <div className="grid gap-1.5 lg:grid-cols-2 lg:gap-3">
+          <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
             {withoutRoutines > 0 && (
-              <Link
+              <AttentionSummaryLink
                 to="/routines?view=calendar&assign=1"
-                className="bg-brand/5 border-brand/20 hover:bg-brand/10 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 transition-colors lg:px-4 lg:py-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    Sin rutina asignada
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {withoutRoutines} miembro{withoutRoutines !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <ChevronRight className="text-brand h-4 w-4 shrink-0" />
-              </Link>
+                icon={Dumbbell}
+                label="Sin rutina"
+                count={withoutRoutines}
+              />
             )}
             {withoutNutritionPlan > 0 && (
-              <Link
+              <AttentionSummaryLink
                 to="/nutrition-overview?filter=without"
-                className="flex items-center justify-between gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 transition-colors hover:bg-amber-500/10 lg:px-4 lg:py-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    Sin plan nutricional
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    {withoutNutritionPlan} miembro{withoutNutritionPlan !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              </Link>
+                icon={UtensilsCrossed}
+                label="Sin nutrición"
+                count={withoutNutritionPlan}
+                tone="amber"
+              />
             )}
-            {withoutAssessment.map((member) => (
-              <Link
-                key={`assessment-${member.id}`}
-                to={`/members/${member.id}/routines?tab=coaching`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-violet-500/20 bg-violet-500/5 px-3 py-2.5 transition-colors hover:bg-violet-500/10 lg:px-4 lg:py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    {member.full_name}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Falta evaluación de entrenamiento
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
-              </Link>
-            ))}
-            {staleCheckins.map((member) => (
-              <div
-                key={`checkin-${member.id}`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-sky-500/20 bg-sky-500/5 px-3 py-2.5 transition-colors hover:bg-sky-500/10 lg:px-4 lg:py-3"
-              >
-                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    {member.full_name}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Check-in pendiente · {member.days_since}d
-                  </p>
-                </Link>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Link
-                    to={`/members/${member.id}/routines?tab=coaching`}
-                    className="rounded-lg bg-sky-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-sky-700"
-                  >
-                    Registrar
-                  </Link>
-                  <Link
-                    to={`/messages?member=${member.id}`}
-                    aria-label={`Enviar mensaje a ${member.full_name}`}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-sky-700 hover:bg-sky-500/10 dark:text-sky-300"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-            {recoveryAlerts.map((member) => (
-              <div
-                key={`recovery-${member.id}`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-2.5 transition-colors hover:bg-rose-500/10 lg:px-4 lg:py-3"
-              >
-                <Link to={`/members/${member.id}/routines?tab=coaching`} className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    {member.full_name}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Recuperación: molestias {member.discomfort}/5 · energía {member.energy}/5
-                  </p>
-                </Link>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Link
-                    to={`/members/${member.id}/routines?tab=agenda`}
-                    className="rounded-lg bg-rose-600 px-2 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-rose-700"
-                  >
-                    Agendar 1:1
-                  </Link>
-                  <Link
-                    to={`/messages?member=${member.id}`}
-                    aria-label={`Enviar mensaje a ${member.full_name}`}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-rose-700 hover:bg-rose-500/10 dark:text-rose-300"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-            {(stats?.expiringMembers ?? []).map((m) => (
-              <Link
-                key={m.id}
-                to={`/members/${m.id}/routines`}
-                className="flex items-center justify-between gap-2 rounded-xl border border-red-500/15 bg-red-500/5 px-3 py-2.5 transition-colors hover:bg-red-500/10 lg:px-4 lg:py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">
-                    {m.full_name}
-                  </p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Membresía por vencer
-                  </p>
-                </div>
-                <Badge variant="danger">{m.days_remaining}d</Badge>
-              </Link>
-            ))}
+            {withoutAssessmentCount > 0 && (
+              <AttentionSummaryLink
+                to="/members"
+                icon={ClipboardCheck}
+                label="Sin evaluación"
+                count={withoutAssessmentCount}
+                tone="violet"
+              />
+            )}
+            {staleCheckinsCount > 0 && (
+              <AttentionSummaryLink
+                to="/members"
+                icon={ClipboardCheck}
+                label="Check-in semanal"
+                count={staleCheckinsCount}
+                tone="sky"
+              />
+            )}
+            {recoveryAlertsCount > 0 && (
+              <AttentionSummaryLink
+                to="/members"
+                icon={HeartPulse}
+                label="Recuperación"
+                count={recoveryAlertsCount}
+                tone="rose"
+              />
+            )}
+            {expiringCount > 0 && (
+              <AttentionSummaryLink
+                to="/members?expiring=true"
+                icon={CreditCard}
+                label="Membresía por vencer"
+                count={expiringCount}
+                tone="red"
+              />
+            )}
           </div>
         </div>
       )}
 
-      {/* Mobile: stack · Tablet+: Hoy + Actividad side by side */}
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-stretch md:gap-4 lg:gap-5">
         <TodayPanel
           loading={loading}
           quiet={todayQuiet}
           trainingToday={trainingToday}
+          remoteTraining={remoteTraining}
           inactiveMembers={inactiveMembers}
         />
         <ActivityPanel

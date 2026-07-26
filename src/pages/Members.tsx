@@ -57,7 +57,16 @@ import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import type { MemberBadgeData } from '../components/member/MemberBadgeCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { type TrainingShift } from '../lib/trainingShift';
+import { ROLE_LABELS, type UserRole } from '../lib/roles';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+
+const MEMBER_ROLE_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: 'Todos' },
+  { value: 'member', label: ROLE_LABELS.member },
+  { value: 'trainer', label: ROLE_LABELS.trainer },
+  { value: 'receptionist', label: ROLE_LABELS.receptionist },
+  { value: 'admin', label: ROLE_LABELS.admin },
+];
 
 const MemberBadgeModal = lazy(() =>
   import('../components/member/MemberBadgeModal').then((m) => ({ default: m.MemberBadgeModal }))
@@ -116,6 +125,7 @@ export default function Members() {
   const [toggleTarget, setToggleTarget] = useState<Member | null>(null);
   const [toggling, setToggling] = useState(false);
   const [expiringFilter, setExpiringFilter] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
   const [shiftFilter, setShiftFilter] = useState<TrainingShift | ''>('');
   const [badgeTarget, setBadgeTarget] = useState<MemberBadgeData | null>(null);
   const [editShiftTarget, setEditShiftTarget] = useState<Member | null>(null);
@@ -204,6 +214,7 @@ export default function Members() {
     search,
     expiringFilter,
     shiftFilter: shiftFilter || undefined,
+    roleFilter: roleFilter || undefined,
     isTrainer,
   });
   const members = membersData?.items ?? [];
@@ -874,24 +885,45 @@ export default function Members() {
             )}
           </div>
           {(user?.role === 'admin' || user?.role === 'receptionist' || isTrainer) && (
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {(user?.role === 'admin' || user?.role === 'receptionist') && (
-                <ShiftFilter value={shiftFilter} onChange={handleShiftFilterChange} label="Turno" />
-              )}
-              {(user?.role === 'admin' || isTrainer) && (
+            <div className="flex flex-col gap-2 sm:gap-2.5">
+              {user?.role === 'admin' && (
                 <FilterChips
-                  className="w-fit max-w-full shrink-0"
-                  options={[
-                    { value: '', label: 'Todos' },
-                    { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-                  ]}
-                  value={expiringFilter ? 'expiring' : ''}
+                  className="w-fit max-w-full"
+                  ariaLabel="Filtrar por rol"
+                  options={MEMBER_ROLE_FILTER_OPTIONS}
+                  value={roleFilter}
                   onChange={(v) => {
-                    setExpiringFilter(v === 'expiring');
+                    setRoleFilter(v as UserRole | '');
+                    if (v && v !== 'member') setExpiringFilter(false);
                     setPage(1);
                   }}
                 />
               )}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {(user?.role === 'admin' || user?.role === 'receptionist') && (
+                  <ShiftFilter
+                    value={shiftFilter}
+                    onChange={handleShiftFilterChange}
+                    label="Turno"
+                  />
+                )}
+                {(user?.role === 'admin' || isTrainer) && (
+                  <FilterChips
+                    className="w-fit max-w-full shrink-0"
+                    ariaLabel="Filtrar membresías por vencer"
+                    options={[
+                      { value: '', label: 'Todos' },
+                      { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+                    ]}
+                    value={expiringFilter ? 'expiring' : ''}
+                    onChange={(v) => {
+                      setExpiringFilter(v === 'expiring');
+                      if (v === 'expiring') setRoleFilter('member');
+                      setPage(1);
+                    }}
+                  />
+                )}
+              </div>
             </div>
           )}
         </div>
