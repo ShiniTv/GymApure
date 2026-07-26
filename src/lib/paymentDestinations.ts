@@ -42,6 +42,7 @@ export async function updatePaymentDestinations(
     pago_movil: { ...current.pago_movil, ...(partial.pago_movil ?? {}) },
     transferencia: { ...current.transferencia, ...(partial.transferencia ?? {}) },
     zelle: { ...current.zelle, ...(partial.zelle ?? {}) },
+    usdt: { ...current.usdt, ...(partial.usdt ?? {}) },
     efectivo_usd: { ...current.efectivo_usd, ...(partial.efectivo_usd ?? {}) },
   });
 
