@@ -43,7 +43,9 @@ test.describe('Auditoría WCAG AA', () => {
   test('listado de miembros para staff no presenta violaciones WCAG AA', async ({ page }) => {
     await login(page, ADMIN_EMAIL, demoPassword());
     await page.goto('/members', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('tablist', { name: /filtros/i })).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole('tablist', { name: /filtrar por rol|filtros|por vencer|turno/i })
+    ).toBeVisible({ timeout: 15_000 });
     await expectNoAccessibilityViolations(page);
   });
 
