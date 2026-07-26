@@ -14,6 +14,12 @@ import {
   getExchangeRateAdminView,
   setManualUsdOverride,
 } from '../lib/exchangeRate.ts';
+import {
+  getPaymentDestinations,
+  normalizePaymentDestinations,
+  updatePaymentDestinations,
+  type PaymentDestinations,
+} from '../lib/paymentDestinations.ts';
 import { runExchangeRateRefreshNow } from '../jobs/exchangeRateCron.ts';
 import { invalidateAdminStatsCache } from '../lib/adminStatsCache.ts';
 import { logAudit } from '../lib/audit.ts';
@@ -43,6 +49,91 @@ const exchangeRateSettingsSchema = z.object({
 const checkInPinSchema = z.object({
   check_in_pin: z.string().trim().max(12).optional(),
   require_self_check_in_pin: z.boolean().optional(),
+});
+
+const paymentDestinationsSchema = z.object({
+  pago_movil: z
+    .object({
+      enabled: z.boolean().optional(),
+      phone: z.string().max(20).optional(),
+      bank_name: z.string().max(80).optional(),
+      holder_cedula: z.string().max(20).optional(),
+      notes: z.string().max(300).optional(),
+    })
+    .optional(),
+  transferencia: z
+    .object({
+      enabled: z.boolean().optional(),
+      bank_name: z.string().max(80).optional(),
+      account_number: z.string().max(40).optional(),
+      account_type: z.enum(['corriente', 'ahorro', '']).optional(),
+      holder_name: z.string().max(120).optional(),
+      holder_cedula: z.string().max(20).optional(),
+      notes: z.string().max(300).optional(),
+    })
+    .optional(),
+  zelle: z
+    .object({
+      enabled: z.boolean().optional(),
+      email: z.string().max(120).optional(),
+      holder_name: z.string().max(120).optional(),
+      notes: z.string().max(300).optional(),
+    })
+    .optional(),
+  efectivo_usd: z
+    .object({
+      enabled: z.boolean().optional(),
+      denominations: z.array(z.coerce.number().positive()).max(12).optional(),
+      notes: z.string().max(300).optional(),
+    })
+    .optional(),
+});
+
+/** Public to any authenticated role that can pay / register payments. */
+router.get(
+  '/payment-destinations',
+  authorize(['admin', 'receptionist', 'member']),
+  async (_req, res) => {
+    try {
+      const destinations = await getPaymentDestinations();
+      res.json(destinations);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error interno';
+      res.status(500).json({ error: message });
+    }
+  }
+);
+
+router.put('/payment-destinations', authorize(['admin']), async (req: AuthRequest, res) => {
+  const parsed = paymentDestinationsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const current = await getPaymentDestinations();
+    const merged = normalizePaymentDestinations({
+      ...current,
+      ...parsed.data,
+      pago_movil: { ...current.pago_movil, ...(parsed.data.pago_movil ?? {}) },
+      transferencia: { ...current.transferencia, ...(parsed.data.transferencia ?? {}) },
+      zelle: { ...current.zelle, ...(parsed.data.zelle ?? {}) },
+      efectivo_usd: { ...current.efectivo_usd, ...(parsed.data.efectivo_usd ?? {}) },
+    }) satisfies PaymentDestinations;
+    const settings = await updatePaymentDestinations(merged);
+    await logAudit(req.user!.id, 'settings.payment_destinations.update', {
+      enabled: {
+        pago_movil: settings.pago_movil.enabled,
+        transferencia: settings.transferencia.enabled,
+        zelle: settings.zelle.enabled,
+        efectivo_usd: settings.efectivo_usd.enabled,
+      },
+    });
+    res.json(settings);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
 });
 
 router.get('/expiry', authorize(['admin']), async (_req, res) => {

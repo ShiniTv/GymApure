@@ -26,6 +26,7 @@ import {
   Select,
 } from '../components/ui';
 import { PushNotificationsToggle } from '../components/PushNotificationsToggle';
+import { PaymentDestinationsSettingsCard } from '../components/settings/PaymentDestinationsSettingsCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 const SETTINGS_NAV = [
@@ -33,6 +34,7 @@ const SETTINGS_NAV = [
   { id: 'avisos-membresia', label: 'Avisos de membresía' },
   { id: 'retencion-chat', label: 'Retención del chat' },
   { id: 'pin-presencia', label: 'PIN de presencia' },
+  { id: 'datos-cobro', label: 'Datos de cobro' },
   { id: 'tasa-usd', label: 'Tasa USD (BCV)' },
   { id: 'salud-operativa', label: 'Salud operativa' },
 ] as const;
@@ -750,6 +752,13 @@ export default function Settings() {
                 />
               </div>
             </Card>
+
+            <PaymentDestinationsSettingsCard
+              onMessage={(tone, message) => {
+                setSettingsMessageTone(tone);
+                setSettingsMessage(message);
+              }}
+            />
 
             {exchangeRateView && (
               <Card

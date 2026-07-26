@@ -34,6 +34,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Members = lazy(() => import('./pages/Members'));
 const Payments = lazy(() => import('./pages/Payments'));
+const PtBilling = lazy(() => import('./pages/PtBilling'));
 const Attendance = lazy(() => import('./pages/Attendance'));
 const Memberships = lazy(() => import('./pages/Memberships'));
 const Routines = lazy(() => import('./pages/Routines'));
@@ -432,6 +433,20 @@ function AppRoutes() {
                     }}
                   >
                     <Payments />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="pt-billing"
+              element={
+                <ProtectedRoute allowedRoles={['trainer', 'member']}>
+                  <ErrorBoundary
+                    onError={(error) => {
+                      reportBoundaryError(error);
+                    }}
+                  >
+                    <PtBilling />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

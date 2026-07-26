@@ -7,6 +7,23 @@ Gestión de pagos de membresía, comprobantes y conversión USD/VES con tasa BCV
 
 ---
 
+## Datos de cobro (admin)
+
+En **Configuración → Datos de cobro** el admin publica:
+
+| Método                 | Campos                                          |
+| ---------------------- | ----------------------------------------------- |
+| Pago móvil             | Teléfono, cédula, banco                         |
+| Transferencia          | Titular, cédula, banco, tipo y número de cuenta |
+| Zelle                  | Correo (+ nombre opcional)                      |
+| Divisas (efectivo USD) | Denominaciones aceptadas                        |
+
+Al **reportar pago**, el miembro ve esos datos (y puede copiarlos). En efectivo USD puede indicar cantidad de billetes por denominación.
+
+API: `GET/PUT /api/settings/payment-destinations` (GET autenticado; PUT admin).
+
+---
+
 ## Flujo: registrar pago (recepción/admin)
 
 **Objetivo:** Registrar un pago con comprobante para aprobación.
@@ -92,3 +109,4 @@ npm run test:exchange-rate
 - [Manual administrador](../manual/MANUAL-ADMIN.md)
 - [Manual recepción](../manual/MANUAL-RECEPCION.md)
 - [Membresías y asistencia](./MEMBRESIAS-Y-ASISTENCIA.md)
+- [Cobros PT (entrenador privado)](./COBROS-PT.md) — ledger aparte; no uses `/payments` para PT

@@ -28,6 +28,7 @@ Conservar patrones del repo: TypeScript strict, React Query, paginación de list
 | ----------------------- | ----------------------------------------- | ------------------------------------------------ |
 | Rutinas / workout       | `docs/modulos/RUTINAS-Y-ENTRENAMIENTO.md` | `test:routine-exercises`                         |
 | Pagos / BCV             | `docs/modulos/PAGOS-Y-TIPO-DE-CAMBIO.md`  | `test:payments-checklist`, `test:exchange-rate`  |
+| Cobros PT               | `docs/modulos/COBROS-PT.md`               | `test:security-checklist` (IDOR PT)              |
 | Membresías / asistencia | `docs/modulos/MEMBRESIAS-Y-ASISTENCIA.md` | `test:memberships-checkin`                       |
 | Chat / notifs           | `docs/modulos/CHAT-Y-NOTIFICACIONES.md`   | `test:chat-checklist`, `test:sprint6`            |
 | Entrenadores / turnos   | `docs/modulos/ENTRENADORES-Y-TURNOS.md`   | `test:trainer-shifts`, `test:trainer-auth`       |

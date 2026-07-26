@@ -33,14 +33,15 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 
 ### Sheet "Más"
 
-| Opción     | Ruta         |
-| ---------- | ------------ |
-| Mensajes   | `/messages`  |
-| Reservas   | `/reservas`  |
-| Biblioteca | `/exercises` |
-| Historial  | `/history`   |
-| Pagos      | `/payments`  |
-| Mi Perfil  | `/profile`   |
+| Opción     | Ruta          |
+| ---------- | ------------- |
+| Mensajes   | `/messages`   |
+| Reservas   | `/reservas`   |
+| Biblioteca | `/exercises`  |
+| Historial  | `/history`    |
+| Pagos      | `/payments`   |
+| Cobros PT  | `/pt-billing` |
+| Mi Perfil  | `/profile`    |
 
 ### Bottom nav (pill)
 
@@ -92,6 +93,16 @@ Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 1. **Más** → **Pagos**.
 2. Historial y estado (pendiente, aprobado, rechazado).
 3. Sube comprobante si aplica.
+
+Detalle membresía: [PAGOS-Y-TIPO-DE-CAMBIO.md](../modulos/PAGOS-Y-TIPO-DE-CAMBIO.md).
+
+### Cobros de entrenamiento personalizado (PT)
+
+1. **Más** → **Cobros PT** (`/pt-billing`).
+2. Si tu entrenador te cobró una sesión/paquete, **Reportar pago** con referencia y comprobante opcional.
+3. Esos pagos van al entrenador, **no** a la membresía del gym.
+
+Detalle: [COBROS-PT.md](../modulos/COBROS-PT.md).
 
 ### Reservar clases grupales
 

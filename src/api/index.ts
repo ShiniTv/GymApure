@@ -28,6 +28,7 @@ import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
 import webVitalsRoutes from './webVitals.ts';
 import appointmentRoutes from './appointments.ts';
+import trainerBillingRoutes from './trainerBilling.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
 import { apiRateLimiter } from './middleware/rateLimit.ts';
@@ -55,6 +56,7 @@ router.use(enforceMfaForStaff);
 
 router.use('/users', userRoutes);
 router.use('/appointments', appointmentRoutes);
+router.use('/trainer-billing', trainerBillingRoutes);
 router.use('/trainers', trainerRoutes);
 router.use('/memberships', membershipRoutes);
 router.use('/exchange-rate', exchangeRateRoutes);
