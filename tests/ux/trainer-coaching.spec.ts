@@ -73,8 +73,8 @@ test.describe('Trainer coaching context', () => {
     const start = new Date(Date.now() + 86_400_000);
     const end = new Date(start.getTime() + 60 * 60_000);
     const notes = `Seguimiento individual QA ${Date.now()}`;
-    await page.getByLabel('Inicio').fill(start.toISOString().slice(0, 16));
-    await page.getByLabel('Fin').fill(end.toISOString().slice(0, 16));
+    await page.locator('#appointment-start').fill(start.toISOString().slice(0, 16));
+    await page.locator('#appointment-end').fill(end.toISOString().slice(0, 16));
     await page.getByLabel('Notas').fill(notes);
     await page.getByRole('button', { name: /^agendar sesión$/i }).click();
     await expect(page.getByText('Sesión 1:1 agendada')).toBeVisible();
