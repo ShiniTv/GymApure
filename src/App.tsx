@@ -9,7 +9,6 @@ import { ProgressBar } from './components/ProgressBar';
 import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
 import { loadAppFonts } from './lib/fonts';
 import Login from './pages/Login';
-import { getDefaultRouteForRole } from './lib/roles';
 
 const PUBLIC_AUTH_PATHS = new Set([
   '/',
@@ -130,7 +129,7 @@ function ProtectedRoute({
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+    return <Navigate to="/access-denied" replace />;
   }
 
   return children;

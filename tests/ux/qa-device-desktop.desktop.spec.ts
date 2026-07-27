@@ -114,8 +114,9 @@ test.describe('QA device desktop D7 (trainer)', () => {
     await expect(page.getByRole('button', { name: new RegExp(`^Cerrar ${name}`) })).toBeVisible();
 
     const cardWidth = await page.evaluate(() => {
-      const closeBtn = document.querySelector('button[aria-expanded="true"]');
-      const card = closeBtn?.closest('[class*="rounded"]');
+      const buttons = Array.from(document.querySelectorAll('button[aria-expanded="true"]'));
+      const visible = buttons.find((b) => (b as HTMLElement).offsetParent !== null);
+      const card = visible?.closest('[class*="rounded"]');
       return card ? Math.round(card.getBoundingClientRect().width) : 0;
     });
     const viewport = page.viewportSize()?.width ?? 1280;

@@ -65,7 +65,7 @@ test.describe('Trainer coaching context', () => {
     expect(memberId, 'member assigned to trainer').toBeTruthy();
 
     await page.goto(`/members/${memberId}/routines?tab=agenda`);
-    await expect(page.getByRole('tab', { name: /agenda 1:1/i })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: /^agenda$/i })).toHaveAttribute(
       'aria-selected',
       'true'
     );
