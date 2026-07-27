@@ -153,7 +153,7 @@ export function MemberBottomNav() {
                         className={cn(
                           moreItemClass,
                           itemActive
-                            ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
+                            ? 'bg-surface-overlay text-text ring-border ring-1'
                             : 'bg-surface-overlay/60 text-text hover:bg-surface-overlay'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
@@ -161,7 +161,7 @@ export function MemberBottomNav() {
                       >
                         {itemActive ? (
                           <span
-                            className="bg-brand absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+                            className="bg-text-muted absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
                             aria-hidden
                           />
                         ) : null}
@@ -233,7 +233,7 @@ export function MemberBottomNav() {
                       ref={moreButtonRef}
                       type="button"
                       onClick={() => setMoreOpen((v) => !v)}
-                      className={cn(tabClass, active ? 'text-brand' : 'text-text-secondary')}
+                      className={cn(tabClass, active ? 'text-text' : 'text-text-muted')}
                       aria-label={
                         chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
                       }
@@ -261,7 +261,7 @@ export function MemberBottomNav() {
                     <Link
                       to={item.href}
                       {...routePrefetchHandlers(item.href)}
-                      className={cn(tabClass, active ? 'text-brand' : 'text-text-secondary')}
+                      className={cn(tabClass, active ? 'text-text' : 'text-text-muted')}
                       aria-label={item.name}
                       aria-current={active ? 'page' : undefined}
                     >

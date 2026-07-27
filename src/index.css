@@ -3,9 +3,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens — GymApure Mobile (Figma: Mobile App UI)
- * Source: https://www.figma.com/design/WwEtNcIqpDNxYZx4ZpiE7m/Mobile-App-UI
- * Pixel-sampled dark mode; light values are inverted companions for desktop/staff.
+ * Design tokens — GymApure chrome
+ * Direction: Linear/Cursor-inspired app shell (calm surfaces, soft nav pills).
+ * Brand blue stays for CTAs / status — not for sidebar selection.
+ * Mobile foundations still align with Figma Mobile App UI radii/spacing.
+ * Figma: https://www.figma.com/design/WwEtNcIqpDNxYZx4ZpiE7m/Mobile-App-UI
  */
 @theme {
   /* —— Typography —— */
@@ -72,18 +74,18 @@
   --spacing-ds-6: 1.5rem; /* 24 — section gap */
   --spacing-ds-8: 2rem; /* 32 — block gap */
 
-  /* —— Radii (native rounded finish) —— */
-  --radius-chip: 0.75rem; /* 12 */
-  --radius-input: 1rem; /* 16 */
-  --radius-button: 1rem; /* 16 — use rounded-full for pills */
-  --radius-card: 1.25rem; /* 20 */
-  --radius-sheet: 1.75rem; /* 28 — bottom sheets */
+  /* —— Radii (Linear-like panels; sheets stay softer) —— */
+  --radius-chip: 0.5rem; /* 8 */
+  --radius-input: 0.75rem; /* 12 */
+  --radius-button: 0.75rem; /* 12 */
+  --radius-card: 0.75rem; /* 12 — window panels */
+  --radius-sheet: 1.25rem; /* 20 — bottom sheets */
   --radius-pill: 9999px;
 
-  /* —— Elevation —— */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  /* —— Elevation (quieter; dark relies on surface tone) —— */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.08);
+  --shadow-card: none;
   --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.45);
 
   --touch-min: 44px;
@@ -185,22 +187,22 @@
   }
 
   .dark {
-    /* Figma Mobile App UI — dark mode surfaces */
-    --color-bg: #0c0c0c;
-    --color-bg-elevated: #141414;
-    --color-surface: #1c1c1c;
-    --color-surface-raised: #242424;
-    --color-surface-overlay: #2c2c2c;
-    --color-surface-dark: #141414;
-    --color-border: #2c2c2c;
-    --color-border-subtle: #242424;
-    --color-text: #ffffff;
-    /* AA: lighten secondary/muted on near-black (was failing ~3:1) */
-    --color-text-secondary: #c4c4c8;
+    /* Linear-like dark: deep canvas, slightly lifted sidebar/surfaces */
+    --color-bg: #09090b;
+    --color-bg-elevated: #111113;
+    --color-surface: #18181b;
+    --color-surface-raised: #1f1f23;
+    --color-surface-overlay: #27272a;
+    --color-surface-dark: #111113;
+    --color-border: #27272a;
+    --color-border-subtle: #1f1f23;
+    --color-text: #fafafa;
+    /* AA: secondary/muted on near-black */
+    --color-text-secondary: #d4d4d8;
     --color-text-muted: #a1a1aa;
-    --color-text-inverse: #0c0c0c;
-    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.35);
-    --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.45);
+    --color-text-inverse: #09090b;
+    --shadow-card: none;
+    --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.35);
   }
 
   body {
@@ -359,7 +361,7 @@ body,
     font-size: var(--text-h1);
     line-height: var(--text-h1--line-height);
     letter-spacing: var(--text-h1--letter-spacing);
-    font-weight: var(--text-h1--font-weight);
+    font-weight: 600;
     color: var(--color-text);
   }
 
@@ -454,14 +456,14 @@ body,
 
   .surface-card {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
   }
 
-  /* Dark: separate with surface tone, not hairline borders */
+  /* Dark: hairline border — Linear window edge */
   .dark .surface-card {
-    border-color: transparent;
+    border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
     box-shadow: none;
   }
 
@@ -477,11 +479,11 @@ body,
   }
 
   .page-stack {
-    @apply space-y-4 sm:space-y-5 lg:space-y-6;
+    @apply space-y-3.5 sm:space-y-4 lg:space-y-5;
   }
 
   .page-stack-loose {
-    @apply space-y-5 sm:space-y-6 lg:space-y-8;
+    @apply space-y-5 sm:space-y-6 lg:space-y-7;
   }
 
   /* Constrain form / panel width so content does not stretch on tablet widths */
@@ -502,7 +504,7 @@ body,
   }
 
   .page-stack-tight {
-    @apply space-y-4 sm:space-y-5;
+    @apply space-y-3 sm:space-y-4;
   }
 
   .form-stack {
@@ -521,26 +523,40 @@ body,
   .table-shell {
     overflow: hidden;
     border-radius: var(--radius-card);
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
     background-color: var(--color-surface);
-    box-shadow: var(--shadow-card);
+    box-shadow: none;
   }
 
-  /* Sidebar / navigation — compact density, clear gaps between items */
+  .dark .table-shell {
+    border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
+  }
+
+  /* App shell — Linear/Cursor chrome (sidebar vs canvas) */
+  .app-sidebar {
+    background-color: var(--color-bg-elevated);
+    border-color: color-mix(in srgb, var(--color-border) 85%, transparent);
+  }
+
+  .app-canvas {
+    background-color: var(--color-bg);
+  }
+
+  /* Sidebar / navigation — soft pills, muted section labels */
   .nav-stack {
-    @apply flex flex-col gap-1;
+    @apply flex flex-col gap-0.5;
   }
 
   .nav-section {
-    @apply mb-ds-4 flex flex-col gap-1 last:mb-0;
+    @apply mb-ds-3 flex flex-col gap-0.5 last:mb-0;
   }
 
   .nav-section-label {
-    @apply text-text-muted mb-1.5 px-2.5 text-[10px] font-medium tracking-[0.14em] uppercase;
+    @apply text-text-muted mb-1 px-2.5 text-[10px] font-medium tracking-[0.08em] uppercase;
   }
 
   .nav-link {
-    @apply flex min-h-9 touch-manipulation items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
+    @apply flex min-h-8 touch-manipulation items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
   }
 
   .nav-link:active {
@@ -550,20 +566,25 @@ body,
 
   @media (max-width: 1023px) {
     .nav-link-mobile {
-      @apply min-h-11 gap-3 px-3 py-2.5 text-sm;
+      @apply min-h-11 gap-3 rounded-lg px-3 py-2.5 text-sm;
     }
   }
 
+  /* Active = quiet surface pill (not brand wash) — Linear/Cursor pattern */
   .nav-link-active {
-    @apply bg-brand/10 text-brand dark:text-brand shadow-none;
+    @apply bg-surface-overlay text-text shadow-none;
   }
 
   .nav-link-inactive {
-    @apply text-text-secondary hover:bg-surface-overlay hover:text-text;
+    @apply text-text-secondary hover:bg-surface-overlay/70 hover:text-text;
   }
 
   .nav-badge {
     @apply flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[9px] leading-none font-bold;
+  }
+
+  .nav-badge-soft {
+    @apply bg-brand/15 text-brand;
   }
 
   /* Filled brand surfaces — Figma primary is saturated blue; keep light on-brand text */
@@ -921,24 +942,24 @@ body,
   );
 }
 
-/* Shared glass surface: top island + bottom nav pill (Figma chrome) */
+/* Mobile chrome — same language as desktop shell (lighter glass, quieter shadow) */
 .mobile-chrome-glass,
 .member-bottom-nav-pill {
-  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
-  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
-  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: color-mix(in srgb, var(--color-bg-elevated) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(1.2);
   box-shadow:
-    0 4px 24px rgb(0 0 0 / 0.08),
-    0 1px 2px rgb(0 0 0 / 0.04);
+    0 2px 16px rgb(0 0 0 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.03);
 }
 
 .dark .mobile-chrome-glass,
 .dark .member-bottom-nav-pill {
-  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
-  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+  background: color-mix(in srgb, var(--color-bg-elevated) 86%, transparent);
   box-shadow:
-    0 4px 24px rgb(0 0 0 / 0.45),
-    0 1px 2px rgb(0 0 0 / 0.25);
+    0 2px 20px rgb(0 0 0 / 0.35),
+    0 1px 2px rgb(0 0 0 / 0.2);
 }
 
 .member-bottom-nav-pill {
@@ -970,7 +991,7 @@ body,
 }
 
 .member-bottom-nav-tab-icon--active {
-  @apply bg-brand text-white;
+  @apply bg-surface-overlay text-text;
 }
 
 .member-bottom-nav-unread {

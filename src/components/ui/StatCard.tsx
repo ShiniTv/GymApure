@@ -42,12 +42,10 @@ function StatCardContent({
   if (minimal) {
     return (
       <>
-        <p className="text-[10px] leading-tight font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+        <p className="text-text-muted text-[10px] leading-tight font-medium tracking-wide uppercase">
           {title}
         </p>
-        <p className="mt-0.5 text-lg font-bold text-zinc-900 tabular-nums sm:text-xl dark:text-white">
-          {value}
-        </p>
+        <p className="text-text mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
       </>
     );
   }

@@ -9,7 +9,7 @@ import { cn } from '../../lib/utils';
 
 export function Table({ className, children, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="border-border/80 bg-surface overflow-x-auto rounded-xl border">
+    <div className="border-border/60 bg-surface overflow-x-auto rounded-[var(--radius-card)] border shadow-none">
       <table className={cn('w-full text-left text-sm', className)} {...props}>
         {children}
       </table>
@@ -23,7 +23,7 @@ export function TableHead({
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn('border-border/80 bg-surface-raised/70 border-b', className)} {...props}>
+    <thead className={cn('border-border/60 bg-surface-raised/50 border-b', className)} {...props}>
       {children}
     </thead>
   );
@@ -35,7 +35,7 @@ export function TableBody({
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={cn('divide-border/60 divide-y', className)} {...props}>
+    <tbody className={cn('divide-border/50 divide-y', className)} {...props}>
       {children}
     </tbody>
   );
@@ -43,7 +43,7 @@ export function TableBody({
 
 export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn('hover:bg-surface-raised/70 transition-colors', className)} {...props}>
+    <tr className={cn('hover:bg-surface-raised/60 transition-colors', className)} {...props}>
       {children}
     </tr>
   );
@@ -57,7 +57,7 @@ export function TableHeader({
   return (
     <th
       className={cn(
-        'px-4 py-2.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400',
+        'text-text-muted px-4 py-2.5 text-xs font-semibold tracking-wide uppercase',
         className
       )}
       {...props}
@@ -73,7 +73,7 @@ export function TableCell({
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn('px-4 py-3 text-zinc-900 dark:text-zinc-100', className)} {...props}>
+    <td className={cn('text-text px-4 py-3', className)} {...props}>
       {children}
     </td>
   );
@@ -96,9 +96,8 @@ export function DataCard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn(
-        'border-border/80 bg-surface w-full space-y-1.5 rounded-xl border p-3 text-left transition-[background-color,border-color,transform] sm:p-4',
-        onClick &&
-          'hover:border-brand/25 hover:bg-surface-raised/70 cursor-pointer active:scale-[0.99]',
+        'border-border/60 bg-surface w-full space-y-1.5 rounded-[var(--radius-card)] border p-3 text-left transition-[background-color,border-color,transform] sm:p-4',
+        onClick && 'hover:bg-surface-raised/70 cursor-pointer active:scale-[0.99]',
         className
       )}
     >

@@ -54,8 +54,8 @@ export function EmptyState({
       variant="dashed"
       className={cn(
         'text-center',
-        isMotivational && 'from-brand/5 border-brand/20 bg-gradient-to-b to-transparent',
-        compact && 'border-border/70 py-6',
+        isMotivational && 'border-border/70 bg-surface',
+        compact && 'border-border/60 py-6',
         className
       )}
     >
@@ -63,12 +63,12 @@ export function EmptyState({
         <MotivationalIllustration />
       ) : (
         <Icon
-          className={cn('mx-auto text-text-muted', compact ? 'mb-2.5 h-8 w-8' : 'mb-4 h-12 w-12')}
+          className={cn('text-text-muted mx-auto', compact ? 'mb-2.5 h-7 w-7' : 'mb-3.5 h-9 w-9')}
         />
       )}
       <h3
         className={cn(
-          'font-semibold tracking-[-0.01em] text-text',
+          'text-text font-semibold tracking-[-0.01em]',
           compact ? 'text-[13px]' : 'text-sm'
         )}
       >
@@ -77,7 +77,7 @@ export function EmptyState({
       {description && (
         <p
           className={cn(
-            'mx-auto text-text-secondary',
+            'text-text-secondary mx-auto',
             compact ? 'mt-1 max-w-xs text-[11px] leading-snug' : 'mt-1.5 max-w-sm text-xs'
           )}
         >

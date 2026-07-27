@@ -17,7 +17,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
   return (
     <div className={cn('relative w-full', containerClassName)}>
       <Search
-        className="pointer-events-none absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-300"
+        className="text-text-muted pointer-events-none absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2"
         aria-hidden
       />
       <input
@@ -27,7 +27,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
         aria-describedby={error ? errorId : undefined}
         className={cn(
           fieldClassName,
-          'border-border/80 bg-surface hover:border-brand/25 pr-3 pl-10 shadow-none',
+          'pr-3 pl-10',
           error ? 'border-red-500' : undefined,
           className
         )}

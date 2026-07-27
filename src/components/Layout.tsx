@@ -175,13 +175,13 @@ export default function Layout() {
         </a>
         {/* Mobile Header — fixed glass island (content scrolls underneath) */}
         <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
-          <div className="mobile-chrome-glass rounded-card pointer-events-auto flex h-12 items-center justify-between gap-2 px-3">
+          <div className="mobile-chrome-glass pointer-events-auto flex h-11 items-center justify-between gap-2 rounded-xl px-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <Logo className="h-8 w-8 shrink-0" />
+              <Logo className="h-7 w-7 shrink-0" />
               <div className="min-w-0">
                 {currentPage ? (
                   <>
-                    <p className="text-text truncate text-sm leading-tight font-bold tracking-[-0.02em]">
+                    <p className="text-text truncate text-[13px] leading-tight font-semibold tracking-[-0.02em]">
                       {mobileHeaderTitle}
                     </p>
                     <p className="text-text-muted truncate text-[10px] leading-tight font-medium">
@@ -209,10 +209,10 @@ export default function Layout() {
         </div>
 
         <div className="flex min-h-0">
-          {/* Sidebar */}
+          {/* Sidebar — Linear-like elevated panel */}
           <aside
             className={clsx(
-              'bg-bg-elevated fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
+              'app-sidebar border-border/70 fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -221,49 +221,49 @@ export default function Layout() {
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
-              <div className="hidden h-16 shrink-0 items-center justify-center lg:flex">
+              <div className="border-border/50 hidden h-14 shrink-0 items-center justify-center border-b lg:flex">
                 <button
                   type="button"
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors"
+                  className="text-text-secondary hover:bg-surface-overlay flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors"
                   aria-label="Expandir menú"
                   title="Expandir menú"
                 >
-                  <Logo className="pointer-events-none h-8 w-8 shrink-0" />
+                  <Logo className="pointer-events-none h-7 w-7 shrink-0" />
                 </button>
               </div>
             ) : (
-              <div className="hidden h-16 shrink-0 items-center gap-3 px-4 lg:flex">
-                <Logo className="h-8 w-8 shrink-0" />
-                <div className="overflow-hidden whitespace-nowrap transition-opacity duration-200">
+              <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:flex">
+                <Logo className="h-7 w-7 shrink-0" />
+                <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
                   {brandMark}
-                  <p className="text-text-muted mt-0.5 text-[10px] font-medium tracking-[0.06em]">
+                  <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
                     {portalTitle}
                   </p>
                 </div>
-                <NotificationBell compact className="ml-auto" />
+                <NotificationBell compact className="shrink-0" />
                 <button
                   type="button"
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="text-text-muted hover:bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                  className="text-text-muted hover:bg-surface-overlay flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
-                  <PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftClose className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
 
             {!sidebarCollapsed && (
-              <div className="flex h-16 shrink-0 items-center gap-3 px-4 lg:hidden">
-                <Logo className="h-8 w-8 shrink-0" />
+              <div className="border-border/50 flex h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:hidden">
+                <Logo className="h-7 w-7 shrink-0" />
                 <div className="min-w-0 flex-1">
                   {brandMark}
-                  <p className="text-text-muted mt-0.5 text-[10px] font-medium tracking-[0.06em]">
+                  <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
                     {portalTitle}
                   </p>
                 </div>
@@ -273,8 +273,8 @@ export default function Layout() {
             <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
-                  'nav-stack scroll-area min-h-0 flex-1 py-3 lg:py-4',
-                  sidebarCollapsed ? 'px-1.5' : 'px-2.5'
+                  'nav-stack scroll-area min-h-0 flex-1 py-2.5 lg:py-3',
+                  sidebarCollapsed ? 'px-1.5' : 'px-2'
                 )}
               >
                 {allFiltered.map((section) => (
@@ -298,20 +298,26 @@ export default function Layout() {
                           )}
                           title={sidebarCollapsed ? item.name : undefined}
                           aria-label={sidebarCollapsed ? item.name : undefined}
+                          aria-current={isActive ? 'page' : undefined}
                         >
-                          <item.icon className="h-4 w-4 shrink-0" />
+                          <item.icon
+                            className={clsx(
+                              'h-4 w-4 shrink-0',
+                              isActive ? 'text-text' : 'text-text-muted'
+                            )}
+                          />
                           {!sidebarCollapsed && (
                             <>
                               <span className="flex-1 truncate">{item.name}</span>
                               {showChatNav && item.href === '/messages' && chatUnread > 0 && (
-                                <span className="nav-badge brand-solid">
+                                <span className="nav-badge nav-badge-soft">
                                   {chatUnread > 99 ? '99+' : chatUnread}
                                 </span>
                               )}
                               {user?.role === 'admin' &&
                                 item.href === '/panel' &&
                                 expiringCount > 0 && (
-                                  <span className="nav-badge brand-solid">
+                                  <span className="nav-badge nav-badge-soft">
                                     {expiringCount > 99 ? '99+' : expiringCount}
                                   </span>
                                 )}
@@ -339,21 +345,21 @@ export default function Layout() {
 
               <div
                 className={clsx(
-                  'bg-bg/40 shrink-0 space-y-1',
-                  sidebarCollapsed ? 'px-1.5 py-3' : 'px-2.5 py-3',
+                  'border-border/50 shrink-0 space-y-0.5 border-t',
+                  sidebarCollapsed ? 'px-1.5 py-2.5' : 'px-2 py-2.5',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isAdminMobileShell && 'pb-[env(safe-area-inset-bottom)]',
-                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-3'
+                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-2.5'
                 )}
               >
                 {!sidebarCollapsed && (
-                  <div className="hidden pb-2 lg:block">
+                  <div className="hidden pb-1.5 lg:block">
                     <InstallPrompt />
                   </div>
                 )}
                 {sidebarCollapsed && (
-                  <div className="hidden justify-center pb-2 lg:flex">
+                  <div className="hidden justify-center pb-1.5 lg:flex">
                     <NotificationBell compact />
                   </div>
                 )}
@@ -373,9 +379,9 @@ export default function Layout() {
                   }
                 >
                   {theme === 'light' ? (
-                    <Moon className="h-4 w-4 shrink-0" />
+                    <Moon className="text-text-muted h-4 w-4 shrink-0" />
                   ) : (
-                    <Sun className="h-4 w-4 shrink-0" />
+                    <Sun className="text-text-muted h-4 w-4 shrink-0" />
                   )}
                   {!sidebarCollapsed && (
                     <span className="flex-1 text-left">
@@ -390,7 +396,7 @@ export default function Layout() {
                     setIsSidebarOpen(false);
                   }}
                   className={clsx(
-                    'hover:bg-surface-overlay flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors',
+                    'hover:bg-surface-overlay/70 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}
@@ -403,10 +409,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="text-text truncate text-sm leading-snug font-medium">
+                      <p className="text-text truncate text-[13px] leading-snug font-medium">
                         {user?.name}
                       </p>
-                      <p className="text-text-muted mt-1 truncate text-[10px] font-medium tracking-[0.04em]">
+                      <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.02em]">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>
@@ -433,7 +439,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'bg-bg h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto p-4 transition-colors duration-300 sm:p-6 lg:p-8',
+              'app-canvas h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto p-4 transition-colors duration-300 sm:p-6 lg:p-8',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
