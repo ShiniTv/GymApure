@@ -17,11 +17,9 @@ export default function Dashboard() {
   const adminStats = useAdminStatsOptional();
   const memberStatsCtx = useMemberStatsOptional();
   const isTrainer = user?.role === 'trainer';
-  const {
-    data: trainerStats,
-    isPending: trainerLoading,
-    refetch: refetchTrainer,
-  } = useTrainerStatsQuery(isTrainer);
+  // Prefetch + pull-to-refresh; loading/error UI lives in TrainerDashboard
+  // so a failing /api/stats/trainer never blocks the whole /panel behind a skeleton.
+  const { refetch: refetchTrainer } = useTrainerStatsQuery(isTrainer);
   const isAdmin = user?.role === 'admin';
   const isMember = user?.role === 'member';
   const isReceptionist = user?.role === 'receptionist';
@@ -46,9 +44,7 @@ export default function Dashboard() {
     ? Boolean(adminStats?.loading && !adminStats?.stats)
     : isMember
       ? memberStatsCtx?.loading && !memberStats
-      : isTrainer
-        ? trainerLoading && !trainerStats
-        : false;
+      : false;
 
   if (user?.role === 'receptionist') {
     return <Navigate to="/reception" replace />;
