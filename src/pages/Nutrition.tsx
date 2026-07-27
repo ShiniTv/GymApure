@@ -24,6 +24,7 @@ import {
   EmptyState,
   PageState,
   BackToDashboardLink,
+  IconButton,
 } from '../components/ui';
 import { MacroRing } from '../components/nutrition/MacroRing';
 import { CalorieSemiGauge } from '../components/nutrition/CalorieSemiGauge';
@@ -375,23 +376,23 @@ export default function Nutrition() {
                           </p>
                         </div>
                         {canEditLogs && (
-                          <div className="flex shrink-0 gap-0.5">
-                            <button
-                              type="button"
+                          <div className="flex shrink-0 gap-1">
+                            <IconButton
+                              size="sm"
+                              variant="tertiary"
                               onClick={() => openEditMeal(log)}
-                              className="hover:text-brand hover:bg-brand/10 rounded-xl p-2 text-zinc-400 dark:text-zinc-300"
                               aria-label="Editar"
                             >
                               <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
+                            </IconButton>
+                            <IconButton
+                              size="sm"
+                              variant="danger"
                               onClick={() => void handleDeleteMeal(log)}
-                              className="rounded-xl p-2 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
                               aria-label="Eliminar"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            </IconButton>
                           </div>
                         )}
                       </li>

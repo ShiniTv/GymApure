@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
-import { Plus, Check, X, CreditCard, Clock, DollarSign, List } from 'lucide-react';
+import { Plus, Check, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatMoney } from '../lib/utils';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
@@ -15,14 +15,18 @@ import {
   FilterChips,
   BackToDashboardLink,
   EmptyState,
+  IconButton,
   SearchInput,
   ListRowSkeleton,
-  StatCard,
   TableRowSkeleton,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
-import { usePaymentsQuery, useInvalidatePayments } from '../hooks/queries/usePaymentsQuery';
+import {
+  usePaymentsQuery,
+  useInvalidatePayments,
+  useReviewPaymentMutation,
+} from '../hooks/queries/usePaymentsQuery';
 import { useMembershipPlansQuery } from '../hooks/queries/useMembershipsQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
@@ -42,16 +46,17 @@ import { PaymentDetailRail } from './payments/PaymentDetailRail';
 import type { PaymentMemberOption as MemberOption } from './payments/PaymentRegisterModal';
 import { cn } from '../lib/utils';
 import { useBreakpoint } from '../hooks/useBreakpoint';
+import { Virtuoso } from 'react-virtuoso';
 
 export default function Payments() {
   const { user } = useAuth();
   usePageTitle('Pagos');
-  const { isMobileShell, isDesktop } = useBreakpoint();
+  const { isDesktop, isTablet } = useBreakpoint();
   const adminStats = useAdminStatsOptional();
   const memberStats = useMemberStatsOptional();
   const isMember = user?.role === 'member';
   const isStaffPayment = user?.role === 'admin' || user?.role === 'receptionist';
-  const showStaffMobileChrome = isStaffPayment && isMobileShell;
+  const showDetailRail = isDesktop || isTablet;
   const invalidatePayments = useInvalidatePayments();
 
   const onRefreshPayments = useCallback(async () => {
@@ -73,6 +78,7 @@ export default function Payments() {
   const [statusFilter, setStatusFilter] = useState(() =>
     user?.role === 'admin' || user?.role === 'receptionist' ? 'pending' : ''
   );
+  const [stalePending, setStalePending] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const pageSize = user?.role === 'member' ? 10 : 20;
@@ -91,19 +97,29 @@ export default function Payments() {
     };
   }, [searchInput, isStaffPayment]);
 
+  const paymentsQueryParams = {
+    page,
+    pageSize,
+    statusFilter,
+    search: isStaffPayment ? search : undefined,
+  };
   const {
     data: paymentsData,
     isPending: loading,
     isError: paymentsError,
     refetch: refetchPayments,
-  } = usePaymentsQuery({
-    page,
-    pageSize,
-    statusFilter,
-    search: isStaffPayment ? search : undefined,
-  });
+  } = usePaymentsQuery(paymentsQueryParams);
+  const reviewPayment = useReviewPaymentMutation(paymentsQueryParams);
   const payments = paymentsData?.items ?? [];
   const total = paymentsData?.total ?? 0;
+  const displayPayments = React.useMemo(() => {
+    if (!stalePending) return payments;
+    const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000;
+    return payments.filter((p) => {
+      const t = new Date(p.created_at).getTime();
+      return Number.isFinite(t) && t < cutoff;
+    });
+  }, [payments, stalePending]);
 
   // Form state
   const [amountUsd, setAmountUsd] = useState('');
@@ -291,6 +307,12 @@ export default function Payments() {
     setSelectedPlanId(matching ? String(matching.id) : '');
   };
 
+  const openRejectModal = (payment: Payment) => {
+    setRejectReason('');
+    setActionError('');
+    setRejectTarget(payment);
+  };
+
   const handleApprove = async () => {
     if (!approveTarget || approving) return;
     if (!selectedPlanId) {
@@ -300,16 +322,14 @@ export default function Payments() {
 
     setApproving(true);
     try {
-      const res = await apiFetch(`/api/payments/${approveTarget.id}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ membership_id: Number(selectedPlanId) }),
+      await reviewPayment.mutateAsync({
+        paymentId: approveTarget.id,
+        status: 'approved',
+        membershipId: Number(selectedPlanId),
       });
-      await parseJsonResponse(res);
 
       setApproveTarget(null);
       setSelectedPlanId('');
-      apiFetchPayments();
       await adminStats?.refresh();
       toast?.success('Pago aprobado');
     } catch (err) {
@@ -329,15 +349,13 @@ export default function Payments() {
 
     setRejecting(true);
     try {
-      const res = await apiFetch(`/api/payments/${rejectTarget.id}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
+      await reviewPayment.mutateAsync({
+        paymentId: rejectTarget.id,
+        status: 'rejected',
+        reason,
       });
-      await parseJsonResponse(res);
       setRejectTarget(null);
       setRejectReason('');
-      apiFetchPayments();
       await adminStats?.refresh();
       toast?.success('Pago rechazado');
     } catch (err) {
@@ -350,82 +368,82 @@ export default function Payments() {
   return (
     <PullToRefreshContainer pullDistance={pullPayments} isRefreshing={refreshingPayments}>
       <div className="page-stack-tight mx-auto w-full max-w-7xl" {...paymentsHandlers}>
-        {!showStaffMobileChrome && (
-          <PageHeader
-            compact
-            title={
-              isMember ? (
-                <>
-                  Mis <span className="text-brand">pagos</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-brand">Pagos</span>
-                </>
-              )
-            }
-            subtitle={isMember ? 'Activa tu membresía' : undefined}
-            action={
-              isMember ? (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <BackToDashboardLink />
-                  <Button
-                    size="sm"
-                    className="h-10 min-h-10 shrink-0 px-3 whitespace-nowrap sm:px-4"
-                    onClick={() => openRegisterModal()}
-                    aria-label="Reportar pago"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Reportar pago</span>
-                  </Button>
-                </div>
-              ) : isStaffPayment ? (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <BackToDashboardLink />
-                  <Button
-                    size="sm"
-                    className="h-10 min-h-10 shrink-0 px-3"
-                    onClick={() => openRegisterModal()}
-                    aria-label="Registrar pago"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Registrar</span>
-                  </Button>
-                </div>
-              ) : (
+        <PageHeader
+          compact
+          title={
+            isMember ? (
+              <>
+                Mis <span className="text-brand">pagos</span>
+              </>
+            ) : (
+              <>
+                Gestión de <span className="text-brand">pagos</span>
+              </>
+            )
+          }
+          subtitle={
+            isMember ? 'Activa tu membresía' : isStaffPayment ? 'Revisión y registro' : undefined
+          }
+          action={
+            isMember ? (
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <BackToDashboardLink />
-              )
-            }
-          />
-        )}
+                <Button
+                  size="sm"
+                  className="shrink-0 px-3 whitespace-nowrap"
+                  onClick={() => openRegisterModal()}
+                  aria-label="Reportar pago"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Reportar pago</span>
+                </Button>
+              </div>
+            ) : (
+              <BackToDashboardLink />
+            )
+          }
+        />
 
-        {isStaffPayment && adminStats?.stats && (
-          <div className="hidden grid-cols-4 gap-3 lg:grid lg:gap-4">
-            <StatCard
-              title="Pendientes"
-              value={adminStats.stats.pendingPayments}
-              icon={CreditCard}
-              minimal
-            />
-            <StatCard
-              title=">2 días"
-              value={adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
-              icon={Clock}
-              minimal
-            />
-            <StatCard
-              title="Ingresos mes"
-              value={formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
-              icon={DollarSign}
-              minimal
-            />
-            <StatCard title="En lista" value={total} icon={List} minimal />
+        {isStaffPayment && adminStats?.stats ? (
+          <div className="hidden grid-cols-4 gap-2 lg:grid">
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Pendientes
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.pendingPayments}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                &gt;2 días
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                Ingresos mes
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                En lista
+              </p>
+              <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+                {total}
+              </p>
+            </div>
           </div>
-        )}
+        ) : null}
 
         {isMember && !loading && (payments.length > 0 || Boolean(statusFilter)) && (
           <div className="flex items-center justify-between gap-2 px-0.5">
-            <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted min-w-0 truncate text-[11px]">
               {total} pago{total !== 1 ? 's' : ''}
               {statusFilter ? ` · ${paymentStatusLabel(statusFilter as Payment['status'])}` : ''}
             </p>
@@ -460,7 +478,7 @@ export default function Payments() {
           />
         )}
 
-        {isStaffPayment && (
+        {isStaffPayment ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <SearchInput
@@ -470,19 +488,19 @@ export default function Payments() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 aria-label="Buscar pagos"
               />
-              {showStaffMobileChrome && (
-                <Button
-                  size="sm"
-                  className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0"
-                  onClick={() => openRegisterModal()}
-                  aria-label="Registrar pago"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                size="sm"
+                className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+                onClick={() => openRegisterModal()}
+                aria-label="Registrar pago"
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Registrar</span>
+              </Button>
             </div>
             <FilterChips
               className="w-fit max-w-full"
+              ariaLabel="Filtrar por estado"
               options={[
                 { value: '', label: 'Todos' },
                 {
@@ -490,17 +508,28 @@ export default function Payments() {
                   label: 'Pendientes',
                   count: adminStats?.stats?.pendingPayments,
                 },
+                {
+                  value: 'pending_old',
+                  label: '>2 días',
+                  count: adminStats?.stats?.pendingPaymentsOlderThan2Days,
+                },
                 { value: 'approved', label: 'Aprobados' },
                 { value: 'rejected', label: 'Rechazados' },
               ]}
-              value={statusFilter}
+              value={stalePending ? 'pending_old' : statusFilter}
               onChange={(v) => {
-                setStatusFilter(v);
+                if (v === 'pending_old') {
+                  setStatusFilter('pending');
+                  setStalePending(true);
+                } else {
+                  setStatusFilter(v);
+                  setStalePending(false);
+                }
                 setPage(1);
               }}
             />
           </div>
-        )}
+        ) : null}
 
         {paymentsError ? (
           <EmptyState
@@ -514,7 +543,7 @@ export default function Payments() {
             }
           />
         ) : isMember && !loading && payments.length === 0 && !statusFilter ? (
-          <div className="mx-auto flex min-h-[min(32vh,18rem)] w-full max-w-sm flex-col justify-center">
+          <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-4">
             <EmptyState
               variant="motivational"
               icon={CreditCard}
@@ -524,7 +553,7 @@ export default function Payments() {
             />
           </div>
         ) : isMember && !loading && payments.length === 0 && statusFilter ? (
-          <div className="mx-auto flex min-h-[min(24vh,14rem)] w-full max-w-sm flex-col justify-center">
+          <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-3">
             <EmptyState
               variant="motivational"
               icon={CreditCard}
@@ -555,9 +584,9 @@ export default function Payments() {
           <div
             className={cn(
               isStaffPayment &&
-                isDesktop &&
+                showDetailRail &&
                 selectedPayment &&
-                'lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-4'
+                'md:grid md:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] md:items-start md:gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-4'
             )}
           >
             <Card
@@ -565,8 +594,7 @@ export default function Payments() {
               rounded="xl"
               className={cn(
                 'min-w-0 overflow-hidden',
-                isMember &&
-                  'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
+                'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
               )}
             >
               {isMember ? (
@@ -583,10 +611,6 @@ export default function Payments() {
                             onProofPreview={setProofPreview}
                           />
                         ))}
-                        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-                          Los pendientes se revisan en recepción. Si rechazan uno, te avisamos en
-                          Mensajes.
-                        </p>
                       </>
                     )}
                   </div>
@@ -680,20 +704,28 @@ export default function Payments() {
                 <>
                   <div className="lg:hidden">
                     {loading ? (
-                      <div className="px-3 py-2">
+                      <div className="space-y-2">
                         <ListRowSkeleton rows={4} />
                       </div>
-                    ) : payments.length === 0 ? (
+                    ) : displayPayments.length === 0 ? (
                       <EmptyState
                         icon={CreditCard}
-                        title={search ? 'Sin resultados' : 'Sin pagos registrados'}
+                        title={
+                          search
+                            ? 'Sin resultados'
+                            : stalePending
+                              ? 'Sin pendientes viejos'
+                              : 'Sin pagos registrados'
+                        }
                         description={
                           search
                             ? 'Prueba otro nombre o referencia, o limpia la búsqueda.'
-                            : 'Los reportes de miembros aparecerán aquí para revisión.'
+                            : stalePending
+                              ? 'No hay pagos pendientes de más de 2 días.'
+                              : 'Los reportes de miembros aparecerán aquí para revisión.'
                         }
                         action={
-                          search ? undefined : (
+                          search || stalePending ? undefined : (
                             <Button size="sm" onClick={() => openRegisterModal()}>
                               <Plus className="h-4 w-4" />
                               Registrar pago
@@ -701,84 +733,39 @@ export default function Payments() {
                           )
                         }
                       />
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2 px-1 py-1 md:grid-cols-2">
-                        {payments.map((payment) => (
-                          <div
-                            key={payment.id}
-                            className="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-brand text-base leading-none font-bold tabular-nums">
-                                    ${payment.amount_usd}
-                                  </p>
-                                  <Badge
-                                    variant={paymentStatusVariant(payment.status)}
-                                    className="px-1.5 py-0 text-[9px]"
-                                  >
-                                    {paymentStatusLabel(payment.status)}
-                                  </Badge>
-                                </div>
-                                <p className="mt-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
-                                  Miembro
-                                </p>
-                                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                                  {payment.user_name}
-                                </p>
-                                <p className="mt-0.5 truncate text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                                  <time dateTime={payment.created_at}>
-                                    {formatPaymentDate(payment.created_at)}
-                                  </time>
-                                  <span className="mx-1 text-zinc-300 dark:text-zinc-600">·</span>
-                                  <span className="capitalize">
-                                    {formatPaymentMethod(payment.method)}
-                                  </span>
-                                </p>
-                                {payment.reference ? (
-                                  <p
-                                    className="mt-0.5 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
-                                    title={payment.reference}
-                                  >
-                                    Ref. {payment.reference}
-                                  </p>
-                                ) : null}
-                              </div>
-                              {payment.proof_url ? (
-                                <ProofPreviewButton
-                                  onClick={() => setProofPreview(payment)}
-                                  className="h-9 w-9 shrink-0"
-                                />
-                              ) : null}
-                            </div>
-                            {isStaffPayment && payment.status === 'pending' ? (
-                              <div className="mt-2.5 flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openApproveModal(payment)}
-                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-emerald-500/35 bg-emerald-500/5 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400"
-                                >
-                                  <Check className="h-4 w-4" />
-                                  Aprobar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setRejectReason('');
-                                    setActionError('');
-                                    setRejectTarget(payment);
-                                  }}
-                                  className="h-11 min-h-[var(--touch-min)] flex-1 border-red-500/35 bg-red-500/5 text-red-600 hover:bg-red-500/15 dark:text-red-400"
-                                >
-                                  <X className="h-4 w-4" />
-                                  Rechazar
-                                </Button>
-                              </div>
-                            ) : null}
+                    ) : displayPayments.length > 12 ? (
+                      <Virtuoso
+                        style={{ height: 'min(70vh, 48rem)' }}
+                        data={displayPayments}
+                        itemContent={(_index, payment) => (
+                          <div className="pb-2">
+                            <PaymentMobileCard
+                              payment={payment}
+                              isStaff
+                              showActions={!showDetailRail}
+                              onProofPreview={setProofPreview}
+                              onApprove={openApproveModal}
+                              onReject={openRejectModal}
+                              onOpenDetail={
+                                showDetailRail ? (p) => setSelectedPayment(p) : undefined
+                              }
+                            />
                           </div>
+                        )}
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        {displayPayments.map((payment) => (
+                          <PaymentMobileCard
+                            key={payment.id}
+                            payment={payment}
+                            isStaff
+                            showActions={!showDetailRail}
+                            onProofPreview={setProofPreview}
+                            onApprove={openApproveModal}
+                            onReject={openRejectModal}
+                            onOpenDetail={showDetailRail ? (p) => setSelectedPayment(p) : undefined}
+                          />
                         ))}
                       </div>
                     )}
@@ -804,7 +791,7 @@ export default function Payments() {
                             <TableRowSkeleton cols={7} />
                             <TableRowSkeleton cols={7} />
                           </>
-                        ) : payments.length === 0 ? (
+                        ) : displayPayments.length === 0 ? (
                           <tr>
                             <td
                               colSpan={7}
@@ -812,11 +799,13 @@ export default function Payments() {
                             >
                               {search
                                 ? 'Sin resultados para esa búsqueda'
-                                : 'No hay pagos registrados'}
+                                : stalePending
+                                  ? 'No hay pendientes de más de 2 días'
+                                  : 'No hay pagos registrados'}
                             </td>
                           </tr>
                         ) : (
-                          payments.map((payment) => (
+                          displayPayments.map((payment) => (
                             <tr
                               key={payment.id}
                               className={cn(
@@ -871,28 +860,29 @@ export default function Payments() {
                                   </Badge>
                                   {isStaffPayment && payment.status === 'pending' && (
                                     <>
-                                      <button
-                                        type="button"
-                                        onClick={() => openApproveModal(payment)}
-                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-500/10"
+                                      <IconButton
+                                        size="sm"
+                                        variant="secondary"
+                                        className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
                                         aria-label="Aprobar pago"
+                                        title="Aprobar"
+                                        onClick={() => openApproveModal(payment)}
                                       >
-                                        <Check className="h-3.5 w-3.5" />
-                                        Aprobar
-                                      </button>
-                                      <button
-                                        type="button"
+                                        <Check className="h-3.5 w-3.5" strokeWidth={2.25} />
+                                      </IconButton>
+                                      <IconButton
+                                        size="sm"
+                                        variant="danger"
+                                        aria-label="Rechazar pago"
+                                        title="Rechazar"
                                         onClick={() => {
                                           setRejectReason('');
                                           setActionError('');
                                           setRejectTarget(payment);
                                         }}
-                                        className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-red-500 hover:bg-red-500/10"
-                                        aria-label="Rechazar pago"
                                       >
-                                        <X className="h-3.5 w-3.5" />
-                                        Rechazar
-                                      </button>
+                                        <X className="h-3.5 w-3.5" strokeWidth={2.25} />
+                                      </IconButton>
                                     </>
                                   )}
                                 </div>
@@ -913,7 +903,7 @@ export default function Payments() {
                 label="pagos"
               />
             </Card>
-            {isStaffPayment && isDesktop && selectedPayment ? (
+            {isStaffPayment && showDetailRail && selectedPayment ? (
               <PaymentDetailRail
                 payment={selectedPayment}
                 isStaff={isStaffPayment}

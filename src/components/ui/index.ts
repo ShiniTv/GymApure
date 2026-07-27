@@ -1,4 +1,6 @@
 export { Button } from './Button';
+export { IconButton } from './IconButton';
+export type { IconButtonProps, IconButtonSize, IconButtonVariant } from './IconButton';
 export { Card } from './Card';
 export { Modal } from './Modal';
 export { Sheet } from './Sheet';
@@ -27,6 +29,10 @@ export {
   ListRowSkeleton,
   ChatBubbleSkeleton,
   WorkoutShellSkeleton,
+  FilterChipsSkeleton,
+  AuditLogsSkeleton,
+  CalendarViewSkeleton,
+  AssignmentsListSkeleton,
 } from './Skeleton';
 export { Table, TableHead, TableBody, TableRow, TableHeader, TableCell, DataCard } from './Table';
 export { Avatar } from './Avatar';

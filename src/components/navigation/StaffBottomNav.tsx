@@ -71,12 +71,17 @@ export function StaffBottomNav({
     return sections;
   }, [moreItems]);
 
+  const moreMenuBadgeCount = useMemo(
+    () => moreItems.reduce((total, item) => total + (item.badgeCount ?? 0), 0),
+    [moreItems]
+  );
+
   const initials = greetingName
     ? greetingName
         .split(/\s+/)
         .filter(Boolean)
         .slice(0, 2)
-        .map((p) => p[0]?.toUpperCase() ?? '')
+        .map((p) => (p[0] ? p[0].toUpperCase() : ''))
         .join('') || '?'
     : null;
 
@@ -133,6 +138,13 @@ export function StaffBottomNav({
                         ? '1 sin leer'
                         : `${chatUnread > 99 ? '99+' : chatUnread} sin leer`
                       : null;
+                  const itemBadge = item.badgeCount ?? 0;
+                  const badgeLabel =
+                    itemBadge > 0
+                      ? itemBadge === 1
+                        ? '1 pendiente'
+                        : `${itemBadge > 99 ? '99+' : itemBadge} pendientes`
+                      : null;
                   return (
                     <li key={item.href}>
                       <Link
@@ -146,7 +158,13 @@ export function StaffBottomNav({
                             : 'border-border/60 text-text-secondary hover:bg-surface-overlay/60 hover:text-text bg-transparent'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
-                        aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}
+                        aria-label={
+                          unreadLabel
+                            ? `${item.name}, ${unreadLabel}`
+                            : badgeLabel
+                              ? `${item.name}, ${badgeLabel}`
+                              : item.name
+                        }
                       >
                         {itemActive ? (
                           <span
@@ -161,6 +179,11 @@ export function StaffBottomNav({
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
+                          {!item.showUnreadBadge && itemBadge > 0 ? (
+                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                              {itemBadge > 99 ? '99+' : itemBadge}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
                       </Link>
@@ -210,17 +233,28 @@ export function StaffBottomNav({
                         'tap-feedback inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150',
                         active ? 'text-text' : 'text-text-muted'
                       )}
-                      aria-label={item.name}
+                      aria-label={
+                        moreMenuBadgeCount > 0
+                          ? `${item.name}, ${moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount} pendientes`
+                          : item.name
+                      }
                       aria-expanded={moreOpen}
                       aria-haspopup="dialog"
                     >
-                      <span
-                        className={clsx(
-                          'member-bottom-nav-tab-icon',
-                          active && 'member-bottom-nav-tab-icon--active'
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" aria-hidden />
+                      <span className="relative">
+                        <span
+                          className={clsx(
+                            'member-bottom-nav-tab-icon',
+                            active && 'member-bottom-nav-tab-icon--active'
+                          )}
+                        >
+                          <item.icon className="h-5 w-5" aria-hidden />
+                        </span>
+                        {moreMenuBadgeCount > 0 ? (
+                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            {moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount}
+                          </span>
+                        ) : null}
                       </span>
                     </button>
                   </li>

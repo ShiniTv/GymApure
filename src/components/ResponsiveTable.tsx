@@ -1,4 +1,5 @@
 import { type ReactNode, Fragment, type ReactElement } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { cn } from '../lib/utils';
 import { Card } from './ui/Card';
 
@@ -19,6 +20,8 @@ interface ResponsiveTableProps<T> {
   breakpoint?: 'md' | 'lg';
   /** Wrap desktop table in Card (padding none, rounded xl) */
   desktopInCard?: boolean;
+  /** Virtualize long mobile card lists at or above this item count. */
+  virtualizeMobileAt?: number;
 }
 
 export function ResponsiveTable<T>({
@@ -35,6 +38,7 @@ export function ResponsiveTable<T>({
   desktopClassName,
   breakpoint = 'lg',
   desktopInCard = false,
+  virtualizeMobileAt,
 }: ResponsiveTableProps<T>) {
   const mobileHidden = breakpoint === 'lg' ? 'lg:hidden' : 'md:hidden';
   const desktopHidden = breakpoint === 'lg' ? 'hidden lg:block' : 'hidden md:block';
@@ -71,7 +75,17 @@ export function ResponsiveTable<T>({
   return (
     <>
       <div className={cn(mobileHidden, mobileClassName)}>
-        {mobileWrapper ? mobileWrapper(mobileItems) : mobileItems}
+        {virtualizeMobileAt && items.length >= virtualizeMobileAt ? (
+          <Virtuoso
+            style={{ height: 'min(70vh, 48rem)' }}
+            data={items}
+            itemContent={(index, item) => <div className="pb-2.5">{mobile(item, index)}</div>}
+          />
+        ) : mobileWrapper ? (
+          mobileWrapper(mobileItems)
+        ) : (
+          mobileItems
+        )}
       </div>
 
       {desktopInCard ? (

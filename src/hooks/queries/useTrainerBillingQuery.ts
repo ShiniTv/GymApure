@@ -187,6 +187,19 @@ export function useRejectTrainerInvoiceMutation() {
   });
 }
 
+export function useCancelTrainerInvoiceMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiFetch(`/api/trainer-billing/invoices/${id}/cancel`, { method: 'POST' });
+      const data = await parseJsonResponse<{ error?: string }>(res);
+      if (!res.ok) throw new Error(data.error ?? 'No se pudo cancelar');
+      return data;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: [...rootKey, 'invoices'] }),
+  });
+}
+
 export function useReportTrainerInvoiceMutation() {
   const qc = useQueryClient();
   return useMutation({

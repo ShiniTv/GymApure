@@ -1,4 +1,4 @@
-import { Button, Label, Modal } from '../../components/ui';
+import { Button, Label, Modal, Select } from '../../components/ui';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 
 export interface MembershipPlan {
@@ -44,11 +44,14 @@ export function MemberAssignModal({
   onClearAssignError,
   onAssign,
 }: MemberAssignModalProps) {
+  const canAssign = Boolean(selectedPlanId) && (!isReceptionist || Boolean(selectedPaymentId));
+
   return (
     <Modal
       open={!!target}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="md"
+      scrollable
       title={
         target ? (
           <>
@@ -58,20 +61,37 @@ export function MemberAssignModal({
           ''
         )
       }
+      footer={
+        target ? (
+          <>
+            <Button type="button" variant="ghost" size="sm" className="flex-1" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="flex-1"
+              disabled={!canAssign}
+              onClick={onAssign}
+            >
+              Asignar
+            </Button>
+          </>
+        ) : null
+      }
     >
-      {target && (
-        <>
-          {target.membership_name && (
-            <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
-              Plan actual: <strong>{target.membership_name}</strong> ({target.days_remaining} días).
-              La nueva suscripción se encadena al vencimiento.
+      {target ? (
+        <div className="space-y-2.5">
+          {target.membership_name ? (
+            <p className="text-text-muted text-[12px] leading-snug">
+              Plan actual: <span className="text-text font-medium">{target.membership_name}</span> (
+              {target.days_remaining} días). La nueva suscripción se encadena al vencimiento.
             </p>
-          )}
-          {isReceptionist && (
-            <div className="mb-4">
-              <Label>Pago aprobado (obligatorio)</Label>
-              <select
-                className="mt-1 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
+          ) : null}
+          {isReceptionist ? (
+            <div>
+              <Label className="mb-0.5">Pago aprobado</Label>
+              <Select
                 value={selectedPaymentId}
                 onChange={(e) => {
                   onSelectedPaymentIdChange(e.target.value);
@@ -85,32 +105,28 @@ export function MemberAssignModal({
                     {new Date(payment.created_at).toLocaleDateString('es-VE')}
                   </option>
                 ))}
-              </select>
-              {approvedPayments.length === 0 && (
-                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                  No hay pagos aprobados para este miembro. Registre y apruebe un pago primero.
+              </Select>
+              {approvedPayments.length === 0 ? (
+                <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                  No hay pagos aprobados. Registra y aprueba un pago primero.
                 </p>
-              )}
+              ) : null}
             </div>
-          )}
-          <select
-            className="mb-4 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold dark:border-zinc-700 dark:bg-zinc-800"
-            value={selectedPlanId}
-            onChange={(e) => onSelectedPlanIdChange(e.target.value)}
-          >
-            <option value="">Seleccionar plan...</option>
-            {membershipPlans.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name} — {plan.duration_days} días — ${plan.price_usd}
-              </option>
-            ))}
-          </select>
-          {assignError && <p className="mb-3 text-xs text-red-500">{assignError}</p>}
-          <Button onClick={onAssign} className="w-full">
-            Asignar / Renovar
-          </Button>
-        </>
-      )}
+          ) : null}
+          <div>
+            <Label className="mb-0.5">Plan</Label>
+            <Select value={selectedPlanId} onChange={(e) => onSelectedPlanIdChange(e.target.value)}>
+              <option value="">Seleccionar plan…</option>
+              {membershipPlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} — {plan.duration_days} días — ${plan.price_usd}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {assignError ? <p className="text-xs text-red-500">{assignError}</p> : null}
+        </div>
+      ) : null}
     </Modal>
   );
 }

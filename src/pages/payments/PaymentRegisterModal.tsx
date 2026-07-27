@@ -123,8 +123,32 @@ export function PaymentRegisterModal({
       }
       maxWidth="2xl"
       scrollable
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="flex-1"
+            disabled={submitting}
+            onClick={onClose}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form="payment-register-form"
+            size="sm"
+            className="flex-1"
+            loading={submitting}
+            disabled={needsBsRate && (exchangeRateLoading || !exchangeRate)}
+          >
+            Enviar
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={onSubmit} className="page-stack">
+      <form id="payment-register-form" onSubmit={onSubmit} className="space-y-2.5">
         {submitError && (
           <p className="text-sm font-bold text-red-500" role="alert">
             {submitError}
@@ -302,28 +326,6 @@ export function PaymentRegisterModal({
               </p>
             )}
           </div>
-        </div>
-
-        <div className="flex gap-4 pt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            className="flex-1"
-            size="lg"
-            disabled={submitting}
-            onClick={onClose}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            size="lg"
-            loading={submitting}
-            disabled={needsBsRate && (exchangeRateLoading || !exchangeRate)}
-          >
-            Enviar
-          </Button>
         </div>
       </form>
     </Modal>

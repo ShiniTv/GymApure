@@ -380,32 +380,32 @@ export default function Reception() {
     checkInPin?.configured && checkInPin.pin ? (
       <div
         className={cn(
-          'border-brand/20 bg-brand/5 flex items-center gap-2.5 rounded-xl border px-3 py-2',
+          'border-brand/20 bg-brand/5 flex items-center gap-2.5 rounded-lg border px-3 py-2',
           !isCounterMode && 'px-4 py-3'
         )}
       >
         <KeyRound className="text-brand h-4 w-4 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
             PIN del día
           </p>
-          <p className="font-mono text-lg font-bold tracking-[0.18em] text-zinc-900 dark:text-white">
+          <p className="text-text font-mono text-lg font-bold tracking-[0.18em]">
             {checkInPin.pin}
           </p>
         </div>
         {user?.role === 'admin' ? (
           <Link
             to="/settings"
-            className="shrink-0 text-[11px] font-semibold text-zinc-500 underline"
+            className="text-text-muted inline-flex min-h-11 shrink-0 items-center text-[11px] font-semibold underline"
           >
             Cambiar
           </Link>
         ) : (
-          <span className="shrink-0 text-[10px] text-zinc-400">Solo admin</span>
+          <span className="text-text-muted shrink-0 text-[10px]">Solo admin</span>
         )}
       </div>
     ) : checkInPin && !checkInPin.configured ? (
-      <p className="px-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-text-muted px-0.5 text-xs">
         Sin PIN de presencia.
         {user?.role === 'admin' ? (
           <>
@@ -447,12 +447,12 @@ export default function Reception() {
   const lookupPanel = (
     <div
       className={cn(
-        'space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
-        !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
+        'border-border/80 bg-surface space-y-3 rounded-lg border p-3',
+        !isCounterMode && 'p-4'
       )}
     >
       <div className="space-y-2">
-        <Label htmlFor="reception-cedula" className="text-xs font-medium text-zinc-500">
+        <Label htmlFor="reception-cedula" className="text-text-muted text-xs font-medium">
           Cédula
         </Label>
         <div className="flex items-stretch gap-2">
@@ -483,7 +483,7 @@ export default function Reception() {
           </Button>
         </div>
         {isCounterMode && (
-          <p className="hidden text-xs text-zinc-400 sm:block dark:text-zinc-300">
+          <p className="text-text-muted hidden text-xs sm:block">
             Atajos:{' '}
             <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
               Enter
@@ -529,10 +529,7 @@ export default function Reception() {
 
   const memberPanel = (
     <div
-      className={cn(
-        'rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50',
-        !isCounterMode && 'border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900'
-      )}
+      className={cn('border-border/80 bg-surface rounded-lg border p-3', !isCounterMode && 'p-4')}
     >
       {lookupLoading ? (
         <div className="flex items-center justify-center py-8">
@@ -544,13 +541,13 @@ export default function Reception() {
             <div className="min-w-0">
               <h3
                 className={cn(
-                  'font-semibold text-zinc-900 dark:text-white',
+                  'text-text font-semibold',
                   isCounterMode ? 'text-sm' : 'text-lg font-bold'
                 )}
               >
                 {lookup.user.full_name}
               </h3>
-              <p className="mt-0.5 text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+              <p className="text-text-muted mt-0.5 text-xs tabular-nums">
                 {lookup.user.cedula}
                 {!isCounterMode && lookup.user.email ? ` · ${lookup.user.email}` : ''}
               </p>
@@ -558,7 +555,7 @@ export default function Reception() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-2 h-8 px-2 text-xs"
+                  className="mt-2 min-h-11 px-2 text-xs"
                   onClick={openCedulaEdit}
                 >
                   <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -608,7 +605,7 @@ export default function Reception() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-8 px-2 text-xs"
+                  className="min-h-11 px-2 text-xs"
                   onClick={openRenewForLookup}
                 >
                   <CreditCard className="mr-1 h-3.5 w-3.5" />
@@ -629,7 +626,7 @@ export default function Reception() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-8 px-2 text-xs"
+                    className="min-h-11 px-2 text-xs"
                     onClick={openRenewForLookup}
                   >
                     <CreditCard className="mr-1 h-3.5 w-3.5" />
@@ -639,12 +636,12 @@ export default function Reception() {
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
+                    <Button size="sm" variant="ghost" className="min-h-11 px-2 text-xs">
                       Pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
-                    <Button size="sm" variant="ghost" className="h-8 px-2 text-xs">
+                    <Button size="sm" variant="ghost" className="min-h-11 px-2 text-xs">
                       Asignar plan
                     </Button>
                   </Link>
@@ -659,14 +656,14 @@ export default function Reception() {
             <button
               type="button"
               onClick={openCedulaEdit}
-              className="text-[11px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              className="text-text-muted hover:text-text inline-flex min-h-11 items-center text-[11px] font-medium"
             >
               Corregir cédula
             </button>
           )}
 
           {lookup.attendance?.today_session && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-xs">
               Ingreso hoy:{' '}
               {format(new Date(lookup.attendance.today_session.check_in_time), 'HH:mm', {
                 locale: es,
@@ -678,23 +675,23 @@ export default function Reception() {
         </div>
       ) : lookup && !lookup.found ? (
         <div className="space-y-2.5 py-4 text-center">
-          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{lookup.error}</p>
+          <p className="text-text-secondary text-sm font-medium">{lookup.error}</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             <Link to={walkInHref(cedula)}>
-              <Button size="sm" className="h-9 px-3 text-xs">
+              <Button size="sm" className="min-h-11 px-3 text-xs">
                 <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                 Registrar
               </Button>
             </Link>
             <Link to="/members">
-              <Button variant="ghost" size="sm" className="h-9 px-3 text-xs">
+              <Button variant="ghost" size="sm" className="min-h-11 px-3 text-xs">
                 Solo cuenta
               </Button>
             </Link>
           </div>
         </div>
       ) : (
-        <div className="py-3 text-center text-zinc-400 dark:text-zinc-500">
+        <div className="text-text-muted py-3 text-center">
           <p className="text-[11px] font-medium">Ingresa una cédula para consultar</p>
         </div>
       )}
@@ -738,10 +735,8 @@ export default function Reception() {
       <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold text-zinc-900 dark:text-white">
-              Acceso
-            </h1>
-            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+            <h1 className="text-text truncate text-base font-semibold">Acceso</h1>
+            <p className="text-text-muted truncate text-[11px]">
               {/* Count lives in tab + lista Dentro; avoid triple KPI on md+ access desk. */}
               <span className="md:hidden">{insideCount} dentro</span>
               <span className="hidden md:inline">F1 entrada · F2 salida</span>
@@ -752,7 +747,7 @@ export default function Reception() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 p-0"
+                className="h-11 w-11 p-0"
                 title="Modo tablet"
                 aria-label="Modo tablet"
               >
@@ -762,7 +757,7 @@ export default function Reception() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 w-9 p-0"
+              className="h-11 w-11 p-0"
               onClick={() => setCounterMode(false)}
               title="Salir del mostrador"
               aria-label="Salir del mostrador"
@@ -784,11 +779,7 @@ export default function Reception() {
               </div>
               <aside className="hidden min-w-0 md:col-span-2 md:flex md:flex-col md:gap-4">
                 <div className="min-w-0 flex-1">{insideList}</div>
-                <Card
-                  padding="md"
-                  rounded="xl"
-                  className="min-w-0 border-zinc-200/70 dark:border-zinc-800/80"
-                >
+                <Card padding="md" rounded="xl" className="border-border/80 min-w-0">
                   <h3 className="section-title mb-2">Actividad reciente</h3>
                   <ReceptionActivityFeed limit={5} compact refreshKey={feedRefresh} />
                 </Card>

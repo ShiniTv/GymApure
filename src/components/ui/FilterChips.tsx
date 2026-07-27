@@ -18,6 +18,8 @@ interface FilterChipsProps {
   fullWidth?: boolean;
   /** Accessible name for the filter group. */
   ariaLabel?: string;
+  /** Prefer scroll on mobile when there are many chips. */
+  layout?: 'wrap' | 'scroll';
 }
 
 /** Compact list filters — hug content on desktop; pass fullWidth only when needed. */
@@ -28,11 +30,12 @@ export function FilterChips({
   className,
   fullWidth = false,
   ariaLabel = 'Filtros',
+  layout = 'wrap',
 }: FilterChipsProps) {
   return (
     <SegmentedControl
       variant="compact"
-      layout="wrap"
+      layout={layout}
       fullWidth={fullWidth}
       className={className}
       ariaLabel={ariaLabel}

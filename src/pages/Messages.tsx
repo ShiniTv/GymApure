@@ -27,6 +27,7 @@ import {
   Button,
   EmptyState,
   FilterChips,
+  IconButton,
   Modal,
   PageHeader,
   PaginationBar,
@@ -535,28 +536,28 @@ const ChatBubble = memo(function ChatBubble({
                   : 'pointer-events-none opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:focus-within:pointer-events-auto sm:focus-within:opacity-100'
               )}
             >
-              <button
-                type="button"
+              <IconButton
+                size="sm"
+                variant="tertiary"
                 onClick={() => {
                   setIsEditing(true);
                   setActionsOpen(false);
                 }}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 aria-label="Editar mensaje"
               >
                 <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
+              </IconButton>
+              <IconButton
+                size="sm"
+                variant="danger"
                 onClick={() => {
                   setShowDeleteConfirm(true);
                   setActionsOpen(false);
                 }}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
                 aria-label="Eliminar mensaje"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </IconButton>
             </div>
           )}
         </div>

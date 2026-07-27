@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { asyncRouter } from './middleware/asyncRouter.ts';
 import { authorize, type AuthRequest } from './middleware/auth.ts';
 import { query } from '../db/index.ts';
-import { trainerHasMemberAccess } from '../lib/trainerAccess.ts';
+import { trainerHasMemberAccess, ensureTrainerMemberAssignment } from '../lib/trainerAccess.ts';
 import {
   getTrainerPaymentDestinations,
   upsertTrainerPaymentDestinations,
@@ -76,6 +76,29 @@ async function assertInvoiceAccess(
   if (user.role === 'trainer' && inv.trainer_id === user.id) return inv;
   if (user.role === 'member' && inv.member_id === user.id) return inv;
   return null;
+}
+
+/** Same eligible set as Miembros for trainers: assignment OR routine of this trainer. */
+async function trainerCanBillMember(trainerId: number, memberId: number): Promise<boolean> {
+  if (await trainerHasMemberAccess(trainerId, memberId)) return true;
+
+  const { rows } = await query<{ ok: number }>(
+    `SELECT 1 AS ok
+     FROM user_routines ur
+     JOIN routines r ON r.id = ur.routine_id
+     JOIN users u ON u.id = ur.user_id
+     WHERE ur.user_id = $1
+       AND r.trainer_id = $2
+       AND u.role = 'member'
+       AND u.status = 'active'
+     LIMIT 1`,
+    [toDbId(memberId), toDbId(trainerId)]
+  );
+  if (!rows[0]) return false;
+
+  // Persist explicit link so future billings / access stay consistent
+  await ensureTrainerMemberAssignment(trainerId, memberId, trainerId);
+  return true;
 }
 
 /** ——— Offers ——— */
@@ -291,7 +314,7 @@ router.post('/invoices', authorize(['trainer']), async (req: AuthRequest, res) =
   }
   const trainerId = req.user!.id;
   const memberId = parsed.data.member_id;
-  if (!(await trainerHasMemberAccess(trainerId, memberId))) {
+  if (!(await trainerCanBillMember(trainerId, memberId))) {
     res.status(403).json({ error: 'Solo puedes cobrar a miembros asignados' });
     return;
   }
@@ -474,15 +497,24 @@ router.get(
   }
 );
 
-/** Assigned members picker for trainer billing UI */
+/** Assigned members picker for trainer billing UI (matches Miembros eligibility). */
 router.get('/members', authorize(['trainer']), async (req: AuthRequest, res) => {
+  const trainerId = toDbId(req.user!.id);
   const { rows } = await query(
     `SELECT u.id, u.full_name, u.cedula
-     FROM trainer_member_assignments tma
-     JOIN users u ON u.id = tma.member_id
-     WHERE tma.trainer_id = $1 AND u.role = 'member' AND COALESCE(u.is_active, TRUE)
+     FROM users u
+     WHERE u.role = 'member'
+       AND u.status = 'active'
+       AND u.id IN (
+         SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+         UNION
+         SELECT DISTINCT ur.user_id
+         FROM user_routines ur
+         JOIN routines r ON r.id = ur.routine_id
+         WHERE r.trainer_id = $1
+       )
      ORDER BY u.full_name ASC`,
-    [toDbId(req.user!.id)]
+    [trainerId]
   );
   res.json(rows);
 });

@@ -1,6 +1,11 @@
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { MemberOnboarding } from '../../components/members/OnboardingStatus';
+import {
+  applyOptimisticUpdate,
+  rollbackOptimistic,
+  type OptimisticContext,
+} from '../../lib/optimisticMutation';
 
 export interface Member {
   id: number;
@@ -22,7 +27,7 @@ export interface Member {
   onboarding?: MemberOnboarding | null;
 }
 
-interface PaginatedUsers {
+export interface PaginatedUsers {
   items: Member[];
   total: number;
   page: number;
@@ -71,4 +76,47 @@ export function useMembersQuery(params: MembersQueryParams) {
 export function useInvalidateMembers() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries({ queryKey: ['members'] });
+}
+
+interface MembershipStatusVariables {
+  memberId: number;
+  status: 'active' | 'paused';
+  reason?: string;
+}
+
+export function useMembershipStatusMutation(params: MembersQueryParams) {
+  const queryClient = useQueryClient();
+  const queryKey = membersQueryKey(params);
+
+  return useMutation<unknown, Error, MembershipStatusVariables, OptimisticContext<PaginatedUsers>>({
+    mutationFn: async ({ memberId, status, reason }) => {
+      const endpoint = status === 'paused' ? 'pause' : 'resume';
+      const res = await apiFetch(`/api/memberships/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: memberId,
+          ...(reason ? { reason } : {}),
+        }),
+      });
+      return parseJsonResponse(res);
+    },
+    onMutate: ({ memberId, status }) =>
+      applyOptimisticUpdate<PaginatedUsers>(queryClient, queryKey, (previous) => ({
+        ...(previous ?? {
+          items: [],
+          total: 0,
+          page: params.page,
+          pageSize: params.pageSize,
+        }),
+        items:
+          previous?.items.map((member) =>
+            member.id === memberId ? { ...member, subscription_status: status } : member
+          ) ?? [],
+      })),
+    onError: (_error, _variables, context) => {
+      rollbackOptimistic(queryClient, context);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['members'] }),
+  });
 }

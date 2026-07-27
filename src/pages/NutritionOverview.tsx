@@ -86,7 +86,7 @@ export default function NutritionOverview() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-6">
           <Spinner />
         </div>
       ) : !data || assignedTotal === 0 ? (
@@ -227,7 +227,7 @@ export default function NutritionOverview() {
                 icon={UtensilsCrossed}
                 title="Sin resultados"
                 description="Prueba otro filtro o búsqueda."
-                className="py-10"
+                className="py-5"
               />
             ) : (
               <div className="overflow-x-auto">

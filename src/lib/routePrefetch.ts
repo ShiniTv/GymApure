@@ -28,6 +28,9 @@ const ROUTE_PREFETCH: Record<string, () => Promise<unknown>> = {
   '/history': () => import('../pages/WorkoutHistory'),
   '/history/records': () => import('../pages/ExerciseRecords'),
   '/check-in': () => import('../pages/CheckIn'),
+  '/clases': () => import('../pages/Classes'),
+  '/demo-leads': () => import('../pages/DemoLeads'),
+  '/security': () => import('../pages/MfaSecurity'),
 };
 
 function prefetchRouteData(path: string): void {

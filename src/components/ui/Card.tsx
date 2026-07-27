@@ -12,9 +12,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const paddingMap = {
   none: '',
-  sm: 'p-ds-4',
-  md: 'p-ds-4 sm:p-ds-5',
-  lg: 'p-ds-5 sm:p-ds-6',
+  sm: 'p-ds-3',
+  md: 'p-ds-3 sm:p-ds-4',
+  lg: 'p-ds-4 sm:p-ds-5',
 };
 
 /** Linear-like window panels — hairline edge, no heavy shadow. */

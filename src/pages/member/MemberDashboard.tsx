@@ -36,16 +36,24 @@ import { Button, Card, Collapse, EmptyState, PageHeader, Badge } from '../../com
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 
-const PAGE = 'page-stack stagger-fade-in mx-auto w-full max-w-5xl';
+const PAGE = 'page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl';
 const BANNER =
   'flex flex-col justify-between gap-4 rounded-xl border px-ds-4 py-ds-4 sm:flex-row sm:items-center';
-const SURFACE_ROW =
-  'tap-feedback flex items-center gap-3.5 rounded-xl border border-border/80 bg-surface px-ds-4 py-ds-4 transition-[background-color,border-color,transform,opacity] duration-150 hover:border-brand/20';
 const ASSIGNMENT_UPCOMING =
   'bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border';
 const ASSIGNMENT_ENDING =
   'flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5';
 const LINK_BRAND = 'text-brand inline-block text-xs font-bold hover:underline';
+const MOBILE_LIST_ROW =
+  'tap-feedback flex min-h-12 items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-raised';
+
+const MEMBER_LINKS = [
+  { to: '/routines', icon: Dumbbell, label: 'Rutinas', detail: 'Asignaciones activas' },
+  { to: '/reservas', icon: CalendarDays, label: 'Reservas', detail: 'Clases grupales' },
+  { to: '/nutrition', icon: UtensilsCrossed, label: 'Nutrición', detail: 'Macros y comidas' },
+  { to: '/history', icon: Clock, label: 'Historial', detail: 'Sesiones anteriores' },
+  { to: '/payments', icon: CreditCard, label: 'Pagos', detail: 'Reportar o renovar' },
+] as const;
 
 interface AssignmentRow {
   id: number;
@@ -158,6 +166,7 @@ export default function MemberDashboard() {
   return (
     <div className={PAGE}>
       <MemberHero
+        className="bg-none shadow-none [&_.type-h1]:text-xl sm:[&_.type-h1]:text-2xl"
         name={user?.name ?? 'Atleta'}
         workoutsThisWeek={memberStats?.workoutsThisWeek ?? 0}
         weeklyTrainingGoal={memberStats?.weeklyTrainingGoal ?? 5}
@@ -246,77 +255,72 @@ export default function MemberDashboard() {
       <MemberSelfCheckInCard />
       <MemberRemoteTrainingCard />
 
-      {/* Desktop: full routine + membership cards. Mobile: no second train CTA (hero owns it). */}
+      {/* Desktop: full routine + membership cards. Mobile: one quiet list; hero owns the train CTA. */}
       {isMobile ? (
-        <div className="stagger-fade-in space-y-4">
+        <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
           {routine ? (
-            <Link to="/routines" className={cn(SURFACE_ROW, 'hover:bg-surface-raised')}>
-              <div className="bg-brand/10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+            <Link to="/routines" className={MOBILE_LIST_ROW}>
+              <div className="bg-brand/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
                 <Dumbbell className="text-brand h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-text text-sm leading-snug font-semibold">Ver rutinas</p>
-                <p className="text-text-secondary mt-1 truncate text-[11px] leading-relaxed">
+                <p className="text-text text-sm leading-snug font-medium">Tu rutina</p>
+                <p className="text-text-secondary mt-0.5 truncate text-[11px]">
                   {routineScheduledToday ? 'Hoy toca' : 'Próximo día de rutina'} · {routine.name}
                 </p>
               </div>
               <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
           ) : (
-            <Link to="/messages" className={SURFACE_ROW}>
-              <div className="bg-surface-overlay flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+            <Link to="/messages" className={MOBILE_LIST_ROW}>
+              <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
                 <Dumbbell className="text-text-muted h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-text text-sm leading-snug font-semibold">Sin rutina aún</p>
-                <p className="text-text-secondary mt-1 text-[11px] leading-relaxed">
-                  Escribe a tu entrenador
-                </p>
+                <p className="text-text text-sm leading-snug font-medium">Sin rutina aún</p>
+                <p className="text-text-secondary mt-0.5 text-[11px]">Escribe a tu entrenador</p>
               </div>
+              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
           )}
 
-          <Card padding="md" rounded="xl">
-            <h3 className="text-text text-sm font-semibold">Membresía</h3>
-            {sub ? (
-              <>
-                <p
-                  className={cn(
-                    'mt-2 text-lg font-bold',
-                    subscriptionPlanNameClass(sub.days_remaining, alertDays)
-                  )}
-                >
-                  {sub.membership_name}
-                </p>
-                <p className="text-text-secondary mt-1.5 text-xs leading-relaxed">
-                  {formatRemainingDaysShort(sub.days_remaining)}
-                  {' · '}
-                  Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
-                </p>
-                <div className="bg-surface-overlay mt-4 h-2 w-full rounded-full">
-                  <div
-                    className="h-2 rounded-full transition-[width,background-color] duration-500"
-                    style={{
-                      width: `${subscriptionBarStyle.widthPercent}%`,
-                      backgroundColor: subscriptionBarStyle.backgroundColor,
-                    }}
-                    role="progressbar"
-                    aria-valuenow={subscriptionBarStyle.widthPercent}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={formatRemainingDaysShort(sub.days_remaining)}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-text-secondary text-xs">Sin membresía activa</p>
-                <Button size="sm" variant="ghost" onClick={() => navigate('/payments')}>
-                  Reportar pago
-                </Button>
-              </div>
-            )}
-          </Card>
+          <Link to="/payments" className={MOBILE_LIST_ROW}>
+            <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+              <CreditCard className="text-text-secondary h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-text text-sm leading-snug font-medium">Membresía</p>
+              {sub ? (
+                <>
+                  <p
+                    className={cn(
+                      'mt-0.5 truncate text-[11px]',
+                      subscriptionPlanNameClass(sub.days_remaining, alertDays)
+                    )}
+                  >
+                    {sub.membership_name} · {formatRemainingDaysShort(sub.days_remaining)}
+                  </p>
+                  <div className="bg-surface-overlay mt-1.5 h-1 w-full max-w-48 rounded-full">
+                    <div
+                      className="h-1 rounded-full transition-[width,background-color] duration-500"
+                      style={{
+                        width: `${subscriptionBarStyle.widthPercent}%`,
+                        backgroundColor: subscriptionBarStyle.backgroundColor,
+                      }}
+                      role="progressbar"
+                      aria-valuenow={subscriptionBarStyle.widthPercent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={formatRemainingDaysShort(sub.days_remaining)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-text-secondary mt-0.5 text-[11px]">Sin membresía activa</p>
+              )}
+            </div>
+            <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+          </Link>
         </div>
       ) : (
         <div className="stagger-fade-in grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -441,53 +445,71 @@ export default function MemberDashboard() {
         </div>
       )}
 
-      <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/routines"
-          icon={Dumbbell}
-          title="Rutinas"
-          description="Asignaciones activas"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/reservas"
-          icon={CalendarDays}
-          title="Reservas"
-          description="Clases grupales"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/nutrition"
-          icon={UtensilsCrossed}
-          title="Nutrición"
-          description="Macros y comidas"
-          tone="emerald"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/history"
-          icon={Clock}
-          title="Historial"
-          description="Sesiones anteriores"
-          tone="blue"
-        />
-        <QuickAction
-          compact
-          iconOnlyMobile
-          to="/payments"
-          icon={CreditCard}
-          title="Pagos"
-          description="Reportar o renovar"
-          tone="emerald"
-        />
-      </div>
+      {isMobile ? (
+        <section aria-labelledby="member-links-title">
+          <h2
+            id="member-links-title"
+            className="text-text-secondary mb-1.5 px-1 text-[11px] font-medium"
+          >
+            Explorar
+          </h2>
+          <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
+            {MEMBER_LINKS.map(({ to, icon: Icon, label, detail }) => (
+              <Link key={to} to={to} className={MOBILE_LIST_ROW}>
+                <Icon className="text-text-secondary h-4 w-4 shrink-0" aria-hidden />
+                <span className="text-text min-w-0 flex-1 text-sm font-medium">{label}</span>
+                <span className="text-text-muted hidden truncate text-[11px] min-[360px]:block">
+                  {detail}
+                </span>
+                <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+          <QuickAction
+            compact
+            to="/routines"
+            icon={Dumbbell}
+            title="Rutinas"
+            description="Asignaciones activas"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            to="/reservas"
+            icon={CalendarDays}
+            title="Reservas"
+            description="Clases grupales"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            to="/nutrition"
+            icon={UtensilsCrossed}
+            title="Nutrición"
+            description="Macros y comidas"
+            tone="emerald"
+          />
+          <QuickAction
+            compact
+            to="/history"
+            icon={Clock}
+            title="Historial"
+            description="Sesiones anteriores"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            to="/payments"
+            icon={CreditCard}
+            title="Pagos"
+            description="Reportar o renovar"
+            tone="emerald"
+          />
+        </div>
+      )}
 
       <PushOnboardingCard />
 

@@ -13,6 +13,7 @@ import {
   Badge,
   EmptyState,
   Button,
+  IconButton,
   Breadcrumbs,
   PageState,
   Modal,
@@ -896,15 +897,15 @@ export default function WorkoutHistory() {
                 </Badge>
               </div>
               {sessionDetail.end_time && (
-                <Button
+                <IconButton
                   size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 shrink-0 p-0 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  variant="danger"
                   onClick={() => setDeleteConfirmOpen(true)}
                   aria-label="Eliminar del historial"
+                  title="Eliminar del historial"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </IconButton>
               )}
             </div>
 

@@ -268,7 +268,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-10">
+      <div className="flex justify-center py-6">
         <Spinner />
       </div>
     );

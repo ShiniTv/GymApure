@@ -46,6 +46,21 @@ function StatCardContent({
           {title}
         </p>
         <p className="text-text mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
+        {trend ? (
+          <span
+            className={cn(
+              'mt-1 flex items-center gap-0.5 text-[10px] font-medium',
+              trendTone === 'up' && 'text-emerald-600 dark:text-emerald-500',
+              trendTone === 'down' && 'text-red-600 dark:text-red-400',
+              trendTone === 'neutral' && 'text-text-muted'
+            )}
+          >
+            {trendTone === 'up' && <TrendingUp className="h-3 w-3" />}
+            {trendTone === 'down' && <TrendingDown className="h-3 w-3" />}
+            {trendTone === 'neutral' && <Minus className="h-3 w-3" />}
+            {trend}
+          </span>
+        ) : null}
       </>
     );
   }
@@ -131,7 +146,7 @@ export function StatCard({
     return (
       <Link
         to={to}
-        className={cn('block rounded-xl', className)}
+        className={cn('block rounded-[var(--radius-card)]', className)}
         aria-label={`${title}: ${value}`}
         title={title}
       >

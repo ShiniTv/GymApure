@@ -5,6 +5,7 @@ import { LogIn, LogOut } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { Badge, Spinner } from '../ui';
 import { cn } from '../../lib/utils';
+import { Virtuoso } from 'react-virtuoso';
 
 export interface TodayAttendanceRow {
   id: number;
@@ -62,7 +63,7 @@ export default function ReceptionActivityFeed({
     return (
       <p
         className={cn(
-          'text-center text-zinc-400 dark:text-zinc-300',
+          'text-text-muted text-center',
           compact
             ? 'flex min-h-[120px] flex-1 items-center justify-center py-6 text-xs'
             : 'py-6 text-sm',
@@ -74,56 +75,77 @@ export default function ReceptionActivityFeed({
     );
   }
 
-  return (
-    <div className={cn('space-y-2', className)}>
-      {rows.map((row) => (
+  const renderRow = (_index: number, row: TodayAttendanceRow) => (
+    <div
+      className={cn(
+        'flex items-center justify-between gap-2.5',
+        compact ? 'px-0.5 py-2' : 'border-border/60 border-b px-1 py-2.5 last:border-b-0'
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
         <div
-          key={row.id}
           className={cn(
-            'flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800',
-            compact ? 'p-2.5' : 'p-3'
+            'flex shrink-0 items-center justify-center rounded-md',
+            compact ? 'h-7 w-7' : 'p-1.5',
+            row.is_inside
+              ? 'bg-emerald-500/10 text-emerald-600'
+              : 'bg-surface-raised text-text-muted'
           )}
         >
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div
-              className={cn(
-                'shrink-0 rounded-lg p-1.5',
-                row.is_inside
-                  ? 'bg-emerald-500/10 text-emerald-600'
-                  : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-              )}
-            >
-              {row.is_inside ? <LogIn className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
-            </div>
-            <div className="min-w-0">
-              <p
-                className={cn(
-                  'truncate font-semibold text-zinc-900 dark:text-white',
-                  compact ? 'text-sm' : 'text-base'
-                )}
-              >
-                {row.full_name}
-              </p>
-              {!compact && row.cedula && (
-                <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{row.cedula}</p>
-              )}
-            </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              {format(new Date(row.check_in_time), 'HH:mm', { locale: es })}
-            </p>
-            {row.is_inside ? (
-              <Badge variant="success" className="mt-1 text-[10px]">
-                Dentro
-              </Badge>
-            ) : row.duration_minutes ? (
-              <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-300">
-                {row.duration_minutes} min
-              </p>
-            ) : null}
-          </div>
+          {row.is_inside ? (
+            <LogIn className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+          ) : (
+            <LogOut className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+          )}
         </div>
+        <div className="min-w-0">
+          <p
+            className={cn('text-text truncate font-semibold', compact ? 'text-[13px]' : 'text-sm')}
+          >
+            {row.full_name}
+          </p>
+          <p className="text-text-muted truncate text-[11px]">
+            {row.cedula ? (
+              <>
+                {row.cedula}
+                <span className="mx-1 opacity-50">·</span>
+              </>
+            ) : null}
+            {format(new Date(row.check_in_time), 'HH:mm', { locale: es })}
+            {!row.is_inside && row.duration_minutes != null ? (
+              <>
+                <span className="mx-1 opacity-50">·</span>
+                {row.duration_minutes} min
+              </>
+            ) : null}
+          </p>
+        </div>
+      </div>
+      <div className="shrink-0">
+        {row.is_inside ? (
+          <Badge variant="success" className="px-1.5 py-0 text-[9px]">
+            Dentro
+          </Badge>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  if (rows.length > 12) {
+    return (
+      <Virtuoso
+        className={className}
+        style={{ height: compact ? '18rem' : 'min(50vh, 26rem)' }}
+        data={rows}
+        itemContent={renderRow}
+      />
+    );
+  }
+
+  return (
+    <div className={cn('divide-border/60 divide-y', className)}>
+      {rows.map((row, index) => (
+        <div key={row.id}>{renderRow(index, row)}</div>
       ))}
     </div>
   );

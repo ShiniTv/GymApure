@@ -975,8 +975,9 @@ export default function ActiveWorkout() {
         items={[{ label: 'Rutinas', href: '/routines' }, { label: routine.name }]}
       />
 
-      <div className="border-border bg-bg/95 sticky top-0 z-10 -mx-3 border-b px-3 backdrop-blur-sm sm:-mx-0 sm:px-0">
-        <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
+      {/* Header en flujo (no sticky): la rutina queda limpia al hacer scroll */}
+      <div className="border-border/70 bg-surface-raised/50 rounded-[var(--radius-card)] border px-3 py-2.5 sm:px-3.5">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <button
               type="button"
@@ -993,7 +994,7 @@ export default function ActiveWorkout() {
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                 <span
                   className={cn(
-                    'bg-brand/10 text-brand inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums transition-all',
+                    'bg-brand/10 text-brand inline-flex items-center gap-1 rounded-[var(--radius-chip)] px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums transition-all',
                     pausePulse ? 'animate-pulse' : ''
                   )}
                 >
@@ -1003,7 +1004,7 @@ export default function ActiveWorkout() {
                 {isPaused ? (
                   <span
                     className={cn(
-                      'bg-surface-overlay text-text-secondary rounded-full px-2 py-0.5 text-[10px] font-medium transition-all',
+                      'bg-surface-overlay text-text-secondary rounded-[var(--radius-chip)] px-2 py-0.5 text-[10px] font-medium transition-all',
                       pausePulse ? 'animate-pulse' : ''
                     )}
                   >
@@ -1086,13 +1087,13 @@ export default function ActiveWorkout() {
             </Button>
           </div>
         </div>
-        <div className="pb-2.5">
+        <div className="mt-2.5">
           <div className="text-text-secondary mb-1 flex items-center justify-between text-[10px] font-medium sm:hidden">
             <span>Progreso</span>
             <span className="text-brand">{progressPct}%</span>
           </div>
           <div
-            className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
+            className="bg-surface-overlay h-1.5 overflow-hidden rounded-full"
             role="progressbar"
             aria-valuenow={progressPct}
             aria-valuemin={0}
@@ -1286,28 +1287,50 @@ export default function ActiveWorkout() {
         </nav>
       )}
 
-      <div className="page-stack-loose">
+      <div className="page-stack-tight">
         {routine.exercises.map((exercise, index) => (
           <article
             key={exercise.id}
             id={`active-workout-exercise-${exercise.id}`}
             className={cn(
-              'rounded-card border-border bg-surface shadow-card border p-3 transition-all sm:p-4 md:p-6',
+              'rounded-card border-border bg-surface border p-3 transition-all sm:p-4',
               completedExercises[exercise.id]
-                ? 'scale-[0.98] opacity-50 ring-2 ring-emerald-500/50'
+                ? 'scale-[0.99] opacity-55 ring-1 ring-emerald-500/40'
                 : '',
               isMobileFocus && index !== focusedIndex && 'hidden'
             )}
           >
-            <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
+            <div className="mb-3 flex min-w-0 items-start gap-2.5">
+              <span className="brand-solid mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold not-italic">
+                {index + 1}
+              </span>
               <div className="min-w-0 flex-1">
-                <h3 className="text-text flex min-w-0 items-center gap-3 text-lg font-bold">
-                  <span className="brand-solid flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold not-italic">
-                    {index + 1}
-                  </span>
-                  <span className="truncate">{exercise.name}</span>
-                </h3>
-                <p className="text-text-secondary mt-2 text-sm font-medium">
+                <div className="flex min-w-0 items-start gap-2">
+                  <h3 className="text-text min-w-0 flex-1 text-base leading-snug font-bold sm:text-lg">
+                    <span className="break-words">{exercise.name}</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleExerciseComplete(exercise.id);
+                    }}
+                    className={cn(
+                      'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all',
+                      completedExercises[exercise.id]
+                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-900/20'
+                        : 'bg-surface-overlay text-text-secondary hover:bg-surface-raised hover:text-text'
+                    )}
+                    aria-label={
+                      completedExercises[exercise.id]
+                        ? 'Marcar ejercicio como pendiente'
+                        : 'Completar ejercicio'
+                    }
+                    title={completedExercises[exercise.id] ? 'Hecho' : 'Completar'}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-text-secondary mt-1 text-xs font-medium sm:text-sm">
                   {formatMuscleGroupLabel(exercise.muscle_group)} · Descanso:{' '}
                   {exercise.rest_seconds}s
                 </p>
@@ -1317,26 +1340,10 @@ export default function ActiveWorkout() {
                   </p>
                 )}
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  toggleExerciseComplete(exercise.id);
-                }}
-                className={cn(
-                  'flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all',
-                  completedExercises[exercise.id]
-                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
-                    : 'bg-surface-overlay text-text-secondary hover:bg-surface-raised'
-                )}
-              >
-                <CheckCircle className="h-4 w-4" />
-                {completedExercises[exercise.id] ? 'Hecho' : 'Completar'}
-              </button>
             </div>
 
             {(exercise.description || exercise.execution || exercise.video_url) && (
-              <div className="mb-4 space-y-3">
+              <div className="mb-3 space-y-3">
                 {exercise.description && (
                   <p className="text-text-secondary text-xs italic">"{exercise.description}"</p>
                 )}
@@ -1407,12 +1414,12 @@ export default function ActiveWorkout() {
               </div>
             )}
 
-            <div className="space-y-4">
-              <div className="text-text-muted grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] gap-2 px-1 text-center text-[11px] font-semibold sm:grid-cols-10 sm:gap-3 sm:px-2">
-                <div className="sm:col-span-2">Serie</div>
-                <div className="sm:col-span-3">kg</div>
-                <div className="sm:col-span-3">Reps</div>
-                <div className="flex items-center justify-center">
+            <div className="space-y-2">
+              <div className="text-text-muted grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem] items-center gap-2 text-[11px] font-semibold tracking-wide uppercase">
+                <div className="text-center">Serie</div>
+                <div className="text-center">kg</div>
+                <div className="text-center">Reps</div>
+                <div className="flex items-center justify-center" aria-hidden>
                   <CheckCircle className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -1429,21 +1436,24 @@ export default function ActiveWorkout() {
                 return (
                   <div
                     key={setNum}
-                    className={`grid grid-cols-[minmax(0,2.25rem)_1fr_1fr_auto] items-center gap-2 rounded-2xl p-1.5 transition-all sm:grid-cols-10 sm:gap-3 ${isCompleted ? 'bg-emerald-500/5 opacity-70' : 'bg-surface-overlay/40'}`}
+                    className={cn(
+                      'grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem] items-center gap-2 rounded-lg px-0.5 py-1 transition-all',
+                      isCompleted ? 'bg-emerald-500/5 opacity-80' : 'bg-transparent'
+                    )}
                   >
-                    <div className="flex justify-center sm:col-span-2">
-                      <span className="border-border bg-surface flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-semibold text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white">
+                    <div className="flex justify-center">
+                      <span className="border-border bg-surface-raised text-text flex h-9 w-9 items-center justify-center rounded-md border text-sm font-semibold tabular-nums">
                         {setNum}
                       </span>
                     </div>
-                    <div className="min-w-0 sm:col-span-3">
+                    <div className="min-w-0">
                       <Input
                         id={weightInputId}
                         type="number"
                         inputMode="decimal"
                         enterKeyHint="next"
                         placeholder={priorSet ? String(priorSet.weight) : '0'}
-                        className="min-h-[40px] py-2 text-center text-base font-bold sm:min-h-[44px] sm:py-3 sm:text-lg md:py-2 md:text-base"
+                        className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
                         value={logs[key]?.weight || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'weight', e.target.value);
@@ -1458,19 +1468,19 @@ export default function ActiveWorkout() {
                         aria-label={`Peso serie ${setNum}`}
                       />
                       {lastHintLabel ? (
-                        <p className="text-text-muted dark:text-text-secondary mt-0.5 truncate text-center text-[10px]">
+                        <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
                           {lastHintLabel}
                         </p>
                       ) : null}
                     </div>
-                    <div className="min-w-0 sm:col-span-3">
+                    <div className="min-w-0">
                       <Input
                         id={repsInputId}
                         type="number"
                         inputMode="numeric"
                         enterKeyHint="done"
                         placeholder={priorSet ? String(priorSet.reps) : exercise.reps.toString()}
-                        className="min-h-[40px] py-2 text-center text-base font-bold sm:min-h-[44px] sm:py-3 sm:text-lg md:py-2 md:text-base"
+                        className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
                         value={logs[key]?.reps || ''}
                         onChange={(e) => {
                           handleLogChange(exercise.id, setNum, 'reps', e.target.value);
@@ -1485,14 +1495,14 @@ export default function ActiveWorkout() {
                         aria-label={`Repeticiones serie ${setNum}`}
                       />
                     </div>
-                    <div className="flex justify-center sm:col-span-2">
+                    <div className="flex justify-center">
                       {isCompleted ? (
                         <button
                           type="button"
                           onClick={() => {
                             editSet(exercise.id, setNum);
                           }}
-                          className="bg-brand/10 text-brand hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-lg p-0 shadow-sm transition-all"
+                          className="bg-brand/10 text-brand hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-md transition-all"
                           title="Editar serie"
                           aria-label={`Editar serie ${setNum}`}
                         >
@@ -1502,10 +1512,10 @@ export default function ActiveWorkout() {
                         <button
                           type="button"
                           onClick={() => void toggleSetComplete(exercise.id, setNum)}
-                          className="hover:text-brand hover:border-brand border-border bg-surface text-text-muted flex h-9 w-9 items-center justify-center rounded-lg border p-0 shadow-sm transition-all dark:bg-zinc-800"
+                          className="border-border bg-surface-raised text-text-muted hover:border-brand hover:text-brand flex h-9 w-9 items-center justify-center rounded-md border transition-all"
                           aria-label={`Marcar serie ${setNum} como hecha`}
                         >
-                          <CheckCircle className="h-5 w-5" />
+                          <CheckCircle className="h-4 w-4" />
                         </button>
                       )}
                     </div>
@@ -1513,30 +1523,29 @@ export default function ActiveWorkout() {
                 );
               })}
 
-              {exercise.sets > 1 && !logs[`${exercise.id}-${exercise.sets}`]?.completed && (
-                <div className="flex justify-end">
+              <div className="flex items-stretch gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleAddSet(exercise.id);
+                  }}
+                  className="hover:text-brand hover:bg-brand/5 hover:border-brand/40 border-border text-text-muted flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed px-2 text-xs font-medium transition-all"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Añadir serie
+                </button>
+                {exercise.sets > 1 && !logs[`${exercise.id}-${exercise.sets}`]?.completed ? (
                   <button
                     type="button"
                     onClick={() => handleRemoveLastSet(exercise.id)}
-                    className="border-border bg-surface text-text-muted flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition-all hover:border-red-200 hover:text-red-600 dark:bg-zinc-800 dark:hover:border-red-500/30 dark:hover:text-red-400"
+                    className="border-border text-text-muted inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-all hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-500"
                     aria-label="Eliminar última serie"
                     title="Eliminar última serie"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                   </button>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  handleAddSet(exercise.id);
-                }}
-                className="hover:text-brand hover:bg-brand/5 hover:border-brand/50 border-border text-text-muted mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed py-2.5 text-xs font-medium transition-all"
-              >
-                <Plus className="h-4 w-4" />
-                Añadir Serie
-              </button>
+                ) : null}
+              </div>
             </div>
           </article>
         ))}

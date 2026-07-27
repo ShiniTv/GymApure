@@ -75,20 +75,20 @@ export function MemberHero({
         className
       )}
     >
-      <div className="relative flex items-start gap-5">
+      <div className="relative flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-brand text-[11px] font-medium tracking-[0.16em] uppercase">
             {getGreeting()}
           </p>
-          <h2 className="type-h1 mt-2 truncate text-[1.65rem] sm:text-3xl">{firstName}</h2>
-          <p className="text-text-secondary mt-2 truncate text-sm leading-relaxed">
+          <h2 className="type-h1 mt-1 truncate text-xl sm:text-2xl">{firstName}</h2>
+          <p className="text-text-secondary mt-1 truncate text-[13px] leading-snug">
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
           {(routineInProgress && !routineCompletedToday) ||
           routineCompletedToday ||
           workoutStreak > 0 ? (
-            <div className="mt-3.5 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               {routineInProgress && !routineCompletedToday && (
                 <span className={cn(statusPill, 'bg-warning/10 text-warning')}>
                   Entrenamiento en curso
@@ -114,8 +114,8 @@ export function MemberHero({
         <ProgressRing
           value={workoutsThisWeek}
           max={weeklyTrainingGoal}
-          size={76}
-          strokeWidth={5}
+          size={64}
+          strokeWidth={4.5}
           label="Esta semana"
           sublabel="meta"
           className="shrink-0"
@@ -124,7 +124,7 @@ export function MemberHero({
 
       <Button
         size="sm"
-        className="relative mt-5 w-full shadow-sm sm:mt-6 sm:w-auto"
+        className="relative mt-3.5 w-full shadow-sm sm:mt-4 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
         onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
         onMouseEnter={() => {

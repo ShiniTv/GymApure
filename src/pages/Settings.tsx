@@ -481,20 +481,20 @@ export default function Settings() {
         </Card>
       )}
 
-      <div className="xl:grid xl:grid-cols-[13.5rem_minmax(0,1fr)] xl:items-start xl:gap-6">
+      <div className="xl:grid xl:grid-cols-[12rem_minmax(0,1fr)] xl:items-start xl:gap-5">
         <nav
           aria-label="Secciones de configuración"
           className="sticky top-3 mb-3 hidden self-start xl:mb-0 xl:block"
         >
           <Card padding="sm" rounded="xl" className="space-y-0.5">
-            <p className="mb-2 px-2 text-[10px] font-bold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted mb-2 px-2 text-[10px] font-medium tracking-wide uppercase">
               Secciones
             </p>
             {SETTINGS_NAV.map((item) => (
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className="hover:bg-brand/10 hover:text-brand block rounded-lg px-2.5 py-2 text-[13px] font-medium text-zinc-700 transition-colors dark:text-zinc-300"
+                className="text-text-secondary hover:bg-surface-overlay block rounded-[var(--radius-button)] px-2.5 py-2 text-[13px] font-medium transition-colors"
               >
                 {item.label}
               </a>
@@ -764,7 +764,7 @@ export default function Settings() {
               id="tasa-usd"
               padding="sm"
               rounded="xl"
-              className="flex max-w-3xl min-w-0 scroll-mt-20 flex-col overflow-hidden md:p-4"
+              className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden md:p-4"
             >
               <div className="mb-2.5 flex min-w-0 items-center gap-2">
                 <h2 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
@@ -804,18 +804,18 @@ export default function Settings() {
               </p>
 
               {exchangeRateView.active ? (
-                <div className="mb-4 min-w-0 rounded-lg border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
-                  <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                <div className="border-border/70 bg-surface-raised/50 mb-4 min-w-0 rounded-[var(--radius-card)] border px-3 py-3">
+                  <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                     Tasa activa
                   </p>
-                  <p className="mt-1 text-lg font-bold break-words text-zinc-900 tabular-nums dark:text-white">
+                  <p className="text-text mt-1 text-lg font-semibold break-words tabular-nums">
                     {exchangeRateView.active.rate.toLocaleString('es-VE', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 4,
                     })}{' '}
                     Bs/USD
                   </p>
-                  <p className="mt-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  <p className="text-text-muted mt-1 text-[11px] leading-snug">
                     Fuente: {exchangeRateView.active.source === 'manual' ? 'Manual' : 'BCV'} · Fecha
                     valor: {exchangeRateView.active.effective_date}
                   </p>
@@ -874,26 +874,23 @@ export default function Settings() {
 
               {exchangeRateView.history.length > 0 && (
                 <div className="mt-4 min-w-0">
-                  <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                  <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
                     Historial BCV reciente
                   </p>
                   <div className="space-y-1.5">
                     {exchangeRateView.history.slice(0, 5).map((row) => (
                       <div
                         key={row.id}
-                        className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 text-xs dark:border-zinc-800"
+                        className="border-border/70 min-w-0 rounded-[var(--radius-card)] border px-2.5 py-2 text-xs"
                       >
-                        <span className="font-bold text-zinc-900 tabular-nums dark:text-white">
+                        <span className="text-text font-semibold tabular-nums">
                           {row.rate.toLocaleString('es-VE', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 4,
                           })}{' '}
                           Bs/USD
                         </span>
-                        <span className="text-zinc-500 dark:text-zinc-400">
-                          {' '}
-                          · {row.effective_date}
-                        </span>
+                        <span className="text-text-muted"> · {row.effective_date}</span>
                       </div>
                     ))}
                   </div>

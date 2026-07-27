@@ -1,5 +1,10 @@
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
+import {
+  applyOptimisticUpdate,
+  rollbackOptimistic,
+  type OptimisticContext,
+} from '../../lib/optimisticMutation';
 
 export interface Payment {
   id: number;
@@ -14,7 +19,7 @@ export interface Payment {
   rejection_reason?: string | null;
 }
 
-interface PaginatedPayments {
+export interface PaginatedPayments {
   items: Payment[];
   total: number;
   page: number;
@@ -56,4 +61,63 @@ export function usePaymentsQuery(params: PaymentsQueryParams) {
 export function useInvalidatePayments() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries({ queryKey: ['payments'] });
+}
+
+interface ReviewPaymentVariables {
+  paymentId: number;
+  status: 'approved' | 'rejected';
+  membershipId?: number;
+  reason?: string;
+}
+
+export function useReviewPaymentMutation(params: PaymentsQueryParams) {
+  const queryClient = useQueryClient();
+  const queryKey = paymentsQueryKey(params);
+
+  return useMutation<unknown, Error, ReviewPaymentVariables, OptimisticContext<PaginatedPayments>>({
+    mutationFn: async ({ paymentId, status, membershipId, reason }) => {
+      const endpoint = status === 'approved' ? 'approve' : 'reject';
+      const body = status === 'approved' ? { membership_id: membershipId } : { reason };
+      const res = await apiFetch(`/api/payments/${paymentId}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return parseJsonResponse(res);
+    },
+    onMutate: ({ paymentId, status, reason }) =>
+      applyOptimisticUpdate<PaginatedPayments>(queryClient, queryKey, (previous) => {
+        const fallback: PaginatedPayments = {
+          items: [],
+          total: 0,
+          page: params.page,
+          pageSize: params.pageSize,
+        };
+        const current = previous ?? fallback;
+        if (params.statusFilter && params.statusFilter !== status) {
+          const items = current.items.filter((payment) => payment.id !== paymentId);
+          return {
+            ...current,
+            items,
+            total: Math.max(0, current.total - (items.length === current.items.length ? 0 : 1)),
+          };
+        }
+        return {
+          ...current,
+          items: current.items.map((payment) =>
+            payment.id === paymentId
+              ? {
+                  ...payment,
+                  status,
+                  rejection_reason: status === 'rejected' ? (reason ?? null) : null,
+                }
+              : payment
+          ),
+        };
+      }),
+    onError: (_error, _variables, context) => {
+      rollbackOptimistic(queryClient, context);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['payments'] }),
+  });
 }

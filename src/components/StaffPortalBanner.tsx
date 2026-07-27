@@ -9,7 +9,7 @@ interface StaffPortalBannerProps {
   className?: string;
 }
 
-/** Brand-forward greeting strip for staff homes (admin / trainer). */
+/** Flat Linear-style page intro for staff homes (admin / trainer). */
 export function StaffPortalBanner({
   eyebrow,
   title,
@@ -18,25 +18,16 @@ export function StaffPortalBanner({
   className,
 }: StaffPortalBannerProps) {
   return (
-    <div
-      className={cn(
-        'border-brand/20 from-brand/5 relative overflow-hidden rounded-2xl border bg-gradient-to-br via-transparent to-transparent px-4 py-3.5 sm:px-5',
-        className
-      )}
-    >
-      <div
-        className="bg-brand/10 pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl"
-        aria-hidden
-      />
-      <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className={cn('relative', className)}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-brand text-[10px] font-semibold tracking-wide uppercase">{eyebrow}</p>
-          <div className="mt-0.5 text-lg font-bold tracking-tight text-zinc-900 sm:text-xl dark:text-white">
+          <p className="text-text-muted text-[10px] font-medium tracking-[0.08em] uppercase">
+            {eyebrow}
+          </p>
+          <div className="text-text mt-1 text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
             {title}
           </div>
-          {subtitle ? (
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
-          ) : null}
+          {subtitle ? <p className="text-text-muted mt-1 text-sm">{subtitle}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>

@@ -107,7 +107,7 @@ function StaffRoutineExercises({
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:text-red-500"
                   aria-label={`Eliminar ${exercise.name}`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -167,7 +167,7 @@ function StaffRoutineExercises({
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
                   aria-label={`Eliminar ${exercise.name}`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -219,14 +219,9 @@ export function RoutinesLibraryView({
 
   if (routines.length === 0) {
     return (
-      <div
-        className={cn(
-          'mx-auto flex w-full max-w-sm flex-col justify-center',
-          isMember && 'min-h-[min(52vh,28rem)]'
-        )}
-      >
+      <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-4">
         {isStaff ? (
-          <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 px-4 py-8 text-center dark:border-zinc-700">
+          <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 px-4 py-5 text-center dark:border-zinc-700">
             <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sin plantillas</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Crea la primera para asignarla a tus miembros.
@@ -439,7 +434,7 @@ export function RoutinesLibraryView({
                           aria-label={`Eliminar ${routine.name}`}
                           title="Eliminar"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
@@ -535,7 +530,7 @@ export function RoutinesLibraryView({
                           className="h-9 flex-1 text-xs text-red-600 dark:text-red-400"
                           onClick={() => onDeleteRoutine(routine)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                           Eliminar
                         </Button>
                       </div>
@@ -628,7 +623,7 @@ export function RoutinesLibraryView({
                       aria-label={`Eliminar ${selectedStaffRoutine.name}`}
                       title="Eliminar"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

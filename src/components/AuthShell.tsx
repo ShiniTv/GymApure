@@ -82,7 +82,7 @@ export default function AuthShell({
           ? 'max-w-2xl'
           : useSplit
             ? 'max-w-md md:max-w-lg lg:max-w-md'
-            : 'max-w-md md:max-w-lg'
+            : 'max-w-[22rem] sm:max-w-md'
   );
 
   const formColumn = (
@@ -186,11 +186,13 @@ export default function AuthShell({
   return (
     <div
       className={cn(
-        'relative flex min-h-dvh flex-col overflow-hidden transition-colors duration-300',
+        'relative min-h-dvh w-full overflow-hidden transition-colors duration-300',
         isLinear
           ? 'auth-linear bg-[#09090b] text-zinc-100'
           : 'to-brand/[0.05] bg-gradient-to-br from-zinc-50 via-zinc-50 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-950',
-        isFullscreen ? 'items-stretch justify-start p-0' : 'items-center justify-center p-4',
+        isFullscreen
+          ? 'flex flex-col items-stretch justify-start p-0'
+          : 'grid place-items-center p-4',
         isKiosk && !isFullscreen ? 'py-8' : '',
         className
       )}
@@ -241,7 +243,7 @@ export default function AuthShell({
         </div>
       )}
 
-      <div className={contentMax}>
+      <div className={cn(contentMax, !isFullscreen && 'mx-auto')}>
         {children}
         {footer && !isFullscreen && <div className="mt-6">{footer}</div>}
       </div>

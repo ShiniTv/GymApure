@@ -16,7 +16,17 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
 import { useTrainerNutritionOverviewQuery } from '../../hooks/queries/useNutritionQuery';
-import { Card, Badge, EmptyState, Button, PageHeader, Skeleton } from '../../components/ui';
+import {
+  Card,
+  Badge,
+  EmptyState,
+  Button,
+  PageHeader,
+  Skeleton,
+  StatCard,
+} from '../../components/ui';
+import { DashboardSection } from '../../components/admin/DashboardSection';
+import { StaffPortalBanner } from '../../components/StaffPortalBanner';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { cn } from '../../lib/utils';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
@@ -24,31 +34,6 @@ import { routePrefetchHandlers } from '../../lib/routePrefetch';
 const TODAY_LIST_CAP = 5;
 
 const SURFACE = 'border-border/80 bg-surface';
-
-function MetricCell({
-  label,
-  value,
-  loading,
-}: {
-  label: string;
-  value: number;
-  loading?: boolean;
-}) {
-  return (
-    <div className="min-w-0 px-3 py-2.5 text-center sm:px-4 sm:py-3 lg:px-5 lg:py-4 lg:text-left">
-      <p className="text-text-secondary text-[10px] font-medium tracking-wide uppercase lg:text-[11px]">
-        {label}
-      </p>
-      {loading ? (
-        <Skeleton className="mx-auto mt-1 h-7 w-9 lg:mx-0 lg:h-8 lg:w-10" />
-      ) : (
-        <p className="text-text mt-0.5 text-xl font-bold tabular-nums sm:text-2xl lg:text-[1.75rem]">
-          {value}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function ShortcutChip({
   to,
@@ -65,12 +50,12 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="rounded-pill bg-surface text-text-secondary hover:bg-surface-raised inline-flex h-10 shrink-0 touch-manipulation items-center gap-2 px-3.5 text-[12px] leading-snug font-medium transition-colors lg:h-11 lg:px-4 lg:text-[13px]"
+      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-[var(--radius-button)] border px-3 text-[12px] leading-snug font-medium transition-colors lg:text-[13px]"
     >
-      <Icon className="text-brand h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
+      <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
       {label}
       {count != null && count > 0 ? (
-        <span className="bg-brand/15 text-brand ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+        <span className="bg-brand/15 text-brand ml-0.5 rounded-[var(--radius-chip)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
           {count > 99 ? '99+' : count}
         </span>
       ) : null}
@@ -125,7 +110,7 @@ function AttentionSummaryLink({
     <Link
       to={to}
       className={cn(
-        'flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-colors lg:px-3.5 lg:py-3',
+        'flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 transition-colors lg:px-3.5',
         toneClass
       )}
     >
@@ -155,160 +140,164 @@ function TodayPanel({
   const trainingCount = trainingToday.length + remoteTraining.length;
 
   return (
-    <Card
-      padding="sm"
-      rounded="xl"
-      className={cn(SURFACE, 'h-full lg:p-4', quiet && !loading ? 'py-3 lg:py-4' : undefined)}
-    >
-      <div className="mb-2.5 flex items-center justify-between gap-2 lg:mb-3">
-        <h2 className="text-text text-[13px] font-semibold lg:text-sm">Hoy</h2>
-        {trainingCount > 0 ? (
+    <DashboardSection
+      title="Hoy"
+      compact
+      action={
+        trainingCount > 0 ? (
           <Badge variant="success" className="text-[10px]">
             {trainingCount} entrenando
           </Badge>
-        ) : null}
-      </div>
-      {loading ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : quiet ? (
-        <div className="grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-zinc-100 lg:gap-0 dark:sm:divide-zinc-800">
-          <div className="sm:pr-4 lg:pr-5">
-            <p className="text-text-secondary text-[11px] font-semibold">Entrenando · 0</p>
-            <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
-              Nadie en gym ni remoto
-            </p>
+        ) : null
+      }
+    >
+      <Card
+        padding="sm"
+        rounded="xl"
+        className={cn(SURFACE, quiet && !loading ? 'py-3' : undefined)}
+      >
+        {loading ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
-          <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
-            <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
-            <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
-              Sin alertas de inactividad
-            </p>
+        ) : quiet ? (
+          <div className="sm:divide-border/60 grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x lg:gap-0">
+            <div className="sm:pr-4 lg:pr-5">
+              <p className="text-text-secondary text-[11px] font-semibold">Entrenando · 0</p>
+              <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
+                Nadie en gym ni remoto
+              </p>
+            </div>
+            <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
+              <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
+              <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
+                Sin alertas de inactividad
+              </p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-zinc-100 dark:sm:divide-zinc-800">
-          <div className="space-y-3 sm:pr-4 lg:pr-5">
-            <div>
+        ) : (
+          <div className="sm:divide-border/60 grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x">
+            <div className="space-y-3 sm:pr-4 lg:pr-5">
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <p className="text-text-secondary text-[11px] font-semibold">
+                    En el gym · {trainingToday.length}
+                  </p>
+                  {trainingToday.length > TODAY_LIST_CAP && (
+                    <Link
+                      to="/members"
+                      className="text-brand inline-flex min-h-11 items-center text-[10px] font-semibold hover:underline"
+                    >
+                      Ver todos
+                    </Link>
+                  )}
+                </div>
+                {trainingToday.length === 0 ? (
+                  <p className="text-text-secondary text-[12px]">Nadie en el gym</p>
+                ) : (
+                  <ul className="space-y-0.5">
+                    {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
+                      const checkIn = formatCheckIn(m.check_in_time);
+                      return (
+                        <li key={`gym-${m.id}`} className="flex items-center gap-1">
+                          <Link
+                            to={`/members/${m.id}/routines`}
+                            className="hover:text-brand text-text flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                          >
+                            <span className="min-w-0 truncate">{m.full_name}</span>
+                            {checkIn ? (
+                              <span className="shrink-0 text-[10px] font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                                {checkIn}
+                              </span>
+                            ) : (
+                              <ChevronRight className="text-text-muted h-3.5 w-3.5 shrink-0" />
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <p className="text-text-secondary flex items-center gap-1 text-[11px] font-semibold">
+                    <Radio className="h-3 w-3" aria-hidden />
+                    Remoto · {remoteTraining.length}
+                  </p>
+                </div>
+                {remoteTraining.length === 0 ? (
+                  <p className="text-text-secondary text-[12px]">Nadie en remoto</p>
+                ) : (
+                  <ul className="space-y-0.5">
+                    {remoteTraining.slice(0, TODAY_LIST_CAP).map((m) => {
+                      const started = formatCheckIn(m.started_at);
+                      return (
+                        <li key={`remote-${m.id}`}>
+                          <Link
+                            to={`/members/${m.id}/routines`}
+                            className="hover:text-brand text-text flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                          >
+                            <span className="min-w-0 truncate">{m.full_name}</span>
+                            {started ? (
+                              <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
+                                {started}
+                              </span>
+                            ) : null}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <p className="text-text-secondary text-[11px] font-semibold">
-                  En el gym · {trainingToday.length}
-                </p>
-                {trainingToday.length > TODAY_LIST_CAP && (
+                <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
+                {inactiveMembers.length > TODAY_LIST_CAP && (
                   <Link
                     to="/members"
-                    className="text-brand text-[10px] font-semibold hover:underline"
+                    className="text-brand inline-flex min-h-11 items-center text-[10px] font-semibold hover:underline"
                   >
                     Ver todos
                   </Link>
                 )}
               </div>
-              {trainingToday.length === 0 ? (
-                <p className="text-text-secondary text-[12px]">Nadie en el gym</p>
+              {inactiveMembers.length === 0 ? (
+                <p className="text-text-secondary text-[12px]">Sin alertas de inactividad</p>
               ) : (
                 <ul className="space-y-0.5">
-                  {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
-                    const checkIn = formatCheckIn(m.check_in_time);
-                    return (
-                      <li key={`gym-${m.id}`} className="flex items-center gap-1">
-                        <Link
-                          to={`/members/${m.id}/routines`}
-                          className="hover:text-brand text-text flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
-                        >
-                          <span className="min-w-0 truncate">{m.full_name}</span>
-                          {checkIn ? (
-                            <span className="shrink-0 text-[10px] font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
-                              {checkIn}
-                            </span>
-                          ) : (
-                            <ChevronRight className="text-text-muted h-3.5 w-3.5 shrink-0" />
-                          )}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-
-            <div>
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <p className="text-text-secondary flex items-center gap-1 text-[11px] font-semibold">
-                  <Radio className="h-3 w-3" aria-hidden />
-                  Remoto · {remoteTraining.length}
-                </p>
-              </div>
-              {remoteTraining.length === 0 ? (
-                <p className="text-text-secondary text-[12px]">Nadie en remoto</p>
-              ) : (
-                <ul className="space-y-0.5">
-                  {remoteTraining.slice(0, TODAY_LIST_CAP).map((m) => {
-                    const started = formatCheckIn(m.started_at);
-                    return (
-                      <li key={`remote-${m.id}`}>
-                        <Link
-                          to={`/members/${m.id}/routines`}
-                          className="hover:text-brand text-text flex min-w-0 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
-                        >
-                          <span className="min-w-0 truncate">{m.full_name}</span>
-                          {started ? (
-                            <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
-                              {started}
-                            </span>
-                          ) : null}
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {inactiveMembers.slice(0, TODAY_LIST_CAP).map((m) => (
+                    <li key={m.id} className="flex items-center gap-1">
+                      <Link
+                        to={`/members/${m.id}/routines`}
+                        className="hover:text-brand text-text flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                      >
+                        <span className="min-w-0 truncate">{m.full_name}</span>
+                        <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                          {m.days_since}d
+                        </span>
+                      </Link>
+                      <Link
+                        to={`/messages?member=${m.id}`}
+                        className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                        aria-label={`Mensaje a ${m.full_name}`}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
           </div>
-
-          <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
-              {inactiveMembers.length > TODAY_LIST_CAP && (
-                <Link
-                  to="/members"
-                  className="text-brand text-[10px] font-semibold hover:underline"
-                >
-                  Ver todos
-                </Link>
-              )}
-            </div>
-            {inactiveMembers.length === 0 ? (
-              <p className="text-text-secondary text-[12px]">Sin alertas de inactividad</p>
-            ) : (
-              <ul className="space-y-0.5">
-                {inactiveMembers.slice(0, TODAY_LIST_CAP).map((m) => (
-                  <li key={m.id} className="flex items-center gap-1">
-                    <Link
-                      to={`/members/${m.id}/routines`}
-                      className="hover:text-brand text-text flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg py-1.5 text-[12px] font-medium lg:py-2 lg:text-[13px]"
-                    >
-                      <span className="min-w-0 truncate">{m.full_name}</span>
-                      <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                        {m.days_since}d
-                      </span>
-                    </Link>
-                    <Link
-                      to={`/messages?member=${m.id}`}
-                      className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
-                      aria-label={`Mensaje a ${m.full_name}`}
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+    </DashboardSection>
   );
 }
 
@@ -329,23 +318,25 @@ function ActivityPanel({
   onSeeMembers: () => void;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <h2 className="text-text mb-2 px-0.5 text-[13px] font-semibold lg:mb-3 lg:text-sm">
-        Actividad reciente
-      </h2>
+    <DashboardSection title="Actividad reciente" compact>
       {loading ? (
-        <div className={cn('rounded-card p-ds-4 flex-1 space-y-0 overflow-hidden border', SURFACE)}>
+        <div
+          className={cn(
+            'space-y-2 overflow-hidden rounded-[var(--radius-card)] border p-3',
+            SURFACE
+          )}
+        >
           <Skeleton className="h-10 w-full" />
-          <Skeleton className="mt-2 h-10 w-full" />
-          <Skeleton className="mt-2 hidden h-10 w-full lg:block" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="hidden h-10 w-full lg:block" />
         </div>
       ) : !activities?.length ? (
-        <div className={cn('rounded-card px-ds-4 py-ds-5 flex-1 border', SURFACE)}>
+        <div className={cn('rounded-[var(--radius-card)] border px-3 py-4', SURFACE)}>
           <p className="text-text-secondary text-[12px] leading-relaxed lg:text-[13px]">
             Cuando entrenen, verás sus sesiones aquí.{' '}
             <button
               type="button"
-              className="text-brand font-semibold underline-offset-2 hover:underline"
+              className="text-brand inline font-semibold underline-offset-2 hover:underline"
               onClick={onSeeMembers}
             >
               Ver miembros
@@ -353,26 +344,26 @@ function ActivityPanel({
           </p>
         </div>
       ) : (
-        <ul className={cn('rounded-card flex-1 overflow-hidden border', SURFACE)}>
+        <ul className={cn('overflow-hidden rounded-[var(--radius-card)] border', SURFACE)}>
           {activities.map((activity, i) => (
             <li key={`${activity.user_id}-${activity.start_time}`}>
               <Link
                 to={`/members/${activity.user_id}/history`}
                 className={cn(
-                  'hover:bg-surface-raised/70 flex items-center gap-2.5 px-3 py-2.5 transition-colors lg:px-4 lg:py-3',
+                  'hover:bg-surface-raised/70 flex items-center gap-2.5 px-3 py-2.5 transition-colors',
                   i > 0 && 'border-border/60 border-t'
                 )}
               >
-                <Dumbbell className="text-brand h-3.5 w-3.5 shrink-0 lg:h-4 lg:w-4" aria-hidden />
+                <Dumbbell className="text-brand h-3.5 w-3.5 shrink-0" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-text truncate text-[13px] font-semibold">
                     {activity.full_name}
                   </p>
-                  <p className="text-text-secondary truncate text-[11px] lg:text-xs">
+                  <p className="text-text-secondary truncate text-[11px]">
                     {activity.routine_name}
                   </p>
                 </div>
-                <span className="text-text-muted shrink-0 text-[11px] font-medium tabular-nums lg:text-xs">
+                <span className="text-text-muted shrink-0 text-[11px] font-medium tabular-nums">
                   {new Date(activity.start_time).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -383,7 +374,7 @@ function ActivityPanel({
           ))}
         </ul>
       )}
-    </div>
+    </DashboardSection>
   );
 }
 
@@ -423,15 +414,8 @@ export default function TrainerDashboard() {
 
   if (isError) {
     return (
-      <div className="page-stack">
-        <PageHeader
-          compact
-          title={
-            <>
-              Panel de <span className="text-brand">entrenador</span>
-            </>
-          }
-        />
+      <div className="page-stack-tight mx-auto w-full max-w-7xl">
+        <PageHeader compact title="Panel de entrenador" />
         <EmptyState
           icon={AlertTriangle}
           title="No se pudo cargar el panel"
@@ -447,15 +431,15 @@ export default function TrainerDashboard() {
   }
 
   return (
-    <div className="page-stack mx-auto w-full max-w-3xl lg:max-w-5xl xl:max-w-6xl">
-      <PageHeader
-        compact
+    <div className="page-stack-tight mx-auto w-full max-w-7xl">
+      <StaffPortalBanner
+        eyebrow="Panel de entrenador"
         title={
           <>
             Hola, <span className="text-brand">{firstName}</span>
           </>
         }
-        subtitle="Actividad con tus miembros"
+        subtitle="Actividad y seguimiento con tus miembros"
         action={
           stats?.activeNow || remoteActive ? (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -468,23 +452,22 @@ export default function TrainerDashboard() {
         }
       />
 
-      <div
-        className={cn(
-          'rounded-card bg-surface sm:divide-border/40 grid grid-cols-2 overflow-hidden sm:grid-cols-4 sm:divide-x',
-          SURFACE
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-[70px] rounded-lg" />
+          ))
+        ) : (
+          <>
+            <StatCard minimal title="Miembros" value={stats?.assignedMembers ?? 0} icon={Users} />
+            <StatCard minimal title="En gym" value={stats?.activeNow ?? 0} icon={Dumbbell} />
+            <StatCard minimal title="Remoto" value={remoteActive} icon={Radio} />
+            <StatCard minimal title="Hoy" value={stats?.todayWorkouts ?? 0} icon={CalendarDays} />
+          </>
         )}
-      >
-        <MetricCell label="Miembros" value={stats?.assignedMembers ?? 0} loading={loading} />
-        <MetricCell label="En gym" value={stats?.activeNow ?? 0} loading={loading} />
-        <div className="border-border/60 border-t sm:border-t-0">
-          <MetricCell label="Remoto" value={remoteActive} loading={loading} />
-        </div>
-        <div className="border-border/60 border-t sm:border-t-0">
-          <MetricCell label="Hoy" value={stats?.todayWorkouts ?? 0} loading={loading} />
-        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 pb-0.5">
+      <div className="flex flex-wrap gap-1.5">
         <ShortcutChip to="/members" icon={Users} label="Miembros" count={stats?.assignedMembers} />
         <ShortcutChip
           to="/routines?view=calendar&assign=1"
@@ -499,14 +482,12 @@ export default function TrainerDashboard() {
           count={withoutNutritionPlan > 0 ? withoutNutritionPlan : undefined}
         />
         <ShortcutChip to="/routines?view=calendar" icon={CalendarDays} label="Calendario" />
+        <ShortcutChip to="/pt-billing" icon={CreditCard} label="Cobros PT" />
         <ShortcutChip to="/messages" icon={MessageSquare} label="Mensajes" />
       </div>
 
       {hasAttention && (
-        <div className="space-y-1.5">
-          <p className="text-text-secondary px-0.5 text-[11px] font-semibold tracking-wide uppercase">
-            Atención
-          </p>
+        <DashboardSection title="Requiere atención" compact>
           <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
             {withoutRoutines > 0 && (
               <AttentionSummaryLink
@@ -562,10 +543,10 @@ export default function TrainerDashboard() {
               />
             )}
           </div>
-        </div>
+        </DashboardSection>
       )}
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-stretch md:gap-4 lg:gap-5">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start md:gap-4">
         <TodayPanel
           loading={loading}
           quiet={todayQuiet}

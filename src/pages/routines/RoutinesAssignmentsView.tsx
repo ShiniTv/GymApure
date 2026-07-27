@@ -1,6 +1,6 @@
 import { Calendar, Dumbbell, UserPlus, Plus } from 'lucide-react';
 import { formatDateOnly } from '../../lib/dates';
-import { Button, Spinner, Avatar, PageState, Badge } from '../../components/ui';
+import { Button, Avatar, Badge, AssignmentsListSkeleton } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import type { RoutineAssignmentMember, RoutinesView } from './types';
 
@@ -38,12 +38,7 @@ export function RoutinesAssignmentsView({
   const totalRoutines = activeMembers.reduce((sum, m) => sum + (m.routines?.length ?? 0), 0);
 
   if (loadingAssignments) {
-    return (
-      <PageState>
-        <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando asignaciones…</p>
-      </PageState>
-    );
+    return <AssignmentsListSkeleton rows={5} />;
   }
 
   if (activeMembers.length === 0) {

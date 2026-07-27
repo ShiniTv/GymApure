@@ -6,11 +6,9 @@ export function loadBaseFonts(): void {
   void import('@fontsource/inter/latin-500.css');
   void import('@fontsource/inter/latin-600.css');
   void import('@fontsource/inter/latin-700.css');
-  void import('@fontsource/plus-jakarta-sans/latin-700.css');
-  void import('@fontsource/plus-jakarta-sans/latin-800.css');
 }
 
-/** Mono + extra weights — deferred until authenticated app shell mounts. */
+/** Mono — deferred until authenticated app shell mounts (code / tabular screens). */
 export function loadAppFonts(): void {
   if (appFontsLoaded) return;
   appFontsLoaded = true;

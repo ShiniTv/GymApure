@@ -14,15 +14,16 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
+import { Virtuoso } from 'react-virtuoso';
 import {
   Badge,
   Button,
   Card,
   PageHeader,
-  Spinner,
   EmptyState,
   FilterChips,
   BackToDashboardLink,
+  AuditLogsSkeleton,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
@@ -107,6 +108,53 @@ function actionIcon(action: string) {
   return Shield;
 }
 
+function AuditTimelineItem({ log, isLast }: { log: AuditLogRow; isLast: boolean }) {
+  const Icon = actionIcon(log.action);
+  const variant = actionBadgeVariant(log.action);
+  const detailText = formatDetails(log.details);
+
+  return (
+    <li className="relative flex gap-4 pb-5 last:pb-0">
+      {!isLast && (
+        <span className="bg-border/80 absolute top-10 bottom-0 left-5 w-px" aria-hidden />
+      )}
+      <div
+        className={cn(
+          'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-[var(--color-surface)]',
+          variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
+          variant === 'danger' && 'bg-red-500/10 text-red-600',
+          variant === 'accent' && 'bg-brand/10 text-brand',
+          variant === 'default' && 'bg-surface-raised text-text-secondary'
+        )}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <Badge variant={variant}>{actionLabel(log.action)}</Badge>
+          <time className="text-xs text-zinc-400 dark:text-zinc-300" dateTime={log.created_at}>
+            {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
+          </time>
+        </div>
+        <div className="min-w-0">
+          <p className="text-text truncate text-sm font-semibold">{log.user_name ?? 'Sistema'}</p>
+          {log.user_email ? (
+            <p
+              className="text-text-secondary mt-0.5 truncate text-xs font-normal"
+              title={log.user_email}
+            >
+              {log.user_email}
+            </p>
+          ) : null}
+        </div>
+        <p className="text-text-secondary mt-1 line-clamp-2 text-xs break-words" title={detailText}>
+          {detailText}
+        </p>
+      </div>
+    </li>
+  );
+}
+
 export default function AuditLogs() {
   const [logs, setLogs] = useState<AuditLogRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,85 +213,46 @@ export default function AuditLogs() {
         onChange={setActionFilter}
       />
 
-      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <Card padding="none" rounded="xl" className="min-w-0 overflow-hidden">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Spinner />
+          <div className="p-3 md:p-4">
+            <AuditLogsSkeleton />
           </div>
         ) : logs.length === 0 ? (
-          <EmptyState
-            icon={Shield}
-            title="No hay registros"
-            description="Las acciones de administradores y recepción aparecerán aquí."
-          />
+          <div className="p-6">
+            <EmptyState
+              icon={Shield}
+              title="No hay registros"
+              description="Las acciones de administradores y recepción aparecerán aquí."
+            />
+          </div>
         ) : (
           <>
             {/* Mobile / tablet: timeline */}
-            <ol className="relative space-y-0 lg:hidden">
-              {logs.map((log, index) => {
-                const Icon = actionIcon(log.action);
-                const variant = actionBadgeVariant(log.action);
-                const isLast = index === logs.length - 1;
-                const detailText = formatDetails(log.details);
-
-                return (
-                  <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
-                    {!isLast && (
-                      <span
-                        className="bg-border/80 absolute top-10 bottom-0 left-5 w-px"
-                        aria-hidden
-                      />
-                    )}
-                    <div
-                      className={cn(
-                        'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-[var(--color-surface)]',
-                        variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
-                        variant === 'danger' && 'bg-red-500/10 text-red-600',
-                        variant === 'accent' && 'bg-brand/10 text-brand',
-                        variant === 'default' && 'bg-surface-raised text-text-secondary'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1 pt-0.5">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <Badge variant={variant}>{actionLabel(log.action)}</Badge>
-                        <time
-                          className="text-xs text-zinc-400 dark:text-zinc-300"
-                          dateTime={log.created_at}
-                        >
-                          {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
-                        </time>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-text truncate text-sm font-semibold">
-                          {log.user_name ?? 'Sistema'}
-                        </p>
-                        {log.user_email ? (
-                          <p
-                            className="text-text-secondary mt-0.5 truncate text-xs font-normal"
-                            title={log.user_email}
-                          >
-                            {log.user_email}
-                          </p>
-                        ) : null}
-                      </div>
-                      <p
-                        className="text-text-secondary mt-1 line-clamp-2 text-xs break-words"
-                        title={detailText}
-                      >
-                        {detailText}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+            <div className="p-3 md:p-4 lg:hidden">
+              {logs.length > 12 ? (
+                <Virtuoso
+                  style={{ height: 'min(70vh, 48rem)' }}
+                  data={logs}
+                  itemContent={(index, log) => (
+                    <ol className="relative">
+                      <AuditTimelineItem log={log} isLast={index === logs.length - 1} />
+                    </ol>
+                  )}
+                />
+              ) : (
+                <ol className="relative space-y-0">
+                  {logs.map((log, index) => (
+                    <AuditTimelineItem key={log.id} log={log} isLast={index === logs.length - 1} />
+                  ))}
+                </ol>
+              )}
+            </div>
 
             {/* Desktop: dense table */}
-            <div className="hidden min-w-0 overflow-x-auto lg:block">
+            <div className="table-shell hidden min-w-0 overflow-x-auto lg:block">
               <table className="w-full min-w-[52rem] text-left text-sm">
-                <thead className="border-border/80 bg-surface-raised/70 sticky top-0 z-[1] border-b text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:text-zinc-400">
+                <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
                   <tr>
                     <th className="px-3 py-2.5">Cuándo</th>
                     <th className="px-3 py-2.5">Acción</th>
@@ -251,12 +260,15 @@ export default function AuditLogs() {
                     <th className="min-w-0 px-3 py-2.5">Detalle</th>
                   </tr>
                 </thead>
-                <tbody className="divide-border/60 divide-y">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {logs.map((log) => {
                     const variant = actionBadgeVariant(log.action);
                     const detailText = formatDetails(log.details);
                     return (
-                      <tr key={log.id} className="hover:bg-surface-raised/70 transition-colors">
+                      <tr
+                        key={log.id}
+                        className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                      >
                         <td className="text-text-secondary px-3 py-2.5 text-xs whitespace-nowrap tabular-nums">
                           <time dateTime={log.created_at}>
                             {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', {

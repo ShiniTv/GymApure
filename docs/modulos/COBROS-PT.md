@@ -25,8 +25,8 @@ No usa la tabla `payments` ni los destinos de cobro del gym (`payment_destinatio
 2. Publica **Mis datos de cobro (PT)** (pago móvil, transferencia, Zelle, USDT/Binance, efectivo USD).
 3. Elige **tasa de referencia**: BCV (oficial del gym) o **tasa euro** (Bs por 1 USD, valor manual del entrenador).
 4. Opcional: guarda **tarifas** reutilizables.
-5. **Nuevo cobro** → elige cliente asignado, concepto y monto USD (se muestra equivalente en Bs).
-6. Cuando el cliente reporta (referencia ± comprobante) → **Confirmar** o **Rechazar** (motivo obligatorio).
+5. **Nuevo cobro** → elige cliente elegible (asignado o con rutina tuya), concepto y monto USD (se muestra equivalente en Bs).
+6. Cuando el cliente reporta (referencia ± comprobante) → **Confirmar** o **Rechazar** (motivo obligatorio). En **Administración de cobros** filtras por estado y cancelas cobros aún sin reporte.
 
 ---
 

@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react';
+import { memo } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Dumbbell,
@@ -11,9 +11,8 @@ import {
   UtensilsCrossed,
   Pause,
   Play,
-  MoreHorizontal,
 } from 'lucide-react';
-import { Badge, AnchoredMenu } from '../../components/ui';
+import { Badge } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ROLE_LABELS, type UserRole } from '../../lib/roles';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
@@ -68,8 +67,6 @@ export const MemberTableRow = memo(function MemberTableRow({
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
   const isAdmin = userRole === 'admin';
-  const moreRef = useRef<HTMLButtonElement>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
   const badgeInfo =
     member.role === 'member' && member.membership_name
       ? getExpiryBadgeInfo(member.days_remaining, alertDays)
@@ -173,9 +170,6 @@ export const MemberTableRow = memo(function MemberTableRow({
     });
   }
 
-  const primaryActions = actions.slice(0, isTrainer ? 3 : 2);
-  const overflowActions = actions.slice(isTrainer ? 3 : 2);
-
   return (
     <tr
       className={cn(
@@ -260,71 +254,22 @@ export const MemberTableRow = memo(function MemberTableRow({
       </td>
       <td className="px-4 py-2.5 text-right lg:px-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-wrap items-center justify-end gap-1">
-          {primaryActions.map((action) => (
+          {actions.map((action) => (
             <button
               key={action.key}
               type="button"
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'inline-flex min-h-9 items-center justify-center gap-1 rounded-lg p-1.5 text-zinc-400 transition-colors disabled:opacity-50 dark:text-zinc-300',
-                isTrainer && 'lg:min-w-0 lg:gap-1.5 lg:px-2 lg:py-1.5',
-                !isTrainer && 'min-w-9',
+                'inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-button)] p-1.5 text-zinc-400 transition-colors disabled:opacity-50 dark:text-zinc-300',
                 action.className
               )}
               title={action.label}
               aria-label={action.label}
             >
               <action.icon className="h-4 w-4 shrink-0" />
-              {isTrainer ? (
-                <span className="hidden text-[11px] font-semibold lg:inline">{action.label}</span>
-              ) : null}
             </button>
           ))}
-          {overflowActions.length > 0 && (
-            <>
-              <button
-                ref={moreRef}
-                type="button"
-                onClick={() => setMoreOpen((v) => !v)}
-                className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                title="Más acciones"
-                aria-label="Más acciones"
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-              <AnchoredMenu
-                open={moreOpen}
-                onClose={() => setMoreOpen(false)}
-                anchorRef={moreRef}
-                align="end"
-                className="min-w-[11rem] rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-              >
-                {overflowActions.map((action) => (
-                  <button
-                    key={action.key}
-                    type="button"
-                    disabled={action.key === 'pause' && membershipOperationLoading}
-                    onClick={() => {
-                      setMoreOpen(false);
-                      action.onClick();
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors',
-                      action.danger
-                        ? 'text-red-600 hover:bg-red-500/10 dark:text-red-400'
-                        : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
-                    )}
-                  >
-                    <action.icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    {action.label}
-                  </button>
-                ))}
-              </AnchoredMenu>
-            </>
-          )}
         </div>
       </td>
     </tr>

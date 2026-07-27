@@ -107,6 +107,7 @@
     "deploy:release": "tsx scripts/deploy/release-checklist.ts",
     "lighthouse:ci": "tsx scripts/deploy/lighthouse-ci.ts",
     "bundle:baseline": "tsx scripts/deploy/bundle-baseline.ts",
+    "bundle:budget": "tsx scripts/deploy/check-bundle-budgets.ts",
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\""

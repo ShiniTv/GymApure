@@ -69,6 +69,119 @@ export function DashboardSkeleton({ statCount = 4 }: { statCount?: number }) {
   );
 }
 
+/** Filter chip row placeholder */
+export function FilterChipsSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="flex flex-wrap gap-1.5" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-8 w-20 rounded-[var(--radius-button)]" />
+      ))}
+    </div>
+  );
+}
+
+/** Audit log page — timeline on mobile, table on desktop */
+export function AuditLogsSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label="Cargando auditoría">
+      <div className="space-y-4 lg:hidden">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex gap-4">
+            <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-5 w-28 rounded-[var(--radius-chip)]" />
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="table-shell hidden overflow-hidden lg:block">
+        <table className="w-full min-w-[52rem] text-left text-sm">
+          <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+            <tr>
+              {['Cuándo', 'Acción', 'Actor', 'Detalle'].map((col) => (
+                <th key={col} className="px-3 py-2.5">
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <TableRowSkeleton cols={4} />
+            <TableRowSkeleton cols={4} />
+            <TableRowSkeleton cols={4} />
+            <TableRowSkeleton cols={4} />
+            <TableRowSkeleton cols={4} />
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Routine calendar — month header, palette chips, grid */
+export function CalendarViewSkeleton() {
+  return (
+    <div className="space-y-2.5" aria-busy="true" aria-label="Cargando calendario">
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+        <div className="flex gap-1">
+          <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
+          <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
+          <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
+        </div>
+      </div>
+      <div className="hidden space-y-2 rounded-xl border border-zinc-200/70 p-2.5 lg:block dark:border-zinc-800/80">
+        <Skeleton className="h-3 w-40" />
+        <div className="flex flex-wrap gap-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-7 w-28 rounded-[var(--radius-button)]" />
+          ))}
+        </div>
+      </div>
+      <div className="hidden overflow-hidden rounded-xl border border-zinc-200/70 xl:block dark:border-zinc-800/80">
+        <div className="grid grid-cols-7 gap-px border-b border-zinc-100 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="mx-auto h-3 w-8" />
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-px bg-zinc-100 p-1 dark:bg-zinc-800">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-md bg-zinc-50 dark:bg-zinc-900/50" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Routine assignments member cards */
+export function AssignmentsListSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div className="space-y-2.5" aria-busy="true" aria-label="Cargando asignaciones">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-zinc-200/70 p-3 dark:border-zinc-800/80">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <Skeleton className="h-6 w-24 rounded-[var(--radius-button)]" />
+            <Skeleton className="h-6 w-20 rounded-[var(--radius-button)]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Conversation list / payment card placeholders */
 export function ListRowSkeleton({ rows = 5 }: { rows?: number }) {
   return (

@@ -13,6 +13,8 @@ export interface StaffBottomNavMoreItem {
   href: string;
   icon: LucideIcon;
   showUnreadBadge?: boolean;
+  /** Numeric badge (e.g. cobros PT por confirmar). */
+  badgeCount?: number;
   /** Optional section label; renders a header when it changes from the previous item */
   section?: string;
 }

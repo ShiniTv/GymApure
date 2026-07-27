@@ -1,3 +1,4 @@
+import { type MouseEvent } from 'react';
 import { FileImage } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -5,13 +6,16 @@ export function ProofPreviewButton({
   onClick,
   className,
 }: {
-  onClick: () => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
   className?: string;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(e);
+      }}
       className={cn(
         'text-brand hover:bg-brand/10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 transition-colors dark:border-zinc-700',
         className

@@ -22,6 +22,7 @@ import {
   Badge,
   EmptyState,
   Button,
+  CalendarViewSkeleton,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import {
@@ -793,49 +794,53 @@ export default function Routines() {
               }
             />
           ) : view === 'calendar' ? (
-            <RoutinesCalendarView
-              currentDate={currentDate}
-              setCurrentDate={setCurrentDate}
-              selectedDay={selectedDay}
-              setSelectedDay={setSelectedDay}
-              calendarDays={calendarDays}
-              assignmentsByDay={assignmentsByDay}
-              paletteRoutines={(libraryRoutines ?? []).map((r) => ({ id: r.id, name: r.name }))}
-              paletteMembers={members.map((m) => ({ id: m.id, full_name: m.full_name }))}
-              onAssignDirect={() => {
-                const day = selectedDay ?? new Date();
-                const dateStr = format(day, 'yyyy-MM-dd');
-                setAssignForm((prev) => ({
-                  ...prev,
-                  start_date: dateStr,
-                  end_date: dateStr,
-                }));
-                setAssignSingleDay(true);
-                setIsAssigningFromCalendar(true);
-              }}
-              onAssignOnDay={(dateStr) => {
-                setAssignForm((prev) => ({
-                  ...prev,
-                  start_date: dateStr,
-                  end_date: dateStr,
-                }));
-                setAssignSingleDay(true);
-                setIsAssigningFromCalendar(true);
-              }}
-              onDropAssign={(dateStr, payload) => {
-                setAssignForm((prev) => ({
-                  ...prev,
-                  start_date: dateStr,
-                  end_date: dateStr,
-                  ...(payload.kind === 'routine'
-                    ? { routine_id: String(payload.id) }
-                    : { user_id: String(payload.id) }),
-                }));
-                setAssignSingleDay(true);
-                setIsAssigningFromCalendar(true);
-              }}
-              onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
-            />
+            loadingAssignments ? (
+              <CalendarViewSkeleton />
+            ) : (
+              <RoutinesCalendarView
+                currentDate={currentDate}
+                setCurrentDate={setCurrentDate}
+                selectedDay={selectedDay}
+                setSelectedDay={setSelectedDay}
+                calendarDays={calendarDays}
+                assignmentsByDay={assignmentsByDay}
+                paletteRoutines={(libraryRoutines ?? []).map((r) => ({ id: r.id, name: r.name }))}
+                paletteMembers={members.map((m) => ({ id: m.id, full_name: m.full_name }))}
+                onAssignDirect={() => {
+                  const day = selectedDay ?? new Date();
+                  const dateStr = format(day, 'yyyy-MM-dd');
+                  setAssignForm((prev) => ({
+                    ...prev,
+                    start_date: dateStr,
+                    end_date: dateStr,
+                  }));
+                  setAssignSingleDay(true);
+                  setIsAssigningFromCalendar(true);
+                }}
+                onAssignOnDay={(dateStr) => {
+                  setAssignForm((prev) => ({
+                    ...prev,
+                    start_date: dateStr,
+                    end_date: dateStr,
+                  }));
+                  setAssignSingleDay(true);
+                  setIsAssigningFromCalendar(true);
+                }}
+                onDropAssign={(dateStr, payload) => {
+                  setAssignForm((prev) => ({
+                    ...prev,
+                    start_date: dateStr,
+                    end_date: dateStr,
+                    ...(payload.kind === 'routine'
+                      ? { routine_id: String(payload.id) }
+                      : { user_id: String(payload.id) }),
+                  }));
+                  setAssignSingleDay(true);
+                  setIsAssigningFromCalendar(true);
+                }}
+                onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}
+              />
+            )
           ) : (
             <RoutinesAssignmentsView
               loadingAssignments={loadingAssignments}

@@ -27,6 +27,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const role = user.role;
+    const isStaff = role === 'admin' || role === 'receptionist' || role === 'trainer';
     let active = true;
 
     void import('socket.io-client').then(({ io }) => {
@@ -40,19 +42,24 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       s.on('connect', () => setIsConnected(true));
       s.on('disconnect', () => setIsConnected(false));
 
-      s.on('check-in:new', () => {
-        queryClient.invalidateQueries({ queryKey: ['members'] });
-      });
-
-      s.on('payment:updated', () => {
-        queryClient.invalidateQueries({ queryKey: ['payments'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      });
+      if (role === 'admin' || role === 'receptionist') {
+        s.on('check-in:new', () => {
+          queryClient.invalidateQueries({ queryKey: ['members'] });
+        });
+        s.on('payment:updated', () => {
+          queryClient.invalidateQueries({ queryKey: ['payments'] });
+          if (role === 'admin') {
+            queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+          }
+        });
+      }
 
       s.on('message:new', (payload?: { conversationId?: number }) => {
         void queryClient.invalidateQueries({ queryKey: ['chat', 'unread'] });
         void queryClient.invalidateQueries({ queryKey: ['chat', 'mine'] });
-        void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+        if (isStaff) {
+          void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+        }
         const conversationId = payload?.conversationId;
         if (conversationId != null) {
           void queryClient.invalidateQueries({
@@ -64,8 +71,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       });
 
       s.on('stats:updated', () => {
-        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+        if (role === 'admin') {
+          queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        }
+        if (role === 'member') {
+          queryClient.invalidateQueries({ queryKey: ['member-stats'] });
+        }
+        if (role === 'receptionist') {
+          queryClient.invalidateQueries({ queryKey: ['reception-stats'] });
+        }
       });
 
       s.on('notification:new', () => {

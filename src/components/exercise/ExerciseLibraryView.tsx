@@ -29,6 +29,7 @@ function ExerciseCard({
   onToggle,
   onEdit,
   onDelete,
+  listRow = false,
 }: {
   exercise: Exercise;
   expanded: boolean;
@@ -36,37 +37,32 @@ function ExerciseCard({
   onToggle: () => void;
   onEdit?: (exercise: Exercise) => void;
   onDelete?: (exercise: Exercise) => void;
+  /** Borderless row inside a divide-y list shell. */
+  listRow?: boolean;
 }) {
   const muscleLabel = formatMuscleGroupLabel(exercise.muscle_group);
   const canManage = Boolean(onEdit && onDelete);
   const hasVideo = Boolean(exercise.video_url);
   const hasBothMedia = hasVideo && Boolean(exercise.execution);
 
-  return (
-    <Card
-      padding="sm"
-      rounded="xl"
-      className={cn(
-        'h-fit border-zinc-200/70 bg-white/80 transition-colors dark:border-zinc-800/80 dark:bg-zinc-900/50',
-        expanded && 'ring-brand/20 ring-2'
-      )}
-    >
+  const body = (
+    <>
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full touch-manipulation items-center gap-2 py-0.5 text-left sm:gap-2.5"
+        className="flex w-full touch-manipulation items-center gap-2.5 px-3 py-2.5 text-left"
         aria-expanded={expanded}
         aria-label={expanded ? `Cerrar ${exercise.name}` : `Ver ${exercise.name}`}
       >
-        <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9">
-          <Dumbbell className="text-brand h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+        <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+          <Dumbbell className="text-brand h-3.5 w-3.5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[13px] leading-snug font-semibold text-zinc-900 dark:text-white">
+          <h3 className="text-text truncate text-[13px] leading-snug font-semibold">
             {exercise.name}
           </h3>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{muscleLabel}</span>
+            <span className="text-text-muted text-[11px]">{muscleLabel}</span>
             {hasVideo ? (
               <span
                 className="text-brand inline-flex items-center gap-0.5 text-[10px] font-semibold"
@@ -90,7 +86,7 @@ function ExerciseCard({
         </div>
         <ChevronRight
           className={cn(
-            'h-4 w-4 shrink-0 text-zinc-400 transition-transform dark:text-zinc-500',
+            'text-text-muted h-4 w-4 shrink-0 transition-transform',
             expanded && 'rotate-90'
           )}
           aria-hidden
@@ -98,14 +94,11 @@ function ExerciseCard({
       </button>
 
       {expanded ? (
-        <div className="animate-in slide-in-from-top-2 mt-2 space-y-3 border-t border-zinc-100/80 pt-2.5 duration-200 dark:border-zinc-800/80">
+        <div className="border-border/60 animate-in slide-in-from-top-2 space-y-3 border-t px-3 pt-2.5 pb-3 duration-200">
           {exercise.description ? (
-            <p className="text-xs leading-snug text-zinc-500 dark:text-zinc-400">
-              {exercise.description}
-            </p>
+            <p className="text-text-secondary text-xs leading-snug">{exercise.description}</p>
           ) : null}
 
-          {/* Side-by-side only when the card spans a full desktop row (see grid col-span). */}
           <div
             className={cn(
               'grid grid-cols-1 gap-3',
@@ -138,9 +131,7 @@ function ExerciseCard({
               </div>
             ) : null}
             {!hasVideo && !exercise.execution ? (
-              <p className="text-xs text-zinc-400 italic dark:text-zinc-500">
-                Sin video ni guía aún.
-              </p>
+              <p className="text-text-muted text-xs italic">Sin video ni guía aún.</p>
             ) : null}
           </div>
 
@@ -149,25 +140,42 @@ function ExerciseCard({
               <button
                 type="button"
                 onClick={() => onEdit!(exercise)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                 aria-label={`Editar ${exercise.name}`}
                 title="Editar"
               >
-                <Edit className="h-4 w-4" aria-hidden />
+                <Edit className="h-3.5 w-3.5" aria-hidden />
               </button>
               <button
                 type="button"
                 onClick={() => onDelete!(exercise)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400"
+                className="text-text-muted inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-red-500/10 hover:text-red-500"
                 aria-label={`Eliminar ${exercise.name}`}
                 title="Eliminar"
               >
-                <Trash2 className="h-4 w-4" aria-hidden />
+                <Trash2 className="h-3.5 w-3.5" aria-hidden />
               </button>
             </div>
           ) : null}
         </div>
       ) : null}
+    </>
+  );
+
+  if (listRow) {
+    return <div className="bg-transparent">{body}</div>;
+  }
+
+  return (
+    <Card
+      padding="none"
+      rounded="xl"
+      className={cn(
+        'border-border/80 bg-surface h-fit overflow-hidden border transition-colors',
+        expanded && 'ring-brand/25 ring-1'
+      )}
+    >
+      {body}
     </Card>
   );
 }
@@ -208,12 +216,7 @@ export function ExerciseLibraryView({
                 : 'Agrega movimientos al catálogo para usarlos en tus rutinas.';
 
     return (
-      <div
-        className={cn(
-          'mx-auto w-full max-w-md',
-          readOnly && 'flex min-h-[min(40vh,22rem)] flex-col justify-center'
-        )}
-      >
+      <div className="mx-auto w-full max-w-md">
         <EmptyState
           compact
           variant={readOnly ? 'motivational' : 'default'}
@@ -238,8 +241,29 @@ export function ExerciseLibraryView({
   }
 
   return (
-    <div className="space-y-1.5">
-      <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
+    <>
+      {/* Mobile: lista densa tipo herramienta */}
+      <div className="border-border/80 bg-surface divide-border/60 divide-y overflow-hidden rounded-[var(--radius-card)] border md:hidden">
+        {filteredExercises.map((exercise) => {
+          const expanded = expandedId === exercise.id;
+          return (
+            <div key={exercise.id} className={cn(expanded && 'bg-surface-overlay/30')}>
+              <ExerciseCard
+                exercise={exercise}
+                expanded={expanded}
+                readOnly={readOnly}
+                onToggle={() => setExpandedId(expanded ? null : exercise.id)}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                listRow
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: grid de cards */}
+      <div className="hidden grid-cols-1 items-start gap-2 md:grid md:grid-cols-2 md:gap-3 xl:grid-cols-4">
         {filteredExercises.map((exercise) => {
           const expanded = expandedId === exercise.id;
           return (
@@ -256,15 +280,6 @@ export function ExerciseLibraryView({
           );
         })}
       </div>
-      {readOnly ? (
-        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 md:text-left dark:text-zinc-500">
-          Toca un ejercicio para ver video o guía de ejecución.
-        </p>
-      ) : (
-        <p className="px-0.5 pt-1 text-[11px] text-zinc-400 md:hidden dark:text-zinc-500">
-          Toca una fila para ver detalles
-        </p>
-      )}
-    </div>
+    </>
   );
 }

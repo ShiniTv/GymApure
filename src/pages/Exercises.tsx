@@ -5,7 +5,7 @@ import {
   useInvalidateExercises,
   type Exercise,
 } from '../hooks/queries/useExercisesQuery';
-import { Plus, Video, Dumbbell } from 'lucide-react';
+import { Plus, Video, Dumbbell, ChevronDown, Minus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canOperateExercises } from '../lib/roles';
 import {
@@ -21,6 +21,7 @@ import {
   BackToDashboardLink,
   FilterChips,
   EmptyState,
+  IconButton,
 } from '../components/ui';
 import {
   MUSCLE_GROUPS,
@@ -42,6 +43,9 @@ export default function Exercises() {
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('');
   const [videoOnly, setVideoOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'az' | 'recent'>('az');
+  const [executionSteps, setExecutionSteps] = useState<string[]>(['']);
+  const [videoOpen, setVideoOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search, 300);
   const {
     data: catalog,
@@ -105,8 +109,11 @@ export default function Exercises() {
       muscleGroup: muscleFilter,
     });
     if (videoOnly) list = list.filter((e) => Boolean(e.video_url));
+    list = [...list].sort((a, b) =>
+      sortBy === 'az' ? a.name.localeCompare(b.name, 'es') : b.id - a.id
+    );
     return list;
-  }, [catalogList, debouncedSearch, muscleFilter, videoOnly]);
+  }, [catalogList, debouncedSearch, muscleFilter, videoOnly, sortBy]);
 
   const refreshExercises = () => invalidateExercises();
 
@@ -121,6 +128,12 @@ export default function Exercises() {
         execution: exercise.execution || '',
         video_url: exercise.video_url || '',
       });
+      const steps = (exercise.execution || '')
+        .split(/\n+/)
+        .map((s) => s.replace(/^\d+[.)]\s*/, '').trim())
+        .filter(Boolean);
+      setExecutionSteps(steps.length > 0 ? steps : ['']);
+      setVideoOpen(Boolean(exercise.video_url));
     } else {
       setEditingExercise(null);
       setFormData({
@@ -130,6 +143,8 @@ export default function Exercises() {
         execution: '',
         video_url: '',
       });
+      setExecutionSteps(['']);
+      setVideoOpen(false);
     }
     setIsModalOpen(true);
     setSaveError(null);
@@ -147,7 +162,14 @@ export default function Exercises() {
     data.append('name', formData.name);
     data.append('muscle_group', formData.muscle_group);
     data.append('description', formData.description);
-    data.append('execution', formData.execution);
+    data.append(
+      'execution',
+      executionSteps
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s, i) => `${i + 1}. ${s}`)
+        .join('\n')
+    );
     data.append('video_url', formData.video_url);
 
     try {
@@ -245,24 +267,22 @@ export default function Exercises() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-3 sm:space-y-4">
+    <div className="page-stack-tight mx-auto w-full max-w-6xl">
       <PageHeader
         compact
         title={
-          <>
-            {readOnly ? (
-              <>
-                Mis <span className="text-brand">ejercicios</span>
-              </>
-            ) : (
-              <>
-                Biblioteca de <span className="text-brand">ejercicios</span>
-              </>
-            )}
-          </>
+          readOnly ? (
+            <>
+              Mis <span className="text-brand">ejercicios</span>
+            </>
+          ) : (
+            <>
+              <span className="text-brand">Ejercicios</span>
+            </>
+          )
         }
-        subtitle={readOnly ? 'Movimientos y videos' : 'Para armar rutinas'}
-        action={<BackToDashboardLink />}
+        subtitle={readOnly ? 'Movimientos y videos' : 'Catálogo para armar rutinas'}
+        action={<BackToDashboardLink iconOnly />}
       />
 
       <div className="flex items-center gap-2">
@@ -275,27 +295,29 @@ export default function Exercises() {
           }}
           aria-label="Buscar por nombre o grupo muscular"
         />
-        {canEdit && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-10 w-10 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3"
-            onClick={() => {
-              handleOpenModal();
-            }}
+        {canEdit ? (
+          <IconButton
+            size="md"
+            variant="secondary"
+            className="border-brand/30 text-brand hover:bg-brand/10"
             aria-label="Nuevo ejercicio"
+            title="Nuevo"
+            onClick={() => handleOpenModal()}
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nuevo</span>
-          </Button>
-        )}
+          </IconButton>
+        ) : null}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="space-y-2">
         <FilterChips
+          layout="scroll"
+          ariaLabel="Grupo muscular"
           options={[
             { value: '', label: 'Todos', count: catalogList.length },
-            ...MUSCLE_GROUPS.map((group) => ({
+            ...MUSCLE_GROUPS.filter(
+              (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
+            ).map((group) => ({
               value: group,
               label: group,
               count: muscleCounts[group] ?? 0,
@@ -304,32 +326,52 @@ export default function Exercises() {
           value={muscleFilter}
           onChange={setMuscleFilter}
         />
-        <FilterChips
-          options={[
-            { value: '', label: 'Todos los formatos' },
-            { value: 'video', label: 'Con video', count: videoCount },
-          ]}
-          value={videoOnly ? 'video' : ''}
-          onChange={(v) => setVideoOnly(v === 'video')}
-          ariaLabel="Filtro de video"
-          fullWidth={false}
-          className="w-fit max-w-full"
-        />
-      </div>
-
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="min-w-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-          {resultsLabel}
-        </p>
-        {hasActiveFilters ? (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
-          >
-            Limpiar
-          </button>
-        ) : null}
+        <div className="flex items-center justify-between gap-2 px-0.5">
+          <p className="text-text-muted min-w-0 truncate text-[11px]">{resultsLabel}</p>
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="text-text-muted flex items-center gap-1 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setSortBy('az')}
+                className={sortBy === 'az' ? 'text-text font-semibold' : 'hover:text-text'}
+                aria-pressed={sortBy === 'az'}
+              >
+                A–Z
+              </button>
+              <span aria-hidden>·</span>
+              <button
+                type="button"
+                onClick={() => setSortBy('recent')}
+                className={sortBy === 'recent' ? 'text-text font-semibold' : 'hover:text-text'}
+                aria-pressed={sortBy === 'recent'}
+              >
+                Recientes
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVideoOnly((v) => !v)}
+              className={
+                videoOnly
+                  ? 'bg-surface-overlay text-text inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold'
+                  : 'text-text-secondary hover:text-text inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold'
+              }
+              aria-pressed={videoOnly}
+            >
+              <Video className="h-3 w-3" aria-hidden />
+              Video{videoCount > 0 ? ` · ${videoCount}` : ''}
+            </button>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-brand text-[11px] font-semibold hover:underline"
+              >
+                Limpiar
+              </button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <ExerciseLibraryView
@@ -411,26 +453,48 @@ export default function Exercises() {
             onClose={() => {
               setIsModalOpen(false);
             }}
-            maxWidth="xl"
+            maxWidth="lg"
             scrollable
             title={<>{editingExercise ? 'Editar ejercicio' : 'Nuevo ejercicio'}</>}
+            footer={
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  form="exercise-form"
+                  size="sm"
+                  className="flex-1"
+                  disabled={saving}
+                >
+                  {saving ? 'Guardando…' : editingExercise ? 'Guardar' : 'Crear'}
+                </Button>
+              </>
+            }
           >
-            <form onSubmit={handleSubmit} className="page-stack">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Nombre del Ejercicio</Label>
+            <form id="exercise-form" onSubmit={handleSubmit} className="space-y-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div>
+                  <Label className="mb-0.5">Nombre</Label>
                   <Input
                     required
                     type="text"
-                    placeholder="Ej: Press de Banca"
+                    placeholder="Ej: Press de banca"
                     value={formData.name}
                     onChange={(e) => {
                       setFormData({ ...formData, name: e.target.value });
                     }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Grupo Muscular</Label>
+                <div>
+                  <Label className="mb-0.5">Grupo muscular</Label>
                   <Select
                     value={formData.muscle_group}
                     onChange={(e) => {
@@ -446,11 +510,12 @@ export default function Exercises() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Descripción</Label>
+              <div>
+                <Label className="mb-0.5">Descripción</Label>
                 <Textarea
-                  placeholder="Describe brevemente el objetivo del ejercicio..."
+                  placeholder="Objetivo breve (opcional)"
                   rows={2}
+                  className="min-h-[3.25rem] px-3 py-2 text-sm leading-snug"
                   value={formData.description}
                   onChange={(e) => {
                     setFormData({ ...formData, description: e.target.value });
@@ -458,103 +523,123 @@ export default function Exercises() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Ejecución paso a paso</Label>
-                <Textarea
-                  rows={4}
-                  value={formData.execution}
-                  onChange={(e) => {
-                    setFormData({ ...formData, execution: e.target.value });
-                  }}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <Label>Video del ejercicio</Label>
-                <div className="relative">
-                  <Video className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-400 dark:text-zinc-300" />
-                  <Input
-                    type="url"
-                    className="pl-12 font-mono text-sm"
-                    placeholder="Enlace de YouTube (opcional)..."
-                    value={formData.video_url}
-                    onChange={(e) => {
-                      handleVideoUrlChange(e.target.value);
-                    }}
-                  />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="mb-0">Ejecución</Label>
+                  <button
+                    type="button"
+                    className="text-brand text-[11px] font-semibold hover:underline"
+                    onClick={() => setExecutionSteps((steps) => [...steps, ''])}
+                  >
+                    + Paso
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
-                  id="video-upload"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    if (
-                      file &&
-                      mediaCapabilities?.directUpload &&
-                      file.size > mediaCapabilities.maxUploadBytes
-                    ) {
-                      setSaveError(
-                        `El video supera ${mediaCapabilities.recommendedMaxMb} MB. Comprímelo antes de subir.`
-                      );
-                      setVideoFile(null);
-                      e.target.value = '';
-                      return;
-                    }
-                    setSaveError(null);
-                    setVideoFile(file);
-                  }}
-                />
-                <label
-                  htmlFor="video-upload"
-                  className="hover:border-brand/50 flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 p-6 transition-all dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  <Plus className="h-5 w-5" />
-                  <span className="text-xs font-medium">
-                    {videoFile ? videoFile.name : 'Seleccionar video MP4/MOV'}
-                  </span>
-                </label>
-                <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  {mediaCapabilities?.directUpload ? (
-                    <>
-                      Producción: subida directa a almacenamiento privado. Máx.{' '}
-                      {mediaCapabilities.recommendedMaxMb} MB · {mediaCapabilities.maxDurationSec} s
-                      · MP4/WebM comprimido en 720p antes de subir.
-                    </>
-                  ) : (
-                    <>
-                      Máx. 60 s · 50 MB al subir · se comprime automáticamente a 720p (requiere
-                      FFmpeg en el servidor).
-                    </>
-                  )}
-                </p>
-                {videoUploadProgress && (
-                  <p className="text-brand text-xs font-medium">{videoUploadProgress}</p>
-                )}
+                <div className="space-y-1.5">
+                  {executionSteps.map((step, index) => (
+                    <div key={index} className="flex items-center gap-1.5">
+                      <span className="text-text-muted w-4 shrink-0 text-center text-[11px] tabular-nums">
+                        {index + 1}
+                      </span>
+                      <Input
+                        value={step}
+                        placeholder={`Paso ${index + 1}`}
+                        onChange={(e) => {
+                          const next = [...executionSteps];
+                          next[index] = e.target.value;
+                          setExecutionSteps(next);
+                        }}
+                      />
+                      <IconButton
+                        size="sm"
+                        variant="ghost"
+                        aria-label={`Quitar paso ${index + 1}`}
+                        disabled={executionSteps.length <= 1}
+                        onClick={() =>
+                          setExecutionSteps((steps) =>
+                            steps.length <= 1 ? steps : steps.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </IconButton>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-              <div className="flex gap-4 pt-4">
-                <Button
+              <div className="border-border/60 overflow-hidden rounded-[var(--radius-input)] border">
+                <button
                   type="button"
-                  variant="ghost"
-                  className="flex-1"
-                  size="lg"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                  }}
+                  onClick={() => setVideoOpen((o) => !o)}
+                  className="hover:bg-surface-overlay/40 flex w-full items-center gap-2 px-3 py-2 text-left"
+                  aria-expanded={videoOpen}
                 >
-                  Cancelar
-                </Button>
-                <Button type="submit" className="min-h-[48px] flex-1" size="lg" disabled={saving}>
-                  {saving
-                    ? 'Guardando...'
-                    : editingExercise
-                      ? 'Guardar cambios'
-                      : 'Crear ejercicio'}
-                </Button>
+                  <Video className="text-text-muted h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="text-text min-w-0 flex-1 text-[13px] font-medium">
+                    Video (opcional)
+                  </span>
+                  <ChevronDown
+                    className={`text-text-muted h-3.5 w-3.5 transition-transform ${videoOpen ? 'rotate-180' : ''}`}
+                    aria-hidden
+                  />
+                </button>
+                {videoOpen ? (
+                  <div className="border-border/60 space-y-1.5 border-t px-3 pt-2 pb-3">
+                    <Input
+                      type="url"
+                      leadingIcon={<Video />}
+                      className="font-mono text-xs"
+                      placeholder="YouTube (opcional)"
+                      value={formData.video_url}
+                      onChange={(e) => {
+                        handleVideoUrlChange(e.target.value);
+                      }}
+                    />
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      id="video-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (
+                          file &&
+                          mediaCapabilities?.directUpload &&
+                          file.size > mediaCapabilities.maxUploadBytes
+                        ) {
+                          setSaveError(
+                            `El video supera ${mediaCapabilities.recommendedMaxMb} MB. Comprímelo antes de subir.`
+                          );
+                          setVideoFile(null);
+                          e.target.value = '';
+                          return;
+                        }
+                        setSaveError(null);
+                        setVideoFile(file);
+                      }}
+                    />
+                    <label
+                      htmlFor="video-upload"
+                      className="border-border/70 hover:border-brand/40 bg-surface-overlay/40 flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-input)] border border-dashed px-3 py-2 transition-colors"
+                    >
+                      <Plus className="text-text-muted h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="text-text-secondary min-w-0 truncate text-[11px] font-medium">
+                        {videoFile ? videoFile.name : 'Subir MP4/MOV'}
+                      </span>
+                    </label>
+                    <p className="text-text-muted text-[10px] leading-snug">
+                      {mediaCapabilities?.directUpload
+                        ? `Máx. ${mediaCapabilities.recommendedMaxMb} MB · ${mediaCapabilities.maxDurationSec}s · 720p`
+                        : 'Máx. 60s · 50 MB · se comprime a 720p'}
+                    </p>
+                    {videoUploadProgress ? (
+                      <p className="text-brand text-[11px] font-medium">{videoUploadProgress}</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
+
+              {saveError ? <p className="text-sm text-red-500">{saveError}</p> : null}
             </form>
           </Modal>
         </>

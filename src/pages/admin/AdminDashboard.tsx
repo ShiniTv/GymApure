@@ -95,14 +95,7 @@ export default function AdminDashboard() {
   if (adminStats.error && !stats) {
     return (
       <div className="page-stack-tight mx-auto w-full max-w-7xl">
-        <PageHeader
-          compact
-          title={
-            <>
-              Administración <span className="text-brand">general</span>
-            </>
-          }
-        />
+        <PageHeader compact title={<>Administración general</>} />
         <EmptyState
           icon={AlertTriangle}
           title="No se pudo cargar el panel"
@@ -154,18 +147,14 @@ export default function AdminDashboard() {
     <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <StaffPortalBanner
         eyebrow="Panel administrativo"
-        title={
-          <>
-            Administración <span className="text-brand">general</span>
-          </>
-        }
+        title={<>Administración general</>}
         subtitle="Supervisión y gestión del gym"
       />
 
       {emailConfigured === false && (
         <Link
           to="/settings"
-          className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 transition-colors hover:bg-amber-500/15"
+          className="border-border/70 bg-surface-raised/50 hover:bg-surface-raised flex items-start gap-3 rounded-[var(--radius-card)] border px-4 py-3 transition-colors"
         >
           <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <div className="min-w-0 flex-1">
@@ -229,46 +218,50 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <StaggerContainer className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 [&>*]:h-full">
+      <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
         <StaggerItem>
           <StatCard
-            compact
+            minimal
             title="Ingresos (mes)"
             value={formatMoney(revenueThisMonth)}
             icon={DollarSign}
             color="emerald"
             trend={monthTrend.label}
             trendTone={monthTrend.tone}
+            to="/payments"
           />
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            compact
+            minimal
             title="Activas"
             value={stats?.activeSubscriptions || 0}
             icon={Activity}
             color="blue"
+            to="/memberships"
           />
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            compact
+            minimal
             title="Check-ins hoy"
             value={stats?.todayCheckIns || 0}
             icon={Clock}
             color="emerald"
             trend={checkInTrend.label}
             trendTone={checkInTrend.tone}
+            to="/attendance"
           />
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            compact
+            minimal
             title={`Por vencer (${alertDays}d)`}
             value={expiringSoon}
             icon={CalendarClock}
             color="orange"
-            className={expiringSoon > 0 ? 'border-brand/40 bg-brand/[0.03]' : undefined}
+            to="/members?expiring=true"
+            className={expiringSoon > 0 ? 'border-orange-500/40' : undefined}
           />
         </StaggerItem>
       </StaggerContainer>
@@ -362,15 +355,9 @@ export default function AdminDashboard() {
 
               if (actionItems.length === 0) {
                 return (
-                  <Card
-                    padding="sm"
-                    rounded="xl"
-                    className="border-emerald-500/20 bg-emerald-500/5"
-                  >
-                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                      Nada urgente por ahora
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                  <Card padding="sm" rounded="xl" className="border-border/60">
+                    <p className="text-text text-sm font-medium">Nada urgente por ahora</p>
+                    <p className="text-text-muted mt-0.5 text-[11px]">
                       Sin pagos pendientes, vencimientos ni alertas de equipos.
                     </p>
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -531,46 +518,40 @@ export default function AdminDashboard() {
           </DashboardSection>
 
           <DashboardSection title="Finanzas y supervisión" compact>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-              <Card padding="sm" rounded="xl" className="space-y-1">
-                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Card padding="sm" rounded="xl" className="space-y-0.5">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Pagos &gt;2 días
                 </p>
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-                  {pendingOld}
-                </p>
+                <p className="text-text text-lg font-semibold tabular-nums">{pendingOld}</p>
               </Card>
-              <Card padding="sm" rounded="xl" className="space-y-1">
-                <p className="flex items-center gap-1 text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              <Card padding="sm" rounded="xl" className="space-y-0.5">
+                <p className="text-text-muted flex items-center gap-1 text-[10px] font-medium tracking-wide uppercase">
                   <CalendarDays className="h-3 w-3" />
                   Clases hoy
                 </p>
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="text-text text-lg font-semibold tabular-nums">
                   {classFill}%
-                  <span className="ml-1 text-xs font-normal text-zinc-500">
+                  <span className="text-text-muted ml-1 text-xs font-normal">
                     ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
                   </span>
                 </p>
               </Card>
-              <Card padding="sm" rounded="xl" className="space-y-1">
-                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              <Card padding="sm" rounded="xl" className="space-y-0.5">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Pausadas
                 </p>
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-                  {pausedSubs}
-                </p>
+                <p className="text-text text-lg font-semibold tabular-nums">{pausedSubs}</p>
               </Card>
-              <Card padding="sm" rounded="xl" className="space-y-1">
-                <p className="text-[10px] font-bold tracking-wide text-zinc-500 uppercase">
+              <Card padding="sm" rounded="xl" className="space-y-0.5">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
-                  {pendingPayments}
-                </p>
+                <p className="text-text text-lg font-semibold tabular-nums">{pendingPayments}</p>
               </Card>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <QuickAction
                 compact
                 iconOnlyMobile

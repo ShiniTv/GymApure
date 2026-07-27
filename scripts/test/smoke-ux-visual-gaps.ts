@@ -32,8 +32,11 @@ function ok(name: string, cond: boolean, detail?: string) {
 }
 
 async function waitAppReady(page: import('@playwright/test').Page) {
+  // El loader/skeleton del sistema usa `aria-busy` + `aria-label="Cargando ..."` (sin texto visible).
+  // Esperamos por cualquier elemento de ese tipo para evitar flakiness al evaluar nav/PTR.
   await page
-    .getByText(/^CARGANDO/i)
+    .locator('[aria-busy="true"][aria-label^="Cargando" i]')
+    .first()
     .waitFor({ state: 'hidden', timeout: 45_000 })
     .catch(() => undefined);
   await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);

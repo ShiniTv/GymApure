@@ -27,16 +27,16 @@ export function ReceptionInsideList({
   onRequestCheckout,
 }: ReceptionInsideListProps) {
   return (
-    <div className="rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="border-border/80 bg-surface rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+        <h3 className="text-text text-xs font-semibold">
           Dentro
-          <span className="ml-1.5 text-zinc-400 tabular-nums">({insideCount})</span>
+          <span className="text-text-muted ml-1.5 tabular-nums">({insideCount})</span>
         </h3>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 px-0"
+          className="h-11 w-11 px-0"
           onClick={onRefresh}
           aria-label="Actualizar"
         >
@@ -44,16 +44,12 @@ export function ReceptionInsideList({
         </Button>
       </div>
       {tab === 'inside' && messageBanner && <div className="mb-2">{messageBanner}</div>}
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+      <div className="divide-border/60 divide-y">
         {inside.map((m) => (
           <div key={m.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                {m.full_name}
-              </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                {m.cedula || 'Sin cédula'}
-              </p>
+              <p className="text-text truncate text-sm font-semibold">{m.full_name}</p>
+              <p className="text-text-muted text-[11px]">{m.cedula || 'Sin cédula'}</p>
             </div>
             <p className="shrink-0 text-[11px] font-medium text-emerald-600 tabular-nums dark:text-emerald-400">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
@@ -61,7 +57,7 @@ export function ReceptionInsideList({
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 w-9 shrink-0 px-0"
+              className="h-11 w-11 shrink-0 px-0"
               disabled={!m.cedula || actionLoading}
               loading={checkingOutCedula === m.cedula?.trim()}
               onClick={() => onRequestCheckout(m)}
@@ -73,9 +69,7 @@ export function ReceptionInsideList({
           </div>
         ))}
         {inside.length === 0 && (
-          <p className="py-5 text-center text-xs text-zinc-400 dark:text-zinc-500">
-            Nadie dentro ahora
-          </p>
+          <p className="text-text-muted py-5 text-center text-xs">Nadie dentro ahora</p>
         )}
       </div>
     </div>

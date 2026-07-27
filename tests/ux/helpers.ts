@@ -117,8 +117,9 @@ export async function goToActiveWorkout(page: Page): Promise<void> {
   assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
   await routineCard.click();
+  // Labels: library uses short "Entrenar"/"Continuar"; hero/dashboard may use longer copy.
   const startBtn = page.getByRole('button', {
-    name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|entrenar ahora)$/i,
+    name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|entrenar( ahora)?)$/i,
   });
   await expect(startBtn).toBeVisible({ timeout: 10_000 });
   await startBtn.click();

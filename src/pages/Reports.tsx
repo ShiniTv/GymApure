@@ -5,18 +5,6 @@ import { useDebouncedValue } from '../lib/useDebouncedValue';
 import { cn, formatMoney } from '../lib/utils';
 
 import {
-  FileSpreadsheet,
-  Download,
-  Calendar,
-  DollarSign,
-  Users,
-  Fingerprint,
-  FileText,
-} from 'lucide-react';
-
-import { format, subDays, startOfMonth } from 'date-fns';
-
-import {
   Button,
   Card,
   Input,
@@ -26,8 +14,19 @@ import {
   BackToDashboardLink,
   Badge,
   EmptyState,
+  FilterChips,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
+import {
+  FileSpreadsheet,
+  Download,
+  Calendar,
+  DollarSign,
+  Users,
+  Fingerprint,
+  FileText,
+} from 'lucide-react';
+import { format, subDays, startOfMonth } from 'date-fns';
 
 type ReportType = 'payments' | 'attendance' | 'members' | 'retention';
 type ReportFormat = 'csv' | 'pdf';
@@ -206,17 +205,22 @@ export default function Reports() {
   const selectedReport = REPORTS.find((r) => r.type === selectedType) ?? REPORTS[0];
   const selectedCount = preview?.[selectedReport.previewKey];
 
+  const rangePreset =
+    from === format(subDays(new Date(), 7), 'yyyy-MM-dd') && to === today
+      ? '7'
+      : from === format(subDays(new Date(), 30), 'yyyy-MM-dd') && to === today
+        ? '30'
+        : from === format(startOfMonth(new Date()), 'yyyy-MM-dd') && to === today
+          ? 'month'
+          : '';
+
   return (
     <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <PageHeader
         compact
-        title={
-          <>
-            Reportes <span className="text-brand">exportables</span>
-          </>
-        }
-        subtitle="Vista previa del rango + PDF/CSV para compartir o contabilidad."
-        action={<BackToDashboardLink />}
+        title={<>Reportes</>}
+        subtitle="PDF / CSV por rango · vista previa"
+        action={<BackToDashboardLink iconOnly />}
       />
 
       {error && (
@@ -226,63 +230,40 @@ export default function Reports() {
       )}
 
       <Card padding="sm" rounded="xl">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
-          <div className="flex min-w-0 items-center gap-2 sm:mr-auto sm:mb-0.5">
-            <Calendar className="text-brand h-4 w-4 shrink-0" />
-            <div className="min-w-0">
-              <h2 className="text-sm leading-tight font-bold text-zinc-900 dark:text-white">
-                Rango de fechas
-              </h2>
-              <p className="text-[10px] leading-tight text-zinc-500 dark:text-zinc-400">
-                Pagos, asistencias y retención
-              </p>
-            </div>
+        <div className="mb-2.5 flex items-center gap-2">
+          <Calendar className="text-brand h-3.5 w-3.5 shrink-0" />
+          <h2 className="text-text text-[13px] font-semibold">Rango de fechas</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="min-w-0">
+            <Label className="text-[11px]">Desde</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
-          <div className="flex min-w-0 flex-wrap items-end gap-2 sm:gap-3">
-            <div className="w-[calc(50%-0.25rem)] min-w-0 sm:w-36">
-              <Label className="text-[11px]">Desde</Label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div className="w-[calc(50%-0.25rem)] min-w-0 sm:w-36">
-              <Label className="text-[11px]">Hasta</Label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
-            <div className="flex flex-wrap gap-1.5 pb-0.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2.5 text-[11px]"
-                onClick={() => setLastDays(7)}
-              >
-                7 días
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2.5 text-[11px]"
-                onClick={() => setLastDays(30)}
-              >
-                30 días
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2.5 text-[11px]"
-                onClick={setCurrentMonth}
-              >
-                Este mes
-              </Button>
-            </div>
+          <div className="min-w-0">
+            <Label className="text-[11px]">Hasta</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
+        </div>
+        <div className="mt-2.5">
+          <FilterChips
+            options={[
+              { value: '7', label: '7 días' },
+              { value: '30', label: '30 días' },
+              { value: 'month', label: 'Este mes' },
+            ]}
+            value={rangePreset}
+            onChange={(v) => {
+              if (v === '7') setLastDays(7);
+              else if (v === '30') setLastDays(30);
+              else if (v === 'month') setCurrentMonth();
+            }}
+          />
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] lg:items-start">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-          {REPORTS.map((report) => {
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] lg:items-start">
+        <div className="border-border/80 bg-surface overflow-hidden rounded-[var(--radius-card)] border">
+          {REPORTS.map((report, index) => {
             const Icon = report.icon;
             const count = preview?.[report.previewKey];
             const pdfLoading = downloading?.type === report.type && downloading.format === 'pdf';
@@ -291,19 +272,16 @@ export default function Reports() {
             const selected = selectedType === report.type;
 
             return (
-              <Card
+              <div
                 key={report.type}
-                padding="sm"
-                rounded="xl"
                 role="button"
                 tabIndex={0}
                 aria-pressed={selected}
                 aria-label={`Vista previa de ${report.title}`}
                 className={cn(
-                  'flex cursor-pointer flex-col transition-colors',
-                  selected
-                    ? 'border-brand/40 bg-brand/[0.04] ring-brand/30 ring-1'
-                    : 'hover:border-zinc-300 dark:hover:border-zinc-700'
+                  'cursor-pointer px-3 py-2.5 transition-colors',
+                  index > 0 && 'border-border/60 border-t',
+                  selected ? 'bg-brand/[0.06]' : 'hover:bg-surface-overlay/50'
                 )}
                 onClick={() => setSelectedType(report.type)}
                 onKeyDown={(e) => {
@@ -313,118 +291,111 @@ export default function Reports() {
                   }
                 }}
               >
-                <div className="mb-2.5 flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 items-start gap-2">
-                    <div className="bg-brand/10 shrink-0 rounded-lg p-1.5">
-                      <Icon className="text-brand dark:text-brand h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+                <div className="flex items-start gap-2.5">
+                  <div className="bg-brand/10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                    <Icon className="text-brand h-3.5 w-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h3 className="text-text min-w-0 flex-1 truncate text-[13px] font-semibold">
                         {report.title}
                       </h3>
-                      <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                        {report.description}
-                      </p>
+                      {previewLoading ? (
+                        <Skeleton className="h-4 w-8" />
+                      ) : (
+                        <span className="text-brand shrink-0 text-[12px] font-semibold tabular-nums">
+                          {count ?? '—'}
+                          <span className="text-text-muted ml-1 text-[10px] font-medium">reg.</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate text-[11px] leading-snug">
+                      {report.description}
+                    </p>
+                    <div className="mt-2 flex gap-1.5">
+                      <Button
+                        size="sm"
+                        className="h-8 min-h-8 gap-1 px-2.5 text-[11px]"
+                        loading={pdfLoading}
+                        disabled={busy && !pdfLoading}
+                        aria-label={`Descargar PDF de ${report.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDownload(report.type, report.hasDateRange, 'pdf');
+                        }}
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        PDF
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 min-h-8 gap-1 px-2.5 text-[11px]"
+                        loading={csvLoading}
+                        disabled={busy && !csvLoading}
+                        aria-label={`Descargar CSV de ${report.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDownload(report.type, report.hasDateRange, 'csv');
+                        }}
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        CSV
+                      </Button>
                     </div>
                   </div>
-                  <div className="shrink-0 pl-1 text-right">
-                    {previewLoading ? (
-                      <Skeleton className="ml-auto h-7 w-8" />
-                    ) : (
-                      <>
-                        <p className="text-brand text-lg leading-none font-bold tabular-nums sm:text-xl">
-                          {count ?? '—'}
-                        </p>
-                        <p className="mt-0.5 text-[9px] tracking-wide text-zinc-400 uppercase dark:text-zinc-300">
-                          reg.
-                        </p>
-                      </>
-                    )}
-                  </div>
                 </div>
-
-                <div className="mt-auto flex gap-1.5">
-                  <Button
-                    size="sm"
-                    className="min-w-0 flex-1"
-                    loading={pdfLoading}
-                    disabled={busy && !pdfLoading}
-                    aria-label={`Descargar PDF de ${report.title}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleDownload(report.type, report.hasDateRange, 'pdf');
-                    }}
-                  >
-                    <FileText className="h-4 w-4" />
-                    PDF
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="min-w-0 flex-1"
-                    loading={csvLoading}
-                    disabled={busy && !csvLoading}
-                    aria-label={`Descargar CSV de ${report.title}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleDownload(report.type, report.hasDateRange, 'csv');
-                    }}
-                  >
-                    <Download className="h-4 w-4" />
-                    CSV
-                  </Button>
-                </div>
-              </Card>
+              </div>
             );
           })}
         </div>
 
         <Card padding="sm" rounded="xl" className="min-w-0">
-          <div className="mb-3 flex items-start justify-between gap-2">
+          <div className="mb-2.5 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">
+              <h2 className="text-text text-[13px] font-semibold">
                 Vista previa · {selectedReport.title}
               </h2>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted text-[11px]">
                 {selectedReport.hasDateRange
                   ? `${formatSampleDate(from)} – ${formatSampleDate(to)}`
                   : 'Estado actual de miembros'}
-                {typeof selectedCount === 'number' ? ` · ${selectedCount} registros` : ''}
+                {typeof selectedCount === 'number' ? ` · ${selectedCount} reg.` : ''}
               </p>
             </div>
           </div>
 
           {selectedType === 'payments' && (
-            <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
-                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+            <div className="mb-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              <div className="border-border/70 rounded-lg border px-2.5 py-2">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Total USD
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
                   {previewLoading ? '—' : formatMoney(preview?.paymentsTotalUsd ?? 0)}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
-                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+              <div className="border-border/70 rounded-lg border px-2.5 py-2">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Aprobados
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsApproved ?? 0)}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
-                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+              <div className="border-border/70 rounded-lg border px-2.5 py-2">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsPending ?? 0)}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50/70 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
-                <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+              <div className="border-border/70 rounded-lg border px-2.5 py-2">
+                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                   Rechazados
                 </p>
-                <p className="mt-0.5 text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsRejected ?? 0)}
                 </p>
               </div>
@@ -439,10 +410,11 @@ export default function Reports() {
             </div>
           ) : selectedType === 'retention' ? (
             <EmptyState
+              compact
               icon={FileText}
               title={`${preview?.retention ?? 0} membresías vencidas/inactivas`}
-              description="Descarga el PDF o CSV para el detalle de retención, no-shows y renovaciones."
-              className="border-0 bg-transparent py-4 shadow-none"
+              description="Descarga PDF o CSV para el detalle."
+              className="border-0 bg-transparent py-3 shadow-none"
             />
           ) : selectedType === 'payments' ? (
             (preview?.samples?.payments?.length ?? 0) === 0 ? (

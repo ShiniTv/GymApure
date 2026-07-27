@@ -200,7 +200,7 @@ export default function Login() {
   return (
     <AuthShell aesthetic="linear">
       <Card
-        className="auth-linear-panel page-stack w-full p-6 sm:p-8"
+        className="auth-linear-panel page-stack w-full p-6 sm:p-7"
         data-testid="login-panel"
         padding="none"
       >
@@ -214,11 +214,11 @@ export default function Login() {
         />
 
         {mfaChallenge ? (
-          <form className="form-stack" onSubmit={handleMfaSubmit} noValidate>
+          <form className="form-stack mt-7" onSubmit={handleMfaSubmit} noValidate>
             {error && <Alert variant="error">{error}</Alert>}
 
             <div>
-              <Label className="auth-linear-label" htmlFor="mfa_code">
+              <Label className="auth-linear-label mb-1.5" htmlFor="mfa_code">
                 Código MFA
               </Label>
               <Input
@@ -237,12 +237,7 @@ export default function Login() {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="auth-linear-primary w-full"
-              size="lg"
-              loading={loading}
-            >
+            <Button type="submit" className="auth-linear-primary mt-1 w-full" loading={loading}>
               Verificar
             </Button>
 
@@ -259,7 +254,7 @@ export default function Login() {
             </button>
           </form>
         ) : (
-          <form className="form-stack" onSubmit={handleSubmit} noValidate>
+          <form className="form-stack mt-7" onSubmit={handleSubmit} noValidate>
             {isLocked ? (
               <Alert variant="error">
                 <p>Demasiados intentos fallidos.</p>
@@ -272,7 +267,7 @@ export default function Login() {
             )}
 
             <div>
-              <Label className="auth-linear-label" htmlFor="email">
+              <Label className="auth-linear-label mb-1.5" htmlFor="email">
                 Correo electrónico
               </Label>
               <Input
@@ -294,7 +289,7 @@ export default function Login() {
               />
             </div>
             <div>
-              <Label className="auth-linear-label" htmlFor="password">
+              <Label className="auth-linear-label mb-1.5" htmlFor="password">
                 Contraseña
               </Label>
               <PasswordInput
@@ -314,10 +309,10 @@ export default function Login() {
               />
             </div>
 
-            <p className="text-right">
+            <p className="-mt-1 text-right">
               <Link
                 to="/forgot-password"
-                className="text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+                className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-200"
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -325,8 +320,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="auth-linear-primary w-full"
-              size="lg"
+              className="auth-linear-primary mt-1 w-full"
               loading={loading}
               disabled={isLocked}
             >
@@ -334,7 +328,7 @@ export default function Login() {
             </Button>
 
             {registerAllowed && (
-              <p className="text-center text-xs text-zinc-500">
+              <p className="pt-1 text-center text-[11px] text-zinc-500">
                 ¿No tienes una cuenta?{' '}
                 <Link
                   to="/register"

@@ -15,8 +15,9 @@ import { BRAND } from '../config/brand';
 import { MobileShellProvider } from '../context/MobileShellContext';
 import { LogOut, Sun, Moon, PanelLeftClose } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
+import { useTrainerInvoicesQuery } from '../hooks/queries/useTrainerBillingQuery';
 import clsx from 'clsx';
-import { ROLE_LABELS, PORTAL_TITLES } from '../lib/roles';
+import { ROLE_LABELS, PORTAL_TITLES, getDefaultRouteForRole } from '../lib/roles';
 import { getNavigationForRole } from '../config/navigation';
 import { Avatar } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
@@ -32,6 +33,7 @@ import { LogoutConfirmModal, useLogoutConfirm } from './LogoutConfirmModal';
 import { NotificationBell } from './notifications/NotificationBell';
 import { useAppFonts } from '../hooks/useAppFonts';
 import { routePrefetchHandlers } from '../lib/routePrefetch';
+import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
@@ -53,6 +55,7 @@ export default function Layout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const [sidebarBackdropMounted, setSidebarBackdropMounted] = useState(false);
   const [sidebarBackdropVisible, setSidebarBackdropVisible] = useState(false);
   const touchStartX = useRef(0);
@@ -70,6 +73,12 @@ export default function Layout() {
   const isReceptionist = user?.role === 'receptionist';
   const isTrainer = user?.role === 'trainer';
   const isAdmin = user?.role === 'admin';
+  const { data: trainerInvoices = [] } = useTrainerInvoicesQuery(isTrainer);
+  const ptConfirmCount = useMemo(
+    () =>
+      trainerInvoices.filter((inv) => inv.status === 'pending' && Boolean(inv.reference)).length,
+    [trainerInvoices]
+  );
   const { isMobileShell: isBelowDesktopShell } = useBreakpoint();
   const isMemberMobileShell = isMember && isBelowDesktopShell;
   const isReceptionMobileShell = isReceptionist && isBelowDesktopShell;
@@ -85,6 +94,11 @@ export default function Layout() {
   /** Bottom-nav shells use Más + swipe; never show hamburger on mobile */
   const useMobileNavLinks = isMobileShell;
   const [showThemeOnboarding, setShowThemeOnboarding] = useState(false);
+
+  const toggleCommandPalette = useCallback(() => {
+    setCommandOpen((v) => !v);
+  }, []);
+  useCommandPaletteShortcut(toggleCommandPalette);
 
   useEffect(() => {
     if (isMember && !localStorage.getItem(THEME_ONBOARDING_KEY)) {
@@ -155,6 +169,11 @@ export default function Layout() {
 
   const brandMark = <BrandName variant="split" />;
   const mobileHeaderTitle = currentPage ?? BRAND.name;
+  const homeHref = getDefaultRouteForRole(user?.role ?? 'member');
+
+  const goHome = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
 
   const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16.5rem)] lg:w-56';
   const hideBackToDashboard =
@@ -177,7 +196,15 @@ export default function Layout() {
         <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
           <div className="mobile-chrome-glass pointer-events-auto flex h-11 items-center justify-between gap-2 rounded-xl px-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <Logo className="h-7 w-7 shrink-0" />
+              <Link
+                to={homeHref}
+                onClick={goHome}
+                className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                aria-label="Ir al inicio"
+                title="Ir al inicio"
+              >
+                <Logo className="h-7 w-7 shrink-0" />
+              </Link>
               <div className="min-w-0">
                 {currentPage ? (
                   <>
@@ -189,7 +216,15 @@ export default function Layout() {
                     </p>
                   </>
                 ) : (
-                  <BrandName variant="inline" size="sm" className="truncate leading-tight" />
+                  <Link
+                    to={homeHref}
+                    onClick={goHome}
+                    className="block min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                    aria-label="Ir al inicio"
+                    title="Ir al inicio"
+                  >
+                    <BrandName variant="inline" size="sm" className="truncate leading-tight" />
+                  </Link>
                 )}
               </div>
             </div>
@@ -222,27 +257,35 @@ export default function Layout() {
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
               <div className="border-border/50 hidden h-14 shrink-0 items-center justify-center border-b lg:flex">
-                <button
-                  type="button"
+                <Link
+                  to={homeHref}
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="text-text-secondary hover:bg-surface-overlay flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors"
-                  aria-label="Expandir menú"
-                  title="Expandir menú"
+                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors"
+                  aria-label="Ir al inicio"
+                  title="Ir al inicio"
                 >
                   <Logo className="pointer-events-none h-7 w-7 shrink-0" />
-                </button>
+                </Link>
               </div>
             ) : (
               <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:flex">
-                <Logo className="h-7 w-7 shrink-0" />
-                <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
-                  {brandMark}
-                  <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
-                    {portalTitle}
-                  </p>
-                </div>
+                <Link
+                  to={homeHref}
+                  onClick={goHome}
+                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  aria-label="Ir al inicio"
+                  title="Ir al inicio"
+                >
+                  <Logo className="h-7 w-7 shrink-0" />
+                  <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
+                    {brandMark}
+                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                      {currentPage ?? portalTitle}
+                    </p>
+                  </div>
+                </Link>
                 <NotificationBell compact className="shrink-0" />
                 <button
                   type="button"
@@ -260,13 +303,21 @@ export default function Layout() {
 
             {!sidebarCollapsed && (
               <div className="border-border/50 flex h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:hidden">
-                <Logo className="h-7 w-7 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  {brandMark}
-                  <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
-                    {portalTitle}
-                  </p>
-                </div>
+                <Link
+                  to={homeHref}
+                  onClick={goHome}
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  aria-label="Ir al inicio"
+                  title="Ir al inicio"
+                >
+                  <Logo className="h-7 w-7 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    {brandMark}
+                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                      {currentPage ?? portalTitle}
+                    </p>
+                  </div>
+                </Link>
               </div>
             )}
 
@@ -312,6 +363,11 @@ export default function Layout() {
                               {showChatNav && item.href === '/messages' && chatUnread > 0 && (
                                 <span className="nav-badge nav-badge-soft">
                                   {chatUnread > 99 ? '99+' : chatUnread}
+                                </span>
+                              )}
+                              {isTrainer && item.href === '/pt-billing' && ptConfirmCount > 0 && (
+                                <span className="nav-badge nav-badge-soft">
+                                  {ptConfirmCount > 99 ? '99+' : ptConfirmCount}
                                 </span>
                               )}
                               {user?.role === 'admin' &&
@@ -439,7 +495,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'app-canvas h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto p-4 transition-colors duration-300 sm:p-6 lg:p-8',
+              'app-canvas h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto px-3.5 py-3 transition-colors duration-300 sm:p-5 lg:p-6',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
@@ -469,6 +525,8 @@ export default function Layout() {
         {showAdminBottomNav && <AdminBottomNav />}
 
         <LogoutConfirmModal {...logoutConfirmProps} />
+
+        <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
 
         {isMember && (
           <ThemeOnboarding

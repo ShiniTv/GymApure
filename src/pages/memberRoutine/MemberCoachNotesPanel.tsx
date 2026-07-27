@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { Pencil, Trash2, StickyNote } from 'lucide-react';
-import { Button, EmptyState, Spinner, Textarea } from '../../components/ui';
+import { Button, EmptyState, IconButton, Spinner, Textarea } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useToastOptional } from '../../context/ToastContext';
 import { toDisplayErrorMessage } from '../../lib/api';
@@ -96,7 +96,7 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
       </div>
 
       {isPending ? (
-        <div className="flex justify-center py-10">
+        <div className="flex justify-center py-6">
           <Spinner />
         </div>
       ) : isError ? (
@@ -137,10 +137,10 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
                     </p>
                   </div>
                   {canEdit ? (
-                    <div className="flex shrink-0 gap-0.5">
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+                    <div className="flex shrink-0 gap-1">
+                      <IconButton
+                        size="sm"
+                        variant="tertiary"
                         aria-label="Editar nota"
                         onClick={() => {
                           setEditingId(note.id);
@@ -148,15 +148,15 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
                         }}
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
+                      </IconButton>
+                      <IconButton
+                        size="sm"
+                        variant="danger"
                         aria-label="Eliminar nota"
                         onClick={() => void remove(note.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </IconButton>
                     </div>
                   ) : null}
                 </div>

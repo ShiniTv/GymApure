@@ -46,7 +46,7 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-6">
         <Spinner />
       </div>
     );

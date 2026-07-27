@@ -9,6 +9,8 @@ interface ModalProps {
   onClose: () => void;
   title: ReactNode;
   children: ReactNode;
+  /** Sticky action bar below the scroll area (Cancelar / Guardar). */
+  footer?: ReactNode;
   className?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
   scrollable?: boolean;
@@ -30,6 +32,7 @@ export function Modal({
   onClose,
   title,
   children,
+  footer,
   className,
   maxWidth = 'md',
   scrollable,
@@ -181,10 +184,20 @@ export function Modal({
           </div>
           <div
             id={contentId}
-            className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-4 sm:p-5')}
+            className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-3.5 sm:p-4')}
           >
             {children}
           </div>
+          {footer ? (
+            <div
+              className={cn(
+                'flex shrink-0 items-center gap-2',
+                scrollable ? 'border-border/60 px-ds-4 sm:px-ds-5 border-t py-2.5' : 'mt-4'
+              )}
+            >
+              {footer}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>,

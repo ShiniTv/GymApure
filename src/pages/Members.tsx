@@ -36,6 +36,7 @@ import { useToastOptional } from '../context/ToastContext';
 import {
   useMembersQuery,
   useInvalidateMembers,
+  useMembershipStatusMutation,
   type Member,
 } from '../hooks/queries/useMembersQuery';
 import { useInvalidateMemberOptions } from '../hooks/queries/useRoutinesQuery';
@@ -203,12 +204,7 @@ export default function Members() {
   const isStaffMember = isTrainer || isReceptionist;
   const colCount = isStaffMember ? 5 : 6;
 
-  const {
-    data: membersData,
-    isPending: loading,
-    isError: membersError,
-    refetch: refetchMembers,
-  } = useMembersQuery({
+  const membersQueryParams = {
     page,
     pageSize,
     search,
@@ -216,7 +212,14 @@ export default function Members() {
     shiftFilter: shiftFilter || undefined,
     roleFilter: roleFilter || undefined,
     isTrainer,
-  });
+  };
+  const {
+    data: membersData,
+    isPending: loading,
+    isError: membersError,
+    refetch: refetchMembers,
+  } = useMembersQuery(membersQueryParams);
+  const membershipStatusMutation = useMembershipStatusMutation(membersQueryParams);
   const members = membersData?.items ?? [];
   const total = membersData?.total ?? 0;
 
@@ -523,14 +526,10 @@ export default function Members() {
       if (member.subscription_status === 'paused') {
         setMembershipOperationId(member.id);
         try {
-          await parseJsonResponse(
-            await apiFetch('/api/memberships/resume', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ user_id: member.id }),
-            })
-          );
-          invalidateMembers();
+          await membershipStatusMutation.mutateAsync({
+            memberId: member.id,
+            status: 'active',
+          });
           await adminStats?.refresh();
           toast?.success('Membresía reanudada');
         } catch (err) {
@@ -545,7 +544,7 @@ export default function Members() {
       setPauseReason('');
       setPauseError('');
     },
-    [adminStats, invalidateMembers, toast]
+    [adminStats, membershipStatusMutation, toast]
   );
 
   const confirmPauseMembership = useCallback(async () => {
@@ -559,16 +558,13 @@ export default function Members() {
     setPausing(true);
     setMembershipOperationId(pauseTarget.id);
     try {
-      await parseJsonResponse(
-        await apiFetch('/api/memberships/pause', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: pauseTarget.id, reason }),
-        })
-      );
+      await membershipStatusMutation.mutateAsync({
+        memberId: pauseTarget.id,
+        status: 'paused',
+        reason,
+      });
       setPauseTarget(null);
       setPauseReason('');
-      invalidateMembers();
       await adminStats?.refresh();
       toast?.success('Membresía pausada');
     } catch (err) {
@@ -577,7 +573,7 @@ export default function Members() {
       setPausing(false);
       setMembershipOperationId(null);
     }
-  }, [adminStats, invalidateMembers, pauseReason, pauseTarget, pausing, toast]);
+  }, [adminStats, membershipStatusMutation, pauseReason, pauseTarget, pausing, toast]);
 
   const filteredMembers = members;
   const canAddUser =
@@ -992,6 +988,7 @@ export default function Members() {
                 keyExtractor={(member) => member.id}
                 breakpoint="lg"
                 desktopInCard
+                virtualizeMobileAt={13}
                 loading={loading}
                 loadingSkeleton={
                   <>

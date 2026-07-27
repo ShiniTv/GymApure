@@ -9,7 +9,7 @@ import {
   Spinner,
   Badge,
   BackToDashboardLink,
-  SegmentedControl,
+  FilterChips,
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
@@ -81,7 +81,13 @@ export default function Reservas() {
       ).length;
       days.push({
         key,
-        label: i === 0 ? 'Hoy' : format(d, 'EEE d', { locale: es }),
+        label:
+          i === 0
+            ? 'Hoy'
+            : (() => {
+                const raw = format(d, 'EEE d', { locale: es });
+                return raw.charAt(0).toUpperCase() + raw.slice(1);
+              })(),
         count,
       });
     }
@@ -154,58 +160,33 @@ export default function Reservas() {
         action={<BackToDashboardLink />}
       />
 
-      <SegmentedControl
-        ariaLabel="Filtrar reservas"
-        value={filter}
-        onChange={(v) => setFilter(v)}
-        options={[
-          { value: 'all', label: `Próximas (${upcoming.length})` },
-          { value: 'mine', label: `Mías (${mine.length})` },
-        ]}
-      />
-
-      {filter === 'all' && !isPending && !isError ? (
-        <div
-          className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="tablist"
-          aria-label="Días de la semana"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={focusDay === null}
-            onClick={() => setFocusDay(null)}
-            className={cn(
-              'rounded-pill shrink-0 border px-3 py-1.5 text-xs font-semibold transition-colors',
-              focusDay === null
-                ? 'border-brand/40 bg-brand/10 text-brand'
-                : 'border-border text-text-secondary hover:bg-surface-overlay'
-            )}
-          >
-            Todos
-          </button>
-          {dayChips.map((day) => (
-            <button
-              key={day.key}
-              type="button"
-              role="tab"
-              aria-selected={focusDay === day.key}
-              onClick={() => setFocusDay(day.key)}
-              className={cn(
-                'rounded-pill shrink-0 border px-3 py-1.5 text-xs font-semibold capitalize transition-colors',
-                focusDay === day.key
-                  ? 'border-brand/40 bg-brand/10 text-brand'
-                  : 'border-border text-text-secondary hover:bg-surface-overlay'
-              )}
-            >
-              {day.label}
-              {day.count > 0 ? (
-                <span className="text-text-muted ml-1 tabular-nums">({day.count})</span>
-              ) : null}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-2">
+        <FilterChips
+          ariaLabel="Filtrar reservas"
+          className="w-fit max-w-full"
+          value={filter}
+          onChange={(v) => setFilter(v as FilterTab)}
+          options={[
+            { value: 'all', label: 'Próximas', count: upcoming.length },
+            { value: 'mine', label: 'Mías', count: mine.length },
+          ]}
+        />
+        {filter === 'all' && !isPending && !isError ? (
+          <FilterChips
+            ariaLabel="Días de la semana"
+            value={focusDay ?? ''}
+            onChange={(v) => setFocusDay(v === '' ? null : v)}
+            options={[
+              { value: '', label: 'Todos' },
+              ...dayChips.map((day) => ({
+                value: day.key,
+                label: day.label,
+                count: day.count > 0 ? day.count : undefined,
+              })),
+            ]}
+          />
+        ) : null}
+      </div>
 
       {isPending ? (
         <div className="flex justify-center py-8">

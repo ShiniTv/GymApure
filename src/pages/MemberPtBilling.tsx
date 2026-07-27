@@ -3,7 +3,7 @@ import { Landmark, Upload } from 'lucide-react';
 import {
   Badge,
   Button,
-  Card,
+  DataCard,
   EmptyState,
   Input,
   Label,
@@ -87,7 +87,7 @@ export default function MemberPtBilling() {
   };
 
   return (
-    <div className="page-stack mx-auto w-full max-w-3xl">
+    <div className="page-stack-tight mx-auto w-full max-w-3xl">
       <PageHeader
         compact
         title={
@@ -95,71 +95,106 @@ export default function MemberPtBilling() {
             Cobros <span className="text-brand">PT</span>
           </>
         }
-        subtitle="Pagos de entrenamiento personalizado con tu entrenador. Independiente de la membresía del gym."
-        action={<BackToDashboardLink />}
+        subtitle="Sesiones 1:1 · aparte de la membresía"
+        action={<BackToDashboardLink iconOnly />}
       />
 
       {pendingCount > 0 ? (
         <p className="text-text-secondary text-xs">
-          Tienes {pendingCount} cobro{pendingCount === 1 ? '' : 's'} pendiente
-          {pendingCount === 1 ? '' : 's'}.
+          {pendingCount} pendiente{pendingCount === 1 ? '' : 's'} · reporta el pago
         </p>
       ) : null}
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
-        {isPending ? (
+      {isPending ? (
+        <div className="flex justify-center py-8">
           <Spinner />
-        ) : invoices.length === 0 ? (
-          <EmptyState
-            icon={Landmark}
-            title="Sin cobros PT"
-            description="Cuando tu entrenador te cobre una sesión o paquete, aparecerá aquí."
-          />
-        ) : (
-          <ul className="divide-border divide-y">
-            {invoices.map((inv) => (
-              <li
-                key={inv.id}
-                className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {inv.title}
-                    {inv.trainer_name ? ` · ${inv.trainer_name}` : ''}
-                  </p>
-                  <p className="text-text-secondary text-xs">
-                    ${inv.amount_usd}
-                    {inv.reference ? ` · Ref. ${inv.reference}` : ''}
-                    {inv.rejection_reason ? ` · ${inv.rejection_reason}` : ''}
+        </div>
+      ) : invoices.length === 0 ? (
+        <EmptyState
+          compact
+          icon={Landmark}
+          title="Nada por pagar"
+          description="Cuando tu entrenador te envíe un cobro, lo verás aquí."
+        />
+      ) : (
+        <div className="space-y-2">
+          {invoices.map((inv) => (
+            <DataCard key={inv.id} className="!space-y-0 !p-2.5 sm:!p-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <p className="text-text min-w-0 flex-1 truncate text-[13px] leading-tight font-semibold">
+                      {inv.title}
+                      {inv.trainer_name ? (
+                        <span className="text-text-muted font-medium"> · {inv.trainer_name}</span>
+                      ) : null}
+                    </p>
+                    <Badge
+                      variant={statusVariant(inv.status)}
+                      className="shrink-0 px-1.5 py-0 text-[9px]"
+                    >
+                      {statusLabel(inv.status)}
+                    </Badge>
+                  </div>
+                  <p className="text-text-secondary mt-0.5 truncate text-[11px] leading-snug">
+                    <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
+                    {inv.reference ? (
+                      <>
+                        <span className="text-text-muted mx-1.5">·</span>
+                        <span className="font-mono text-[10px]">Ref. {inv.reference}</span>
+                      </>
+                    ) : null}
+                    {inv.rejection_reason ? (
+                      <>
+                        <span className="text-text-muted mx-1.5">·</span>
+                        <span>{inv.rejection_reason}</span>
+                      </>
+                    ) : null}
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={statusVariant(inv.status)}>{statusLabel(inv.status)}</Badge>
-                  {inv.status === 'pending' ? (
-                    <Button size="sm" onClick={() => openReport(inv)}>
-                      {inv.reference ? 'Actualizar reporte' : 'Reportar pago'}
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+                {inv.status === 'pending' ? (
+                  <Button size="sm" className="shrink-0" onClick={() => openReport(inv)}>
+                    {inv.reference ? 'Actualizar' : 'Reportar'}
+                  </Button>
+                ) : null}
+              </div>
+            </DataCard>
+          ))}
+        </div>
+      )}
 
       <Modal
         open={!!reporting}
         onClose={() => setReporting(null)}
-        title={
-          <>
-            REPORTAR <span className="text-brand">PAGO PT</span>
-          </>
-        }
+        title={<>Reportar pago</>}
         maxWidth="lg"
         scrollable
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => setReporting(null)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="flex-1"
+              onClick={() => void submitReport()}
+              disabled={reference.trim().length < 1 || report.isPending}
+              loading={report.isPending}
+            >
+              Enviar
+            </Button>
+          </>
+        }
       >
         {reporting ? (
-          <div className="page-stack">
+          <div className="space-y-3.5">
             <p className="text-text-secondary text-sm">
               {reporting.title} —{' '}
               <span className="text-text font-semibold">${reporting.amount_usd}</span>
@@ -217,18 +252,6 @@ export default function MemberPtBilling() {
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 />
               </label>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => void submitReport()}
-                disabled={reference.trim().length < 1 || report.isPending}
-                loading={report.isPending}
-              >
-                Enviar reporte
-              </Button>
-              <Button variant="ghost" onClick={() => setReporting(null)}>
-                Cancelar
-              </Button>
             </div>
           </div>
         ) : null}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useEffect, useRef, useMemo } from 'react';
 import { apiFetch, parseJsonResponse, parseJsonOptional } from '../lib/api';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
 import {
@@ -37,18 +37,12 @@ import {
   DifficultySelect,
   Breadcrumbs,
   Avatar,
-  SegmentedControl,
   PageState,
   AnchoredMenu,
+  IconButton,
 } from '../components/ui';
 import { ExercisePicker } from '../components/exercise/ExercisePicker';
 import { AssignRoutineForm } from '../components/routines/AssignRoutineForm';
-import { MemberProgressPanel } from './memberRoutine/MemberProgressPanel';
-import { MemberCoachNotesPanel } from './memberRoutine/MemberCoachNotesPanel';
-import { MemberCoachingPanel } from './memberRoutine/MemberCoachingPanel';
-import { MemberTrainingBlocksPanel } from './memberRoutine/MemberTrainingBlocksPanel';
-import { MemberAppointmentsPanel } from './memberRoutine/MemberAppointmentsPanel';
-import { MemberMeasurementsPanel } from './memberRoutine/MemberMeasurementsPanel';
 import { clientLogger } from '../lib/clientLogger';
 import { formatDifficulty } from '../lib/utils';
 import { parseNonNegativeInt } from '../lib/parseFormNumber';
@@ -67,6 +61,49 @@ import { buildExerciseSummary } from '../lib/routineDisplay';
 import { useHealthProfileQuery } from '../hooks/queries/useHealthProfileQuery';
 import { hasCriticalHealthFlags } from '../lib/healthConditions';
 import { ACTIVITY_LEVELS } from '../lib/metabolicRate';
+
+const MemberProgressPanel = lazy(() =>
+  import('./memberRoutine/MemberProgressPanel').then((module) => ({
+    default: module.MemberProgressPanel,
+  }))
+);
+const MemberCoachNotesPanel = lazy(() =>
+  import('./memberRoutine/MemberCoachNotesPanel').then((module) => ({
+    default: module.MemberCoachNotesPanel,
+  }))
+);
+const MemberCoachingPanel = lazy(() =>
+  import('./memberRoutine/MemberCoachingPanel').then((module) => ({
+    default: module.MemberCoachingPanel,
+  }))
+);
+const MemberTrainingBlocksPanel = lazy(() =>
+  import('./memberRoutine/MemberTrainingBlocksPanel').then((module) => ({
+    default: module.MemberTrainingBlocksPanel,
+  }))
+);
+const MemberAppointmentsPanel = lazy(() =>
+  import('./memberRoutine/MemberAppointmentsPanel').then((module) => ({
+    default: module.MemberAppointmentsPanel,
+  }))
+);
+const MemberMeasurementsPanel = lazy(() =>
+  import('./memberRoutine/MemberMeasurementsPanel').then((module) => ({
+    default: module.MemberMeasurementsPanel,
+  }))
+);
+
+function PanelFallback() {
+  return (
+    <div
+      className="flex min-h-32 items-center justify-center"
+      role="status"
+      aria-label="Cargando panel"
+    >
+      <Spinner />
+    </div>
+  );
+}
 
 function heightCmNumber(height: number | null | undefined): number | null {
   if (height == null || Number.isNaN(height)) return null;
@@ -182,8 +219,20 @@ export default function MemberRoutine() {
 
   useEffect(() => {
     const next = parseCoachingTab(searchParams.get('tab'));
+    if (next === 'mediciones') {
+      setCoachingTab('progreso');
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('tab', 'progreso');
+          return p;
+        },
+        { replace: true }
+      );
+      return;
+    }
     if (next) setCoachingTab(next);
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   const changeCoachingTab = (tab: CoachingTab) => {
     setCoachingTab(tab);
@@ -198,8 +247,10 @@ export default function MemberRoutine() {
     );
   };
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreSectionsOpen, setMoreSectionsOpen] = useState(false);
   const [routineMenuId, setRoutineMenuId] = useState<number | null>(null);
   const moreMenuAnchorRef = useRef<HTMLButtonElement>(null);
+  const moreSectionsAnchorRef = useRef<HTMLButtonElement>(null);
   const routineMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
@@ -725,7 +776,7 @@ export default function MemberRoutine() {
         },
       };
     }
-    if (routines.length === 0) {
+    if (routines.length === 0 && coachingTab === 'rutinas') {
       return {
         tone: 'warning' as const,
         message: 'Sin rutina asignada.',
@@ -745,31 +796,7 @@ export default function MemberRoutine() {
         },
       };
     }
-    if (measurements.length === 0) {
-      return {
-        tone: 'neutral' as const,
-        message: 'Aún no hay mediciones de progreso.',
-        actionLabel: 'Registrar',
-        run: () => {
-          changeCoachingTab('mediciones');
-          setIsAddingMeasurement(true);
-        },
-      };
-    }
-    const weightBit =
-      latestMeasurement?.weight != null ? `último peso ${latestMeasurement.weight} kg` : null;
-    return {
-      tone: 'ok' as const,
-      message: [
-        `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`,
-        weightBit,
-        formatMemberGoal(member.goal),
-      ]
-        .filter(Boolean)
-        .join(' · '),
-      actionLabel: null as string | null,
-      run: null as (() => void) | null,
-    };
+    return null;
   })();
 
   const headerPrimary = showHealthAlert
@@ -824,45 +851,52 @@ export default function MemberRoutine() {
           </span>
         }
         subtitle={
-          coachingTab === 'rutinas'
-            ? `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`
-            : subscription
+          [
+            coachingTab === 'rutinas'
+              ? `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`
+              : null,
+            subscription
               ? `${subscription.membership_name} · ${subscription.days_remaining} días`
-              : undefined
+              : null,
+            member.goal ? formatMemberGoal(member.goal) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || undefined
         }
         action={
           <div className="flex shrink-0 items-center gap-1">
-            <Button
-              variant={headerPrimary.solid ? 'primary' : 'ghost'}
-              size="sm"
-              className={headerPrimary.solid ? 'h-9 gap-1.5 px-3 text-xs' : 'h-9 w-9 px-0'}
-              onClick={headerPrimary.run}
-              aria-label={headerPrimary.label}
-              title={headerPrimary.label}
-            >
-              {headerPrimary.label === 'Mensaje' ? (
-                <MessageSquare className="h-4 w-4" />
-              ) : headerPrimary.label === 'Asignar' ? (
-                <>
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>{headerPrimary.label}</span>
-                </>
-              ) : (
+            {headerPrimary.solid ? (
+              <Button
+                size="sm"
+                className="h-8 gap-1.5 px-2.5 text-xs"
+                onClick={headerPrimary.run}
+                aria-label={headerPrimary.label}
+              >
+                {headerPrimary.label === 'Asignar' ? <Plus className="h-3.5 w-3.5" /> : null}
                 <span>{headerPrimary.label}</span>
-              )}
-            </Button>
-            <Button
+              </Button>
+            ) : (
+              <IconButton
+                size="sm"
+                variant="ghost"
+                aria-label={headerPrimary.label}
+                title={headerPrimary.label}
+                onClick={headerPrimary.run}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+              </IconButton>
+            )}
+            <IconButton
               ref={moreMenuAnchorRef}
-              variant="ghost"
               size="sm"
-              className="h-9 w-9 px-0"
-              onClick={() => setMoreMenuOpen((open) => !open)}
+              variant="ghost"
+              aria-label="Más acciones"
               aria-expanded={moreMenuOpen}
               aria-haspopup="menu"
-              aria-label="Más acciones"
+              onClick={() => setMoreMenuOpen((open) => !open)}
             >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </IconButton>
           </div>
         }
       />
@@ -950,84 +984,111 @@ export default function MemberRoutine() {
         </button>
       </AnchoredMenu>
 
-      <Card
-        padding="sm"
-        rounded="xl"
-        className="hidden border-zinc-200/70 bg-white sm:flex sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800/80 dark:bg-zinc-900/50"
-      >
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Avatar name={member.full_name} size="sm" className="shrink-0" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-              {member.full_name}
-            </p>
-            <p className="mt-0.5 truncate text-[10px] text-zinc-500 sm:text-xs dark:text-zinc-400">
-              {subscription
-                ? `${subscription.membership_name} · ${subscription.days_remaining} días`
-                : 'Sin membresía activa'}
-            </p>
+      {showHealthAlert ? (
+        <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+          Alerta de salud activa — revisa el perfil del miembro.
+        </p>
+      ) : null}
+
+      <div className="border-border/60 -mx-0.5 border-b">
+        <div
+          className="flex items-end gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label="Secciones del miembro"
+        >
+          {(
+            [
+              { value: 'rutinas', label: 'Rutinas' },
+              { value: 'progreso', label: 'Progreso' },
+              { value: 'bloques', label: 'Bloques' },
+              { value: 'agenda', label: 'Agenda' },
+              { value: 'coaching', label: 'Coaching' },
+            ] as const
+          ).map((tab) => {
+            const active = coachingTab === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => changeCoachingTab(tab.value)}
+                className={
+                  active
+                    ? 'text-text border-brand shrink-0 border-b-2 px-2.5 pt-0.5 pb-2 text-[13px] font-semibold whitespace-nowrap'
+                    : 'text-text-muted hover:text-text shrink-0 border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-[13px] font-medium whitespace-nowrap'
+                }
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              ref={moreSectionsAnchorRef}
+              onClick={() => setMoreSectionsOpen((o) => !o)}
+              aria-expanded={moreSectionsOpen}
+              aria-haspopup="menu"
+              className={
+                coachingTab === 'notas' || coachingTab === 'perfil'
+                  ? 'text-text border-brand border-b-2 px-2.5 pt-0.5 pb-2 text-[13px] font-semibold whitespace-nowrap'
+                  : 'text-text-muted hover:text-text border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-[13px] font-medium whitespace-nowrap'
+              }
+            >
+              Más
+            </button>
+            <AnchoredMenu
+              open={moreSectionsOpen}
+              onClose={() => setMoreSectionsOpen(false)}
+              anchorRef={moreSectionsAnchorRef}
+              className="min-w-[9rem]"
+            >
+              {(
+                [
+                  { value: 'notas', label: 'Notas' },
+                  { value: 'perfil', label: 'Perfil' },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  onClick={() => {
+                    setMoreSectionsOpen(false);
+                    changeCoachingTab(tab.value);
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </AnchoredMenu>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-1.5">
-          {member.goal && (
-            <Badge variant="warning" className="max-w-[8rem] truncate px-1.5 py-0 text-[9px]">
-              {formatMemberGoal(member.goal)}
-            </Badge>
-          )}
-          {showHealthAlert && (
-            <Badge variant="danger" className="px-1.5 py-0 text-[9px]">
-              Salud
-            </Badge>
-          )}
-          {routines.length > 0 && (
-            <Badge variant="default" className="px-1.5 py-0 text-[9px]">
-              {routines.length} rutina{routines.length !== 1 ? 's' : ''}
-            </Badge>
-          )}
-        </div>
-      </Card>
-
-      <SegmentedControl
-        variant="compact"
-        layout="wrap"
-        value={coachingTab}
-        onChange={changeCoachingTab}
-        options={[
-          { value: 'rutinas', label: 'Rutinas' },
-          { value: 'progreso', label: 'Progreso' },
-          { value: 'bloques', label: 'Bloques' },
-          { value: 'agenda', label: 'Agenda 1:1' },
-          { value: 'coaching', label: 'Coaching' },
-          { value: 'notas', label: 'Notas' },
-          { value: 'perfil', label: 'Perfil' },
-          { value: 'mediciones', label: 'Mediciones' },
-        ]}
-        className="w-full"
-      />
-
-      <div
-        className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-[12px] ${
-          coachingInsight.tone === 'danger'
-            ? 'bg-red-500/10 text-red-700 dark:text-red-300'
-            : coachingInsight.tone === 'warning'
-              ? 'bg-amber-500/10 text-amber-800 dark:text-amber-200'
-              : coachingInsight.tone === 'ok'
-                ? 'bg-zinc-100/80 text-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-400'
-                : 'bg-zinc-100/80 text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300'
-        }`}
-        role="status"
-      >
-        <p className="min-w-0 flex-1 leading-snug">{coachingInsight.message}</p>
-        {coachingInsight.actionLabel && coachingInsight.run && (
-          <button
-            type="button"
-            onClick={coachingInsight.run}
-            className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] font-semibold underline-offset-2 hover:underline"
-          >
-            {coachingInsight.actionLabel}
-          </button>
-        )}
       </div>
+
+      {coachingInsight ? (
+        <div
+          className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[12px] ${
+            coachingInsight.tone === 'danger'
+              ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+              : 'bg-amber-500/10 text-amber-800 dark:text-amber-200'
+          }`}
+          role="status"
+        >
+          <p className="min-w-0 flex-1 leading-snug">{coachingInsight.message}</p>
+          {coachingInsight.actionLabel && coachingInsight.run ? (
+            <button
+              type="button"
+              onClick={coachingInsight.run}
+              className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold underline-offset-2 hover:underline"
+            >
+              {coachingInsight.actionLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {coachingTab === 'perfil' && (
         <div className="space-y-2.5">
@@ -1292,18 +1353,6 @@ export default function MemberRoutine() {
             </div>
           </details>
         </div>
-      )}
-
-      {coachingTab === 'mediciones' && (
-        <MemberMeasurementsPanel
-          measurements={measurements}
-          canEdit={user?.role === 'admin' || user?.role === 'trainer'}
-          isAdding={isAddingMeasurement}
-          form={measurementForm}
-          onAddingChange={setIsAddingMeasurement}
-          onFormChange={setMeasurementForm}
-          onSubmit={handleAddMeasurement}
-        />
       )}
 
       <Modal
@@ -1638,23 +1687,38 @@ export default function MemberRoutine() {
         </div>
       </Modal>
 
-      {coachingTab === 'progreso' && id ? (
-        <MemberProgressPanel memberId={parseInt(id, 10)} />
-      ) : null}
+      <Suspense fallback={<PanelFallback />}>
+        {coachingTab === 'progreso' && id ? (
+          <div className="space-y-3">
+            <MemberProgressPanel memberId={parseInt(id, 10)} />
+            <MemberMeasurementsPanel
+              measurements={measurements}
+              canEdit={user?.role === 'admin' || user?.role === 'trainer'}
+              isAdding={isAddingMeasurement}
+              form={measurementForm}
+              onAddingChange={setIsAddingMeasurement}
+              onFormChange={setMeasurementForm}
+              onSubmit={handleAddMeasurement}
+            />
+          </div>
+        ) : null}
 
-      {coachingTab === 'notas' && id ? <MemberCoachNotesPanel memberId={parseInt(id, 10)} /> : null}
+        {coachingTab === 'notas' && id ? (
+          <MemberCoachNotesPanel memberId={parseInt(id, 10)} />
+        ) : null}
 
-      {coachingTab === 'coaching' && id ? (
-        <MemberCoachingPanel memberId={parseInt(id, 10)} />
-      ) : null}
+        {coachingTab === 'coaching' && id ? (
+          <MemberCoachingPanel memberId={parseInt(id, 10)} />
+        ) : null}
 
-      {coachingTab === 'bloques' && id ? (
-        <MemberTrainingBlocksPanel memberId={parseInt(id, 10)} />
-      ) : null}
+        {coachingTab === 'bloques' && id ? (
+          <MemberTrainingBlocksPanel memberId={parseInt(id, 10)} />
+        ) : null}
 
-      {coachingTab === 'agenda' && id ? (
-        <MemberAppointmentsPanel memberId={parseInt(id, 10)} />
-      ) : null}
+        {coachingTab === 'agenda' && id ? (
+          <MemberAppointmentsPanel memberId={parseInt(id, 10)} />
+        ) : null}
+      </Suspense>
 
       {coachingTab === 'rutinas' && (
         <div className="space-y-2.5">
@@ -1753,28 +1817,25 @@ export default function MemberRoutine() {
                       </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                      <button
-                        type="button"
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <IconButton
+                        size="sm"
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           void toggleExpandRoutine(routine.id);
                         }}
-                        className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-8 sm:w-8 sm:rounded-lg ${
-                          isExpanded
-                            ? 'border-zinc-900 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'hover:border-brand hover:text-brand border-zinc-200 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'
-                        }`}
                         aria-label={isExpanded ? 'Cerrar ejercicios' : 'Ver ejercicios'}
                         aria-expanded={isExpanded}
-                        title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
+                        title={isExpanded ? 'Cerrar' : 'Ejercicios'}
                       >
                         <ChevronDown
-                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                         />
-                      </button>
-                      <button
-                        type="button"
+                      </IconButton>
+                      <IconButton
+                        size="sm"
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (routineMenuId === routine.id) {
@@ -1784,63 +1845,12 @@ export default function MemberRoutine() {
                           routineMenuAnchorRef.current = e.currentTarget;
                           setRoutineMenuId(routine.id);
                         }}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 sm:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
                         aria-label="Más acciones"
                         aria-expanded={routineMenuId === routine.id}
                         aria-haspopup="menu"
                       >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                      <div className="hidden items-center gap-0.5 sm:flex">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(routine);
-                          }}
-                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                          aria-label={`Editar ${routine.name}`}
-                          title="Editar"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleCloneRoutine(routine);
-                          }}
-                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                          aria-label={`Duplicar ${routine.name}`}
-                          title="Duplicar en biblioteca"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setUnassignTarget(routine);
-                          }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                          aria-label={`Quitar ${routine.name}`}
-                          title="Quitar"
-                        >
-                          <UserMinus className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void navigate(`/members/${id}/history?routine=${routine.id}`);
-                          }}
-                          className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                          aria-label={`Historial de ${routine.name}`}
-                          title="Historial"
-                        >
-                          <History className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </IconButton>
                     </div>
                   </div>
 
@@ -1947,21 +1957,21 @@ export default function MemberRoutine() {
                               <button
                                 type="button"
                                 onClick={() => openSubstitution(routine.id, exercise)}
-                                className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                                className="hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
                                 aria-label={`Sustituir ${exercise.name}`}
                                 title="Sustituir"
                               >
-                                <ArrowLeftRight className="h-3.5 w-3.5" />
+                                <ArrowLeftRight className="h-4 w-4" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => {
                                   setDeleteExerciseTarget({ routineId: routine.id, exercise });
                                 }}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
                                 aria-label={`Eliminar ${exercise.name}`}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
@@ -2007,6 +2017,18 @@ export default function MemberRoutine() {
                 >
                   <Edit className="h-4 w-4" />
                   Editar
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  onClick={() => {
+                    setRoutineMenuId(null);
+                    void handleCloneRoutine(menuRoutine);
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicar
                 </button>
                 <button
                   type="button"

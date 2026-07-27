@@ -234,7 +234,7 @@ export function RoutinesCalendarView({
                 onDragStart={(e) => {
                   setAssignDrag(e.dataTransfer, { kind: 'routine', id: r.id });
                 }}
-                className="border-brand/20 bg-brand/5 inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold text-zinc-800 active:cursor-grabbing dark:text-zinc-100"
+                className="border-brand/20 bg-brand/5 inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1 text-[11px] font-semibold text-zinc-800 active:cursor-grabbing dark:text-zinc-100"
                 title={`Arrastrar rutina «${r.name}»`}
               >
                 <Dumbbell className="text-brand h-3 w-3 shrink-0" aria-hidden />
@@ -249,7 +249,7 @@ export function RoutinesCalendarView({
                 onDragStart={(e) => {
                   setAssignDrag(e.dataTransfer, { kind: 'member', id: m.id });
                 }}
-                className="inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
+                className="inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
                 title={`Arrastrar miembro «${m.full_name}»`}
               >
                 <Users className="h-3 w-3 shrink-0 text-zinc-400" aria-hidden />
