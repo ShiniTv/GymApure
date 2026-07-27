@@ -35,6 +35,8 @@ export interface MembersQueryParams {
   search: string;
   expiringFilter: boolean;
   shiftFilter?: string;
+  /** Admin role filter; trainers always force member via isTrainer. */
+  roleFilter?: string;
   isTrainer: boolean;
 }
 
@@ -51,6 +53,7 @@ async function fetchMembers(params: MembersQueryParams): Promise<PaginatedUsers>
   if (params.expiringFilter) qs.set('expiring', 'true');
   if (params.shiftFilter) qs.set('shift', params.shiftFilter);
   if (params.isTrainer) qs.set('role', 'member');
+  else if (params.roleFilter) qs.set('role', params.roleFilter);
 
   const res = await apiFetch(`/api/users?${qs.toString()}`);
   return parseJsonResponse<PaginatedUsers>(res);

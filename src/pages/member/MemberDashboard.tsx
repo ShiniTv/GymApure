@@ -30,6 +30,7 @@ import { cn, formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { MemberHero } from '../../components/member/MemberHero';
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
+import { MemberRemoteTrainingCard } from '../../components/member/MemberRemoteTrainingCard';
 import { PushOnboardingCard } from '../../components/PushOnboardingCard';
 import { Button, Card, Collapse, EmptyState, PageHeader, Badge } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
@@ -243,6 +244,7 @@ export default function MemberDashboard() {
         })()}
 
       <MemberSelfCheckInCard />
+      <MemberRemoteTrainingCard />
 
       {/* Desktop: full routine + membership cards. Mobile: no second train CTA (hero owns it). */}
       {isMobile ? (

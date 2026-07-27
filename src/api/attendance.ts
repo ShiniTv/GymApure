@@ -343,24 +343,114 @@ router.get(
   '/me',
   authorize(['member']),
   asyncHandler(async (req: AuthRequest, res) => {
-    const { rows } = await query<{
-      id: number;
-      check_in_time: Date | string;
-      is_inside: boolean;
-    }>(
-      `SELECT id, check_in_time, (check_out_time IS NULL) AS is_inside
-       FROM attendance
-       WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')}
-       ORDER BY check_in_time DESC
-       LIMIT 1`,
-      [req.user!.id]
-    );
-    const latest = rows[0] ?? null;
+    const memberId = req.user!.id;
+    const [attendanceResult, remoteResult] = await Promise.all([
+      query<{
+        id: number;
+        check_in_time: Date | string;
+        is_inside: boolean;
+      }>(
+        `SELECT id, check_in_time, (check_out_time IS NULL) AS is_inside
+         FROM attendance
+         WHERE user_id = $1 AND ${sqlTodayRange('check_in_time')}
+         ORDER BY check_in_time DESC
+         LIMIT 1`,
+        [memberId]
+      ),
+      query<{
+        id: number;
+        started_at: Date | string;
+      }>(
+        `SELECT id, started_at
+         FROM member_remote_sessions
+         WHERE member_id = $1
+           AND ended_at IS NULL
+           AND started_at >= NOW() - INTERVAL '4 hours'
+         ORDER BY started_at DESC
+         LIMIT 1`,
+        [memberId]
+      ),
+    ]);
+    const latest = attendanceResult.rows[0] ?? null;
+    const remote = remoteResult.rows[0] ?? null;
     res.json({
       is_inside: Boolean(latest?.is_inside),
       check_in_time: latest?.check_in_time ?? null,
       attendance_id: latest?.id ?? null,
+      remote_training: Boolean(remote),
+      remote_session_id: remote?.id ?? null,
+      remote_started_at: remote?.started_at ?? null,
     });
+  })
+);
+
+router.post(
+  '/remote-start',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const memberId = req.user!.id;
+
+    // Close stale open sessions (>4h) before starting a new one.
+    await query(
+      `UPDATE member_remote_sessions
+       SET ended_at = started_at + INTERVAL '4 hours'
+       WHERE member_id = $1
+         AND ended_at IS NULL
+         AND started_at < NOW() - INTERVAL '4 hours'`,
+      [memberId]
+    );
+
+    const existing = await query<{ id: number; started_at: Date | string }>(
+      `SELECT id, started_at
+       FROM member_remote_sessions
+       WHERE member_id = $1 AND ended_at IS NULL
+       LIMIT 1`,
+      [memberId]
+    );
+    if (existing.rows[0]) {
+      res.json({
+        message: 'Ya estás marcando entrenamiento remoto',
+        already_active: true,
+        id: existing.rows[0].id,
+        started_at: existing.rows[0].started_at,
+      });
+      return;
+    }
+
+    const { rows } = await query<{ id: number; started_at: Date | string }>(
+      `INSERT INTO member_remote_sessions (member_id)
+       VALUES ($1)
+       RETURNING id, started_at`,
+      [memberId]
+    );
+    const session = rows[0];
+    await logAudit(memberId, 'member.remote_training_start', { session_id: session.id });
+    res.status(201).json({
+      message: 'Entrenamiento remoto iniciado',
+      id: session.id,
+      started_at: session.started_at,
+    });
+  })
+);
+
+router.post(
+  '/remote-end',
+  authorize(['member']),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const memberId = req.user!.id;
+    const { rows } = await query<{ id: number }>(
+      `UPDATE member_remote_sessions
+       SET ended_at = NOW()
+       WHERE member_id = $1 AND ended_at IS NULL
+       RETURNING id`,
+      [memberId]
+    );
+    if (!rows[0]) {
+      res.status(400).json({ error: 'No tienes un entrenamiento remoto activo' });
+      return;
+    }
+    await logAudit(memberId, 'member.remote_training_end', { session_id: rows[0].id });
+    res.json({ message: 'Entrenamiento remoto finalizado', id: rows[0].id });
   })
 );
 

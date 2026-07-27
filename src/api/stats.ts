@@ -494,6 +494,23 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
              LIMIT 8`,
             [trainerId]
           ),
+          query<{ id: number; full_name: string; started_at: string }>(
+            `SELECT u.id, u.full_name, rs.started_at::text
+             FROM member_remote_sessions rs
+             JOIN users u ON u.id = rs.member_id
+             WHERE rs.ended_at IS NULL
+               AND rs.started_at >= NOW() - INTERVAL '4 hours'
+               AND (
+                 u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+                 OR u.id IN (
+                   SELECT ur.user_id FROM user_routines ur
+                   JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+                 )
+               )
+             ORDER BY rs.started_at DESC
+             LIMIT 12`,
+            [trainerId]
+          ),
         ])
       : Promise.resolve(null);
 
@@ -544,6 +561,7 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const membersWithoutAssessment = trainerExtras ? trainerExtras[4].rows : [];
     const staleCheckins = trainerExtras ? trainerExtras[5].rows : [];
     const recoveryAlerts = trainerExtras ? trainerExtras[6].rows : [];
+    const remoteTrainingNow = trainerExtras ? trainerExtras[7].rows : [];
 
     res.json({
       totalMembers: parseInt(totalMembers.rows[0]?.count || '0', 10),
@@ -559,6 +577,8 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       membersWithoutAssessment,
       staleCheckins,
       recoveryAlerts,
+      remoteTrainingNow,
+      remoteActiveNow: remoteTrainingNow.length,
       expiryAlertDays: alertDays,
     });
   } catch (err: unknown) {

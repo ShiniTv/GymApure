@@ -30,6 +30,12 @@ export interface TrainerStatsResponse {
     full_name: string;
     check_in_time: string;
   }[];
+  remoteTrainingNow?: {
+    id: number;
+    full_name: string;
+    started_at: string;
+  }[];
+  remoteActiveNow?: number;
   membersWithoutAssessment?: {
     id: number;
     full_name: string;

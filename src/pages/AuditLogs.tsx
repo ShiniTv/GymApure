@@ -55,6 +55,8 @@ const ACTION_LABELS: Record<string, string> = {
   'auth.logout': 'Cierre de sesión',
   'auth.register': 'Registro',
   'auth.change_password': 'Cambio contraseña',
+  'member.remote_training_start': 'Entrenamiento remoto',
+  'member.remote_training_end': 'Fin entrenamiento remoto',
 };
 
 const ACTION_FILTERS = [
@@ -188,18 +190,17 @@ export default function AuditLogs() {
                   <li key={log.id} className="relative flex gap-4 pb-5 last:pb-0">
                     {!isLast && (
                       <span
-                        className="absolute top-10 bottom-0 left-5 w-px bg-zinc-200 dark:bg-zinc-800"
+                        className="bg-border/80 absolute top-10 bottom-0 left-5 w-px"
                         aria-hidden
                       />
                     )}
                     <div
                       className={cn(
-                        'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-white dark:ring-zinc-900',
+                        'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-[var(--color-surface)]',
                         variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
                         variant === 'danger' && 'bg-red-500/10 text-red-600',
                         variant === 'accent' && 'bg-brand/10 text-brand',
-                        variant === 'default' &&
-                          'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        variant === 'default' && 'bg-surface-raised text-text-secondary'
                       )}
                     >
                       <Icon className="h-5 w-5" />
@@ -215,12 +216,12 @@ export default function AuditLogs() {
                         </time>
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                        <p className="text-text truncate text-sm font-semibold">
                           {log.user_name ?? 'Sistema'}
                         </p>
                         {log.user_email ? (
                           <p
-                            className="mt-0.5 truncate text-xs font-normal text-zinc-500 dark:text-zinc-400"
+                            className="text-text-secondary mt-0.5 truncate text-xs font-normal"
                             title={log.user_email}
                           >
                             {log.user_email}
@@ -228,7 +229,7 @@ export default function AuditLogs() {
                         ) : null}
                       </div>
                       <p
-                        className="mt-1 line-clamp-2 text-xs break-words text-zinc-500 dark:text-zinc-400"
+                        className="text-text-secondary mt-1 line-clamp-2 text-xs break-words"
                         title={detailText}
                       >
                         {detailText}
@@ -242,7 +243,7 @@ export default function AuditLogs() {
             {/* Desktop: dense table */}
             <div className="hidden min-w-0 overflow-x-auto lg:block">
               <table className="w-full min-w-[52rem] text-left text-sm">
-                <thead className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-400">
+                <thead className="border-border/80 bg-surface-raised/70 sticky top-0 z-[1] border-b text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:text-zinc-400">
                   <tr>
                     <th className="px-3 py-2.5">Cuándo</th>
                     <th className="px-3 py-2.5">Acción</th>
@@ -250,13 +251,13 @@ export default function AuditLogs() {
                     <th className="min-w-0 px-3 py-2.5">Detalle</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border/60 divide-y">
                   {logs.map((log) => {
                     const variant = actionBadgeVariant(log.action);
                     const detailText = formatDetails(log.details);
                     return (
-                      <tr key={log.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
-                        <td className="px-3 py-2.5 text-xs whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
+                      <tr key={log.id} className="hover:bg-surface-raised/70 transition-colors">
+                        <td className="text-text-secondary px-3 py-2.5 text-xs whitespace-nowrap tabular-nums">
                           <time dateTime={log.created_at}>
                             {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', {
                               locale: es,
@@ -267,19 +268,19 @@ export default function AuditLogs() {
                           <Badge variant={variant}>{actionLabel(log.action)}</Badge>
                         </td>
                         <td className="max-w-[14rem] min-w-0 px-3 py-2.5">
-                          <p className="truncate font-semibold text-zinc-900 dark:text-white">
+                          <p className="text-text truncate font-semibold">
                             {log.user_name ?? 'Sistema'}
                           </p>
                           {log.user_email ? (
                             <p
-                              className="truncate text-[11px] text-zinc-500 dark:text-zinc-400"
+                              className="text-text-secondary truncate text-[11px]"
                               title={log.user_email}
                             >
                               {log.user_email}
                             </p>
                           ) : null}
                         </td>
-                        <td className="max-w-[28rem] min-w-0 px-3 py-2.5 text-xs text-zinc-600 dark:text-zinc-300">
+                        <td className="text-text-secondary max-w-[28rem] min-w-0 px-3 py-2.5 text-xs">
                           <p className="line-clamp-2 break-words" title={detailText}>
                             {detailText}
                           </p>
