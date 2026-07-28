@@ -146,7 +146,7 @@ export default function AdminDashboard() {
   return (
     <div className="page-stack-tight mx-auto w-full max-w-7xl">
       <StaffPortalBanner
-        eyebrow="Panel administrativo"
+        eyebrow="GymApure · Panel administrativo"
         title={<>Administración general</>}
         subtitle="Supervisión y gestión del gym"
       />

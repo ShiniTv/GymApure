@@ -94,9 +94,11 @@ npm run db:audit:prod
 | `member_health_profiles`                     | Perfil metabólico                |
 | `push_subscriptions`                         | Web push                         |
 | `password_reset_tokens`                      | Recuperar contraseña             |
+| `demo_requests`                              | Leads landing `/solicitar-demo`  |
 | `schema_migrations`                          | Solo scripts de migración        |
+| `web_vitals_metrics`                         | Telemetría Core Web Vitals       |
 
-**Eliminada:** `demo_requests` (julio 2026).
+> **Nota (2026-07-28):** `demo_requests` se eliminó temporalmente y se **reintrodujo** (`20260717000002_demo_requests.sql`) para captura de leads. No está huérfana.
 
 ---
 
@@ -156,18 +158,31 @@ _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producci
 1. Migración `drop_demo_requests` — tabla huérfana eliminada en ambos entornos
 2. Migración `cleanup_legacy_settings` — columna `image_url` eliminada; keys legacy purgadas
 3. Migración `ensure_rls_lockdown_all_tables` — política `backend_only` en **todas** las tablas public
-4. `schema_migrations` debe igualar los **71** archivos en `supabase/migrations/` (verificar con `db:health`)
-5. Tokens de reset expirados purgados en dev (prod: 0 tokens)
+4. `schema_migrations` debe igualar los archivos en `supabase/migrations/` (verificar con `db:health`; **75** al 2026-07-28)
+5. Tokens de reset expirados purgados en dev (prod: 0 tokens tras purge 2026-07-28)
 
-### Estado post-remediación
+### Estado post-remediación (histórico 2026-07-11)
 
 | Check                           | Dev     | Prod    |
 | ------------------------------- | ------- | ------- |
 | Migraciones al día              | 42/42   | 42/42   |
 | Subscriptions activas expiradas | 0       | 0       |
 | Supabase security advisors      | 0 lints | 0 lints |
-| `demo_requests` existe          | No      | No      |
+| `demo_requests` existe          | No\*    | No\*    |
 | `equipment_catalog.image_url`   | No      | No      |
+
+\*Tabla reintroducida el 2026-07-17 para leads; ver snapshot 2026-07-28 abajo.
+
+### Snapshot auditoría 360° (2026-07-28)
+
+| Check                           | Dev                                                                 | Prod                                |
+| ------------------------------- | ------------------------------------------------------------------- | ----------------------------------- |
+| Migraciones                     | 75/75                                                               | 75/75                               |
+| `db:health`                     | OK                                                                  | OK (tras purge 1 reset token usado) |
+| Tokens reset expirados/usados   | 0                                                                   | 0                                   |
+| Isolation `db:verify-isolation` | PASS (reset dev no afectó prod; 16 users prod)                      |
+| Prod `/api/health`              | —                                                                   | `ok`, `db_latency_ms` ≈ 21          |
+| Staging                         | Local PG `gymapure_staging` (cloud bloqueado: Free 2-project limit) |
 
 ### Tablas más grandes (prod)
 
@@ -181,12 +196,13 @@ _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producci
 
 ### Pendiente manual (ops — no bloquea desarrollo)
 
-Snapshot histórico del 2026-07-11 (entonces ~42 migraciones). Hoy el repo tiene **71** SQL en `supabase/migrations/` (2026-07-25).
+Snapshot histórico del 2026-07-11 (entonces ~42 migraciones). Hoy el repo tiene **75** SQL en `supabase/migrations/` (2026-07-28).
 
 Antes de cleanup en producción:
 
 1. Confirmar `npm run db:migrate:prod` al día (incluye `storage_objects_rls` si aún no está).
 2. `npm run db:audit-storage:prod` y revisar huérfanos antes de `db:storage-cleanup --apply`.
 3. Despliegue Render solo tras merge + checklist de release (`scripts/deploy/release-checklist.ts`).
+4. Staging cloud: upgrade Supabase o pausar un proyecto Free → `npm run db:create-staging-project`.
 
 Device QA push/PWA (Android bg / iPhone Add to Home) sigue en [QA-DEVICE-10.md](../qa/QA-DEVICE-10.md). Staging: [STAGING.md](./STAGING.md).

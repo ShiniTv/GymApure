@@ -26,6 +26,8 @@ Credenciales demo: `docs/TESTING.md` (`DEMO_PASSWORD`).
 
 A1/A3 verificados en Playwright mobile (`qa-device-push.mobile.spec.ts`, 2026-07-23). A2/A4/A5 requieren Chrome real en Android.
 
+**Auditoría 360° (2026-07-28):** axe ampliado a `/payments`, `/check-in?kiosk=1`, `/routines`. Flujo profundo workout: `tests/ux/workout-deep-flow.spec.ts`. Filas A4/I2–I4 siguen requiriendo dispositivo físico — no marcar sin plantilla de evidencia abajo.
+
 **PWA nombre:** el manifest usa **GymApure** (no “Caribean Gym”). Tras instalar, el icono/nombre en el launcher debe coincidir.
 
 ## iPhone — Safari 16.4+

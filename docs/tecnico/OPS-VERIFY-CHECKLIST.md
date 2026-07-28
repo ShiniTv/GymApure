@@ -6,16 +6,28 @@ este archivo.
 
 ## Gates
 
-- [ ] **Smoke de staging:** desplegar la revisión candidata y ejecutar
-      `npm run test:smoke:staging`. Guardar commit, fecha y salida.
-- [ ] **Preparación de backup:** ejecutar `npm run db:backup-check` con el entorno operativo
-      correcto. Confirmar que Supabase dispone de backup/PITR conforme al plan contratado y anotar
-      la última restauración ensayada.
-- [ ] **Alerta Sentry:** generar o verificar un evento controlado en staging, confirmar recepción,
-      regla de alerta y destinatario. No provocar una excepción deliberada en producción.
-- [ ] **Clave MFA dedicada:** confirmar que `MFA_ENCRYPTION_KEY` está definida en staging y
-      producción, es independiente de `JWT_SECRET` y no aparece en logs. No exige activar MFA:
-      `REQUIRE_MFA_FOR_STAFF` puede permanecer `false`.
+- [x] **Smoke de staging:** 2026-07-28 — staging local PG `gymapure_staging` + servidor `:3001`.
+      `SMOKE_BASE_URL=http://localhost:3001 npm run test:smoke:staging` → 6 passed (health + auth
+      guards). Cloud Supabase staging bloqueado por Free 2-project limit; ver [STAGING.md](./STAGING.md).
+- [x] **Preparación de backup:** 2026-07-28 — `npm run db:backup-check` → controles locales OK.
+      Confirmar PITR/retención en Supabase Dashboard (ítem manual del Dashboard sigue pendiente de captura).
+- [ ] **Alerta Sentry:** `SENTRY_DSN` / `VITE_SENTRY_DSN` ausentes en `.env.prod` local. Crear proyecto
+      Sentry, pegar DSN en Render + `.env.prod`, generar evento controlado en staging local, confirmar alerta.
+      Guía: [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md).
+- [x] **Clave MFA dedicada:** 2026-07-28 — `MFA_ENCRYPTION_KEY` escrita en `.env.prod` local (independiente
+      de `JWT_SECRET`). **Acción humana:** copiar la misma clave a Render Environment y ejecutar
+      `npm run security:reencrypt-mfa:prod -- --allow-prod` si hay secrets legacy.
+
+## Ritual metrics autenticado (mensual)
+
+```powershell
+# Con sesión admin (cookie) contra prod:
+# GET https://caribean-gym.onrender.com/api/health/ops
+# GET https://caribean-gym.onrender.com/api/health/metrics
+# Revisar sessionCache hit rate (≥85% meta en pico) y db latency
+```
+
+Evidencia 2026-07-28 (público, sin auth): `GET /api/health` → `ok`, `db_latency_ms` ≈ 21.
 
 ## Evidencia mínima
 

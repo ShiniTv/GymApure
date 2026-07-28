@@ -6,3 +6,10 @@ export {
   trainerOwnsRoutine,
   isActiveMember,
 } from '../trainerAccess.ts';
+export {
+  verifySessionToken,
+  sessionFailureStatus,
+  createLoginSession,
+  type DbSessionUser,
+} from '../sessionAuth.ts';
+export { hashPassword, verifyPassword } from '../passwordHash.ts';

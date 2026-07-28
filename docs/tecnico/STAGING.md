@@ -6,32 +6,38 @@ Staging es un **tercer entorno** entre desarrollo y producción. Sirve para vali
 
 ## Cuándo usar cada entorno
 
-| Entorno | Nombre Supabase          | Supabase ref           | Uso                                        |
-| ------- | ------------------------ | ---------------------- | ------------------------------------------ |
-| Dev     | GymApure – Desarrollo    | `sqjyxmbtgmiorckigrrg` | Desarrollo diario, demo, `db:restore-demo` |
-| Staging | _(crear proyecto nuevo)_ | `CHANGEME`             | QA pre-prod, migraciones, smoke tests      |
-| Prod    | GymApure – Producción    | `ffjwvlcwhyskddqqojnp` | Usuarios reales del gym (Render)           |
+| Entorno | Nombre / host                                                                           | Ref / DSN                         | Uso                                        |
+| ------- | --------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------ |
+| Dev     | GymApure – Desarrollo (Supabase)                                                        | `sqjyxmbtgmiorckigrrg`            | Desarrollo diario, demo, `db:restore-demo` |
+| Staging | **Local PG** `gymapure_staging` (actual) o Supabase Staging (cuando el plan lo permita) | `127.0.0.1:5432/gymapure_staging` | QA pre-prod, migraciones, smoke            |
+| Prod    | GymApure – Producción (Supabase) + Render                                               | `ffjwvlcwhyskddqqojnp`            | Usuarios reales del gym                    |
+
+### Limitación Free (2026-07-28)
+
+Supabase Free permite **2 proyectos activos**. Dev + Prod ocupan el cupo; `npm run db:create-staging-project` falla con el límite. Staging operativo actual = **PostgreSQL 17 local** (`.env.staging`). Al subir de plan o pausar un proyecto: crear cloud con `db:create-staging-project` y actualizar este doc + [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
+
+Migraciones Storage (`payment-proofs`, etc.) se **omiten** en staging local (sin Supabase Storage); el resto del esquema aplica (75/75 en `schema_migrations` contando omitidas reconocidas).
 
 ---
 
-## Crear staging (una vez)
+## Crear staging local (actual)
 
-1. Supabase Dashboard → **New project** (región cercana a prod, plan Free/Pro según necesidad).
-2. Copiar plantilla:
-   ```powershell
-   Copy-Item .env.staging.example .env.staging
-   ```
-3. Completar `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CRON_SECRET`.
-4. Reemplazar `CHANGEME_STAGING_REF` en la URL con el ref del nuevo proyecto.
-5. Bootstrap:
-   ```powershell
-   npm run env:init-staging
-   npm run db:migrate:staging
-   npm run db:health:staging
-   npm run db:create-admin:staging
-   ```
-6. (Opcional) Servicio Render `caribean-gym-staging` apuntando al mismo `.env` vía Dashboard.
-7. Añadir el ref de staging en [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md) cuando exista.
+```powershell
+# Requiere PostgreSQL local + .env.staging (gitignored)
+npm run db:migrate:staging
+npm run db:health:staging
+$env:ADMIN_EMAIL='staging-admin@gym.local'
+$env:ADMIN_PASSWORD='StagingAdmin123!'
+$env:ADMIN_FULL_NAME='Staging Admin'
+npm run db:create-admin:staging
+```
+
+## Crear staging cloud (cuando el plan lo permita)
+
+1. `npm run db:create-staging-project` **o** Dashboard → New project.
+2. Completar `.env.staging` (ref, service role, JWT, CRON).
+3. `npm run db:migrate:staging && npm run db:health:staging && npm run db:create-admin:staging`
+4. (Opcional) Render `caribean-gym-staging`.
 
 ---
 
@@ -42,25 +48,25 @@ npm run env:check
 npm run deploy:release -- --run
 # Si staging OK y listo para prod:
 npm run deploy:release -- --run --migrate-prod
-# O solo: npm run db:migrate:prod
 ```
 
-Smoke contra staging (servidor con `.env.staging`):
+`--migrate-prod` **exige** `.env.staging` completo (sin `CHANGEME`) salvo `--allow-skip-staging`.
+
+Smoke:
 
 ```powershell
+# Servidor contra staging en otro terminal:
+npx tsx scripts/dev/run-with-env.ts .env.staging server.ts
 npm run test:smoke:staging
-npm run security:audit-mfa:staging
 ```
-
-Si todo pasa → deploy a Render prod.
 
 ---
 
 ## Reglas
 
 - **Nunca** copiar dump de prod con PII a staging sin anonimizar.
-- **Nunca** usar `db:restore-demo` en staging si ese entorno se usa para QA realista (usa datos sintéticos).
-- `ENABLE_HIBP_CHECK=true` en staging igual que prod. MFA permanece opcional (`REQUIRE_MFA_FOR_STAFF=false`).
+- **Nunca** usar `db:restore-demo` en staging cloud con datos realistas.
+- MFA opcional (`REQUIRE_MFA_FOR_STAFF=false`).
 
 ---
 

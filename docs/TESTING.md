@@ -105,7 +105,7 @@ npm run verify:local-e2e
 npm run test:ux
 ```
 
-Playwright (navegador) no corre en CI por defecto; ejecútalo local antes de release:
+Playwright corre en CI (`npm run test:ux:browser` en `.github/workflows/ci.yml`). Localmente:
 
 ```bash
 npx playwright install chromium

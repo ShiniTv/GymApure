@@ -55,9 +55,23 @@ test.describe('Auditoría WCAG AA', () => {
     await expectNoAccessibilityViolations(page);
   });
 
-  test('recepción no presenta violaciones WCAG AA', async ({ page }) => {
+  test('pagos (admin) no presenta violaciones WCAG AA', async ({ page }) => {
+    await login(page, ADMIN_EMAIL, demoPassword());
+    await page.goto('/payments', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test('recepción tablet no presenta violaciones WCAG AA', async ({ page }) => {
     await login(page, RECEPTION_EMAIL, demoPassword());
-    await page.goto('/reception');
+    await page.goto('/check-in?kiosk=1', { waitUntil: 'domcontentloaded' });
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test('rutinas de miembro no presenta violaciones WCAG AA graves', async ({ page }) => {
+    await login(page, MEMBER_EMAIL, demoPassword());
+    await page.goto('/routines', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
     await expectNoAccessibilityViolations(page);
   });
 });

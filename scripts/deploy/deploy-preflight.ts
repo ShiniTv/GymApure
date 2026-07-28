@@ -67,11 +67,22 @@ function main() {
   const sslCa = process.env.DATABASE_SSL_CA?.trim() ?? '';
 
   if (isProd) {
-    ok(
-      'REDIS_URL configurado (rate limit / lockout)',
-      redisUrl.length > 0,
-      'Render Key Value (caribean-gym-kv) o Upstash; ver render.yaml'
-    );
+    const onRender = Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID);
+    // En laptop .env.prod a menudo no copia REDIS_URL (está en Render Dashboard).
+    // En el servicio Render sí debe existir — FAIL solo allí.
+    if (onRender) {
+      ok(
+        'REDIS_URL configurado (rate limit / lockout)',
+        redisUrl.length > 0,
+        'Render Key Value (caribean-gym-kv) o Upstash; ver render.yaml'
+      );
+    } else {
+      warn(
+        'REDIS_URL en .env.prod local (rate limit / lockout)',
+        redisUrl.length > 0,
+        'Confirmado en Render vía caribean-gym-kv; opcional en CLI local'
+      );
+    }
     warn(
       'DATABASE_SSL_CA (TLS verificado a Postgres)',
       sslCa.length > 0,

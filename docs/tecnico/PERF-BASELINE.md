@@ -41,8 +41,14 @@ $env:ANALYZE=1; npm run build
 | ------------------------------- | ------------------------------- |
 | `/login` Lighthouse performance | 0.97                            |
 | `/login` accessibility          | 1.00                            |
-| `/login` LCP                    | 1069 ms                         |
-| `bundle:budget`                 | OK (130 JS assets)              |
+| `/login` LCP                    | 1066 ms (re-medida 2026-07-28)  |
+| `bundle:budget`                 | OK (133 JS assets, 2026-07-28)  |
 | `bundle:baseline` gzip delta    | +3.3% (under 5% fail threshold) |
+
+### Soft gate panel (2026-07-28)
+
+- Panel autenticado se mide en CI con `LIGHTHOUSE_AUTH_PANEL=1` (advisory).
+- Endurecer: `$env:LIGHTHOUSE_PANEL_STRICT='1'; $env:LIGHTHOUSE_AUTH_PANEL='1'; npm run lighthouse:ci` cuando el panel cumpla ≥0.72 estable.
+- Prod health 2026-07-28: `db_latency_ms` ≈ 21 ms. Redis session cache: confirmar hit-rate en `/api/health/metrics` con sesión admin (Render tiene `REDIS_URL` vía KV).
 
 Update this file when `lighthouse:ci` numbers move meaningfully.

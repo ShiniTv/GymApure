@@ -97,3 +97,28 @@ export function useDiscardWorkoutMutation() {
     onSuccess: (_data, variables) => invalidate(variables.routineId),
   });
 }
+
+export function useAddRoutineExerciseMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      routineId,
+      payload,
+    }: {
+      routineId: string | number;
+      payload: unknown;
+    }) => {
+      const res = await apiFetch(`/api/routines/${routineId}/exercises`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return parseJsonResponse(res);
+    },
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['workout-routine', String(variables.routineId)],
+      });
+    },
+  });
+}

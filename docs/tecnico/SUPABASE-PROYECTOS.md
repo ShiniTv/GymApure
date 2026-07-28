@@ -6,10 +6,11 @@ Referencia canónica para no confundir **nombre en el dashboard** con **rol real
 
 ## Mapa actual (julio 2026)
 
-| Nombre en Supabase Dashboard | Ref                    | Rol                  | Archivo local | Render              |
-| ---------------------------- | ---------------------- | -------------------- | ------------- | ------------------- |
-| **GymApure – Desarrollo**    | `sqjyxmbtgmiorckigrrg` | Desarrollo / pruebas | `.env.dev`    | No                  |
-| **GymApure – Producción**    | `ffjwvlcwhyskddqqojnp` | Gym en vivo          | `.env.prod`   | Sí (`DATABASE_URL`) |
+| Nombre en Supabase Dashboard / host | Ref / DSN              | Rol                                           | Archivo local        | Render              |
+| ----------------------------------- | ---------------------- | --------------------------------------------- | -------------------- | ------------------- |
+| **GymApure – Desarrollo**           | `sqjyxmbtgmiorckigrrg` | Desarrollo / pruebas                          | `.env.dev`           | No                  |
+| Staging local PG `gymapure_staging` | `127.0.0.1:5432`       | QA pre-prod (Free: sin 3er proyecto Supabase) | `.env.staging`       | Opcional futuro     |
+| **GymApure – Producción**           | `ffjwvlcwhyskddqqojnp` | Gym en vivo                                   | `.env.prod` / Render | Sí (`DATABASE_URL`) |
 
 **Regla:** el ref dentro de `DATABASE_URL` (`postgres.XXXXXXXX`) es la fuente de verdad — no el nombre visual del proyecto.
 

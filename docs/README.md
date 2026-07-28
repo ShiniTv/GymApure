@@ -58,6 +58,7 @@
 | [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md)             | Nombres y refs de proyectos Supabase (mapa)        |
 | [tecnico/VARIABLES-ENTORNO.md](./tecnico/VARIABLES-ENTORNO.md)               | Tabla completa de variables `.env`                 |
 | [tecnico/ARQUITECTURA.md](./tecnico/ARQUITECTURA.md)                         | Stack, flujo de datos, auth, crons, Storage        |
+| [adr/README.md](./adr/README.md)                                             | Architecture Decision Records (001–004)            |
 | [tecnico/MIGRACIONES-Y-BD.md](./tecnico/MIGRACIONES-Y-BD.md)                 | Política de migraciones y resumen reciente         |
 | [DESARROLLO.md](./DESARROLLO.md)                                             | Flujo diario de desarrollo, comandos, convenciones |
 | [DEPLOY.md](./DEPLOY.md)                                                     | Despliegue Render + Supabase producción            |

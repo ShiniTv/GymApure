@@ -18,7 +18,11 @@ function hasStagingEnv(): boolean {
   const p = path.join(root, '.env.staging');
   if (!fs.existsSync(p)) return false;
   const raw = fs.readFileSync(p, 'utf8');
-  return !raw.includes('CHANGEME_STAGING_REF') && !raw.includes('CHANGEME_STAGING_SERVICE');
+  // Cloud template placeholders OR empty DATABASE_URL
+  if (raw.includes('CHANGEME_STAGING_REF') || raw.includes('CHANGEME_STAGING_SERVICE')) {
+    return false;
+  }
+  return /DATABASE_URL=.+/m.test(raw) && !/DATABASE_URL=.*CHANGEME/m.test(raw);
 }
 
 function npmRun(script: string): boolean {
@@ -32,15 +36,19 @@ function npmRun(script: string): boolean {
 }
 
 function main() {
+  const allowSkipStaging = process.argv.includes('--allow-skip-staging');
   console.log('\n=== GymApure release checklist ===\n');
   console.log('1. Preflight prod (secretos / Redis / avisos SSL·Sentry·SMTP)');
-  console.log('2. Migrar + smoke en staging (si .env.staging está completo)');
+  console.log('2. Migrar + health (+ smoke) en staging');
   console.log('3. Migrar producción: npm run db:migrate:prod');
   console.log('4. Deploy Render (main) + health check\n');
 
   if (!run && !migrateProd) {
     console.log('Modo dry-run. Para ejecutar staging: npm run deploy:release -- --run');
-    console.log('Para migrar prod tras staging OK: npm run deploy:release -- --run --migrate-prod\n');
+    console.log(
+      'Para migrar prod tras staging OK: npm run deploy:release -- --run --migrate-prod'
+    );
+    console.log('Emergencia sin staging: añade --allow-skip-staging (no recomendado)\n');
     console.log('Ver docs/tecnico/STAGING.md y docs/DEPLOY.md\n');
     return;
   }
@@ -62,6 +70,12 @@ function main() {
     console.log(
       '\n· Smoke staging: arranca el servidor contra .env.staging y ejecuta npm run test:smoke:staging'
     );
+  } else if (migrateProd && !allowSkipStaging) {
+    console.error(
+      '\n✗ .env.staging ausente o incompleto. Provisiona staging (docs/tecnico/STAGING.md)'
+    );
+    console.error('  o usa --allow-skip-staging solo en emergencia documentada.\n');
+    process.exit(1);
   } else {
     console.warn(
       '\n⚠ .env.staging ausente o con CHANGEME — saltando staging. Provisiona según docs/tecnico/STAGING.md'

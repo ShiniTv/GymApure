@@ -20,18 +20,13 @@ import type { UserProfile, Measurement } from '../../hooks/queries/useProfileQue
 import { HEALTH_CONDITION_FLAGS } from '../../lib/healthConditions';
 import { ACTIVITY_LEVELS, getAgeFromDob, type ActivityLevel } from '../../lib/metabolicRate';
 import { cn } from '../../lib/utils';
+import { heightCmNumber } from './utils';
 
 interface ProfileHealthTabProps {
   userId: number;
   profile: UserProfile;
   measurements: Measurement[];
   onSwitchToDatos: () => void;
-}
-
-function heightCmNumber(height: number | null | undefined): number | null {
-  if (height == null || Number.isNaN(height)) return null;
-  if (height > 0 && height < 3) return Math.round(height * 1000) / 10;
-  return height;
 }
 
 export function ProfileHealthTab({

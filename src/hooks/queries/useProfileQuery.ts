@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonOptional, parseJsonResponse } from '../../lib/api';
 
 export interface UserProfile {
@@ -95,4 +95,93 @@ export function useInvalidateProfile() {
   return (userId: number) => {
     void qc.invalidateQueries({ queryKey: ['profile', userId] });
   };
+}
+
+export function useUpdateProfileMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
+      const res = await apiFetch(`/api/users/${userId}/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return parseJsonResponse<UserProfile>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
+}
+
+export function useUploadAvatarMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await apiFetch(`/api/users/${userId}/avatar`, {
+        method: 'POST',
+        body: fd,
+      });
+      return parseJsonResponse<{ profile_image: string }>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
+}
+
+export function useRemoveAvatarMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiFetch(`/api/users/${userId}/avatar`, { method: 'DELETE' });
+      return parseJsonResponse<{ profile_image: null }>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
+}
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: async (body: {
+      current_password: string;
+      new_password: string;
+      confirm_password: string;
+    }) => {
+      const res = await apiFetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      await parseJsonResponse(res);
+    },
+  });
+}
+
+export function useAddMeasurementMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async (body: {
+      date: string;
+      weight: number | null;
+      body_fat_percentage: number | null;
+      waist: number | null;
+      arm: number | null;
+      leg: number | null;
+    }) => {
+      const res = await apiFetch(`/api/users/${userId}/measurements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return parseJsonResponse<Measurement>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
 }

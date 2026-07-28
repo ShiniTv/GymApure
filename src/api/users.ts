@@ -4,7 +4,6 @@ import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
-import { notifyRoutineAssigned } from '../lib/chat/eventMessages.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
 import {
   uploadMediaFile,
@@ -21,7 +20,6 @@ import {
 import { hashPassword } from '../lib/passwordHash.ts';
 import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
-import { logger } from '../lib/logger.ts';
 import {
   parseBooleanQuery,
   parsePaginationQuery,
@@ -39,13 +37,11 @@ import { mountCoachNoteRoutes } from './coachNotes.ts';
 import { mountTrainerCoachingRoutes } from './trainerCoaching.ts';
 import { mountTrainingBlockRoutes } from './trainingBlocks.ts';
 import { invalidateSessionUserCache } from '../lib/sessionUserCache.ts';
-import { assignRoutineSchema } from '../lib/routineSchemas.ts';
-import {
-  isActiveMember,
-  trainerOwnsRoutine,
-  ensureTrainerMemberAssignment,
-} from '../lib/trainerAccess.ts';
+import { ensureTrainerMemberAssignment } from '../lib/trainerAccess.ts';
 import { buildUserListFilters, USER_LIST_FROM, userCountFromSql } from './users/listHelpers.ts';
+import { mountUserMeasurementRoutes } from './users/measurements.ts';
+import { mountUserRoutineRoutes } from './users/memberRoutines.ts';
+import { mountUserHistoryRoutes } from './users/history.ts';
 
 const router = asyncRouter();
 
@@ -60,38 +56,6 @@ const profileSchema = z.object({
     .optional()
     .nullable(),
 });
-
-const measurementSchema = z.object({
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
-    .optional(),
-  weight: z.coerce.number().positive('Peso inválido').max(500).optional().nullable(),
-  body_fat_percentage: z.coerce.number().min(0).max(100).optional().nullable(),
-  waist: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
-  arm: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
-  leg: z.coerce.number().positive('Medida inválida').max(300).optional().nullable(),
-});
-
-async function findUserMeasurement(userId: number, measurementId: number) {
-  const { rows } = await query<{ id: number }>(
-    'SELECT id FROM user_measurements WHERE id = $1 AND user_id = $2',
-    [measurementId, userId]
-  );
-  return rows[0] ?? null;
-}
-
-const ROUTINE_EXERCISE_PREVIEW_JOIN = `LEFT JOIN LATERAL (
-    SELECT string_agg(preview_names.name, ' · ') AS exercise_preview
-    FROM (
-      SELECT e.name
-      FROM routine_exercises re
-      JOIN exercises e ON e.id = re.exercise_id
-      WHERE re.routine_id = r.id
-      ORDER BY re.id
-      LIMIT 3
-    ) preview_names
-  ) preview ON true`;
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'Error interno';
@@ -401,355 +365,6 @@ router.delete(
     void deleteMediaFile(previousImage);
 
     res.json({ profile_image: null });
-  })
-);
-
-router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, res) => {
-  try {
-    const trainerScope = req.user!.role === 'trainer' ? ' AND r.trainer_id = $2' : '';
-    const params = req.user!.role === 'trainer' ? [req.params.id, req.user!.id] : [req.params.id];
-
-    const { rows } = await query(
-      `SELECT r.*, ur.assigned_at, ur.start_date, ur.end_date, ur.scheduled_weekdays,
-              COALESCE(ec.exercise_count, 0)::int AS exercise_count,
-              preview.exercise_preview
-       FROM routines r
-       JOIN user_routines ur ON r.id = ur.routine_id
-       LEFT JOIN (
-         SELECT routine_id, COUNT(*)::int AS exercise_count
-         FROM routine_exercises
-         GROUP BY routine_id
-       ) ec ON ec.routine_id = r.id
-       ${ROUTINE_EXERCISE_PREVIEW_JOIN}
-       WHERE ur.user_id = $1${trainerScope}
-       ORDER BY ur.assigned_at DESC`,
-      params
-    );
-    res.json(rows);
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
-
-router.get('/:id/measurements', requireMemberAccess('id', 'admin'), async (req, res) => {
-  try {
-    const { rows } = await query(
-      `SELECT id, date, weight, body_fat_percentage, waist, arm, leg, created_at
-       FROM user_measurements
-       WHERE user_id = $1
-       ORDER BY date DESC, created_at DESC
-       LIMIT 50`,
-      [req.params.id]
-    );
-    res.json(rows);
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
-
-router.post('/:id/measurements', requireMemberAccess('id', 'admin'), async (req, res) => {
-  const parsed = measurementSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: formatZodError(parsed.error) });
-  }
-
-  const { date, weight, body_fat_percentage, waist, arm, leg } = parsed.data;
-  try {
-    const { rows } = await query(
-      `INSERT INTO user_measurements (user_id, date, weight, body_fat_percentage, waist, arm, leg)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, date, weight, body_fat_percentage, waist, arm, leg, created_at`,
-      [
-        req.params.id,
-        date || new Date().toISOString().split('T')[0],
-        weight ?? null,
-        body_fat_percentage ?? null,
-        waist ?? null,
-        arm ?? null,
-        leg ?? null,
-      ]
-    );
-    res.status(201).json(rows[0]);
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
-
-router.patch(
-  '/:id/measurements/:measurementId',
-  requireMemberAccess('id', 'admin'),
-  asyncHandler(async (req, res) => {
-    const userId = parseInt(req.params.id, 10);
-    const measurementId = parseInt(req.params.measurementId, 10);
-    if (Number.isNaN(userId) || Number.isNaN(measurementId)) {
-      res.status(400).json({ error: 'ID inválido' });
-      return;
-    }
-
-    const parsed = measurementSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: formatZodError(parsed.error) });
-      return;
-    }
-
-    const existing = await findUserMeasurement(userId, measurementId);
-    if (!existing) {
-      res.status(404).json({ error: 'Medición no encontrada' });
-      return;
-    }
-
-    const data = parsed.data;
-    const fields = ['date', 'weight', 'body_fat_percentage', 'waist', 'arm', 'leg'] as const;
-    const sets: string[] = [];
-    const params: unknown[] = [];
-
-    for (const key of fields) {
-      if (key in data) {
-        sets.push(`${key} = $${params.length + 1}`);
-        params.push(data[key] ?? null);
-      }
-    }
-
-    if (sets.length === 0) {
-      res.status(400).json({ error: 'No hay campos para actualizar' });
-      return;
-    }
-
-    params.push(measurementId, userId);
-    const { rows } = await query(
-      `UPDATE user_measurements SET ${sets.join(', ')}
-       WHERE id = $${params.length - 1} AND user_id = $${params.length}
-       RETURNING id, date, weight, body_fat_percentage, waist, arm, leg, created_at`,
-      params
-    );
-
-    res.json(rows[0]);
-  })
-);
-
-router.delete(
-  '/:id/measurements/:measurementId',
-  requireMemberAccess('id', 'admin'),
-  asyncHandler(async (req, res) => {
-    const userId = parseInt(req.params.id, 10);
-    const measurementId = parseInt(req.params.measurementId, 10);
-    if (Number.isNaN(userId) || Number.isNaN(measurementId)) {
-      res.status(400).json({ error: 'ID inválido' });
-      return;
-    }
-
-    const existing = await findUserMeasurement(userId, measurementId);
-    if (!existing) {
-      res.status(404).json({ error: 'Medición no encontrada' });
-      return;
-    }
-
-    await query('DELETE FROM user_measurements WHERE id = $1 AND user_id = $2', [
-      measurementId,
-      userId,
-    ]);
-    res.json({ success: true });
-  })
-);
-
-router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, res) => {
-  const userId = parseInt(req.params.id, 10);
-  if (Number.isNaN(userId)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
-
-  const { page, pageSize, offset } = parsePaginationQuery(req.query, { pageSize: 20 });
-  const trainerScope = req.user!.role === 'trainer' ? ' AND r.trainer_id = $2' : '';
-  const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
-
-  try {
-    const countParams = trainerId ? [userId, trainerId] : [userId];
-    const listParams = trainerId
-      ? [userId, trainerId, pageSize, offset]
-      : [userId, pageSize, offset];
-
-    const [countResult, weekResult, activeResult, listResult] = await Promise.all([
-      query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count
-         FROM workout_sessions ws
-         JOIN routines r ON ws.routine_id = r.id
-         WHERE ws.user_id = $1 AND ws.end_time IS NOT NULL${trainerScope}`,
-        countParams
-      ),
-      query<{ count: string }>(
-        `SELECT COUNT(DISTINCT DATE(ws.start_time))::text AS count
-         FROM workout_sessions ws
-         JOIN routines r ON ws.routine_id = r.id
-         WHERE ws.user_id = $1
-           AND ws.end_time IS NOT NULL
-           AND ws.success = 1
-           AND ws.start_time >= DATE_TRUNC('week', CURRENT_DATE)${trainerScope}`,
-        countParams
-      ),
-      query(
-        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, ws.routine_id,
-                r.name AS routine_name,
-                COALESCE(wl.sets_completed, 0)::int AS sets_completed
-         FROM workout_sessions ws
-         JOIN routines r ON ws.routine_id = r.id
-         LEFT JOIN (
-           SELECT session_id, COUNT(*)::int AS sets_completed
-           FROM workout_logs
-           GROUP BY session_id
-         ) wl ON wl.session_id = ws.id
-         WHERE ws.user_id = $1 AND ws.end_time IS NULL${trainerScope}
-         ORDER BY ws.start_time DESC`,
-        countParams
-      ),
-      query(
-        `SELECT ws.id, ws.start_time, ws.end_time, ws.success, ws.routine_id,
-                r.name AS routine_name,
-                COALESCE(wl.sets_completed, 0)::int AS sets_completed
-         FROM workout_sessions ws
-         JOIN routines r ON ws.routine_id = r.id
-         LEFT JOIN (
-           SELECT session_id, COUNT(*)::int AS sets_completed
-           FROM workout_logs
-           GROUP BY session_id
-         ) wl ON wl.session_id = ws.id
-         WHERE ws.user_id = $1 AND ws.end_time IS NOT NULL${trainerScope}
-         ORDER BY ws.start_time DESC
-         LIMIT $${trainerId ? 3 : 2} OFFSET $${trainerId ? 4 : 3}`,
-        listParams
-      ),
-    ]);
-
-    const total = parseInt(countResult.rows[0]?.count || '0', 10);
-    const workoutsThisWeek = parseInt(weekResult.rows[0]?.count || '0', 10);
-    const payload: PaginatedResult<unknown> & {
-      workoutsThisWeek: number;
-      activeSessions: unknown[];
-    } = {
-      items: listResult.rows,
-      activeSessions: activeResult.rows,
-      total,
-      page,
-      pageSize,
-      workoutsThisWeek,
-    };
-
-    res.json(payload);
-  } catch (err: unknown) {
-    res.status(500).json({ error: getErrorMessage(err) });
-  }
-});
-
-router.post(
-  '/:id/routines',
-  authorize(['trainer']),
-  asyncHandler(async (req: AuthRequest, res) => {
-    const memberId = parseInt(req.params.id, 10);
-    if (Number.isNaN(memberId)) {
-      res.status(400).json({ error: 'ID inválido' });
-      return;
-    }
-
-    const parsed = assignRoutineSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: formatZodError(parsed.error) });
-      return;
-    }
-
-    const { routine_id, start_date, end_date, scheduled_weekdays } = parsed.data;
-    if (start_date > end_date) {
-      res.status(400).json({
-        error: 'La fecha de inicio debe ser anterior o igual a la de fin',
-      });
-      return;
-    }
-
-    const trainerId = req.user!.id;
-    const ownsRoutine = await trainerOwnsRoutine(trainerId, routine_id);
-    if (!ownsRoutine) {
-      res.status(403).json({ error: 'No puedes asignar una rutina que no te pertenece' });
-      return;
-    }
-
-    const memberOk = await isActiveMember(memberId);
-    if (!memberOk) {
-      res.status(404).json({ error: 'Miembro no encontrado o inactivo' });
-      return;
-    }
-
-    await ensureTrainerMemberAssignment(trainerId, memberId, trainerId);
-
-    const assigned_by = trainerId;
-    const existing = await query<{ id: number }>(
-      `SELECT id FROM user_routines WHERE user_id = $1 AND routine_id = $2 LIMIT 1`,
-      [memberId, routine_id]
-    );
-
-    if (existing.rows.length > 0) {
-      const { rows } = await query<{ id: number }>(
-        `UPDATE user_routines
-         SET start_date = $1, end_date = $2, scheduled_weekdays = $3,
-             assigned_by = $4, assigned_at = NOW()
-         WHERE user_id = $5 AND routine_id = $6
-         RETURNING id`,
-        [start_date, end_date, scheduled_weekdays ?? null, assigned_by, memberId, routine_id]
-      );
-      res.json({ id: rows[0].id, success: true, updated: true });
-
-      void notifyRoutineAssigned(memberId, routine_id).catch((err: unknown) => {
-        logger.error('Error enviando notificacion de rutina asignada', {
-          error: getErrorMessage(err),
-        });
-      });
-      return;
-    }
-
-    const { rows } = await query<{ id: number }>(
-      `INSERT INTO user_routines (
-         user_id, routine_id, assigned_by, start_date, end_date, scheduled_weekdays
-       )
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id`,
-      [memberId, routine_id, assigned_by, start_date, end_date, scheduled_weekdays ?? null]
-    );
-    res.json({ id: rows[0].id, success: true, updated: false });
-
-    void notifyRoutineAssigned(memberId, routine_id).catch((err: unknown) => {
-      logger.error('Error enviando notificacion de rutina asignada', {
-        error: getErrorMessage(err),
-      });
-    });
-  })
-);
-
-router.delete(
-  '/:id/routines/:routineId',
-  authorize(['trainer']),
-  asyncHandler(async (req: AuthRequest, res) => {
-    const memberId = parseInt(req.params.id, 10);
-    const routineId = parseInt(req.params.routineId, 10);
-    if (Number.isNaN(memberId) || Number.isNaN(routineId)) {
-      res.status(400).json({ error: 'ID inválido' });
-      return;
-    }
-
-    const trainerId = req.user!.id;
-    const ownsRoutine = await trainerOwnsRoutine(trainerId, routineId);
-    if (!ownsRoutine) {
-      res.status(403).json({ error: 'No puedes modificar una rutina que no te pertenece' });
-      return;
-    }
-
-    const { rowCount } = await query(
-      'DELETE FROM user_routines WHERE user_id = $1 AND routine_id = $2',
-      [memberId, routineId]
-    );
-
-    if (!rowCount) {
-      res.status(404).json({ error: 'Asignación no encontrada' });
-      return;
-    }
-
-    res.json({ success: true });
   })
 );
 
@@ -1141,6 +756,9 @@ router.get(
   })
 );
 
+mountUserMeasurementRoutes(router);
+mountUserRoutineRoutes(router);
+mountUserHistoryRoutes(router);
 mountHealthProfileRoutes(router);
 mountExerciseRecordRoutes(router);
 mountCoachNoteRoutes(router);
