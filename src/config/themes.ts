@@ -7,9 +7,10 @@ export const PALETTES = {
     id: 'sky',
     label: 'Cielo',
     description: 'Azul eléctrico del Mobile App UI (Figma)',
-    swatch: { light: '#0c98ff', dark: '#0c98ff' },
-    brand: { light: '#0c98ff', lightHover: '#0284c7', dark: '#0c98ff', darkHover: '#3aadff' },
-    chartAccent: { light: '#0c98ff', dark: '#0c98ff' },
+    // Light brand ≥4.5:1 on #f4f4f5 (AA); bright blues stay for dark surfaces.
+    swatch: { light: '#0284c7', dark: '#3aadff' },
+    brand: { light: '#0284c7', lightHover: '#0369a1', dark: '#3aadff', darkHover: '#0c98ff' },
+    chartAccent: { light: '#0284c7', dark: '#3aadff' },
   },
   monochrome: {
     id: 'monochrome',
