@@ -37,12 +37,12 @@
   --text-small--font-weight: 500;
 
   /* —— Brand & status (Figma dark accents) —— */
-  --color-brand: #0c98ff;
-  --color-brand-hover: #3aadff;
+  --color-brand: #0284c7;
+  --color-brand-hover: #0369a1;
   --color-secondary: #704ca8;
   --color-secondary-hover: #8b6bc4;
-  --color-warning: #b49c44;
-  --color-warning-hover: #c9b35a;
+  --color-warning: #8a7320;
+  --color-warning-hover: #a38928;
   --color-check-out: #0c98ff;
   --color-check-out-hover: #3aadff;
   --color-success: #14b05c;
@@ -202,6 +202,10 @@
     --color-text-secondary: #d4d4d8;
     --color-text-muted: #a1a1aa;
     --color-text-inverse: #09090b;
+    --color-brand: #3aadff;
+    --color-brand-hover: #0c98ff;
+    --color-warning: #c9b35a;
+    --color-warning-hover: #b49c44;
     --shadow-card: none;
     --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.35);
   }

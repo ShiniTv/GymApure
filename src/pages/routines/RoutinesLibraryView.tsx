@@ -423,9 +423,7 @@ export function RoutinesLibraryView({
                         {status ? (
                           <>
                             <span className="text-text-muted/50 mx-1">·</span>
-                            <span className={cn(completedToday ? 'text-success' : 'text-warning')}>
-                              {status}
-                            </span>
+                            <span className="text-text-secondary">{status}</span>
                           </>
                         ) : null}
                       </p>
@@ -436,11 +434,11 @@ export function RoutinesLibraryView({
                       ) : null}
                       {!isMember && canOpen && !isExpanded && (
                         <>
-                          <span className="text-brand text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
+                          <span className="text-text-secondary text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
                             Ver ejercicios
                             <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                           </span>
-                          <span className="text-brand text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
+                          <span className="text-text-secondary text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
                             Seleccionar
                             <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                           </span>

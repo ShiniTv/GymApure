@@ -685,7 +685,9 @@ export default function Routines() {
                             </p>
                           )}
                         </div>
-                        <span className="text-small text-brand shrink-0 font-medium">Próxima</span>
+                        <span className="text-small text-text-secondary shrink-0 font-medium">
+                          Próxima
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -711,7 +713,7 @@ export default function Routines() {
                             </p>
                           )}
                         </div>
-                        <span className="text-small text-warning shrink-0 font-medium">
+                        <span className="text-small text-text-secondary shrink-0 font-medium">
                           Por vencer
                         </span>
                       </div>

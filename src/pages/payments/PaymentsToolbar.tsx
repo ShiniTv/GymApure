@@ -50,6 +50,7 @@ export function PaymentsToolbar({
     <>
       <PageHeader
         compact
+        showTitleOnMobile
         title={
           isMember ? (
             <>
