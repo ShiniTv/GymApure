@@ -30,7 +30,7 @@ const outline = cn(
 
 const variants: Record<ButtonVariant, string> = {
   primary: cn(
-    'bg-brand text-white shadow-none dark:text-zinc-950',
+    'bg-brand text-text-inverse shadow-none',
     'hover:bg-brand-hover',
     'active:bg-[color-mix(in_srgb,var(--color-brand)_88%,black)]',
     'focus-visible:ring-brand/40',

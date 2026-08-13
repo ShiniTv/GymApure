@@ -217,7 +217,7 @@ export function AssignRoutineForm({
                   className={cn(
                     'text-small h-9 w-9 rounded-[var(--radius-chip)] font-semibold transition-colors',
                     selected
-                      ? 'bg-brand text-white'
+                      ? 'bg-brand text-text-inverse'
                       : 'bg-surface-raised text-text-secondary hover:bg-surface-overlay'
                   )}
                 >

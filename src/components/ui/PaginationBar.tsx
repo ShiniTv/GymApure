@@ -86,7 +86,7 @@ export function PaginationBar({
               className={cn(
                 'flex h-9 min-w-9 items-center justify-center rounded-lg px-1.5 text-sm font-semibold transition-colors',
                 p === page
-                  ? 'bg-brand text-white shadow-sm dark:text-zinc-900'
+                  ? 'bg-brand text-text-inverse shadow-sm'
                   : 'text-text-secondary hover:bg-surface-overlay'
               )}
               aria-label={`Página ${p}`}

@@ -37,8 +37,8 @@
   --text-small--font-weight: 500;
 
   /* —— Brand & status (Figma dark accents) —— */
-  --color-brand: #0284c7;
-  --color-brand-hover: #0369a1;
+  --color-brand: #0369a1;
+  --color-brand-hover: #075985;
   --color-secondary: #704ca8;
   --color-secondary-hover: #8b6bc4;
   --color-warning: #8a7320;
@@ -607,7 +607,7 @@ body,
 
   /* Filled brand surfaces — Figma primary is saturated blue; keep light on-brand text */
   .brand-solid {
-    @apply bg-brand text-white;
+    @apply bg-brand text-text-inverse;
   }
 
   .brand-solid-hover {
