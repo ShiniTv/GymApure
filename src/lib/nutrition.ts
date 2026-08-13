@@ -140,15 +140,15 @@ export function macroStatusLabel(status: MacroStatus): string {
 export function macroStatusColorClass(status: MacroStatus): string {
   switch (status) {
     case 'on_track':
-      return 'bg-emerald-500';
+      return 'bg-success';
     case 'near_low':
     case 'near_high':
-      return 'bg-amber-500';
+      return 'bg-warning';
     case 'under':
     case 'over':
-      return 'bg-red-500';
+      return 'bg-danger';
     default:
-      return 'bg-zinc-300 dark:bg-zinc-600';
+      return 'bg-surface-overlay';
   }
 }
 

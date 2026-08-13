@@ -6,7 +6,7 @@ import { typography } from '../lib/typography';
 
 const ctaPrimary = cn(
   typography.button,
-  'inline-flex h-12 min-h-[var(--touch-min)] items-center justify-center rounded-button bg-brand px-6 text-white shadow-sm shadow-brand/20 transition-colors hover:bg-brand-hover dark:text-zinc-950'
+  'inline-flex h-12 min-h-[var(--touch-min)] items-center justify-center rounded-button bg-brand px-6 text-white shadow-sm shadow-brand/20 transition-colors hover:bg-brand-hover dark:text-text-inverse'
 );
 const ctaSecondary = cn(
   typography.button,
@@ -20,7 +20,7 @@ export default function Landing() {
   usePageTitle(BRAND.pageTitle);
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+    <div className="dark bg-bg text-text relative flex min-h-dvh flex-col overflow-hidden">
       <img
         src="/landing-hero-gym.png"
         alt=""
@@ -29,11 +29,11 @@ export default function Landing() {
         fetchPriority="high"
       />
       <div
-        className="absolute inset-0 bg-gradient-to-b from-zinc-950/55 via-zinc-950/50 to-zinc-950/90"
+        className="from-bg/55 via-bg/50 to-bg/90 absolute inset-0 bg-gradient-to-b"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_oklab,#0c98ff_22%,transparent),_transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_color-mix(in_oklab,var(--color-brand)_22%,transparent),_transparent_55%)]"
         aria-hidden
       />
 

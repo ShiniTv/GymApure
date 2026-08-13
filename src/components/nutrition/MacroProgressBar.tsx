@@ -33,17 +33,17 @@ export function MacroProgressBar({
 
   return (
     <div className={cn('space-y-1', className)}>
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="font-semibold text-zinc-700 dark:text-zinc-300">{label}</span>
-        <span className="text-zinc-500 tabular-nums dark:text-zinc-400">
+      <div className="text-small flex items-center justify-between gap-2">
+        <span className="text-text-secondary font-semibold">{label}</span>
+        <span className="text-text-muted tabular-nums">
           {Math.round(consumed)}
           {unit ? ` ${unit}` : ''} / {target}
           {unit ? ` ${unit}` : ''}
         </span>
       </div>
-      <div className="relative h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="bg-surface-raised relative h-2 overflow-hidden rounded-full">
         <div
-          className="absolute inset-y-0 bg-emerald-500/15 dark:bg-emerald-500/20"
+          className="bg-success/15 absolute inset-y-0"
           style={{ left: `${bandStart}%`, width: `${bandWidth}%` }}
           aria-hidden
         />
@@ -55,7 +55,7 @@ export function MacroProgressBar({
           style={{ width: `${fillPct}%` }}
         />
       </div>
-      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{macroStatusLabel(status)}</p>
+      <p className="text-small text-text-muted">{macroStatusLabel(status)}</p>
     </div>
   );
 }
@@ -69,18 +69,18 @@ export function AdherenceBar({
   status?: MacroStatus;
   label: string;
 }) {
-  const color = percent >= 75 ? 'bg-emerald-500' : percent >= 50 ? 'bg-amber-500' : 'bg-red-500';
+  const color = percent >= 75 ? 'bg-success' : percent >= 50 ? 'bg-warning' : 'bg-danger';
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+      <div className="text-small text-text-muted flex justify-between">
         <span>{label}</span>
         <span className="tabular-nums">{percent}%</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="bg-surface-raised h-1.5 overflow-hidden rounded-full">
         <div className={cn('h-full rounded-full', color)} style={{ width: `${percent}%` }} />
       </div>
       {status && status !== 'on_track' && (
-        <p className="text-[9px] text-zinc-400 dark:text-zinc-300">{macroStatusLabel(status)}</p>
+        <p className="text-small text-text-muted">{macroStatusLabel(status)}</p>
       )}
     </div>
   );

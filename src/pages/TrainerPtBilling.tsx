@@ -210,7 +210,7 @@ export default function TrainerPtBilling() {
             setConfigOpen(true);
             setDestOpen(true);
           }}
-          className="w-full rounded-[var(--radius-button)] border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-left text-[12px] leading-snug text-amber-800 dark:text-amber-200"
+          className="border-warning/25 bg-warning/5 text-warning text-small w-full rounded-[var(--radius-button)] border px-3 py-2 text-left leading-snug"
         >
           Configura tus datos de cobro para que el cliente sepa a dónde transferir.
         </button>
@@ -257,9 +257,7 @@ export default function TrainerPtBilling() {
           }
         />
       ) : filteredInvoices.length === 0 ? (
-        <p className="text-text-muted py-6 text-center text-[13px]">
-          No hay cobros en este filtro.
-        </p>
+        <p className="text-text-muted py-6 text-center text-sm">No hay cobros en este filtro.</p>
       ) : (
         <div className="space-y-2">
           {filteredInvoices.map((inv) => (
@@ -267,24 +265,24 @@ export default function TrainerPtBilling() {
               <div className="flex min-w-0 items-center gap-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <p className="text-text min-w-0 flex-1 truncate text-[13px] leading-tight font-semibold">
+                    <p className="text-text min-w-0 flex-1 truncate text-sm leading-tight font-semibold">
                       {inv.member_name}
                     </p>
                     <Badge
                       variant={statusVariant(inv.status)}
-                      className="shrink-0 px-1.5 py-0 text-[9px]"
+                      className="text-small shrink-0 px-1.5 py-0"
                     >
                       {statusLabel(inv.status, Boolean(inv.reference))}
                     </Badge>
                   </div>
-                  <p className="text-text-secondary mt-0.5 truncate text-[11px] leading-snug">
+                  <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
                     <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
                     <span className="text-text-muted mx-1.5">·</span>
                     <span>{inv.title}</span>
                     {inv.reference ? (
                       <>
                         <span className="text-text-muted mx-1.5">·</span>
-                        <span className="font-mono text-[10px]">Ref. {inv.reference}</span>
+                        <span className="text-small font-mono">Ref. {inv.reference}</span>
                       </>
                     ) : null}
                   </p>
@@ -294,7 +292,7 @@ export default function TrainerPtBilling() {
                     <IconButton
                       size="sm"
                       variant="secondary"
-                      className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+                      className="border-success/30 text-success hover:bg-success/10"
                       aria-label="Confirmar cobro"
                       title="Confirmar"
                       onClick={() =>
@@ -350,7 +348,7 @@ export default function TrainerPtBilling() {
           aria-expanded={configOpen}
         >
           <Settings2 className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
-          <span className="min-w-0 flex-1 text-[13px] font-semibold">Configuración</span>
+          <span className="min-w-0 flex-1 text-sm font-semibold">Configuración</span>
           <ChevronDown
             className={cn(
               'text-text-muted h-3.5 w-3.5 shrink-0 transition-transform',
@@ -364,7 +362,7 @@ export default function TrainerPtBilling() {
           <div className="border-border/60 space-y-3 border-t p-3.5 sm:p-4">
             <div className="grid gap-3 md:grid-cols-2 md:gap-4">
               <div className="space-y-3">
-                <h3 className="text-text text-[13px] font-semibold">Mis tarifas</h3>
+                <h3 className="text-text text-sm font-semibold">Mis tarifas</h3>
                 {loadingOffers ? (
                   <Spinner />
                 ) : (
@@ -372,7 +370,7 @@ export default function TrainerPtBilling() {
                     {offers.map((o) => (
                       <li
                         key={o.id}
-                        className="flex items-center justify-between gap-3 py-2 text-[13px] first:pt-0 last:pb-0"
+                        className="flex items-center justify-between gap-3 py-2 text-sm first:pt-0 last:pb-0"
                       >
                         <span
                           className={
@@ -385,7 +383,7 @@ export default function TrainerPtBilling() {
                       </li>
                     ))}
                     {offers.length === 0 ? (
-                      <li className="text-text-muted py-1 text-[12px]">Sin tarifas aún</li>
+                      <li className="text-text-muted text-small py-1">Sin tarifas aún</li>
                     ) : null}
                   </ul>
                 )}
@@ -421,7 +419,7 @@ export default function TrainerPtBilling() {
               </div>
 
               <div className="space-y-3">
-                <h3 className="text-text text-[13px] font-semibold">Tasa de referencia</h3>
+                <h3 className="text-text text-sm font-semibold">Tasa de referencia</h3>
                 <div>
                   <Label>Preferencia</Label>
                   <Select
@@ -455,7 +453,7 @@ export default function TrainerPtBilling() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-text-secondary text-[12px] leading-snug">
+                  <p className="text-text-secondary text-small leading-snug">
                     {rateCtx?.bcv_bs_per_usd
                       ? `BCV vigente: ${rateCtx.bcv_bs_per_usd.toLocaleString('es-VE')} Bs/USD`
                       : 'Sin tasa BCV disponible aún'}
@@ -496,14 +494,12 @@ export default function TrainerPtBilling() {
                     <Landmark className="h-3.5 w-3.5" aria-hidden />
                   </span>
                   <span className="min-w-0 flex-1 pt-0.5">
-                    <span className="flex flex-wrap items-center gap-2 text-[13px] font-semibold">
+                    <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                       Datos de cobro
                       {!destReady ? (
-                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                          pendiente
-                        </span>
+                        <span className="text-warning text-small font-medium">pendiente</span>
                       ) : (
-                        <span className="text-text-muted text-[11px] font-medium">listo</span>
+                        <span className="text-text-muted text-small font-medium">listo</span>
                       )}
                       <ChevronDown
                         className={cn(
@@ -513,7 +509,7 @@ export default function TrainerPtBilling() {
                         aria-hidden
                       />
                     </span>
-                    <span className="text-text-muted mt-1 block text-[12px] leading-snug">
+                    <span className="text-text-muted text-small mt-1 block leading-snug">
                       Teléfono, cuenta o Zelle que verá el cliente
                     </span>
                   </span>
@@ -535,7 +531,7 @@ export default function TrainerPtBilling() {
 
               {destOpen ? (
                 <div className="border-border/60 mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2.5 text-[13px] font-semibold sm:col-span-2">
+                  <label className="flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
                     <input
                       type="checkbox"
                       className="size-4"
@@ -581,7 +577,7 @@ export default function TrainerPtBilling() {
                     }
                   />
 
-                  <label className="mt-3 flex items-center gap-2.5 text-[13px] font-semibold sm:col-span-2">
+                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
                     <input
                       type="checkbox"
                       className="size-4"
@@ -653,7 +649,7 @@ export default function TrainerPtBilling() {
                     }
                   />
 
-                  <label className="mt-3 flex items-center gap-2.5 text-[13px] font-semibold sm:col-span-2">
+                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
                     <input
                       type="checkbox"
                       className="size-4"
@@ -679,7 +675,7 @@ export default function TrainerPtBilling() {
                     }
                   />
 
-                  <label className="mt-3 flex items-center gap-2.5 text-[13px] font-semibold sm:col-span-2">
+                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
                     <input
                       type="checkbox"
                       className="size-4"
@@ -725,7 +721,7 @@ export default function TrainerPtBilling() {
                     }
                   />
 
-                  <label className="mt-3 flex items-center gap-2.5 text-[13px] font-semibold sm:col-span-2">
+                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
                     <input
                       type="checkbox"
                       className="size-4"
@@ -743,7 +739,7 @@ export default function TrainerPtBilling() {
                     {DEFAULT_USD_DENOMINATIONS.map((d) => (
                       <label
                         key={d}
-                        className="border-border inline-flex items-center gap-1.5 rounded-[var(--radius-chip)] border px-2.5 py-1.5 text-[12px]"
+                        className="border-border text-small inline-flex items-center gap-1.5 rounded-[var(--radius-chip)] border px-2.5 py-1.5"
                       >
                         <input
                           type="checkbox"
@@ -810,12 +806,12 @@ export default function TrainerPtBilling() {
           </div>
         ) : members.length === 0 ? (
           <div className="space-y-3">
-            <p className="text-text-muted text-[13px] leading-relaxed">
+            <p className="text-text-muted text-sm leading-relaxed">
               No hay clientes elegibles. Aparecen los asignados a ti o con una rutina tuya.
             </p>
             <Link
               to="/members"
-              className="border-border text-text hover:bg-surface-overlay inline-flex min-h-9 items-center justify-center rounded-[var(--radius-button)] border px-3 text-[13px] font-semibold transition-colors"
+              className="border-border text-text hover:bg-surface-overlay inline-flex min-h-9 items-center justify-center rounded-[var(--radius-button)] border px-3 text-sm font-semibold transition-colors"
             >
               Ver mis miembros
             </Link>
@@ -874,7 +870,7 @@ export default function TrainerPtBilling() {
                 placeholder="0.00"
               />
               {amount && rateCtx?.active_bs_per_usd ? (
-                <p className="text-text-muted mt-1.5 text-[12px]">
+                <p className="text-text-muted text-small mt-1.5">
                   ≈{' '}
                   {(Number(amount) * rateCtx.active_bs_per_usd).toLocaleString('es-VE', {
                     maximumFractionDigits: 2,
@@ -986,7 +982,7 @@ export default function TrainerPtBilling() {
           </>
         }
       >
-        <p className="text-text-secondary text-[13px] leading-relaxed">
+        <p className="text-text-secondary text-sm leading-relaxed">
           Antes del primer cobro, publica pago móvil, transferencia u otro método para que el
           cliente sepa a dónde transferir.
         </p>

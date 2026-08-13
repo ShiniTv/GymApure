@@ -11,10 +11,6 @@ interface CalorieSemiGaugeProps {
   className?: string;
 }
 
-/** Padding so glow blur and round caps at arc tips are not clipped. */
-const PAD_X = 14;
-const PAD_Y = 12;
-
 function useAnimatedValue(target: number, durationMs = 900) {
   const [value, setValue] = useState(0);
   const valueRef = useRef(0);
@@ -49,9 +45,9 @@ function useAnimatedValue(target: number, durationMs = 900) {
   return value;
 }
 
-/** Semi-gauge with glowing fill that animates as meals are logged. */
+/** Semi-gauge that animates as meals are logged — brand/danger tokens, no glow blur. */
 export function CalorieSemiGauge({ consumed, target, date, className }: CalorieSemiGaugeProps) {
-  const glowId = useId().replace(/:/g, '');
+  const gradId = useId().replace(/:/g, '');
   const width = 280;
   const height = 148;
   const strokeWidth = 10;
@@ -73,42 +69,23 @@ export function CalorieSemiGauge({ consumed, target, date, className }: CalorieS
     : format(dateObj, 'MMM d', { locale: es });
 
   const arcPath = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
-  const vbX = -PAD_X;
-  const vbY = -PAD_Y;
-  const vbW = width + PAD_X * 2;
-  const vbH = height + PAD_Y * 2;
 
   return (
     <div
-      className={cn('relative mx-auto w-full max-w-[280px] overflow-visible', className)}
+      className={cn('relative mx-auto w-full max-w-[280px]', className)}
       role="img"
       aria-label={`Calorías: ${Math.round(consumed)} de ${target}`}
     >
-      {/* Expanded viewBox leaves room for blur + round caps without clipping */}
-      <svg
-        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
-        className="h-auto w-full overflow-visible"
-        aria-hidden
-      >
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" aria-hidden>
         <defs>
-          <filter
-            id={`cal-glow-${glowId}`}
-            x="-80%"
-            y="-80%"
-            width="260%"
-            height="260%"
-            filterUnits="objectBoundingBox"
-          >
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <linearGradient id={`cal-grad-${glowId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={over ? '#f87171' : '#fde68a'} />
-            <stop offset="55%" stopColor={over ? '#ef4444' : '#fbbf24'} />
-            <stop offset="100%" stopColor={over ? '#dc2626' : '#f59e0b'} />
+          <linearGradient id={`cal-grad-${gradId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop
+              offset="0%"
+              stopColor={over ? 'var(--color-danger)' : 'var(--color-warning)'}
+              stopOpacity={over ? 1 : 0.65}
+            />
+            <stop offset="55%" stopColor={over ? 'var(--color-danger)' : 'var(--color-warning)'} />
+            <stop offset="100%" stopColor={over ? 'var(--color-danger)' : 'var(--color-brand)'} />
           </linearGradient>
         </defs>
 
@@ -118,38 +95,33 @@ export function CalorieSemiGauge({ consumed, target, date, className }: CalorieS
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
-          className="text-zinc-200 dark:text-zinc-800/55"
+          className="text-border"
         />
         <path
           d={arcPath}
           fill="none"
-          stroke={`url(#cal-grad-${glowId})`}
+          stroke={`url(#cal-grad-${gradId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${progressLength} ${arcLength}`}
-          filter={pct > 0.015 ? `url(#cal-glow-${glowId})` : undefined}
           opacity={pct > 0.01 ? 1 : 0}
         />
       </svg>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center px-4 pb-1 text-center">
-        <p className="text-[12px] font-medium text-zinc-500 capitalize dark:text-zinc-400">
-          {dateLabel}
-        </p>
-        <p className="mt-1.5 text-[2rem] leading-none font-bold tracking-tight text-zinc-900 tabular-nums dark:text-white">
+        <p className="text-small text-text-muted font-medium capitalize">{dateLabel}</p>
+        <p className="text-text mt-1.5 text-[2rem] leading-none font-bold tracking-tight tabular-nums">
           {Math.round(animatedConsumed).toLocaleString('es')}
-          <span className="ml-1.5 text-sm font-medium text-zinc-400">kcal</span>
+          <span className="text-text-muted ml-1.5 text-sm font-medium">kcal</span>
         </p>
-        <div className="mt-2 flex items-center gap-1.5 text-[12px]">
-          <span className={cn(over ? 'text-red-500' : 'text-zinc-500 dark:text-zinc-400')}>
+        <div className="text-small mt-2 flex items-center gap-1.5">
+          <span className={cn(over ? 'text-danger' : 'text-text-muted')}>
             {over ? 'Extra' : 'Quedan'}
           </span>
           <span
             className={cn(
-              'inline-flex min-w-[3.25rem] items-center justify-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold tabular-nums',
-              over
-                ? 'bg-red-500/15 text-red-500'
-                : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800/90 dark:text-zinc-200'
+              'inline-flex min-w-[3.25rem] items-center justify-center rounded-full px-2.5 py-0.5 font-semibold tabular-nums',
+              over ? 'bg-danger/15 text-danger' : 'bg-surface-raised text-text-secondary'
             )}
           >
             {over

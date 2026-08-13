@@ -66,7 +66,15 @@ El sistema de tokens (Linear-like) es sólido; la deuda está en **call sites**:
 - `Sheet` / `Modal` — `motion-reduce:transition-none`
 - `WorkoutHistory` / `Trainers` — zinc → tokens
 
-Siguiente: nutrition glows (`MacroRing`), Landing hex, `TrainerPtBilling` tipografía.
+## Cuarta oleada (2026-08-13)
+
+- `MacroRing` / `CalorieSemiGauge` — sin Gaussian glow ni hex; stroke con tokens
+- `MacroProgressBar` / `AdherenceBar` / `WeekDateStrip` — zinc/glow → tokens
+- `Nutrition` / `MemberNutrition` — call sites zinc → `bg-surface` / `text-text-*`
+- `Landing` — `dark` + `bg-bg`; radial con `var(--color-brand)` (sin `#0c98ff`)
+- `TrainerPtBilling` — tipografía `text-sm` / `text-small`; amber/emerald → warning/success
+
+Siguiente: `PageHeader` badge quiet; residual `text-[Npx]` en historial de workouts; detector Impeccable re-run.
 
 ## Comandos
 

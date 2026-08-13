@@ -201,7 +201,7 @@ export default function Nutrition() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando nutrición…</p>
+        <p className="text-text-muted text-small mt-3">Cargando nutrición…</p>
       </PageState>
     );
   }
@@ -292,43 +292,40 @@ export default function Nutrition() {
               label="Proteína"
               consumed={totals.protein}
               target={plan.protein_target_g}
-              colorClass="text-amber-400 dark:text-amber-300"
-              glowColor="#fbbf24"
+              colorClass="text-warning"
               icon={Beef}
             />
             <MacroRing
               label="Carbos"
               consumed={totals.carbs}
               target={plan.carbs_target_g}
-              colorClass="text-orange-500"
-              glowColor="#f97316"
+              colorClass="text-brand"
               icon={Wheat}
             />
             <MacroRing
               label="Grasas"
               consumed={totals.fat}
               target={plan.fat_target_g}
-              colorClass="text-rose-500"
-              glowColor="#f43f5e"
+              colorClass="text-danger"
               icon={Droplet}
             />
           </section>
 
           {coachingHint && (
-            <p className="px-1 pb-1 text-center text-[11px] text-zinc-500 md:text-left dark:text-zinc-400">
+            <p className="text-small text-text-muted px-1 pb-1 text-center md:text-left">
               {coachingHint}
             </p>
           )}
 
           {plan.notes && (
-            <p className="px-2 pb-1 text-center text-[11px] leading-relaxed text-zinc-500 md:px-1 md:text-left dark:text-zinc-400">
-              <span className="text-zinc-400 dark:text-zinc-500">Entrenador · </span>
+            <p className="text-small text-text-muted px-2 pb-1 text-center leading-relaxed md:px-1 md:text-left">
+              <span className="text-text-muted/80">Entrenador · </span>
               {plan.notes}
             </p>
           )}
         </div>
 
-        <Card padding="sm" rounded="xl" className="border-zinc-200/80 md:p-4 dark:border-zinc-800">
+        <Card padding="sm" rounded="xl" className="border-border md:p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="section-title">Comidas del día</h2>
             {canEditLogs && (
@@ -340,12 +337,10 @@ export default function Nutrition() {
           </div>
           {logs.length === 0 ? (
             <div className="flex flex-col items-center gap-2.5 py-5 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-                <UtensilsCrossed className="h-4 w-4 text-zinc-400" />
+              <div className="bg-surface-raised flex h-10 w-10 items-center justify-center rounded-2xl">
+                <UtensilsCrossed className="text-text-muted h-4 w-4" />
               </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Aún no registraste comidas hoy.
-              </p>
+              <p className="text-text-muted text-sm">Aún no registraste comidas hoy.</p>
               {canEditLogs && (
                 <Button size="sm" onClick={openAddMeal}>
                   <Plus className="h-4 w-4" />
@@ -357,20 +352,20 @@ export default function Nutrition() {
             <div className="space-y-4">
               {logsByMeal.map(({ type, items }) => (
                 <div key={type}>
-                  <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
+                  <p className="text-small text-text-muted mb-2 font-semibold tracking-wide uppercase">
                     {MEAL_TYPE_LABELS[type]}
                   </p>
                   <ul className="space-y-2">
                     {items.map((log) => (
                       <li
                         key={log.id}
-                        className="flex items-start justify-between gap-2 rounded-2xl border border-zinc-100 bg-zinc-50/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/60"
+                        className="border-border bg-surface-raised/70 flex items-start justify-between gap-2 rounded-2xl border px-3 py-2.5"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+                          <p className="text-text truncate text-sm font-semibold">
                             {log.description}
                           </p>
-                          <p className="mt-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                          <p className="text-small text-text-muted mt-0.5 tabular-nums">
                             {log.calories} kcal · P {log.protein_g}g · C {log.carbs_g}g · G{' '}
                             {log.fat_g}g
                           </p>
@@ -411,7 +406,7 @@ export default function Nutrition() {
         title={editingLog ? 'Editar comida' : 'Registrar comida'}
         maxWidth="md"
       >
-        {error && <p className="mb-3 text-xs text-red-500">{error}</p>}
+        {error && <p className="text-danger text-small mb-3">{error}</p>}
         {!editingLog && (
           <div className="mb-3">
             <input
@@ -434,7 +429,7 @@ export default function Nutrition() {
               Analizar foto
             </Button>
             {analysisHints.length > 0 && (
-              <ul className="mt-2 space-y-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <ul className="text-small text-text-muted mt-2 space-y-0.5">
                 {analysisHints.map((hint) => (
                   <li key={hint}>{hint}</li>
                 ))}
