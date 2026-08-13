@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import {
   Plus,
   ChevronRight,
@@ -7,8 +8,18 @@ import {
   Settings2,
   Dumbbell,
   Play,
+  Copy,
 } from 'lucide-react';
-import { Button, Card, EmptyState, Badge, ListRowSkeleton, Skeleton } from '../../components/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  ListRowSkeleton,
+  Skeleton,
+  SearchInput,
+  Select,
+  Label,
+} from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import type { Routine, RoutineExercise } from './types';
@@ -23,6 +34,9 @@ export interface RoutinesLibraryViewProps {
   onEditRoutine: (routine: Routine) => void;
   onDeleteRoutine: (routine: Routine) => void;
   onCreateRoutine: () => void;
+  onCloneRoutine?: (routine: Routine) => void;
+  onCreateFromTemplate?: () => void;
+  cloningRoutineId?: number | null;
   onAddExercise: (routineId: number) => void;
   onInlineUpdate: (
     routineId: number,
@@ -37,31 +51,23 @@ export interface RoutinesLibraryViewProps {
   activeRoutineIds?: number[];
 }
 
-function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
-  if (difficulty === 'Advanced') return 'danger';
-  if (difficulty === 'Intermediate') return 'warning';
-  return 'success';
-}
-
 function StaffRoutineExercises({
   routine,
   onAddExercise,
   onInlineUpdate,
   onEditExercise,
   onDeleteExercise,
-  dense = false,
 }: {
   routine: Routine;
   onAddExercise: (routineId: number) => void;
   onInlineUpdate: RoutinesLibraryViewProps['onInlineUpdate'];
   onEditExercise: (exercise: RoutineExercise) => void;
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
-  dense?: boolean;
 }) {
   return (
     <>
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Ejercicios</h4>
+        <h4 className="text-small text-text-secondary font-semibold">Ejercicios</h4>
         <Button
           type="button"
           size="sm"
@@ -74,113 +80,83 @@ function StaffRoutineExercises({
         </Button>
       </div>
 
-      <div
-        className={cn(
-          'space-y-0 sm:grid sm:gap-3',
-          dense ? 'sm:grid-cols-1 lg:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-        )}
-      >
+      <ul className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
         {routine.exercises?.map((exercise) => (
-          <div key={exercise.routine_exercise_id}>
-            <div className="flex items-center justify-between gap-2 border-b border-zinc-100 py-2 sm:hidden dark:border-zinc-800">
-              <div className="min-w-0">
-                <h5 className="truncate text-sm font-medium text-zinc-900 dark:text-white">
-                  {exercise.name}
-                </h5>
-                <p className="text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+          <li
+            key={exercise.routine_exercise_id}
+            className="flex items-start justify-between gap-2 px-2.5 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <h5 className="text-text truncate text-sm font-medium">{exercise.name}</h5>
+              <p className="text-small text-text-muted mt-0.5">
+                {exercise.muscle_group}
+                <span className="text-text-muted/60 mx-1">·</span>
+                <span className="tabular-nums">
                   {exercise.sets}×{exercise.reps}
                   {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => onEditExercise(exercise)}
-                  className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400"
-                  aria-label={`Editar ${exercise.name}`}
-                >
-                  <Edit className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteExercise(routine.id, exercise)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:text-red-500"
-                  aria-label={`Eliminar ${exercise.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="hidden items-start justify-between gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 sm:flex dark:border-zinc-700 dark:bg-zinc-800/50">
-              <div className="min-w-0">
-                <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                  {exercise.name}
-                </h5>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                  {exercise.muscle_group}
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                  <label className="inline-flex items-center gap-1">
-                    Sets
-                    <input
-                      type="number"
-                      className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-                      defaultValue={exercise.sets}
-                      onBlur={(e) =>
-                        onInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))
-                      }
-                      onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                    />
-                  </label>
-                  <label className="inline-flex items-center gap-1">
-                    Reps
-                    <input
-                      type="number"
-                      className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-                      defaultValue={exercise.reps}
-                      onBlur={(e) =>
-                        onInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))
-                      }
-                      onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                    />
-                  </label>
-                  <span>
-                    Rst{' '}
-                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                      {exercise.rest_seconds}s
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="flex shrink-0 gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => onEditExercise(exercise)}
-                  className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
-                  aria-label={`Editar ${exercise.name}`}
-                >
-                  <Edit className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteExercise(routine.id, exercise)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
-                  aria-label={`Eliminar ${exercise.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                </span>
+              </p>
+              <div className="text-small text-text-muted mt-1.5 hidden flex-wrap gap-x-3 gap-y-1 sm:flex">
+                <label className="inline-flex items-center gap-1">
+                  Sets
+                  <input
+                    type="number"
+                    className="border-border bg-surface text-text focus:ring-brand w-9 rounded-[var(--radius-chip)] border px-1 py-0.5 text-center font-semibold focus:ring-1"
+                    defaultValue={exercise.sets}
+                    onBlur={(e) =>
+                      onInlineUpdate(routine.id, exercise, 'sets', parseInt(e.target.value))
+                    }
+                    onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                  />
+                </label>
+                <label className="inline-flex items-center gap-1">
+                  Reps
+                  <input
+                    type="number"
+                    className="border-border bg-surface text-text focus:ring-brand w-9 rounded-[var(--radius-chip)] border px-1 py-0.5 text-center font-semibold focus:ring-1"
+                    defaultValue={exercise.reps}
+                    onBlur={(e) =>
+                      onInlineUpdate(routine.id, exercise, 'reps', parseInt(e.target.value))
+                    }
+                    onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                  />
+                </label>
               </div>
             </div>
-          </div>
+            <div className="flex shrink-0 gap-0.5">
+              <button
+                type="button"
+                onClick={() => onEditExercise(exercise)}
+                className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                aria-label={`Editar ${exercise.name}`}
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteExercise(routine.id, exercise)}
+                className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                aria-label={`Eliminar ${exercise.name}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </li>
         ))}
         {(!routine.exercises || routine.exercises.length === 0) && (
-          <div className="col-span-full rounded-lg border border-dashed border-zinc-200 py-5 text-center text-[11px] text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-300">
+          <li className="text-small text-text-muted border-border border-dashed px-3 py-5 text-center italic">
             Sin ejercicios en esta rutina
-          </div>
+          </li>
         )}
-      </div>
+      </ul>
     </>
   );
+}
+
+function statusMeta(inProgress: boolean, completedToday: boolean): string | null {
+  if (completedToday) return 'Hecha hoy';
+  if (inProgress) return 'En curso';
+  return null;
 }
 
 export function RoutinesLibraryView({
@@ -193,6 +169,9 @@ export function RoutinesLibraryView({
   onEditRoutine,
   onDeleteRoutine,
   onCreateRoutine,
+  onCloneRoutine,
+  onCreateFromTemplate,
+  cloningRoutineId = null,
   onAddExercise,
   onInlineUpdate,
   onEditExercise,
@@ -201,12 +180,27 @@ export function RoutinesLibraryView({
   completedRoutineIdsToday = [],
   activeRoutineIds = [],
 }: RoutinesLibraryViewProps) {
+  const [search, setSearch] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+
   const completedTodaySet = new Set(completedRoutineIdsToday);
   const activeRoutineSet = new Set(activeRoutineIds);
   const isStaff = userRole === 'trainer' || userRole === 'admin';
   const isMember = userRole === 'member';
   const lightCards = isMember || userRole === 'trainer';
-  const totalExercises = routines.reduce((sum, r) => sum + (r.exercise_count ?? 0), 0);
+
+  const filteredRoutines = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return routines.filter((r) => {
+      if (difficulty && r.difficulty !== difficulty) return false;
+      if (!q) return true;
+      const hay = `${r.name} ${formatDifficulty(r.difficulty)}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [routines, search, difficulty]);
+
+  const totalExercises = filteredRoutines.reduce((sum, r) => sum + (r.exercise_count ?? 0), 0);
+  const hasFilters = Boolean(search.trim() || difficulty);
 
   if (loadingRoutines) {
     return (
@@ -221,9 +215,9 @@ export function RoutinesLibraryView({
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-4">
         {isStaff ? (
-          <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 px-4 py-5 text-center dark:border-zinc-700">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sin plantillas</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="border-border space-y-3 rounded-xl border border-dashed px-4 py-5 text-center">
+            <p className="text-text text-sm font-semibold">Sin plantillas</p>
+            <p className="text-text-muted text-xs">
               Crea la primera para asignarla a tus miembros.
             </p>
             <Button size="sm" className="mx-auto" onClick={onCreateRoutine}>
@@ -257,7 +251,9 @@ export function RoutinesLibraryView({
 
   const selectedStaffRoutine =
     isStaff && expandedRoutineId != null
-      ? (routines.find((r) => r.id === expandedRoutineId) ?? null)
+      ? (filteredRoutines.find((r) => r.id === expandedRoutineId) ??
+        routines.find((r) => r.id === expandedRoutineId) ??
+        null)
       : null;
   const selectedStaffSummary = selectedStaffRoutine
     ? buildExerciseSummary({
@@ -269,393 +265,472 @@ export function RoutinesLibraryView({
 
   return (
     <div className="w-full space-y-2.5 sm:space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="min-w-0 px-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-          {routines.length} rutina{routines.length !== 1 ? 's' : ''} · {totalExercises} ejercicio
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <p className="text-small text-text-muted min-w-0 px-0.5">
+          {filteredRoutines.length}
+          {hasFilters ? ` de ${routines.length}` : ''} rutina
+          {filteredRoutines.length !== 1 ? 's' : ''} · {totalExercises} ejercicio
           {totalExercises !== 1 ? 's' : ''}
         </p>
         {isStaff && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
-            onClick={onCreateRoutine}
-            aria-label="Nueva rutina"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden text-xs sm:inline">Nueva</span>
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            {onCreateFromTemplate && routines.length > 0 ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-9 gap-1.5 px-2.5"
+                onClick={onCreateFromTemplate}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span className="hidden text-xs sm:inline">Desde plantilla</span>
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
+              onClick={onCreateRoutine}
+              aria-label="Nueva rutina"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden text-xs sm:inline">Nueva</span>
+            </Button>
+          </div>
         )}
       </div>
 
-      <div
-        className={cn(
-          isStaff &&
-            'md:grid md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start md:gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]'
-        )}
-      >
+      {isStaff ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <SearchInput
+              placeholder="Buscar plantilla…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar plantilla"
+            />
+          </div>
+          <div className="w-full sm:w-44">
+            <Label className="sr-only">Dificultad</Label>
+            <Select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+              <option value="">Todas las dificultades</option>
+              <option value="Beginner">{formatDifficulty('Beginner')}</option>
+              <option value="Intermediate">{formatDifficulty('Intermediate')}</option>
+              <option value="Advanced">{formatDifficulty('Advanced')}</option>
+            </Select>
+          </div>
+        </div>
+      ) : null}
+
+      {isStaff && filteredRoutines.length === 0 ? (
+        <div className="border-border rounded-xl border border-dashed px-4 py-8 text-center">
+          <p className="text-text text-sm font-semibold">Ninguna plantilla coincide</p>
+          <p className="text-text-muted text-small mt-1">Prueba otro nombre o quita el filtro.</p>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-3"
+            onClick={() => {
+              setSearch('');
+              setDifficulty('');
+            }}
+          >
+            Limpiar filtros
+          </Button>
+        </div>
+      ) : (
         <div
           className={cn(
-            isStaff
-              ? 'grid grid-cols-1 gap-2.5'
-              : 'grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4'
+            isStaff &&
+              'md:grid md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start md:gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]'
           )}
         >
-          {routines.map((routine) => {
-            const isExpanded = expandedRoutineId === routine.id;
-            const canOpen = isMember || isStaff;
-            const completedToday = completedTodaySet.has(routine.id);
-            const inProgress = activeRoutineSet.has(routine.id);
-            const exerciseSummary = buildExerciseSummary({
-              count: routine.exercise_count ?? 0,
-              preview: routine.exercise_preview,
-              loadedExercises: routine.exercises,
-            });
-            const workoutLabel = completedToday
-              ? 'Completada hoy'
-              : inProgress
-                ? 'Continuar'
-                : 'Entrenar';
+          <div
+            className={cn(
+              isStaff
+                ? 'grid grid-cols-1 gap-2.5'
+                : 'grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4'
+            )}
+          >
+            {filteredRoutines.map((routine) => {
+              const isExpanded = expandedRoutineId === routine.id;
+              const canOpen = isMember || isStaff;
+              const completedToday = completedTodaySet.has(routine.id);
+              const inProgress = activeRoutineSet.has(routine.id);
+              const status = statusMeta(inProgress, completedToday);
+              const exerciseSummary = buildExerciseSummary({
+                count: routine.exercise_count ?? 0,
+                preview: routine.exercise_preview,
+                loadedExercises: routine.exercises,
+              });
+              const workoutLabel = completedToday
+                ? 'Completada hoy'
+                : inProgress
+                  ? 'Continuar'
+                  : 'Entrenar';
+              const cloning = cloningRoutineId === routine.id;
 
-            return (
-              <Card
-                key={routine.id}
-                padding={lightCards ? 'sm' : 'md'}
-                rounded="xl"
-                className={`content-visibility-auto touch-manipulation overflow-hidden ${
-                  lightCards
-                    ? 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50'
-                    : ''
-                } ${
-                  isExpanded
-                    ? isStaff
-                      ? 'ring-brand/25 border-brand/30 ring-2'
-                      : 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4'
-                    : ''
-                }`}
-              >
-                <div
-                  role={canOpen ? 'button' : undefined}
-                  tabIndex={canOpen ? 0 : undefined}
-                  onClick={canOpen ? () => onRoutineCardClick(routine.id) : undefined}
-                  onKeyDown={
-                    canOpen
-                      ? (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            onRoutineCardClick(routine.id);
-                          }
-                        }
-                      : undefined
-                  }
-                  className={`group flex items-center gap-2.5 ${canOpen ? 'cursor-pointer' : ''}`}
-                >
-                  {!(lightCards && isStaff) && (
-                    <div
-                      className={`flex shrink-0 items-center justify-center rounded-lg ${
-                        lightCards ? 'bg-brand/10 h-8 w-8' : 'bg-brand/10 h-10 w-10 rounded-xl'
-                      }`}
-                    >
-                      {lightCards ? (
-                        <Dumbbell className="text-brand h-3.5 w-3.5" />
-                      ) : (
-                        <Dumbbell className="text-brand dark:text-brand h-4 w-4" />
-                      )}
-                    </div>
+              return (
+                <Card
+                  key={routine.id}
+                  padding={lightCards ? 'sm' : 'md'}
+                  rounded="xl"
+                  className={cn(
+                    'content-visibility-auto touch-manipulation overflow-hidden',
+                    lightCards && 'border-border/70 bg-surface/80',
+                    isExpanded &&
+                      (isStaff
+                        ? 'ring-brand/25 border-brand/30 ring-2'
+                        : 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4')
                   )}
+                >
+                  <div
+                    role={canOpen ? 'button' : undefined}
+                    tabIndex={canOpen ? 0 : undefined}
+                    onClick={canOpen ? () => onRoutineCardClick(routine.id) : undefined}
+                    onKeyDown={
+                      canOpen
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              onRoutineCardClick(routine.id);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={cn('group flex items-center gap-2.5', canOpen && 'cursor-pointer')}
+                  >
+                    {!(lightCards && isStaff) && (
+                      <div
+                        className={cn(
+                          'bg-brand/10 flex shrink-0 items-center justify-center',
+                          lightCards ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'
+                        )}
+                      >
+                        <Dumbbell
+                          className={cn('text-brand', lightCards ? 'h-3.5 w-3.5' : 'h-4 w-4')}
+                        />
+                      </div>
+                    )}
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <h3 className="truncate text-sm leading-snug font-semibold text-zinc-900 dark:text-white">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-text truncate text-sm leading-snug font-semibold">
                         {routine.name}
                       </h3>
-                      <Badge
-                        variant={difficultyVariant(routine.difficulty)}
-                        className="shrink-0 px-1.5 py-0 text-[9px]"
-                      >
+                      <p className="text-small text-text-muted mt-0.5 font-medium">
                         {formatDifficulty(routine.difficulty)}
-                      </Badge>
-                      {inProgress && !completedToday && (
-                        <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
-                          En curso
-                        </Badge>
-                      )}
-                      {completedToday && (
-                        <Badge variant="success" className="shrink-0 px-1.5 py-0 text-[9px]">
-                          Hecha hoy
-                        </Badge>
+                        <span className="text-text-muted/50 mx-1">·</span>
+                        {exerciseSummary.label}
+                        {status ? (
+                          <>
+                            <span className="text-text-muted/50 mx-1">·</span>
+                            <span className={cn(completedToday ? 'text-success' : 'text-warning')}>
+                              {status}
+                            </span>
+                          </>
+                        ) : null}
+                      </p>
+                      {isMember && exerciseSummary.preview ? (
+                        <p className="text-small text-text-muted mt-0.5 line-clamp-1 leading-snug">
+                          {exerciseSummary.preview}
+                        </p>
+                      ) : null}
+                      {!isMember && canOpen && !isExpanded && (
+                        <>
+                          <span className="text-brand text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
+                            Ver ejercicios
+                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                          </span>
+                          <span className="text-brand text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
+                            Seleccionar
+                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                          </span>
+                        </>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                      {exerciseSummary.label}
-                    </p>
-                    {/* Preview: members always; staff only when expanded (see below) */}
-                    {isMember && exerciseSummary.preview ? (
-                      <p className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
-                        {exerciseSummary.preview}
-                      </p>
-                    ) : null}
-                    {!isMember && canOpen && !isExpanded && (
-                      <>
-                        <span className="text-brand mt-1.5 inline-flex items-center text-[11px] font-semibold md:hidden">
-                          Ver ejercicios
-                          <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                        </span>
-                        <span className="text-brand mt-1.5 hidden text-[11px] font-semibold md:inline-flex md:items-center">
-                          Seleccionar
-                          <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                        </span>
-                      </>
-                    )}
-                  </div>
 
-                  <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                    {isStaff && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditRoutine(routine);
-                          }}
-                          className="hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors sm:inline-flex dark:text-zinc-300"
-                          aria-label={`Configurar ${routine.name}`}
-                          title="Configurar"
-                        >
-                          <Settings2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteRoutine(routine);
-                          }}
-                          className="hidden h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 sm:inline-flex dark:text-zinc-300"
-                          aria-label={`Eliminar ${routine.name}`}
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+                      {isStaff && (
+                        <>
+                          {onCloneRoutine ? (
+                            <button
+                              type="button"
+                              disabled={cloning}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onCloneRoutine(routine);
+                              }}
+                              className="text-text-muted hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-50 sm:inline-flex"
+                              aria-label={`Duplicar ${routine.name}`}
+                              title="Duplicar"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditRoutine(routine);
+                            }}
+                            className="text-text-muted hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+                            aria-label={`Configurar ${routine.name}`}
+                            title="Configurar"
+                          >
+                            <Settings2 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteRoutine(routine);
+                            }}
+                            className="text-text-muted hover:bg-danger/10 hover:text-danger hidden h-8 w-8 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+                            aria-label={`Eliminar ${routine.name}`}
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onToggleExpandRoutine(routine.id);
+                            }}
+                            className={cn(
+                              'inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8',
+                              isExpanded
+                                ? 'bg-text text-bg'
+                                : 'text-text-muted hover:bg-surface-overlay hover:text-text'
+                            )}
+                            aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
+                            aria-expanded={isExpanded}
+                            title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
+                          >
+                            <ChevronDown
+                              className={cn(
+                                'h-4 w-4 transition-transform',
+                                isExpanded && 'rotate-180'
+                              )}
+                            />
+                          </button>
+                        </>
+                      )}
+                      {isMember && (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             void onToggleExpandRoutine(routine.id);
                           }}
-                          className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8 ${
-                            isExpanded
-                              ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                              : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200'
-                          }`}
-                          aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
+                          className={cn(
+                            'text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                            isExpanded && 'bg-surface-overlay text-text'
+                          )}
+                          aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
                           aria-expanded={isExpanded}
                           title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
                         >
                           <ChevronDown
-                            className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            className={cn(
+                              'h-4 w-4 transition-transform',
+                              isExpanded && 'rotate-180'
+                            )}
                           />
                         </button>
-                      </>
-                    )}
-                    {isMember && (
-                      <button
+                      )}
+                    </div>
+                  </div>
+
+                  {isMember && (
+                    <div className="mt-2.5">
+                      <Button
                         type="button"
+                        size="sm"
+                        className="min-h-9 w-full shadow-none sm:w-auto"
+                        disabled={completedToday}
                         onClick={(e) => {
                           e.stopPropagation();
-                          void onToggleExpandRoutine(routine.id);
+                          onStartWorkout?.(routine.id);
                         }}
-                        className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 ${
-                          isExpanded
-                            ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
-                            : ''
-                        }`}
-                        aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
-                        aria-expanded={isExpanded}
-                        title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
                       >
-                        <ChevronDown
-                          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                        <Play className="h-3.5 w-3.5" />
+                        {workoutLabel}
+                      </Button>
+                    </div>
+                  )}
 
-                {isMember && (
-                  <div className="mt-2.5">
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="min-h-9 w-full shadow-none sm:w-auto"
-                      disabled={completedToday}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStartWorkout?.(routine.id);
-                      }}
+                  {isExpanded && (
+                    <div
+                      className={cn(
+                        'border-border/80 animate-in slide-in-from-top-2 mt-3 space-y-2.5 border-t pt-3 duration-200',
+                        isStaff && 'md:hidden'
+                      )}
                     >
-                      <Play className="h-3.5 w-3.5" />
-                      {workoutLabel}
-                    </Button>
-                  </div>
-                )}
-
-                {isExpanded && (
-                  <div
-                    className={cn(
-                      'animate-in slide-in-from-top-2 mt-3 space-y-2.5 border-t border-zinc-100/80 pt-3 duration-200 dark:border-zinc-800/80',
-                      isStaff && 'md:hidden'
-                    )}
-                  >
-                    {isStaff && exerciseSummary.preview ? (
-                      <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                        {exerciseSummary.preview}
-                      </p>
-                    ) : null}
-                    {isStaff && (
-                      <div className="flex gap-1.5">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-9 flex-1 text-xs"
-                          onClick={() => onEditRoutine(routine)}
-                        >
-                          <Settings2 className="h-3.5 w-3.5" />
-                          Configurar
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-9 flex-1 text-xs text-red-600 dark:text-red-400"
-                          onClick={() => onDeleteRoutine(routine)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </Button>
-                      </div>
-                    )}
-                    {isMember ? (
-                      <>
-                        <div className="space-y-2">
+                      {isStaff && exerciseSummary.preview ? (
+                        <p className="text-small text-text-muted leading-snug">
+                          {exerciseSummary.preview}
+                        </p>
+                      ) : null}
+                      {isStaff && (
+                        <div className="flex gap-1.5">
+                          {onCloneRoutine ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-9 flex-1 text-xs"
+                              disabled={cloning}
+                              onClick={() => onCloneRoutine(routine)}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              Duplicar
+                            </Button>
+                          ) : null}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-9 flex-1 text-xs"
+                            onClick={() => onEditRoutine(routine)}
+                          >
+                            <Settings2 className="h-3.5 w-3.5" />
+                            Configurar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="text-danger h-9 flex-1 text-xs"
+                            onClick={() => onDeleteRoutine(routine)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      )}
+                      {isMember ? (
+                        <div className="space-y-0">
                           {routine.exercises?.map((exercise) => (
                             <div
                               key={exercise.routine_exercise_id}
-                              className="rounded-lg px-2.5 py-2 dark:bg-zinc-950/40"
+                              className="border-border/60 border-b px-0.5 py-2 last:border-0"
                             >
                               <div className="flex items-baseline justify-between gap-2">
-                                <h5 className="truncate text-sm font-medium text-zinc-900 dark:text-white">
+                                <h5 className="text-text truncate text-sm font-medium">
                                   {exercise.name}
                                 </h5>
-                                <p className="shrink-0 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                                <p className="text-small text-text-muted shrink-0 tabular-nums">
                                   {exercise.sets}×{exercise.reps}
                                 </p>
                               </div>
-                              <p className="mt-0.5 text-[11px] text-zinc-400 capitalize dark:text-zinc-500">
+                              <p className="text-small text-text-muted mt-0.5 capitalize">
                                 {exercise.muscle_group}
                                 {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
                               </p>
                             </div>
                           ))}
                           {(!routine.exercises || routine.exercises.length === 0) && (
-                            <div className="rounded-lg border border-dashed border-zinc-200 py-5 text-center text-xs text-zinc-400 italic dark:border-zinc-700 dark:text-zinc-300">
+                            <div className="border-border text-text-muted rounded-lg border border-dashed py-5 text-center text-xs italic">
                               Sin ejercicios en esta rutina
                             </div>
                           )}
                         </div>
-                      </>
-                    ) : (
-                      <StaffRoutineExercises
-                        routine={routine}
-                        onAddExercise={onAddExercise}
-                        onInlineUpdate={onInlineUpdate}
-                        onEditExercise={onEditExercise}
-                        onDeleteExercise={onDeleteExercise}
-                      />
-                    )}
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+                      ) : (
+                        <StaffRoutineExercises
+                          routine={routine}
+                          onAddExercise={onAddExercise}
+                          onInlineUpdate={onInlineUpdate}
+                          onEditExercise={onEditExercise}
+                          onDeleteExercise={onDeleteExercise}
+                        />
+                      )}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
 
-        {isStaff ? (
-          <Card
-            padding="sm"
-            rounded="xl"
-            className="sticky top-3 hidden max-h-[calc(100vh-7rem)] overflow-y-auto border-zinc-200/70 bg-white/80 md:block dark:border-zinc-800/80 dark:bg-zinc-900/50"
-          >
-            {selectedStaffRoutine && selectedStaffSummary ? (
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+          {isStaff ? (
+            <Card
+              padding="sm"
+              rounded="xl"
+              className="border-border/70 bg-surface/80 sticky top-3 hidden max-h-[calc(100vh-7rem)] overflow-y-auto md:block"
+            >
+              {selectedStaffRoutine && selectedStaffSummary ? (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-text truncate text-sm font-semibold">
                         {selectedStaffRoutine.name}
                       </h3>
-                      <Badge
-                        variant={difficultyVariant(selectedStaffRoutine.difficulty)}
-                        className="shrink-0 px-1.5 py-0 text-[9px]"
-                      >
+                      <p className="text-small text-text-muted mt-0.5">
                         {formatDifficulty(selectedStaffRoutine.difficulty)}
-                      </Badge>
+                        <span className="text-text-muted/50 mx-1">·</span>
+                        {selectedStaffSummary.label}
+                        {selectedStaffSummary.preview ? ` · ${selectedStaffSummary.preview}` : ''}
+                      </p>
                     </div>
-                    <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {selectedStaffSummary.label}
-                      {selectedStaffSummary.preview ? ` · ${selectedStaffSummary.preview}` : ''}
-                    </p>
+                    <div className="flex shrink-0 gap-0.5">
+                      {onCloneRoutine ? (
+                        <button
+                          type="button"
+                          disabled={cloningRoutineId === selectedStaffRoutine.id}
+                          onClick={() => onCloneRoutine(selectedStaffRoutine)}
+                          className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-50"
+                          aria-label={`Duplicar ${selectedStaffRoutine.name}`}
+                          title="Duplicar"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => onEditRoutine(selectedStaffRoutine)}
+                        className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg"
+                        aria-label={`Configurar ${selectedStaffRoutine.name}`}
+                        title="Configurar"
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteRoutine(selectedStaffRoutine)}
+                        className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-8 w-8 items-center justify-center rounded-lg"
+                        aria-label={`Eliminar ${selectedStaffRoutine.name}`}
+                        title="Eliminar"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => onEditRoutine(selectedStaffRoutine)}
-                      className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400"
-                      aria-label={`Configurar ${selectedStaffRoutine.name}`}
-                      title="Configurar"
-                    >
-                      <Settings2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteRoutine(selectedStaffRoutine)}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
-                      aria-label={`Eliminar ${selectedStaffRoutine.name}`}
-                      title="Eliminar"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <StaffRoutineExercises
+                    routine={selectedStaffRoutine}
+                    onAddExercise={onAddExercise}
+                    onInlineUpdate={onInlineUpdate}
+                    onEditExercise={onEditExercise}
+                    onDeleteExercise={onDeleteExercise}
+                  />
                 </div>
-                <StaffRoutineExercises
-                  routine={selectedStaffRoutine}
-                  onAddExercise={onAddExercise}
-                  onInlineUpdate={onInlineUpdate}
-                  onEditExercise={onEditExercise}
-                  onDeleteExercise={onDeleteExercise}
-                  dense
-                />
-              </div>
-            ) : (
-              <div className="flex min-h-[12rem] flex-col items-center justify-center px-4 py-8 text-center">
-                <Dumbbell className="text-brand/40 mb-2 h-8 w-8" aria-hidden />
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                  Selecciona una plantilla
-                </p>
-                <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
-                  Elige una rutina a la izquierda para editar ejercicios aquí.
-                </p>
-              </div>
-            )}
-          </Card>
-        ) : null}
-      </div>
+              ) : (
+                <div className="flex min-h-[12rem] flex-col items-center justify-center px-4 py-8 text-center">
+                  <Dumbbell className="text-brand/40 mb-2 h-8 w-8" aria-hidden />
+                  <p className="text-text text-sm font-semibold">Selecciona una plantilla</p>
+                  <p className="text-small text-text-muted mt-1">
+                    Elige una rutina a la izquierda para editar ejercicios aquí.
+                  </p>
+                </div>
+              )}
+            </Card>
+          ) : null}
+        </div>
+      )}
 
       {isStaff && routines.length <= 1 && (
         <button
           type="button"
           onClick={onCreateRoutine}
-          className="text-brand hover:bg-brand/5 dark:hover:bg-brand/10 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2.5 text-xs font-semibold transition-colors dark:border-zinc-700"
+          className="text-brand border-border hover:bg-brand/5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed py-2.5 text-xs font-semibold transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           {routines.length === 0 ? 'Crear plantilla' : 'Crear otra plantilla'}
@@ -663,7 +738,7 @@ export function RoutinesLibraryView({
       )}
 
       {memberFooterHint ? (
-        <p className="px-1 pt-1 text-center text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">
+        <p className="text-small text-text-muted px-1 pt-1 text-center leading-snug">
           {memberFooterHint}
         </p>
       ) : null}

@@ -2,10 +2,11 @@ import { UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { parseDateOnly } from '../../lib/dates';
-import { formatDifficulty } from '../../lib/utils';
 import { SHIFT_LABELS, type TrainingShift } from '../../lib/trainingShift';
 import { Button, Label, Input, Select, Spinner } from '../ui';
 import { toDisplayErrorMessage } from '../../lib/api';
+import { cn } from '../../lib/utils';
+import { RoutinePicker } from './RoutinePicker';
 
 export interface AssignRoutineFormValue {
   user_id: string;
@@ -47,6 +48,16 @@ interface AssignRoutineFormProps {
   onCreateMember?: () => void;
 }
 
+const WEEKDAYS: [string, string][] = [
+  ['L', 'Lunes'],
+  ['M', 'Martes'],
+  ['X', 'Miércoles'],
+  ['J', 'Jueves'],
+  ['V', 'Viernes'],
+  ['S', 'Sábado'],
+  ['D', 'Domingo'],
+];
+
 export function AssignRoutineForm({
   value,
   onChange,
@@ -80,17 +91,17 @@ export function AssignRoutineForm({
         <div>
           <Label>Miembro</Label>
           {membersLoading ? (
-            <div className="flex items-center gap-2 py-2.5 text-xs text-zinc-500">
+            <div className="text-text-muted flex items-center gap-2 py-2.5 text-xs">
               <Spinner className="h-4 w-4" />
               Cargando miembros…
             </div>
           ) : membersError ? (
-            <p className="py-2 text-xs text-red-500">
+            <p className="text-danger py-2 text-xs">
               {toDisplayErrorMessage(membersError, 'No se pudieron cargar los miembros')}
             </p>
           ) : members.length === 0 ? (
-            <div className="space-y-2 rounded-xl border border-dashed border-zinc-200/80 px-3 py-4 text-center dark:border-zinc-700">
-              <p className="text-xs text-zinc-500">No hay miembros registrados.</p>
+            <div className="border-border space-y-2 rounded-xl border border-dashed px-3 py-4 text-center">
+              <p className="text-text-muted text-xs">No hay miembros registrados.</p>
               {onCreateMember && (
                 <Button variant="ghost" size="sm" onClick={onCreateMember}>
                   Crear miembro
@@ -114,7 +125,7 @@ export function AssignRoutineForm({
                 ))}
               </Select>
               {selectedMemberShift && (
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-small text-text-muted mt-1">
                   Turno: {SHIFT_LABELS[selectedMemberShift]}
                   {availableTrainers.length > 0
                     ? ` · ${availableTrainers.map((t) => t.full_name).join(', ')}`
@@ -126,38 +137,26 @@ export function AssignRoutineForm({
         </div>
       )}
 
-      <div>
-        <Label>Rutina</Label>
-        <Select
-          value={value.routine_id}
-          onChange={(e) => {
-            onChange({ ...value, routine_id: e.target.value });
-          }}
-        >
-          <option value="">Elegir rutina…</option>
-          {routineOptions.map((r) => {
-            const isReassign = assignedRoutineIds?.has(r.id);
-            return (
-              <option key={r.id} value={r.id}>
-                {r.name} · {formatDifficulty(r.difficulty)}
-                {r.trainer_name ? ` · ${r.trainer_name}` : ''}
-                {isReassign ? ' · reasignar' : ''}
-              </option>
-            );
-          })}
-        </Select>
-        {selectedMemberShift && routineOptions.length === 0 && (
-          <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
-            No hay rutinas de entrenadores en {shiftShort}.
-          </p>
-        )}
-      </div>
+      <RoutinePicker
+        routines={routineOptions}
+        value={value.routine_id}
+        onChange={(routine_id) => onChange({ ...value, routine_id })}
+        assignedRoutineIds={assignedRoutineIds}
+        emptyHint={
+          selectedMemberShift && routineOptions.length === 0
+            ? `No hay rutinas de entrenadores en ${shiftShort}.`
+            : 'Ninguna plantilla coincide'
+        }
+      />
+      {selectedMemberShift && routineOptions.length === 0 ? (
+        <p className="text-small text-warning -mt-1">
+          No hay rutinas de entrenadores en {shiftShort}.
+        </p>
+      ) : null}
 
       <div className={singleDay ? 'space-y-2' : 'grid grid-cols-2 gap-3'}>
         {singleDay && singleDayLabel && (
-          <p className="text-xs font-medium text-zinc-700 capitalize dark:text-zinc-300">
-            {singleDayLabel}
-          </p>
+          <p className="text-text-secondary text-xs font-medium capitalize">{singleDayLabel}</p>
         )}
         <div>
           <Label>{singleDay ? 'Fecha' : 'Inicio'}</Label>
@@ -187,11 +186,9 @@ export function AssignRoutineForm({
           </div>
         )}
         {singleDay ? (
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Aparecerá solo este día en el calendario.
-          </p>
+          <p className="text-small text-text-muted">Aparecerá solo este día en el calendario.</p>
         ) : (
-          <p className="col-span-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-small text-text-muted col-span-2">
             Periodo en que el miembro tendrá esta rutina activa.
           </p>
         )}
@@ -199,19 +196,9 @@ export function AssignRoutineForm({
 
       {!singleDay && (
         <fieldset>
-          <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Días programados
-          </legend>
+          <legend className="text-text-secondary text-sm font-medium">Días programados</legend>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {[
-              ['L', 'Lunes'],
-              ['M', 'Martes'],
-              ['X', 'Miércoles'],
-              ['J', 'Jueves'],
-              ['V', 'Viernes'],
-              ['S', 'Sábado'],
-              ['D', 'Domingo'],
-            ].map(([short, label], index) => {
+            {WEEKDAYS.map(([short, label], index) => {
               const day = index + 1;
               const selected = value.scheduled_weekdays?.includes(day) ?? false;
               return (
@@ -227,18 +214,19 @@ export function AssignRoutineForm({
                       : [...current, day].sort((a, b) => a - b);
                     onChange({ ...value, scheduled_weekdays });
                   }}
-                  className={`h-9 w-9 rounded-full text-xs font-semibold transition-colors ${
+                  className={cn(
+                    'text-small h-9 w-9 rounded-[var(--radius-chip)] font-semibold transition-colors',
                     selected
                       ? 'bg-brand text-white'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-                  }`}
+                      : 'bg-surface-raised text-text-secondary hover:bg-surface-overlay'
+                  )}
                 >
                   {short}
                 </button>
               );
             })}
           </div>
-          <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-small text-text-muted mt-1.5">
             Opcional. Si no eliges días, la rutina seguirá disponible todos los días.
           </p>
         </fieldset>

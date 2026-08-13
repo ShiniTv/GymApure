@@ -74,7 +74,14 @@ El sistema de tokens (Linear-like) es sólido; la deuda está en **call sites**:
 - `Landing` — `dark` + `bg-bg`; radial con `var(--color-brand)` (sin `#0c98ff`)
 - `TrainerPtBilling` — tipografía `text-sm` / `text-small`; amber/emerald → warning/success
 
-Siguiente: `PageHeader` badge quiet; residual `text-[Npx]` en historial de workouts; detector Impeccable re-run.
+## Quinta oleada — biblioteca trainer (2026-08-13)
+
+- `RoutinesLibraryView` — SearchInput + filtro dificultad (Select); sin stacks de Badge
+- Duplicar / «Desde plantilla» vía `POST /routines/:id/clone`
+- `RoutinePicker` + `AssignRoutineForm` — typeahead; días `radius-chip` (no `rounded-full`)
+- Asignaciones / calendario / highlights — meta `text-small` en lugar de Badge
+
+Siguiente: residual FilterChips walls (Equipment/Members); `PageHeader` quiet.
 
 ## Comandos
 

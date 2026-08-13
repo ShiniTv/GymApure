@@ -19,7 +19,6 @@ import {
   SegmentedControl,
   BackToDashboardLink,
   Card,
-  Badge,
   EmptyState,
   Button,
   CalendarViewSkeleton,
@@ -91,6 +90,12 @@ export default function Routines() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [newRoutine, setNewRoutine] = useState({
+    name: '',
+    difficulty: 'Beginner',
+    clone_from_id: '',
+  });
+  const [cloningRoutineId, setCloningRoutineId] = useState<number | null>(null);
   const [isAssigningFromCalendar, setIsAssigningFromCalendar] = useState(false);
   const [assignSingleDay, setAssignSingleDay] = useState(false);
   const [assignForm, setAssignForm] = useState({
@@ -100,7 +105,6 @@ export default function Routines() {
     end_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
   });
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
-  const [newRoutine, setNewRoutine] = useState({ name: '', difficulty: 'Beginner' });
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
   const [isEditingExercise, setIsEditingExercise] = useState(false);
   const [editingExercise, setEditingExercise] = useState<RoutineExercise | null>(null);
@@ -351,19 +355,63 @@ export default function Routines() {
   };
 
   const handleCreateRoutine = async () => {
-    if (!newRoutine.name || !user) return;
+    if (!user) return;
+    const cloneFromId = newRoutine.clone_from_id ? parseInt(newRoutine.clone_from_id, 10) : NaN;
+    const isClone = Number.isSafeInteger(cloneFromId) && cloneFromId > 0;
+    if (!isClone && !newRoutine.name.trim()) return;
+
     try {
-      const res = await apiFetch('/api/routines', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newRoutine, trainer_id: user.id }),
-      });
-      await parseJsonResponse(res);
+      if (isClone) {
+        const body: { name?: string } = {};
+        if (newRoutine.name.trim()) body.name = newRoutine.name.trim();
+        const res = await apiFetch(`/api/routines/${cloneFromId}/clone`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const cloned = await parseJsonResponse<{ id: number; name: string }>(res);
+        toast?.success(`${cloned.name} creada desde plantilla`);
+        setExpandedRoutineId(cloned.id);
+      } else {
+        const res = await apiFetch('/api/routines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newRoutine.name.trim(),
+            difficulty: newRoutine.difficulty,
+            trainer_id: user.id,
+          }),
+        });
+        const created = await parseJsonResponse<{ id?: number }>(res);
+        toast?.success('Rutina creada');
+        if (created.id != null) setExpandedRoutineId(created.id);
+      }
       setIsCreating(false);
-      setNewRoutine({ name: '', difficulty: 'Beginner' });
+      setNewRoutine({ name: '', difficulty: 'Beginner', clone_from_id: '' });
       refreshRoutines();
     } catch (err) {
       clientLogger.error('Failed to create routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo crear la rutina');
+    }
+  };
+
+  const handleCloneRoutine = async (routine: Routine) => {
+    setCloningRoutineId(routine.id);
+    try {
+      const res = await apiFetch(`/api/routines/${routine.id}/clone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const cloned = await parseJsonResponse<{ id: number; name: string }>(res);
+      toast?.success(`${cloned.name} en tu biblioteca`);
+      setExpandedRoutineId(cloned.id);
+      refreshRoutines();
+    } catch (err) {
+      clientLogger.error('Failed to clone routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo duplicar la rutina');
+    } finally {
+      setCloningRoutineId(null);
     }
   };
 
@@ -618,7 +666,7 @@ export default function Routines() {
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Asignaciones</h3>
                 {memberRoutineHighlights.upcoming.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
+                    <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
                       Próximas
                     </p>
                     {memberRoutineHighlights.upcoming.map((routine) => (
@@ -627,11 +675,9 @@ export default function Routines() {
                         className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                            {routine.name}
-                          </p>
+                          <p className="text-text truncate text-sm font-semibold">{routine.name}</p>
                           {routine.start_date && (
-                            <p className="text-[11px] text-zinc-500">
+                            <p className="text-small text-text-muted">
                               Inicia{' '}
                               {format(parseDateOnly(routine.start_date), 'dd MMM yyyy', {
                                 locale: es,
@@ -639,27 +685,25 @@ export default function Routines() {
                             </p>
                           )}
                         </div>
-                        <Badge variant="default">Próxima</Badge>
+                        <span className="text-small text-brand shrink-0 font-medium">Próxima</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {memberRoutineHighlights.ending.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
+                    <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
                       Por vencer
                     </p>
                     {memberRoutineHighlights.ending.map((routine) => (
                       <div
                         key={routine.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2"
+                        className="border-warning/20 bg-warning/5 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                            {routine.name}
-                          </p>
+                          <p className="text-text truncate text-sm font-semibold">{routine.name}</p>
                           {routine.end_date && (
-                            <p className="text-[11px] text-zinc-500">
+                            <p className="text-small text-text-muted">
                               Hasta{' '}
                               {format(parseDateOnly(routine.end_date), 'dd MMM yyyy', {
                                 locale: es,
@@ -667,7 +711,9 @@ export default function Routines() {
                             </p>
                           )}
                         </div>
-                        <Badge variant="warning">Por vencer</Badge>
+                        <span className="text-small text-warning shrink-0 font-medium">
+                          Por vencer
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -713,6 +759,11 @@ export default function Routines() {
             newRoutine={newRoutine}
             setNewRoutine={setNewRoutine}
             handleCreateRoutine={handleCreateRoutine}
+            libraryRoutines={routines.map((r) => ({
+              id: r.id,
+              name: r.name,
+              difficulty: r.difficulty,
+            }))}
             editingRoutine={editingRoutine}
             setEditingRoutine={setEditingRoutine}
             handleUpdateRoutine={handleUpdateRoutine}
@@ -760,8 +811,21 @@ export default function Routines() {
                 setDeleteRoutineTarget(routine);
               }}
               onCreateRoutine={() => {
+                setNewRoutine({ name: '', difficulty: 'Beginner', clone_from_id: '' });
                 setIsCreating(true);
               }}
+              onCreateFromTemplate={() => {
+                setNewRoutine({
+                  name: '',
+                  difficulty: 'Beginner',
+                  clone_from_id: routines[0] ? String(routines[0].id) : '',
+                });
+                setIsCreating(true);
+              }}
+              onCloneRoutine={(routine) => {
+                void handleCloneRoutine(routine);
+              }}
+              cloningRoutineId={cloningRoutineId}
               onAddExercise={(routineId) => {
                 setExpandedRoutineId(routineId);
                 setAddExerciseError(null);

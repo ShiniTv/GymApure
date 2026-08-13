@@ -14,7 +14,7 @@ import {
   differenceInCalendarDays,
 } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { Button, Badge } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import type { CalendarAssignment } from './types';
 
@@ -49,12 +49,6 @@ export interface RoutinesCalendarViewProps {
   paletteRoutines?: CalendarPaletteRoutine[];
   paletteMembers?: CalendarPaletteMember[];
   onDropAssign?: (dateStr: string, payload: AssignDragPayload) => void;
-}
-
-function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
-  if (difficulty === 'Advanced') return 'danger';
-  if (difficulty === 'Intermediate') return 'warning';
-  return 'success';
 }
 
 const SWIPE_THRESHOLD_PX = 48;
@@ -496,12 +490,9 @@ export function RoutinesCalendarView({
                         {a.routine_name}
                       </p>
                     </div>
-                    <Badge
-                      variant={difficultyVariant(a.difficulty)}
-                      className="shrink-0 px-1.5 py-0 text-[9px]"
-                    >
+                    <span className="text-small text-text-muted shrink-0">
                       {formatDifficulty(a.difficulty)}
-                    </Badge>
+                    </span>
                   </button>
                 </li>
               ))}

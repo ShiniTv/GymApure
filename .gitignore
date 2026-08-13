@@ -23,3 +23,8 @@ supabase/.temp/
 # Evidencia local de auditorías UX (PNG/JSON voluminosos)
 .cursor/ux-audit-evidence/
 archive/ux-audit-evidence/
+# Agent design skills (local only — no desplegar en Render)
+.agents/
+.cursor/agents/
+.cursor/skills/impeccable/
+skills-lock.json

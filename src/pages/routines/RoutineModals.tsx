@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Label, Input, DifficultySelect } from '../../components/ui';
+import { Button, Modal, Label, Input, DifficultySelect, Select } from '../../components/ui';
 import { AssignRoutineForm } from '../../components/routines/AssignRoutineForm';
 import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
@@ -31,9 +31,12 @@ export interface RoutineModalsProps {
   handleQuickAssign: () => void;
   isCreating: boolean;
   setIsCreating: (open: boolean) => void;
-  newRoutine: { name: string; difficulty: string };
-  setNewRoutine: React.Dispatch<React.SetStateAction<{ name: string; difficulty: string }>>;
+  newRoutine: { name: string; difficulty: string; clone_from_id: string };
+  setNewRoutine: React.Dispatch<
+    React.SetStateAction<{ name: string; difficulty: string; clone_from_id: string }>
+  >;
   handleCreateRoutine: () => void;
+  libraryRoutines?: { id: number; name: string; difficulty: string }[];
   editingRoutine: Routine | null;
   setEditingRoutine: (routine: Routine | null) => void;
   handleUpdateRoutine: () => void;
@@ -83,6 +86,7 @@ export function RoutineModals({
   newRoutine,
   setNewRoutine,
   handleCreateRoutine,
+  libraryRoutines = [],
   editingRoutine,
   setEditingRoutine,
   handleUpdateRoutine,
@@ -145,9 +149,38 @@ export function RoutineModals({
         onClose={() => {
           setIsCreating(false);
         }}
-        title="Nueva rutina"
+        title={newRoutine.clone_from_id ? 'Nueva desde plantilla' : 'Nueva rutina'}
       >
         <div className="space-y-4">
+          {libraryRoutines.length > 0 ? (
+            <div>
+              <Label>Basada en (opcional)</Label>
+              <Select
+                value={newRoutine.clone_from_id ?? ''}
+                onChange={(e) => {
+                  const clone_from_id = e.target.value;
+                  const source = libraryRoutines.find((r) => String(r.id) === clone_from_id);
+                  setNewRoutine({
+                    ...newRoutine,
+                    clone_from_id,
+                    ...(source && !newRoutine.name.trim()
+                      ? { name: `${source.name} (copia)`, difficulty: source.difficulty }
+                      : {}),
+                  });
+                }}
+              >
+                <option value="">En blanco</option>
+                {libraryRoutines.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-small text-text-muted mt-1">
+                Copia ejercicios de una plantilla existente.
+              </p>
+            </div>
+          ) : null}
           <div>
             <Label>Nombre de la Rutina</Label>
             <Input
@@ -156,26 +189,34 @@ export function RoutineModals({
               onChange={(e) => {
                 setNewRoutine({ ...newRoutine, name: e.target.value });
               }}
-              placeholder="Ej: Full Body"
+              placeholder={
+                newRoutine.clone_from_id ? 'Dejar vacío para nombre automático' : 'Ej: Full Body'
+              }
             />
           </div>
-          <div>
-            <Label>Dificultad</Label>
-            <DifficultySelect
-              className="tracking-tighter uppercase"
-              value={newRoutine.difficulty}
-              onChange={(value) => {
-                setNewRoutine({ ...newRoutine, difficulty: value });
-              }}
-            />
-          </div>
+          {!newRoutine.clone_from_id ? (
+            <div>
+              <Label>Dificultad</Label>
+              <DifficultySelect
+                className="tracking-tighter uppercase"
+                value={newRoutine.difficulty}
+                onChange={(value) => {
+                  setNewRoutine({ ...newRoutine, difficulty: value });
+                }}
+              />
+            </div>
+          ) : (
+            <p className="text-small text-text-muted">
+              La dificultad y los ejercicios se copian de la plantilla.
+            </p>
+          )}
           <Button
             className="w-full"
             size="lg"
             onClick={handleCreateRoutine}
-            disabled={!newRoutine.name}
+            disabled={!newRoutine.clone_from_id && !newRoutine.name.trim()}
           >
-            Crear Rutina
+            {newRoutine.clone_from_id ? 'Duplicar plantilla' : 'Crear Rutina'}
           </Button>
         </div>
       </Modal>

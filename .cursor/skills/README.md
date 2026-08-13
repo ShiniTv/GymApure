@@ -12,33 +12,20 @@ Skills de proyecto que el agente puede aplicar al desarrollar, revisar o operar 
 | `gymapure-db-ops`          | Migraciones, health, audits, demo data            |
 | `gymapure-feature-change`  | Extender un módulo (API → hooks → UI → test)      |
 | `gymapure-ux-playwright`   | UX por rol, mobile/tablet, Playwright             |
-| `impeccable`               | Diseño: init/document/critique/polish/detect      |
 
-## Diseño / motion (`.agents/skills/` vía `npx skills add`)
+> `impeccable` se instala en local (ver sección Diseño); no se versiona para no romper deploys en Render.
 
-Instaladas en el estándar Agent Skills (`.agents/skills/`). Cursor las descubre junto a `.cursor/skills/`.
+## Diseño / motion (local — no van a Render)
 
-| Skill                           | Origen               | Uso típico                                       |
-| ------------------------------- | -------------------- | ------------------------------------------------ |
-| `emil-design-eng`               | emilkowalski/skill   | Principía design-eng + animación                 |
-| `animate`                       | emilkowalski/skill   | Construir motion con curvas/duraciones correctas |
-| `review-animations`             | emilkowalski/skill   | Revisar animaciones existentes                   |
-| `improve-animations`            | emilkowalski/skill   | Auditoría priorizada de motion                   |
-| `find-animation-opportunities`  | emilkowalski/skill   | Dónde sí/no animar                               |
-| `animation-vocabulary`          | emilkowalski/skill   | Vocabulario preciso para pedir motion            |
-| `apple-design`                  | emilkowalski/skill   | Principios Apple adaptados a web                 |
-| `prototype`                     | emilkowalski/skill   | Variantes UI con picker                          |
-| `pick-ui-library`               | emilkowalski/skill   | Elegir librería UI                               |
-| `ask-sonner`                    | emilkowalski/skill   | Toasts Sonner                                    |
-| `design-taste-frontend`         | Leonxlnx/taste-skill | Anti-slop frontend (v2, preferida)               |
-| `design-taste-frontend-v1`      | Leonxlnx/taste-skill | Taste v1 (solo si v2 rompe el flujo)             |
-| `redesign-existing-projects`    | Leonxlnx/taste-skill | Auditoría/rediseño de UI existente               |
-| `high-end-visual-design`        | Leonxlnx/taste-skill | Dirección visual high-end                        |
-| `minimalist-ui`                 | Leonxlnx/taste-skill | Dirección minimalista                            |
-| `brandkit` / `gpt-taste` / etc. | Leonxlnx/taste-skill | Especializadas (imagen, brand, estilos)          |
+Instalar con `npx skills add …` / `npx impeccable install`. Viven en `.agents/skills/` e Impeccable en `.cursor/skills/impeccable/` (**gitignore**; no se despliegan).
 
-Contexto de producto/visual: `PRODUCT.md`, `DESIGN.md` en la raíz (Impeccable).
-Informe de auditoría: `docs/qa/UX-DESIGN-AUDIT.md`.
+Cursor las descubre en local. Ver `PRODUCT.md` / `DESIGN.md` y `docs/qa/UX-DESIGN-AUDIT.md`.
+
+| Skill                      | Origen               | Uso típico                 |
+| -------------------------- | -------------------- | -------------------------- |
+| `emil-design-eng` + motion | emilkowalski/skill   | Design-eng y animación     |
+| `design-taste-frontend`    | Leonxlnx/taste-skill | Anti-slop frontend         |
+| `impeccable` (local)       | impeccable install   | critique / polish / detect |
 
 ## Cómo invocar
 

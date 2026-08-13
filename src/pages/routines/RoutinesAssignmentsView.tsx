@@ -1,6 +1,6 @@
 import { Calendar, Dumbbell, UserPlus, Plus } from 'lucide-react';
 import { formatDateOnly } from '../../lib/dates';
-import { Button, Avatar, Badge, AssignmentsListSkeleton } from '../../components/ui';
+import { Button, Avatar, AssignmentsListSkeleton } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import type { RoutineAssignmentMember, RoutinesView } from './types';
 
@@ -19,12 +19,6 @@ function formatAssignmentDate(value: string | null | undefined): string {
   } catch {
     return '—';
   }
-}
-
-function difficultyVariant(difficulty: string): 'danger' | 'warning' | 'success' {
-  if (difficulty === 'Advanced') return 'danger';
-  if (difficulty === 'Intermediate') return 'warning';
-  return 'success';
 }
 
 export function RoutinesAssignmentsView({
@@ -131,15 +125,12 @@ export function RoutinesAssignmentsView({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-                          <h4 className="truncate text-xs font-semibold text-zinc-900 sm:text-sm dark:text-white">
+                          <h4 className="text-text truncate text-xs font-semibold sm:text-sm">
                             {routine.routine_name}
                           </h4>
-                          <Badge
-                            variant={difficultyVariant(routine.difficulty)}
-                            className="shrink-0 px-1.5 py-0 text-[9px]"
-                          >
+                          <span className="text-small text-text-muted shrink-0">
                             {formatDifficulty(routine.difficulty)}
-                          </Badge>
+                          </span>
                         </div>
                         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
                           <span className="inline-flex items-center gap-1">
