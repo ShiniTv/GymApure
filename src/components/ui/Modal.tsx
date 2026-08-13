@@ -4,6 +4,8 @@ import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
+const EXIT_MS = 200;
+
 interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -45,6 +47,7 @@ export function Modal({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
 
   useScrollLock(open);
@@ -54,13 +57,17 @@ export function Modal({
   }, []);
 
   useEffect(() => {
-    if (!open) {
-      setVisible(false);
-      return;
+    if (open) {
+      setMounted(true);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
     }
 
-    const frame = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(frame);
+    setVisible(false);
+    const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -96,10 +103,11 @@ export function Modal({
   }, []);
 
   useEffect(() => {
-    if (!open) {
+    if (!mounted) {
       previousFocusRef.current?.focus();
       return;
     }
+    if (!open) return;
 
     previousFocusRef.current = document.activeElement as HTMLElement;
     document.addEventListener('keydown', handleKeyDown);
@@ -125,14 +133,14 @@ export function Modal({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, handleKeyDown, initialFocus]);
+  }, [open, mounted, handleKeyDown, initialFocus]);
 
-  if (!portalTarget || !open) return null;
+  if (!portalTarget || !mounted) return null;
 
   return createPortal(
     <div
       className={cn(
-        'fixed inset-0 z-[80] overflow-y-auto transition-opacity duration-150',
+        'fixed inset-0 z-[80] overflow-y-auto transition-opacity duration-200 ease-out motion-reduce:transition-none',
         visible ? 'opacity-100' : 'opacity-0'
       )}
     >
@@ -151,9 +159,11 @@ export function Modal({
           aria-describedby={contentId}
           tabIndex={-1}
           className={cn(
-            'border-border/60 bg-surface my-auto w-full rounded-[var(--radius-card)] border shadow-none transition-all duration-200',
+            'border-border/60 bg-surface my-auto w-full rounded-[var(--radius-card)] border shadow-none transition-[opacity,transform] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none',
             'dark:bg-surface-raised dark:border-border/70',
-            visible ? 'scale-100 opacity-100' : 'scale-[0.99] opacity-0',
+            visible
+              ? 'translate-y-0 scale-100 opacity-100'
+              : 'translate-y-1 scale-[0.98] opacity-0',
             scrollable
               ? 'flex max-h-[90dvh] flex-col overflow-hidden'
               : 'scroll-area p-ds-4 sm:p-ds-5 max-h-[calc(100dvh-3rem)] overflow-y-auto',
@@ -169,7 +179,7 @@ export function Modal({
           >
             <h2
               id={titleId}
-              className="text-text text-[15px] font-semibold tracking-[-0.02em] sm:text-base"
+              className="text-text text-sm font-semibold tracking-[-0.02em] sm:text-base"
             >
               {title}
             </h2>

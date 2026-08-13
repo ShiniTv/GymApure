@@ -376,7 +376,7 @@ export default function WorkoutHistory() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando historial…</p>
+        <p className="text-text-muted mt-3 text-xs">Cargando historial…</p>
       </PageState>
     );
   }
@@ -441,7 +441,7 @@ export default function WorkoutHistory() {
                       : `/members?q=${encodeURIComponent(displayName ?? '')}`
                   )
                 }
-                className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 lg:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="hover:text-brand text-text-muted hover:bg-surface-overlay inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors lg:hidden"
                 aria-label="Volver al miembro"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -471,18 +471,18 @@ export default function WorkoutHistory() {
               className="border-brand/30 bg-brand/5 dark:border-brand/25 order-1"
             >
               <h3 className="section-title mb-2">Entrenamientos en curso</h3>
-              <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted mb-3 text-[11px] leading-snug">
                 Puedes salir y volver cuando quieras. Solo se registrará al pulsar Finalizar.
               </p>
               <div className="space-y-2">
                 {filteredActiveSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-100 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
+                    className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2.5"
                   >
                     <div className="min-w-0">
                       <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
-                      <p className="mt-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                      <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
                         Iniciado {formatSessionDate(session.start_time)} ·{' '}
                         {formatSessionTime(session.start_time)} · {session.sets_completed} series
                       </p>
@@ -516,11 +516,11 @@ export default function WorkoutHistory() {
             <Card
               padding="sm"
               rounded="xl"
-              className="flex h-full flex-col border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+              className="border-border/70 bg-surface flex h-full flex-col"
             >
               <div className="mb-3">
                 <h3 className="section-title">{isMemberSelf ? 'Tu actividad' : 'Actividad'}</h3>
-                <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
                   Sesiones y ritmo de la semana
                 </p>
               </div>
@@ -541,18 +541,18 @@ export default function WorkoutHistory() {
                 ).map((stat) => (
                   <div
                     key={stat.title}
-                    className="rounded-lg border border-zinc-100 bg-zinc-50/80 px-2 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/40"
+                    className="border-border bg-surface-raised rounded-lg border px-2 py-2 text-center"
                   >
-                    <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                    <p className="text-small text-text-muted font-medium tracking-wide uppercase">
                       {stat.title}
                     </p>
-                    <p className="mt-0.5 text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+                    <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                       {stat.value}
                     </p>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+              <div className="border-border mt-3 border-t pt-3">
                 <WorkoutWeeklyChart history={history} />
               </div>
             </Card>
@@ -561,11 +561,11 @@ export default function WorkoutHistory() {
               <Card
                 padding="sm"
                 rounded="xl"
-                className="flex h-full flex-col border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+                className="border-border/70 bg-surface flex h-full flex-col"
               >
                 <div className="mb-3">
                   <h3 className="section-title">Progreso de fuerza</h3>
-                  <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                  <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
                     {progressLoading
                       ? 'Cargando tendencia de las últimas 8 semanas…'
                       : progress && progress.goal_completion_percent > 0
@@ -589,7 +589,7 @@ export default function WorkoutHistory() {
       {id && filteredActiveSessions.length > 0 && (
         <Card padding="md" rounded="xl" className="border-brand/30 bg-brand/5">
           <h3 className="section-title mb-3">Entrenamientos en curso</h3>
-          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted mb-3 text-xs">
             Puedes salir y volver cuando quieras. Solo se registrará en tu historial al pulsar
             Finalizar.
           </p>
@@ -597,11 +597,11 @@ export default function WorkoutHistory() {
             {filteredActiveSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-100 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
+                className="border-border bg-surface flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2.5"
               >
                 <div className="min-w-0">
                   <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
-                  <p className="mt-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                  <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
                     Iniciado {formatSessionDate(session.start_time)} ·{' '}
                     {formatSessionTime(session.start_time)} · {session.sets_completed} series
                   </p>
@@ -624,17 +624,11 @@ export default function WorkoutHistory() {
         </Card>
       )}
 
-      <Card
-        padding="none"
-        rounded="xl"
-        className="overflow-hidden border-zinc-200/70 dark:border-zinc-800/80"
-      >
+      <Card padding="none" rounded="xl" className="border-border/70 overflow-hidden">
         {(filteredHistory.length > 0 || filteredActiveSessions.length > 0 || loading) && !id && (
-          <div className="border-b border-zinc-100 bg-zinc-50/50 px-3 py-2.5 sm:px-4 dark:border-zinc-800 dark:bg-zinc-900/30">
-            <h3 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-              Sesiones registradas
-            </h3>
-            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <div className="border-border bg-surface-raised/50 border-b px-3 py-2.5 sm:px-4">
+            <h3 className="text-text text-[13px] font-semibold">Sesiones registradas</h3>
+            <p className="text-text-muted mt-0.5 text-[11px]">
               <span className="lg:hidden">Toca una sesión para ver detalle y series</span>
               <span className="hidden lg:inline">
                 Selecciona una sesión para ver detalle y series
@@ -682,7 +676,7 @@ export default function WorkoutHistory() {
         ) : (
           <>
             {/* Mobile card list */}
-            <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+            <div className="divide-border divide-y lg:hidden">
               {loading ? (
                 <div className="flex justify-center p-8">
                   <Spinner />
@@ -693,14 +687,14 @@ export default function WorkoutHistory() {
                     key={session.id}
                     type="button"
                     onClick={() => void openSessionDetail(session.id)}
-                    className="content-visibility-auto relative w-full bg-white px-3 py-2.5 pl-8 text-left transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
+                    className="content-visibility-auto bg-surface hover:bg-surface-raised relative w-full px-3 py-2.5 pl-8 text-left transition-colors"
                   >
                     <span
                       className="bg-brand ring-brand/15 absolute top-4 left-3 h-2.5 w-2.5 rounded-full ring-4"
                       aria-hidden
                     />
                     <span
-                      className="absolute top-6 bottom-0 left-[1.125rem] w-px bg-zinc-200 last:hidden dark:bg-zinc-800"
+                      className="bg-border absolute top-6 bottom-0 left-[1.125rem] w-px last:hidden"
                       aria-hidden
                     />
                     <div className="mb-1 flex items-start justify-between gap-2">
@@ -708,7 +702,7 @@ export default function WorkoutHistory() {
                         <p className="text-brand dark:text-brand truncate text-sm font-semibold">
                           {session.routine_name}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                        <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
                           {formatSessionDate(session.start_time)} ·{' '}
                           {formatSessionTime(session.start_time)}
                         </p>
@@ -717,7 +711,7 @@ export default function WorkoutHistory() {
                         Finalizado
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                    <div className="text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="text-brand h-3 w-3" />
                         {formatDuration(session.start_time, session.end_time)}
@@ -754,8 +748,8 @@ export default function WorkoutHistory() {
             </div>
 
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+              <table className="text-text-muted w-full text-left text-xs sm:text-sm">
+                <thead className="bg-surface-raised text-text-muted text-small font-semibold sm:text-xs">
                   <tr>
                     <th className="px-3 py-2.5 lg:px-5">Fecha</th>
                     <th className="px-3 py-2.5 lg:px-5">Rutina</th>
@@ -765,7 +759,7 @@ export default function WorkoutHistory() {
                     <th className="px-3 py-2.5 lg:px-5">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border divide-y">
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="px-5 py-8 text-center">
@@ -776,14 +770,14 @@ export default function WorkoutHistory() {
                     filteredHistory.map((session) => (
                       <tr
                         key={session.id}
-                        className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
+                        className="hover:bg-surface-raised cursor-pointer transition-colors"
                         onClick={() => void openSessionDetail(session.id)}
                       >
-                        <td className="px-3 py-2.5 font-medium whitespace-nowrap text-zinc-700 lg:px-5 dark:text-zinc-200">
+                        <td className="text-text px-3 py-2.5 font-medium whitespace-nowrap lg:px-5">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="text-brand h-3.5 w-3.5 shrink-0" />
                             {formatSessionDate(session.start_time)}
-                            <span className="text-[10px] text-zinc-400 tabular-nums dark:text-zinc-300">
+                            <span className="text-text-muted text-small tabular-nums">
                               {formatSessionTime(session.start_time)}
                             </span>
                           </div>
@@ -791,13 +785,13 @@ export default function WorkoutHistory() {
                         <td className="text-brand dark:text-brand px-3 py-2.5 font-semibold lg:px-5">
                           {session.routine_name}
                         </td>
-                        <td className="px-3 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 lg:px-5">
                           <div className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" />
                             {formatDuration(session.start_time, session.end_time)}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 lg:px-5">
                           {session.sets_completed} series
                         </td>
                         <td className="px-3 py-2.5 lg:px-5">
@@ -870,7 +864,7 @@ export default function WorkoutHistory() {
         ) : sessionDetail ? (
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="text-text-muted flex min-w-0 flex-wrap gap-2 text-xs">
                 <span>
                   {formatSessionTime(sessionDetail.start_time)}
                   {sessionDetail.end_time
@@ -936,23 +930,19 @@ export default function WorkoutHistory() {
             )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 dark:text-white">
-                  {sessionDetail.summary.sets_logged}
-                </p>
-                <p className="text-[10px] text-zinc-500">Series hechas</p>
+              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold">{sessionDetail.summary.sets_logged}</p>
+                <p className="text-small text-text-muted">Series hechas</p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 dark:text-white">
-                  {sessionDetail.summary.sets_planned}
-                </p>
-                <p className="text-[10px] text-zinc-500">Series planeadas</p>
+              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold">{sessionDetail.summary.sets_planned}</p>
+                <p className="text-small text-text-muted">Series planeadas</p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 dark:text-white">
+              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold">
                   {sessionDetail.summary.total_volume_kg} kg
                 </p>
-                <p className="text-[10px] text-zinc-500">Volumen total</p>
+                <p className="text-small text-text-muted">Volumen total</p>
               </div>
             </div>
 
@@ -960,16 +950,11 @@ export default function WorkoutHistory() {
               {sessionDetail.exercises.map((exercise) => {
                 const omitted = exercise.logs.length === 0;
                 return (
-                  <div
-                    key={exercise.exercise_id}
-                    className="rounded-lg border border-zinc-100 p-3 dark:border-zinc-800"
-                  >
+                  <div key={exercise.exercise_id} className="border-border rounded-lg border p-3">
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div>
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                            {exercise.name}
-                          </p>
+                          <p className="text-text text-sm font-semibold">{exercise.name}</p>
                           {exercise.is_all_time_pr && (
                             <Badge variant="success" className="px-1.5 py-0 text-[9px]">
                               Nueva marca
@@ -977,12 +962,12 @@ export default function WorkoutHistory() {
                           )}
                         </div>
                         {exercise.muscle_group && (
-                          <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
+                          <p className="text-small text-text-muted capitalize">
                             {exercise.muscle_group}
                           </p>
                         )}
                         {exercise.session_best && (
-                          <p className="mt-0.5 text-[11px] text-zinc-600 dark:text-zinc-300">
+                          <p className="text-text-secondary text-small mt-0.5">
                             Mejor serie:{' '}
                             <span className="font-semibold tabular-nums">
                               {exercise.session_best.weight} kg × {exercise.session_best.reps}
@@ -990,7 +975,7 @@ export default function WorkoutHistory() {
                           </p>
                         )}
                       </div>
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      <p className="text-text-muted text-[10px]">
                         Plan: {exercise.planned_sets}×{exercise.planned_reps}
                       </p>
                     </div>
@@ -1001,7 +986,7 @@ export default function WorkoutHistory() {
                     ) : (
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                          <tr className="text-text-muted text-[10px]">
                             <th className="pb-1 font-medium">Serie</th>
                             <th className="pb-1 font-medium">Peso</th>
                             <th className="pb-1 font-medium">Reps</th>
@@ -1009,7 +994,7 @@ export default function WorkoutHistory() {
                         </thead>
                         <tbody>
                           {exercise.logs.map((log) => (
-                            <tr key={log.set_number} className="text-zinc-700 dark:text-zinc-200">
+                            <tr key={log.set_number} className="text-text">
                               <td className="py-0.5 tabular-nums">{log.set_number}</td>
                               <td className="py-0.5 tabular-nums">{log.weight} kg</td>
                               <td className="py-0.5 tabular-nums">{log.reps}</td>
@@ -1036,12 +1021,12 @@ export default function WorkoutHistory() {
       >
         {discardTarget && (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-text-secondary text-sm">
               ¿Descartar <span className="font-semibold">{discardTarget.routine_name}</span>{' '}
               iniciado el {formatSessionDate(discardTarget.start_time)} a las{' '}
               {formatSessionTime(discardTarget.start_time)}?
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-xs">
               Se eliminará el progreso de esta sesión. No aparecerá en tu historial. Podrás empezar
               de nuevo cuando quieras.
             </p>
@@ -1077,13 +1062,13 @@ export default function WorkoutHistory() {
       >
         {sessionDetail && (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            <p className="text-text-secondary text-sm">
               ¿Eliminar la sesión de{' '}
               <span className="font-semibold">{sessionDetail.routine_name}</span> del{' '}
               {formatSessionDate(sessionDetail.start_time)} a las{' '}
               {formatSessionTime(sessionDetail.start_time)}?
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-xs">
               Esta acción no se puede deshacer. Se borrarán las series registradas de esta sesión.
             </p>
             <div className="flex gap-2">

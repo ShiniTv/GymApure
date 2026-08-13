@@ -93,7 +93,9 @@ export function Sheet({
     }
 
     const getFocusables = () =>
-      sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+      sheet.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
 
     requestAnimationFrame(() => getFocusables()[0]?.focus());
 
@@ -129,7 +131,7 @@ export function Sheet({
       <button
         type="button"
         className={cn(
-          'fixed inset-0 bg-black/40 transition-opacity ease-in-out',
+          'fixed inset-0 bg-black/40 transition-opacity ease-in-out motion-reduce:transition-none',
           visible ? 'opacity-100' : 'opacity-0'
         )}
         style={{ zIndex: backdropZ, transitionDuration: `${EXIT_MS}ms` }}
@@ -143,7 +145,7 @@ export function Sheet({
         aria-labelledby={title ? titleId : undefined}
         aria-label={!title ? ariaLabel : undefined}
         className={cn(
-          'fixed right-0 left-0 px-3 transition-transform ease-in-out',
+          'fixed right-0 left-0 px-3 transition-transform ease-in-out motion-reduce:transform-none motion-reduce:transition-none',
           side === 'bottom' && !panelStyle?.bottom && 'bottom-0',
           side === 'top' && 'top-14',
           visible ? 'translate-y-0' : slideClosed,
@@ -177,7 +179,7 @@ export function Sheet({
                 id={titleId}
                 className={cn(
                   'text-text tracking-[-0.02em]',
-                  compact ? 'text-sm font-semibold' : 'text-[15px] font-semibold'
+                  compact ? 'text-sm font-semibold' : 'text-sm font-semibold sm:text-base'
                 )}
               >
                 {title}

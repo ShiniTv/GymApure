@@ -109,9 +109,7 @@ export function MemberRoutinesList({
               key={routine.id}
               padding="sm"
               rounded="xl"
-              className={`touch-manipulation border-zinc-200/70 dark:border-zinc-800/80 ${
-                isExpanded ? 'ring-brand/20 ring-2' : ''
-              }`}
+              className={`touch-manipulation ${isExpanded ? 'ring-brand/20 ring-2' : ''}`}
             >
               <div className="flex items-center gap-2">
                 <div
@@ -133,20 +131,20 @@ export function MemberRoutinesList({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="truncate text-sm leading-tight font-semibold text-zinc-900 dark:text-white">
+                      <h3 className="text-text truncate text-sm leading-tight font-semibold">
                         {routine.name}
                       </h3>
-                      <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                      <Badge variant="default" className="text-small shrink-0 px-1.5 py-0">
                         {formatDifficulty(routine.difficulty)}
                       </Badge>
                     </div>
-                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400">
+                    <p className="text-text-muted text-small mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="h-3 w-3 shrink-0" />
                         {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
                       </span>
-                      <span className="text-zinc-400 dark:text-zinc-500">·</span>
-                      <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                      <span className="text-text-muted">·</span>
+                      <span className="text-text-secondary font-medium">
                         {exerciseSummary.label}
                       </span>
                     </p>
@@ -190,16 +188,14 @@ export function MemberRoutinesList({
               </div>
 
               {isExpanded && (
-                <div className="mt-2.5 space-y-2 border-t border-zinc-100 pt-2.5 dark:border-zinc-800">
+                <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">
                   {exerciseSummary.preview && (
-                    <p className="text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                    <p className="text-text-muted text-small leading-snug">
                       {exerciseSummary.preview}
                     </p>
                   )}
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      Ejercicios
-                    </h4>
+                    <h4 className="text-text-secondary text-xs font-semibold">Ejercicios</h4>
                     <Button
                       type="button"
                       size="sm"
@@ -215,26 +211,26 @@ export function MemberRoutinesList({
                     {routine.exercises?.map((exercise) => (
                       <div
                         key={exercise.routine_exercise_id}
-                        className="flex items-start justify-between gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-800/50"
+                        className="border-border/70 bg-surface-raised flex items-start justify-between gap-2 rounded-lg border px-2.5 py-2"
                       >
                         <div className="min-w-0">
-                          <h5 className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                          <h5 className="text-text truncate text-xs font-semibold">
                             {exercise.name}
                           </h5>
-                          <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
+                          <p className="text-text-muted text-small capitalize">
                             {exercise.muscle_group}
                           </p>
                           {formatSetPrescriptionSummary(exercise.set_prescription) && (
-                            <p className="mt-0.5 text-[10px] font-medium text-zinc-600 dark:text-zinc-300">
+                            <p className="text-text-secondary text-small mt-0.5 font-medium">
                               {formatSetPrescriptionSummary(exercise.set_prescription)}
                             </p>
                           )}
-                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                          <div className="text-text-muted text-small mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
                             <label className="inline-flex items-center gap-1">
                               Sets
                               <input
                                 type="number"
-                                className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                className="border-border bg-surface text-text focus:ring-brand w-9 rounded border px-1 py-0.5 text-center font-semibold focus:ring-1"
                                 defaultValue={exercise.sets}
                                 onBlur={(e) =>
                                   onInlineUpdate(
@@ -253,7 +249,7 @@ export function MemberRoutinesList({
                               Reps
                               <input
                                 type="number"
-                                className="focus:ring-brand w-9 rounded border border-zinc-200 bg-white px-1 py-0.5 text-center font-semibold text-zinc-900 focus:ring-1 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
+                                className="border-border bg-surface text-text focus:ring-brand w-9 rounded border px-1 py-0.5 text-center font-semibold focus:ring-1"
                                 defaultValue={exercise.reps}
                                 onBlur={(e) =>
                                   onInlineUpdate(
@@ -270,7 +266,7 @@ export function MemberRoutinesList({
                             </label>
                             <span>
                               Rst{' '}
-                              <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                              <span className="text-text font-semibold">
                                 {exercise.rest_seconds}s
                               </span>
                             </span>
@@ -280,7 +276,7 @@ export function MemberRoutinesList({
                           <button
                             type="button"
                             onClick={() => onEditExercise(routine.id, exercise)}
-                            className="hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                            className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                             aria-label={`Editar ${exercise.name}`}
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -288,7 +284,7 @@ export function MemberRoutinesList({
                           <button
                             type="button"
                             onClick={() => onSubstituteExercise(routine.id, exercise)}
-                            className="hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors dark:text-zinc-300"
+                            className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
                             aria-label={`Sustituir ${exercise.name}`}
                             title="Sustituir"
                           >
@@ -297,7 +293,7 @@ export function MemberRoutinesList({
                           <button
                             type="button"
                             onClick={() => onDeleteExercise(routine.id, exercise)}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-300"
+                            className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
                             aria-label={`Eliminar ${exercise.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -306,7 +302,7 @@ export function MemberRoutinesList({
                       </div>
                     ))}
                     {(!routine.exercises || routine.exercises.length === 0) && (
-                      <p className="col-span-full py-3 text-center text-[11px] text-zinc-400 italic dark:text-zinc-300">
+                      <p className="text-text-muted text-small col-span-full py-3 text-center">
                         Sin ejercicios en esta rutina.
                       </p>
                     )}
@@ -321,7 +317,7 @@ export function MemberRoutinesList({
         <button
           type="button"
           onClick={onAssignRoutine}
-          className="text-brand hover:bg-brand/5 dark:hover:bg-brand/10 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2.5 text-xs font-semibold transition-colors dark:border-zinc-700"
+          className="text-brand hover:bg-brand/5 border-border flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed py-2.5 text-xs font-semibold transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Asignar otra rutina
@@ -338,7 +334,7 @@ export function MemberRoutinesList({
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onEditRoutine(menuRoutine);
@@ -350,7 +346,7 @@ export function MemberRoutinesList({
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onCloneRoutine(menuRoutine);
@@ -362,7 +358,7 @@ export function MemberRoutinesList({
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-500/10"
+              className="text-danger hover:bg-danger/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onUnassignRoutine(menuRoutine);
@@ -374,7 +370,7 @@ export function MemberRoutinesList({
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onNavigateHistory(menuRoutine.id);

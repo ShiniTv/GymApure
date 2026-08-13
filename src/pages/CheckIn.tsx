@@ -201,8 +201,7 @@ export default function CheckIn() {
       className={cn(
         'w-full',
         isKioskMode && 'min-h-[64px] text-lg',
-        !isCheckIn &&
-          'bg-[var(--color-check-out)] shadow-[var(--color-check-out)]/20 hover:bg-[var(--color-check-out-hover)]'
+        !isCheckIn && 'bg-[var(--color-check-out)] hover:bg-[var(--color-check-out-hover)]'
       )}
     >
       {isCheckIn ? 'Registrar entrada' : 'Registrar salida'}
@@ -239,9 +238,9 @@ export default function CheckIn() {
                   'h-32 w-32',
                   status === 'scanning'
                     ? isCheckIn
-                      ? 'border-brand ring-brand/20 ring-4'
-                      : 'border-[var(--color-check-out)] ring-4 ring-[var(--color-check-out)]/20'
-                    : 'border-zinc-200 dark:border-zinc-800'
+                      ? 'border-brand ring-brand/20 ring-2'
+                      : 'border-[var(--color-check-out)] ring-2 ring-[var(--color-check-out)]/20'
+                    : 'border-border'
                 )}
               >
                 {status === 'scanning' && (
@@ -259,14 +258,14 @@ export default function CheckIn() {
                 ) : isCheckIn ? (
                   <LogIn className="text-brand/40 h-16 w-16" />
                 ) : (
-                  <LogOut className="h-16 w-16 text-blue-500/40" />
+                  <LogOut className="h-16 w-16 text-[var(--color-check-out)]/40" />
                 )}
               </div>
             ) : null}
             <div>
               <h2
                 className={cn(
-                  'font-bold text-zinc-900 dark:text-white',
+                  'text-text font-semibold',
                   isKioskMode ? (isMobileKiosk ? 'text-xl' : 'text-2xl') : 'text-lg'
                 )}
               >
@@ -278,7 +277,7 @@ export default function CheckIn() {
               </h2>
               <p
                 className={cn(
-                  'mt-1 text-zinc-500 dark:text-zinc-400',
+                  'text-text-muted mt-1',
                   isKioskMode ? (isMobileKiosk ? 'text-sm' : 'text-base') : 'text-sm'
                 )}
               >
@@ -299,7 +298,7 @@ export default function CheckIn() {
                 <button
                   type="button"
                   onClick={() => setShowManualCedula(true)}
-                  className="flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:bg-zinc-800/60"
+                  className="border-border bg-surface-raised text-text hover:bg-surface-overlay flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors"
                 >
                   Ingresar cédula manualmente
                   <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
@@ -324,9 +323,9 @@ export default function CheckIn() {
             'py-8 text-center',
             status === 'success'
               ? isCheckIn
-                ? 'text-emerald-500'
-                : 'text-blue-500'
-              : 'text-red-500',
+                ? 'text-success'
+                : 'text-[var(--color-check-out)]'
+              : 'text-danger',
             isKioskMode && (isMobileKiosk ? 'py-6' : 'py-12')
           )}
         >
@@ -336,9 +335,9 @@ export default function CheckIn() {
               isKioskMode ? (isMobileKiosk ? 'h-24 w-24' : 'h-32 w-32') : 'h-24 w-24',
               status === 'success'
                 ? isCheckIn
-                  ? 'bg-emerald-500/10'
-                  : 'bg-blue-500/10'
-                : 'bg-red-500/10'
+                  ? 'bg-success/10'
+                  : 'bg-[var(--color-check-out)]/10'
+                : 'bg-danger/10'
             )}
           >
             {status === 'success' ? (
@@ -349,7 +348,7 @@ export default function CheckIn() {
           </div>
           <h2
             className={cn(
-              'mb-2 font-bold text-zinc-900 dark:text-white',
+              'text-text mb-2 font-semibold',
               isKioskMode ? (isMobileKiosk ? 'text-2xl' : 'text-4xl') : 'text-3xl'
             )}
           >
@@ -362,22 +361,17 @@ export default function CheckIn() {
           <div className="space-y-1">
             <p
               className={cn(
-                'font-semibold text-zinc-900 dark:text-white',
+                'text-text font-semibold',
                 isKioskMode ? (isMobileKiosk ? 'text-lg' : 'text-2xl') : 'text-xl'
               )}
             >
               {status === 'success' ? userName : userName || 'Error de validación'}
             </p>
-            <p
-              className={cn(
-                'text-zinc-500 dark:text-zinc-400',
-                isKioskMode && !isMobileKiosk ? 'text-lg' : ''
-              )}
-            >
+            <p className={cn('text-text-muted', isKioskMode && !isMobileKiosk ? 'text-lg' : '')}>
               {message}
             </p>
             {durationLabel && (
-              <p className="mt-2 text-sm font-semibold text-blue-500">
+              <p className="mt-2 text-sm font-semibold text-[var(--color-check-out)]">
                 Tiempo en gym: {durationLabel}
               </p>
             )}
@@ -391,7 +385,7 @@ export default function CheckIn() {
               className={cn(
                 'mt-8',
                 isMobileKiosk &&
-                  'sticky bottom-0 -mx-4 border-t border-zinc-800 bg-zinc-950 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
+                  'border-border bg-bg sticky bottom-0 -mx-4 border-t px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
               )}
             >
               <Button
@@ -421,16 +415,16 @@ export default function CheckIn() {
   if (isKioskMode) {
     return (
       <AuthShell variant="kiosk-fullscreen">
-        <div className="flex min-h-dvh flex-col text-white">
+        <div className="dark bg-bg text-text flex min-h-dvh flex-col">
           <header
             className={cn(
-              'relative flex shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950',
+              'border-border bg-bg relative flex shrink-0 items-center justify-between border-b',
               isLargeKioskLayout ? 'px-6 py-5 md:px-10' : 'px-4 py-3'
             )}
           >
             <Link
               to="/reception"
-              className="absolute top-3 left-4 z-10 inline-flex items-center gap-1 text-[11px] text-zinc-500 transition-colors hover:text-zinc-300 sm:left-6 sm:text-xs"
+              className="text-text-muted hover:text-text text-small absolute top-3 left-4 z-10 inline-flex items-center gap-1 transition-colors sm:left-6 sm:text-xs"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Volver a recepción
@@ -447,9 +441,7 @@ export default function CheckIn() {
                   onDark
                   className={cn(isLargeKioskLayout ? 'text-xl' : 'text-base')}
                 />
-                <p className="truncate text-xs text-zinc-400 sm:text-sm dark:text-zinc-300">
-                  Control de acceso
-                </p>
+                <p className="text-text-muted truncate text-xs sm:text-sm">Control de acceso</p>
               </div>
             </div>
             <div className="shrink-0 text-right">
@@ -461,7 +453,7 @@ export default function CheckIn() {
               >
                 {format(now, 'HH:mm:ss')}
               </p>
-              <p className="hidden text-sm text-zinc-400 capitalize sm:block dark:text-zinc-300">
+              <p className="text-text-muted hidden text-sm capitalize sm:block">
                 {format(now, 'EEEE d MMM', { locale: es })}
               </p>
             </div>
@@ -475,7 +467,7 @@ export default function CheckIn() {
           >
             <section
               className={cn(
-                'flex flex-col border-b border-zinc-800/80 lg:border-r lg:border-b-0',
+                'border-border/80 flex flex-col border-b lg:border-r lg:border-b-0',
                 isLargeKioskLayout
                   ? 'justify-center px-6 py-10 md:px-12'
                   : 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 pb-[env(safe-area-inset-bottom)]'
@@ -497,11 +489,11 @@ export default function CheckIn() {
               />
               <div className="mx-auto w-full max-w-md lg:mx-0">{formContent}</div>
             </section>
-            <section className="hidden flex-col items-center justify-center bg-zinc-900/40 px-12 py-10 lg:flex">
+            <section className="bg-surface-raised hidden flex-col items-center justify-center px-12 py-10 lg:flex">
               <div className="w-full max-w-md space-y-6">
                 <Suspense
                   fallback={
-                    <div className="flex h-72 w-full items-center justify-center rounded-2xl bg-zinc-800/50">
+                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-2xl">
                       <Spinner size="lg" />
                     </div>
                   }
@@ -517,15 +509,15 @@ export default function CheckIn() {
                   <h2 className="mb-2 text-2xl font-bold">
                     {isCheckIn ? 'Escanee su carné' : 'Escanee para salir'}
                   </h2>
-                  <p className="text-base leading-relaxed text-zinc-400">
+                  <p className="text-text-muted text-base leading-relaxed">
                     {isCheckIn
                       ? 'Apunte la cámara al QR del carné. En celular, el miembro debe usar “Mostrar QR para escaneo” con brillo al máximo.'
                       : 'Escanee el mismo código QR para registrar su salida.'}
                   </p>
                 </div>
-                <div className="flex items-center justify-center gap-6 text-sm text-zinc-500">
+                <div className="text-text-muted flex items-center justify-center gap-6 text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                    <span className="bg-success h-2 w-2 rounded-full" />
                     Sistema activo
                   </span>
                   <span className="flex items-center gap-2">
@@ -556,22 +548,22 @@ export default function CheckIn() {
           { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
         ]}
       />
-      <Card padding="sm" rounded="xl" className="shadow-md transition-all md:p-5">
+      <Card padding="sm" rounded="xl" className="md:p-5">
         {formContent}
       </Card>
       <div className="mt-4 flex flex-col items-center gap-3 sm:mt-6">
         <div className="flex justify-center gap-6">
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <div className="text-text-muted flex items-center gap-2 text-xs">
+            <span className="bg-success h-2 w-2 rounded-full" />
             Sistema activo
           </div>
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="h-2 w-2 rounded-full bg-zinc-400 dark:bg-zinc-600" />v{APP_VERSION}
+          <div className="text-text-muted flex items-center gap-2 text-xs">
+            <span className="bg-text-muted/50 h-2 w-2 rounded-full" />v{APP_VERSION}
           </div>
         </div>
         <Link
           to="/reception"
-          className="hover:text-brand text-xs text-zinc-500 transition-colors dark:text-zinc-400"
+          className="hover:text-brand text-text-muted text-xs transition-colors"
         >
           Panel de recepción
         </Link>

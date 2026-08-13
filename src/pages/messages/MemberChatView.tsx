@@ -78,19 +78,17 @@ function MemberChannelButton({
         'flex w-full items-start justify-between gap-3 rounded-xl border px-3.5 py-3 text-left transition-colors',
         selected
           ? 'border-brand/40 bg-brand/5'
-          : 'hover:border-brand/30 hover:bg-brand/5 dark:hover:border-brand/40 border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900/60'
+          : 'hover:border-brand/30 hover:bg-brand/5 border-border bg-surface'
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-            {CHAT_CHANNEL_LABELS[channel]}
-          </p>
+          <p className="text-text truncate text-sm font-semibold">{CHAT_CHANNEL_LABELS[channel]}</p>
           {listTime ? (
-            <span className="shrink-0 text-[10px] text-zinc-400 tabular-nums">{listTime}</span>
+            <span className="text-text-muted text-small shrink-0 tabular-nums">{listTime}</span>
           ) : null}
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted mt-0.5 truncate text-xs">
           {item?.last_message_preview?.trim() || meta.description}
         </p>
       </div>
@@ -244,7 +242,7 @@ export function MemberChatView() {
             icon={MessageSquare}
             title={meta.emptyTitle}
             description={meta.emptyDescription}
-            className="border-0 bg-transparent p-0 shadow-none"
+            framed={false}
           />
         </div>
       );
@@ -387,13 +385,13 @@ export function MemberChatView() {
         </>
       ) : (
         <div className="member-chat-shell grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3">
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-            <p className="px-2 py-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <div className="border-border/70 bg-surface flex min-h-0 flex-col overflow-hidden rounded-xl border p-2">
+            <p className="text-text-muted text-small px-2 py-2 font-semibold tracking-wide uppercase">
               Canales
             </p>
             {channelList}
           </div>
-          <div className="member-chat-panel flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/60 bg-gradient-to-b from-zinc-50/90 via-white/70 to-zinc-50/50 dark:border-zinc-800/70 dark:from-zinc-950 dark:via-zinc-950/85 dark:to-zinc-900/40">
+          <div className="member-chat-panel border-border/60 bg-surface flex min-h-0 flex-col overflow-hidden rounded-xl border">
             {selectedChannel ? (
               <>
                 <div className="flex min-h-0 flex-1 flex-col">
@@ -413,7 +411,7 @@ export function MemberChatView() {
                   icon={MessageSquare}
                   title="Elige un canal"
                   description="Recepción, administración o entrenador — cada uno es un chat aparte."
-                  className="border-0 bg-transparent p-0 shadow-none"
+                  framed={false}
                 />
               </div>
             )}

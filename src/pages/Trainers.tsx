@@ -294,8 +294,8 @@ export default function Trainers() {
             <div className="grid gap-2 sm:grid-cols-2 lg:hidden">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} padding="sm" rounded="xl">
-                  <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="mt-2 h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                  <div className="bg-surface-overlay h-4 w-32 animate-pulse rounded" />
+                  <div className="bg-surface-overlay mt-2 h-3 w-24 animate-pulse rounded" />
                 </Card>
               ))}
             </div>
@@ -305,8 +305,8 @@ export default function Trainers() {
               className="table-shell hidden overflow-hidden lg:block"
             >
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <table className="text-text-muted w-full text-left text-sm">
+                  <tbody className="divide-border divide-y">
                     <TableRowSkeleton cols={6} />
                     <TableRowSkeleton cols={6} />
                     <TableRowSkeleton cols={6} />
@@ -338,14 +338,10 @@ export default function Trainers() {
           <Card padding="sm" rounded="xl" className="relative">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate font-bold text-zinc-900 dark:text-white">
-                  {trainer.full_name}
-                </p>
-                <p className="truncate text-xs text-zinc-500">{trainer.email}</p>
+                <p className="text-text truncate font-bold">{trainer.full_name}</p>
+                <p className="text-text-muted truncate text-xs">{trainer.email}</p>
                 {trainer.specialty && (
-                  <p className="mt-1 truncate text-xs text-zinc-600 dark:text-zinc-400">
-                    {trainer.specialty}
-                  </p>
+                  <p className="text-text-muted mt-1 truncate text-xs">{trainer.specialty}</p>
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-0.5">
@@ -354,7 +350,7 @@ export default function Trainers() {
                   onClick={() => {
                     setMembersTarget(trainer);
                   }}
-                  className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
+                  className="hover:bg-brand/10 hover:text-brand text-text-muted shrink-0 rounded-lg p-1.5"
                   title="Miembros asignados"
                   aria-label={`Miembros de ${trainer.full_name}`}
                 >
@@ -365,7 +361,7 @@ export default function Trainers() {
                   onClick={() => {
                     openEdit(trainer);
                   }}
-                  className="hover:bg-brand/10 hover:text-brand shrink-0 rounded-lg p-1.5 text-zinc-400"
+                  className="hover:bg-brand/10 hover:text-brand text-text-muted shrink-0 rounded-lg p-1.5"
                   title="Editar perfil"
                 >
                   <Edit className="h-4 w-4" />
@@ -376,7 +372,7 @@ export default function Trainers() {
                     onClick={() => {
                       openDelete(trainer);
                     }}
-                    className="shrink-0 rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
+                    className="text-text-muted hover:bg-danger/10 hover:text-danger shrink-0 rounded-lg p-1.5"
                     title="Eliminar entrenador"
                     aria-label={`Eliminar ${trainer.full_name}`}
                   >
@@ -407,14 +403,12 @@ export default function Trainers() {
           </tr>
         }
         desktop={(trainer) => (
-          <tr className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
-            <td className="px-4 py-2.5 font-medium text-zinc-900 lg:px-5 dark:text-white">
-              {trainer.full_name}
-            </td>
-            <td className="max-w-[12rem] truncate px-4 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
+          <tr className="hover:bg-surface-raised transition-colors">
+            <td className="text-text px-4 py-2.5 font-medium lg:px-5">{trainer.full_name}</td>
+            <td className="text-text-muted max-w-[12rem] truncate px-4 py-2.5 lg:px-5">
               {trainer.email}
             </td>
-            <td className="max-w-[10rem] truncate px-4 py-2.5 text-zinc-600 lg:px-5 dark:text-zinc-300">
+            <td className="text-text-secondary max-w-[10rem] truncate px-4 py-2.5 lg:px-5">
               {trainer.specialty || '—'}
             </td>
             <td className="px-4 py-2.5 lg:px-5">
@@ -435,7 +429,7 @@ export default function Trainers() {
                   onClick={() => {
                     setMembersTarget(trainer);
                   }}
-                  className="hover:bg-brand/10 hover:text-brand rounded-lg p-1.5 text-zinc-400"
+                  className="hover:bg-brand/10 hover:text-brand text-text-muted rounded-lg p-1.5"
                   title="Miembros asignados"
                   aria-label={`Miembros de ${trainer.full_name}`}
                 >
@@ -446,7 +440,7 @@ export default function Trainers() {
                   onClick={() => {
                     openEdit(trainer);
                   }}
-                  className="hover:bg-brand/10 hover:text-brand rounded-lg p-1.5 text-zinc-400"
+                  className="hover:bg-brand/10 hover:text-brand text-text-muted rounded-lg p-1.5"
                   title="Editar perfil"
                   aria-label={`Editar ${trainer.full_name}`}
                 >
@@ -458,7 +452,7 @@ export default function Trainers() {
                     onClick={() => {
                       openDelete(trainer);
                     }}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-500"
+                    className="text-text-muted hover:bg-danger/10 hover:text-danger rounded-lg p-1.5"
                     title="Eliminar entrenador"
                     aria-label={`Eliminar ${trainer.full_name}`}
                   >
@@ -576,7 +570,7 @@ export default function Trainers() {
                 setForm({ ...form, password: e.target.value });
               }}
             />
-            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-small mt-1">
               Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
             </p>
           </div>
@@ -617,9 +611,7 @@ export default function Trainers() {
       >
         {editTarget && (
           <div className="form-stack">
-            <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-              {editTarget.full_name}
-            </p>
+            <p className="text-text text-sm font-semibold">{editTarget.full_name}</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Nivel</Label>
@@ -680,7 +672,7 @@ export default function Trainers() {
       <Modal open={!!deleteTarget} onClose={closeDelete} title="Eliminar entrenador">
         {deleteTarget && (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary text-sm">
               Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
               los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
               deberás desactivarlo o reasignarlas antes.

@@ -25,9 +25,7 @@ export const ConversationListItem = memo(function ConversationListItem({
       onClick={onSelect}
       className={clsx(
         'w-full rounded-xl border px-2.5 py-2.5 text-left transition-colors sm:rounded-lg sm:py-2',
-        selected
-          ? 'border-brand/40 bg-brand/5'
-          : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+        selected ? 'border-brand/40 bg-brand/5' : 'hover:bg-surface-raised border-transparent'
       )}
     >
       <div className="flex items-start gap-2.5">
@@ -39,14 +37,10 @@ export const ConversationListItem = memo(function ConversationListItem({
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-              {item.member_name}
-            </p>
+            <p className="text-text truncate text-sm font-semibold">{item.member_name}</p>
             <div className="flex shrink-0 items-center gap-1.5">
               {listTime ? (
-                <span className="text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500">
-                  {listTime}
-                </span>
+                <span className="text-text-muted text-small tabular-nums">{listTime}</span>
               ) : null}
               {item.unread_count > 0 ? (
                 <span className="nav-badge brand-solid">
@@ -56,22 +50,18 @@ export const ConversationListItem = memo(function ConversationListItem({
             </div>
           </div>
           {item.member_cedula ? (
-            <p className="mt-0.5 truncate text-[10px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-text-muted text-small mt-0.5 truncate">
               {item.member_cedula}
               {item.membership_name ? ` · ${item.membership_name}` : ''}
             </p>
           ) : item.membership_name ? (
-            <p className="mt-0.5 truncate text-[10px] text-zinc-400 dark:text-zinc-500">
-              {item.membership_name}
-            </p>
+            <p className="text-text-muted text-small mt-0.5 truncate">{item.membership_name}</p>
           ) : null}
           {item.last_message_preview ? (
             <p
               className={clsx(
                 'mt-1 truncate text-xs',
-                item.unread_count > 0
-                  ? 'font-medium text-zinc-700 dark:text-zinc-200'
-                  : 'text-zinc-500 dark:text-zinc-400'
+                item.unread_count > 0 ? 'text-text font-medium' : 'text-text-muted'
               )}
             >
               {item.last_message_preview}

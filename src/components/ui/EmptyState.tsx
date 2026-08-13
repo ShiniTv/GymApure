@@ -1,6 +1,7 @@
 import { type LucideIcon } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { Card } from './Card';
 
 interface EmptyStateProps {
@@ -12,6 +13,11 @@ interface EmptyStateProps {
   variant?: 'default' | 'motivational';
   /** Smaller icon and tighter padding for list pages */
   compact?: boolean;
+  /**
+   * When false, render without the dashed Card chrome (avoids box-in-box
+   * when already inside a Card or list panel). Default true.
+   */
+  framed?: boolean;
 }
 
 function MotivationalIllustration() {
@@ -44,8 +50,42 @@ export function EmptyState({
   className,
   variant = 'default',
   compact = false,
+  framed = true,
 }: EmptyStateProps) {
   const isMotivational = variant === 'motivational';
+
+  const body = (
+    <>
+      {isMotivational ? (
+        <MotivationalIllustration />
+      ) : (
+        <Icon
+          className={cn('text-text-muted mx-auto', compact ? 'mb-2.5 h-7 w-7' : 'mb-3.5 h-9 w-9')}
+        />
+      )}
+      <h3 className={cn(typography.sectionTitle, 'text-text', compact ? 'text-small' : 'text-sm')}>
+        {title}
+      </h3>
+      {description && (
+        <p
+          className={cn(
+            typography.small,
+            'text-text-secondary mx-auto',
+            compact ? 'mt-1 max-w-xs' : 'mt-1.5 max-w-sm'
+          )}
+        >
+          {description}
+        </p>
+      )}
+      {action && (
+        <div className={cn('flex justify-center', compact ? 'mt-3' : 'mt-4')}>{action}</div>
+      )}
+    </>
+  );
+
+  if (!framed) {
+    return <div className={cn('text-center', compact ? 'py-4' : 'py-6', className)}>{body}</div>;
+  }
 
   return (
     <Card
@@ -59,34 +99,7 @@ export function EmptyState({
         className
       )}
     >
-      {isMotivational ? (
-        <MotivationalIllustration />
-      ) : (
-        <Icon
-          className={cn('text-text-muted mx-auto', compact ? 'mb-2.5 h-7 w-7' : 'mb-3.5 h-9 w-9')}
-        />
-      )}
-      <h3
-        className={cn(
-          'text-text font-semibold tracking-[-0.01em]',
-          compact ? 'text-[13px]' : 'text-sm'
-        )}
-      >
-        {title}
-      </h3>
-      {description && (
-        <p
-          className={cn(
-            'text-text-secondary mx-auto',
-            compact ? 'mt-1 max-w-xs text-[11px] leading-snug' : 'mt-1.5 max-w-sm text-xs'
-          )}
-        >
-          {description}
-        </p>
-      )}
-      {action && (
-        <div className={cn('flex justify-center', compact ? 'mt-3' : 'mt-4')}>{action}</div>
-      )}
+      {body}
     </Card>
   );
 }

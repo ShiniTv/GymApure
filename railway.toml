@@ -1,0 +1,16 @@
+# GymApure — Railway
+# https://docs.railway.com/reference/config-as-code
+#
+# Deploy: conectar el repo en Railway Dashboard o `npx @railway/cli`
+# Variables: scripts/deploy/railway-prod.env.example + secretos de .env.prod
+# Guía: docs/DEPLOY-RAILWAY.md
+
+[build]
+buildCommand = "npm ci --include=dev && npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

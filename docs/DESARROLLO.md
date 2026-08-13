@@ -285,7 +285,7 @@ caribean-gym/
 └── docs/                  # Documentación (índice: docs/README.md; QA en docs/qa/)
 ```
 
-**Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`, ref `sqjyxmbtgmiorckigrrg`); producción = **GymApure – Producción** (Render + `.env.prod`, ref `ffjwvlcwhyskddqqojnp`).
+**Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`, ref `sqjyxmbtgmiorckigrrg`); producción = **GymApure – Producción** (Render + `.env.prod`, ref `ffjwvlcwhyskddqqojnp`). Guías: [DEPLOY.md](./DEPLOY.md), alternativa [DEPLOY-RAILWAY.md](./DEPLOY-RAILWAY.md).
 
 ### Mapa módulo → archivos clave
 

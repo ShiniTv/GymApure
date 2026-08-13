@@ -240,8 +240,8 @@ export function StaffChatView() {
     return (
       <>
         {startableMembers.length > 0 && (
-          <div className="mb-2 space-y-1 border-b border-zinc-100 pb-2 dark:border-zinc-800">
-            <p className="px-1 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <div className="border-border mb-2 space-y-1 border-b pb-2">
+            <p className="text-small text-text-muted px-1 font-semibold tracking-wide uppercase">
               Iniciar chat
             </p>
             {startableMembers.map((member) => (
@@ -250,17 +250,13 @@ export function StaffChatView() {
                 type="button"
                 disabled={openWithMember.isPending}
                 onClick={() => startChatWithMember(member.id)}
-                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                className="hover:bg-surface-raised flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors"
               >
                 <UserPlus className="text-brand h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                    {member.full_name}
-                  </p>
+                  <p className="text-text truncate text-sm font-semibold">{member.full_name}</p>
                   {member.cedula ? (
-                    <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
-                      {member.cedula}
-                    </p>
+                    <p className="text-text-muted text-small truncate">{member.cedula}</p>
                   ) : null}
                 </div>
               </button>
@@ -285,7 +281,7 @@ export function StaffChatView() {
           </div>
         ))}
         {conversationsTotal > conversationsPageSize ? (
-          <div className="border-t border-zinc-100 pt-2 dark:border-zinc-800">
+          <div className="border-border border-t pt-2">
             <PaginationBar
               page={listPage}
               pageSize={conversationsPageSize}
@@ -301,7 +297,7 @@ export function StaffChatView() {
   const listToolbar = (
     <div className="space-y-2">
       {isTrainer ? (
-        <p className="rounded-lg bg-zinc-100/80 px-2.5 py-1.5 text-[11px] leading-snug font-medium text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
+        <p className="bg-surface-raised text-text-muted text-small rounded-lg px-2.5 py-1.5 leading-snug font-medium">
           <span className="sm:hidden">Solo tus clientes con rutina</span>
           <span className="hidden sm:inline">Solo clientes con rutina asignada por ti</span>
         </p>
@@ -329,9 +325,9 @@ export function StaffChatView() {
 
   const contextRail =
     selected && selected.member_id > 0 ? (
-      <div className="hidden min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 lg:flex dark:border-zinc-800/80 dark:bg-zinc-900/50">
-        <div className="shrink-0 border-b border-zinc-100/80 px-3 py-3 dark:border-zinc-800/80">
-          <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+      <div className="border-border/70 bg-surface hidden min-h-0 flex-col overflow-hidden rounded-xl border lg:flex">
+        <div className="border-border/80 shrink-0 border-b px-3 py-3">
+          <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
             Contexto
           </p>
         </div>
@@ -339,31 +335,27 @@ export function StaffChatView() {
           <div className="flex flex-col items-center gap-2 text-center">
             <Avatar src={selected.member_avatar} name={selected.member_name} size="lg" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                {selected.member_name}
-              </p>
+              <p className="text-text truncate text-sm font-semibold">{selected.member_name}</p>
               {selected.member_cedula ? (
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {selected.member_cedula}
-                </p>
+                <p className="text-text-muted text-small">{selected.member_cedula}</p>
               ) : null}
             </div>
           </div>
-          <div className="space-y-2 rounded-xl bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <div className="bg-surface-raised space-y-2 rounded-xl p-3">
+            <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
               Membresía
             </p>
-            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+            <p className="text-text text-sm font-medium">
               {selected.membership_name ?? 'Sin plan activo'}
             </p>
             {selectedExpiry ? (
               <Badge className={selectedExpiry.className}>{selectedExpiry.label}</Badge>
             ) : selected.days_remaining != null ? (
-              <p className="text-xs text-zinc-500">{selected.days_remaining} días restantes</p>
+              <p className="text-text-muted text-xs">{selected.days_remaining} días restantes</p>
             ) : null}
           </div>
           <div className="space-y-1.5">
-            <p className="px-0.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+            <p className="text-small text-text-muted px-0.5 font-semibold tracking-wide uppercase">
               Atajos
             </p>
             {(isAdmin || isReception) && (
@@ -467,25 +459,25 @@ export function StaffChatView() {
         </div>
       </div>
     ) : (
-      <div className="hidden min-h-0 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200/80 p-4 lg:flex dark:border-zinc-800">
+      <div className="border-border hidden min-h-0 flex-col items-center justify-center rounded-xl border border-dashed p-4 lg:flex">
         <EmptyState
           compact
           icon={User}
           title="Sin contexto"
           description="Selecciona un chat para ver membresía y atajos."
-          className="border-0 bg-transparent p-0 shadow-none"
+          framed={false}
         />
       </div>
     );
 
   const chatThread = selected ? (
     <>
-      <div className="flex shrink-0 flex-col gap-2 border-b border-zinc-100/80 px-2 py-2 sm:px-3 dark:border-zinc-800/80">
+      <div className="border-border/80 flex shrink-0 flex-col gap-2 border-b px-2 py-2 sm:px-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleBackToList}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 md:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="text-text-muted hover:bg-surface-overlay inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors md:hidden"
             aria-label="Volver a conversaciones"
           >
             <svg
@@ -505,10 +497,8 @@ export function StaffChatView() {
             className="!h-8 !w-8 shrink-0 !text-[10px] !ring-1"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-              {selected.member_name}
-            </p>
-            <p className="hidden truncate text-[10px] text-zinc-500 sm:block dark:text-zinc-400">
+            <p className="text-text truncate text-sm font-semibold">{selected.member_name}</p>
+            <p className="text-text-muted text-small hidden truncate sm:block">
               {[selected.member_cedula, selected.membership_name].filter(Boolean).join(' · ') ||
                 'Miembro'}
             </p>
@@ -520,7 +510,7 @@ export function StaffChatView() {
               'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors',
               threadSearchOpen
                 ? 'bg-brand/10 text-brand'
-                : 'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                : 'text-text-muted hover:bg-surface-overlay'
             )}
             aria-label="Buscar en la conversación"
             aria-pressed={threadSearchOpen}
@@ -538,7 +528,7 @@ export function StaffChatView() {
           />
         ) : null}
         {threadQuery && (
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted text-small">
             {visibleStaffMessages.length === 0
               ? 'Sin coincidencias'
               : `${visibleStaffMessages.length} mensaje${visibleStaffMessages.length !== 1 ? 's' : ''}`}
@@ -556,7 +546,7 @@ export function StaffChatView() {
               icon={MessageSquare}
               title={`Escribe a ${selected.member_name.split(' ')[0] || 'este miembro'}`}
               description="Aún no hay mensajes en este chat. Envía el primero o usa una respuesta rápida."
-              className="border-0 bg-transparent p-0 shadow-none"
+              framed={false}
             />
           </div>
         ) : visibleStaffMessages.length === 0 ? (
@@ -566,7 +556,7 @@ export function StaffChatView() {
               icon={Search}
               title="Sin coincidencias"
               description="Prueba otra palabra o limpia la búsqueda."
-              className="border-0 bg-transparent p-0 shadow-none"
+              framed={false}
             />
           </div>
         ) : (
@@ -598,7 +588,7 @@ export function StaffChatView() {
         icon={MessageSquare}
         title="Selecciona una conversación"
         description="Elige un miembro de la lista para chatear."
-        className="border-0 bg-transparent p-0 shadow-none"
+        framed={false}
       />
     </div>
   );
@@ -640,15 +630,13 @@ export function StaffChatView() {
           action={<BackToDashboardLink />}
         />
         <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)_minmax(200px,240px)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-            <div className="shrink-0 space-y-2 border-b border-zinc-100/80 p-3 dark:border-zinc-800/80">
-              {listToolbar}
-            </div>
+          <div className="border-border/70 bg-surface flex min-h-0 flex-col overflow-hidden rounded-xl border">
+            <div className="border-border/80 shrink-0 space-y-2 border-b p-3">{listToolbar}</div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
               {renderConversationListBody()}
             </div>
           </div>
-          <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+          <div className="border-border/70 bg-surface flex min-h-0 flex-col overflow-hidden rounded-xl border">
             {chatThread}
           </div>
           {contextRail}

@@ -105,7 +105,7 @@ export function MemberBottomNav() {
         side="bottom"
         panelStyle={sheetBottomStyle}
         zIndex={46}
-        cardClassName="mx-auto max-w-md shadow-lg"
+        cardClassName="mx-auto max-w-md"
         showHandle
         compact
       >
@@ -120,7 +120,7 @@ export function MemberBottomNav() {
             <p className="text-text truncate text-sm font-semibold tracking-[-0.02em]">
               Hola, {first}
             </p>
-            <p className="text-text-secondary text-[11px]">Tu cuenta y atajos</p>
+            <p className="text-text-secondary text-small">Tu cuenta y atajos</p>
           </div>
         </div>
 
@@ -214,7 +214,7 @@ export function MemberBottomNav() {
             className="member-bottom-nav-fab pointer-events-auto absolute touch-manipulation"
             aria-label="Entrenar"
           >
-            <span className="brand-solid ring-bg tap-feedback flex h-full w-full items-center justify-center rounded-full shadow-lg ring-2 transition-[transform,opacity] duration-150">
+            <span className="brand-solid ring-bg tap-feedback flex h-full w-full items-center justify-center rounded-full ring-2 transition-[transform,opacity] duration-150">
               <Dumbbell className="h-5 w-5 text-white" aria-hidden />
             </span>
           </Link>

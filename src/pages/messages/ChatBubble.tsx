@@ -27,11 +27,11 @@ import {
 export function DaySeparator({ iso }: { iso: string }) {
   return (
     <div className="my-2.5 flex items-center gap-2.5 px-1" role="separator">
-      <div className="h-px flex-1 bg-zinc-200/70 dark:bg-zinc-800/80" />
-      <span className="shrink-0 text-[10px] font-medium tracking-wide text-zinc-400 dark:text-zinc-500">
+      <div className="bg-border/70 h-px flex-1" />
+      <span className="text-text-muted text-small shrink-0 font-medium tracking-wide">
         {formatMessageDay(iso)}
       </span>
-      <div className="h-px flex-1 bg-zinc-200/70 dark:bg-zinc-800/80" />
+      <div className="bg-border/70 h-px flex-1" />
     </div>
   );
 }
@@ -132,17 +132,17 @@ export const ChatBubble = memo(function ChatBubble({
     return (
       <div className="my-2 flex w-full justify-center px-2">
         <div className="max-w-[20rem] text-center sm:max-w-sm">
-          <p className="rounded-2xl bg-zinc-100/90 px-3 py-1.5 text-[11px] leading-snug text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-300">
+          <p className="bg-surface-raised text-text-secondary text-small rounded-2xl px-3 py-1.5 leading-snug">
             {message.body}
           </p>
           <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
-            <p className="text-[10px] text-zinc-400 tabular-nums dark:text-zinc-500">
+            <p className="text-text-muted text-small tabular-nums">
               {formatMessageTime(message.created_at)}
             </p>
             {systemAction ? (
               <Link
                 to={systemAction.to}
-                className="text-brand text-[10px] font-semibold hover:underline"
+                className="text-brand text-small font-semibold hover:underline"
               >
                 {systemAction.label}
               </Link>
@@ -163,10 +163,8 @@ export const ChatBubble = memo(function ChatBubble({
       {isEditing ? (
         <div
           className={clsx(
-            'w-full rounded-2xl border bg-white p-3 shadow-sm dark:bg-zinc-900',
-            isOutgoing
-              ? 'border-brand/20 dark:border-brand/40 max-w-md'
-              : 'max-w-md border-zinc-200 dark:border-zinc-700'
+            'bg-surface w-full rounded-2xl border p-3',
+            isOutgoing ? 'border-brand/20 max-w-md' : 'border-border max-w-md'
           )}
         >
           <textarea
@@ -175,10 +173,7 @@ export const ChatBubble = memo(function ChatBubble({
               setDraft(e.target.value);
             }}
             rows={3}
-            className={cn(
-              fieldClassName,
-              'min-h-[88px] w-full resize-none text-sm text-zinc-900 dark:text-zinc-100'
-            )}
+            className={cn(fieldClassName, 'text-text min-h-[88px] w-full resize-none text-sm')}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
@@ -195,7 +190,7 @@ export const ChatBubble = memo(function ChatBubble({
             <button
               type="button"
               onClick={cancelEdit}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 items-center justify-center rounded-lg"
               aria-label="Cancelar edición"
             >
               <X className="h-4 w-4" />
@@ -219,9 +214,7 @@ export const ChatBubble = memo(function ChatBubble({
           )}
         >
           {!isOutgoing && message.sender_name ? (
-            <p className="px-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
-              {message.sender_name}
-            </p>
+            <p className="text-text-muted text-small px-1 font-medium">{message.sender_name}</p>
           ) : null}
           <button
             type="button"
@@ -229,7 +222,7 @@ export const ChatBubble = memo(function ChatBubble({
               'w-fit max-w-full rounded-2xl px-3 py-2 text-left transition-opacity',
               isOutgoing
                 ? 'brand-solid rounded-br-md text-white'
-                : 'rounded-bl-md border border-zinc-200/50 bg-white text-zinc-800 shadow-sm shadow-zinc-900/5 dark:border-zinc-700/60 dark:bg-zinc-800/70 dark:text-zinc-100 dark:shadow-none',
+                : 'border-border/60 bg-surface text-text rounded-bl-md border',
               manageable && 'cursor-pointer',
               message.client_status === 'sending' && 'opacity-80',
               message.client_status === 'failed' && 'opacity-90 ring-1 ring-red-400/40'
@@ -262,14 +255,14 @@ export const ChatBubble = memo(function ChatBubble({
               </a>
             ) : null}
             {showCaption || !attachmentSrc ? (
-              <p className="text-[13px] leading-snug break-words whitespace-pre-wrap text-inherit sm:text-sm">
+              <p className="text-sm leading-snug break-words whitespace-pre-wrap text-inherit">
                 {message.body}
               </p>
             ) : null}
             <p
               className={clsx(
-                'mt-0.5 flex items-center justify-end gap-1 text-[10px] tabular-nums',
-                isOutgoing ? 'text-white/70' : 'text-zinc-400 dark:text-zinc-500'
+                'text-small mt-0.5 flex items-center justify-end gap-1 tabular-nums',
+                isOutgoing ? 'text-white/70' : 'text-text-muted'
               )}
             >
               {message.client_status === 'sending' ? (
@@ -352,13 +345,9 @@ export const ChatBubble = memo(function ChatBubble({
         title="Eliminar mensaje"
         maxWidth="sm"
       >
-        <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">¿Eliminar este mensaje?</p>
-        <p className="mb-2 line-clamp-3 text-xs text-zinc-500 dark:text-zinc-400">
-          «{previewBody}»
-        </p>
-        <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">
-          Esta acción no se puede deshacer.
-        </p>
+        <p className="text-text-secondary mb-2 text-sm">¿Eliminar este mensaje?</p>
+        <p className="text-text-muted mb-2 line-clamp-3 text-xs">«{previewBody}»</p>
+        <p className="text-text-muted mb-6 text-xs">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3">
           <Button
             variant="ghost"

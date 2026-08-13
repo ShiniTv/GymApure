@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { apiFetch } from '../../lib/api';
 
 function getGreeting(): string {
@@ -12,9 +13,6 @@ function getGreeting(): string {
   if (hour < 19) return 'Buenas tardes';
   return 'Buenas noches';
 }
-
-const statusPill =
-  'inline-flex max-w-full items-center rounded-pill px-2.5 py-1 text-[11px] font-semibold';
 
 interface MemberHeroProps {
   name: string;
@@ -66,48 +64,46 @@ export function MemberHero({
         ? 'Entrenar ahora'
         : 'Ver rutinas';
 
+  const statusLine = routineCompletedToday
+    ? 'Completada hoy'
+    : routineInProgress
+      ? 'Entrenamiento en curso'
+      : null;
+
   return (
-    <Card
-      padding="md"
-      rounded="xl"
-      className={cn(
-        'from-brand/[0.05] relative overflow-hidden bg-gradient-to-br via-transparent to-transparent',
-        className
-      )}
-    >
+    <Card padding="md" rounded="xl" className={cn('relative overflow-hidden', className)}>
       <div className="relative flex items-start gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-brand text-[11px] font-medium tracking-[0.16em] uppercase">
-            {getGreeting()}
-          </p>
-          <h2 className="type-h1 mt-1 truncate text-xl sm:text-2xl">{firstName}</h2>
-          <p className="text-text-secondary mt-1 truncate text-[13px] leading-snug">
+          <p className={typography.labelCaps}>{getGreeting()}</p>
+          <h2 className={cn(typography.pageTitle, 'mt-1 truncate text-xl sm:text-2xl')}>
+            {firstName}
+          </h2>
+          <p className={cn(typography.pageSubtitle, 'truncate')}>
             {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
           </p>
 
-          {(routineInProgress && !routineCompletedToday) ||
-          routineCompletedToday ||
-          workoutStreak > 0 ? (
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              {routineInProgress && !routineCompletedToday && (
-                <span className={cn(statusPill, 'bg-warning/10 text-warning')}>
-                  Entrenamiento en curso
+          {statusLine || workoutStreak > 0 ? (
+            <p
+              className={cn(
+                typography.small,
+                'text-text-secondary mt-2 flex flex-wrap items-center gap-x-2 gap-y-1'
+              )}
+            >
+              {statusLine ? <span>{statusLine}</span> : null}
+              {statusLine && workoutStreak > 0 ? (
+                <span className="text-text-muted" aria-hidden>
+                  ·
                 </span>
-              )}
-
-              {routineCompletedToday && (
-                <span className={cn(statusPill, 'bg-success/10 text-success')}>Completada hoy</span>
-              )}
-
-              {workoutStreak > 0 && (
-                <div className={cn(statusPill, 'streak-badge bg-success/10 gap-1.5')}>
+              ) : null}
+              {workoutStreak > 0 ? (
+                <span className="inline-flex items-center gap-1">
                   <Flame className="text-success h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="text-success">
+                  <span>
                     Racha {workoutStreak} día{workoutStreak !== 1 ? 's' : ''}
                   </span>
-                </div>
-              )}
-            </div>
+                </span>
+              ) : null}
+            </p>
           ) : null}
         </div>
 
@@ -124,7 +120,7 @@ export function MemberHero({
 
       <Button
         size="sm"
-        className="relative mt-3.5 w-full shadow-sm sm:mt-4 sm:w-auto"
+        className="relative mt-3.5 w-full sm:mt-4 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
         onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
         onMouseEnter={() => {

@@ -62,6 +62,7 @@
 | [tecnico/MIGRACIONES-Y-BD.md](./tecnico/MIGRACIONES-Y-BD.md)                 | Política de migraciones y resumen reciente         |
 | [DESARROLLO.md](./DESARROLLO.md)                                             | Flujo diario de desarrollo, comandos, convenciones |
 | [DEPLOY.md](./DEPLOY.md)                                                     | Despliegue Render + Supabase producción            |
+| [DEPLOY-RAILWAY.md](./DEPLOY-RAILWAY.md)                                     | Alternativa de hosting (Railway)                   |
 | [TESTING.md](./TESTING.md)                                                   | Tests automatizados y CI                           |
 | [UX-QA.md](./qa/UX-QA.md)                                                    | Matriz UX manual por rol/viewport                  |
 | [QA-VISUAL-CHECKLIST.md](./qa/QA-VISUAL-CHECKLIST.md)                        | Checklist visual pre-release                       |

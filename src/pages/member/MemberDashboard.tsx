@@ -32,7 +32,7 @@ import { MemberHero } from '../../components/member/MemberHero';
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
 import { MemberRemoteTrainingCard } from '../../components/member/MemberRemoteTrainingCard';
 import { PushOnboardingCard } from '../../components/PushOnboardingCard';
-import { Button, Card, Collapse, EmptyState, PageHeader, Badge } from '../../components/ui';
+import { Button, Card, Collapse, EmptyState, PageHeader } from '../../components/ui';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 
@@ -40,9 +40,9 @@ const PAGE = 'page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl';
 const BANNER =
   'flex flex-col justify-between gap-4 rounded-xl border px-ds-4 py-ds-4 sm:flex-row sm:items-center';
 const ASSIGNMENT_UPCOMING =
-  'bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-xl border';
+  'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const ASSIGNMENT_ENDING =
-  'flex items-center justify-between gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5';
+  'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const LINK_BRAND = 'text-brand inline-block text-xs font-bold hover:underline';
 const MOBILE_LIST_ROW =
   'tap-feedback flex min-h-12 items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-raised';
@@ -81,7 +81,7 @@ function AssignmentListItem({
     <div
       className={cn(
         tone === 'upcoming' ? ASSIGNMENT_UPCOMING : ASSIGNMENT_ENDING,
-        compact ? 'px-3 py-2.5' : 'px-4 py-3'
+        compact ? 'py-2' : 'py-2.5'
       )}
     >
       <div className="min-w-0">
@@ -92,7 +92,7 @@ function AssignmentListItem({
         </p>
         {dateValue && (
           <p
-            className={cn('text-text-secondary', compact ? 'mt-0.5 text-[11px]' : 'mt-0.5 text-xs')}
+            className={cn('text-text-secondary', compact ? 'text-small mt-0.5' : 'mt-0.5 text-xs')}
           >
             {dateLabel} {format(parseDateOnly(dateValue), 'dd MMM yyyy', { locale: es })}
           </p>
@@ -166,7 +166,7 @@ export default function MemberDashboard() {
   return (
     <div className={PAGE}>
       <MemberHero
-        className="bg-none shadow-none [&_.type-h1]:text-xl sm:[&_.type-h1]:text-2xl"
+        className="shadow-none"
         name={user?.name ?? 'Atleta'}
         workoutsThisWeek={memberStats?.workoutsThisWeek ?? 0}
         weeklyTrainingGoal={memberStats?.weeklyTrainingGoal ?? 5}
@@ -178,12 +178,12 @@ export default function MemberDashboard() {
       />
 
       {pending > 0 && (
-        <div className={cn(BANNER, 'bg-amber-500/10')}>
+        <div className={cn(BANNER, 'border-warning/20 bg-warning/10')}>
           <div>
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+            <p className="text-text text-sm font-semibold">
               Tienes {pending} pago(s) pendiente(s) de revisión.
             </p>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-amber-800/80 dark:text-amber-300/80">
+            <p className="text-text-secondary text-small mt-1.5 leading-relaxed">
               Paso 3 de 3: espera la aprobación del staff para activar o renovar tu membresía.
               {sub && shouldShowExpiryAlert(sub.days_remaining, alertDays)
                 ? ` · ${formatExpiryCountdown(sub.days_remaining)}`
@@ -192,7 +192,7 @@ export default function MemberDashboard() {
           </div>
           <Link
             to="/payments?status=pending"
-            className="text-xs font-bold text-amber-900 underline hover:no-underline dark:text-amber-200"
+            className="text-warning text-small font-semibold underline hover:no-underline"
           >
             Ver pagos
           </Link>
@@ -238,7 +238,7 @@ export default function MemberDashboard() {
                 <p className={cn('text-sm font-bold', classes.text)}>
                   {formatExpiryCountdown(sub.days_remaining) + suffix}
                 </p>
-                <p className={cn('mt-1.5 text-[11px] leading-relaxed opacity-80', classes.text)}>
+                <p className={cn('text-small mt-1.5 leading-relaxed opacity-80', classes.text)}>
                   Plan {sub.membership_name}
                   {sub.end_date
                     ? ` · vence ${format(parseDateOnly(sub.end_date), 'dd MMM yyyy', { locale: es })}`
@@ -265,7 +265,7 @@ export default function MemberDashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Tu rutina</p>
-                <p className="text-text-secondary mt-0.5 truncate text-[11px]">
+                <p className="text-text-secondary text-small mt-0.5 truncate">
                   {routineScheduledToday ? 'Hoy toca' : 'Próximo día de rutina'} · {routine.name}
                 </p>
               </div>
@@ -278,7 +278,7 @@ export default function MemberDashboard() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Sin rutina aún</p>
-                <p className="text-text-secondary mt-0.5 text-[11px]">Escribe a tu entrenador</p>
+                <p className="text-text-secondary text-small mt-0.5">Escribe a tu entrenador</p>
               </div>
               <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
@@ -294,7 +294,7 @@ export default function MemberDashboard() {
                 <>
                   <p
                     className={cn(
-                      'mt-0.5 truncate text-[11px]',
+                      'text-small mt-0.5 truncate',
                       subscriptionPlanNameClass(sub.days_remaining, alertDays)
                     )}
                   >
@@ -316,7 +316,7 @@ export default function MemberDashboard() {
                   </div>
                 </>
               ) : (
-                <p className="text-text-secondary mt-0.5 text-[11px]">Sin membresía activa</p>
+                <p className="text-text-secondary text-small mt-0.5">Sin membresía activa</p>
               )}
             </div>
             <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
@@ -339,7 +339,7 @@ export default function MemberDashboard() {
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                     </p>
                     {routine.training_block_name && (
-                      <p className="text-brand mt-1 text-[11px] font-semibold">
+                      <p className="text-brand text-small mt-1 font-semibold">
                         Bloque: {routine.training_block_name}
                         {routine.training_block_objective
                           ? ` · ${routine.training_block_objective}`
@@ -350,7 +350,7 @@ export default function MemberDashboard() {
                 </div>
                 <Button
                   size="sm"
-                  className="mt-3 w-full shadow-sm"
+                  className="mt-3 w-full"
                   disabled={primaryRoutineCompletedToday || !routineScheduledToday}
                   onClick={() => navigate(`/workout/${routine.id}`)}
                 >
@@ -380,6 +380,7 @@ export default function MemberDashboard() {
               </>
             ) : (
               <EmptyState
+                framed={false}
                 variant="motivational"
                 icon={Dumbbell}
                 title="Sin rutina asignada"
@@ -430,6 +431,7 @@ export default function MemberDashboard() {
               </>
             ) : (
               <EmptyState
+                framed={false}
                 variant="motivational"
                 icon={CreditCard}
                 title="Sin membresía activa"
@@ -449,7 +451,7 @@ export default function MemberDashboard() {
         <section aria-labelledby="member-links-title">
           <h2
             id="member-links-title"
-            className="text-text-secondary mb-1.5 px-1 text-[11px] font-medium"
+            className="text-text-secondary text-small mb-1.5 px-1 font-medium"
           >
             Explorar
           </h2>
@@ -458,7 +460,7 @@ export default function MemberDashboard() {
               <Link key={to} to={to} className={MOBILE_LIST_ROW}>
                 <Icon className="text-text-secondary h-4 w-4 shrink-0" aria-hidden />
                 <span className="text-text min-w-0 flex-1 text-sm font-medium">{label}</span>
-                <span className="text-text-muted hidden truncate text-[11px] min-[360px]:block">
+                <span className="text-text-muted text-small hidden truncate min-[360px]:block">
                   {detail}
                 </span>
                 <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
@@ -543,7 +545,7 @@ export default function MemberDashboard() {
                         tone="upcoming"
                         dateLabel="Inicia"
                         dateValue={row.start_date}
-                        badge={<Badge variant="default">Próxima</Badge>}
+                        badge={<span className="text-small text-text-muted shrink-0">Próxima</span>}
                         compact
                       />
                     );
@@ -557,7 +559,7 @@ export default function MemberDashboard() {
                         tone="ending"
                         dateLabel="Hasta"
                         dateValue={row.end_date}
-                        badge={<Badge variant="warning">Por vencer</Badge>}
+                        badge={<span className="text-small text-warning shrink-0">Por vencer</span>}
                         compact
                       />
                     );
@@ -575,7 +577,7 @@ export default function MemberDashboard() {
                   <p className="text-text text-sm font-bold">
                     {memberStats.lastWorkout.routine_name}
                   </p>
-                  <p className="text-text-secondary mt-0.5 text-[11px]">
+                  <p className="text-text-secondary text-small mt-0.5">
                     {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
                       locale: es,
                     })}
@@ -603,7 +605,7 @@ export default function MemberDashboard() {
                       tone="upcoming"
                       dateLabel="Inicia"
                       dateValue={row.start_date}
-                      badge={<Badge variant="default">Próxima</Badge>}
+                      badge={<span className="text-small text-text-muted shrink-0">Próxima</span>}
                     />
                   );
                 })}
@@ -616,7 +618,7 @@ export default function MemberDashboard() {
                       tone="ending"
                       dateLabel="Hasta"
                       dateValue={row.end_date}
-                      badge={<Badge variant="warning">Por vencer</Badge>}
+                      badge={<span className="text-small text-warning shrink-0">Por vencer</span>}
                     />
                   );
                 })}

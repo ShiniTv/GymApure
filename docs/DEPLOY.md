@@ -2,6 +2,10 @@
 
 Guía para GymApure en producción. El proyecto Supabase de producción actual es **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`), enlazado a Render. Mapa de entornos: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
 
+> **Hosting principal:** Render (Blueprint / [`render.yaml`](../render.yaml)).  
+> **Alternativa:** [Railway](./DEPLOY-RAILWAY.md) si en el futuro cambias de host.  
+> **No uses Vercel** para el monolit Express (WebSockets + crons).
+
 > **Instalación nueva desde cero:** la Parte 1 describe crear un proyecto Supabase de producción. Si ya tienes **GymApure – Producción**, salta a migraciones y variables en Render.
 
 ## Prerrequisitos
@@ -100,6 +104,20 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 ---
 
 ## Parte 2 — Render
+
+### 0. Reactivar tras cancelar la suscripción
+
+Si el servicio `caribean-gym` o el plan de pago se canceló:
+
+1. [dashboard.render.com](https://dashboard.render.com) → Billing → reactiva el plan (Starter o superior; Free hace cold starts largos).
+2. Si el servicio web **sigue listado** (Suspended / Deleted pending): **Resume** / **Restore** → Manual Deploy → **Deploy latest commit**.
+3. Si el servicio **ya no existe**: **New → Blueprint** → elige el repo → usa [`render.yaml`](../render.yaml) (crea de nuevo `caribean-gym` + Key Value `caribean-gym-kv`).
+4. Vuelve a pegar secretos `sync: false` (desde `.env.prod` local o Supabase Dashboard → Producción):  
+   `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `MFA_ENCRYPTION_KEY`, y opcionales SMTP / Sentry / VAPID / `DATABASE_SSL_CA`.
+5. Confirma `PUBLIC_APP_URL=https://caribean-gym.onrender.com` (o tu dominio custom).
+6. Smoke: `GET https://caribean-gym.onrender.com/api/health` → debe responder `db: up` (o equivalente OK).
+
+La BD de producción en Supabase **no** se toca al reactivar Render; solo reenlazas las mismas variables.
 
 ### 1. Conectar repositorio
 

@@ -3,6 +3,9 @@
   "private": true,
   "version": "2.5.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx scripts/dev/run-with-env.ts .env.dev server.ts",
     "dev:clean": "node scripts/dev/dev-clean.mjs",
