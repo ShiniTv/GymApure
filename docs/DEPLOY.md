@@ -6,7 +6,7 @@ Guía para GymApure en producción. El proyecto Supabase de producción actual e
 > **Alternativa:** [Railway](./DEPLOY-RAILWAY.md) si en el futuro cambias de host.  
 > **No uses Vercel** para el monolit Express (WebSockets + crons).
 
-> **Instalación nueva desde cero:** la Parte 1 describe crear un proyecto Supabase de producción. Si ya tienes **GymApure – Producción**, salta a migraciones y variables en Render.
+> **Build en Render:** Node **22** (`render.yaml`). `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` evita descargar browsers en el build (`npm ci --include=dev`).
 
 ## Prerrequisitos
 

@@ -19,13 +19,15 @@ services:
     name: caribean-gym
     runtime: node
     plan: starter
-    nodeVersion: 20
-    buildCommand: npm ci --include=dev && npm run build
+    nodeVersion: 22
+    buildCommand: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: '1'
       - key: PUBLIC_APP_URL
         value: https://caribean-gym.onrender.com
       - key: REQUIRE_MFA_FOR_STAFF
