@@ -68,16 +68,4 @@ export interface WorkoutExerciseOption {
   muscle_group: string;
 }
 
-async function fetchExerciseOptions(): Promise<WorkoutExerciseOption[]> {
-  const res = await apiFetch('/api/exercises?all=1');
-  return parseJsonResponse<WorkoutExerciseOption[]>(res);
-}
-
-export function useWorkoutExerciseOptionsQuery(enabled = true) {
-  return useQuery({
-    queryKey: ['exercises', 'all', 'workout-picker'],
-    queryFn: fetchExerciseOptions,
-    enabled,
-    staleTime: 120_000,
-  });
-}
+export { useExercisesCatalogQuery as useWorkoutExerciseOptionsQuery } from './useExercisesQuery';

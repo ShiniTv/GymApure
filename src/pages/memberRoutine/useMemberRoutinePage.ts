@@ -100,8 +100,7 @@ export function useMemberRoutinePage(id: string | undefined) {
   const [weeklyGoalSaved, setWeeklyGoalSaved] = useState(false);
   const weeklyGoalSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const needExerciseCatalog = isAddingExercise || !!substitutionTarget;
-  const { data: exercisesCatalog = [] } = useExercisesCatalogQuery(needExerciseCatalog);
+  const { data: exercisesCatalog = [], isPending: catalogLoading } = useExercisesCatalogQuery(true);
   const { data: routinesCatalog = [] } = useRoutinesLibraryQuery(isAssigning);
 
   const availableExercises = useMemo(
@@ -728,6 +727,7 @@ export function useMemberRoutinePage(id: string | undefined) {
       handleUpdateRoutine,
       substitutionTarget,
       availableExercises,
+      catalogLoading,
       substitutionExerciseId,
       setSubstitutionExerciseId,
       substitutionReason,

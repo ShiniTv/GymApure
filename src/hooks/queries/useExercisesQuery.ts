@@ -40,8 +40,10 @@ async function fetchExercisesPage(
   return parseJsonResponse<PaginatedResult<Exercise>>(res);
 }
 
+export const EXERCISES_CATALOG_QUERY_KEY = ['exercises', 'catalog'] as const;
+
 /** Slim catalog for pickers (server-capped). */
-async function fetchExercisesCatalog(): Promise<Exercise[]> {
+export async function fetchExercisesCatalog(): Promise<Exercise[]> {
   const res = await apiFetch('/api/exercises?all=1');
   const data = await parseJsonResponse<Exercise[]>(res);
   return Array.isArray(data) ? data : [];
@@ -75,9 +77,11 @@ export function useExercisesQuery(
 
 export function useExercisesCatalogQuery(enabled = true) {
   return useQuery({
-    queryKey: ['exercises', 'catalog'],
+    queryKey: EXERCISES_CATALOG_QUERY_KEY,
     queryFn: fetchExercisesCatalog,
     enabled,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
   });
 }
 

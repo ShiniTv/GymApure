@@ -112,6 +112,7 @@ export default function MemberRoutine() {
         onUpdateRoutine={() => void modals.handleUpdateRoutine()}
         substitutionTarget={modals.substitutionTarget}
         availableExercises={modals.availableExercises}
+        catalogLoading={modals.catalogLoading}
         substitutionExerciseId={modals.substitutionExerciseId}
         substitutionReason={modals.substitutionReason}
         substitutingExercise={modals.substitutingExercise}

@@ -31,6 +31,7 @@ interface MemberRoutineModalsProps {
 
   substitutionTarget: { routineId: number; exercise: Exercise } | null;
   availableExercises: ExerciseOption[];
+  catalogLoading?: boolean;
   substitutionExerciseId: string;
   substitutionReason: string;
   substitutingExercise: boolean;
@@ -85,6 +86,7 @@ export function MemberRoutineModals({
   onUpdateRoutine,
   substitutionTarget,
   availableExercises,
+  catalogLoading = false,
   substitutionExerciseId,
   substitutionReason,
   substitutingExercise,
@@ -178,6 +180,7 @@ export function MemberRoutineModals({
             </p>
             <ExercisePicker
               label="Ejercicio sustituto"
+              loading={catalogLoading}
               exercises={availableExercises.filter(
                 (exercise) =>
                   exercise.id !== substitutionTarget.exercise.id &&
@@ -225,6 +228,7 @@ export function MemberRoutineModals({
         <div className="space-y-4">
           <ExercisePicker
             exercises={availableExercises}
+            loading={catalogLoading}
             value={newExercise.exercise_id}
             onChange={(exerciseId) => {
               setNewExercise({ ...newExercise, exercise_id: exerciseId });

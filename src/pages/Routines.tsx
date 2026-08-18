@@ -146,7 +146,8 @@ export default function Routines() {
     isError: membersError,
     error: membersQueryError,
   } = useMemberOptionsQuery(!isMember && !!user);
-  const { data: exercisesCatalog = [] } = useExercisesCatalogQuery(isAddingExercise);
+  const { data: exercisesCatalog = [], isPending: exercisesCatalogLoading } =
+    useExercisesCatalogQuery(!isMember && !!user);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
   const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);
@@ -772,6 +773,7 @@ export default function Routines() {
             isAddingExercise={isAddingExercise}
             setIsAddingExercise={setIsAddingExercise}
             availableExercises={availableExercises}
+            catalogLoading={exercisesCatalogLoading}
             newExercise={newExercise}
             setNewExercise={setNewExercise}
             handleAddWorkoutExercise={handleAddWorkoutExercise}

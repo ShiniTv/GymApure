@@ -107,6 +107,7 @@ export default function ActiveWorkout() {
       <AddExerciseModal
         open={page.isAddingExercise}
         exercises={page.availableExercises}
+        exercisesLoading={page.exercisesCatalogLoading}
         value={page.newExercise}
         error={page.addExerciseError}
         onClose={() => {

@@ -43,6 +43,7 @@ export interface RoutineModalsProps {
   isAddingExercise: boolean;
   setIsAddingExercise: (open: boolean) => void;
   availableExercises: ExerciseOption[];
+  catalogLoading?: boolean;
   newExercise: RoutineExerciseForm;
   setNewExercise: React.Dispatch<React.SetStateAction<RoutineExerciseForm>>;
   handleAddWorkoutExercise: () => void;
@@ -93,6 +94,7 @@ export function RoutineModals({
   isAddingExercise,
   setIsAddingExercise,
   availableExercises,
+  catalogLoading = false,
   newExercise,
   setNewExercise,
   handleAddWorkoutExercise,
@@ -284,6 +286,7 @@ export function RoutineModals({
         <div className="space-y-4">
           <ExercisePicker
             exercises={availableExercises}
+            loading={catalogLoading}
             value={newExercise.exercise_id}
             onChange={(exerciseId) => {
               setNewExercise({ ...newExercise, exercise_id: exerciseId });

@@ -1,20 +1,17 @@
-import { lazy, Suspense } from 'react';
-import { Button, Input, Label, Modal, Spinner } from '../../components/ui';
+import { Button, Input, Label, Modal } from '../../components/ui';
 import { parseNonNegativeInt } from '../../lib/parseFormNumber';
 import {
   defaultRoutineExerciseForm,
   type RoutineExerciseForm,
 } from '../../lib/routineExercisePayload';
 import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
+import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import type { WorkoutExerciseOption } from '../../hooks/queries/useWorkoutRoutineQuery';
-
-const ExercisePicker = lazy(() =>
-  import('../../components/exercise/ExercisePicker').then((m) => ({ default: m.ExercisePicker }))
-);
 
 export function AddExerciseModal({
   open,
   exercises,
+  exercisesLoading = false,
   value,
   error,
   onClose,
@@ -23,6 +20,7 @@ export function AddExerciseModal({
 }: {
   open: boolean;
   exercises: WorkoutExerciseOption[];
+  exercisesLoading?: boolean;
   value: RoutineExerciseForm;
   error: string | null;
   onClose: () => void;
@@ -40,21 +38,14 @@ export function AddExerciseModal({
       scrollable
     >
       <div className="space-y-4">
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-6">
-              <Spinner />
-            </div>
-          }
-        >
-          <ExercisePicker
-            exercises={exercises}
-            value={value.exercise_id}
-            onChange={(exerciseId) => {
-              onChange({ ...value, exercise_id: exerciseId });
-            }}
-          />
-        </Suspense>
+        <ExercisePicker
+          exercises={exercises}
+          loading={exercisesLoading}
+          value={value.exercise_id}
+          onChange={(exerciseId) => {
+            onChange({ ...value, exercise_id: exerciseId });
+          }}
+        />
         {value.exercise_id ? (
           <>
             <RoutineExercisePrescriptionFields

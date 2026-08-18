@@ -18,8 +18,8 @@ import {
   pendingWorkoutLogCount,
   readCachedWorkoutRoutine,
 } from '../../lib/workoutOfflineQueue';
+import { useExercisesCatalogQuery } from '../../hooks/queries/useExercisesQuery';
 import {
-  useWorkoutExerciseOptionsQuery,
   useWorkoutRoutineQuery,
   type WorkoutRoutine,
 } from '../../hooks/queries/useWorkoutRoutineQuery';
@@ -109,7 +109,8 @@ export function useActiveWorkoutPage() {
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const { data: availableExercises = [] } = useWorkoutExerciseOptionsQuery(isAddingExercise);
+  const { data: availableExercises = [], isPending: exercisesCatalogLoading } =
+    useExercisesCatalogQuery(true);
 
   useEffect(() => {
     if (routineFromQuery) {
@@ -664,6 +665,7 @@ export function useActiveWorkoutPage() {
     isAddingExercise,
     setIsAddingExercise,
     availableExercises,
+    exercisesCatalogLoading,
     newExercise,
     setNewExercise,
     addExerciseError,

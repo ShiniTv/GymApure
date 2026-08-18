@@ -7,7 +7,7 @@ import {
   useInvalidateExercises,
   type Exercise,
 } from '../hooks/queries/useExercisesQuery';
-import { Plus, Video, Dumbbell, ChevronDown, Minus } from 'lucide-react';
+import { Plus, Video, Dumbbell, ChevronDown, Minus, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canOperateExercises } from '../lib/roles';
 import {
@@ -16,7 +16,6 @@ import {
   Label,
   Modal,
   PageHeader,
-  Spinner,
   Select,
   Textarea,
   SearchInput,
@@ -25,6 +24,8 @@ import {
   EmptyState,
   SegmentedControl,
   IconButton,
+  Card,
+  Skeleton,
 } from '../components/ui';
 import {
   MUSCLE_GROUPS,
@@ -36,6 +37,7 @@ import {
   type ExerciseLayoutView,
 } from '../components/exercise/ExerciseLibraryView';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
+import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
@@ -52,6 +54,7 @@ export default function Exercises() {
   const [muscleFilter, setMuscleFilter] = useState('');
   const [videoOnly, setVideoOnly] = useState(false);
   const [layoutView, setLayoutView] = useState<ExerciseLayoutView>('flat');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [executionSteps, setExecutionSteps] = useState<string[]>(['']);
   const [videoOpen, setVideoOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -236,6 +239,7 @@ export default function Exercises() {
   };
 
   const hasActiveFilters = Boolean(debouncedSearch.trim() || muscleFilter || videoOnly);
+  const filterChipCount = Number(Boolean(muscleFilter)) + Number(videoOnly);
   const clearFilters = () => {
     setSearch('');
     setMuscleFilter('');
@@ -280,8 +284,23 @@ export default function Exercises() {
 
   if (loading) {
     return (
-      <div className="page-state-center">
-        <Spinner />
+      <div className="page-stack-tight mx-auto w-full max-w-6xl">
+        <PageHeader
+          compact
+          title={
+            <>
+              <span className="text-brand">Ejercicios</span>
+            </>
+          }
+          subtitle="Catálogo para armar rutinas"
+          action={<BackToDashboardLink iconOnly />}
+        />
+        <Skeleton className="h-11 w-full rounded-xl" />
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <Skeleton key={index} className="h-[4.25rem] rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -326,60 +345,93 @@ export default function Exercises() {
           }}
           aria-label="Buscar por nombre o grupo muscular"
         />
-        {filteredForDisplay.length > 0 ? (
-          <SegmentedControl
-            variant="compact"
-            value={layoutView}
-            onChange={setLayoutView}
-            className="w-fit max-w-full"
-            options={[
-              { value: 'flat', label: 'Lista' },
-              { value: 'groups', label: 'Grupos' },
-            ]}
-          />
-        ) : null}
+        <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-11 sm:justify-end">
+          {filteredForDisplay.length > 0 || hasActiveFilters ? (
+            <SegmentedControl
+              variant="compact"
+              value={layoutView}
+              onChange={setLayoutView}
+              className="w-fit max-w-full"
+              options={[
+                { value: 'flat', label: 'Lista' },
+                { value: 'groups', label: 'Grupos' },
+              ]}
+            />
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'h-9 gap-1.5 px-2.5',
+              filtersOpen && 'bg-surface-overlay',
+              filterChipCount > 0 && 'text-brand'
+            )}
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+            aria-label="Filtros"
+            title="Filtros"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden md:inline">Filtros</span>
+            {filterChipCount > 0 ? (
+              <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+                {filterChipCount}
+              </span>
+            ) : null}
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <FilterChips
-          layout="scroll"
-          ariaLabel="Filtros del catálogo"
-          options={[
-            { value: '', label: 'Todos', count: catalogList.length },
-            ...(videoCount > 0 || videoOnly
-              ? [{ value: '__video__', label: 'Con video', count: videoCount }]
-              : []),
-            ...MUSCLE_GROUPS.filter(
-              (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
-            ).map((group) => ({
-              value: group,
-              label: group,
-              count: muscleCounts[group] ?? 0,
-            })),
-          ]}
-          value={videoOnly ? '__video__' : muscleFilter}
-          onChange={(value) => {
-            if (value === '__video__') {
-              setMuscleFilter('');
-              setVideoOnly(true);
-              return;
-            }
-            setVideoOnly(false);
-            setMuscleFilter(value);
-          }}
-        />
-        <div className="flex items-center justify-between gap-2 px-0.5">
-          <p className="text-text-muted min-w-0 truncate text-[11px]">{resultsLabel}</p>
-          {hasActiveFilters ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
-            >
-              Limpiar
-            </button>
+      {filtersOpen ? (
+        <Card padding="sm" rounded="xl" className="space-y-3">
+          <FilterChips
+            className="w-fit max-w-full"
+            ariaLabel="Grupo muscular"
+            options={[
+              { value: '', label: 'Grupos', count: catalogList.length },
+              ...MUSCLE_GROUPS.filter(
+                (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
+              ).map((group) => ({
+                value: group,
+                label: group,
+                count: muscleCounts[group] ?? 0,
+              })),
+            ]}
+            value={muscleFilter}
+            onChange={setMuscleFilter}
+          />
+          {videoCount > 0 || videoOnly ? (
+            <FilterChips
+              className="w-fit max-w-full"
+              ariaLabel="Video"
+              options={[
+                { value: 'all', label: 'Video' },
+                { value: 'video', label: 'Con video', count: videoCount },
+              ]}
+              value={videoOnly ? 'video' : 'all'}
+              onChange={(value) => setVideoOnly(value === 'video')}
+            />
           ) : null}
-        </div>
+          {filterChipCount > 0 ? (
+            <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          ) : null}
+        </Card>
+      ) : null}
+
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <p className="text-text-muted min-w-0 truncate text-[11px]">{resultsLabel}</p>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+          >
+            Limpiar
+          </button>
+        ) : null}
       </div>
 
       <ExerciseLibraryView

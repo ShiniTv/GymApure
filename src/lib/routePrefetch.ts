@@ -2,6 +2,10 @@ import { queryClient } from './queryClient';
 import { apiFetch, parseJsonResponse } from './api';
 import { membersQueryKey } from '../hooks/queries/useMembersQuery';
 import { paymentsQueryKey } from '../hooks/queries/usePaymentsQuery';
+import {
+  EXERCISES_CATALOG_QUERY_KEY,
+  fetchExercisesCatalog,
+} from '../hooks/queries/useExercisesQuery';
 import type { UserRole } from './roles';
 
 const prefetched = new Set<string>();
@@ -77,6 +81,15 @@ function prefetchRouteData(path: string): void {
     // AdminStatsProvider already loads /api/stats/admin for admins only.
     // Prefetching here caused 403 noise for trainer/member/reception.
     return;
+  }
+
+  if (path === '/exercises' || path === '/routines') {
+    dataPrefetched.add(path);
+    void queryClient.prefetchQuery({
+      queryKey: EXERCISES_CATALOG_QUERY_KEY,
+      queryFn: fetchExercisesCatalog,
+      staleTime: 5 * 60_000,
+    });
   }
 }
 
