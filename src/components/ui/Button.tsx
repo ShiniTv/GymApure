@@ -30,7 +30,7 @@ const outline = cn(
 
 const variants: Record<ButtonVariant, string> = {
   primary: cn(
-    'bg-brand text-text-inverse shadow-none',
+    'brand-solid shadow-none',
     'hover:bg-brand-hover',
     'active:bg-[color-mix(in_srgb,var(--color-brand)_88%,black)]',
     'focus-visible:ring-brand/40',
@@ -77,8 +77,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'tap-feedback transition-[background-color,border-color,color,box-shadow,transform,opacity] duration-150',
         'focus-visible:ring-offset-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'disabled:cursor-not-allowed disabled:active:scale-100 disabled:active:opacity-100',
-        variants[variant],
         sizes[size],
+        variants[variant],
         className
       )}
       {...props}

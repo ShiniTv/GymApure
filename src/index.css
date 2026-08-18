@@ -605,9 +605,10 @@ body,
     @apply bg-brand/15 text-brand;
   }
 
-  /* Filled brand surfaces — Figma primary is saturated blue; keep light on-brand text */
+  /* Filled brand surfaces — inverse text via CSS var so light/dark both stay AA */
   .brand-solid {
-    @apply bg-brand text-text-inverse;
+    background-color: var(--color-brand);
+    color: var(--color-text-inverse);
   }
 
   .brand-solid-hover {
