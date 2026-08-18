@@ -60,6 +60,30 @@ interface FilterExercisesOptions {
   muscleGroup?: string;
 }
 
+export function groupExercisesByMuscle<T extends ExercisePickerItem>(
+  exercises: T[]
+): { muscle: string; items: T[] }[] {
+  const map = new Map<string, T[]>();
+  for (const exercise of exercises) {
+    const label = formatMuscleGroupLabel(exercise.muscle_group);
+    const list = map.get(label);
+    if (list) list.push(exercise);
+    else map.set(label, [exercise]);
+  }
+
+  const groups: { muscle: string; items: T[] }[] = [];
+  for (const muscle of MUSCLE_GROUPS) {
+    const items = map.get(muscle);
+    if (items && items.length > 0) groups.push({ muscle, items });
+  }
+  for (const [muscle, items] of map) {
+    if (!MUSCLE_GROUPS.includes(muscle as MuscleGroup)) {
+      groups.push({ muscle, items });
+    }
+  }
+  return groups;
+}
+
 export function filterExercises<T extends ExercisePickerItem>(
   exercises: T[],
   { search = '', muscleGroup = '' }: FilterExercisesOptions

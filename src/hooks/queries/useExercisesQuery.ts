@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { PaginatedResult } from '../../lib/pagination';
 
-/** Slim catalog row (`GET /api/exercises`). Detail fields arrive on expand. */
+/** Slim catalog row (`GET /api/exercises`). Detail fields arrive when opening the modal. */
 export interface Exercise {
   id: number;
   name: string;

@@ -104,22 +104,17 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
 });
 
 test.describe('QA device desktop D7 (trainer)', () => {
-  test('D7 Ejercicios: expandir usa ancho de fila', async ({ page }) => {
+  test('D7 Ejercicios: detalle abre modal a ancho de viewport', async ({ page }) => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
     await page.goto('/exercises');
-    const expandBtn = page.getByRole('button', { name: /^Ver / }).first();
-    await expect(expandBtn).toBeVisible({ timeout: 20_000 });
-    const name = (await expandBtn.getAttribute('aria-label'))?.replace(/^Ver\s+/, '') ?? '';
-    await expandBtn.click();
-    await expect(page.getByRole('button', { name: new RegExp(`^Cerrar ${name}`) })).toBeVisible();
+    const card = page.getByRole('button', { name: /^Ver / }).first();
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await card.click();
 
-    const cardWidth = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button[aria-expanded="true"]'));
-      const visible = buttons.find((b) => (b as HTMLElement).offsetParent !== null);
-      const card = visible?.closest('[class*="rounded"]');
-      return card ? Math.round(card.getBoundingClientRect().width) : 0;
-    });
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 20_000 });
+    const dialogWidth = await dialog.evaluate((el) => Math.round(el.getBoundingClientRect().width));
     const viewport = page.viewportSize()?.width ?? 1280;
-    expect(cardWidth).toBeGreaterThan(viewport * 0.55);
+    expect(dialogWidth).toBeGreaterThan(viewport * 0.55);
   });
 });

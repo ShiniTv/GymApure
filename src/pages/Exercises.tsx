@@ -23,6 +23,7 @@ import {
   BackToDashboardLink,
   FilterChips,
   EmptyState,
+  SegmentedControl,
   IconButton,
 } from '../components/ui';
 import {
@@ -30,7 +31,10 @@ import {
   filterExercises,
   formatMuscleGroupLabel,
 } from '../lib/exerciseMuscleGroups';
-import { ExerciseLibraryView } from '../components/exercise/ExerciseLibraryView';
+import {
+  ExerciseLibraryView,
+  type ExerciseLayoutView,
+} from '../components/exercise/ExerciseLibraryView';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -47,7 +51,7 @@ export default function Exercises() {
   const [search, setSearch] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('');
   const [videoOnly, setVideoOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<'az' | 'recent'>('az');
+  const [layoutView, setLayoutView] = useState<ExerciseLayoutView>('flat');
   const [executionSteps, setExecutionSteps] = useState<string[]>(['']);
   const [videoOpen, setVideoOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -113,11 +117,8 @@ export default function Exercises() {
       muscleGroup: muscleFilter,
     });
     if (videoOnly) list = list.filter((e) => exerciseHasVideo(e));
-    list = [...list].sort((a, b) =>
-      sortBy === 'az' ? a.name.localeCompare(b.name, 'es') : b.id - a.id
-    );
     return list;
-  }, [catalogList, debouncedSearch, muscleFilter, videoOnly, sortBy]);
+  }, [catalogList, debouncedSearch, muscleFilter, videoOnly]);
 
   const refreshExercises = () => invalidateExercises();
 
@@ -301,12 +302,23 @@ export default function Exercises() {
           )
         }
         subtitle={readOnly ? 'Movimientos y videos' : 'Catálogo para armar rutinas'}
-        action={<BackToDashboardLink iconOnly />}
+        action={
+          <div className="flex shrink-0 items-center gap-1">
+            <BackToDashboardLink iconOnly />
+            {canEdit ? (
+              <Button onClick={() => void handleOpenModal()} className="h-9 gap-1.5 px-2.5 sm:px-4">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nuevo ejercicio</span>
+                <span className="sr-only sm:hidden">Nuevo ejercicio</span>
+              </Button>
+            ) : null}
+          </div>
+        }
       />
 
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <SearchInput
-          containerClassName="min-w-0 flex-1"
+          containerClassName="min-w-0 w-full flex-1"
           placeholder="Buscar ejercicio…"
           value={search}
           onChange={(e) => {
@@ -314,26 +326,29 @@ export default function Exercises() {
           }}
           aria-label="Buscar por nombre o grupo muscular"
         />
-        {canEdit ? (
-          <IconButton
-            size="md"
-            variant="secondary"
-            className="border-brand/30 text-brand hover:bg-brand/10"
-            aria-label="Nuevo ejercicio"
-            title="Nuevo"
-            onClick={() => void handleOpenModal()}
-          >
-            <Plus className="h-4 w-4" />
-          </IconButton>
+        {filteredForDisplay.length > 0 ? (
+          <SegmentedControl
+            variant="compact"
+            value={layoutView}
+            onChange={setLayoutView}
+            className="w-fit max-w-full"
+            options={[
+              { value: 'flat', label: 'Lista' },
+              { value: 'groups', label: 'Grupos' },
+            ]}
+          />
         ) : null}
       </div>
 
       <div className="space-y-2">
         <FilterChips
           layout="scroll"
-          ariaLabel="Grupo muscular"
+          ariaLabel="Filtros del catálogo"
           options={[
             { value: '', label: 'Todos', count: catalogList.length },
+            ...(videoCount > 0 || videoOnly
+              ? [{ value: '__video__', label: 'Con video', count: videoCount }]
+              : []),
             ...MUSCLE_GROUPS.filter(
               (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
             ).map((group) => ({
@@ -342,54 +357,28 @@ export default function Exercises() {
               count: muscleCounts[group] ?? 0,
             })),
           ]}
-          value={muscleFilter}
-          onChange={setMuscleFilter}
+          value={videoOnly ? '__video__' : muscleFilter}
+          onChange={(value) => {
+            if (value === '__video__') {
+              setMuscleFilter('');
+              setVideoOnly(true);
+              return;
+            }
+            setVideoOnly(false);
+            setMuscleFilter(value);
+          }}
         />
         <div className="flex items-center justify-between gap-2 px-0.5">
           <p className="text-text-muted min-w-0 truncate text-[11px]">{resultsLabel}</p>
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="text-text-muted flex items-center gap-1 text-[11px]">
-              <button
-                type="button"
-                onClick={() => setSortBy('az')}
-                className={sortBy === 'az' ? 'text-text font-semibold' : 'hover:text-text'}
-                aria-pressed={sortBy === 'az'}
-              >
-                A–Z
-              </button>
-              <span aria-hidden>·</span>
-              <button
-                type="button"
-                onClick={() => setSortBy('recent')}
-                className={sortBy === 'recent' ? 'text-text font-semibold' : 'hover:text-text'}
-                aria-pressed={sortBy === 'recent'}
-              >
-                Recientes
-              </button>
-            </div>
+          {hasActiveFilters ? (
             <button
               type="button"
-              onClick={() => setVideoOnly((v) => !v)}
-              className={
-                videoOnly
-                  ? 'bg-surface-overlay text-text inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold'
-                  : 'text-text-secondary hover:text-text inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-semibold'
-              }
-              aria-pressed={videoOnly}
+              onClick={clearFilters}
+              className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
             >
-              <Video className="h-3 w-3" aria-hidden />
-              Video{videoCount > 0 ? ` · ${videoCount}` : ''}
+              Limpiar
             </button>
-            {hasActiveFilters ? (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-brand text-[11px] font-semibold hover:underline"
-              >
-                Limpiar
-              </button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -400,6 +389,7 @@ export default function Exercises() {
         muscleFilter={muscleFilter}
         videoOnly={videoOnly}
         skipClientFilter
+        layoutView={layoutView}
         onClearFilters={hasActiveFilters ? clearFilters : undefined}
         onEdit={canEdit ? (exercise) => void handleOpenModal(exercise) : undefined}
         onDelete={

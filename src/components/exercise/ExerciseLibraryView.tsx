@@ -1,203 +1,53 @@
 import { useState } from 'react';
-import { BookOpen, Dumbbell, Video, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { Dumbbell } from 'lucide-react';
 import { Virtuoso } from 'react-virtuoso';
-import {
-  exerciseHasVideo,
-  useExerciseDetailQuery,
-  type Exercise,
-} from '../../hooks/queries/useExercisesQuery';
-import { Card, Badge, EmptyState, Button, Spinner } from '../ui';
-import { filterExercises, formatMuscleGroupLabel } from '../../lib/exerciseMuscleGroups';
-import { ExerciseVideoPlayer } from './ExerciseVideoPlayer';
-import { ExerciseExecutionSteps } from './ExerciseExecutionSteps';
-import { cn } from '../../lib/utils';
+import { exerciseHasVideo, type Exercise } from '../../hooks/queries/useExercisesQuery';
+import { EmptyState, Button } from '../ui';
+import { filterExercises, groupExercisesByMuscle } from '../../lib/exerciseMuscleGroups';
+import { ExerciseListCard } from './ExerciseListCard';
+import { ExerciseDetailModal } from './ExerciseDetailModal';
+
+export type ExerciseLayoutView = 'flat' | 'groups';
+
+const FLAT_VIRTUOSO_AT = 48;
 
 interface ExerciseLibraryViewProps {
   exercises: Exercise[];
   readOnly?: boolean;
   search: string;
-  /** Active muscle chip label (for empty copy). */
   muscleFilter?: string;
   videoOnly?: boolean;
-  /** When true, exercises are already filtered server-side. */
   skipClientFilter?: boolean;
+  layoutView?: ExerciseLayoutView;
   onEdit?: (exercise: Exercise) => void;
   onDelete?: (exercise: Exercise) => void;
   onCreate?: () => void;
   onClearFilters?: () => void;
 }
 
-function ExerciseCard({
-  exercise,
-  expanded,
+function ExerciseCardGrid({
+  items,
+  hideMuscle,
   readOnly,
-  onToggle,
-  onEdit,
-  onDelete,
-  listRow = false,
+  onOpen,
 }: {
-  exercise: Exercise;
-  expanded: boolean;
+  items: Exercise[];
+  hideMuscle: boolean;
   readOnly: boolean;
-  onToggle: () => void;
-  onEdit?: (exercise: Exercise) => void;
-  onDelete?: (exercise: Exercise) => void;
-  /** Borderless row inside a divide-y list shell. */
-  listRow?: boolean;
+  onOpen: (id: number) => void;
 }) {
-  const {
-    data: detail,
-    isPending,
-    isError,
-  } = useExerciseDetailQuery(expanded ? exercise.id : null);
-  const full = expanded && detail ? detail : exercise;
-  const muscleLabel = formatMuscleGroupLabel(exercise.muscle_group);
-  const canManage = Boolean(onEdit && onDelete);
-  const hasVideo = exerciseHasVideo(exercise) || exerciseHasVideo(full);
-  const hasBothMedia = hasVideo && Boolean(full.execution);
-
-  const body = (
-    <>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full touch-manipulation items-center gap-2.5 px-3 py-2.5 text-left"
-        aria-expanded={expanded}
-        aria-label={expanded ? `Cerrar ${exercise.name}` : `Ver ${exercise.name}`}
-      >
-        <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-          <Dumbbell className="text-brand h-3.5 w-3.5" aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-text truncate text-[13px] leading-snug font-semibold">
-            {exercise.name}
-          </h3>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span className="text-text-muted text-[11px]">{muscleLabel}</span>
-            {hasVideo ? (
-              <span
-                className="text-brand inline-flex items-center gap-0.5 text-[10px] font-semibold"
-                title="Tiene video"
-              >
-                <Video className="h-3 w-3" aria-hidden />
-                Video
-              </span>
-            ) : null}
-            {!readOnly && exercise.is_system && !exercise.owner_trainer_id ? (
-              <Badge variant="accent" className="text-[9px]">
-                Sistema
-              </Badge>
-            ) : null}
-            {!readOnly && exercise.forked_from_id ? (
-              <Badge variant="warning" className="text-[9px]">
-                Personalizado
-              </Badge>
-            ) : null}
-          </div>
-        </div>
-        <ChevronRight
-          className={cn(
-            'text-text-muted h-4 w-4 shrink-0 transition-transform',
-            expanded && 'rotate-90'
-          )}
-          aria-hidden
-        />
-      </button>
-
-      {expanded ? (
-        <div className="border-border/60 animate-in slide-in-from-top-2 space-y-3 border-t px-3 pt-2.5 pb-3 duration-200">
-          {isPending ? (
-            <div className="flex justify-center py-4">
-              <Spinner size="xs" />
-            </div>
-          ) : isError ? (
-            <p className="text-text-muted text-xs">No se pudo cargar el detalle.</p>
-          ) : (
-            <>
-              {full.description ? (
-                <p className="text-text-secondary text-xs leading-snug">{full.description}</p>
-              ) : null}
-
-              <div
-                className={cn(
-                  'grid grid-cols-1 gap-3',
-                  hasBothMedia && 'md:grid-cols-2 md:items-start md:gap-4'
-                )}
-              >
-                {hasVideo && full.video_url ? (
-                  <div className="min-w-0 space-y-2">
-                    <h4 className="label-caps flex items-center gap-2">
-                      <Video className="h-3 w-3" /> Video
-                    </h4>
-                    <ExerciseVideoPlayer
-                      url={full.video_url}
-                      posterUrl={full.video_poster_url}
-                      title={`${exercise.name} — video tutorial`}
-                    />
-                  </div>
-                ) : null}
-                {full.execution ? (
-                  <div className="min-w-0 space-y-2">
-                    <h4 className="label-caps flex items-center gap-2">
-                      <BookOpen className="h-3 w-3" /> Ejecución
-                    </h4>
-                    <ExerciseExecutionSteps
-                      execution={full.execution}
-                      title="Guía de ejecución"
-                      showTitle={false}
-                      compact
-                    />
-                  </div>
-                ) : null}
-                {!hasVideo && !full.execution ? (
-                  <p className="text-text-muted text-xs italic">Sin video ni guía aún.</p>
-                ) : null}
-              </div>
-            </>
-          )}
-
-          {!readOnly && canManage ? (
-            <div className="flex items-center justify-end gap-1 pt-0.5">
-              <button
-                type="button"
-                onClick={() => onEdit!(detail ?? exercise)}
-                className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
-                aria-label={`Editar ${exercise.name}`}
-                title="Editar"
-              >
-                <Edit className="h-3.5 w-3.5" aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete!(exercise)}
-                className="text-text-muted inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-red-500/10 hover:text-red-500"
-                aria-label={`Eliminar ${exercise.name}`}
-                title="Eliminar"
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden />
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </>
-  );
-
-  if (listRow) {
-    return <div className="bg-transparent">{body}</div>;
-  }
-
   return (
-    <Card
-      padding="none"
-      rounded="xl"
-      className={cn(
-        'border-border/80 bg-surface h-fit overflow-hidden border transition-colors',
-        expanded && 'ring-brand/25 ring-1'
-      )}
-    >
-      {body}
-    </Card>
+    <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+      {items.map((exercise) => (
+        <ExerciseListCard
+          key={exercise.id}
+          exercise={exercise}
+          onOpen={onOpen}
+          hideMuscle={hideMuscle}
+          readOnly={readOnly}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -208,18 +58,21 @@ export function ExerciseLibraryView({
   muscleFilter = '',
   videoOnly = false,
   skipClientFilter = false,
+  layoutView = 'flat',
   onEdit,
   onDelete,
   onCreate,
   onClearFilters,
 }: ExerciseLibraryViewProps) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(null);
   const filteredExercises = skipClientFilter
     ? exercises
     : filterExercises(exercises, { search, muscleGroup: muscleFilter }).filter((e) =>
         videoOnly ? exerciseHasVideo(e) : true
       );
   const hasActiveFilters = Boolean(search.trim() || muscleFilter || videoOnly);
+  const groups = groupExercisesByMuscle(filteredExercises);
+  const hideMuscle = Boolean(muscleFilter) || layoutView === 'groups';
 
   if (filteredExercises.length === 0) {
     const emptyTitle = hasActiveFilters ? 'Sin resultados' : 'Sin ejercicios';
@@ -262,28 +115,59 @@ export function ExerciseLibraryView({
   }
 
   return (
-    <div className="border-border/80 bg-surface divide-border/60 overflow-hidden rounded-[var(--radius-card)] border">
-      <Virtuoso
-        useWindowScroll
-        data={filteredExercises}
-        increaseViewportBy={240}
-        itemContent={(_index, exercise) => {
-          const expanded = expandedId === exercise.id;
-          return (
-            <div className={cn('border-border/60 border-b', expanded && 'bg-surface-overlay/30')}>
-              <ExerciseCard
-                exercise={exercise}
-                expanded={expanded}
+    <>
+      {layoutView === 'groups' ? (
+        <div className="space-y-4 sm:space-y-5">
+          {groups.map((group) => (
+            <section key={group.muscle}>
+              <div className="mb-2 flex items-center gap-2 px-0.5">
+                <h3 className="text-text text-sm font-semibold">{group.muscle}</h3>
+                <span className="bg-surface-overlay text-text-muted rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+                  {group.items.length}
+                </span>
+              </div>
+              <ExerciseCardGrid
+                items={group.items}
+                hideMuscle
                 readOnly={readOnly}
-                onToggle={() => setExpandedId(expanded ? null : exercise.id)}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                listRow
+                onOpen={setDetailId}
+              />
+            </section>
+          ))}
+        </div>
+      ) : filteredExercises.length >= FLAT_VIRTUOSO_AT ? (
+        <Virtuoso
+          style={{ height: 'min(70vh, 900px)' }}
+          data={filteredExercises}
+          className="rounded-xl"
+          computeItemKey={(_index, exercise) => exercise.id}
+          itemContent={(_index, exercise) => (
+            <div className="pb-2 sm:pr-1">
+              <ExerciseListCard
+                exercise={exercise}
+                onOpen={setDetailId}
+                hideMuscle={hideMuscle}
+                readOnly={readOnly}
               />
             </div>
-          );
-        }}
+          )}
+        />
+      ) : (
+        <ExerciseCardGrid
+          items={filteredExercises}
+          hideMuscle={hideMuscle}
+          readOnly={readOnly}
+          onOpen={setDetailId}
+        />
+      )}
+
+      <ExerciseDetailModal
+        exerciseId={detailId}
+        readOnly={readOnly}
+        onClose={() => setDetailId(null)}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
-    </div>
+    </>
   );
 }

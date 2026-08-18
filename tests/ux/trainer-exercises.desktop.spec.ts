@@ -6,27 +6,21 @@ test.describe('Entrenador — biblioteca de ejercicios desktop', () => {
     await loginDesktop(page, TRAINER_EMAIL, demoPassword());
   });
 
-  test('expandir ejercicio usa fila completa (no columna 1/4)', async ({ page }) => {
+  test('abrir ejercicio usa modal a ancho de viewport', async ({ page }) => {
     await page.goto('/exercises');
     await expect(page.getByRole('heading', { name: /ejercicios/i }).first()).toBeVisible({
       timeout: 20_000,
     });
 
-    const expandBtn = page.getByRole('button', { name: /^Ver / }).first();
-    await expect(expandBtn).toBeVisible({ timeout: 20_000 });
-    const exerciseName = (await expandBtn.getAttribute('aria-label'))?.replace(/^Ver\s+/, '') ?? '';
-    await expandBtn.click();
+    const card = page.getByRole('button', { name: /^Ver / }).first();
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await card.click();
 
-    await expect(page.getByRole('button', { name: new RegExp(`^Cerrar ${exerciseName}`) })).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 20_000 });
 
-    // Prefer the visible (desktop) expanded card — mobile list stays in DOM with md:hidden.
-    const cardWidth = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button[aria-expanded="true"]'));
-      const visible = buttons.find((b) => (b as HTMLElement).offsetParent !== null);
-      const card = visible?.closest('[class*="rounded"]');
-      return card ? Math.round(card.getBoundingClientRect().width) : 0;
-    });
+    const dialogWidth = await dialog.evaluate((el) => Math.round(el.getBoundingClientRect().width));
     const viewport = page.viewportSize()?.width ?? 1280;
-    expect(cardWidth).toBeGreaterThan(viewport * 0.55);
+    expect(dialogWidth).toBeGreaterThan(viewport * 0.55);
   });
 });
