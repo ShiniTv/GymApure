@@ -383,68 +383,62 @@ export function RoutinesLibraryView({
                         : 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4')
                   )}
                 >
-                  <div
-                    role={canOpen ? 'button' : undefined}
-                    tabIndex={canOpen ? 0 : undefined}
-                    onClick={canOpen ? () => onRoutineCardClick(routine.id) : undefined}
-                    onKeyDown={
-                      canOpen
-                        ? (e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              onRoutineCardClick(routine.id);
-                            }
-                          }
-                        : undefined
-                    }
-                    className={cn('group flex items-center gap-2.5', canOpen && 'cursor-pointer')}
-                  >
-                    {!(lightCards && isStaff) && (
-                      <div
-                        className={cn(
-                          'bg-brand/10 flex shrink-0 items-center justify-center',
-                          lightCards ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'
-                        )}
-                      >
-                        <Dumbbell
-                          className={cn('text-brand', lightCards ? 'h-3.5 w-3.5' : 'h-4 w-4')}
-                        />
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-text truncate text-sm leading-snug font-semibold">
-                        {routine.name}
-                      </h3>
-                      <p className="text-small text-text-muted mt-0.5 font-medium">
-                        {formatDifficulty(routine.difficulty)}
-                        <span className="text-text-muted/50 mx-1">·</span>
-                        {exerciseSummary.label}
-                        {status ? (
-                          <>
-                            <span className="text-text-muted/50 mx-1">·</span>
-                            <span className="text-text-secondary">{status}</span>
-                          </>
-                        ) : null}
-                      </p>
-                      {isMember && exerciseSummary.preview ? (
-                        <p className="text-small text-text-muted mt-0.5 line-clamp-1 leading-snug">
-                          {exerciseSummary.preview}
-                        </p>
-                      ) : null}
-                      {!isMember && canOpen && !isExpanded && (
-                        <>
-                          <span className="text-text-secondary text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
-                            Ver ejercicios
-                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                          </span>
-                          <span className="text-text-secondary text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
-                            Seleccionar
-                            <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                          </span>
-                        </>
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={canOpen ? () => onRoutineCardClick(routine.id) : undefined}
+                      className={cn(
+                        'group flex min-w-0 flex-1 items-center gap-2.5 text-left',
+                        canOpen ? 'cursor-pointer' : 'cursor-default'
                       )}
-                    </div>
+                    >
+                      {!(lightCards && isStaff) && (
+                        <div
+                          className={cn(
+                            'bg-brand/10 flex shrink-0 items-center justify-center',
+                            lightCards ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'
+                          )}
+                        >
+                          <Dumbbell
+                            className={cn('text-brand', lightCards ? 'h-3.5 w-3.5' : 'h-4 w-4')}
+                          />
+                        </div>
+                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-text truncate text-sm leading-snug font-semibold">
+                          {routine.name}
+                        </h3>
+                        <p className="text-small text-text-muted mt-0.5 font-medium">
+                          {formatDifficulty(routine.difficulty)}
+                          <span className="text-text-muted/50 mx-1">·</span>
+                          {exerciseSummary.label}
+                          {status ? (
+                            <>
+                              <span className="text-text-muted/50 mx-1">·</span>
+                              <span className="text-text-secondary">{status}</span>
+                            </>
+                          ) : null}
+                        </p>
+                        {isMember && exerciseSummary.preview ? (
+                          <p className="text-small text-text-muted mt-0.5 line-clamp-1 leading-snug">
+                            {exerciseSummary.preview}
+                          </p>
+                        ) : null}
+                        {!isMember && canOpen && !isExpanded && (
+                          <>
+                            <span className="text-text-secondary text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
+                              Ver ejercicios
+                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                            </span>
+                            <span className="text-text-secondary text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
+                              Seleccionar
+                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </button>
 
                     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                       {isStaff && (
