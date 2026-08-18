@@ -7,7 +7,6 @@ import {
   LogIn,
   UserCircle,
   Wrench,
-  CalendarDays,
   ShieldCheck,
   LayoutDashboard,
 } from 'lucide-react';
@@ -30,7 +29,6 @@ export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
 export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
   { name: 'Resumen', href: '/reception', icon: LayoutDashboard, section: 'Operación' },
   { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
-  { name: 'Clases', href: '/clases', icon: CalendarDays, section: 'Operación' },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },

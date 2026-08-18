@@ -34,7 +34,6 @@ Conservar patrones del repo: TypeScript strict, React Query, paginación de list
 | Entrenadores / turnos   | `docs/modulos/ENTRENADORES-Y-TURNOS.md`   | `test:trainer-shifts`, `test:trainer-auth`       |
 | Equipamiento            | `docs/modulos/EQUIPAMIENTO.md`            | smoke + UX manual                                |
 | Nutrición               | `docs/modulos/NUTRICION.md`               | según alcance                                    |
-| Clases / reservas       | `docs/modulos/CLASES-Y-RESERVAS.md`       | `test:classes-checklist`                         |
 | Móvil / PWA             | `docs/modulos/MOVIL-Y-PWA.md`             | `gymapure-ux-playwright`                         |
 | Auth / RBAC             | `docs/TESTING.md`                         | `test:security-checklist`, `test:auth-checklist` |
 | Recepción               | `docs/TESTING.md`                         | `test:reception-checklist`                       |

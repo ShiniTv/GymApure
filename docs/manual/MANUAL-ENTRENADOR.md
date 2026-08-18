@@ -37,7 +37,7 @@ Guía para el rol **trainer** (entrenador).
 
 Bottom nav entrenador (visible con drawer cerrado; **icon-only** + `aria-label`):
 
-- **Panel**, **Miembros**, **Rutinas**, **Mensajes** + **Más** (Nutrición, Cobros PT, asignaciones, Clases, …)
+- **Panel**, **Miembros**, **Rutinas**, **Mensajes** + **Más** (Nutrición, Cobros PT, asignaciones, …)
 
 Al abrir drawer lateral: footer pegado al fondo; bottom nav se oculta.
 
@@ -100,12 +100,6 @@ El miembro completa y actualiza estos datos en su **Perfil → Salud**. Son esti
 1. **Ejercicios** → catálogo con filtros.
 2. Crear ejercicio propio con video opcional.
 3. Ejercicios del sistema incluyen pasos y video guía.
-
-### Clases grupales
-
-1. **Clases grupales** (`/clases`) → crea o gestiona sesiones que impartes.
-2. Los miembros reservan cupos desde su app (**Reservas**).
-3. Revisa inscritos antes de la clase.
 
 ### Seguridad MFA
 

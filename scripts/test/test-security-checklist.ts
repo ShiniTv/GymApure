@@ -190,12 +190,6 @@ async function main() {
 
     cookie = '';
     ok('Login trainer tras files IDOR', await loginAs('trainer@gym.com'));
-    const classSessions = await api('GET', '/api/classes/sessions');
-    ok(
-      'Trainer GET sesiones de clase → 200',
-      classSessions.res.status === 200,
-      `status ${classSessions.res.status}`
-    );
 
     const assessmentRead = await api('GET', `/api/users/${memberId}/training-assessment`);
     ok('Trainer lee evaluación de miembro asignado → 200', assessmentRead.res.status === 200);
@@ -375,6 +369,54 @@ async function main() {
     }
   } else {
     console.log('  SKIP IDOR/rutinas (member@gym.com no encontrado — db:restore-demo)');
+  }
+
+  // --- GET /api/exercises/:id visibilidad (catálogo vs privado entrenador) ---
+  {
+    cookie = '';
+    ok('Login trainer para detalle de ejercicio', await loginAs('trainer@gym.com'));
+    const catalog = await api('GET', '/api/exercises?all=1');
+    const items = Array.isArray(catalog.data)
+      ? (catalog.data as Array<{
+          id: number;
+          owner_trainer_id?: number | null;
+          execution?: unknown;
+        }>)
+      : [];
+    const catalogItem = items.find((e) => e.owner_trainer_id == null);
+    const owned = items.find((e) => e.owner_trainer_id != null);
+    ok(
+      'Lista slim de ejercicios no incluye execution',
+      items.length === 0 || items.every((e) => typeof e.execution === 'undefined')
+    );
+    if (catalogItem) {
+      const trainerDetail = await api('GET', `/api/exercises/${catalogItem.id}`);
+      ok(
+        'Trainer GET catálogo :id → 200',
+        trainerDetail.res.status === 200,
+        `status ${trainerDetail.res.status}`
+      );
+    }
+    cookie = '';
+    ok('Login member para detalle de ejercicio', await loginAs('member@gym.com'));
+    if (catalogItem) {
+      const memberDetail = await api('GET', `/api/exercises/${catalogItem.id}`);
+      ok(
+        'Member GET catálogo :id → 200',
+        memberDetail.res.status === 200,
+        `status ${memberDetail.res.status}`
+      );
+    }
+    if (owned) {
+      const blocked = await api('GET', `/api/exercises/${owned.id}`);
+      ok(
+        'Member no ve ejercicio privado de entrenador → 404',
+        blocked.res.status === 404,
+        `status ${blocked.res.status}`
+      );
+    } else {
+      console.log('  SKIP IDOR ejercicio privado (no hay filas owner_trainer_id)');
+    }
   }
 
   // --- Sesión única: segundo login invalida el primero ---

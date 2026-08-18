@@ -88,12 +88,6 @@ Ver [EQUIPAMIENTO.md](../modulos/EQUIPAMIENTO.md).
 
 Ver [ENTRENADORES-Y-TURNOS.md](../modulos/ENTRENADORES-Y-TURNOS.md).
 
-### Clases grupales
-
-1. **Clases** (`/clases`) → crear sesiones (horario, cupo, entrenador).
-2. Los miembros reservan desde **Reservas** (`/reservas`).
-3. Recepción y admin ven la lista del día para control de cupos.
-
 ### Seguridad MFA
 
 1. **Seguridad MFA** (`/security`) o **Perfil → Seguridad → Configurar MFA**.
@@ -122,7 +116,6 @@ Ver [NUTRICION.md](../modulos/NUTRICION.md).
 | Membresías     | `/memberships`        |
 | Pagos          | `/payments`           |
 | Entrenadores   | `/trainers`           |
-| Clases         | `/clases`             |
 | Equipamiento   | `/equipment`          |
 | Asistencia     | `/attendance`         |
 | Reportes       | `/reports`            |

@@ -599,14 +599,6 @@ router.get('/retention', authorize(['admin']), async (req, res) => {
                AND prev.end_date < s.start_date
            )
        ),
-       no_shows AS (
-         SELECT COUNT(*)::text AS v
-         FROM class_bookings cb
-         JOIN class_sessions cs ON cs.id = cb.session_id
-         , bounds b
-         WHERE cb.status = 'no_show'
-           AND cs.starts_at::date BETWEEN b.d_from AND b.d_to
-       ),
        checkins AS (
          SELECT COUNT(DISTINCT a.user_id)::text AS v
          FROM attendance a, bounds b
@@ -630,9 +622,6 @@ router.get('/retention', authorize(['admin']), async (req, res) => {
          UNION ALL
          SELECT 'Miembros con check-in', (SELECT v FROM checkins),
                 'Únicos que asistieron en el rango'
-         UNION ALL
-         SELECT 'No-shows de clases', (SELECT v FROM no_shows),
-                'Reservas marcadas como no asistió'
        ) t`,
       [fromDate, toDate]
     );

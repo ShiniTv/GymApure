@@ -22,7 +22,6 @@ import {
   Wrench,
   Monitor,
   Mail,
-  CalendarDays,
   LogIn,
   Users,
   UsersRound,
@@ -138,7 +137,6 @@ export default function AdminDashboard() {
   const equipmentInspectionsDue = stats?.equipmentInspectionsDue ?? 0;
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
   const pendingOld = stats?.pendingPaymentsOlderThan2Days ?? 0;
-  const classFill = stats?.classFillPercentToday ?? 0;
   const pausedSubs = stats?.pausedSubscriptions ?? 0;
   const chartExpanded = showRevenueChart || isDesktop;
   const expiringExpanded = showExpiringList || isDesktop;
@@ -524,18 +522,6 @@ export default function AdminDashboard() {
                   Pagos &gt;2 días
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pendingOld}</p>
-              </Card>
-              <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted flex items-center gap-1 text-[10px] font-medium tracking-wide uppercase">
-                  <CalendarDays className="h-3 w-3" />
-                  Clases hoy
-                </p>
-                <p className="text-text text-lg font-semibold tabular-nums">
-                  {classFill}%
-                  <span className="text-text-muted ml-1 text-xs font-normal">
-                    ({stats?.classBookingsToday ?? 0}/{stats?.classCapacityToday ?? 0})
-                  </span>
-                </p>
               </Card>
               <Card padding="sm" rounded="xl" className="space-y-0.5">
                 <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">

@@ -14,16 +14,19 @@ import {
 import { assertVideoUpload } from '../lib/uploadValidation.ts';
 import {
   assertValidExerciseVideoRef,
+  createExercisePosterUploadSession,
   createExerciseVideoUploadSession,
   getExerciseMediaCapabilities,
 } from '../lib/exerciseVideoStorage.ts';
 import {
   buildExerciseListQueries,
   canTrainerMutateExercise,
+  canViewExercise,
   forkSystemExerciseForTrainer,
   getExerciseById,
   hideSystemExerciseForTrainer,
   isSystemCatalogExercise,
+  mapExerciseListRow,
 } from '../lib/exerciseLibrary.ts';
 import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
 
@@ -36,10 +39,16 @@ const exercisePayloadSchema = z.object({
   execution: z.string().trim().max(5000).optional().nullable(),
   video_url: z.string().trim().max(1000).optional().nullable(),
   video_storage_ref: z.string().trim().max(500).optional().nullable(),
+  poster_storage_ref: z.string().trim().max(500).optional().nullable(),
 });
 
 const uploadUrlSchema = z.object({
   contentType: z.enum(['video/mp4', 'video/webm']),
+  fileSize: z.number().int().positive(),
+});
+
+const posterUploadUrlSchema = z.object({
+  contentType: z.enum(['image/webp', 'image/jpeg']),
   fileSize: z.number().int().positive(),
 });
 
@@ -61,7 +70,8 @@ async function resolveExerciseVideo(
   file: Express.Multer.File | undefined,
   video_url: string | null | undefined,
   video_storage_ref: string | null | undefined,
-  existingPoster?: string | null
+  existingPoster?: string | null,
+  poster_storage_ref?: string | null
 ): Promise<ResolvedExerciseVideo> {
   if (file && isMediaStorageRemote()) {
     throw new Error(
@@ -71,7 +81,12 @@ async function resolveExerciseVideo(
 
   if (video_storage_ref?.trim()) {
     assertValidExerciseVideoRef(video_storage_ref.trim());
-    return { videoUrl: video_storage_ref.trim(), posterUrl: null };
+    let posterUrl: string | null = null;
+    if (poster_storage_ref?.trim()) {
+      assertValidExerciseVideoRef(poster_storage_ref.trim());
+      posterUrl = poster_storage_ref.trim();
+    }
+    return { videoUrl: video_storage_ref.trim(), posterUrl };
   }
 
   if (file) {
@@ -120,6 +135,23 @@ router.post('/upload-url', authorize(['trainer']), uploadRateLimiter, async (req
   }
 });
 
+router.post('/poster-upload-url', authorize(['trainer']), uploadRateLimiter, async (req, res) => {
+  const parsed = posterUploadUrlSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+  }
+
+  try {
+    const session = await createExercisePosterUploadSession(
+      parsed.data.contentType,
+      parsed.data.fileSize
+    );
+    res.json(session);
+  } catch (err: unknown) {
+    res.status(400).json({ error: getErrorMessage(err) });
+  }
+});
+
 const EXERCISES_ALL_MAX = 500;
 
 router.get('/', async (req: AuthRequest, res) => {
@@ -139,9 +171,10 @@ router.get('/', async (req: AuthRequest, res) => {
         search: search || undefined,
         limit: EXERCISES_ALL_MAX,
         offset: 0,
+        columns: 'list',
       });
       const { rows } = await query(listSql, listParams);
-      res.json(rows);
+      res.json(rows.map(mapExerciseListRow));
       return;
     }
 
@@ -156,13 +189,14 @@ router.get('/', async (req: AuthRequest, res) => {
       search: search || undefined,
       limit: pageSize,
       offset,
+      columns: 'list',
     });
     const [countResult, listResult] = await Promise.all([
       query<{ count: string }>(countSql, params),
       query(listSql, listParams),
     ]);
     res.json({
-      items: listResult.rows,
+      items: listResult.rows.map(mapExerciseListRow),
       total: parseInt(countResult.rows[0]?.count || '0', 10),
       page,
       pageSize,
@@ -182,11 +216,24 @@ router.post(
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
     }
-    const { name, muscle_group, description, execution, video_url, video_storage_ref } =
-      parsed.data;
+    const {
+      name,
+      muscle_group,
+      description,
+      execution,
+      video_url,
+      video_storage_ref,
+      poster_storage_ref,
+    } = parsed.data;
     let resolved: ResolvedExerciseVideo;
     try {
-      resolved = await resolveExerciseVideo(req.file, video_url, video_storage_ref, null);
+      resolved = await resolveExerciseVideo(
+        req.file,
+        video_url,
+        video_storage_ref,
+        null,
+        poster_storage_ref
+      );
     } catch (err: unknown) {
       return res.status(400).json({ error: getErrorMessage(err) });
     }
@@ -216,6 +263,28 @@ router.post(
   }
 );
 
+router.get('/:id', async (req: AuthRequest, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  try {
+    const exercise = await getExerciseById(id);
+    if (!exercise) return res.status(404).json({ error: 'Ejercicio no encontrado' });
+
+    const role = req.user?.role ?? 'member';
+    const userId = req.user?.id;
+    if (userId == null || !(await canViewExercise(exercise, role, userId))) {
+      return res.status(404).json({ error: 'Ejercicio no encontrado' });
+    }
+
+    res.json(exercise);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
 router.put(
   '/:id',
   authorize(['trainer']),
@@ -227,8 +296,15 @@ router.put(
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
     }
-    const { name, muscle_group, description, execution, video_url, video_storage_ref } =
-      parsed.data;
+    const {
+      name,
+      muscle_group,
+      description,
+      execution,
+      video_url,
+      video_storage_ref,
+      poster_storage_ref,
+    } = parsed.data;
 
     const existing = await getExerciseById(Number(id));
     if (!existing) return res.status(404).json({ error: 'Ejercicio no encontrado' });
@@ -244,7 +320,8 @@ router.put(
         req.file,
         video_url,
         video_storage_ref,
-        existing.video_poster_url
+        existing.video_poster_url,
+        poster_storage_ref
       );
     } catch (err: unknown) {
       return res.status(400).json({ error: getErrorMessage(err) });
@@ -253,6 +330,7 @@ router.put(
     const mediaChanged =
       Boolean(req.file) ||
       Boolean(video_storage_ref?.trim()) ||
+      Boolean(poster_storage_ref?.trim()) ||
       resolved.videoUrl !== existing.video_url ||
       resolved.posterUrl !== existing.video_poster_url;
 

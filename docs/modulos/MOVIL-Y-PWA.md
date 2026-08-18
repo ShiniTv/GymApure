@@ -21,7 +21,7 @@ Tabs: **Inicio**, **Rutinas**, **Nutrición**, **Más**. Pill **icon-only** con 
 
 ### Sheet Más
 
-Mensajes, Reservas, Biblioteca, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
+Mensajes, Biblioteca, Historial, Pagos, Mi Perfil. Accesible desde tab Más.
 Oculta en `/workout/:id` (entrenamiento inmersivo).
 
 ### FAB "Entrenar"
@@ -51,7 +51,7 @@ Disponible en Inicio, Rutinas e Historial. Recepción: PTR en resumen/KPIs.
 
 ## Recepción
 
-Bottom nav: **Acceso** (mostrador), Miembros, Pagos, Mensajes + Más (Resumen, Modo tablet, Equipamiento, Clases, MFA, Perfil).
+Bottom nav: **Acceso** (mostrador), Miembros, Pagos, Mensajes + Más (Resumen, Modo tablet, Equipamiento, MFA, Perfil).
 
 En móvil, `/reception` abre por defecto el modo mostrador (`mode=counter`); el resumen queda como home secundaria vía Más / Salir del mostrador.
 
@@ -61,7 +61,7 @@ Admin también puede abrir `/reception` y `/check-in` (cubre mostrador).
 
 ## Entrenador
 
-Bottom nav: Panel, Miembros, Rutinas, Mensajes + Más (Nutrición, asignaciones/calendario, Clases, Ejercicios, Equipamiento, MFA, Perfil).
+Bottom nav: Panel, Miembros, Rutinas, Mensajes + Más (Nutrición, asignaciones/calendario, Ejercicios, Equipamiento, MFA, Perfil).
 Al abrir drawer: bottom nav oculta; footer sin hueco inferior.
 
 Lista de miembros: tap en tarjeta → ficha rápida (`MemberQuickSheet`) con Ver rutinas / Mensaje / Historial / Nutrición.

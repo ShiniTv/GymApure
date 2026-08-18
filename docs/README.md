@@ -35,7 +35,6 @@
 
 | Módulo                      | Documento                                                                  |
 | --------------------------- | -------------------------------------------------------------------------- |
-| Clases y reservas           | [modulos/CLASES-Y-RESERVAS.md](./modulos/CLASES-Y-RESERVAS.md)             |
 | Escalabilidad diferida (P3) | [ROADMAP-P3-ESCALABILIDAD.md](./ROADMAP-P3-ESCALABILIDAD.md)               |
 | Equipamiento (CMMS)         | [modulos/EQUIPAMIENTO.md](./modulos/EQUIPAMIENTO.md)                       |
 | Pagos y tipo de cambio BCV  | [modulos/PAGOS-Y-TIPO-DE-CAMBIO.md](./modulos/PAGOS-Y-TIPO-DE-CAMBIO.md)   |

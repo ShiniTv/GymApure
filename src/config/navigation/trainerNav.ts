@@ -4,7 +4,6 @@ import {
   Dumbbell,
   CalendarClock,
   CalendarDays,
-  CalendarRange,
   BookOpen,
   MessageSquare,
   UserCircle,
@@ -34,7 +33,6 @@ export const TRAINER_NAV: NavSection[] = [
       { name: 'Rutinas', href: '/routines', icon: Dumbbell },
       { name: 'Asignaciones de rutinas', href: '/routines?view=assignments', icon: CalendarClock },
       { name: 'Calendario de rutinas', href: '/routines?view=calendar', icon: CalendarDays },
-      { name: 'Clases grupales', href: '/clases', icon: CalendarRange },
     ],
   },
   {

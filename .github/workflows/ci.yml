@@ -136,7 +136,6 @@ jobs:
           npm run test:ux
           npm run test:ux:browser
           npm run test:chat-checklist
-          npm run test:classes-checklist
           npm run test:memberships-checkin
           npm run test:routine-exercises
           npm run test:exchange-rate

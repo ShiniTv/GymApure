@@ -74,7 +74,7 @@ export default function SolicitarDemo() {
             <ul className="text-text-secondary space-y-2 text-sm">
               <li>Recepción, check-in y registro en mostrador en minutos</li>
               <li>Pagos con comprobante y tasa BCV</li>
-              <li>Rutinas, clases y chat con miembros</li>
+              <li>Rutinas, pagos y chat con miembros</li>
             </ul>
           </section>
 

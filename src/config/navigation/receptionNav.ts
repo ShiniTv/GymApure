@@ -6,7 +6,6 @@ import {
   MessageSquare,
   UserCircle,
   Wrench,
-  CalendarDays,
   ShieldCheck,
 } from 'lucide-react';
 import type { NavSection } from './types';
@@ -17,7 +16,6 @@ export const RECEPTION_NAV: NavSection[] = [
     items: [
       { name: 'Inicio', href: '/reception', icon: Fingerprint },
       { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: LogIn },
-      { name: 'Clases del día', href: '/clases', icon: CalendarDays },
     ],
   },
   {

@@ -36,7 +36,6 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 | Opción     | Ruta          |
 | ---------- | ------------- |
 | Mensajes   | `/messages`   |
-| Reservas   | `/reservas`   |
 | Biblioteca | `/exercises`  |
 | Historial  | `/history`    |
 | Pagos      | `/payments`   |
@@ -103,13 +102,6 @@ Detalle membresía: [PAGOS-Y-TIPO-DE-CAMBIO.md](../modulos/PAGOS-Y-TIPO-DE-CAMBI
 3. Esos pagos van al entrenador, **no** a la membresía del gym.
 
 Detalle: [COBROS-PT.md](../modulos/COBROS-PT.md).
-
-### Reservar clases grupales
-
-1. **Más** → **Reservas** (`/reservas`).
-2. Elige una sesión disponible (cupos, horario, entrenador).
-3. Confirma la reserva. Si está llena, puedes unirte a la **lista de espera**.
-4. Cancela desde la misma pantalla si aún no ha empezado (mín. 2 h antes).
 
 ### Marcar entrada / salida
 

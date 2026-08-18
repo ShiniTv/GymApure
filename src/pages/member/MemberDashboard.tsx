@@ -5,7 +5,6 @@ import { parseDateOnly } from '../../lib/dates';
 import { dateLocale as es } from '../../lib/dateLocale';
 import {
   AlertTriangle,
-  CalendarDays,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -49,7 +48,6 @@ const MOBILE_LIST_ROW =
 
 const MEMBER_LINKS = [
   { to: '/routines', icon: Dumbbell, label: 'Rutinas', detail: 'Asignaciones activas' },
-  { to: '/reservas', icon: CalendarDays, label: 'Reservas', detail: 'Clases grupales' },
   { to: '/nutrition', icon: UtensilsCrossed, label: 'Nutrición', detail: 'Macros y comidas' },
   { to: '/history', icon: Clock, label: 'Historial', detail: 'Sesiones anteriores' },
   { to: '/payments', icon: CreditCard, label: 'Pagos', detail: 'Reportar o renovar' },
@@ -469,21 +467,13 @@ export default function MemberDashboard() {
           </div>
         </section>
       ) : (
-        <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+        <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           <QuickAction
             compact
             to="/routines"
             icon={Dumbbell}
             title="Rutinas"
             description="Asignaciones activas"
-            tone="blue"
-          />
-          <QuickAction
-            compact
-            to="/reservas"
-            icon={CalendarDays}
-            title="Reservas"
-            description="Clases grupales"
             tone="blue"
           />
           <QuickAction

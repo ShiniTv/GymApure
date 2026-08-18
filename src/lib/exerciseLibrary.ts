@@ -24,6 +24,8 @@ export interface ExerciseListOptions {
   search?: string;
   limit?: number;
   offset?: number;
+  /** `list` omits execution/description for catalog payloads. */
+  columns?: 'list' | 'full';
 }
 
 function buildLibraryBase(
@@ -144,7 +146,13 @@ export function buildExerciseListQueries(options: ExerciseListOptions): {
   );
 
   const countSql = `SELECT COUNT(*)::text AS count ${base.fromSql}${whereSql}`;
-  let listSql = `SELECT * ${base.fromSql}${whereSql} ORDER BY name`;
+  const selectSql =
+    options.columns === 'full'
+      ? 'SELECT *'
+      : `SELECT id, name, muscle_group,
+                (video_url IS NOT NULL AND btrim(video_url) <> '') AS has_video,
+                is_system, owner_trainer_id, forked_from_id`;
+  let listSql = `${selectSql} ${base.fromSql}${whereSql} ORDER BY name`;
 
   const listParams = [...params];
   if (options.limit != null) {
@@ -261,5 +269,90 @@ export function canTrainerMutateExercise(exercise: ExerciseRow, trainerId: numbe
   if (!exercise.is_system && exercise.owner_trainer_id == null && exercise.forked_from_id == null) {
     return true;
   }
+  return false;
+}
+
+export interface ExerciseListItem {
+  id: number;
+  name: string;
+  muscle_group: string;
+  has_video: boolean;
+  is_system: boolean;
+  owner_trainer_id: number | null;
+  forked_from_id: number | null;
+}
+
+function asDbString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  return '';
+}
+
+export function mapExerciseListRow(row: {
+  id?: unknown;
+  name?: unknown;
+  muscle_group?: unknown;
+  has_video?: unknown;
+  is_system?: unknown;
+  owner_trainer_id?: unknown;
+  forked_from_id?: unknown;
+}): ExerciseListItem {
+  return {
+    id: Number(row.id),
+    name: asDbString(row.name),
+    muscle_group: asDbString(row.muscle_group),
+    has_video: row.has_video === true || row.has_video === 't' || row.has_video === 'true',
+    is_system: Boolean(row.is_system),
+    owner_trainer_id:
+      row.owner_trainer_id == null || row.owner_trainer_id === ''
+        ? null
+        : Number(row.owner_trainer_id),
+    forked_from_id:
+      row.forked_from_id == null || row.forked_from_id === '' ? null : Number(row.forked_from_id),
+  };
+}
+
+async function isSystemExerciseHiddenForTrainer(
+  trainerId: number,
+  exerciseId: number
+): Promise<boolean> {
+  const { rows } = await query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1 FROM trainer_exercise_hidden WHERE trainer_id = $1 AND exercise_id = $2
+     ) AS exists`,
+    [trainerId, exerciseId]
+  );
+  return Boolean(rows[0]?.exists);
+}
+
+/** Matches library list visibility. Unauthorized callers get 404, not 403. */
+export async function canViewExercise(
+  exercise: ExerciseRow,
+  role: string,
+  userId: number
+): Promise<boolean> {
+  if (role === 'admin' || role === 'receptionist') return true;
+
+  if (role === 'member') {
+    return exercise.owner_trainer_id == null && exercise.forked_from_id == null;
+  }
+
+  if (role === 'trainer') {
+    if (exercise.owner_trainer_id === userId) return true;
+    if (
+      !exercise.is_system &&
+      exercise.owner_trainer_id == null &&
+      exercise.forked_from_id == null
+    ) {
+      return true;
+    }
+    if (!isSystemCatalogExercise(exercise)) return false;
+    const [hidden, fork] = await Promise.all([
+      isSystemExerciseHiddenForTrainer(userId, exercise.id),
+      getTrainerFork(exercise.id, userId),
+    ]);
+    return !hidden && !fork;
+  }
+
   return false;
 }

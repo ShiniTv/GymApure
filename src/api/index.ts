@@ -22,7 +22,6 @@ import equipmentRoutes from './equipment.ts';
 import notificationRoutes from './notifications.ts';
 import exchangeRateRoutes from './exchangeRate.ts';
 import cronRoutes from './cronRoutes.ts';
-import classRoutes from './classes.ts';
 import demoRequestRoutes from './demoRequests.ts';
 import guestPassRoutes from './guestPasses.ts';
 import demoLeadsRoutes from './demoLeads.ts';
@@ -77,7 +76,6 @@ router.use('/files', fileRoutes);
 router.use('/push', pushSubscriptionRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/equipment', equipmentRoutes);
-router.use('/classes', classRoutes);
 router.use('/demo-leads', demoLeadsRoutes);
 
 router.use((_req, res) => {

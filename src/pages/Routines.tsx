@@ -146,7 +146,7 @@ export default function Routines() {
     isError: membersError,
     error: membersQueryError,
   } = useMemberOptionsQuery(!isMember && !!user);
-  const { data: exercisesCatalog = [] } = useExercisesCatalogQuery(isStaffRoutines);
+  const { data: exercisesCatalog = [] } = useExercisesCatalogQuery(isAddingExercise);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
   const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);

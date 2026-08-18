@@ -7,7 +7,7 @@ Snapshot re-eval 2026-07-25. Auditoría 360° 2026-07-28. MFA opcional (no es de
 - [x] Pack PWA PNG + screenshots + theme_color
 - [x] Landing brand-first (foto + motion)
 - [x] Tokens contraste AA + axe staff sin disable color-contrast
-- [x] Reservas discovery (Inicio) + chips por día
+- [x] Reservas discovery (Inicio) + chips por día — retirado: módulo de clases eliminado
 - [x] Scorecard re-eval
 - [x] Axe ampliado (payments, check-in kiosk, routines) — 2026-07-28
 - [x] Font muerto `@fontsource/plus-jakarta-sans` eliminado

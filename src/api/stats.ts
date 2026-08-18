@@ -44,10 +44,6 @@ export interface AdminStatsPayload {
   equipmentMaintenance: number;
   equipmentOutOfService: number;
   equipmentInspectionsDue: number;
-  classSessionsToday: number;
-  classBookingsToday: number;
-  classCapacityToday: number;
-  classFillPercentToday: number;
   demoLeadsPending: number;
 }
 
@@ -66,7 +62,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     lastDoorAlert,
     equipmentStats,
     pausedSubs,
-    classToday,
     demoPending,
   ] = await Promise.all([
     query<{ total_all: string; this_month: string; last_month: string }>(
@@ -130,31 +125,10 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM subscriptions WHERE status = 'paused'`
     ),
-    query<{ sessions: string; bookings: string; capacity: string }>(
-      `SELECT
-         COUNT(cs.id)::text AS sessions,
-         COALESCE(SUM(b.booked_count), 0)::text AS bookings,
-         COALESCE(SUM(cs.capacity), 0)::text AS capacity
-       FROM class_sessions cs
-       LEFT JOIN LATERAL (
-         SELECT COUNT(*)::int AS booked_count
-         FROM class_bookings cb
-         WHERE cb.session_id = cs.id AND cb.status IN ('booked', 'attended', 'waitlisted')
-       ) b ON true
-       WHERE cs.status = 'scheduled'
-         AND cs.starts_at >= CURRENT_DATE
-         AND cs.starts_at < CURRENT_DATE + INTERVAL '1 day'`
-    ),
     query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM demo_requests WHERE status = 'pending'`
     ),
   ]);
-
-  const classSessionsToday = parseInt(classToday.rows[0]?.sessions || '0', 10);
-  const classBookingsToday = parseInt(classToday.rows[0]?.bookings || '0', 10);
-  const classCapacityToday = parseInt(classToday.rows[0]?.capacity || '0', 10);
-  const classFillPercentToday =
-    classCapacityToday > 0 ? Math.round((classBookingsToday / classCapacityToday) * 100) : 0;
 
   return {
     totalRevenue: parseFloat(paymentAgg.rows[0]?.total_all || '0'),
@@ -178,10 +152,6 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     equipmentMaintenance: equipmentStats.maintenance,
     equipmentOutOfService: equipmentStats.outOfService,
     equipmentInspectionsDue: equipmentStats.inspectionsDueThisWeek,
-    classSessionsToday,
-    classBookingsToday,
-    classCapacityToday,
-    classFillPercentToday,
     demoLeadsPending: parseInt(demoPending.rows[0]?.count || '0', 10),
   };
 }
@@ -212,10 +182,6 @@ function pickAdminStatsParts(
       equipmentMaintenance: payload.equipmentMaintenance,
       equipmentOutOfService: payload.equipmentOutOfService,
       equipmentInspectionsDue: payload.equipmentInspectionsDue,
-      classSessionsToday: payload.classSessionsToday,
-      classBookingsToday: payload.classBookingsToday,
-      classCapacityToday: payload.classCapacityToday,
-      classFillPercentToday: payload.classFillPercentToday,
       demoLeadsPending: payload.demoLeadsPending,
     });
   }

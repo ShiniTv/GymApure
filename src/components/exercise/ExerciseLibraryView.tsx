@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { BookOpen, Dumbbell, Video, ChevronRight, Edit, Trash2 } from 'lucide-react';
-import type { Exercise } from '../../hooks/queries/useExercisesQuery';
-import { Card, Badge, EmptyState, Button } from '../ui';
+import { Virtuoso } from 'react-virtuoso';
+import {
+  exerciseHasVideo,
+  useExerciseDetailQuery,
+  type Exercise,
+} from '../../hooks/queries/useExercisesQuery';
+import { Card, Badge, EmptyState, Button, Spinner } from '../ui';
 import { filterExercises, formatMuscleGroupLabel } from '../../lib/exerciseMuscleGroups';
 import { ExerciseVideoPlayer } from './ExerciseVideoPlayer';
 import { ExerciseExecutionSteps } from './ExerciseExecutionSteps';
@@ -40,10 +45,16 @@ function ExerciseCard({
   /** Borderless row inside a divide-y list shell. */
   listRow?: boolean;
 }) {
+  const {
+    data: detail,
+    isPending,
+    isError,
+  } = useExerciseDetailQuery(expanded ? exercise.id : null);
+  const full = expanded && detail ? detail : exercise;
   const muscleLabel = formatMuscleGroupLabel(exercise.muscle_group);
   const canManage = Boolean(onEdit && onDelete);
-  const hasVideo = Boolean(exercise.video_url);
-  const hasBothMedia = hasVideo && Boolean(exercise.execution);
+  const hasVideo = exerciseHasVideo(exercise) || exerciseHasVideo(full);
+  const hasBothMedia = hasVideo && Boolean(full.execution);
 
   const body = (
     <>
@@ -95,51 +106,61 @@ function ExerciseCard({
 
       {expanded ? (
         <div className="border-border/60 animate-in slide-in-from-top-2 space-y-3 border-t px-3 pt-2.5 pb-3 duration-200">
-          {exercise.description ? (
-            <p className="text-text-secondary text-xs leading-snug">{exercise.description}</p>
-          ) : null}
+          {isPending ? (
+            <div className="flex justify-center py-4">
+              <Spinner size="xs" />
+            </div>
+          ) : isError ? (
+            <p className="text-text-muted text-xs">No se pudo cargar el detalle.</p>
+          ) : (
+            <>
+              {full.description ? (
+                <p className="text-text-secondary text-xs leading-snug">{full.description}</p>
+              ) : null}
 
-          <div
-            className={cn(
-              'grid grid-cols-1 gap-3',
-              hasBothMedia && 'md:grid-cols-2 md:items-start md:gap-4'
-            )}
-          >
-            {hasVideo ? (
-              <div className="min-w-0 space-y-2">
-                <h4 className="label-caps flex items-center gap-2">
-                  <Video className="h-3 w-3" /> Video
-                </h4>
-                <ExerciseVideoPlayer
-                  url={exercise.video_url!}
-                  posterUrl={exercise.video_poster_url}
-                  title={`${exercise.name} — video tutorial`}
-                />
+              <div
+                className={cn(
+                  'grid grid-cols-1 gap-3',
+                  hasBothMedia && 'md:grid-cols-2 md:items-start md:gap-4'
+                )}
+              >
+                {hasVideo && full.video_url ? (
+                  <div className="min-w-0 space-y-2">
+                    <h4 className="label-caps flex items-center gap-2">
+                      <Video className="h-3 w-3" /> Video
+                    </h4>
+                    <ExerciseVideoPlayer
+                      url={full.video_url}
+                      posterUrl={full.video_poster_url}
+                      title={`${exercise.name} — video tutorial`}
+                    />
+                  </div>
+                ) : null}
+                {full.execution ? (
+                  <div className="min-w-0 space-y-2">
+                    <h4 className="label-caps flex items-center gap-2">
+                      <BookOpen className="h-3 w-3" /> Ejecución
+                    </h4>
+                    <ExerciseExecutionSteps
+                      execution={full.execution}
+                      title="Guía de ejecución"
+                      showTitle={false}
+                      compact
+                    />
+                  </div>
+                ) : null}
+                {!hasVideo && !full.execution ? (
+                  <p className="text-text-muted text-xs italic">Sin video ni guía aún.</p>
+                ) : null}
               </div>
-            ) : null}
-            {exercise.execution ? (
-              <div className="min-w-0 space-y-2">
-                <h4 className="label-caps flex items-center gap-2">
-                  <BookOpen className="h-3 w-3" /> Ejecución
-                </h4>
-                <ExerciseExecutionSteps
-                  execution={exercise.execution}
-                  title="Guía de ejecución"
-                  showTitle={false}
-                  compact
-                />
-              </div>
-            ) : null}
-            {!hasVideo && !exercise.execution ? (
-              <p className="text-text-muted text-xs italic">Sin video ni guía aún.</p>
-            ) : null}
-          </div>
+            </>
+          )}
 
           {!readOnly && canManage ? (
             <div className="flex items-center justify-end gap-1 pt-0.5">
               <button
                 type="button"
-                onClick={() => onEdit!(exercise)}
+                onClick={() => onEdit!(detail ?? exercise)}
                 className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                 aria-label={`Editar ${exercise.name}`}
                 title="Editar"
@@ -196,7 +217,7 @@ export function ExerciseLibraryView({
   const filteredExercises = skipClientFilter
     ? exercises
     : filterExercises(exercises, { search, muscleGroup: muscleFilter }).filter((e) =>
-        videoOnly ? Boolean(e.video_url) : true
+        videoOnly ? exerciseHasVideo(e) : true
       );
   const hasActiveFilters = Boolean(search.trim() || muscleFilter || videoOnly);
 
@@ -241,13 +262,15 @@ export function ExerciseLibraryView({
   }
 
   return (
-    <>
-      {/* Mobile: lista densa tipo herramienta */}
-      <div className="border-border/80 bg-surface divide-border/60 divide-y overflow-hidden rounded-[var(--radius-card)] border md:hidden">
-        {filteredExercises.map((exercise) => {
+    <div className="border-border/80 bg-surface divide-border/60 overflow-hidden rounded-[var(--radius-card)] border">
+      <Virtuoso
+        useWindowScroll
+        data={filteredExercises}
+        increaseViewportBy={240}
+        itemContent={(_index, exercise) => {
           const expanded = expandedId === exercise.id;
           return (
-            <div key={exercise.id} className={cn(expanded && 'bg-surface-overlay/30')}>
+            <div className={cn('border-border/60 border-b', expanded && 'bg-surface-overlay/30')}>
               <ExerciseCard
                 exercise={exercise}
                 expanded={expanded}
@@ -259,27 +282,8 @@ export function ExerciseLibraryView({
               />
             </div>
           );
-        })}
-      </div>
-
-      {/* Desktop: grid de cards */}
-      <div className="hidden grid-cols-1 items-start gap-2 md:grid md:grid-cols-2 md:gap-3 xl:grid-cols-4">
-        {filteredExercises.map((exercise) => {
-          const expanded = expandedId === exercise.id;
-          return (
-            <div key={exercise.id} className={cn(expanded && 'md:col-span-2 xl:col-span-4')}>
-              <ExerciseCard
-                exercise={exercise}
-                expanded={expanded}
-                readOnly={readOnly}
-                onToggle={() => setExpandedId(expanded ? null : exercise.id)}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </>
+        }}
+      />
+    </div>
   );
 }

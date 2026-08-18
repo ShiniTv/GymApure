@@ -154,10 +154,40 @@ npm run verify:local-e2e   # levanta dev + suite completa (cerrá otro dev en 30
 | `npm run db:setup:dev`                                                      | Migrar + health + activar `.env.dev`                                                                 |
 | `npm run db:seed-system-exercises`                                          | Sembrar catálogo de ejercicios del sistema                                                           |
 | `npm run db:seed-system-exercises -- --skip-existing --allow-missing-video` | Sembrar catálogo sin exigir videos (útil para ampliar nombres/guías primero; luego subís multimedia) |
+| `npm run db:seed-system-exercises -- --videos "C:\\ruta\\mp4"`              | Sembrar + transcodificar/subir videos locales (FFmpeg en tu máquina; genera poster WebP)             |
 | `npm run env:configure-dev`                                                 | Reconfigurar `.env.dev` tras cambio de contraseña (GymApure – Desarrollo)                            |
 | `npm run env:configure-prod`                                                | Reconfigurar `.env.prod` y obtener `DATABASE_URL` para Render                                        |
 | `npm run db:verify-isolation`                                               | Verificar que dev y prod no están cruzados                                                           |
 | `npm run deploy:preflight`                                                  | Validar `.env` antes de migrar/desplegar producción                                                  |
+
+### Videos del catálogo de ejercicios
+
+Fuente: `scripts/db/data/system-exercises.csv` (200 filas de datos; 76 con `filename` .mp4 y 124 sin video). En **producción** (lectura, ago 2026): 124 ejercicios `is_system` sin `video_url`. En dev, tras reset/isolation el catálogo puede estar vacío hasta el seed. Huecos: `npm run db:audit-tables:dev` (check «Ejercicios system sin video») o:
+
+```sql
+SELECT COUNT(*) FROM exercises WHERE is_system = true AND video_url IS NULL;
+```
+
+**No inventar clips.** El contenido de los 124 faltantes es del gimnasio. Render **no tiene FFmpeg**: comprime en local (HandBrake o el seed con FFmpeg) y sube MP4 H.264.
+
+Pipeline recomendado:
+
+1. Carpeta de MP4 (mismo nombre que la columna `filename` del CSV).
+2. Seed (dev): `npm run db:seed-system-exercises -- --videos "C:\\ruta\\a\\mp4"` — transcodifica, sube a `exercise-videos` y genera poster WebP.
+3. Huecos sueltos: **Ejercicios** en la app (admin/entrenador) → subir MP4 uno a uno. En producción el cliente captura miniatura WebP/JPEG y la sube junto al video (`poster_storage_ref`).
+4. Ampliar solo nombres/guías: `--skip-existing --allow-missing-video`.
+
+HandBrake (coincide con límites de `src/lib/videoConfig.ts`):
+
+| Ajuste   | Valor                                              |
+| -------- | -------------------------------------------------- |
+| Video    | H.264 (x264), 720p máx. (1280 px de ancho)         |
+| Calidad  | RF ~26 (o bitrate que deje el archivo **≤ 15 MB**) |
+| Audio    | AAC ~96 kbps                                       |
+| Duración | **≤ 60 s** (recorta el clip)                       |
+| Extra    | Web Optimized / faststart                          |
+
+Producción: no uses `db:seed-system-exercises:prod` sin confirmación explícita. El seed exige FFmpeg **en la máquina que corre el script**, no en Render.
 
 ### Pruebas (servidor en marcha salvo `verify:local-e2e`)
 
@@ -237,8 +267,6 @@ Fuente: `src/App.tsx`. Manuales detallados en [docs/manual/](./manual/).
 | `/security` (MFA)        | ✓     | ✓            | ✓             | —           |
 | `/messages`              | ✓     | ✓            | ✓             | ✓           |
 | `/notifications`         | ✓     | ✓            | ✓             | ✓           |
-| `/clases`                | ✓     | ✓            | ✓             | —           |
-| `/reservas`              | —     | —            | —             | ✓           |
 | `/routines`              | ✓     | —            | ✓             | ✓ (propias) |
 | `/exercises`             | ✓     | —            | ✓             | ✓           |
 | `/nutrition-overview`    | —     | —            | ✓             | —           |

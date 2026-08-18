@@ -169,9 +169,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
                   'has_trainer_assignment',
                   COALESCE(ob.has_trainer_assignment, false),
                   'has_active_routine',
-                  COALESCE(ob.has_active_routine, false),
-                  'has_class_booking',
-                  COALESCE(ob.has_class_booking, false)
+                  COALESCE(ob.has_active_routine, false)
                 ) ELSE NULL END AS onboarding
          ${USER_LIST_FROM}
          LEFT JOIN LATERAL (
@@ -186,11 +184,7 @@ router.get('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Aut
                WHERE ur.user_id = u.id
                  AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
                  AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
-             ) AS has_active_routine,
-             EXISTS (
-               SELECT 1 FROM class_bookings cb
-               WHERE cb.user_id = u.id AND cb.status IN ('booked', 'attended')
-             ) AS has_class_booking
+             ) AS has_active_routine
            WHERE u.role = 'member'
          ) ob ON true
          ${whereSql}

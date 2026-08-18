@@ -12,3 +12,6 @@ export const VIDEO_POSTER_WIDTH = 640;
 export const VIDEO_CRF = 26;
 export const VIDEO_AUDIO_BITRATE = '96k';
 export const VIDEO_POSTER_QUALITY = 80;
+
+/** Client-captured WebP/JPEG poster uploaded with direct video (no FFmpeg on Render). */
+export const VIDEO_POSTER_MAX_BYTES = 512 * 1024;

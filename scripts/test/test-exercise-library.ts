@@ -12,6 +12,8 @@ const DEMO_PASSWORD = process.env.DEMO_PASSWORD?.trim() || 'DemoGym2024!';
 
 let trainerCookie = '';
 let createdTestExerciseId: number | null = null;
+let csrfToken = '';
+let testedExerciseId: number | null = null;
 
 async function api(
   method: string,
@@ -19,12 +21,16 @@ async function api(
   body?: unknown,
   cookie?: string
 ): Promise<{ res: Response; data: Record<string, unknown> }> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(cookie ? { Cookie: cookie } : {}),
+  };
+  if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    headers['x-csrf-token'] = csrfToken;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -35,7 +41,12 @@ function saveCookie(res: Response): string {
   const cookies =
     typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
   const token = cookies.find((c) => c.startsWith('token='));
-  return token ? token.split(';')[0] : '';
+  const csrf = cookies.find((c) => c.startsWith('csrf_token='));
+  if (csrf) {
+    csrfToken = decodeURIComponent(csrf.split(';')[0].slice('csrf_token='.length));
+  }
+  const parts = [token, csrf].filter(Boolean).map((c) => c!.split(';')[0]);
+  return parts.join('; ');
 }
 
 async function loginTrainer(): Promise<boolean> {
@@ -65,10 +76,18 @@ async function ensureSystemExercise(): Promise<number> {
 }
 
 async function cleanup() {
+  const ids = [testedExerciseId, createdTestExerciseId].filter(
+    (id): id is number => id != null
+  );
+  for (const id of ids) {
+    await query(
+      `DELETE FROM trainer_exercise_hidden
+       WHERE exercise_id = $1
+         AND trainer_id = (SELECT id FROM users WHERE email = 'trainer@gym.com')`,
+      [id]
+    );
+  }
   if (createdTestExerciseId) {
-    await query('DELETE FROM trainer_exercise_hidden WHERE exercise_id = $1', [
-      createdTestExerciseId,
-    ]);
     await query('DELETE FROM exercises WHERE id = $1', [createdTestExerciseId]);
   }
 }
@@ -82,6 +101,7 @@ async function main() {
   }
 
   const exerciseId = await ensureSystemExercise();
+  testedExerciseId = exerciseId;
 
   const listRes = await api('GET', '/api/exercises?all=1', undefined, trainerCookie);
   if (listRes.res.status !== 200) {
@@ -98,6 +118,14 @@ async function main() {
     process.exit(1);
   }
   console.log('  OK  Ejercicio del sistema visible en biblioteca');
+
+  const detailRes = await api('GET', `/api/exercises/${exerciseId}`, undefined, trainerCookie);
+  if (detailRes.res.status !== 200 || typeof detailRes.data.execution === 'undefined') {
+    console.error('GET /api/exercises/:id falló', detailRes.res.status, detailRes.data);
+    await cleanup();
+    process.exit(1);
+  }
+  console.log('  OK  GET /api/exercises/:id devuelve detalle');
 
   const hideRes = await api('DELETE', `/api/exercises/${exerciseId}`, undefined, trainerCookie);
   if (hideRes.res.status !== 200 || hideRes.data.hidden !== true) {
@@ -117,6 +145,16 @@ async function main() {
     process.exit(1);
   }
   console.log('  OK  Ejercicio oculto solo para este entrenador');
+
+  const hiddenDetail = await api('GET', `/api/exercises/${exerciseId}`, undefined, trainerCookie);
+  if (hiddenDetail.res.status !== 404) {
+    console.error(
+      `  FAIL GET :id oculto: esperaba 404, obtuvo ${hiddenDetail.res.status}`
+    );
+    await cleanup();
+    process.exit(1);
+  }
+  console.log('  OK  GET :id de ejercicio oculto → 404');
 
   const { rows: stillThere } = await query<{ id: number }>(
     `SELECT id FROM exercises WHERE id = $1`,

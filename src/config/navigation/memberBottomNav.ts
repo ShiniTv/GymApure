@@ -9,7 +9,6 @@ import {
   History,
   CreditCard,
   UserCircle,
-  CalendarDays,
   Landmark,
 } from 'lucide-react';
 
@@ -48,7 +47,6 @@ export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
     showUnreadBadge: true,
     section: 'Actividad',
   },
-  { name: 'Reservas', href: '/reservas', icon: CalendarDays, section: 'Actividad' },
   { name: 'Historial', href: '/history', icon: History, section: 'Actividad' },
   { name: 'Biblioteca', href: '/exercises', icon: BookOpen, section: 'Entreno' },
   { name: 'Pagos', href: '/payments', icon: CreditCard, section: 'Cuenta' },

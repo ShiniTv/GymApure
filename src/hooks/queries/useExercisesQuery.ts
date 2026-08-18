@@ -2,17 +2,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { PaginatedResult } from '../../lib/pagination';
 
+/** Slim catalog row (`GET /api/exercises`). Detail fields arrive on expand. */
 export interface Exercise {
   id: number;
   name: string;
   muscle_group: string;
-  description: string | null;
-  execution: string | null;
-  video_url: string | null;
-  video_poster_url: string | null;
+  has_video?: boolean;
+  description?: string | null;
+  execution?: string | null;
+  video_url?: string | null;
+  video_poster_url?: string | null;
   is_system?: boolean;
   owner_trainer_id?: number | null;
   forked_from_id?: number | null;
+}
+
+export function exerciseHasVideo(exercise: Pick<Exercise, 'has_video' | 'video_url'>): boolean {
+  return Boolean(exercise.has_video || exercise.video_url);
 }
 
 export interface ExercisesQueryParams {
@@ -34,11 +40,16 @@ async function fetchExercisesPage(
   return parseJsonResponse<PaginatedResult<Exercise>>(res);
 }
 
-/** Full catalog for pickers (server-capped). */
+/** Slim catalog for pickers (server-capped). */
 async function fetchExercisesCatalog(): Promise<Exercise[]> {
   const res = await apiFetch('/api/exercises?all=1');
   const data = await parseJsonResponse<Exercise[]>(res);
   return Array.isArray(data) ? data : [];
+}
+
+export async function fetchExerciseById(id: number): Promise<Exercise> {
+  const res = await apiFetch(`/api/exercises/${id}`);
+  return parseJsonResponse<Exercise>(res);
 }
 
 export function useExercisesQuery(
@@ -67,6 +78,14 @@ export function useExercisesCatalogQuery(enabled = true) {
     queryKey: ['exercises', 'catalog'],
     queryFn: fetchExercisesCatalog,
     enabled,
+  });
+}
+
+export function useExerciseDetailQuery(id: number | null) {
+  return useQuery({
+    queryKey: ['exercises', 'detail', id],
+    queryFn: () => fetchExerciseById(id!),
+    enabled: id != null,
   });
 }
 

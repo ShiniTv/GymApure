@@ -9,7 +9,7 @@
 
 | Dimensión                 | Baseline | Re-eval | Audit 360 | Meta ruta | Notas                                                              |
 | ------------------------- | -------- | ------- | --------- | --------- | ------------------------------------------------------------------ |
-| Producto / dominio        | 8.0      | 8.3     | 8.3       | 8.8       | Core profundo; Reservas discovery + día                            |
+| Producto / dominio        | 8.0      | 8.3     | 8.3       | 8.8       | Core profundo (sin clases grupales)                                |
 | Arquitectura / ingeniería | 7.5      | 8.0     | **8.2**   | 9.5       | God-files Profile/Equipment/Members/Messages partidos (2026-07-28) |
 | Seguridad                 | 7.5      | 8.5     | 8.5       | 9.3       | MFA opcional OK; `MFA_ENCRYPTION_KEY` en `.env.prod` local         |
 | Datos / ops / deploy      | 8.5      | 8.7     | **8.5**   | 9.3       | Health prod OK; staging cloud bloqueado (Free 2 proj); Sentry gap  |
@@ -35,7 +35,7 @@ MFA staff permanece **opcional** (`REQUIRE_MFA_FOR_STAFF=false`). No se puntúa 
 ### Avances aplicados (ruta 9.5)
 
 - PWA: `icon-192/512` PNG + maskable, screenshots Chrome, `theme_color` alineado
-- Landing full-bleed gym + motion; contraste AA tokens; Reservas chip-día + CTA Inicio
+- Landing full-bleed gym + motion; contraste AA tokens; CTA Inicio
 - React Query lecturas: Reception, ActiveWorkout, Equipment
 - Chat retención configurable (admin)
 

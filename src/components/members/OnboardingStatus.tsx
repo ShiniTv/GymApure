@@ -4,7 +4,6 @@ import { cn } from '../../lib/utils';
 export interface MemberOnboarding {
   has_trainer_assignment: boolean;
   has_active_routine: boolean;
-  has_class_booking: boolean;
 }
 
 interface OnboardingStatusProps {
@@ -23,7 +22,6 @@ function pendingLabels(onboarding: MemberOnboarding): string[] {
   return [
     !onboarding.has_trainer_assignment && 'entrenador',
     !onboarding.has_active_routine && 'rutina',
-    !onboarding.has_class_booking && 'primera clase',
   ].filter(Boolean) as string[];
 }
 

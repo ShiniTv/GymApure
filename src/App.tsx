@@ -59,8 +59,6 @@ const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-const Reservas = lazy(() => import('./pages/Reservas'));
-const Classes = lazy(() => import('./pages/Classes'));
 const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
 const SolicitarDemo = lazy(() => import('./pages/SolicitarDemo'));
 const Landing = lazy(() => import('./pages/Landing'));
@@ -447,34 +445,6 @@ function AppRoutes() {
                     }}
                   >
                     <PtBilling />
-                  </ErrorBoundary>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="reservas"
-              element={
-                <ProtectedRoute allowedRoles={['member']}>
-                  <ErrorBoundary
-                    onError={(error) => {
-                      reportBoundaryError(error);
-                    }}
-                  >
-                    <Reservas />
-                  </ErrorBoundary>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="clases"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer', 'receptionist']}>
-                  <ErrorBoundary
-                    onError={(error) => {
-                      reportBoundaryError(error);
-                    }}
-                  >
-                    <Classes />
                   </ErrorBoundary>
                 </ProtectedRoute>
               }

@@ -74,7 +74,6 @@ router.get(
       check_out_time: Date | string | null;
       has_trainer_assignment: boolean;
       has_active_routine: boolean;
-      has_class_booking: boolean;
     }>(
       `SELECT u.id, u.full_name, u.email, u.cedula, u.phone, u.status, u.role, u.profile_image,
               sub.id AS sub_id, sub.membership_name, sub.end_date, sub.days_remaining,
@@ -96,12 +95,7 @@ router.get(
                 WHERE ur.user_id = u.id
                   AND (ur.start_date IS NULL OR ur.start_date <= CURRENT_DATE)
                   AND (ur.end_date IS NULL OR ur.end_date >= CURRENT_DATE)
-              ) AS has_active_routine,
-              EXISTS (
-                SELECT 1 FROM class_bookings cb
-                WHERE cb.user_id = u.id
-                  AND cb.status IN ('booked', 'attended')
-              ) AS has_class_booking
+              ) AS has_active_routine
        FROM users u
        LEFT JOIN LATERAL (
          SELECT s.id, m.name AS membership_name, s.end_date,
@@ -201,7 +195,6 @@ router.get(
           ? {
               has_trainer_assignment: row.has_trainer_assignment,
               has_active_routine: row.has_active_routine,
-              has_class_booking: row.has_class_booking,
             }
           : null,
       access_status: accessStatus,

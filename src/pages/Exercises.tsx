@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import {
+  fetchExerciseById,
+  exerciseHasVideo,
   useExercisesCatalogQuery,
   useInvalidateExercises,
   type Exercise,
@@ -34,7 +36,9 @@ import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useDebouncedValue } from '../lib/useDebouncedValue';
 import {
+  capturePosterFromVideoFile,
   fetchExerciseMediaCapabilities,
+  uploadExercisePosterDirect,
   uploadExerciseVideoDirect,
   type ExerciseMediaCapabilities,
 } from '../lib/exerciseVideoUploadClient';
@@ -99,7 +103,7 @@ export default function Exercises() {
   }, [catalogList]);
 
   const videoCount = useMemo(
-    () => catalogList.filter((e) => Boolean(e.video_url)).length,
+    () => catalogList.filter((e) => exerciseHasVideo(e)).length,
     [catalogList]
   );
 
@@ -108,7 +112,7 @@ export default function Exercises() {
       search: debouncedSearch,
       muscleGroup: muscleFilter,
     });
-    if (videoOnly) list = list.filter((e) => Boolean(e.video_url));
+    if (videoOnly) list = list.filter((e) => exerciseHasVideo(e));
     list = [...list].sort((a, b) =>
       sortBy === 'az' ? a.name.localeCompare(b.name, 'es') : b.id - a.id
     );
@@ -117,23 +121,29 @@ export default function Exercises() {
 
   const refreshExercises = () => invalidateExercises();
 
-  const handleOpenModal = (exercise: Exercise | null = null) => {
+  const handleOpenModal = async (exercise: Exercise | null = null) => {
     setVideoFile(null);
     if (exercise) {
-      setEditingExercise(exercise);
+      let detail = exercise;
+      try {
+        detail = await fetchExerciseById(exercise.id);
+      } catch {
+        /* list row still has name/group; execution may be empty until retry */
+      }
+      setEditingExercise(detail);
       setFormData({
-        name: exercise.name,
-        muscle_group: exercise.muscle_group,
-        description: exercise.description || '',
-        execution: exercise.execution || '',
-        video_url: exercise.video_url || '',
+        name: detail.name,
+        muscle_group: detail.muscle_group,
+        description: detail.description || '',
+        execution: detail.execution || '',
+        video_url: detail.video_url || '',
       });
-      const steps = (exercise.execution || '')
+      const steps = (detail.execution || '')
         .split(/\n+/)
         .map((s) => s.replace(/^\d+[.)]\s*/, '').trim())
         .filter(Boolean);
       setExecutionSteps(steps.length > 0 ? steps : ['']);
-      setVideoOpen(Boolean(exercise.video_url));
+      setVideoOpen(Boolean(detail.video_url));
     } else {
       setEditingExercise(null);
       setFormData({
@@ -179,6 +189,15 @@ export default function Exercises() {
           const videoRef = await uploadExerciseVideoDirect(videoFile);
           data.append('video_storage_ref', videoRef);
           data.set('video_url', '');
+          try {
+            setVideoUploadProgress('Generando miniatura…');
+            const posterBlob = await capturePosterFromVideoFile(videoFile);
+            setVideoUploadProgress('Subiendo miniatura…');
+            const posterRef = await uploadExercisePosterDirect(posterBlob);
+            data.append('poster_storage_ref', posterRef);
+          } catch {
+            /* video still saves; poster is optional if capture fails */
+          }
         } else {
           data.append('video', videoFile);
         }
@@ -302,7 +321,7 @@ export default function Exercises() {
             className="border-brand/30 text-brand hover:bg-brand/10"
             aria-label="Nuevo ejercicio"
             title="Nuevo"
-            onClick={() => handleOpenModal()}
+            onClick={() => void handleOpenModal()}
           >
             <Plus className="h-4 w-4" />
           </IconButton>
@@ -382,7 +401,7 @@ export default function Exercises() {
         videoOnly={videoOnly}
         skipClientFilter
         onClearFilters={hasActiveFilters ? clearFilters : undefined}
-        onEdit={canEdit ? (exercise) => handleOpenModal(exercise) : undefined}
+        onEdit={canEdit ? (exercise) => void handleOpenModal(exercise) : undefined}
         onDelete={
           canEdit
             ? (exercise) => {
@@ -391,7 +410,7 @@ export default function Exercises() {
               }
             : undefined
         }
-        onCreate={canEdit ? () => handleOpenModal() : undefined}
+        onCreate={canEdit ? () => void handleOpenModal() : undefined}
       />
 
       {canEdit && (

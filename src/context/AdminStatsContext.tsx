@@ -37,10 +37,6 @@ export interface AdminStats {
   equipmentMaintenance?: number;
   equipmentOutOfService?: number;
   equipmentInspectionsDue?: number;
-  classSessionsToday?: number;
-  classBookingsToday?: number;
-  classCapacityToday?: number;
-  classFillPercentToday?: number;
   demoLeadsPending?: number;
 }
 

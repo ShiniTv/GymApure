@@ -9,12 +9,14 @@ import {
   VIDEO_MAX_DURATION_SEC,
   VIDEO_MAX_OUTPUT_BYTES,
   VIDEO_MAX_UPLOAD_BYTES,
+  VIDEO_POSTER_MAX_BYTES,
 } from './videoConfig.ts';
 import { isFfmpegAvailable } from './videoOptimizer.ts';
 
 export const SIGNED_VIDEO_PLAYBACK_TTL_SEC = 600;
 
 const ALLOWED_DIRECT_UPLOAD_MIMES = new Set(['video/mp4', 'video/webm']);
+const ALLOWED_POSTER_UPLOAD_MIMES = new Set(['image/webp', 'image/jpeg']);
 
 export interface ExerciseMediaCapabilities {
   track: 'direct_supabase' | 'local_multipart';
@@ -56,6 +58,14 @@ export function extensionForVideoMime(mime: string): '.mp4' | '.webm' {
   return mime === 'video/webm' ? '.webm' : '.mp4';
 }
 
+export function extensionForPosterMime(mime: string): '.webp' | '.jpg' {
+  return mime === 'image/jpeg' ? '.jpg' : '.webp';
+}
+
+export function buildExercisePosterObjectKey(extension: '.webp' | '.jpg' = '.webp'): string {
+  return `exercises/${Date.now()}-${Math.random().toString(36).slice(2)}-poster${extension}`;
+}
+
 export function assertDirectUploadAllowed(contentType: string, fileSize: number): void {
   if (!isMediaStorageRemote()) {
     throw new Error('Upload directo solo disponible con Supabase Storage en producción.');
@@ -87,6 +97,38 @@ export async function createExerciseVideoUploadSession(
     uploadUrl: signed.signedUrl,
     token: signed.token,
     videoRef: buildExerciseVideoMediaRef(objectKey),
+    objectKey,
+  };
+}
+
+export function assertDirectPosterUploadAllowed(contentType: string, fileSize: number): void {
+  if (!isMediaStorageRemote()) {
+    throw new Error('Upload directo solo disponible con Supabase Storage en producción.');
+  }
+  if (!ALLOWED_POSTER_UPLOAD_MIMES.has(contentType)) {
+    throw new Error('Formato de miniatura no permitido. Usa WebP o JPEG.');
+  }
+  if (fileSize > VIDEO_POSTER_MAX_BYTES) {
+    throw new Error('La miniatura supera 512 KB. Genera otra más liviana.');
+  }
+}
+
+export async function createExercisePosterUploadSession(
+  contentType: string,
+  fileSize: number
+): Promise<{
+  uploadUrl: string;
+  token: string;
+  posterRef: string;
+  objectKey: string;
+}> {
+  assertDirectPosterUploadAllowed(contentType, fileSize);
+  const objectKey = buildExercisePosterObjectKey(extensionForPosterMime(contentType));
+  const signed = await supabaseCreateSignedUploadUrl(VIDEOS_BUCKET, objectKey);
+  return {
+    uploadUrl: signed.signedUrl,
+    token: signed.token,
+    posterRef: buildExerciseVideoMediaRef(objectKey),
     objectKey,
   };
 }
