@@ -99,14 +99,16 @@ export async function getMemberRoutineCard(page: Page) {
       const busy = document.querySelector('[aria-busy="true"][aria-label="Cargando rutinas"]');
       const loadingText = document.body.textContent?.includes('Cargando rutinas');
       const empty = document.body.textContent?.includes('Sin rutinas asignadas');
-      const card = document.querySelector('[role="button"]');
+      const card =
+        document.querySelector('[role="button"]') ||
+        document.querySelector('button');
       return !busy && !loadingText && (empty || !!card);
     },
     undefined,
     { timeout: 20_000 }
   ).catch(() => undefined);
 
-  const card = page.locator('[role="button"]').filter({ hasText: /ejercicio/i }).first();
+  const card = page.getByRole('button').filter({ hasText: /ejercicio/i }).first();
   return (await card.isVisible()) ? card : null;
 }
 
