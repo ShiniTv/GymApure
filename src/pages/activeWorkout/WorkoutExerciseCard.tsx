@@ -8,6 +8,7 @@ import {
   executionStepCount,
 } from '../../components/exercise/ExerciseExecutionSteps';
 import { formatLastSetHint, getLastSetHint } from './setValues';
+import { prescriptionEffort, prescriptionLoad } from '../../lib/setPrescription';
 import type { WorkoutLogEntry } from './types';
 import { workoutChipBtn } from './styles';
 import type { WorkoutRoutine } from '../../hooks/queries/useWorkoutRoutineQuery';
@@ -47,6 +48,14 @@ export function WorkoutExerciseCard({
   onAddSet: () => void;
   onRemoveLastSet: () => void;
 }) {
+  const load = prescriptionLoad(exercise.set_prescription);
+  const effort = prescriptionEffort(exercise.set_prescription);
+  const showLoad = load !== 'none';
+  const loadHeader = load === 'plates' ? 'Placas' : 'kg';
+  const effortHeader = effort === 'time' ? 'Seg' : 'Reps';
+  const setGridClass = showLoad
+    ? 'grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem]'
+    : 'grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]';
   const [showVideo, setShowVideo] = useState(false);
   const [showExecution, setShowExecution] = useState(false);
 
@@ -156,10 +165,15 @@ export function WorkoutExerciseCard({
       )}
 
       <div className="space-y-2">
-        <div className="text-text-muted grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem] items-center gap-2 text-[11px] font-semibold tracking-wide uppercase">
+        <div
+          className={cn(
+            'text-text-muted grid items-center gap-2 text-[11px] font-semibold tracking-wide uppercase',
+            setGridClass
+          )}
+        >
           <div className="text-center">Serie</div>
-          <div className="text-center">kg</div>
-          <div className="text-center">Reps</div>
+          {showLoad ? <div className="text-center">{loadHeader}</div> : null}
+          <div className="text-center">{effortHeader}</div>
           <div className="flex items-center justify-center" aria-hidden>
             <CheckCircle className="h-3.5 w-3.5" />
           </div>
@@ -170,7 +184,8 @@ export function WorkoutExerciseCard({
           const key = `${exercise.id}-${setNum}`;
           const isCompleted = logs[key]?.completed;
           const priorSet = getLastSetHint(exercise.id, setNum, lastSessionLogs);
-          const lastHintLabel = !isCompleted && priorSet ? formatLastSetHint(priorSet) : null;
+          const lastHintLabel =
+            !isCompleted && priorSet ? formatLastSetHint(priorSet, load, effort) : null;
           const weightInputId = `workout-weight-${exercise.id}-${setNum}`;
           const repsInputId = `workout-reps-${exercise.id}-${setNum}`;
 
@@ -178,7 +193,8 @@ export function WorkoutExerciseCard({
             <div
               key={setNum}
               className={cn(
-                'grid grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem] items-center gap-2 rounded-lg px-0.5 py-1 transition-all',
+                'grid items-center gap-2 rounded-lg px-0.5 py-1 transition-all',
+                setGridClass,
                 isCompleted ? 'bg-emerald-500/5 opacity-80' : 'bg-transparent'
               )}
             >
@@ -187,31 +203,35 @@ export function WorkoutExerciseCard({
                   {setNum}
                 </span>
               </div>
-              <div className="min-w-0">
-                <Input
-                  id={weightInputId}
-                  type="number"
-                  inputMode="decimal"
-                  enterKeyHint="next"
-                  placeholder={priorSet ? String(priorSet.weight) : '0'}
-                  className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
-                  value={logs[key]?.weight || ''}
-                  onChange={(e) => onLogChange(setNum, 'weight', e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      document.getElementById(repsInputId)?.focus();
+              {showLoad ? (
+                <div className="min-w-0">
+                  <Input
+                    id={weightInputId}
+                    type="number"
+                    inputMode="decimal"
+                    enterKeyHint="next"
+                    placeholder={priorSet ? String(priorSet.weight) : '0'}
+                    className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
+                    value={logs[key]?.weight || ''}
+                    onChange={(e) => onLogChange(setNum, 'weight', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById(repsInputId)?.focus();
+                      }
+                    }}
+                    disabled={isCompleted}
+                    aria-label={
+                      load === 'plates' ? `Placas serie ${setNum}` : `Peso serie ${setNum}`
                     }
-                  }}
-                  disabled={isCompleted}
-                  aria-label={`Peso serie ${setNum}`}
-                />
-                {lastHintLabel ? (
-                  <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
-                    {lastHintLabel}
-                  </p>
-                ) : null}
-              </div>
+                  />
+                  {lastHintLabel ? (
+                    <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
+                      {lastHintLabel}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="min-w-0">
                 <Input
                   id={repsInputId}
@@ -229,8 +249,15 @@ export function WorkoutExerciseCard({
                     }
                   }}
                   disabled={isCompleted}
-                  aria-label={`Repeticiones serie ${setNum}`}
+                  aria-label={
+                    effort === 'time' ? `Segundos serie ${setNum}` : `Repeticiones serie ${setNum}`
+                  }
                 />
+                {!showLoad && lastHintLabel ? (
+                  <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
+                    {lastHintLabel}
+                  </p>
+                ) : null}
               </div>
               <div className="flex justify-center">
                 {isCompleted ? (

@@ -1,5 +1,10 @@
 import type { SetPrescriptionRow } from './setPrescription';
-import { deriveSetPrescription, summarySetsReps } from './setPrescription';
+import {
+  deriveSetPrescription,
+  prescriptionEffort,
+  prescriptionLoad,
+  summarySetsReps,
+} from './setPrescription';
 
 export interface RoutineExerciseForm {
   exercise_id: string;
@@ -23,13 +28,21 @@ function normalizeSetPrescription(
   prescription: SetPrescriptionRow[]
 ): SetPrescriptionRow[] | null {
   const rows = deriveSetPrescription(sets, reps, prescription);
+  const effort = prescriptionEffort(rows);
+  const load = prescriptionLoad(rows);
   const hasWeight = rows.some((row) => row.weight_kg != null && row.weight_kg > 0);
+  const hasPlates = rows.some((row) => row.plates != null && row.plates > 0);
   const hasVariedReps = rows.some((row) => row.reps !== rows[0]?.reps);
-  if (!hasWeight && !hasVariedReps) return null;
+  if (!hasWeight && !hasPlates && !hasVariedReps && effort !== 'time' && load === 'none') {
+    return null;
+  }
   return rows.map((row) => ({
     set_number: row.set_number,
-    weight_kg: row.weight_kg,
+    weight_kg: load === 'kg' ? row.weight_kg : null,
     reps: row.reps,
+    plates: load === 'plates' ? (row.plates ?? null) : null,
+    effort,
+    load,
   }));
 }
 

@@ -1,7 +1,46 @@
+export type EffortMode = 'reps' | 'time';
+export type LoadMode = 'none' | 'kg' | 'plates';
+
 export interface SetPrescriptionRow {
   set_number: number;
   weight_kg: number | null;
   reps: number;
+  plates?: number | null;
+  effort?: EffortMode;
+  load?: LoadMode;
+}
+
+function isEffortMode(value: unknown): value is EffortMode {
+  return value === 'reps' || value === 'time';
+}
+
+function isLoadMode(value: unknown): value is LoadMode {
+  return value === 'none' || value === 'kg' || value === 'plates';
+}
+
+export function prescriptionEffort(rows: SetPrescriptionRow[] | null | undefined): EffortMode {
+  return rows?.[0]?.effort === 'time' ? 'time' : 'reps';
+}
+
+export function prescriptionLoad(rows: SetPrescriptionRow[] | null | undefined): LoadMode {
+  const load = rows?.[0]?.load;
+  if (load === 'kg' || load === 'plates' || load === 'none') return load;
+  if (rows?.some((row) => row.plates != null && row.plates > 0)) return 'plates';
+  if (rows?.some((row) => row.weight_kg != null && row.weight_kg > 0)) return 'kg';
+  return 'none';
+}
+
+export function stampPrescriptionStyle(
+  rows: SetPrescriptionRow[],
+  style: { effort: EffortMode; load: LoadMode }
+): SetPrescriptionRow[] {
+  return rows.map((row) => ({
+    ...row,
+    effort: style.effort,
+    load: style.load,
+    plates: style.load === 'plates' ? (row.plates ?? 4) : null,
+    weight_kg: style.load === 'kg' ? row.weight_kg : null,
+  }));
 }
 
 export function deriveSetPrescription(
@@ -12,14 +51,19 @@ export function deriveSetPrescription(
   const safeSets = Math.max(1, Math.min(50, sets));
   const safeReps = Math.max(1, reps);
   const byNumber = new Map((existing ?? []).map((row) => [row.set_number, row]));
+  const effort = prescriptionEffort(existing);
+  const load = prescriptionLoad(existing);
 
   return Array.from({ length: safeSets }, (_, index) => {
     const set_number = index + 1;
     const prev = byNumber.get(set_number);
     return {
       set_number,
-      weight_kg: prev?.weight_kg ?? null,
+      weight_kg: load === 'kg' ? (prev?.weight_kg ?? null) : null,
       reps: prev?.reps ?? safeReps,
+      plates: load === 'plates' ? (prev?.plates ?? 4) : null,
+      effort,
+      load,
     };
   });
 }
@@ -36,9 +80,17 @@ export function formatSetPrescriptionSummary(
   rows: SetPrescriptionRow[] | null | undefined
 ): string | null {
   if (!rows || rows.length === 0) return null;
+  const effort = prescriptionEffort(rows);
+  const load = prescriptionLoad(rows);
   const parts = rows.map((row) => {
-    const weight = row.weight_kg != null && row.weight_kg > 0 ? `${row.weight_kg}×` : '';
-    return `${weight}${row.reps}`.replace(/^×/, '');
+    const amount = effort === 'time' ? `${row.reps}s` : String(row.reps);
+    if (load === 'plates' && row.plates != null && row.plates > 0) {
+      return `${row.plates} placas × ${amount}`;
+    }
+    if (load === 'kg' && row.weight_kg != null && row.weight_kg > 0) {
+      return `${row.weight_kg} kg × ${amount}`;
+    }
+    return amount;
   });
   return parts.join(' · ');
 }
@@ -56,10 +108,16 @@ export function parseSetPrescriptionFromApi(value: unknown): SetPrescriptionRow[
     const weightRaw = row.weight_kg;
     const weight_kg =
       weightRaw === null || weightRaw === undefined || weightRaw === '' ? null : Number(weightRaw);
+    const platesRaw = row.plates;
+    const plates =
+      platesRaw === null || platesRaw === undefined || platesRaw === '' ? null : Number(platesRaw);
     rows.push({
       set_number,
       weight_kg: weight_kg != null && Number.isFinite(weight_kg) ? weight_kg : null,
       reps,
+      plates: plates != null && Number.isFinite(plates) && plates >= 0 ? plates : null,
+      effort: isEffortMode(row.effort) ? row.effort : undefined,
+      load: isLoadMode(row.load) ? row.load : undefined,
     });
   }
   return rows.length > 0 ? rows.sort((a, b) => a.set_number - b.set_number) : null;
@@ -82,11 +140,13 @@ export function defaultRepsFromPrescription(
 export function hasDetailedSetPrescription(
   prescription: SetPrescriptionRow[] | null | undefined
 ): boolean {
-  if (!prescription?.length) return false;
-  const firstReps = prescription[0]?.reps;
-  return (
-    prescription.some((row) => row.weight_kg != null && row.weight_kg > 0) ||
-    prescription.some((row) => row.reps !== firstReps)
+  if (!prescription || prescription.length < 2) return false;
+  const first = prescription[0];
+  return prescription.some(
+    (row) =>
+      row.reps !== first.reps ||
+      (row.weight_kg ?? null) !== (first.weight_kg ?? null) ||
+      (row.plates ?? null) !== (first.plates ?? null)
   );
 }
 
@@ -110,13 +170,14 @@ export function buildPrescriptionLogSeeds(
   for (const exercise of exercises) {
     const prescription =
       exercise.set_prescription ?? deriveSetPrescription(exercise.sets, exercise.reps);
+    const load = prescriptionLoad(prescription);
     for (const row of prescription) {
       const key = `${exercise.id}-${row.set_number}`;
+      const loadValue = load === 'plates' ? row.plates : load === 'kg' ? row.weight_kg : 0;
       seeded[key] = {
         exercise_id: exercise.id,
         set_number: row.set_number,
-        // Sin peso prescrito: 0 kg (peso corporal / rutina simple) para poder confirmar la serie.
-        weight: row.weight_kg != null ? String(row.weight_kg) : '0',
+        weight: loadValue != null ? String(loadValue) : '0',
         reps: String(row.reps),
         completed: false,
       };

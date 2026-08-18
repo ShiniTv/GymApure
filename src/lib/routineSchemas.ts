@@ -44,6 +44,9 @@ export const routineExerciseSchema = z.object({
         set_number: z.coerce.number().int().positive().max(50),
         weight_kg: z.coerce.number().min(0).max(2000).nullable().optional(),
         reps: z.coerce.number().int().positive().max(500),
+        plates: z.coerce.number().min(0).max(50).nullable().optional(),
+        effort: z.enum(['reps', 'time']).optional(),
+        load: z.enum(['none', 'kg', 'plates']).optional(),
       })
     )
     .max(50)

@@ -1,10 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { Button, Input, Label, Modal, Spinner } from '../../components/ui';
-import { parseNonNegativeInt, parsePositiveInt } from '../../lib/parseFormNumber';
+import { parseNonNegativeInt } from '../../lib/parseFormNumber';
 import {
   defaultRoutineExerciseForm,
   type RoutineExerciseForm,
 } from '../../lib/routineExercisePayload';
+import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
 import type { WorkoutExerciseOption } from '../../hooks/queries/useWorkoutRoutineQuery';
 
 const ExercisePicker = lazy(() =>
@@ -34,7 +35,7 @@ export function AddExerciseModal({
       onClose={() => {
         onClose();
       }}
-      title="Añadir Ejercicio"
+      title="Añadir ejercicio"
       maxWidth="xl"
       scrollable
     >
@@ -54,63 +55,45 @@ export function AddExerciseModal({
             }}
           />
         </Suspense>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Series</Label>
-            <Input
-              type="number"
-              value={value.sets}
-              onChange={(e) => {
-                onChange({
-                  ...value,
-                  sets: parsePositiveInt(e.target.value, value.sets),
-                });
-              }}
+        {value.exercise_id ? (
+          <>
+            <RoutineExercisePrescriptionFields
+              formKey={`workout-add-${value.exercise_id}`}
+              selectedExerciseName={
+                exercises.find((exercise) => String(exercise.id) === value.exercise_id)?.name
+              }
+              value={value}
+              onChange={(prescription) => onChange({ ...value, ...prescription })}
             />
-          </div>
-          <div>
-            <Label>Reps</Label>
-            <Input
-              type="number"
-              value={value.reps}
-              onChange={(e) => {
-                onChange({
-                  ...value,
-                  reps: parsePositiveInt(e.target.value, value.reps),
-                });
-              }}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Descanso (seg)</Label>
-            <Input
-              type="number"
-              value={value.rest_seconds}
-              onChange={(e) => {
-                onChange({
-                  ...value,
-                  rest_seconds: parseNonNegativeInt(e.target.value, value.rest_seconds),
-                });
-              }}
-            />
-          </div>
-          <div>
-            <Label>Sugerencia</Label>
-            <Input
-              type="text"
-              placeholder="Ej: Peso pesado"
-              value={value.weight_suggestion}
-              onChange={(e) => {
-                onChange({ ...value, weight_suggestion: e.target.value });
-              }}
-            />
-          </div>
-        </div>
+            <div className="max-w-[8rem]">
+              <Label>Descanso (seg)</Label>
+              <Input
+                type="number"
+                value={value.rest_seconds}
+                onChange={(e) => {
+                  onChange({
+                    ...value,
+                    rest_seconds: parseNonNegativeInt(e.target.value, value.rest_seconds),
+                  });
+                }}
+              />
+            </div>
+            <div>
+              <Label>Nota (opcional)</Label>
+              <Input
+                type="text"
+                placeholder="Ej: tempo 3-1-1"
+                value={value.weight_suggestion}
+                onChange={(e) => {
+                  onChange({ ...value, weight_suggestion: e.target.value });
+                }}
+              />
+            </div>
+          </>
+        ) : null}
         {error && <p className="text-sm text-red-500">{error}</p>}
         <Button className="w-full" onClick={onSubmit} disabled={!value.exercise_id}>
-          Añadir a Rutina
+          Añadir a la rutina
         </Button>
       </div>
     </Modal>

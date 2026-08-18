@@ -264,12 +264,13 @@ export function useActiveWorkoutPage() {
     const exercise = routine?.exercises.find((e) => e.id === exerciseId);
     if (!exercise) return;
     const nextSetNum = exercise.sets + 1;
-    const prescribedReps =
-      exercise.set_prescription?.find((row) => row.set_number === nextSetNum)?.reps ??
-      exercise.reps;
-    const prescribedWeight = exercise.set_prescription?.find(
-      (row) => row.set_number === nextSetNum
-    )?.weight_kg;
+    const nextRow = exercise.set_prescription?.find((row) => row.set_number === nextSetNum);
+    const prescribedReps = nextRow?.reps ?? exercise.reps;
+    const prevLog = logs[`${exerciseId}-${exercise.sets}`];
+    const prescribedWeight =
+      nextRow?.load === 'plates' || (nextRow?.plates != null && nextRow.plates > 0)
+        ? nextRow?.plates
+        : nextRow?.weight_kg;
 
     setRoutine((prev) => {
       if (!prev) return null;
@@ -287,7 +288,7 @@ export function useActiveWorkoutPage() {
       [key]: {
         exercise_id: exerciseId,
         set_number: nextSetNum,
-        weight: prescribedWeight != null ? String(prescribedWeight) : '0',
+        weight: prescribedWeight != null ? String(prescribedWeight) : (prevLog?.weight ?? '0'),
         reps: String(prescribedReps),
         completed: false,
       },

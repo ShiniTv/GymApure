@@ -1,4 +1,5 @@
-import type { SetPrescriptionRow } from '../../lib/setPrescription';
+import type { EffortMode, LoadMode, SetPrescriptionRow } from '../../lib/setPrescription';
+import { prescriptionLoad } from '../../lib/setPrescription';
 
 export interface WorkoutSetLogSlice {
   weight?: string;
@@ -39,8 +40,10 @@ function prescriptionForSet(
   fallbackReps: number
 ): { weight: number | null; reps: number } {
   const row = prescription?.find((p) => p.set_number === setNum);
+  const load = prescriptionLoad(prescription);
+  const weight = load === 'plates' ? (row?.plates ?? null) : (row?.weight_kg ?? null);
   return {
-    weight: row?.weight_kg ?? null,
+    weight,
     reps: row?.reps ?? fallbackReps,
   };
 }
@@ -61,9 +64,16 @@ export function getLastSetHint(
   return lastHint(exerciseId, setNum, lastSession);
 }
 
-export function formatLastSetHint(hint: { weight: number; reps: number } | null): string | null {
+export function formatLastSetHint(
+  hint: { weight: number; reps: number } | null,
+  load: LoadMode = 'kg',
+  effort: EffortMode = 'reps'
+): string | null {
   if (!hint) return null;
-  return `Última: ${hint.weight} kg × ${hint.reps}`;
+  const amount = effort === 'time' ? `${hint.reps}s` : String(hint.reps);
+  if (load === 'plates') return `Última: ${hint.weight} placas × ${amount}`;
+  if (load === 'none') return `Última: ${amount}`;
+  return `Última: ${hint.weight} kg × ${amount}`;
 }
 
 export function resolveSetValues(

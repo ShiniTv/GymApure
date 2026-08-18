@@ -289,39 +289,48 @@ export function RoutineModals({
               setNewExercise({ ...newExercise, exercise_id: exerciseId });
             }}
           />
-          <RoutineExercisePrescriptionFields
-            formKey="add-exercise"
-            value={newExercise}
-            onChange={(prescription) => {
-              setNewExercise({ ...newExercise, ...prescription });
-            }}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <div className="max-w-[8rem]">
-              <Label>Descanso (seg)</Label>
-              <Input
-                type="number"
-                value={newExercise.rest_seconds}
-                onChange={(e) => {
-                  setNewExercise({
-                    ...newExercise,
-                    rest_seconds: parseNonNegativeInt(e.target.value, newExercise.rest_seconds),
-                  });
+          {newExercise.exercise_id ? (
+            <>
+              <RoutineExercisePrescriptionFields
+                formKey={`add-${newExercise.exercise_id}`}
+                selectedExerciseName={
+                  availableExercises.find(
+                    (exercise) => String(exercise.id) === newExercise.exercise_id
+                  )?.name
+                }
+                value={newExercise}
+                onChange={(prescription) => {
+                  setNewExercise({ ...newExercise, ...prescription });
                 }}
               />
-            </div>
-            <div>
-              <Label>Sugerencia</Label>
-              <Input
-                type="text"
-                placeholder="Ej: Pesado"
-                value={newExercise.weight_suggestion}
-                onChange={(e) => {
-                  setNewExercise({ ...newExercise, weight_suggestion: e.target.value });
-                }}
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="max-w-[8rem]">
+                  <Label>Descanso (seg)</Label>
+                  <Input
+                    type="number"
+                    value={newExercise.rest_seconds}
+                    onChange={(e) => {
+                      setNewExercise({
+                        ...newExercise,
+                        rest_seconds: parseNonNegativeInt(e.target.value, newExercise.rest_seconds),
+                      });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label>Nota (opcional)</Label>
+                  <Input
+                    type="text"
+                    placeholder="Ej: tempo 3-1-1, no bloquear"
+                    value={newExercise.weight_suggestion}
+                    onChange={(e) => {
+                      setNewExercise({ ...newExercise, weight_suggestion: e.target.value });
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          ) : null}
           {addExerciseError && <p className="text-sm text-red-500">{addExerciseError}</p>}
           <Button
             className="w-full"
@@ -370,7 +379,7 @@ export function RoutineModals({
                 />
               </div>
               <div>
-                <Label>Sugerencia</Label>
+                <Label>Nota (opcional)</Label>
                 <Input
                   type="text"
                   value={editingExercise.weight_suggestion}

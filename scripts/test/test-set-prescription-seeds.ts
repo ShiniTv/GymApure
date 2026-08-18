@@ -66,5 +66,18 @@ const zeroWeightSeeds = buildPrescriptionLogSeeds([
 ]);
 ok('peso prescrito 0 se conserva como "0"', zeroWeightSeeds['40-1']?.weight === '0');
 
+const plateSeeds = buildPrescriptionLogSeeds([
+  {
+    id: 50,
+    sets: 2,
+    reps: 12,
+    set_prescription: [
+      { set_number: 1, weight_kg: null, reps: 12, plates: 6, effort: 'reps', load: 'plates' },
+      { set_number: 2, weight_kg: null, reps: 12, plates: 6, effort: 'reps', load: 'plates' },
+    ],
+  },
+]);
+ok('placas: seed usa el stack, no kg', plateSeeds['50-1']?.weight === '6');
+
 console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
 if (failed > 0) process.exit(1);

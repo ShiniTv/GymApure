@@ -179,6 +179,48 @@ async function main() {
     );
   }
 
+  const timedPlates = await api(
+    'POST',
+    `/api/routines/${createdRoutineId}/exercises`,
+    {
+      exercise_id: exerciseId,
+      sets: 3,
+      reps: 40,
+      rest_seconds: 30,
+      set_prescription: [
+        { set_number: 1, reps: 40, weight_kg: null, plates: 5, effort: 'time', load: 'plates' },
+        { set_number: 2, reps: 40, weight_kg: null, plates: 5, effort: 'time', load: 'plates' },
+        { set_number: 3, reps: 40, weight_kg: null, plates: 5, effort: 'time', load: 'plates' },
+      ],
+    },
+    trainerCookie
+  );
+  ok('POST exercise with time + plates prescription', timedPlates.res.status === 200);
+  const timedId = Number(timedPlates.data.id);
+  const getTimed = await api(
+    'GET',
+    `/api/routines/${createdRoutineId}`,
+    undefined,
+    trainerCookie
+  );
+  const timedRow = (
+    (getTimed.data.exercises ?? []) as Array<{
+      routine_exercise_id: number;
+      set_prescription?: Array<{ plates?: number; effort?: string; load?: string; reps?: number }>;
+    }>
+  ).find((row) => row.routine_exercise_id === timedId);
+  ok('time + plates persisted', timedRow?.set_prescription?.[0]?.plates === 5);
+  ok('effort time persisted', timedRow?.set_prescription?.[0]?.effort === 'time');
+  ok('load plates persisted', timedRow?.set_prescription?.[0]?.load === 'plates');
+  if (timedId) {
+    await api(
+      'DELETE',
+      `/api/routines/${createdRoutineId}/exercises/${timedId}`,
+      undefined,
+      trainerCookie
+    );
+  }
+
   await cleanup();
   console.log('\nDone.');
   if (process.exitCode) process.exit(process.exitCode);

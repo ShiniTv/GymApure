@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Label, Input } from '../ui';
+import { Label, Input, SegmentedControl } from '../ui';
 import { SetPrescriptionEditor } from './SetPrescriptionEditor';
 import { parsePositiveInt } from '../../lib/parseFormNumber';
-import type { SetPrescriptionRow } from '../../lib/setPrescription';
+import type { EffortMode, LoadMode, SetPrescriptionRow } from '../../lib/setPrescription';
 import {
   defaultRepsFromPrescription,
   deriveSetPrescription,
   hasDetailedSetPrescription,
+  prescriptionEffort,
+  prescriptionLoad,
   resizeSetPrescription,
+  stampPrescriptionStyle,
 } from '../../lib/setPrescription';
+import {
+  defaultEffortAmount,
+  defaultPlateCount,
+  inferPrescriptionStyle,
+} from '../../lib/exercisePrescriptionStyle';
 
 export interface RoutineExercisePrescriptionValue {
   sets: number;
@@ -19,93 +27,209 @@ export interface RoutineExercisePrescriptionValue {
 interface RoutineExercisePrescriptionFieldsProps {
   value: RoutineExercisePrescriptionValue;
   onChange: (value: RoutineExercisePrescriptionValue) => void;
-  /** Changes when switching add/edit or another exercise — resets detailed toggle */
   formKey?: string;
+  /** When set (add flow), infers tiempo/placas from the exercise name. */
+  selectedExerciseName?: string;
+}
+
+function applyStyle(
+  value: RoutineExercisePrescriptionValue,
+  effort: EffortMode,
+  load: LoadMode
+): RoutineExercisePrescriptionValue {
+  const amount =
+    effort === prescriptionEffort(value.set_prescription)
+      ? value.reps
+      : defaultEffortAmount(effort);
+  const base = deriveSetPrescription(value.sets, amount, value.set_prescription);
+  const stamped = stampPrescriptionStyle(base, { effort, load }).map((row) => ({
+    ...row,
+    reps: amount,
+    plates:
+      load === 'plates' ? (row.plates && row.plates > 0 ? row.plates : defaultPlateCount()) : null,
+    weight_kg: load === 'kg' ? row.weight_kg : null,
+  }));
+  return { ...value, reps: amount, set_prescription: stamped };
 }
 
 export function RoutineExercisePrescriptionFields({
   value,
   onChange,
   formKey = 'default',
+  selectedExerciseName,
 }: RoutineExercisePrescriptionFieldsProps) {
   const [useDetailed, setUseDetailed] = useState(() =>
     hasDetailedSetPrescription(value.set_prescription)
   );
+  const effort = prescriptionEffort(value.set_prescription);
+  const load = prescriptionLoad(value.set_prescription);
 
   useEffect(() => {
     setUseDetailed(hasDetailedSetPrescription(value.set_prescription));
   }, [formKey]);
 
+  useEffect(() => {
+    if (!selectedExerciseName) return;
+    const style = inferPrescriptionStyle(selectedExerciseName);
+    onChange(applyStyle(value, style.effort, style.load));
+  }, [formKey, selectedExerciseName]);
+
   const enableDetailed = () => {
     setUseDetailed(true);
     onChange({
       ...value,
-      set_prescription: deriveSetPrescription(value.sets, value.reps, value.set_prescription),
+      set_prescription: stampPrescriptionStyle(
+        deriveSetPrescription(value.sets, value.reps, value.set_prescription),
+        { effort, load }
+      ),
     });
   };
 
   const disableDetailed = () => {
     setUseDetailed(false);
+    const reps = defaultRepsFromPrescription(value.set_prescription, value.reps);
     onChange({
       ...value,
-      reps: defaultRepsFromPrescription(value.set_prescription, value.reps),
-      set_prescription: null,
+      reps,
+      set_prescription: stampPrescriptionStyle(
+        deriveSetPrescription(value.sets, reps, value.set_prescription),
+        { effort, load }
+      ),
     });
   };
 
+  const uniformLoadValue =
+    load === 'plates'
+      ? (value.set_prescription?.[0]?.plates ?? defaultPlateCount())
+      : (value.set_prescription?.[0]?.weight_kg ?? '');
+
   return (
     <div className="space-y-3">
-      <div className={useDetailed ? 'max-w-32' : 'grid max-w-sm grid-cols-2 gap-4'}>
+      <div>
+        <p className="text-text mb-1.5 text-xs font-medium">Cada serie se mide en</p>
+        <SegmentedControl
+          variant="compact"
+          value={effort}
+          onChange={(next) => onChange(applyStyle(value, next, load))}
+          options={[
+            { value: 'reps', label: 'Repeticiones' },
+            { value: 'time', label: 'Tiempo' },
+          ]}
+        />
+        <p className="text-text-muted mt-1 text-[10px]">
+          {effort === 'time'
+            ? 'La serie dura un tiempo fijo. El valor se guarda en segundos.'
+            : 'Cuentas repeticiones en cada serie.'}
+        </p>
+      </div>
+      <div>
+        <p className="text-text mb-1.5 text-xs font-medium">Carga</p>
+        <SegmentedControl
+          variant="compact"
+          value={load}
+          onChange={(next) => onChange(applyStyle(value, effort, next))}
+          options={[
+            { value: 'none', label: 'Sin carga' },
+            { value: 'kg', label: 'Kg' },
+            { value: 'plates', label: 'Placas' },
+          ]}
+        />
+        <p className="text-text-muted mt-1 text-[10px]">
+          {load === 'plates'
+            ? 'Stack de polea o máquina: cuántas placas pinchas.'
+            : load === 'kg'
+              ? 'Peso libre o discos en kilos.'
+              : 'Sin peso: peso corporal, isometrías o cardio.'}
+        </p>
+      </div>
+
+      <div className={useDetailed ? 'max-w-32' : 'grid max-w-lg grid-cols-2 gap-3 sm:grid-cols-3'}>
         <div>
           <Label>Series</Label>
           <Input
             type="number"
+            min={1}
             value={value.sets}
             onChange={(e) => {
               const nextSets = parsePositiveInt(e.target.value, value.sets);
-              if (useDetailed) {
-                const defaultReps = defaultRepsFromPrescription(value.set_prescription, value.reps);
-                onChange({
-                  ...value,
-                  sets: nextSets,
-                  set_prescription: resizeSetPrescription(
-                    value.set_prescription ?? [],
-                    nextSets,
-                    defaultReps
+              onChange({
+                ...value,
+                sets: nextSets,
+                set_prescription: resizeSetPrescription(
+                  stampPrescriptionStyle(
+                    value.set_prescription ?? deriveSetPrescription(value.sets, value.reps),
+                    { effort, load }
                   ),
-                });
-                return;
-              }
-              onChange({ ...value, sets: nextSets, set_prescription: null });
+                  nextSets,
+                  value.reps
+                ),
+              });
             }}
           />
         </div>
         {!useDetailed && (
-          <div>
-            <Label>Reps / duración (seg)</Label>
-            <Input
-              type="number"
-              value={value.reps}
-              onChange={(e) => {
-                onChange({
-                  ...value,
-                  reps: parsePositiveInt(e.target.value, value.reps),
-                  set_prescription: null,
-                });
-              }}
-            />
-            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-              Mismo valor en todas las series. Para planchas u otros por tiempo, usa segundos.
-            </p>
-          </div>
+          <>
+            <div>
+              <Label>{effort === 'time' ? 'Segundos por serie' : 'Repeticiones'}</Label>
+              <Input
+                type="number"
+                min={1}
+                value={value.reps}
+                onChange={(e) => {
+                  const reps = parsePositiveInt(e.target.value, value.reps);
+                  onChange({
+                    ...value,
+                    reps,
+                    set_prescription: stampPrescriptionStyle(
+                      deriveSetPrescription(value.sets, reps, value.set_prescription),
+                      { effort, load }
+                    ),
+                  });
+                }}
+              />
+              <p className="text-text-muted mt-1 text-[10px]">
+                {effort === 'time'
+                  ? 'Tiempo de trabajo de cada serie (plancha, isometría, holds).'
+                  : 'Mismo número en todas las series.'}
+              </p>
+            </div>
+            {load !== 'none' ? (
+              <div>
+                <Label>{load === 'plates' ? 'Placas' : 'Peso (kg)'}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={load === 'kg' ? '0.5' : '1'}
+                  value={uniformLoadValue}
+                  onChange={(e) => {
+                    const raw = e.target.value.trim();
+                    const n = raw === '' ? null : Number(raw);
+                    const parsed = n != null && Number.isFinite(n) ? n : null;
+                    const rows = stampPrescriptionStyle(
+                      deriveSetPrescription(value.sets, value.reps, value.set_prescription),
+                      { effort, load }
+                    ).map((row) =>
+                      load === 'plates' ? { ...row, plates: parsed } : { ...row, weight_kg: parsed }
+                    );
+                    onChange({ ...value, set_prescription: rows });
+                  }}
+                />
+                <p className="text-text-muted mt-1 text-[10px]">
+                  {load === 'plates'
+                    ? 'Número de placas en el stack de la polea o máquina.'
+                    : 'Carga en kilos; déjalo vacío si aún no la defines.'}
+                </p>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-lg border border-zinc-200 px-3 py-2.5 dark:border-zinc-700">
+      <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
         <input
           id="routine-exercise-detailed-prescription"
           type="checkbox"
-          className="text-brand focus:ring-brand mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
+          className="text-brand focus:ring-brand mt-0.5 h-4 w-4 rounded"
           checked={useDetailed}
           onChange={(e) => {
             if (e.target.checked) enableDetailed();
@@ -113,12 +237,9 @@ export function RoutineExercisePrescriptionFields({
           }}
         />
         <label htmlFor="routine-exercise-detailed-prescription" className="min-w-0 cursor-pointer">
-          <span className="block text-xs font-medium text-zinc-800 dark:text-zinc-200">
-            Prescripción por serie (peso y reps)
-          </span>
-          <span className="mt-0.5 block text-[10px] text-zinc-500 dark:text-zinc-400">
-            Actívalo para seguir cargas o variar reps entre series. Si no, basta con series y reps
-            generales.
+          <span className="text-text block text-xs font-medium">Variar por serie</span>
+          <span className="text-text-muted mt-0.5 block text-[10px]">
+            Cambia reps, segundos o placas entre la 1 y la 3. Si todas van igual, déjalo apagado.
           </span>
         </label>
       </div>
@@ -127,12 +248,20 @@ export function RoutineExercisePrescriptionFields({
         <SetPrescriptionEditor
           sets={value.sets}
           defaultReps={defaultRepsFromPrescription(value.set_prescription, value.reps)}
-          value={value.set_prescription ?? resizeSetPrescription([], value.sets, value.reps)}
+          effort={effort}
+          load={load}
+          value={
+            value.set_prescription ??
+            stampPrescriptionStyle(resizeSetPrescription([], value.sets, value.reps), {
+              effort,
+              load,
+            })
+          }
           onChange={(set_prescription) => {
             onChange({
               ...value,
               reps: defaultRepsFromPrescription(set_prescription, value.reps),
-              set_prescription,
+              set_prescription: stampPrescriptionStyle(set_prescription, { effort, load }),
             });
           }}
         />

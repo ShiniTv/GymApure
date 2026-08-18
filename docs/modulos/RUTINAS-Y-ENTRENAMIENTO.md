@@ -11,7 +11,7 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 | Concepto                   | Descripción                                             |
 | -------------------------- | ------------------------------------------------------- |
 | **Rutina**                 | Conjunto de ejercicios asignados a un miembro           |
-| **Prescripción por serie** | Peso y reps específicos por cada serie (JSON)           |
+| **Prescripción por serie** | Reps o tiempo, kg o placas, por serie (JSON)            |
 | **Sesión activa**          | Entrenamiento en curso (`/workout/:id`)                 |
 | **Meta semanal**           | Objetivo de sesiones por semana (1–7) en perfil miembro |
 | **Guía de ejecución**      | Pasos de texto por ejercicio (catálogo sistema)         |
@@ -25,8 +25,8 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 1. **Rutinas** → **Nueva rutina** o desde ficha del miembro.
 2. Nombre, descripción, días de la semana.
 3. Añade ejercicios desde biblioteca (sistema o propios).
-4. Por ejercicio: series, reps, descanso, peso sugerido.
-5. Opcional: prescripción detallada por serie.
+4. Por ejercicio: cómo se mide la serie (repeticiones o **tiempo**), carga (**kg**, **placas** de polea/máquina, o sin carga), descanso y nota.
+5. Opcional: variar reps, segundos o placas entre series.
 6. Asigna al **miembro**.
 7. Guarda.
 
@@ -44,7 +44,7 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 
 - **Modo pager móvil:** un ejercicio a la vez; navegación inferior.
 - Por ejercicio: título, **Completar**, toggles video/pasos, tabla de series.
-- Registra kg y reps por serie; marca serie completada.
+- Registra kg o placas, y reps o segundos, según cómo se recetó el ejercicio; marca serie completada.
 - **Temporizador de descanso** entre series (hora real; no se frena al cambiar de app).
 - Con permiso de notificaciones: countdown / aviso al terminar en la sombra del sistema (mejor en Android; en iOS PWA al menos aviso al volver/terminar). Acciones +30s y Saltar desde la notificación cuando el SO las soporte.
 - Video guía y pasos de ejecución a ancho completo del card.
