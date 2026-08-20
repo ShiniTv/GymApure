@@ -50,12 +50,31 @@ test.describe('Entrenador móvil', () => {
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Nutrición' })).toBeVisible();
-    await expect(sheet.getByRole('link', { name: 'Asignaciones' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Calendario' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Ejercicios' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Reportar equipo' })).toBeVisible();
     await expect(sheet.getByText('Programación')).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();
     await expect(moreButton).toBeFocused();
+  });
+
+  test('el panel muestra sesiones 1:1 y destinos de atención', async ({ page }) => {
+    await expect(page.getByText(/sesiones 1:1/i)).toBeVisible();
+    await expect(page.getByRole('link', { name: /^agendar$/i })).toBeVisible();
+
+    const assessment = page.getByRole('link', { name: /sin evaluación/i });
+    if ((await assessment.count()) > 0) {
+      await expect(assessment.first()).toHaveAttribute('href', '/members?needs=assessment');
+    }
+    const checkin = page.getByRole('link', { name: /check-in semanal/i });
+    if ((await checkin.count()) > 0) {
+      await expect(checkin.first()).toHaveAttribute('href', '/members?needs=checkin');
+    }
+    const recovery = page.getByRole('link', { name: /recuperación/i });
+    if ((await recovery.count()) > 0) {
+      await expect(recovery.first()).toHaveAttribute('href', '/members?needs=recovery');
+    }
   });
 });

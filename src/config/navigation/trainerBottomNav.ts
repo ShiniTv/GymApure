@@ -4,7 +4,6 @@ import {
   Dumbbell,
   MessageSquare,
   LayoutGrid,
-  CalendarClock,
   CalendarDays,
   BookOpen,
   UserCircle,
@@ -28,19 +27,13 @@ export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
   { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Miembros' },
   { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Miembros' },
   {
-    name: 'Asignaciones',
-    href: '/routines?view=assignments',
-    icon: CalendarClock,
-    section: 'Programación',
-  },
-  {
     name: 'Calendario',
     href: '/routines?view=calendar',
     icon: CalendarDays,
     section: 'Programación',
   },
   { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Contenido' },
-  { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Contenido' },
+  { name: 'Reportar equipo', href: '/equipment', icon: Wrench, section: 'Contenido' },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];

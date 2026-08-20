@@ -37,11 +37,8 @@ interface MemberRoutineHeaderProps {
   coachingInsight: CoachingInsight | null;
   headerPrimary: { label: string; run: () => void; solid: boolean };
   moreMenuOpen: boolean;
-  moreSectionsOpen: boolean;
   moreMenuAnchorRef: React.RefObject<HTMLButtonElement | null>;
-  moreSectionsAnchorRef: React.RefObject<HTMLButtonElement | null>;
   onMoreMenuOpenChange: (open: boolean) => void;
-  onMoreSectionsOpenChange: (open: boolean) => void;
   onChangeTab: (tab: CoachingTab) => void;
   onNavigate: (path: string) => void;
   onCreateRoutine: () => void;
@@ -54,12 +51,20 @@ const PRIMARY_TABS = [
   { value: 'bloques', label: 'Bloques' },
   { value: 'agenda', label: 'Agenda' },
   { value: 'coaching', label: 'Coaching' },
-] as const;
-
-const MORE_TABS = [
   { value: 'notas', label: 'Notas' },
   { value: 'perfil', label: 'Perfil' },
 ] as const;
+
+const TAB_LABELS: Record<CoachingTab, string> = {
+  rutinas: 'Rutinas',
+  progreso: 'Progreso',
+  bloques: 'Bloques',
+  agenda: 'Agenda',
+  coaching: 'Coaching',
+  notas: 'Notas',
+  perfil: 'Perfil',
+  mediciones: 'Progreso',
+};
 
 export function MemberRoutineHeader({
   member,
@@ -71,11 +76,8 @@ export function MemberRoutineHeader({
   coachingInsight,
   headerPrimary,
   moreMenuOpen,
-  moreSectionsOpen,
   moreMenuAnchorRef,
-  moreSectionsAnchorRef,
   onMoreMenuOpenChange,
-  onMoreSectionsOpenChange,
   onChangeTab,
   onNavigate,
   onCreateRoutine,
@@ -95,7 +97,7 @@ export function MemberRoutineHeader({
         items={[
           { label: 'Miembros', href: '/members' },
           { label: member.full_name, href: `/members/${memberId}/routines` },
-          { label: 'Rutinas' },
+          { label: TAB_LABELS[coachingTab] ?? 'Rutinas' },
         ]}
       />
 
@@ -272,43 +274,6 @@ export function MemberRoutineHeader({
               </button>
             );
           })}
-          <div className="relative shrink-0">
-            <button
-              type="button"
-              ref={moreSectionsAnchorRef}
-              onClick={() => onMoreSectionsOpenChange(!moreSectionsOpen)}
-              aria-expanded={moreSectionsOpen}
-              aria-haspopup="menu"
-              className={
-                coachingTab === 'notas' || coachingTab === 'perfil'
-                  ? 'text-text border-brand border-b-2 px-2.5 pt-0.5 pb-2 text-[13px] font-semibold whitespace-nowrap'
-                  : 'text-text-muted hover:text-text border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-[13px] font-medium whitespace-nowrap'
-              }
-            >
-              Más
-            </button>
-            <AnchoredMenu
-              open={moreSectionsOpen}
-              onClose={() => onMoreSectionsOpenChange(false)}
-              anchorRef={moreSectionsAnchorRef}
-              className="min-w-[9rem]"
-            >
-              {MORE_TABS.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  role="menuitem"
-                  className="flex w-full px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  onClick={() => {
-                    onMoreSectionsOpenChange(false);
-                    onChangeTab(tab.value);
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </AnchoredMenu>
-          </div>
         </div>
       </div>
 

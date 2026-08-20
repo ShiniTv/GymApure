@@ -76,3 +76,29 @@ export function useTrainerStatsQuery(enabled = true) {
     retry: 1,
   });
 }
+
+export interface TrainerAppointment {
+  id: number;
+  member_id: number;
+  member_name?: string;
+  starts_at: string;
+  ends_at: string;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+}
+
+async function fetchTrainerAppointments(): Promise<TrainerAppointment[]> {
+  const res = await apiFetchWithRetry('/api/appointments', { timeout: 15_000 });
+  const data = await parseJsonResponse<TrainerAppointment[]>(res);
+  return Array.isArray(data) ? data : [];
+}
+
+export function useTrainerAppointmentsQuery(enabled = true) {
+  return useQuery({
+    queryKey: ['trainer-appointments'],
+    queryFn: fetchTrainerAppointments,
+    enabled,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+    retry: 1,
+  });
+}

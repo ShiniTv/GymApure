@@ -2,8 +2,6 @@ import {
   LayoutDashboard,
   Users,
   Dumbbell,
-  CalendarClock,
-  CalendarDays,
   BookOpen,
   MessageSquare,
   UserCircle,
@@ -29,17 +27,13 @@ export const TRAINER_NAV: NavSection[] = [
   },
   {
     name: 'Programación',
-    items: [
-      { name: 'Rutinas', href: '/routines', icon: Dumbbell },
-      { name: 'Asignaciones de rutinas', href: '/routines?view=assignments', icon: CalendarClock },
-      { name: 'Calendario de rutinas', href: '/routines?view=calendar', icon: CalendarDays },
-    ],
+    items: [{ name: 'Rutinas', href: '/routines', icon: Dumbbell }],
   },
   {
     name: 'Contenido',
     items: [
       { name: 'Ejercicios', href: '/exercises', icon: BookOpen },
-      { name: 'Equipamiento', href: '/equipment', icon: Wrench },
+      { name: 'Reportar equipo', href: '/equipment', icon: Wrench },
     ],
   },
   {

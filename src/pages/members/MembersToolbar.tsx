@@ -35,6 +35,8 @@ export interface MembersToolbarProps {
   onShiftFilterChange: (shift: TrainingShift | '') => void;
   expiringFilter: boolean;
   onExpiringFilterChange: (value: boolean) => void;
+  needsFilter?: string;
+  onTrainerRosterFilterChange?: (value: string) => void;
   onPageChange: (page: number) => void;
   membersWithoutPlanCount: number;
   loading: boolean;
@@ -60,6 +62,8 @@ export function MembersToolbar({
   onShiftFilterChange,
   expiringFilter,
   onExpiringFilterChange,
+  needsFilter = '',
+  onTrainerRosterFilterChange,
   onPageChange,
   membersWithoutPlanCount,
   loading,
@@ -180,13 +184,30 @@ export function MembersToolbar({
               {(userRole === 'admin' || isTrainer) && (
                 <FilterChips
                   className="w-fit max-w-full shrink-0"
-                  ariaLabel="Filtrar membresías por vencer"
-                  options={[
-                    { value: '', label: 'Todos' },
-                    { value: 'expiring', label: `Por vencer (${alertDays}d)` },
-                  ]}
-                  value={expiringFilter ? 'expiring' : ''}
+                  ariaLabel={
+                    isTrainer ? 'Filtrar miembros por atención' : 'Filtrar membresías por vencer'
+                  }
+                  options={
+                    isTrainer
+                      ? [
+                          { value: '', label: 'Todos' },
+                          { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+                          { value: 'assessment', label: 'Sin evaluación' },
+                          { value: 'checkin', label: 'Check-in' },
+                          { value: 'recovery', label: 'Recuperación' },
+                        ]
+                      : [
+                          { value: '', label: 'Todos' },
+                          { value: 'expiring', label: `Por vencer (${alertDays}d)` },
+                        ]
+                  }
+                  value={needsFilter || (expiringFilter ? 'expiring' : '')}
                   onChange={(v) => {
+                    if (isTrainer && onTrainerRosterFilterChange) {
+                      onTrainerRosterFilterChange(v);
+                      onPageChange(1);
+                      return;
+                    }
                     onExpiringFilterChange(v === 'expiring');
                     if (v === 'expiring') onRoleFilterChange('member');
                     onPageChange(1);

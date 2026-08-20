@@ -36,6 +36,8 @@ export default function Members() {
           onShiftFilterChange={page.handleShiftFilterChange}
           expiringFilter={page.expiringFilter}
           onExpiringFilterChange={page.setExpiringFilter}
+          needsFilter={page.needsFilter}
+          onTrainerRosterFilterChange={page.handleTrainerRosterFilter}
           onPageChange={page.setPage}
           membersWithoutPlanCount={page.membersWithoutPlan.length}
           loading={page.loading}
@@ -60,7 +62,13 @@ export default function Members() {
         <MembersListSection
           showDetailRail={page.showDetailRail}
           detailMember={page.detailMember}
-          onDetailMemberChange={page.setDetailMember}
+          onDetailMemberChange={(member) => {
+            if (!member) {
+              page.setDetailMember(null);
+              return;
+            }
+            page.openMemberDetail(member);
+          }}
           filteredMembers={page.filteredMembers}
           loading={page.loading}
           membersError={page.membersError}
@@ -85,6 +93,7 @@ export default function Members() {
           onEditShift={page.openEditShift}
           onMembershipOperation={(member) => void page.handleMembershipOperation(member)}
           getQuickActions={page.buildQuickActions}
+          coachingHubTab={page.coachingHubTab}
         />
 
         <MemberAssignModal

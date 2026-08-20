@@ -88,10 +88,8 @@ export function useMemberRoutinePage(id: string | undefined) {
   );
 
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  const [moreSectionsOpen, setMoreSectionsOpen] = useState(false);
   const [routineMenuId, setRoutineMenuId] = useState<number | null>(null);
   const moreMenuAnchorRef = useRef<HTMLButtonElement>(null);
-  const moreSectionsAnchorRef = useRef<HTMLButtonElement>(null);
   const routineMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
@@ -672,10 +670,7 @@ export function useMemberRoutinePage(id: string | undefined) {
     navigate,
     moreMenuOpen,
     setMoreMenuOpen,
-    moreSectionsOpen,
-    setMoreSectionsOpen,
     moreMenuAnchorRef,
-    moreSectionsAnchorRef,
     openAssignModal,
     openCreateRoutine: () => {
       setIsCreating(true);

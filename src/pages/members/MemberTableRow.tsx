@@ -19,6 +19,7 @@ import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
 import { SHIFT_SHORT_LABELS, SHIFT_BADGE_CLASSES } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 import { OnboardingStatus } from '../../components/members/OnboardingStatus';
+import { memberCoachingHref } from '../../lib/trainerNeeds';
 
 interface MemberTableRowProps {
   member: Member;
@@ -36,6 +37,7 @@ interface MemberTableRowProps {
   onEditShift: (member: Member) => void;
   onMembershipOperation: (member: Member) => void;
   membershipOperationLoading: boolean;
+  coachingHubTab?: string;
 }
 
 interface RowAction {
@@ -63,6 +65,7 @@ export const MemberTableRow = memo(function MemberTableRow({
   onEditShift,
   onMembershipOperation,
   membershipOperationLoading,
+  coachingHubTab,
 }: MemberTableRowProps) {
   const navigate = useNavigate();
   const isTrainer = userRole === 'trainer';
@@ -80,7 +83,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         key: 'routines',
         label: 'Rutinas',
         icon: Dumbbell,
-        onClick: () => navigate(`/members/${member.id}/routines`),
+        onClick: () => navigate(memberCoachingHref(member.id, coachingHubTab)),
         className: 'hover:text-brand hover:bg-brand/10',
       },
       {

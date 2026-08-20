@@ -69,11 +69,8 @@ export default function MemberRoutine() {
         coachingInsight={page.coachingInsight}
         headerPrimary={page.headerPrimary}
         moreMenuOpen={page.moreMenuOpen}
-        moreSectionsOpen={page.moreSectionsOpen}
         moreMenuAnchorRef={page.moreMenuAnchorRef}
-        moreSectionsAnchorRef={page.moreSectionsAnchorRef}
         onMoreMenuOpenChange={page.setMoreMenuOpen}
-        onMoreSectionsOpenChange={page.setMoreSectionsOpen}
         onChangeTab={page.changeCoachingTab}
         onNavigate={(path) => void page.navigate(path)}
         onCreateRoutine={page.openCreateRoutine}

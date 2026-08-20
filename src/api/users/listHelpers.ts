@@ -79,8 +79,30 @@ export function buildUserListFilters(
     conditions.push(`u.training_shift = $${params.length}`);
   }
 
+  const ids = parseUserIdsQuery(query.ids);
+  if (ids.length > 0) {
+    params.push(ids);
+    conditions.push(`u.id = ANY($${params.length}::bigint[])`);
+  }
+
   return {
     whereSql: conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '',
     params,
   };
+}
+
+const MAX_USER_IDS_FILTER = 50;
+
+export function parseUserIdsQuery(raw: unknown): number[] {
+  const text = Array.isArray(raw) ? raw.join(',') : typeof raw === 'string' ? raw : '';
+  const seen = new Set<number>();
+  const ids: number[] = [];
+  for (const part of text.split(',')) {
+    const id = Number(part.trim());
+    if (!Number.isInteger(id) || id <= 0 || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+    if (ids.length >= MAX_USER_IDS_FILTER) break;
+  }
+  return ids;
 }

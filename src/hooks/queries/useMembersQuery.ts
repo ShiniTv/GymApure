@@ -43,6 +43,8 @@ export interface MembersQueryParams {
   /** Admin role filter; trainers always force member via isTrainer. */
   roleFilter?: string;
   isTrainer: boolean;
+  /** Optional id cohort (attention filters). */
+  ids?: number[];
 }
 
 export function membersQueryKey(params: MembersQueryParams) {
@@ -59,15 +61,17 @@ async function fetchMembers(params: MembersQueryParams): Promise<PaginatedUsers>
   if (params.shiftFilter) qs.set('shift', params.shiftFilter);
   if (params.isTrainer) qs.set('role', 'member');
   else if (params.roleFilter) qs.set('role', params.roleFilter);
+  if (params.ids && params.ids.length > 0) qs.set('ids', params.ids.join(','));
 
   const res = await apiFetch(`/api/users?${qs.toString()}`);
   return parseJsonResponse<PaginatedUsers>(res);
 }
 
-export function useMembersQuery(params: MembersQueryParams) {
+export function useMembersQuery(params: MembersQueryParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: membersQueryKey(params),
     queryFn: () => fetchMembers(params),
+    enabled: options?.enabled ?? true,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });

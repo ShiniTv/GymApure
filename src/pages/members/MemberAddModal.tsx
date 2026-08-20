@@ -58,7 +58,7 @@ export function MemberAddModal({
           <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
             asigna una rutina
           </strong>{' '}
-          en Asignaciones. La{' '}
+          en el calendario. La{' '}
           <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
             membresía la activa recepción
           </strong>{' '}

@@ -9,7 +9,10 @@ test.describe('Trainer coach notes', () => {
 
     // Prefer an explicit member routines deep-link if present in the table/actions.
     const memberRoutines = page.locator('a[href*="/members/"][href*="/routines"]').first();
-    if ((await memberRoutines.count()) > 0 && (await memberRoutines.isVisible().catch(() => false))) {
+    if (
+      (await memberRoutines.count()) > 0 &&
+      (await memberRoutines.isVisible().catch(() => false))
+    ) {
       await memberRoutines.click();
     } else {
       // Resolve member id from the members API embedded in the page fetch, then navigate.
@@ -28,9 +31,7 @@ test.describe('Trainer coach notes', () => {
 
     await expect(page).toHaveURL(/\/members\/\d+\/routines/, { timeout: 15_000 });
 
-    // Prefer the member-tabs overflow (menu), not the bottom-nav "Más" sheet trigger.
-    await page.locator('button[aria-haspopup="menu"]').filter({ hasText: /^más$/i }).click();
-    await page.getByRole('menuitem', { name: /^notas$/i }).click();
+    await page.getByRole('tab', { name: /^notas$/i }).click();
     await expect(page.getByText(/nueva nota/i)).toBeVisible({ timeout: 10_000 });
 
     const noteText = `QA nota automatizada ${Date.now()}`;
@@ -38,7 +39,10 @@ test.describe('Trainer coach notes', () => {
     await page.getByRole('button', { name: /guardar nota/i }).click();
     await expect(page.getByText(noteText)).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole('button', { name: /eliminar nota/i }).first().click();
+    await page
+      .getByRole('button', { name: /eliminar nota/i })
+      .first()
+      .click();
     await expect(page.getByText(noteText)).toHaveCount(0, { timeout: 10_000 });
   });
 });

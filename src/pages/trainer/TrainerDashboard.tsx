@@ -14,7 +14,10 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
+import {
+  useTrainerStatsQuery,
+  useTrainerAppointmentsQuery,
+} from '../../hooks/queries/useDashboardQuery';
 import { useTrainerNutritionOverviewQuery } from '../../hooks/queries/useNutritionQuery';
 import {
   Card,
@@ -124,18 +127,38 @@ function AttentionSummaryLink({
   );
 }
 
+function isSameLocalDay(iso: string, now = new Date()) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return false;
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
 function TodayPanel({
   loading,
   quiet,
   trainingToday,
   remoteTraining,
   inactiveMembers,
+  todaysAppointments,
+  appointmentsLoading,
 }: {
   loading: boolean;
   quiet: boolean;
   trainingToday: MemberMini[];
   remoteTraining: MemberMini[];
   inactiveMembers: MemberMini[];
+  todaysAppointments: {
+    id: number;
+    member_id: number;
+    member_name?: string;
+    starts_at: string;
+    status: string;
+  }[];
+  appointmentsLoading: boolean;
 }) {
   const trainingCount = trainingToday.length + remoteTraining.length;
 
@@ -144,11 +167,19 @@ function TodayPanel({
       title="Hoy"
       compact
       action={
-        trainingCount > 0 ? (
-          <Badge variant="success" className="text-[10px]">
-            {trainingCount} entrenando
-          </Badge>
-        ) : null
+        <div className="flex items-center gap-2">
+          {trainingCount > 0 ? (
+            <Badge variant="success" className="text-[10px]">
+              {trainingCount} entrenando
+            </Badge>
+          ) : null}
+          <Link
+            to="/members"
+            className="text-brand inline-flex min-h-11 items-center text-[11px] font-semibold hover:underline"
+          >
+            Agendar
+          </Link>
+        </div>
       }
     >
       <Card
@@ -156,6 +187,34 @@ function TodayPanel({
         rounded="xl"
         className={cn(SURFACE, quiet && !loading ? 'py-3' : undefined)}
       >
+        <div className="border-border/60 mb-3 border-b pb-3">
+          <p className="text-text-secondary mb-1.5 text-[11px] font-semibold">
+            Sesiones 1:1 · {appointmentsLoading ? '…' : todaysAppointments.length}
+          </p>
+          {appointmentsLoading ? (
+            <Skeleton className="h-8 w-full" />
+          ) : todaysAppointments.length === 0 ? (
+            <p className="text-text-secondary text-[12px]">No hay sesiones 1:1 hoy</p>
+          ) : (
+            <ul className="space-y-0.5">
+              {todaysAppointments.slice(0, TODAY_LIST_CAP).map((appointment) => (
+                <li key={appointment.id}>
+                  <Link
+                    to={`/members/${appointment.member_id}/routines?tab=agenda`}
+                    className="hover:text-brand text-text flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                  >
+                    <span className="min-w-0 truncate">
+                      {appointment.member_name ?? `Miembro ${appointment.member_id}`}
+                    </span>
+                    <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
+                      {formatCheckIn(appointment.starts_at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">
             <Skeleton className="h-12 w-full" />
@@ -384,6 +443,8 @@ export default function TrainerDashboard() {
   const navigate = useNavigate();
   const { data: trainerStats, isError, isPending, refetch } = useTrainerStatsQuery();
   const { data: nutritionOverview } = useTrainerNutritionOverviewQuery(true);
+  const { data: appointments = [], isPending: appointmentsPending } =
+    useTrainerAppointmentsQuery(true);
 
   const stats = trainerStats;
   const trainingToday = stats?.trainingToday ?? [];
@@ -398,11 +459,15 @@ export default function TrainerDashboard() {
   const remoteActive = stats?.remoteActiveNow ?? remoteTraining.length;
   const firstName = user?.name?.split(/\s+/)[0] ?? 'entrenador';
   const loading = isPending && !stats;
+  const todaysAppointments = (appointments ?? []).filter(
+    (appointment) => appointment.status === 'scheduled' && isSameLocalDay(appointment.starts_at)
+  );
   const todayQuiet =
     !loading &&
     trainingToday.length === 0 &&
     remoteTraining.length === 0 &&
-    inactiveMembers.length === 0;
+    inactiveMembers.length === 0 &&
+    todaysAppointments.length === 0;
 
   const hasAttention =
     withoutRoutines > 0 ||
@@ -508,7 +573,7 @@ export default function TrainerDashboard() {
             )}
             {withoutAssessmentCount > 0 && (
               <AttentionSummaryLink
-                to="/members"
+                to="/members?needs=assessment"
                 icon={ClipboardCheck}
                 label="Sin evaluación"
                 count={withoutAssessmentCount}
@@ -517,7 +582,7 @@ export default function TrainerDashboard() {
             )}
             {staleCheckinsCount > 0 && (
               <AttentionSummaryLink
-                to="/members"
+                to="/members?needs=checkin"
                 icon={ClipboardCheck}
                 label="Check-in semanal"
                 count={staleCheckinsCount}
@@ -526,7 +591,7 @@ export default function TrainerDashboard() {
             )}
             {recoveryAlertsCount > 0 && (
               <AttentionSummaryLink
-                to="/members"
+                to="/members?needs=recovery"
                 icon={HeartPulse}
                 label="Recuperación"
                 count={recoveryAlertsCount}
@@ -553,6 +618,8 @@ export default function TrainerDashboard() {
           trainingToday={trainingToday}
           remoteTraining={remoteTraining}
           inactiveMembers={inactiveMembers}
+          todaysAppointments={todaysAppointments}
+          appointmentsLoading={appointmentsPending && appointments.length === 0}
         />
         <ActivityPanel
           loading={loading}

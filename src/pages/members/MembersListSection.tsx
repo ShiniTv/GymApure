@@ -39,6 +39,7 @@ export interface MembersListSectionProps {
   onEditShift: (member: Member) => void;
   onMembershipOperation: (member: Member) => void;
   getQuickActions: (member: Member) => MemberQuickAction[];
+  coachingHubTab?: string;
 }
 
 export function MembersListSection({
@@ -69,6 +70,7 @@ export function MembersListSection({
   onEditShift,
   onMembershipOperation,
   getQuickActions,
+  coachingHubTab,
 }: MembersListSectionProps) {
   if (membersError) {
     return (
@@ -190,6 +192,7 @@ export function MembersListSection({
               onEditShift={onEditShift}
               onMembershipOperation={onMembershipOperation}
               membershipOperationLoading={membershipOperationId === member.id}
+              coachingHubTab={coachingHubTab}
             />
           )}
         />

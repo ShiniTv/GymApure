@@ -37,6 +37,13 @@ import { usePageTitle } from '../../hooks/usePageTitle';
 import { type TrainingShift } from '../../lib/trainingShift';
 import { ROLE_LABELS, type UserRole } from '../../lib/roles';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { useTrainerStatsQuery } from '../../hooks/queries/useDashboardQuery';
+import {
+  hubTabForNeeds,
+  memberCoachingHref,
+  parseTrainerNeedsFilter,
+  TRAINER_NEEDS_LABELS,
+} from '../../lib/trainerNeeds';
 
 export const MEMBER_ROLE_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'Todos' },
@@ -126,20 +133,17 @@ export function useMembersPage() {
 
   useEffect(() => {
     if (searchParams.get('focus') === 'nutrition') {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete('focus');
-          return next;
-        },
-        { replace: true }
-      );
+      navigate('/nutrition-overview?filter=without', { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [navigate, searchParams]);
+
+  const needsFilter = parseTrainerNeedsFilter(searchParams.get('needs'));
 
   useEffect(() => {
     if (searchParams.get('expiring') === 'true') {
       setExpiringFilter(true);
+    } else if (needsFilter) {
+      setExpiringFilter(false);
     }
     const shiftParam = searchParams.get('shift');
     if (shiftParam === 'diurno' || shiftParam === 'vespertino' || shiftParam === 'nocturno') {
@@ -147,7 +151,7 @@ export function useMembersPage() {
     } else if (!shiftParam) {
       setShiftFilter('');
     }
-  }, [searchParams]);
+  }, [needsFilter, searchParams]);
 
   const handleShiftFilterChange = (shift: TrainingShift | '') => {
     setShiftFilter(shift);
@@ -161,6 +165,25 @@ export function useMembersPage() {
       },
       { replace: true }
     );
+  };
+
+  const handleTrainerRosterFilter = (value: string) => {
+    setPage(1);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('expiring');
+        next.delete('needs');
+        if (value === 'expiring') {
+          next.set('expiring', 'true');
+        } else if (parseTrainerNeedsFilter(value)) {
+          next.set('needs', value);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+    setExpiringFilter(value === 'expiring');
   };
 
   useEffect(() => {
@@ -177,22 +200,53 @@ export function useMembersPage() {
   const isReceptionist = user?.role === 'receptionist';
   const isStaffMember = isTrainer || isReceptionist;
   const colCount = isStaffMember ? 5 : 6;
+  const coachingHubTab = hubTabForNeeds(needsFilter);
+  const openMemberDetail = useCallback(
+    (member: Member) => {
+      if (isTrainer && coachingHubTab) {
+        navigate(memberCoachingHref(member.id, coachingHubTab));
+        return;
+      }
+      setDetailMember(member);
+    },
+    [coachingHubTab, isTrainer, navigate]
+  );
+  const { data: trainerStats, isPending: trainerStatsPending } = useTrainerStatsQuery(
+    Boolean(isTrainer && needsFilter)
+  );
+  const cohortIds = useMemo(() => {
+    if (!needsFilter) return undefined;
+    const rows =
+      needsFilter === 'assessment'
+        ? trainerStats?.membersWithoutAssessment
+        : needsFilter === 'checkin'
+          ? trainerStats?.staleCheckins
+          : trainerStats?.recoveryAlerts;
+    return (rows ?? []).map((row) => row.id);
+  }, [needsFilter, trainerStats]);
+  const cohortReady = !needsFilter || !trainerStatsPending;
+  const cohortEmpty = Boolean(needsFilter && cohortReady && (cohortIds?.length ?? 0) === 0);
 
   const membersQueryParams = {
     page,
     pageSize,
     search,
-    expiringFilter,
+    expiringFilter: needsFilter ? false : expiringFilter,
     shiftFilter: shiftFilter || undefined,
     roleFilter: roleFilter || undefined,
     isTrainer,
+    ids: cohortIds,
   };
   const {
     data: membersData,
-    isPending: loading,
+    isPending: membersPending,
     isError: membersError,
     refetch: refetchMembers,
-  } = useMembersQuery(membersQueryParams);
+  } = useMembersQuery(membersQueryParams, {
+    enabled: cohortReady && !cohortEmpty,
+  });
+  const loading =
+    Boolean(needsFilter && trainerStatsPending) || (cohortReady && !cohortEmpty && membersPending);
   const membershipStatusMutation = useMembershipStatusMutation(membersQueryParams);
   const members = membersData?.items ?? [];
   const total = membersData?.total ?? 0;
@@ -327,7 +381,7 @@ export function useMembersPage() {
         invalidateMemberOptions();
         if (isTrainer) {
           toast?.success(
-            'Cuenta creada. Asigna una rutina en Asignaciones; recepción debe activar la membresía.'
+            'Cuenta creada. Asigna una rutina en el calendario; recepción debe activar la membresía.'
           );
           if (data.id) {
             navigate('/routines?view=calendar&assign=1');
@@ -562,6 +616,14 @@ export function useMembersPage() {
   }, [filteredMembers, detailMember]);
 
   const membersEmptyState = (() => {
+    if (needsFilter) {
+      return {
+        title: 'Sin resultados',
+        description: search
+          ? 'Ningún miembro de esta lista coincide con tu búsqueda.'
+          : `Nadie en ${TRAINER_NEEDS_LABELS[needsFilter].toLowerCase()} ahora.`,
+      };
+    }
     if (expiringFilter) {
       return {
         title: 'Sin resultados',
@@ -578,7 +640,7 @@ export function useMembersPage() {
       return {
         title: 'Aún no tienes miembros asignados',
         description:
-          '1) Crea la cuenta del miembro. 2) Asigna una rutina en Rutinas → Asignaciones. 3) Recepción activa la membresía para check-in y cobros.',
+          '1) Crea la cuenta del miembro. 2) Asigna una rutina en Rutinas → Calendario. 3) Recepción activa la membresía para check-in y cobros.',
       };
     }
     if (search) {
@@ -593,7 +655,7 @@ export function useMembersPage() {
     };
   })();
 
-  const showTrainerAssignCta = isTrainer && !search && !expiringFilter;
+  const showTrainerAssignCta = isTrainer && !search && !expiringFilter && !needsFilter;
   const membersWithoutPlan = useMemo(
     () => filteredMembers.filter((m) => m.role === 'member' && !m.membership_name),
     [filteredMembers]
@@ -627,7 +689,7 @@ export function useMembersPage() {
             key: 'routines',
             label: 'Ver rutinas',
             icon: Dumbbell,
-            onClick: () => navigate(`/members/${member.id}/routines`),
+            onClick: () => navigate(memberCoachingHref(member.id, coachingHubTab)),
           });
         } else {
           actions.push({
@@ -635,7 +697,7 @@ export function useMembersPage() {
             label: 'Ver rutinas',
             icon: Dumbbell,
             primary: true,
-            onClick: () => navigate(`/members/${member.id}/routines`),
+            onClick: () => navigate(memberCoachingHref(member.id, coachingHubTab)),
           });
         }
         actions.push({
@@ -726,6 +788,7 @@ export function useMembersPage() {
       user?.role,
       user?.id,
       navigate,
+      coachingHubTab,
       openMemberBadge,
       openAssignSubscription,
       openEditShift,
@@ -737,8 +800,8 @@ export function useMembersPage() {
 
   const membersEmptyAction = showTrainerAssignCta ? (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <Button size="sm" onClick={() => navigate('/routines?view=assignments')}>
-        <Dumbbell className="h-4 w-4" /> Ir a asignaciones
+      <Button size="sm" onClick={() => navigate('/routines?view=calendar&assign=1')}>
+        <Dumbbell className="h-4 w-4" /> Asignar rutina
       </Button>
       <Button
         size="sm"
@@ -808,6 +871,10 @@ export function useMembersPage() {
     setRoleFilter,
     shiftFilter,
     handleShiftFilterChange,
+    handleTrainerRosterFilter,
+    needsFilter,
+    coachingHubTab,
+    openMemberDetail,
     badgeTarget,
     setBadgeTarget,
     editShiftTarget,
