@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   Plus,
   Trophy,
+  User,
   UtensilsCrossed,
 } from 'lucide-react';
 import {
@@ -46,14 +47,34 @@ interface MemberRoutineHeaderProps {
 }
 
 const PRIMARY_TABS = [
-  { value: 'rutinas', label: 'Rutinas' },
-  { value: 'progreso', label: 'Progreso' },
-  { value: 'bloques', label: 'Bloques' },
-  { value: 'agenda', label: 'Agenda' },
+  { value: 'plan', label: 'Plan' },
   { value: 'coaching', label: 'Coaching' },
-  { value: 'notas', label: 'Notas' },
-  { value: 'perfil', label: 'Perfil' },
+  { value: 'progreso', label: 'Progreso' },
 ] as const;
+
+const PLAN_SUB_TABS: { value: CoachingTab; label: string }[] = [
+  { value: 'rutinas', label: 'Rutinas' },
+  { value: 'bloques', label: 'Bloques' },
+];
+
+const COACHING_SUB_TABS: { value: CoachingTab; label: string }[] = [
+  { value: 'coaching', label: 'Check-in' },
+  { value: 'notas', label: 'Notas' },
+  { value: 'agenda', label: 'Agenda' },
+];
+
+function hubPrimaryTab(tab: CoachingTab): (typeof PRIMARY_TABS)[number]['value'] {
+  if (tab === 'rutinas' || tab === 'bloques') return 'plan';
+  if (tab === 'coaching' || tab === 'notas' || tab === 'agenda') return 'coaching';
+  if (tab === 'progreso' || tab === 'mediciones') return 'progreso';
+  return 'plan';
+}
+
+function primaryTabToDefault(tab: (typeof PRIMARY_TABS)[number]['value']): CoachingTab {
+  if (tab === 'plan') return 'rutinas';
+  if (tab === 'coaching') return 'coaching';
+  return 'progreso';
+}
 
 const TAB_LABELS: Record<CoachingTab, string> = {
   rutinas: 'Rutinas',
@@ -187,6 +208,18 @@ export function MemberRoutineHeader({
           className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
           onClick={() => {
             onMoreMenuOpenChange(false);
+            onChangeTab('perfil');
+          }}
+        >
+          <User className="h-4 w-4" />
+          Perfil
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          onClick={() => {
+            onMoreMenuOpenChange(false);
             onNavigate(`/members/${memberId}/history`);
           }}
         >
@@ -256,14 +289,14 @@ export function MemberRoutineHeader({
           aria-label="Secciones del miembro"
         >
           {PRIMARY_TABS.map((tab) => {
-            const active = coachingTab === tab.value;
+            const active = hubPrimaryTab(coachingTab) === tab.value;
             return (
               <button
                 key={tab.value}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => onChangeTab(tab.value)}
+                onClick={() => onChangeTab(primaryTabToDefault(tab.value))}
                 className={
                   active
                     ? 'text-text border-brand shrink-0 border-b-2 px-2.5 pt-0.5 pb-2 text-[13px] font-semibold whitespace-nowrap'
@@ -275,6 +308,48 @@ export function MemberRoutineHeader({
             );
           })}
         </div>
+        {hubPrimaryTab(coachingTab) === 'plan' ? (
+          <div className="mt-1 flex gap-1 px-0.5 pb-2">
+            {PLAN_SUB_TABS.map((tab) => {
+              const active = coachingTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => onChangeTab(tab.value)}
+                  className={
+                    active
+                      ? 'bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[11px] font-semibold'
+                      : 'text-text-muted hover:text-text rounded-full px-2.5 py-0.5 text-[11px] font-medium'
+                  }
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {hubPrimaryTab(coachingTab) === 'coaching' ? (
+          <div className="mt-1 flex gap-1 px-0.5 pb-2">
+            {COACHING_SUB_TABS.map((tab) => {
+              const active = coachingTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => onChangeTab(tab.value)}
+                  className={
+                    active
+                      ? 'bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[11px] font-semibold'
+                      : 'text-text-muted hover:text-text rounded-full px-2.5 py-0.5 text-[11px] font-medium'
+                  }
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       {coachingInsight ? (

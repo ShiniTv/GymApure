@@ -131,6 +131,60 @@ export async function notifyPaymentRejected(
   });
 }
 
+export async function notifyMemberSelfAssignedTemplate(
+  memberId: number,
+  trainerId: number,
+  routineName: string,
+  templateName: string
+): Promise<void> {
+  const fullName = await fetchMemberName(memberId);
+  if (!fullName) return;
+
+  void createUserNotification({
+    userId: trainerId,
+    type: 'member_self_assigned',
+    title: 'Cliente eligió plantilla',
+    body: `${fullName} empezó con "${templateName}" (${routineName}).`,
+    href: `/members/${memberId}/routines`,
+    severity: 'info',
+    metadata: { member_id: memberId, routine_name: routineName, template_name: templateName },
+    dedupeKey: `member_self_assign:${memberId}:${routineName}`,
+  }).catch((err) => {
+    console.error('[notify] member self-assign in-app', err);
+  });
+}
+
+export async function notifyMemberExerciseSubstituted(
+  memberId: number,
+  trainerId: number,
+  routineId: number,
+  previousName: string,
+  replacementName: string,
+  reason: string
+): Promise<void> {
+  const fullName = await fetchMemberName(memberId);
+  if (!fullName) return;
+
+  void createUserNotification({
+    userId: trainerId,
+    type: 'member_exercise_substituted',
+    title: 'Cliente sustituyó ejercicio',
+    body: `${fullName}: ${previousName} → ${replacementName}.`,
+    href: `/members/${memberId}/routines?tab=rutinas`,
+    severity: 'info',
+    metadata: {
+      member_id: memberId,
+      routine_id: routineId,
+      previous_name: previousName,
+      replacement_name: replacementName,
+      reason,
+    },
+    dedupeKey: `member_substitute:${memberId}:${routineId}:${replacementName}`,
+  }).catch((err) => {
+    console.error('[notify] member substitute in-app', err);
+  });
+}
+
 export async function notifyRoutineAssigned(userId: number, routineId: number): Promise<void> {
   const fullName = await fetchMemberName(userId);
   if (!fullName) return;

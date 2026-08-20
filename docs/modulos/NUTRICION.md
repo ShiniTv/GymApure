@@ -20,9 +20,10 @@ Planes nutricionales asignados por el entrenador al miembro, con seguimiento dia
 ## Flujo: miembro consulta y registra
 
 1. Tab **Nutrición** en bottom nav (móvil) o menú.
-2. Selector de semana + gauge semi-circular de calorías + anillos P/C/G vs el plan.
-3. **Registrar comida** (manual) o **Analizar foto** (IA).
-4. Con foto: cámara/galería → análisis → preview editable → guardar en el log del día.
+2. Sin plan personalizado del entrenador: **plan sugerido del gym** (`is_suggested: true`) para registrar de inmediato.
+3. Selector de semana + gauge semi-circular de calorías + anillos P/C/G vs el plan.
+4. **Registrar comida** (manual) o **Analizar foto** (IA).
+5. Con foto: cámara/galería → análisis → preview editable → guardar en el log del día.
 
 **Resultado esperado:** Los macros del día se suman al progreso frente al plan del entrenador.
 
@@ -51,12 +52,12 @@ Planes nutricionales asignados por el entrenador al miembro, con seguimiento dia
 
 ## Permisos
 
-| Acción                     | admin | trainer       | member |
-| -------------------------- | ----- | ------------- | ------ |
-| Ver propio plan / logs     | —     | —             | ✓      |
-| Editar plan de miembro     | —     | ✓ (asignados) | —      |
-| Overview de clientes       | —     | ✓ (asignados) | —      |
-| Analizar foto de comida    | —     | —             | ✓      |
+| Acción                  | admin | trainer       | member |
+| ----------------------- | ----- | ------------- | ------ |
+| Ver propio plan / logs  | —     | —             | ✓      |
+| Editar plan de miembro  | —     | ✓ (asignados) | —      |
+| Overview de clientes    | —     | ✓ (asignados) | —      |
+| Analizar foto de comida | —     | —             | ✓      |
 
 > Nota: `GET /api/admin/overview` permanece en API por compatibilidad, pero la UI de overview es solo entrenador.
 

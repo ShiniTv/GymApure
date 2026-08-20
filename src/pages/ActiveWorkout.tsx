@@ -5,6 +5,7 @@ import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
 import { WorkoutHeader } from './activeWorkout/WorkoutHeader';
 import { AddExerciseModal } from './activeWorkout/AddExerciseModal';
+import { SkipExerciseModal } from './activeWorkout/SkipExerciseModal';
 import { ExerciseFocusNav } from './activeWorkout/ExerciseFocusNav';
 import { FinishWorkoutModal, ResetWorkoutModal } from './activeWorkout/WorkoutSessionModals';
 import { ActiveWorkoutExerciseList } from './activeWorkout/ActiveWorkoutExerciseList';
@@ -104,18 +105,33 @@ export default function ActiveWorkout() {
         </div>
       )}
 
-      <AddExerciseModal
-        open={page.isAddingExercise}
-        exercises={page.availableExercises}
-        exercisesLoading={page.exercisesCatalogLoading}
-        value={page.newExercise}
-        error={page.addExerciseError}
-        onClose={() => {
-          page.setIsAddingExercise(false);
-          page.setAddExerciseError(null);
-        }}
-        onChange={page.setNewExercise}
-        onSubmit={() => void page.handleAddExercise()}
+      {!page.isMember && (
+        <AddExerciseModal
+          open={page.isAddingExercise}
+          exercises={page.availableExercises}
+          exercisesLoading={page.exercisesCatalogLoading}
+          value={page.newExercise}
+          error={page.addExerciseError}
+          onClose={() => {
+            page.setIsAddingExercise(false);
+            page.setAddExerciseError(null);
+          }}
+          onChange={page.setNewExercise}
+          onSubmit={() => void page.handleAddExercise()}
+        />
+      )}
+
+      <SkipExerciseModal
+        open={!!page.skipTarget}
+        exerciseName={page.skipTarget?.name ?? ''}
+        reason={page.skipReason}
+        note={page.skipNote}
+        saving={page.skipSaving}
+        error={page.skipError}
+        onClose={() => page.setSkipTarget(null)}
+        onReasonChange={page.setSkipReason}
+        onNoteChange={page.setSkipNote}
+        onConfirm={() => void page.confirmSkipExercise()}
       />
 
       {page.isMobileFocus && !page.isResting ? (
@@ -142,6 +158,7 @@ export default function ActiveWorkout() {
         }
         onAddSet={page.handleAddSet}
         onRemoveLastSet={page.handleRemoveLastSet}
+        onSkipExercise={page.isMember ? page.openSkipExercise : undefined}
       />
 
       <FinishWorkoutModal

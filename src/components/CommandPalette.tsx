@@ -133,11 +133,39 @@ const ROLE_QUICK: Record<string, CommandAction[]> = {
   ],
   member: [
     {
+      id: 'qa:train-now',
+      label: 'Entrenar ahora',
+      href: '/panel',
+      section: 'Acciones',
+      keywords: 'entreno workout hoy fab',
+    },
+    {
+      id: 'qa:choose-routine',
+      label: 'Elegir rutina de hoy',
+      href: '/routines',
+      section: 'Acciones',
+      keywords: 'elegir hoy rutina picker',
+    },
+    {
+      id: 'qa:templates',
+      label: 'Plantillas para empezar',
+      href: '/routines?tab=templates',
+      section: 'Acciones',
+      keywords: 'plantilla template empezar',
+    },
+    {
       id: 'qa:workout',
       label: 'Mis rutinas',
       href: '/routines',
       section: 'Acciones',
       keywords: 'entreno workout rutina',
+    },
+    {
+      id: 'qa:nutrition-log',
+      label: 'Registrar comida',
+      href: '/nutrition',
+      section: 'Acciones',
+      keywords: 'nutrición comida macros',
     },
   ],
 };

@@ -1,7 +1,9 @@
 import { Sparkles, Sun, Moon } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { Modal, Button } from '../ui';
 import ThemePalettePicker from '../ThemePalettePicker';
 import { useTheme } from '../../context/ThemeContext';
+import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { THEME_ONBOARDING_KEY } from '../../config/themes';
 
 interface ThemeOnboardingProps {
@@ -11,22 +13,28 @@ interface ThemeOnboardingProps {
 
 export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const memberStats = useMemberStatsOptional();
 
-  const handleComplete = () => {
+  const finish = (goTrain: boolean) => {
     localStorage.setItem(THEME_ONBOARDING_KEY, '1');
     onComplete();
+    if (!goTrain) return;
+    const routineId =
+      memberStats?.stats?.todayRoutineId ?? memberStats?.stats?.primaryRoutine?.id ?? null;
+    navigate(routineId ? `/workout/${routineId}` : '/routines?tab=templates');
   };
 
   return (
     <Modal
       open={open}
-      onClose={handleComplete}
+      onClose={() => finish(false)}
       title="Personaliza tu experiencia"
       maxWidth="lg"
       scrollable
     >
       <div className="space-y-5">
-        <p className="-mt-2 text-sm text-text-secondary">
+        <p className="text-text-secondary -mt-2 text-sm">
           Elige cómo quieres ver GymApure. Puedes cambiarlo cuando quieras en tu perfil.
         </p>
         <div className="text-brand flex items-center gap-2">
@@ -69,7 +77,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
           <ThemePalettePicker />
         </div>
 
-        <Button className="min-h-[var(--touch-comfort)] w-full" onClick={handleComplete}>
+        <Button className="min-h-[var(--touch-comfort)] w-full" onClick={() => finish(true)}>
           Empezar a entrenar
         </Button>
       </div>

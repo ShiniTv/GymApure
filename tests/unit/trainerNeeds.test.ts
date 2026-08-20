@@ -11,16 +11,18 @@ describe('parseTrainerNeedsFilter', () => {
     expect(parseTrainerNeedsFilter('assessment')).toBe('assessment');
     expect(parseTrainerNeedsFilter('checkin')).toBe('checkin');
     expect(parseTrainerNeedsFilter('recovery')).toBe('recovery');
+    expect(parseTrainerNeedsFilter('choices')).toBe('choices');
     expect(parseTrainerNeedsFilter('expiring')).toBe('');
     expect(parseTrainerNeedsFilter(null)).toBe('');
   });
 });
 
 describe('hubTabForNeeds', () => {
-  it('abre coaching o progreso según la cohorte', () => {
+  it('abre coaching, progreso o rutinas según la cohorte', () => {
     expect(hubTabForNeeds('assessment')).toBe('coaching');
     expect(hubTabForNeeds('checkin')).toBe('coaching');
     expect(hubTabForNeeds('recovery')).toBe('progreso');
+    expect(hubTabForNeeds('choices')).toBe('rutinas');
     expect(hubTabForNeeds('')).toBeUndefined();
   });
 });

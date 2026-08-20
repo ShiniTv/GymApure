@@ -237,6 +237,19 @@ export function useMemberRoutinePage(id: string | undefined) {
     setIsAssigning(true);
   };
 
+  useEffect(() => {
+    if (searchParams.get('assign') !== '1') return;
+    openAssignModal();
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('assign');
+        return next;
+      },
+      { replace: true }
+    );
+  }, [searchParams, setSearchParams, id]);
+
   const handleSaveWeeklyGoal = async () => {
     if (!id) return;
     const goal = Math.min(7, Math.max(1, weeklyGoal));

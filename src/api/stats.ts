@@ -19,8 +19,42 @@ import { computeSubscriptionRemainingPercent } from '../lib/expiryUtils.ts';
 import { computeWorkoutStreak } from '../lib/workoutStreak.ts';
 import { getEquipmentStatsSummary } from '../lib/equipmentInspectionAlerts.ts';
 import { RECEPTION_STAFF } from '../lib/roles.ts';
+import {
+  getTodayRoutineChoice,
+  listPendingMemberChoicesForTrainer,
+  setTodayRoutineChoice,
+} from '../lib/memberAgency.ts';
 
 const router = asyncRouter();
+
+interface MemberRoutineRow {
+  id: number;
+  name: string;
+  difficulty: string;
+  assigned_at: string;
+  start_date: string | null;
+  end_date: string | null;
+  scheduled_weekdays: number[] | null;
+  training_block_name: string | null;
+  training_block_objective: string | null;
+  exercise_count: number;
+}
+
+function resolvePrimaryMemberRoutine(
+  routines: MemberRoutineRow[],
+  todayChoiceId: number | null
+): MemberRoutineRow | null {
+  if (routines.length === 0) return null;
+  const byId = new Map(routines.map((r) => [r.id, r]));
+  if (todayChoiceId != null && byId.has(todayChoiceId)) {
+    return byId.get(todayChoiceId)!;
+  }
+  const todayWeekday = new Date().getDay() || 7;
+  const scheduledToday = routines.find(
+    (r) => !r.scheduled_weekdays?.length || r.scheduled_weekdays.includes(todayWeekday)
+  );
+  return scheduledToday ?? routines[0] ?? null;
+}
 
 export interface AdminStatsPayload {
   totalRevenue: number;
@@ -528,6 +562,8 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
     const staleCheckins = trainerExtras ? trainerExtras[5].rows : [];
     const recoveryAlerts = trainerExtras ? trainerExtras[6].rows : [];
     const remoteTrainingNow = trainerExtras ? trainerExtras[7].rows : [];
+    const memberChoices =
+      trainerId != null ? await listPendingMemberChoicesForTrainer(trainerId) : [];
 
     res.json({
       totalMembers: parseInt(totalMembers.rows[0]?.count || '0', 10),
@@ -545,11 +581,26 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
       recoveryAlerts,
       remoteTrainingNow,
       remoteActiveNow: remoteTrainingNow.length,
+      memberChoices,
       expiryAlertDays: alertDays,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';
     res.status(500).json({ error: message });
+  }
+});
+
+router.put('/member/today-routine', authorize(['member']), async (req: AuthRequest, res) => {
+  const routineId = parseInt(String(req.body?.routine_id ?? ''), 10);
+  if (!Number.isSafeInteger(routineId) || routineId <= 0) {
+    return res.status(400).json({ error: 'routine_id inválido' });
+  }
+  try {
+    await setTodayRoutineChoice(req.user!.id, routineId);
+    res.json({ success: true, routine_id: routineId });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(400).json({ error: message });
   }
 });
 
@@ -569,6 +620,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       memberProfile,
       completedTodayRows,
       activeSessionRows,
+      todayChoiceId,
     ] = await Promise.all([
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
@@ -644,6 +696,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
          ORDER BY ws.start_time DESC`,
         [userId]
       ),
+      getTodayRoutineChoice(userId),
     ]);
 
     const sub = subscription.rows[0] as
@@ -665,11 +718,16 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       );
     }
 
+    const routineRows = routines.rows as MemberRoutineRow[];
+    const primaryRoutine = resolvePrimaryMemberRoutine(routineRows, todayChoiceId);
+
     res.json({
       subscription: sub ?? null,
       remainingPercent,
-      primaryRoutine: routines.rows[0] ?? null,
-      assignedRoutinesCount: routines.rows.length,
+      primaryRoutine,
+      todayRoutineId: todayChoiceId,
+      assignedRoutines: routineRows,
+      assignedRoutinesCount: routineRows.length,
       pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
       lastWorkout: lastWorkout.rows[0] ?? null,
       expiryAlertDays,

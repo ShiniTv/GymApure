@@ -28,6 +28,7 @@ import {
 import { cn, formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { MemberHero } from '../../components/member/MemberHero';
+import { MemberTemplatesSection } from '../../components/member/MemberTemplatesSection';
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
 import { MemberRemoteTrainingCard } from '../../components/member/MemberRemoteTrainingCard';
 import { PushOnboardingCard } from '../../components/PushOnboardingCard';
@@ -127,6 +128,7 @@ export default function MemberDashboard() {
 
   const sub = memberStats?.subscription;
   const routine = memberStats?.primaryRoutine;
+  const assignedRoutines = memberStats?.assignedRoutines ?? [];
   const pending = memberStats?.pendingPayments ?? 0;
   const alertDays = memberStats?.expiryAlertDays ?? 7;
   const completedToday = new Set(memberStats?.completedRoutineIdsToday ?? []);
@@ -173,7 +175,11 @@ export default function MemberDashboard() {
         routineName={routine?.name}
         routineCompletedToday={primaryRoutineCompletedToday}
         routineInProgress={primaryRoutineInProgress}
+        assignedRoutines={assignedRoutines}
+        todayRoutineId={memberStats?.todayRoutineId}
       />
+
+      {!routine ? <MemberTemplatesSection className="shadow-none" /> : null}
 
       {pending > 0 && (
         <div className={cn(BANNER, 'border-warning/20 bg-warning/10')}>
@@ -270,13 +276,15 @@ export default function MemberDashboard() {
               <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
           ) : (
-            <Link to="/messages" className={MOBILE_LIST_ROW}>
+            <Link to="/routines?view=templates" className={MOBILE_LIST_ROW}>
               <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
                 <Dumbbell className="text-text-muted h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Sin rutina aún</p>
-                <p className="text-text-secondary text-small mt-0.5">Escribe a tu entrenador</p>
+                <p className="text-text-secondary text-small mt-0.5">
+                  Elige una plantilla para empezar
+                </p>
               </div>
               <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
             </Link>
@@ -382,10 +390,10 @@ export default function MemberDashboard() {
                 variant="motivational"
                 icon={Dumbbell}
                 title="Sin rutina asignada"
-                description="Tu entrenador te asignará un plan pronto. Mientras tanto, escríbele por mensajes."
+                description="Empieza con una plantilla del gym. Tu entrenador puede ajustarla cuando quiera."
                 action={
-                  <Button size="sm" onClick={() => navigate('/messages')}>
-                    Escribir a mi entrenador
+                  <Button size="sm" onClick={() => navigate('/routines?view=templates')}>
+                    Elegir plantilla
                   </Button>
                 }
               />

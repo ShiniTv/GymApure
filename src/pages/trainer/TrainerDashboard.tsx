@@ -469,13 +469,15 @@ export default function TrainerDashboard() {
     inactiveMembers.length === 0 &&
     todaysAppointments.length === 0;
 
+  const memberChoicesCount = stats?.memberChoices?.length ?? 0;
   const hasAttention =
     withoutRoutines > 0 ||
     withoutNutritionPlan > 0 ||
     withoutAssessmentCount > 0 ||
     staleCheckinsCount > 0 ||
     recoveryAlertsCount > 0 ||
-    expiringCount > 0;
+    expiringCount > 0 ||
+    memberChoicesCount > 0;
 
   if (isError) {
     return (
@@ -596,6 +598,15 @@ export default function TrainerDashboard() {
                 label="Recuperación"
                 count={recoveryAlertsCount}
                 tone="rose"
+              />
+            )}
+            {memberChoicesCount > 0 && (
+              <AttentionSummaryLink
+                to="/members?needs=choices"
+                icon={ClipboardCheck}
+                label="Elecciones del cliente"
+                count={memberChoicesCount}
+                tone="brand"
               />
             )}
             {expiringCount > 0 && (

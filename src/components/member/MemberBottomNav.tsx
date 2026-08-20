@@ -59,12 +59,15 @@ export function MemberBottomNav() {
   const moreSections = useMemo(() => groupMoreItems(MEMBER_MORE_ITEMS), []);
 
   const primaryRoutine = memberStats?.stats?.primaryRoutine;
+  const todayRoutineId =
+    memberStats?.stats?.todayRoutineId ?? memberStats?.stats?.primaryRoutine?.id ?? null;
+  const fabRoutineId = todayRoutineId ?? primaryRoutine?.id ?? null;
   const completedToday = new Set(memberStats?.stats?.completedRoutineIdsToday ?? []);
-  const primaryCompletedToday = primaryRoutine ? completedToday.has(primaryRoutine.id) : false;
-  const workoutHref = primaryRoutine ? `/workout/${primaryRoutine.id}` : '/routines';
+  const primaryCompletedToday = fabRoutineId != null ? completedToday.has(fabRoutineId) : false;
+  const workoutHref = fabRoutineId ? `/workout/${fabRoutineId}` : '/routines?tab=templates';
 
   const showWorkoutFab =
-    !!primaryRoutine?.id && isMemberFabRoute(location.pathname) && !primaryCompletedToday;
+    fabRoutineId != null && isMemberFabRoute(location.pathname) && !primaryCompletedToday;
 
   useEffect(() => {
     setMoreOpen(false);

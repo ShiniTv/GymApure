@@ -11,6 +11,7 @@ export const routineCreateSchema = z.object({
 export const routineUpdateSchema = z.object({
   name: z.string().trim().min(1, 'Nombre requerido').max(100),
   difficulty: z.enum(ROUTINE_DIFFICULTIES, { message: 'Dificultad inválida' }),
+  member_selectable: z.boolean().optional(),
 });
 
 export const assignRoutineSchema = z.object({

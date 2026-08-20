@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router';
 import { useEffect } from 'react';
 import { Button, Card } from '../ui';
 import { ProgressRing } from './ProgressRing';
+import { MemberTodayRoutinePicker } from './MemberTodayRoutinePicker';
 import { cn } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { apiFetch } from '../../lib/api';
+import type { TodayRoutineOption } from './MemberTodayRoutinePicker';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -24,6 +26,8 @@ interface MemberHeroProps {
   routineCompletedToday?: boolean;
   /** True when there is an open session for the primary routine. */
   routineInProgress?: boolean;
+  assignedRoutines?: TodayRoutineOption[];
+  todayRoutineId?: number | null;
   className?: string;
 }
 
@@ -36,6 +40,8 @@ export function MemberHero({
   routineName,
   routineCompletedToday = false,
   routineInProgress = false,
+  assignedRoutines = [],
+  todayRoutineId,
   className,
 }: MemberHeroProps) {
   const navigate = useNavigate();
@@ -62,7 +68,7 @@ export function MemberHero({
       ? 'Continuar entrenamiento'
       : routineId
         ? 'Entrenar ahora'
-        : 'Ver rutinas';
+        : 'Elegir plantilla';
 
   const statusLine = routineCompletedToday
     ? 'Completada hoy'
@@ -79,8 +85,19 @@ export function MemberHero({
             {firstName}
           </h2>
           <p className={cn(typography.pageSubtitle, 'truncate')}>
-            {routineName ? `Hoy toca: ${routineName}` : 'Tu entrenador te asignará rutinas pronto'}
+            {routineName
+              ? `Hoy toca: ${routineName}`
+              : 'Elige cómo entrenar hoy o empieza con una plantilla'}
           </p>
+
+          {assignedRoutines.length > 1 ? (
+            <MemberTodayRoutinePicker
+              className="mt-3"
+              compact
+              routines={assignedRoutines}
+              selectedId={todayRoutineId ?? routineId}
+            />
+          ) : null}
 
           {statusLine || workoutStreak > 0 ? (
             <p
@@ -122,7 +139,7 @@ export function MemberHero({
         size="sm"
         className="relative mt-3.5 w-full sm:mt-4 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
-        onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines')}
+        onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines?view=templates')}
         onMouseEnter={() => {
           if (canTrain && routineId) {
             void apiFetch(`/api/routines/${routineId}`).catch(() => undefined);

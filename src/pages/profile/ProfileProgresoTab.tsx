@@ -1,9 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { ChevronDown, Minus, Plus, Scale, TrendingDown, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { Button, Card, Spinner } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
+import { useMemberStatsOptional } from '../../context/MemberStatsContext';
+import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { Measurement, UserProfile, WorkoutSession } from '../../hooks/queries/useProfileQuery';
 import { StatMini } from './StatMini';
 import { heightCmNumber } from './utils';
@@ -45,6 +48,29 @@ export function ProfileProgresoTab({
   onHistoryOpenChange,
   onAddMeasurement,
 }: ProfileProgresoTabProps) {
+  const { user } = useAuth();
+  const memberStats = useMemberStatsOptional();
+  const [weeklyGoal, setWeeklyGoal] = useState(memberStats?.stats?.weeklyTrainingGoal ?? 5);
+  const [savingGoal, setSavingGoal] = useState(false);
+
+  const saveWeeklyGoal = async () => {
+    if (!user?.id) return;
+    const goal = Math.min(7, Math.max(1, weeklyGoal));
+    setSavingGoal(true);
+    try {
+      const res = await apiFetch(`/api/users/${user.id}/weekly-training-goal`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekly_training_goal: goal }),
+      });
+      const data = await parseJsonResponse<{ weekly_training_goal: number }>(res);
+      setWeeklyGoal(data.weekly_training_goal);
+      await memberStats?.refresh();
+    } finally {
+      setSavingGoal(false);
+    }
+  };
+
   if (progressLoading) {
     return (
       <div className="w-full space-y-3">
@@ -57,6 +83,50 @@ export function ProfileProgresoTab({
 
   return (
     <div className="w-full space-y-3">
+      <Card
+        padding="sm"
+        rounded="xl"
+        className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-text-secondary text-xs font-semibold tracking-wide uppercase">
+              Meta semanal
+            </p>
+            <p className="text-text mt-0.5 text-sm">Días que quieres entrenar por semana</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="border-border inline-flex h-9 w-9 items-center justify-center rounded-lg border"
+              onClick={() => setWeeklyGoal((g) => Math.max(1, g - 1))}
+              aria-label="Reducir meta"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="text-text min-w-[2rem] text-center text-lg font-bold tabular-nums">
+              {weeklyGoal}
+            </span>
+            <button
+              type="button"
+              className="border-border inline-flex h-9 w-9 items-center justify-center rounded-lg border"
+              onClick={() => setWeeklyGoal((g) => Math.min(7, g + 1))}
+              aria-label="Aumentar meta"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={savingGoal || weeklyGoal === (memberStats?.stats?.weeklyTrainingGoal ?? 5)}
+              onClick={() => void saveWeeklyGoal()}
+            >
+              {savingGoal ? 'Guardando…' : 'Guardar'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatMini
           label="Peso actual"

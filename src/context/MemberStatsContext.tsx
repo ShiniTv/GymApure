@@ -21,6 +21,12 @@ export interface MemberStats {
     training_block_name?: string | null;
     training_block_objective?: string | null;
   } | null;
+  todayRoutineId?: number | null;
+  assignedRoutines?: {
+    id: number;
+    name: string;
+    scheduled_weekdays?: number[] | null;
+  }[];
   assignedRoutinesCount: number;
   pendingPayments: number;
   lastWorkout: { routine_name: string; start_time: string } | null;

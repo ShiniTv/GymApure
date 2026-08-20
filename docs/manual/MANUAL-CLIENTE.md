@@ -62,7 +62,13 @@ Botón flotante central visible en **Rutinas**, **Biblioteca** y **Nutrición**.
 ### Ver rutina del día
 
 1. **Inicio** → tarjeta "Hoy toca: …" con nombre de rutina.
-2. O **Rutinas** → expande la rutina asignada.
+2. Si tienes varias rutinas activas, elige **Hoy hago…** (se recuerda solo para hoy).
+3. O **Rutinas** → expande la rutina asignada.
+
+### Sin rutina asignada
+
+1. **Inicio** o **Rutinas** → **Plantillas para empezar**.
+2. Toca una plantilla para asignártela y **Entrenar**; tu entrenador puede ajustarla después.
 
 ### Empezar entrenamiento
 
@@ -78,14 +84,17 @@ Botón flotante central visible en **Rutinas**, **Biblioteca** y **Nutrición**.
    - Registra kg y reps por serie.
    - Usa temporizador de descanso.
 3. **Finalizar entrenamiento** al terminar.
+4. Si hoy no puedes hacer un ejercicio: **Saltar** (dolor, equipo ocupado u otro) — queda registrado para tu entrenador.
+5. En la ficha de rutina puedes **Sustituir** un ejercicio por otro del mismo grupo muscular.
 
 Detalle: [RUTINAS-Y-ENTRENAMIENTO.md](../modulos/RUTINAS-Y-ENTRENAMIENTO.md).
 
 ### Consultar nutrición
 
 1. Tab **Nutrición** en bottom nav.
-2. Revisa el gauge de calorías y los anillos de proteína, carbos y grasas frente al plan de tu entrenador.
-3. **Registrar comida** (manual) o **Analizar foto** (estimación IA; revisa y ajusta antes de guardar).
+2. Si tu entrenador aún no personalizó el plan, verás un **plan sugerido del gym** para empezar a registrar.
+3. Revisa el gauge de calorías y los anillos de proteína, carbos y grasas frente al plan.
+4. **Registrar comida** (manual) o **Analizar foto** (estimación IA; revisa y ajusta antes de guardar).
 
 ### Registrar o ver pagos
 

@@ -11,6 +11,15 @@ import {
   routineUpdateSchema,
 } from '../lib/routineSchemas.ts';
 import { parseBooleanQuery, parsePaginationQuery } from '../lib/pagination.ts';
+import {
+  listSelectableTemplates,
+  recordMemberActivityEvent,
+  selfAssignTemplateRoutine,
+} from '../lib/memberAgency.ts';
+import {
+  notifyMemberExerciseSubstituted,
+  notifyMemberSelfAssignedTemplate,
+} from '../lib/chat/eventMessages.ts';
 
 const router = asyncRouter();
 
@@ -248,6 +257,155 @@ router.get('/assignments/all', authorize(['trainer', 'admin']), async (req: Auth
   }
 });
 
+async function assertCanModifyRoutineExercise(
+  req: AuthRequest,
+  routineId: number
+): Promise<{ ok: true; trainerId: number } | { ok: false; status: number; error: string }> {
+  const trainerId = await getRoutineTrainerId(routineId);
+  if (trainerId === null) {
+    return { ok: false, status: 404, error: 'Rutina no encontrada' };
+  }
+
+  if (req.user!.role === 'member') {
+    const assigned = await assertMemberAssigned(req.user!.id, routineId);
+    if (!assigned) {
+      return { ok: false, status: 403, error: 'Rutina no asignada' };
+    }
+    return { ok: true, trainerId };
+  }
+
+  if (!assertTrainerOwnsRoutine(req, trainerId)) {
+    return { ok: false, status: 403, error: 'No tienes permiso para modificar esta rutina' };
+  }
+  return { ok: true, trainerId };
+}
+
+async function performExerciseSubstitution(
+  req: AuthRequest,
+  routineId: number,
+  routineExerciseId: number,
+  exerciseId: number,
+  reason: string
+) {
+  const access = await assertCanModifyRoutineExercise(req, routineId);
+  if (!access.ok) {
+    return { status: access.status, body: { error: access.error } };
+  }
+
+  const replacement = await withTransaction(async (client: PoolClient) => {
+    const current = await client.query<{
+      exercise_id: number;
+      muscle_group: string;
+      exercise_name: string;
+    }>(
+      `SELECT re.exercise_id, e.muscle_group, e.name AS exercise_name
+       FROM routine_exercises re
+       JOIN exercises e ON e.id = re.exercise_id
+       WHERE re.id = $1 AND re.routine_id = $2`,
+      [routineExerciseId, routineId]
+    );
+    const source = current.rows[0];
+    if (!source) throw new Error('Ejercicio de rutina no encontrado');
+
+    const target = await client.query<{ id: number; name: string; muscle_group: string }>(
+      'SELECT id, name, muscle_group FROM exercises WHERE id = $1',
+      [exerciseId]
+    );
+    const targetExercise = target.rows[0];
+    if (!targetExercise) throw new Error('Ejercicio sustituto no encontrado');
+    if (targetExercise.id === source.exercise_id) {
+      throw new Error('Elige un ejercicio distinto');
+    }
+    if (targetExercise.muscle_group.toLowerCase() !== source.muscle_group.toLowerCase()) {
+      throw new Error('El sustituto debe trabajar el mismo grupo muscular');
+    }
+
+    await client.query('UPDATE routine_exercises SET exercise_id = $1 WHERE id = $2', [
+      targetExercise.id,
+      routineExerciseId,
+    ]);
+    await client.query(
+      `INSERT INTO routine_exercise_substitutions (
+         routine_exercise_id, previous_exercise_id, replacement_exercise_id, substituted_by, reason
+       ) VALUES ($1, $2, $3, $4, $5)`,
+      [routineExerciseId, source.exercise_id, targetExercise.id, req.user!.id, reason]
+    );
+
+    if (req.user!.role === 'member') {
+      await recordMemberActivityEvent({
+        memberId: req.user!.id,
+        trainerId: access.trainerId,
+        eventType: 'exercise_substituted',
+        routineId,
+        metadata: {
+          previous_exercise_id: source.exercise_id,
+          previous_name: source.exercise_name,
+          replacement_exercise_id: targetExercise.id,
+          replacement_name: targetExercise.name,
+          reason,
+        },
+      });
+    }
+
+    return {
+      exercise: targetExercise,
+      previousName: source.exercise_name,
+    };
+  });
+
+  if (req.user!.role === 'member') {
+    void notifyMemberExerciseSubstituted(
+      req.user!.id,
+      access.trainerId,
+      routineId,
+      replacement.previousName,
+      replacement.exercise.name,
+      reason
+    ).catch((err) => {
+      logger.error('Notify member substitute failed', { error: getErrorMessage(err) });
+    });
+  }
+
+  return { status: 200, body: { success: true, exercise: replacement.exercise } };
+}
+
+router.get('/templates', authorize(['member']), async (req: AuthRequest, res) => {
+  try {
+    const rows = await listSelectableTemplates(req.user!.id);
+    res.json(rows);
+  } catch (err: unknown) {
+    res.status(500).json({ error: getErrorMessage(err) });
+  }
+});
+
+router.post('/:id/self-assign', authorize(['member']), async (req: AuthRequest, res) => {
+  const templateId = parseInt(req.params.id, 10);
+  if (!Number.isSafeInteger(templateId) || templateId <= 0) {
+    return res.status(400).json({ error: 'ID de plantilla inválido' });
+  }
+
+  try {
+    const result = await selfAssignTemplateRoutine(req.user!.id, templateId);
+    void notifyMemberSelfAssignedTemplate(
+      req.user!.id,
+      result.trainerId,
+      result.routineName,
+      result.templateName
+    ).catch((err) => {
+      logger.error('Notify self-assign failed', { error: getErrorMessage(err) });
+    });
+    res.status(201).json({
+      success: true,
+      routine_id: result.routineId,
+      routine_name: result.routineName,
+    });
+  } catch (err: unknown) {
+    const message = getErrorMessage(err);
+    const status = message.includes('no encontrada') ? 404 : 400;
+    res.status(status).json({ error: message });
+  }
+});
+
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const routineResult = await query('SELECT * FROM routines WHERE id = $1', [req.params.id]);
@@ -356,7 +514,7 @@ router.post('/:id/clone', authorize(['trainer', 'admin']), async (req: AuthReque
 
 router.post(
   '/:id/exercises/:routineExerciseId/substitute',
-  authorize(['trainer', 'admin']),
+  authorize(['trainer', 'admin', 'member']),
   async (req: AuthRequest, res) => {
     const routineId = parseInt(req.params.id, 10);
     const routineExerciseId = parseInt(req.params.routineExerciseId, 10);
@@ -366,59 +524,15 @@ router.post(
     const parsed = substituteExerciseSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: formatZodError(parsed.error) });
 
-    const trainerId = await getRoutineTrainerId(routineId);
-    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
-    if (!assertTrainerOwnsRoutine(req, trainerId)) {
-      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
-    }
-
     try {
-      const replacement = await withTransaction(async (client: PoolClient) => {
-        const current = await client.query<{
-          exercise_id: number;
-          muscle_group: string;
-        }>(
-          `SELECT re.exercise_id, e.muscle_group
-           FROM routine_exercises re
-           JOIN exercises e ON e.id = re.exercise_id
-           WHERE re.id = $1 AND re.routine_id = $2`,
-          [routineExerciseId, routineId]
-        );
-        const source = current.rows[0];
-        if (!source) throw new Error('Ejercicio de rutina no encontrado');
-
-        const target = await client.query<{ id: number; name: string; muscle_group: string }>(
-          'SELECT id, name, muscle_group FROM exercises WHERE id = $1',
-          [parsed.data.exercise_id]
-        );
-        const targetExercise = target.rows[0];
-        if (!targetExercise) throw new Error('Ejercicio sustituto no encontrado');
-        if (targetExercise.id === source.exercise_id) {
-          throw new Error('Elige un ejercicio distinto');
-        }
-        if (targetExercise.muscle_group.toLowerCase() !== source.muscle_group.toLowerCase()) {
-          throw new Error('El sustituto debe trabajar el mismo grupo muscular');
-        }
-
-        await client.query('UPDATE routine_exercises SET exercise_id = $1 WHERE id = $2', [
-          targetExercise.id,
-          routineExerciseId,
-        ]);
-        await client.query(
-          `INSERT INTO routine_exercise_substitutions (
-             routine_exercise_id, previous_exercise_id, replacement_exercise_id, substituted_by, reason
-           ) VALUES ($1, $2, $3, $4, $5)`,
-          [
-            routineExerciseId,
-            source.exercise_id,
-            targetExercise.id,
-            req.user!.id,
-            parsed.data.reason,
-          ]
-        );
-        return targetExercise;
-      });
-      res.json({ success: true, exercise: replacement });
+      const result = await performExerciseSubstitution(
+        req,
+        routineId,
+        routineExerciseId,
+        parsed.data.exercise_id,
+        parsed.data.reason
+      );
+      res.status(result.status).json(result.body);
     } catch (err: unknown) {
       res.status(400).json({ error: getErrorMessage(err) });
     }
@@ -431,18 +545,25 @@ router.put('/:id', authorize(['trainer', 'admin']), async (req: AuthRequest, res
     return res.status(400).json({ error: formatZodError(parsed.error) });
   }
 
-  const { name, difficulty } = parsed.data;
+  const { name, difficulty, member_selectable } = parsed.data;
   const trainerId = await getRoutineTrainerId(req.params.id);
   if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
   if (!assertTrainerOwnsRoutine(req, trainerId)) {
     return res.status(403).json({ error: 'No tienes permiso para editar esta rutina' });
   }
   try {
-    await query('UPDATE routines SET name = $1, difficulty = $2 WHERE id = $3', [
-      name,
-      difficulty,
-      req.params.id,
-    ]);
+    if (member_selectable === undefined) {
+      await query('UPDATE routines SET name = $1, difficulty = $2 WHERE id = $3', [
+        name,
+        difficulty,
+        req.params.id,
+      ]);
+    } else {
+      await query(
+        'UPDATE routines SET name = $1, difficulty = $2, member_selectable = $3 WHERE id = $4',
+        [name, difficulty, member_selectable, req.params.id]
+      );
+    }
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: getErrorMessage(err) });

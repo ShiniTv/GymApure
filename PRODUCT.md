@@ -19,6 +19,8 @@ GymApure es el sistema operativo del gimnasio: membresías, acceso, entrenamient
 
 Éxito = el staff opera el día a día sin fricción y el miembro abre la app y entrena sin buscar dónde está el botón.
 
+**Principio de autonomía guiada:** el cliente elige y arranca (rutina de hoy, plantillas del gym, sustituciones); el entrenador coachea, revisa y ajusta — no prescribe cada detalle antes de que el miembro pueda actuar.
+
 ## Positioning
 
 Software de gym de barrio / cadena local con roles reales (member, trainer, reception, admin), datos en español (VE: cédula, tipo de cambio), y flujos de piso (check-in, workout activo, bottom nav) — no un clon de “fitness tracker” B2C.

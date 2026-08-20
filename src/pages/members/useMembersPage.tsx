@@ -221,7 +221,12 @@ export function useMembersPage() {
         ? trainerStats?.membersWithoutAssessment
         : needsFilter === 'checkin'
           ? trainerStats?.staleCheckins
-          : trainerStats?.recoveryAlerts;
+          : needsFilter === 'choices'
+            ? (trainerStats?.memberChoices ?? []).map((row) => ({
+                id: row.member_id,
+                full_name: row.member_name ?? `Miembro #${row.member_id}`,
+              }))
+            : trainerStats?.recoveryAlerts;
     return (rows ?? []).map((row) => row.id);
   }, [needsFilter, trainerStats]);
   const cohortReady = !needsFilter || !trainerStatsPending;
@@ -683,7 +688,7 @@ export function useMembersPage() {
             label: 'Asignar rutina',
             icon: CalendarClock,
             primary: true,
-            onClick: () => navigate(`/routines?view=calendar&assign=1&member=${member.id}`),
+            onClick: () => navigate(`/members/${member.id}/routines?assign=1`),
           });
           actions.push({
             key: 'routines',

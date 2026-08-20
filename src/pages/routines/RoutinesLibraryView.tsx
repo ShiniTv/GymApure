@@ -47,6 +47,7 @@ export interface RoutinesLibraryViewProps {
   onEditExercise: (exercise: RoutineExercise) => void;
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
   onStartWorkout?: (routineId: number) => void;
+  onSubstituteExercise?: (routineId: number, exercise: RoutineExercise) => void;
   completedRoutineIdsToday?: number[];
   activeRoutineIds?: number[];
 }
@@ -177,6 +178,7 @@ export function RoutinesLibraryView({
   onEditExercise,
   onDeleteExercise,
   onStartWorkout,
+  onSubstituteExercise,
   completedRoutineIdsToday = [],
   activeRoutineIds = [],
 }: RoutinesLibraryViewProps) {
@@ -230,7 +232,7 @@ export function RoutinesLibraryView({
             variant="motivational"
             icon={Dumbbell}
             title="Aún sin rutina"
-            description="Cuando tu entrenador te asigne una, aparecerá aquí lista para entrenar."
+            description="Ve a Plantillas para empezar por tu cuenta. Tu entrenador puede ajustarla después."
             className="border-0 bg-transparent shadow-none"
           />
         )}
@@ -605,20 +607,33 @@ export function RoutinesLibraryView({
                           {routine.exercises?.map((exercise) => (
                             <div
                               key={exercise.routine_exercise_id}
-                              className="border-border/60 border-b px-0.5 py-2 last:border-0"
+                              className="border-border/60 flex items-start justify-between gap-2 border-b px-0.5 py-2 last:border-0"
                             >
-                              <div className="flex items-baseline justify-between gap-2">
-                                <h5 className="text-text truncate text-sm font-medium">
-                                  {exercise.name}
-                                </h5>
-                                <p className="text-small text-text-muted shrink-0 tabular-nums">
-                                  {exercise.sets}×{exercise.reps}
+                              <div className="min-w-0">
+                                <div className="flex items-baseline justify-between gap-2">
+                                  <h5 className="text-text truncate text-sm font-medium">
+                                    {exercise.name}
+                                  </h5>
+                                  <p className="text-small text-text-muted shrink-0 tabular-nums">
+                                    {exercise.sets}×{exercise.reps}
+                                  </p>
+                                </div>
+                                <p className="text-small text-text-muted mt-0.5 capitalize">
+                                  {exercise.muscle_group}
+                                  {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
                                 </p>
                               </div>
-                              <p className="text-small text-text-muted mt-0.5 capitalize">
-                                {exercise.muscle_group}
-                                {exercise.rest_seconds > 0 ? ` · ${exercise.rest_seconds}s` : ''}
-                              </p>
+                              {onSubstituteExercise ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 shrink-0 px-2 text-xs"
+                                  onClick={() => onSubstituteExercise(routine.id, exercise)}
+                                >
+                                  Sustituir
+                                </Button>
+                              ) : null}
                             </div>
                           ))}
                           {(!routine.exercises || routine.exercises.length === 0) && (

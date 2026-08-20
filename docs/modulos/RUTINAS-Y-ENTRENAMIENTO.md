@@ -37,8 +37,21 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 ## Flujo: miembro inicia entrenamiento
 
 1. **Inicio** o **Rutinas** → expande rutina → **Empezar entrenamiento**.
-2. También: FAB central "Entrenar" en `/routines`, `/exercises`, `/nutrition` (no en Inicio).
-3. Redirige a `/workout/:id`.
+2. Si no tiene rutina: **Plantillas para empezar** → auto-asignación → **Entrenar**.
+3. Con varias rutinas activas: selector **Hoy hago…** (persiste solo el día).
+4. También: FAB central "Entrenar" en `/routines`, `/exercises`, `/nutrition` (no en Inicio).
+5. Redirige a `/workout/:id`.
+
+### Autonomía guiada (miembro)
+
+| Acción                 | API / UI                                                                   |
+| ---------------------- | -------------------------------------------------------------------------- |
+| Elegir rutina de hoy   | `PUT /api/stats/member/today-routine`                                      |
+| Auto-asignar plantilla | `POST /api/routines/:id/self-assign` (solo `member_selectable`)            |
+| Sustituir ejercicio    | `POST /api/routines/:id/exercises/:reId/substitute` (mismo grupo muscular) |
+| Saltar en sesión       | `POST /api/workouts/sessions/:id/skip-exercise`                            |
+
+El entrenador recibe aviso in-app de auto-asignación, sustitución y saltos (`member_activity_events`).
 
 ### Durante la sesión
 

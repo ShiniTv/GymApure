@@ -12,6 +12,14 @@ import {
   cancelWorkoutSchema,
 } from './workoutSchemas.ts';
 import { isBetterSet, pickBestSet } from '../lib/exerciseRecords.ts';
+import { z } from 'zod';
+import { recordMemberActivityEvent } from '../lib/memberAgency.ts';
+
+const skipExerciseSchema = z.object({
+  exercise_id: z.coerce.number().int().positive(),
+  reason: z.enum(['pain', 'equipment_busy', 'other']),
+  note: z.string().trim().max(300).optional(),
+});
 
 const router = asyncRouter();
 
@@ -719,6 +727,64 @@ router.get(
         total_volume_kg: Math.round(totalVolumeKg),
       },
     });
+  })
+);
+
+router.post(
+  '/sessions/:sessionId/skip-exercise',
+  authorize(['member']),
+  requireWorkoutSessionAccess,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const sessionId = parseInt(req.params.sessionId, 10);
+    if (Number.isNaN(sessionId)) {
+      res.status(400).json({ error: 'ID de sesión inválido' });
+      return;
+    }
+    const parsed = skipExerciseSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+      return;
+    }
+
+    const session = await query<{ user_id: number; routine_id: number }>(
+      `SELECT user_id, routine_id FROM workout_sessions WHERE id = $1 AND end_time IS NULL`,
+      [sessionId]
+    );
+    const row = session.rows[0];
+    if (row?.user_id !== req.user!.id) {
+      res.status(404).json({ error: 'Sesión no encontrada' });
+      return;
+    }
+
+    const trainer = await query<{ trainer_id: number }>(
+      'SELECT trainer_id FROM routines WHERE id = $1',
+      [row.routine_id]
+    );
+    const trainerId = trainer.rows[0]?.trainer_id;
+    if (!trainerId) {
+      res.status(400).json({ error: 'Rutina inválida' });
+      return;
+    }
+
+    const exercise = await query<{ name: string }>('SELECT name FROM exercises WHERE id = $1', [
+      parsed.data.exercise_id,
+    ]);
+
+    await recordMemberActivityEvent({
+      memberId: req.user!.id,
+      trainerId,
+      eventType: 'exercise_skipped',
+      routineId: row.routine_id,
+      metadata: {
+        session_id: sessionId,
+        exercise_id: parsed.data.exercise_id,
+        exercise_name: exercise.rows[0]?.name ?? null,
+        reason: parsed.data.reason,
+        note: parsed.data.note ?? null,
+      },
+    });
+
+    res.json({ success: true });
   })
 );
 

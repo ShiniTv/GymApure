@@ -33,6 +33,8 @@ export interface NutritionPlan {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  /** Plan orientativo del gym cuando el coach aún no personaliza. */
+  is_suggested?: boolean;
 }
 
 export interface NutritionLogEntry {

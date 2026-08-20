@@ -51,6 +51,15 @@ export interface TrainerStatsResponse {
     discomfort: number;
     energy: number;
   }[];
+  memberChoices?: {
+    id: number;
+    member_id: number;
+    event_type: string;
+    routine_id: number | null;
+    metadata: Record<string, unknown>;
+    created_at: string;
+    member_name?: string;
+  }[];
   expiryAlertDays?: number;
 }
 

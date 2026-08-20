@@ -19,6 +19,7 @@ import { foodImageUpload } from '../lib/uploadStorage.ts';
 import { assertImageUpload } from '../lib/uploadValidation.ts';
 import { foodAnalyzeRateLimiter, uploadRateLimiter } from './middleware/rateLimit.ts';
 import { analyzeFoodImage, FoodVisionError } from '../lib/foodVision.ts';
+import { getSuggestedNutritionPlanDefaults } from '../lib/memberAgency.ts';
 const router = asyncRouter();
 
 const mealTypeSchema = z.enum(['breakfast', 'lunch', 'dinner', 'snack']);
@@ -141,7 +142,7 @@ function trainerCanEditPlan(user: AuthRequest['user']): boolean {
 router.get(
   '/users/:id/nutrition/plan',
   requireMemberAccess('id'),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: AuthRequest, res) => {
     const userId = parseUserId(req.params.id);
     if (userId === null) {
       res.status(400).json({ error: 'ID inválido' });
@@ -154,6 +155,23 @@ router.get(
     );
 
     if (!rows[0]) {
+      if (req.user!.role === 'member' && userId === req.user!.id) {
+        const suggested = getSuggestedNutritionPlanDefaults();
+        res.json({
+          id: 0,
+          user_id: userId,
+          trainer_id: 0,
+          training_block_id: null,
+          ...suggested,
+          is_suggested: true,
+          start_date: null,
+          end_date: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        return;
+      }
       res.status(404).json({ error: 'Sin plan nutricional' });
       return;
     }

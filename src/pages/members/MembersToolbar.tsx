@@ -195,6 +195,7 @@ export function MembersToolbar({
                           { value: 'assessment', label: 'Sin evaluación' },
                           { value: 'checkin', label: 'Check-in' },
                           { value: 'recovery', label: 'Recuperación' },
+                          { value: 'choices', label: 'Elecciones del cliente' },
                         ]
                       : [
                           { value: '', label: 'Todos' },

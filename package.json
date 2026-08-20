@@ -46,6 +46,7 @@
     "pr:open": "powershell -ExecutionPolicy Bypass -File scripts/deploy/open-github-pr.ps1",
     "test:trainer-shifts": "tsx scripts/test/test-trainer-shifts.ts",
     "test:trainer-auth": "tsx scripts/test/test-trainer-auth.ts",
+    "test:member-agency": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-member-agency.ts",
     "test:routine-exercises": "tsx scripts/test/test-routine-exercises.ts",
     "test:exercise-records": "tsx scripts/test/test-exercise-records.ts",
     "db:migrate": "tsx scripts/db/apply-migrations.ts",

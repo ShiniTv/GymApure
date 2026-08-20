@@ -48,7 +48,14 @@ Al abrir drawer lateral: footer pegado al fondo; bottom nav se oculta.
 ### Ver mis miembros
 
 1. **Miembros** → lista filtrada a asignados.
-2. Clic en miembro → ficha con rutinas, nutrición, historial.
+2. Filtros de atención: sin evaluación, check-in, recuperación, **elecciones del cliente**.
+3. Clic en miembro → hub 1:1 con pestañas **Plan**, **Coaching**, **Progreso** (+ Más: perfil, nutrición, marcas).
+4. **Asignar rutina** desde la ficha (`?assign=1`) sin pasar obligatoriamente por el calendario.
+
+### Revisar elecciones del cliente
+
+1. Panel → **Requiere atención** → **Elecciones del cliente** (auto-asignó plantilla, sustituyó ejercicio, saltó en sesión).
+2. Abre el hub del miembro en pestaña **Plan** para ajustar o responder.
 
 ### Crear rutina
 

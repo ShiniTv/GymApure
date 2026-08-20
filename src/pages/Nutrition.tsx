@@ -1,17 +1,6 @@
 import { useState, FormEvent, useRef } from 'react';
-import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import {
-  UtensilsCrossed,
-  Plus,
-  Trash2,
-  Pencil,
-  MessageSquare,
-  Beef,
-  Wheat,
-  Droplet,
-  Camera,
-} from 'lucide-react';
+import { UtensilsCrossed, Plus, Trash2, Pencil, Beef, Wheat, Droplet, Camera } from 'lucide-react';
 import {
   Button,
   Card,
@@ -206,6 +195,8 @@ export default function Nutrition() {
     );
   }
 
+  const isSuggestedPlan = plan?.is_suggested === true;
+
   if (!plan) {
     return (
       <div className="page-stack-tight mx-auto w-full max-w-4xl">
@@ -222,15 +213,7 @@ export default function Nutrition() {
         <EmptyState
           icon={UtensilsCrossed}
           title="Sin plan nutricional"
-          description="Tu entrenador aún no ha definido tu plan. Cuando lo haga, podrás registrar comidas y ver tu progreso."
-          action={
-            <Link to="/messages">
-              <Button variant="secondary">
-                <MessageSquare className="h-4 w-4" />
-                Contactar al gym
-              </Button>
-            </Link>
-          }
+          description="Tu entrenador aún no ha definido tu plan."
         />
       </div>
     );
@@ -270,6 +253,16 @@ export default function Nutrition() {
           </div>
         }
       />
+
+      {isSuggestedPlan ? (
+        <div
+          className="border-brand/25 bg-brand/5 text-text-secondary rounded-xl border px-3 py-2.5 text-sm leading-snug"
+          role="status"
+        >
+          <strong className="text-text font-semibold">Plan sugerido del gym.</strong>{' '}
+          {plan.notes ?? 'Puedes registrar comidas ya; tu entrenador puede personalizarlo después.'}
+        </div>
+      ) : null}
 
       <WeekDateStrip
         selectedDate={selectedDate}

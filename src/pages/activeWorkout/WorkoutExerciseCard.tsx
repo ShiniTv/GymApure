@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
-import { BookOpen, CheckCircle, Edit2, Plus, Trash2, Video } from 'lucide-react';
+import { BookOpen, CheckCircle, Edit2, Plus, SkipForward, Trash2, Video } from 'lucide-react';
 import { Collapse, Input } from '../../components/ui';
 import { formatMuscleGroupLabel } from '../../lib/exerciseMuscleGroups';
 import { cn } from '../../lib/utils';
@@ -34,6 +34,7 @@ export function WorkoutExerciseCard({
   onToggleSetComplete,
   onAddSet,
   onRemoveLastSet,
+  onSkip,
 }: {
   exercise: Exercise;
   index: number;
@@ -47,6 +48,7 @@ export function WorkoutExerciseCard({
   onToggleSetComplete: (setNum: number) => void;
   onAddSet: () => void;
   onRemoveLastSet: () => void;
+  onSkip?: () => void;
 }) {
   const load = prescriptionLoad(exercise.set_prescription);
   const effort = prescriptionEffort(exercise.set_prescription);
@@ -91,6 +93,17 @@ export function WorkoutExerciseCard({
             >
               <CheckCircle className="h-4 w-4" />
             </button>
+            {onSkip && !completed ? (
+              <button
+                type="button"
+                onClick={onSkip}
+                className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+                aria-label={`Saltar ${exercise.name}`}
+                title="Saltar hoy"
+              >
+                <SkipForward className="h-4 w-4" />
+              </button>
+            ) : null}
           </div>
           <p className="text-text-secondary mt-1 text-xs font-medium sm:text-sm">
             {formatMuscleGroupLabel(exercise.muscle_group)} · Descanso: {exercise.rest_seconds}s

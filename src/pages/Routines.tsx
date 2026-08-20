@@ -59,6 +59,10 @@ import {
   defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
 import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
+import { MemberTemplatesSection } from '../components/member/MemberTemplatesSection';
+import { MemberTodayRoutinePicker } from '../components/member/MemberTodayRoutinePicker';
+import { MemberSubstituteExerciseModal } from '../components/member/MemberSubstituteExerciseModal';
+import { useSubstituteRoutineExerciseMutation } from '../hooks/queries/useMemberAgencyQuery';
 
 type MemberRoutineRow = Routine & { start_date?: string | null; end_date?: string | null };
 
@@ -82,6 +86,7 @@ function getMemberRoutineStatus(
 export default function Routines() {
   const [searchParams, setSearchParams] = useSearchParams();
   const viewFromUrl = searchParams.get('view');
+  const showMemberTemplates = viewFromUrl === 'templates';
   const initialView: RoutinesView =
     viewFromUrl === 'assignments' || viewFromUrl === 'calendar' ? viewFromUrl : 'library';
 
@@ -121,6 +126,14 @@ export default function Routines() {
   const [deletingExercise, setDeletingExercise] = useState(false);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
   const [editExerciseError, setEditExerciseError] = useState<string | null>(null);
+  const [substituteTarget, setSubstituteTarget] = useState<{
+    routineId: number;
+    exercise: RoutineExercise;
+  } | null>(null);
+  const [substituteExerciseId, setSubstituteExerciseId] = useState('');
+  const [substituteReason, setSubstituteReason] = useState('');
+
+  const substituteMutation = useSubstituteRoutineExerciseMutation();
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -147,7 +160,7 @@ export default function Routines() {
     error: membersQueryError,
   } = useMemberOptionsQuery(!isMember && !!user);
   const { data: exercisesCatalog = [], isPending: exercisesCatalogLoading } =
-    useExercisesCatalogQuery(!isMember && !!user);
+    useExercisesCatalogQuery(!!user);
   const { data: assignments = [], isPending: loadingAssignments } =
     useRoutineAssignmentsQuery(isStaffRoutines);
   const { data: allTrainers = [] } = useTrainersQuery({}, isStaffRoutines);
@@ -483,6 +496,25 @@ export default function Routines() {
     navigate(`/workout/${routineId}`);
   };
 
+  const handleMemberSubstitute = async () => {
+    if (!substituteTarget || !substituteExerciseId || substituteReason.trim().length < 2) return;
+    try {
+      await substituteMutation.mutateAsync({
+        routineId: substituteTarget.routineId,
+        routineExerciseId: substituteTarget.exercise.routine_exercise_id,
+        exercise_id: Number(substituteExerciseId),
+        reason: substituteReason.trim(),
+      });
+      await refreshRoutineExercises(substituteTarget.routineId);
+      setSubstituteTarget(null);
+      setSubstituteExerciseId('');
+      setSubstituteReason('');
+      toast?.success('Ejercicio sustituido');
+    } catch (err) {
+      toast?.error(err instanceof Error ? err.message : 'No se pudo sustituir el ejercicio');
+    }
+  };
+
   const toggleExpandRoutine = async (routineId: number) => {
     if (expandedRoutineId === routineId) {
       setExpandedRoutineId(null);
@@ -645,7 +677,9 @@ export default function Routines() {
             }
             subtitle={
               user?.role === 'member'
-                ? 'Asignadas por tu entrenador'
+                ? showMemberTemplates
+                  ? 'Plantillas para empezar por tu cuenta'
+                  : 'Tus rutinas y elección del día'
                 : view === 'assignments'
                   ? (() => {
                       const active = assignments.filter((m) => m.routines && m.routines.length > 0);
@@ -801,66 +835,121 @@ export default function Routines() {
             }))}
           />
 
-          {view === 'library' ? (
-            <RoutinesLibraryView
-              loadingRoutines={loadingRoutines}
-              routines={routines}
-              userRole={user?.role}
-              expandedRoutineId={expandedRoutineId}
-              onRoutineCardClick={handleRoutineCardClick}
-              onToggleExpandRoutine={toggleExpandRoutine}
-              onEditRoutine={setEditingRoutine}
-              onDeleteRoutine={(routine) => {
-                setDeleteRoutineError(null);
-                setDeleteRoutineTarget(routine);
+          <MemberSubstituteExerciseModal
+            open={!!substituteTarget}
+            exerciseName={substituteTarget?.exercise.name ?? ''}
+            muscleGroup={substituteTarget?.exercise.muscle_group ?? ''}
+            exercises={availableExercises}
+            selectedExerciseId={substituteExerciseId}
+            reason={substituteReason}
+            saving={substituteMutation.isPending}
+            onClose={() => setSubstituteTarget(null)}
+            onExerciseChange={setSubstituteExerciseId}
+            onReasonChange={setSubstituteReason}
+            onConfirm={() => void handleMemberSubstitute()}
+          />
+
+          {isMember ? (
+            <SegmentedControl
+              variant="compact"
+              layout="wrap"
+              className="w-fit max-w-full"
+              value={showMemberTemplates ? 'templates' : 'assigned'}
+              onChange={(next) => {
+                if (next === 'templates') setSearchParams({ view: 'templates' });
+                else setSearchParams({});
               }}
-              onCreateRoutine={() => {
-                setNewRoutine({ name: '', difficulty: 'Beginner', clone_from_id: '' });
-                setIsCreating(true);
-              }}
-              onCreateFromTemplate={() => {
-                setNewRoutine({
-                  name: '',
-                  difficulty: 'Beginner',
-                  clone_from_id: routines[0] ? String(routines[0].id) : '',
-                });
-                setIsCreating(true);
-              }}
-              onCloneRoutine={(routine) => {
-                void handleCloneRoutine(routine);
-              }}
-              cloningRoutineId={cloningRoutineId}
-              onAddExercise={(routineId) => {
-                setExpandedRoutineId(routineId);
-                setAddExerciseError(null);
-                if (pendingAddExerciseId != null) {
-                  setNewExercise((prev) => ({
-                    ...prev,
-                    exercise_id: String(pendingAddExerciseId),
-                  }));
-                  setPendingAddExerciseId(null);
-                }
-                setIsAddingExercise(true);
-              }}
-              onInlineUpdate={handleInlineUpdate}
-              onEditExercise={(exercise) => {
-                setEditExerciseError(null);
-                setEditingExercise(exercise);
-                setIsEditingExercise(true);
-              }}
-              onDeleteExercise={(routineId, exercise) => {
-                setDeleteExerciseTarget({ routineId, exercise });
-              }}
-              onStartWorkout={handleStartWorkout}
-              completedRoutineIdsToday={
-                isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
-              }
-              activeRoutineIds={
-                isMember
-                  ? (memberStatsCtx?.stats?.activeSessions?.map((s) => s.routine_id) ?? [])
-                  : undefined
+              options={[
+                { value: 'assigned', label: 'Mis rutinas' },
+                { value: 'templates', label: 'Plantillas' },
+              ]}
+            />
+          ) : null}
+
+          {isMember &&
+          !showMemberTemplates &&
+          (memberStatsCtx?.stats?.assignedRoutines?.length ?? 0) > 1 ? (
+            <MemberTodayRoutinePicker
+              routines={memberStatsCtx?.stats?.assignedRoutines ?? []}
+              selectedId={
+                memberStatsCtx?.stats?.todayRoutineId ?? memberStatsCtx?.stats?.primaryRoutine?.id
               }
             />
+          ) : null}
+
+          {view === 'library' ? (
+            showMemberTemplates && isMember ? (
+              <MemberTemplatesSection />
+            ) : (
+              <RoutinesLibraryView
+                loadingRoutines={loadingRoutines}
+                routines={routines}
+                userRole={user?.role}
+                expandedRoutineId={expandedRoutineId}
+                onRoutineCardClick={handleRoutineCardClick}
+                onToggleExpandRoutine={toggleExpandRoutine}
+                onEditRoutine={setEditingRoutine}
+                onDeleteRoutine={(routine) => {
+                  setDeleteRoutineError(null);
+                  setDeleteRoutineTarget(routine);
+                }}
+                onCreateRoutine={() => {
+                  setNewRoutine({ name: '', difficulty: 'Beginner', clone_from_id: '' });
+                  setIsCreating(true);
+                }}
+                onCreateFromTemplate={() => {
+                  setNewRoutine({
+                    name: '',
+                    difficulty: 'Beginner',
+                    clone_from_id: routines[0] ? String(routines[0].id) : '',
+                  });
+                  setIsCreating(true);
+                }}
+                onCloneRoutine={(routine) => {
+                  void handleCloneRoutine(routine);
+                }}
+                cloningRoutineId={cloningRoutineId}
+                onAddExercise={(routineId) => {
+                  setExpandedRoutineId(routineId);
+                  setAddExerciseError(null);
+                  if (pendingAddExerciseId != null) {
+                    setNewExercise((prev) => ({
+                      ...prev,
+                      exercise_id: String(pendingAddExerciseId),
+                    }));
+                    setPendingAddExerciseId(null);
+                  }
+                  setIsAddingExercise(true);
+                }}
+                onInlineUpdate={handleInlineUpdate}
+                onEditExercise={(exercise) => {
+                  setEditExerciseError(null);
+                  setEditingExercise(exercise);
+                  setIsEditingExercise(true);
+                }}
+                onDeleteExercise={(routineId, exercise) => {
+                  setDeleteExerciseTarget({ routineId, exercise });
+                }}
+                onStartWorkout={handleStartWorkout}
+                onSubstituteExercise={
+                  isMember
+                    ? (routineId, exercise) => {
+                        setSubstituteTarget({ routineId, exercise });
+                        setSubstituteExerciseId('');
+                        setSubstituteReason('');
+                      }
+                    : undefined
+                }
+                completedRoutineIdsToday={
+                  isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
+                }
+                activeRoutineIds={
+                  isMember
+                    ? (memberStatsCtx?.stats?.activeSessions?.map((s) => s.routine_id) ?? [])
+                    : undefined
+                }
+              />
+            )
           ) : view === 'calendar' ? (
             loadingAssignments ? (
               <CalendarViewSkeleton />

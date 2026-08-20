@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { ApiError, isNetworkError, toDisplayErrorMessage } from '../../lib/api';
+import {
+  ApiError,
+  apiFetch,
+  isNetworkError,
+  parseJsonResponse,
+  toDisplayErrorMessage,
+} from '../../lib/api';
 import { useParams, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { clientLogger } from '../../lib/clientLogger';
@@ -34,6 +40,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { defaultRoutineExerciseForm } from './AddExerciseModal';
 import { useRestTimer } from './useRestTimer';
 import type { WorkoutLogEntry } from './types';
+import type { SkipExerciseReason } from './SkipExerciseModal';
 
 type Routine = WorkoutRoutine;
 
@@ -108,9 +115,14 @@ export function useActiveWorkoutPage() {
   const [isAddingExercise, setIsAddingExercise] = useState(false);
   const [newExercise, setNewExercise] = useState(defaultRoutineExerciseForm);
   const [addExerciseError, setAddExerciseError] = useState<string | null>(null);
+  const [skipTarget, setSkipTarget] = useState<{ id: number; name: string } | null>(null);
+  const [skipReason, setSkipReason] = useState<SkipExerciseReason>('equipment_busy');
+  const [skipNote, setSkipNote] = useState('');
+  const [skipSaving, setSkipSaving] = useState(false);
+  const [skipError, setSkipError] = useState<string | null>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const { data: availableExercises = [], isPending: exercisesCatalogLoading } =
-    useExercisesCatalogQuery(true);
+    useExercisesCatalogQuery(user?.role !== 'member');
 
   useEffect(() => {
     if (routineFromQuery) {
@@ -642,8 +654,46 @@ export function useActiveWorkoutPage() {
     return sum + weight * reps;
   }, 0);
 
+  const openSkipExercise = (exercise: { id: number; name: string }) => {
+    setSkipTarget(exercise);
+    setSkipReason('equipment_busy');
+    setSkipNote('');
+    setSkipError(null);
+  };
+
+  const confirmSkipExercise = async () => {
+    if (!skipTarget || !sessionId) return;
+    setSkipSaving(true);
+    setSkipError(null);
+    try {
+      const res = await apiFetch(`/api/workouts/sessions/${sessionId}/skip-exercise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          exercise_id: skipTarget.id,
+          reason: skipReason,
+          note: skipNote.trim() || undefined,
+        }),
+      });
+      await parseJsonResponse(res);
+      setCompletedExercises((prev) => ({ ...prev, [skipTarget.id]: true }));
+      hapticSuccess();
+      setSkipTarget(null);
+      toast?.success('Ejercicio saltado');
+      void memberStatsCtx?.refresh();
+    } catch (err) {
+      setSkipError(err instanceof Error ? err.message : 'No se pudo saltar el ejercicio');
+    } finally {
+      setSkipSaving(false);
+    }
+  };
+
+  const isMember = user?.role === 'member';
+
   return {
     navigate,
+    user,
+    isMember,
     routine,
     loading,
     fetchError,
@@ -701,5 +751,15 @@ export function useActiveWorkoutPage() {
     handleRemoveLastSet,
     confirmFinish,
     confirmResetProgress,
+    skipTarget,
+    setSkipTarget,
+    skipReason,
+    setSkipReason,
+    skipNote,
+    setSkipNote,
+    skipSaving,
+    skipError,
+    openSkipExercise,
+    confirmSkipExercise,
   };
 }

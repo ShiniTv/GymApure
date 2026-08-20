@@ -17,6 +17,7 @@ export function ActiveWorkoutExerciseList({
   onToggleSetComplete,
   onAddSet,
   onRemoveLastSet,
+  onSkipExercise,
 }: {
   exercises: Exercise[];
   isMobileFocus: boolean;
@@ -35,6 +36,7 @@ export function ActiveWorkoutExerciseList({
   onToggleSetComplete: (exerciseId: number, setNum: number) => void;
   onAddSet: (exerciseId: number) => void;
   onRemoveLastSet: (exerciseId: number) => void;
+  onSkipExercise?: (exercise: Exercise) => void;
 }) {
   return (
     <div className="page-stack-tight">
@@ -53,6 +55,7 @@ export function ActiveWorkoutExerciseList({
           onToggleSetComplete={(setNum) => onToggleSetComplete(exercise.id, setNum)}
           onAddSet={() => onAddSet(exercise.id)}
           onRemoveLastSet={() => onRemoveLastSet(exercise.id)}
+          onSkip={onSkipExercise ? () => onSkipExercise(exercise) : undefined}
         />
       ))}
     </div>
