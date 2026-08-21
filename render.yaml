@@ -3,7 +3,8 @@
 #
 # Blueprint Sync crea caribean-gym-kv e inyecta REDIS_URL.
 # Tras Sync, configura en Dashboard (obligatorio ops):
-#   DATABASE_SSL_CA (PEM inline o ruta), SENTRY_DSN, VITE_SENTRY_DSN, SMTP_*
+#   DATABASE_SSL_CA (PEM inline o ruta), SENTRY_DSN, VITE_SENTRY_DSN, SMTP_*,
+#   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, MFA_ENCRYPTION_KEY
 #
 # Antes del primer deploy:
 #   1. Crear proyecto Supabase de producción (separado de dev)
@@ -72,6 +73,10 @@ services:
       - key: SMTP_FROM
         sync: false
       - key: VAPID_SUBJECT
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
         sync: false
       - key: ADMIN_NOTIFY_EMAILS
         sync: false
