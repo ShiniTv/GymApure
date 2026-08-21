@@ -219,11 +219,9 @@ export default function AdminDashboard() {
       <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
         <StaggerItem>
           <StatCard
-            minimal
             title="Ingresos (mes)"
             value={formatMoney(revenueThisMonth)}
             icon={DollarSign}
-            color="emerald"
             trend={monthTrend.label}
             trendTone={monthTrend.tone}
             to="/payments"
@@ -231,21 +229,17 @@ export default function AdminDashboard() {
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            minimal
             title="Activas"
             value={stats?.activeSubscriptions || 0}
             icon={Activity}
-            color="blue"
             to="/memberships"
           />
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            minimal
             title="Accesos hoy"
             value={stats?.todayCheckIns || 0}
             icon={Clock}
-            color="emerald"
             trend={checkInTrend.label}
             trendTone={checkInTrend.tone}
             to="/attendance"
@@ -253,21 +247,21 @@ export default function AdminDashboard() {
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            minimal
             title={`Por vencer (${alertDays}d)`}
             value={expiringSoon}
             icon={CalendarClock}
+            withIcon={expiringSoon > 0}
             color="orange"
             to="/members?expiring=true"
-            className={expiringSoon > 0 ? 'border-orange-500/40' : undefined}
+            className={expiringSoon > 0 ? 'border-warning/40' : undefined}
           />
         </StaggerItem>
       </StaggerContainer>
 
       {totalRevenue > 0 && (
-        <p className="px-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted px-0.5 text-[10px]">
           Ingresos acumulados{' '}
-          <span className="font-semibold text-zinc-700 tabular-nums dark:text-zinc-300">
+          <span className="text-text-secondary font-semibold tabular-nums">
             {formatMoney(totalRevenue)}
           </span>
         </p>

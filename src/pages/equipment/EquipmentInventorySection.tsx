@@ -247,7 +247,7 @@ export function EquipmentInventorySection({
               size="sm"
               className={cn(
                 'h-9 gap-1.5 px-2.5',
-                filtersOpen && 'bg-zinc-100 dark:bg-zinc-800',
+                filtersOpen && 'bg-surface-raised',
                 activeFilterCount > 0 && 'text-brand'
               )}
               onClick={() => onFiltersOpenChange(!filtersOpen)}
@@ -280,11 +280,7 @@ export function EquipmentInventorySection({
         </div>
 
         {filtersOpen && (
-          <Card
-            padding="sm"
-            rounded="xl"
-            className="space-y-3 border-zinc-200/70 bg-white dark:border-zinc-800/80 dark:bg-zinc-900/50"
-          >
+          <Card padding="sm" rounded="xl" className="border-border/80 bg-surface space-y-3">
             <div className="grid gap-3 lg:grid-cols-2">
               {isAdmin && (
                 <FilterChips

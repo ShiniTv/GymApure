@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, SlidersHorizontal } from 'lucide-react';
 import { formatMoney } from '../../lib/utils';
 import {
   Button,
@@ -31,6 +32,8 @@ export interface PaymentsToolbarProps {
   onOpenRegister: () => void;
 }
 
+const STAT_TILE = 'border-border/80 bg-surface rounded-xl border px-3 py-2.5';
+
 export function PaymentsToolbar({
   isMember,
   isStaffPayment,
@@ -46,6 +49,9 @@ export function PaymentsToolbar({
   onClearStatusFilter,
   onOpenRegister,
 }: PaymentsToolbarProps) {
+  const hasActiveStatus = Boolean(statusFilter) || stalePending;
+  const [filtersOpen, setFiltersOpen] = useState(() => hasActiveStatus);
+
   return (
     <>
       <PageHeader
@@ -87,37 +93,35 @@ export function PaymentsToolbar({
 
       {isStaffPayment && adminStats?.stats ? (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Pendientes
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.pendingPayments}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               &gt;2 días
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Ingresos mes
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               En lista
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-              {total}
-            </p>
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
           </div>
         </div>
       ) : null}
@@ -164,6 +168,18 @@ export function PaymentsToolbar({
               aria-label="Buscar pagos"
             />
             <Button
+              type="button"
+              size="sm"
+              variant={filtersOpen ? 'secondary' : 'ghost'}
+              className="h-10 min-h-10 w-10 shrink-0 p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+              aria-expanded={filtersOpen}
+              aria-label="Más filtros"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal className="h-4 w-4 shrink-0" />
+              <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Filtros</span>
+            </Button>
+            <Button
               size="sm"
               className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
               onClick={onOpenRegister}
@@ -173,27 +189,29 @@ export function PaymentsToolbar({
               <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Registrar</span>
             </Button>
           </div>
-          <FilterChips
-            className="w-fit max-w-full"
-            ariaLabel="Filtrar por estado"
-            options={[
-              { value: '', label: 'Todos' },
-              {
-                value: 'pending',
-                label: 'Pendientes',
-                count: adminStats?.stats?.pendingPayments,
-              },
-              {
-                value: 'pending_old',
-                label: '>2 días',
-                count: adminStats?.stats?.pendingPaymentsOlderThan2Days,
-              },
-              { value: 'approved', label: 'Aprobados' },
-              { value: 'rejected', label: 'Rechazados' },
-            ]}
-            value={stalePending ? 'pending_old' : statusFilter}
-            onChange={onStatusFilterChange}
-          />
+          {filtersOpen ? (
+            <FilterChips
+              className="w-fit max-w-full"
+              ariaLabel="Filtrar por estado"
+              options={[
+                { value: '', label: 'Todos' },
+                {
+                  value: 'pending',
+                  label: 'Pendientes',
+                  count: adminStats?.stats?.pendingPayments,
+                },
+                {
+                  value: 'pending_old',
+                  label: '>2 días',
+                  count: adminStats?.stats?.pendingPaymentsOlderThan2Days,
+                },
+                { value: 'approved', label: 'Aprobados' },
+                { value: 'rejected', label: 'Rechazados' },
+              ]}
+              value={stalePending ? 'pending_old' : statusFilter}
+              onChange={onStatusFilterChange}
+            />
+          ) : null}
         </div>
       ) : null}
     </>
