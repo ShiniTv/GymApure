@@ -52,4 +52,37 @@ test.describe('Member nutrición', () => {
     await expect(page.getByPlaceholder(/pollo con arroz/i)).toBeVisible();
     await expect(page.getByText(/calorías \(kcal\)/i)).toBeVisible();
   });
+
+  test('confirma eliminar comida con modal del sistema', async ({ page }) => {
+    const empty = page.getByText(/sin plan nutricional/i);
+    assertDemoSeed(
+      !(await empty.isVisible().catch(() => false)),
+      'Sin plan nutricional en demo para member@gym.com.'
+    );
+
+    page.on('dialog', (dialog) => {
+      throw new Error(`Diálogo nativo del navegador: ${dialog.message()}`);
+    });
+
+    let deleteBtn = page.getByRole('button', { name: 'Eliminar' }).first();
+    if (!(await deleteBtn.isVisible().catch(() => false))) {
+      await page.getByRole('button', { name: /registrar/i }).first().click();
+      const mealDialog = page.getByRole('dialog', { name: /registrar comida/i });
+      await expect(mealDialog).toBeVisible();
+      await mealDialog.getByPlaceholder(/pollo con arroz/i).fill('Pollo con arroz');
+      await mealDialog.locator('input[type="number"]').first().fill('500');
+      await mealDialog.getByRole('button', { name: /guardar/i }).click();
+      await expect(page.getByText('Pollo con arroz').first()).toBeVisible({ timeout: 15_000 });
+      deleteBtn = page.getByRole('button', { name: 'Eliminar' }).first();
+    }
+
+    await expect(deleteBtn).toBeVisible();
+    await deleteBtn.click();
+
+    const confirmDialog = page.getByRole('dialog', { name: 'Eliminar comida' });
+    await expect(confirmDialog).toBeVisible();
+    await expect(confirmDialog.getByText(/¿eliminar esta comida\?/i)).toBeVisible();
+    await confirmDialog.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(confirmDialog).toBeHidden();
+  });
 });

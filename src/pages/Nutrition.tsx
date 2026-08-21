@@ -61,8 +61,10 @@ export default function Nutrition() {
   const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
   const [showMealModal, setShowMealModal] = useState(false);
   const [editingLog, setEditingLog] = useState<NutritionLogEntry | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<NutritionLogEntry | null>(null);
   const [mealForm, setMealForm] = useState(emptyMealForm);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisHints, setAnalysisHints] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -176,13 +178,23 @@ export default function Nutrition() {
     }
   };
 
-  const handleDeleteMeal = async (log: NutritionLogEntry) => {
-    if (!user || !confirm('¿Eliminar esta comida?')) return;
+  const requestDeleteMeal = (log: NutritionLogEntry) => {
+    setError('');
+    setDeleteTarget(log);
+  };
+
+  const handleDeleteMeal = async () => {
+    if (!user || !deleteTarget) return;
+    setDeleting(true);
+    setError('');
     try {
-      await apiFetch(`/api/nutrition/logs/${log.id}`, { method: 'DELETE' });
+      await apiFetch(`/api/nutrition/logs/${deleteTarget.id}`, { method: 'DELETE' });
       invalidate(user.id);
+      setDeleteTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -376,7 +388,7 @@ export default function Nutrition() {
                             <IconButton
                               size="sm"
                               variant="danger"
-                              onClick={() => void handleDeleteMeal(log)}
+                              onClick={() => requestDeleteMeal(log)}
                               aria-label="Eliminar"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -513,6 +525,39 @@ export default function Nutrition() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Eliminar comida"
+        maxWidth="sm"
+        initialFocus="dialog"
+      >
+        {error && <p className="text-danger text-small mb-3">{error}</p>}
+        <p className="text-text-secondary mb-2 text-sm">¿Eliminar esta comida?</p>
+        {deleteTarget?.description ? (
+          <p className="text-text-muted mb-2 line-clamp-3 text-xs">«{deleteTarget.description}»</p>
+        ) : null}
+        <p className="text-text-muted mb-6 text-xs">Esta acción no se puede deshacer.</p>
+        <div className="flex gap-3">
+          <Button
+            variant="ghost"
+            className="flex-1"
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="danger"
+            className="flex-1"
+            onClick={() => void handleDeleteMeal()}
+            disabled={deleting}
+          >
+            {deleting ? 'Eliminando…' : 'Eliminar'}
+          </Button>
+        </div>
       </Modal>
     </div>
   );

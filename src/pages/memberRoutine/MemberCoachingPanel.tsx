@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Label, Spinner } from '../../components/ui';
+import { Button, Card, Input, Label, Modal, Spinner } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { useToastOptional } from '../../context/ToastContext';
@@ -104,6 +104,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
   const [reviewingSuggestionId, setReviewingSuggestionId] = useState<number | null>(null);
+  const [sharedRoutineTarget, setSharedRoutineTarget] = useState<CoachingSuggestion | null>(null);
   const isTrainer = user?.role === 'trainer';
 
   const loadSuggestions = async () => {
@@ -247,12 +248,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         !acknowledgeSharedRoutine &&
         /rutina está compartida/i.test(errorBody?.error ?? '')
       ) {
-        const confirmed = window.confirm(
-          'Esta rutina también está asignada a otros miembros. ¿Aplicar el ajuste para todos?'
-        );
-        if (confirmed) {
-          await reviewSuggestion(suggestion, action, true);
-        }
+        setSharedRoutineTarget(suggestion);
         return;
       }
       await parseJsonResponse(response);
@@ -264,6 +260,13 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
     } finally {
       setReviewingSuggestionId(null);
     }
+  };
+
+  const applySharedRoutineSuggestion = () => {
+    if (!sharedRoutineTarget || reviewingSuggestionId) return;
+    void reviewSuggestion(sharedRoutineTarget, 'approve', true).then(() => {
+      setSharedRoutineTarget(null);
+    });
   };
 
   if (loading) {
@@ -533,6 +536,40 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
           )}
         </Card>
       )}
+
+      <Modal
+        open={!!sharedRoutineTarget}
+        onClose={() => !reviewingSuggestionId && setSharedRoutineTarget(null)}
+        title="Rutina compartida"
+        maxWidth="sm"
+        initialFocus="dialog"
+      >
+        <p className="text-text-secondary mb-2 text-sm">
+          Esta rutina también está asignada a otros miembros. ¿Aplicar el ajuste para todos?
+        </p>
+        {sharedRoutineTarget ? (
+          <p className="text-text-muted mb-6 text-xs">
+            {sharedRoutineTarget.exercise_name} · {sharedRoutineTarget.routine_name}
+          </p>
+        ) : null}
+        <div className="flex gap-3">
+          <Button
+            variant="ghost"
+            className="flex-1"
+            onClick={() => setSharedRoutineTarget(null)}
+            disabled={!!reviewingSuggestionId}
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1"
+            onClick={applySharedRoutineSuggestion}
+            disabled={!!reviewingSuggestionId}
+          >
+            {reviewingSuggestionId ? 'Aplicando…' : 'Aplicar para todos'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
