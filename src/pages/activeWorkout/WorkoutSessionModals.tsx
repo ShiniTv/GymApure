@@ -35,7 +35,7 @@ export function FinishWorkoutModal({
       title={<>¡Felicidades!</>}
     >
       <div className="mb-5 text-center">
-        <div className="brand-solid ring-brand/10 mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-4">
+        <div className="brand-solid ring-brand/10 animate-success-pop mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg ring-4">
           <CheckCircle className="h-8 w-8" />
         </div>
         <p className="text-text text-sm font-semibold">¿Completaste tu rutina exitosamente?</p>

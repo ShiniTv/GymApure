@@ -4,6 +4,8 @@ import {
   History,
   MessageSquare,
   MoreHorizontal,
+  NotebookPen,
+  CalendarDays,
   Plus,
   Trophy,
   User,
@@ -17,6 +19,8 @@ import {
   IconButton,
   PageHeader,
 } from '../../components/ui';
+import { typography } from '../../lib/typography';
+import { cn } from '../../lib/utils';
 import type { MemberUser, Routine, Subscription } from './types';
 import type { CoachingTab } from './utils';
 import { formatMemberGoal } from './utils';
@@ -48,19 +52,13 @@ interface MemberRoutineHeaderProps {
 
 const PRIMARY_TABS = [
   { value: 'plan', label: 'Plan' },
-  { value: 'coaching', label: 'Coaching' },
+  { value: 'coaching', label: 'Seguimiento' },
   { value: 'progreso', label: 'Progreso' },
 ] as const;
 
 const PLAN_SUB_TABS: { value: CoachingTab; label: string }[] = [
   { value: 'rutinas', label: 'Rutinas' },
   { value: 'bloques', label: 'Bloques' },
-];
-
-const COACHING_SUB_TABS: { value: CoachingTab; label: string }[] = [
-  { value: 'coaching', label: 'Check-in' },
-  { value: 'notas', label: 'Notas' },
-  { value: 'agenda', label: 'Agenda' },
 ];
 
 function hubPrimaryTab(tab: CoachingTab): (typeof PRIMARY_TABS)[number]['value'] {
@@ -81,11 +79,14 @@ const TAB_LABELS: Record<CoachingTab, string> = {
   progreso: 'Progreso',
   bloques: 'Bloques',
   agenda: 'Agenda',
-  coaching: 'Coaching',
+  coaching: 'Check-in semanal',
   notas: 'Notas',
   perfil: 'Perfil',
   mediciones: 'Progreso',
 };
+
+const MENU_ITEM =
+  'text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm';
 
 export function MemberRoutineHeader({
   member,
@@ -104,11 +105,13 @@ export function MemberRoutineHeader({
   onCreateRoutine,
   onAssignRoutine,
 }: MemberRoutineHeaderProps) {
+  const primary = hubPrimaryTab(coachingTab);
+
   return (
     <>
       <Link
         to="/members"
-        className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-800 sm:hidden dark:text-zinc-400 dark:hover:text-zinc-200"
+        className="text-text-muted hover:text-text inline-flex items-center gap-1 text-xs font-medium sm:hidden"
       >
         <ChevronRight className="h-3.5 w-3.5 rotate-180" aria-hidden />
         Miembros
@@ -171,7 +174,7 @@ export function MemberRoutineHeader({
               ref={moreMenuAnchorRef}
               size="sm"
               variant="ghost"
-              aria-label="Más acciones"
+              aria-label="Más en esta ficha"
               aria-expanded={moreMenuOpen}
               aria-haspopup="menu"
               onClick={() => onMoreMenuOpenChange(!moreMenuOpen)}
@@ -186,13 +189,13 @@ export function MemberRoutineHeader({
         open={moreMenuOpen}
         onClose={() => onMoreMenuOpenChange(false)}
         anchorRef={moreMenuAnchorRef}
-        className="min-w-[11rem]"
+        className="min-w-[12rem]"
       >
         {headerPrimary.label !== 'Mensaje' && (
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className={MENU_ITEM}
             onClick={() => {
               onMoreMenuOpenChange(false);
               onNavigate(`/messages?member=${memberId}`);
@@ -205,7 +208,7 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onChangeTab('perfil');
@@ -217,7 +220,31 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
+          onClick={() => {
+            onMoreMenuOpenChange(false);
+            onChangeTab('notas');
+          }}
+        >
+          <NotebookPen className="h-4 w-4" />
+          Notas
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={MENU_ITEM}
+          onClick={() => {
+            onMoreMenuOpenChange(false);
+            onChangeTab('agenda');
+          }}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Agenda
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onNavigate(`/members/${memberId}/history`);
@@ -229,7 +256,7 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onNavigate(`/members/${memberId}/records`);
@@ -241,7 +268,7 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onNavigate(`/members/${memberId}/nutrition`);
@@ -253,7 +280,7 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onCreateRoutine();
@@ -265,7 +292,7 @@ export function MemberRoutineHeader({
         <button
           type="button"
           role="menuitem"
-          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={MENU_ITEM}
           onClick={() => {
             onMoreMenuOpenChange(false);
             onAssignRoutine();
@@ -277,7 +304,7 @@ export function MemberRoutineHeader({
       </AnchoredMenu>
 
       {showHealthAlert ? (
-        <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+        <p className={cn(typography.small, 'text-danger font-medium')}>
           Alerta de salud activa — revisa el perfil del miembro.
         </p>
       ) : null}
@@ -289,7 +316,7 @@ export function MemberRoutineHeader({
           aria-label="Secciones del miembro"
         >
           {PRIMARY_TABS.map((tab) => {
-            const active = hubPrimaryTab(coachingTab) === tab.value;
+            const active = primary === tab.value;
             return (
               <button
                 key={tab.value}
@@ -299,8 +326,8 @@ export function MemberRoutineHeader({
                 onClick={() => onChangeTab(primaryTabToDefault(tab.value))}
                 className={
                   active
-                    ? 'text-text border-brand shrink-0 border-b-2 px-2.5 pt-0.5 pb-2 text-[13px] font-semibold whitespace-nowrap'
-                    : 'text-text-muted hover:text-text shrink-0 border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-[13px] font-medium whitespace-nowrap'
+                    ? 'text-text border-brand shrink-0 border-b-2 px-2.5 pt-0.5 pb-2 text-sm font-semibold whitespace-nowrap'
+                    : 'text-text-muted hover:text-text shrink-0 border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-sm font-medium whitespace-nowrap'
                 }
               >
                 {tab.label}
@@ -308,7 +335,7 @@ export function MemberRoutineHeader({
             );
           })}
         </div>
-        {hubPrimaryTab(coachingTab) === 'plan' ? (
+        {primary === 'plan' ? (
           <div className="mt-1 flex gap-1 px-0.5 pb-2">
             {PLAN_SUB_TABS.map((tab) => {
               const active = coachingTab === tab.value;
@@ -319,8 +346,8 @@ export function MemberRoutineHeader({
                   onClick={() => onChangeTab(tab.value)}
                   className={
                     active
-                      ? 'bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[11px] font-semibold'
-                      : 'text-text-muted hover:text-text rounded-full px-2.5 py-0.5 text-[11px] font-medium'
+                      ? 'bg-brand/10 text-brand rounded-[var(--radius-chip)] px-2.5 py-0.5 text-xs font-semibold'
+                      : 'text-text-muted hover:text-text rounded-[var(--radius-chip)] px-2.5 py-0.5 text-xs font-medium'
                   }
                 >
                   {tab.label}
@@ -329,36 +356,21 @@ export function MemberRoutineHeader({
             })}
           </div>
         ) : null}
-        {hubPrimaryTab(coachingTab) === 'coaching' ? (
-          <div className="mt-1 flex gap-1 px-0.5 pb-2">
-            {COACHING_SUB_TABS.map((tab) => {
-              const active = coachingTab === tab.value;
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => onChangeTab(tab.value)}
-                  className={
-                    active
-                      ? 'bg-brand/10 text-brand rounded-full px-2.5 py-0.5 text-[11px] font-semibold'
-                      : 'text-text-muted hover:text-text rounded-full px-2.5 py-0.5 text-[11px] font-medium'
-                  }
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+        {primary === 'coaching' ? (
+          <p className={cn(typography.small, 'text-text-muted px-0.5 pt-1.5 pb-2')}>
+            Check-in semanal. Notas y agenda en «Más en esta ficha».
+          </p>
         ) : null}
       </div>
 
       {coachingInsight ? (
         <div
-          className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[12px] ${
+          className={cn(
+            'flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs',
             coachingInsight.tone === 'danger'
-              ? 'bg-red-500/10 text-red-700 dark:text-red-300'
-              : 'bg-amber-500/10 text-amber-800 dark:text-amber-200'
-          }`}
+              ? 'bg-danger/10 text-danger'
+              : 'bg-warning/10 text-warning'
+          )}
           role="status"
         >
           <p className="min-w-0 flex-1 leading-snug">{coachingInsight.message}</p>
@@ -366,7 +378,7 @@ export function MemberRoutineHeader({
             <button
               type="button"
               onClick={coachingInsight.run}
-              className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold underline-offset-2 hover:underline"
+              className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold underline-offset-2 hover:underline"
             >
               {coachingInsight.actionLabel}
             </button>

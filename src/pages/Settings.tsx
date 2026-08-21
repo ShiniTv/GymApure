@@ -8,6 +8,17 @@ import { SettingsChatRetentionCard } from './settings/SettingsChatRetentionCard'
 import { SettingsCheckInPinCard } from './settings/SettingsCheckInPinCard';
 import { SettingsExchangeRateCard } from './settings/SettingsExchangeRateCard';
 import { useSettingsPage } from './settings/useSettingsPage';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
+
+function SettingsGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="min-w-0 space-y-3">
+      <h2 className={cn(typography.sectionTitle, 'text-text px-0.5')}>{title}</h2>
+      {children}
+    </section>
+  );
+}
 
 export default function Settings() {
   const page = useSettingsPage();
@@ -16,7 +27,7 @@ export default function Settings() {
     <div className="page-stack-tight mx-auto w-full max-w-6xl min-w-0">
       <PageHeader
         compact
-        className="max-lg:hidden"
+        showTitleOnMobile
         title={
           <>
             Configuración <span className="text-brand">del sistema</span>
@@ -27,11 +38,9 @@ export default function Settings() {
       />
 
       {page.emailConfigured === false && (
-        <Card padding="sm" rounded="xl" className="min-w-0 border-amber-500/30 bg-amber-500/10">
-          <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
-            SMTP no configurado
-          </p>
-          <p className="mt-1 text-xs leading-snug text-amber-800/80 dark:text-amber-300/80">
+        <Card padding="sm" rounded="xl" className="border-warning/30 bg-warning/10 min-w-0">
+          <p className="text-warning text-sm font-bold">SMTP no configurado</p>
+          <p className="text-warning/80 mt-1 text-xs leading-snug">
             Configure las variables SMTP del servidor para enviar bienvenidas, resets y avisos. Sin
             correo, recepción entregará el enlace de creación de contraseña en mostrador.
           </p>
@@ -41,10 +50,58 @@ export default function Settings() {
       <div className="xl:grid xl:grid-cols-[12rem_minmax(0,1fr)] xl:items-start xl:gap-5">
         <SettingsNav />
 
-        <div className="min-w-0 space-y-3 lg:space-y-4">
-          <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
-            <SettingsPushCard />
+        <div className="min-w-0 space-y-6 lg:space-y-8">
+          <SettingsGroup title="Operación">
+            <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
+              <SettingsPushCard />
+              <SettingsCheckInPinCard
+                checkInPinForm={page.checkInPinForm}
+                settingsSaving={page.settingsSaving}
+                onCheckInPinFormChange={page.setCheckInPinForm}
+                onSave={() => void page.saveCheckInPin()}
+              />
+              {page.chatRetention && (
+                <SettingsChatRetentionCard
+                  chatRetention={page.chatRetention}
+                  settingsSaving={page.settingsSaving}
+                  settingsMessage={page.settingsMessage}
+                  settingsMessageTone={page.settingsMessageTone}
+                  onChatRetentionChange={page.setChatRetention}
+                  onSave={() => void page.saveChatRetention()}
+                />
+              )}
+            </div>
+            <SettingsOpsHealthCard
+              opsMetrics={page.opsMetrics}
+              opsMetricsLoading={page.opsMetricsLoading}
+              opsMetricsError={page.opsMetricsError}
+              opsAlerts={page.opsAlerts}
+              onExportJson={() => void page.downloadMetricsExport('json')}
+              onExportCsv={() => void page.downloadMetricsExport('csv')}
+            />
+          </SettingsGroup>
 
+          <SettingsGroup title="Pagos">
+            <PaymentDestinationsSettingsCard
+              onMessage={(tone, message) => {
+                page.setSettingsMessageTone(tone);
+                page.setSettingsMessage(message);
+              }}
+            />
+            {page.exchangeRateView && (
+              <SettingsExchangeRateCard
+                exchangeRateView={page.exchangeRateView}
+                exchangeRateForm={page.exchangeRateForm}
+                settingsSaving={page.settingsSaving}
+                onExchangeRateFormChange={page.setExchangeRateForm}
+                onRefresh={() => void page.refreshExchangeRate()}
+                onSaveOverride={() => void page.saveExchangeRateOverride()}
+                onClearOverride={() => void page.clearExchangeRateOverride()}
+              />
+            )}
+          </SettingsGroup>
+
+          <SettingsGroup title="Alertas">
             <SettingsExpiryCard
               expirySettings={page.expirySettings}
               settingsLoading={page.settingsLoading}
@@ -56,53 +113,7 @@ export default function Settings() {
               onSave={() => void page.saveExpirySettings()}
               onRunJob={() => void page.runExpiryJobNow()}
             />
-
-            {page.chatRetention && (
-              <SettingsChatRetentionCard
-                chatRetention={page.chatRetention}
-                settingsSaving={page.settingsSaving}
-                settingsMessage={page.settingsMessage}
-                settingsMessageTone={page.settingsMessageTone}
-                onChatRetentionChange={page.setChatRetention}
-                onSave={() => void page.saveChatRetention()}
-              />
-            )}
-
-            <SettingsCheckInPinCard
-              checkInPinForm={page.checkInPinForm}
-              settingsSaving={page.settingsSaving}
-              onCheckInPinFormChange={page.setCheckInPinForm}
-              onSave={() => void page.saveCheckInPin()}
-            />
-          </div>
-
-          <PaymentDestinationsSettingsCard
-            onMessage={(tone, message) => {
-              page.setSettingsMessageTone(tone);
-              page.setSettingsMessage(message);
-            }}
-          />
-
-          {page.exchangeRateView && (
-            <SettingsExchangeRateCard
-              exchangeRateView={page.exchangeRateView}
-              exchangeRateForm={page.exchangeRateForm}
-              settingsSaving={page.settingsSaving}
-              onExchangeRateFormChange={page.setExchangeRateForm}
-              onRefresh={() => void page.refreshExchangeRate()}
-              onSaveOverride={() => void page.saveExchangeRateOverride()}
-              onClearOverride={() => void page.clearExchangeRateOverride()}
-            />
-          )}
-
-          <SettingsOpsHealthCard
-            opsMetrics={page.opsMetrics}
-            opsMetricsLoading={page.opsMetricsLoading}
-            opsMetricsError={page.opsMetricsError}
-            opsAlerts={page.opsAlerts}
-            onExportJson={() => void page.downloadMetricsExport('json')}
-            onExportCsv={() => void page.downloadMetricsExport('csv')}
-          />
+          </SettingsGroup>
         </div>
       </div>
     </div>

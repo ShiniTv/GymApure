@@ -8,6 +8,10 @@
   }
 
   var PALETTES = {
+    sky: {
+      light: { b: '#0369a1', bh: '#075985', c: '#0369a1' },
+      dark: { b: '#3aadff', bh: '#0c98ff', c: '#3aadff' },
+    },
     monochrome: {
       light: { b: '#18181b', bh: '#27272a', c: '#18181b' },
       dark: { b: '#fafafa', bh: '#e4e4e7', c: '#fafafa' },
@@ -51,7 +55,7 @@
         : 'dark';
 
   var palette = safeGetItem('gymapure-palette');
-  if (!PALETTES[palette]) palette = 'ember';
+  if (!PALETTES[palette]) palette = 'sky';
 
   var root = document.documentElement;
   root.classList.add(theme);

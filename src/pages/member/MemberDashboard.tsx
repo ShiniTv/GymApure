@@ -511,7 +511,13 @@ export default function MemberDashboard() {
         </div>
       )}
 
-      <PushOnboardingCard />
+      {(() => {
+        const hasMembershipPriority =
+          pending > 0 ||
+          !sub ||
+          (Boolean(sub) && shouldShowExpiryAlert(sub.days_remaining, alertDays));
+        return hasMembershipPriority ? null : <PushOnboardingCard />;
+      })()}
 
       {isMobile &&
       (upcomingRoutines.length > 0 || endingRoutines.length > 0 || memberStats?.lastWorkout) ? (

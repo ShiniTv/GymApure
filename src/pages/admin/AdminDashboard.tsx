@@ -242,7 +242,7 @@ export default function AdminDashboard() {
         <StaggerItem>
           <StatCard
             minimal
-            title="Check-ins hoy"
+            title="Accesos hoy"
             value={stats?.todayCheckIns || 0}
             icon={Clock}
             color="emerald"
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                         to="/reception?mode=counter&tab=access"
                         icon={Monitor}
                         title="Mostrador"
-                        description="Check-in"
+                        description="Acceso"
                         tone="blue"
                       />
                       <QuickAction
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
                       to="/reception?mode=counter&tab=access"
                       icon={Monitor}
                       title="Mostrador"
-                      description="Check-in"
+                      description="Acceso"
                       tone="blue"
                     />
                     <QuickAction
@@ -482,7 +482,7 @@ export default function AdminDashboard() {
                 to="/check-in?kiosk=1"
                 icon={LogIn}
                 title="Modo tablet"
-                description="Check-in en tablet"
+                description="Modo tablet"
                 tone="emerald"
               />
               <QuickAction

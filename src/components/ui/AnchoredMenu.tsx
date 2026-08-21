@@ -83,7 +83,7 @@ export function AnchoredMenu({
       ref={menuRef}
       role="menu"
       className={cn(
-        'fixed z-[80] overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900',
+        'border-border bg-surface fixed z-[80] overflow-hidden rounded-lg border py-1 shadow-lg',
         className
       )}
       style={{ top: position.top, left: position.left, minWidth: position.minWidth }}

@@ -51,10 +51,10 @@ const ROLE_QUICK: Record<string, CommandAction[]> = {
   admin: [
     {
       id: 'qa:checkin-tablet',
-      label: 'Check-in en tablet',
+      label: 'Modo tablet',
       href: '/check-in?kiosk=1',
       section: 'Acciones',
-      keywords: 'kiosk acceso',
+      keywords: 'acceso mostrador tablet',
     },
     {
       id: 'qa:payments-pending',

@@ -326,7 +326,8 @@ export default function CheckIn() {
                 ? 'text-success'
                 : 'text-[var(--color-check-out)]'
               : 'text-danger',
-            isKioskMode && (isMobileKiosk ? 'py-6' : 'py-12')
+            isKioskMode && (isMobileKiosk ? 'py-6' : 'py-12'),
+            status === 'success' && 'animate-success-pop'
           )}
         >
           <div

@@ -1,4 +1,5 @@
-import { Plus, AlertTriangle, X } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, AlertTriangle, X, SlidersHorizontal } from 'lucide-react';
 import {
   Button,
   PageHeader,
@@ -70,6 +71,11 @@ export function MembersToolbar({
   noPlanAlertDismissed,
   onDismissNoPlanAlert,
 }: MembersToolbarProps) {
+  const hasAdvancedNeeds = Boolean(needsFilter) && needsFilter !== '' && needsFilter !== 'expiring';
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => Boolean(roleFilter) || Boolean(shiftFilter) || expiringFilter || hasAdvancedNeeds
+  );
+
   return (
     <>
       <PageHeader
@@ -101,37 +107,35 @@ export function MembersToolbar({
 
       {userRole === 'admin' && adminStats?.stats && (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Activas
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.activeSubscriptions}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Por vencer ({alertDays}d)
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.expiringSoon}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Pagos pend.
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.pendingPayments}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               En lista
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-              {total}
-            </p>
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
           </div>
         </div>
       )}
@@ -146,6 +150,20 @@ export function MembersToolbar({
               onSearchInputChange(e.target.value);
             }}
           />
+          {(userRole === 'admin' || userRole === 'receptionist' || isTrainer) && (
+            <Button
+              type="button"
+              size="sm"
+              variant={filtersOpen ? 'secondary' : 'ghost'}
+              className="h-10 min-h-10 w-10 shrink-0 p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+              aria-expanded={filtersOpen}
+              aria-label="Más filtros"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal className="h-4 w-4 shrink-0" />
+              <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Filtros</span>
+            </Button>
+          )}
           {canAddUser && (
             <Button
               size="sm"
@@ -162,7 +180,7 @@ export function MembersToolbar({
             </Button>
           )}
         </div>
-        {(userRole === 'admin' || userRole === 'receptionist' || isTrainer) && (
+        {(userRole === 'admin' || userRole === 'receptionist' || isTrainer) && filtersOpen && (
           <div className="flex flex-col gap-2 sm:gap-2.5">
             {userRole === 'admin' && (
               <FilterChips
@@ -193,9 +211,9 @@ export function MembersToolbar({
                           { value: '', label: 'Todos' },
                           { value: 'expiring', label: `Por vencer (${alertDays}d)` },
                           { value: 'assessment', label: 'Sin evaluación' },
-                          { value: 'checkin', label: 'Check-in' },
+                          { value: 'checkin', label: 'Seguimiento' },
                           { value: 'recovery', label: 'Recuperación' },
-                          { value: 'choices', label: 'Elecciones del cliente' },
+                          { value: 'choices', label: 'Elecciones' },
                         ]
                       : [
                           { value: '', label: 'Todos' },
