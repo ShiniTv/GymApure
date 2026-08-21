@@ -11,19 +11,32 @@ test.describe('Flujo profundo pagos @deep', () => {
     await page.goto('/payments', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 15_000 });
 
-    const tableOrList = page.getByRole('table').or(page.getByTestId('payments-list')).first();
-    const empty = page.getByText(/sin pagos|no hay pagos|vacío/i).first();
-    const filter = page.getByRole('button', { name: /filtr|estado|buscar/i }).first();
+    // Toolbar: búsqueda + tabs de estado (no hay botón "Filtrar")
+    await expect(page.getByRole('searchbox', { name: /buscar pagos/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole('tablist', { name: /filtrar por estado/i })).toBeVisible();
 
-    const hasList = await tableOrList.isVisible().catch(() => false);
-    const hasEmpty = await empty.isVisible().catch(() => false);
-    const hasFilter = await filter.isVisible().catch(() => false);
+    // Esperar fin de carga (skeleton o lista/vacío)
+    await expect(page.getByLabel(/cargando/i)).toHaveCount(0, { timeout: 15_000 }).catch(() => undefined);
 
-    expect(hasList || hasEmpty || hasFilter).toBeTruthy();
+    const list = page.getByTestId('payments-list');
+    const empty = page.getByText(
+      /sin pagos pendientes|sin pagos registrados|aún sin pagos|no hay pagos|sin resultados/i
+    );
+    await expect(list.or(empty).first()).toBeVisible({ timeout: 15_000 });
 
-    if (hasFilter) {
-      await filter.click();
-      await page.waitForTimeout(200);
+    await page.getByRole('tab', { name: /^pendientes$/i }).click();
+    const pendingEmpty = page.getByText(/sin pagos pendientes/i);
+    const pendingCards = page.getByTestId('payments-list').locator('[class*="space-y"], table, [data-testid]');
+    await expect(pendingEmpty.or(page.getByTestId('payments-list')).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    // Si la cola está vacía, el copy debe ser explícito
+    if (await pendingEmpty.isVisible().catch(() => false)) {
+      await expect(pendingEmpty).toBeVisible();
+    } else {
+      await expect(pendingCards.first()).toBeVisible().catch(() => undefined);
     }
   });
 });

@@ -23,6 +23,46 @@ import { PaymentDetailRail } from './PaymentDetailRail';
 import { cn } from '../../lib/utils';
 import { Virtuoso } from 'react-virtuoso';
 
+function staffEmptyCopy(input: { search: string; stalePending: boolean; statusFilter: string }): {
+  title: string;
+  description: string;
+} {
+  if (input.search) {
+    return {
+      title: 'Sin resultados',
+      description: 'Prueba otro nombre o referencia, o limpia la búsqueda.',
+    };
+  }
+  if (input.stalePending) {
+    return {
+      title: 'Sin pendientes viejos',
+      description: 'No hay pagos pendientes de más de 2 días.',
+    };
+  }
+  if (input.statusFilter === 'pending') {
+    return {
+      title: 'Sin pagos pendientes',
+      description: 'La cola de revisión está vacía. Los nuevos reportes aparecerán aquí.',
+    };
+  }
+  if (input.statusFilter === 'approved') {
+    return {
+      title: 'Sin pagos aprobados',
+      description: 'Cuando apruebes un pago, quedará listado en esta pestaña.',
+    };
+  }
+  if (input.statusFilter === 'rejected') {
+    return {
+      title: 'Sin pagos rechazados',
+      description: 'No hay pagos rechazados en el filtro actual.',
+    };
+  }
+  return {
+    title: 'Sin pagos registrados',
+    description: 'Los reportes de miembros aparecerán aquí para revisión.',
+  };
+}
+
 export interface PaymentsListSectionProps {
   isMember: boolean;
   isStaffPayment: boolean;
@@ -128,6 +168,7 @@ export function PaymentsListSection({
 
   return (
     <div
+      data-testid="payments-list"
       className={cn(
         isStaffPayment &&
           showDetailRail &&
@@ -252,31 +293,24 @@ export function PaymentsListSection({
                   <ListRowSkeleton rows={4} />
                 </div>
               ) : displayPayments.length === 0 ? (
-                <EmptyState
-                  icon={CreditCard}
-                  title={
-                    search
-                      ? 'Sin resultados'
-                      : stalePending
-                        ? 'Sin pendientes viejos'
-                        : 'Sin pagos registrados'
-                  }
-                  description={
-                    search
-                      ? 'Prueba otro nombre o referencia, o limpia la búsqueda.'
-                      : stalePending
-                        ? 'No hay pagos pendientes de más de 2 días.'
-                        : 'Los reportes de miembros aparecerán aquí para revisión.'
-                  }
-                  action={
-                    search || stalePending ? undefined : (
-                      <Button size="sm" onClick={onOpenRegister}>
-                        <Plus className="h-4 w-4" />
-                        Registrar pago
-                      </Button>
-                    )
-                  }
-                />
+                (() => {
+                  const empty = staffEmptyCopy({ search, stalePending, statusFilter });
+                  return (
+                    <EmptyState
+                      icon={CreditCard}
+                      title={empty.title}
+                      description={empty.description}
+                      action={
+                        search || stalePending || statusFilter === 'pending' ? undefined : (
+                          <Button size="sm" onClick={onOpenRegister}>
+                            <Plus className="h-4 w-4" />
+                            Registrar pago
+                          </Button>
+                        )
+                      }
+                    />
+                  );
+                })()
               ) : displayPayments.length > 12 ? (
                 <Virtuoso
                   style={{ height: 'min(70vh, 48rem)' }}
@@ -341,11 +375,12 @@ export function PaymentsListSection({
                         colSpan={7}
                         className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
                       >
-                        {search
-                          ? 'Sin resultados para esa búsqueda'
-                          : stalePending
-                            ? 'No hay pendientes de más de 2 días'
-                            : 'No hay pagos registrados'}
+                        {(() => {
+                          const copy = staffEmptyCopy({ search, stalePending, statusFilter });
+                          return search || stalePending || statusFilter
+                            ? copy.title
+                            : 'No hay pagos registrados';
+                        })()}
                       </td>
                     </tr>
                   ) : (

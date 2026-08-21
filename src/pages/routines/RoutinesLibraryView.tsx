@@ -248,7 +248,7 @@ export function RoutinesLibraryView({
       ? 'Listo por hoy. Mañana puedes repetir o esperar una nueva asignación.'
       : anyInProgress
         ? 'Tienes un entrenamiento en curso: pulsa Continuar cuando quieras.'
-        : 'Pulsa Entrenar para empezar. El chevron muestra series y reps.'
+        : 'Pulsa Empezar entrenamiento. El chevron muestra series y reps.'
     : null;
 
   const selectedStaffRoutine =
@@ -367,8 +367,8 @@ export function RoutinesLibraryView({
               const workoutLabel = completedToday
                 ? 'Completada hoy'
                 : inProgress
-                  ? 'Continuar'
-                  : 'Entrenar';
+                  ? 'Continuar entrenamiento'
+                  : 'Empezar entrenamiento';
               const cloning = cloningRoutineId === routine.id;
 
               return (
@@ -540,8 +540,9 @@ export function RoutinesLibraryView({
                       <Button
                         type="button"
                         size="sm"
-                        className="min-h-9 w-full shadow-none sm:w-auto"
+                        className="min-h-10 w-full text-[13px] font-semibold shadow-none sm:min-h-9 sm:w-auto sm:text-sm"
                         disabled={completedToday}
+                        aria-label={workoutLabel}
                         onClick={(e) => {
                           e.stopPropagation();
                           onStartWorkout?.(routine.id);

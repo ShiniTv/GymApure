@@ -317,6 +317,25 @@ async function main() {
     console.log('✓ Plan nutricional demo para member@gym.com');
   }
 
+  // Admin para test:auth-checklist / test:e2e (contraseña fija distinta de DEMO_PASSWORD)
+  const checklistEmail = (
+    process.env.CHECKLIST_ADMIN_EMAIL ?? 'checklist-admin@test.local'
+  ).toLowerCase();
+  const checklistPassword = process.env.CHECKLIST_ADMIN_PASSWORD ?? 'ChecklistAdmin123!';
+  const checklistName = process.env.CHECKLIST_ADMIN_FULL_NAME ?? 'Checklist Admin';
+  const checklistHash = await hashPassword(checklistPassword);
+  await query(
+    `INSERT INTO users (email, password, role, full_name, status)
+     VALUES ($1, $2, 'admin', $3, 'active')
+     ON CONFLICT (email) DO UPDATE SET
+       password = EXCLUDED.password,
+       role = 'admin',
+       full_name = EXCLUDED.full_name,
+       status = 'active'`,
+    [checklistEmail, checklistHash, checklistName]
+  );
+  console.log(`✓ ${checklistEmail} (admin checklist / test:auth-checklist)`);
+
   console.log(`\nListo. Contraseña demo actualizada (valor en DEMO_PASSWORD de .env).`);
   process.exit(0);
 }

@@ -5,6 +5,8 @@ async function expectAuthScreen(page: import('@playwright/test').Page, name: str
   await expect(page).toHaveScreenshot(name, {
     animations: 'disabled',
     fullPage: true,
+    // Fonts/antialiasing drift across Chromium builds on Windows (~6–7%).
+    maxDiffPixelRatio: 0.08,
   });
 }
 

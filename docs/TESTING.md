@@ -6,8 +6,9 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 
 1. `.env.dev` con `JWT_SECRET`, `DATABASE_URL` y `DEMO_PASSWORD` (mín. 12 caracteres). Verificar: `npm run env:check`.
 2. Base de datos migrada: `npm run db:migrate:dev`
-3. Datos demo para la mayoría de suites: `npm run db:restore-demo`
-4. Admin de checklist (solo `test:auth-checklist` / `test:e2e`):
+3. Datos demo para la mayoría de suites: `npm run db:restore-demo`  
+   (incluye `admin@gym.com`…`member@gym.com` **y** `checklist-admin@test.local` para `test:auth-checklist`).
+4. Admin de checklist: ya lo crea `db:restore-demo`. Solo hace falta `db:create-admin` si quieres otro email/password:
 
    ```powershell
    $env:ADMIN_EMAIL="checklist-admin@test.local"
