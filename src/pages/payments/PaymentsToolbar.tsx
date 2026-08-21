@@ -31,6 +31,8 @@ export interface PaymentsToolbarProps {
   onOpenRegister: () => void;
 }
 
+const STAT_TILE = 'border-border/80 bg-surface rounded-xl border px-3 py-2.5';
+
 export function PaymentsToolbar({
   isMember,
   isStaffPayment,
@@ -87,37 +89,35 @@ export function PaymentsToolbar({
 
       {isStaffPayment && adminStats?.stats ? (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Pendientes
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.pendingPayments}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               &gt;2 días
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               Ingresos mes
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
               {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
             </p>
           </div>
-          <div className="rounded-xl border border-zinc-200/80 bg-white/70 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <div className={STAT_TILE}>
+            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               En lista
             </p>
-            <p className="mt-0.5 text-xl font-bold text-zinc-900 tabular-nums dark:text-white">
-              {total}
-            </p>
+            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
           </div>
         </div>
       ) : null}

@@ -108,7 +108,7 @@ export default function TrainerPtBilling() {
   const [configOpen, setConfigOpen] = useState(false);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [destWizardOpen, setDestWizardOpen] = useState(false);
-  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('all');
+  const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('confirm');
 
   const pendingInvoices = invoices.filter((invoice) => invoice.status === 'pending');
   const awaitingPay = pendingInvoices.filter((invoice) => !invoice.reference);
@@ -116,6 +116,18 @@ export default function TrainerPtBilling() {
   const activeOffers = offers.filter((offer) => offer.active);
   const destReady = hasEnabledDestination(destForm);
   const doneCount = invoices.filter((inv) => matchesFilter(inv, 'done')).length;
+
+  useEffect(() => {
+    if (loadingInvoices) return;
+    setInvoiceFilter((prev) => {
+      if (prev === 'all' || prev === 'done') return prev;
+      if (prev === 'confirm' && awaitingConfirm.length > 0) return prev;
+      if (prev === 'awaiting' && awaitingPay.length > 0) return prev;
+      if (awaitingConfirm.length > 0) return 'confirm';
+      if (awaitingPay.length > 0) return 'awaiting';
+      return 'all';
+    });
+  }, [loadingInvoices, awaitingConfirm.length, awaitingPay.length]);
 
   const filteredInvoices = useMemo(
     () => invoices.filter((inv) => matchesFilter(inv, invoiceFilter)),
@@ -191,7 +203,7 @@ export default function TrainerPtBilling() {
             Cobros <span className="text-brand">PT</span>
           </>
         }
-        subtitle="Sesiones 1:1 · aparte de la membresía"
+        subtitle="Cola de cobros PT · Nuevo y datos de cobro en acciones"
         action={
           <div className="flex items-center gap-2">
             <BackToDashboardLink iconOnly />

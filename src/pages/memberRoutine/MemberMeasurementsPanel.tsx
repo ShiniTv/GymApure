@@ -114,8 +114,8 @@ export function MemberMeasurementsPanel({
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center dark:border-zinc-700">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sin mediciones</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text text-sm font-semibold">Sin mediciones</p>
+            <p className="text-text-muted mt-1 text-xs">
               Registra la primera para ver el progreso en Perfil.
             </p>
             {canEdit && (
