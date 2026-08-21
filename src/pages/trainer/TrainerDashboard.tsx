@@ -555,68 +555,87 @@ export default function TrainerDashboard() {
 
       {hasAttention && (
         <DashboardSection title="Requiere atención" compact>
-          <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-            {withoutRoutines > 0 && (
-              <AttentionSummaryLink
-                to="/routines?view=calendar&assign=1"
-                icon={Dumbbell}
-                label="Sin rutina"
-                count={withoutRoutines}
-              />
+          <div className="space-y-3">
+            {(staleCheckinsCount > 0 || recoveryAlertsCount > 0 || expiringCount > 0) && (
+              <div className="space-y-1.5">
+                <p className="text-text-muted text-xs font-semibold tracking-wide uppercase">Hoy</p>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {staleCheckinsCount > 0 && (
+                    <AttentionSummaryLink
+                      to="/members?needs=checkin"
+                      icon={ClipboardCheck}
+                      label="Seguimiento semanal"
+                      count={staleCheckinsCount}
+                      tone="sky"
+                    />
+                  )}
+                  {recoveryAlertsCount > 0 && (
+                    <AttentionSummaryLink
+                      to="/members?needs=recovery"
+                      icon={HeartPulse}
+                      label="Recuperación"
+                      count={recoveryAlertsCount}
+                      tone="rose"
+                    />
+                  )}
+                  {expiringCount > 0 && (
+                    <AttentionSummaryLink
+                      to="/members?expiring=true"
+                      icon={CreditCard}
+                      label="Membresía por vencer"
+                      count={expiringCount}
+                      tone="red"
+                    />
+                  )}
+                </div>
+              </div>
             )}
-            {withoutNutritionPlan > 0 && (
-              <AttentionSummaryLink
-                to="/nutrition-overview?filter=without"
-                icon={UtensilsCrossed}
-                label="Sin nutrición"
-                count={withoutNutritionPlan}
-                tone="amber"
-              />
-            )}
-            {withoutAssessmentCount > 0 && (
-              <AttentionSummaryLink
-                to="/members?needs=assessment"
-                icon={ClipboardCheck}
-                label="Sin evaluación"
-                count={withoutAssessmentCount}
-                tone="violet"
-              />
-            )}
-            {staleCheckinsCount > 0 && (
-              <AttentionSummaryLink
-                to="/members?needs=checkin"
-                icon={ClipboardCheck}
-                label="Check-in semanal"
-                count={staleCheckinsCount}
-                tone="sky"
-              />
-            )}
-            {recoveryAlertsCount > 0 && (
-              <AttentionSummaryLink
-                to="/members?needs=recovery"
-                icon={HeartPulse}
-                label="Recuperación"
-                count={recoveryAlertsCount}
-                tone="rose"
-              />
-            )}
-            {memberChoicesCount > 0 && (
-              <AttentionSummaryLink
-                to="/members?needs=choices"
-                icon={ClipboardCheck}
-                label="Elecciones del cliente"
-                count={memberChoicesCount}
-                tone="brand"
-              />
-            )}
-            {expiringCount > 0 && (
-              <AttentionSummaryLink
-                to="/members?expiring=true"
-                icon={CreditCard}
-                label="Membresía por vencer"
-                count={expiringCount}
-                tone="red"
-              />
+            {(withoutRoutines > 0 ||
+              withoutNutritionPlan > 0 ||
+              withoutAssessmentCount > 0 ||
+              memberChoicesCount > 0) && (
+              <div className="space-y-1.5">
+                <p className="text-text-muted text-xs font-semibold tracking-wide uppercase">
+                  Pendiente de plan
+                </p>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {withoutRoutines > 0 && (
+                    <AttentionSummaryLink
+                      to="/routines?view=calendar&assign=1"
+                      icon={Dumbbell}
+                      label="Sin rutina"
+                      count={withoutRoutines}
+                    />
+                  )}
+                  {withoutNutritionPlan > 0 && (
+                    <AttentionSummaryLink
+                      to="/nutrition-overview?filter=without"
+                      icon={UtensilsCrossed}
+                      label="Sin nutrición"
+                      count={withoutNutritionPlan}
+                      tone="amber"
+                    />
+                  )}
+                  {withoutAssessmentCount > 0 && (
+                    <AttentionSummaryLink
+                      to="/members?needs=assessment"
+                      icon={ClipboardCheck}
+                      label="Sin evaluación"
+                      count={withoutAssessmentCount}
+                      tone="violet"
+                    />
+                  )}
+                  {memberChoicesCount > 0 && (
+                    <AttentionSummaryLink
+                      to="/members?needs=choices"
+                      icon={ClipboardCheck}
+                      label="Elecciones del cliente"
+                      count={memberChoicesCount}
+                      tone="brand"
+                    />
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </DashboardSection>

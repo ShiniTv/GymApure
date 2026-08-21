@@ -86,6 +86,21 @@ export default function Nutrition() {
     setShowMealModal(true);
   };
 
+  const openQuickMeal = (preset: {
+    meal_type: MealType;
+    description: string;
+    calories: string;
+    protein_g: string;
+    carbs_g: string;
+    fat_g: string;
+  }) => {
+    setEditingLog(null);
+    setMealForm({ ...emptyMealForm, ...preset });
+    setAnalysisHints([]);
+    setError('');
+    setShowMealModal(true);
+  };
+
   const openEditMeal = (log: NutritionLogEntry) => {
     setEditingLog(log);
     setMealForm({
@@ -340,12 +355,64 @@ export default function Nutrition() {
               </Button>
             )}
           </div>
+          {canEditLogs ? (
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {[
+                {
+                  meal_type: 'breakfast' as MealType,
+                  description: 'Desayuno rápido',
+                  calories: '450',
+                  protein_g: '25',
+                  carbs_g: '45',
+                  fat_g: '15',
+                },
+                {
+                  meal_type: 'lunch' as MealType,
+                  description: 'Almuerzo',
+                  calories: '650',
+                  protein_g: '40',
+                  carbs_g: '60',
+                  fat_g: '20',
+                },
+                {
+                  meal_type: 'dinner' as MealType,
+                  description: 'Cena',
+                  calories: '550',
+                  protein_g: '35',
+                  carbs_g: '40',
+                  fat_g: '18',
+                },
+                {
+                  meal_type: 'snack' as MealType,
+                  description: 'Snack',
+                  calories: '200',
+                  protein_g: '15',
+                  carbs_g: '15',
+                  fat_g: '8',
+                },
+              ].map((preset) => (
+                <Button
+                  key={preset.meal_type}
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2.5 text-xs"
+                  onClick={() => openQuickMeal(preset)}
+                >
+                  {MEAL_TYPE_LABELS[preset.meal_type]}
+                </Button>
+              ))}
+            </div>
+          ) : null}
           {logs.length === 0 ? (
             <div className="flex flex-col items-center gap-2.5 py-5 text-center">
               <div className="bg-surface-raised flex h-10 w-10 items-center justify-center rounded-2xl">
                 <UtensilsCrossed className="text-text-muted h-4 w-4" />
               </div>
               <p className="text-text-muted text-sm">Aún no registraste comidas hoy.</p>
+              <p className="text-text-muted text-xs">
+                Usa un atajo arriba o registra con macros / foto.
+              </p>
               {canEditLogs && (
                 <Button size="sm" onClick={openAddMeal}>
                   <Plus className="h-4 w-4" />

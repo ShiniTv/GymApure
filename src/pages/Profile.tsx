@@ -1,10 +1,4 @@
-import {
-  PageHeader,
-  Spinner,
-  SegmentedControl,
-  PageState,
-  BackToDashboardLink,
-} from '../components/ui';
+import { PageHeader, SegmentedControl, PageState, BackToDashboardLink } from '../components/ui';
 import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { ProfileMembershipAlerts } from './profile/ProfileMembershipAlerts';
 import { ProfileDatosTab } from './profile/ProfileDatosTab';
@@ -21,16 +15,26 @@ export default function Profile() {
   if (page.loading) {
     return (
       <PageState>
-        <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando perfil…</p>
+        <div className="mx-auto w-full max-w-4xl space-y-3 px-1">
+          <div className="bg-surface-raised h-8 w-40 animate-pulse rounded-lg" />
+          <div className="bg-surface-raised h-10 w-full animate-pulse rounded-xl" />
+          <div className="bg-surface-raised h-48 w-full animate-pulse rounded-xl" />
+        </div>
       </PageState>
     );
   }
 
   if (!page.profile || !page.user) {
     return (
-      <div className="py-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        No se pudo cargar el perfil
+      <div className="page-stack-tight mx-auto w-full max-w-4xl py-10 text-center">
+        <p className="text-text text-sm font-semibold">No se pudo cargar el perfil</p>
+        <p className="text-text-muted mt-1 text-xs">
+          Revisa tu conexión e inténtalo de nuevo. Si el problema sigue, cierra sesión y vuelve a
+          entrar.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <BackToDashboardLink />
+        </div>
       </div>
     );
   }

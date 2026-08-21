@@ -159,11 +159,10 @@ export function Modal({
           aria-describedby={contentId}
           tabIndex={-1}
           className={cn(
-            'border-border/60 bg-surface my-auto w-full rounded-[var(--radius-card)] border shadow-none transition-[opacity,transform] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none',
+            'border-border/60 bg-surface my-auto w-full rounded-[var(--radius-card)] border shadow-none transition-[opacity,transform] duration-200 motion-reduce:transform-none motion-reduce:transition-none',
             'dark:bg-surface-raised dark:border-border/70',
-            visible
-              ? 'translate-y-0 scale-100 opacity-100'
-              : 'translate-y-1 scale-[0.98] opacity-0',
+            '[transition-timing-function:cubic-bezier(0.23,1,0.32,1)]',
+            visible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-1 scale-95 opacity-0',
             scrollable
               ? 'flex max-h-[90dvh] flex-col overflow-hidden'
               : 'scroll-area p-ds-4 sm:p-ds-5 max-h-[calc(100dvh-3rem)] overflow-y-auto',

@@ -22,7 +22,7 @@ export function memberCoachingHref(memberId: number, tab?: string): string {
 
 export const TRAINER_NEEDS_LABELS: Record<TrainerNeedsFilter, string> = {
   assessment: 'Sin evaluación',
-  checkin: 'Check-in',
+  checkin: 'Seguimiento',
   recovery: 'Recuperación',
   choices: 'Elecciones del cliente',
 };

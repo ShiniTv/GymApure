@@ -194,10 +194,10 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         saved,
         ...previous.filter((item) => item.week_of !== saved.week_of),
       ]);
-      toast?.success('Check-in semanal guardado');
+      toast?.success('Seguimiento semanal guardado');
     } catch (error) {
       clientLogger.error('Failed to save weekly checkin', error);
-      toast?.error(error instanceof Error ? error.message : 'No se pudo guardar el check-in');
+      toast?.error(error instanceof Error ? error.message : 'No se pudo guardar el seguimiento');
     } finally {
       setSavingCheckin(false);
     }
@@ -378,7 +378,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
       <Card padding="md" rounded="xl">
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-            Check-in de la semana
+            Seguimiento de la semana
           </h2>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Registra cómo llega el cliente para decidir si mantienes, progresas o reduces la carga.
@@ -427,7 +427,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
           onClick={() => void saveCheckin()}
           disabled={savingCheckin}
         >
-          {savingCheckin ? 'Guardando…' : 'Guardar check-in'}
+          {savingCheckin ? 'Guardando…' : 'Guardar seguimiento'}
         </Button>
 
         {history.length > 0 && (

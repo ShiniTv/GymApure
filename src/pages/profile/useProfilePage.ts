@@ -162,19 +162,21 @@ export function useProfilePage() {
   }, [profile, user, subscription]);
 
   const profileTabOptions = useMemo(() => {
-    const options: { value: ProfileTab; label: string }[] = [{ value: 'datos', label: 'Datos' }];
+    const primary: { value: ProfileTab; label: string }[] = [{ value: 'datos', label: 'Datos' }];
     if (isMember && profile?.cedula) {
-      options.push({ value: 'carne', label: 'Carné' });
+      primary.push({ value: 'carne', label: 'Carné' });
     }
+    const secondary: { value: ProfileTab; label: string }[] = [];
     if (isMember) {
-      options.push({ value: 'salud', label: 'Salud' });
-      options.push({ value: 'progreso', label: 'Progreso' });
+      secondary.push({ value: 'salud', label: 'Salud' });
+      secondary.push({ value: 'progreso', label: 'Progreso' });
     }
-    options.push(
+    secondary.push(
       { value: 'apariencia', label: 'Apariencia' },
       { value: 'seguridad', label: 'Seguridad' }
     );
-    return options;
+    // Primary first so Datos/Carné lead; secondary remain reachable.
+    return [...primary, ...secondary];
   }, [isMember, profile?.cedula]);
 
   useEffect(() => {

@@ -15,7 +15,12 @@ interface StatCardProps {
   color?: StatColor;
   className?: string;
   compact?: boolean;
-  /** Sin icono lateral — más limpio para grids densos. */
+  /**
+   * Con icono lateral tintado. Por defecto false: layout minimal (tipo + número)
+   * para grids densos de Operate. Usa `withIcon` solo si el dato es accionable.
+   */
+  withIcon?: boolean;
+  /** @deprecated Preferir el default minimal; `withIcon` restaura el chip. */
   minimal?: boolean;
   /** Si se define, la tarjeta completa es un enlace. */
   to?: string;
@@ -35,10 +40,10 @@ function StatCardContent({
   icon: Icon,
   trend,
   trendTone = 'up',
-  color = 'emerald',
+  color = 'brand',
   compact,
   minimal,
-}: Omit<StatCardProps, 'className' | 'to'>) {
+}: Omit<StatCardProps, 'className' | 'to' | 'withIcon'>) {
   if (minimal) {
     return (
       <>
@@ -50,8 +55,8 @@ function StatCardContent({
           <span
             className={cn(
               'mt-1 flex items-center gap-0.5 text-[10px] font-medium',
-              trendTone === 'up' && 'text-emerald-600 dark:text-emerald-500',
-              trendTone === 'down' && 'text-red-600 dark:text-red-400',
+              trendTone === 'up' && 'text-success',
+              trendTone === 'down' && 'text-danger',
               trendTone === 'neutral' && 'text-text-muted'
             )}
           >
@@ -98,9 +103,9 @@ function StatCardContent({
             className={cn(
               'flex items-center gap-0.5 font-medium',
               compact ? 'text-[10px] leading-tight' : 'text-xs sm:text-sm',
-              trendTone === 'up' && 'text-emerald-600 dark:text-emerald-500',
-              trendTone === 'down' && 'text-red-600 dark:text-red-400',
-              trendTone === 'neutral' && 'text-zinc-500 dark:text-zinc-400'
+              trendTone === 'up' && 'text-success',
+              trendTone === 'down' && 'text-danger',
+              trendTone === 'neutral' && 'text-text-muted'
             )}
           >
             {trendTone === 'up' && <TrendingUp className={cn(compact ? 'h-3 w-3' : 'h-4 w-4')} />}
@@ -122,13 +127,15 @@ export function StatCard({
   icon,
   trend,
   trendTone = 'up',
-  color = 'emerald',
+  color = 'brand',
   className,
   compact,
   minimal,
+  withIcon = false,
   to,
 }: StatCardProps) {
-  const padding = minimal || compact ? 'sm' : 'md';
+  const useMinimal = minimal ?? !withIcon;
+  const padding = useMinimal || compact ? 'sm' : 'md';
   const inner = (
     <StatCardContent
       title={title}
@@ -138,7 +145,7 @@ export function StatCard({
       trendTone={trendTone}
       color={color}
       compact={compact}
-      minimal={minimal}
+      minimal={useMinimal}
     />
   );
 
@@ -157,7 +164,7 @@ export function StatCard({
     );
   }
 
-  if (minimal) {
+  if (useMinimal) {
     return (
       <Card padding="sm" rounded="xl" className={className}>
         {inner}

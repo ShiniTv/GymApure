@@ -6,12 +6,15 @@ import {
   useState,
   type ReactNode,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
 
 const EXIT_MS = 280;
+const DISMISS_PX = 96;
+const DISMISS_VELOCITY = 0.55; // px/ms
 
 interface SheetProps {
   open: boolean;
@@ -36,6 +39,8 @@ interface SheetProps {
   compact?: boolean;
   /** Accessible name when `title` is omitted (e.g. custom greeting header) */
   ariaLabel?: string;
+  /** Drag-to-dismiss (bottom sheets). Default true. */
+  dismissible?: boolean;
 }
 
 export function Sheet({
@@ -54,6 +59,7 @@ export function Sheet({
   showHandle = false,
   compact = false,
   ariaLabel,
+  dismissible = true,
 }: SheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -61,12 +67,19 @@ export function Sheet({
   onCloseRef.current = onClose;
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const dragOrigin = useRef(0);
+  const lastMove = useRef<{ y: number; t: number } | null>(null);
+  const velocity = useRef(0);
 
   useScrollLock(open);
 
   useEffect(() => {
     if (open) {
       setMounted(true);
+      setDragY(0);
       const frame = requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
@@ -74,7 +87,11 @@ export function Sheet({
     }
 
     setVisible(false);
-    const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
+    setDragging(false);
+    const timer = window.setTimeout(() => {
+      setMounted(false);
+      setDragY(0);
+    }, EXIT_MS);
     return () => window.clearTimeout(timer);
   }, [open]);
 
@@ -82,7 +99,6 @@ export function Sheet({
     if (e.key === 'Escape') onCloseRef.current();
   }, []);
 
-  // Re-run when `mounted` flips true so focus/trap attach after exit-anim remount.
   useEffect(() => {
     if (!open || !mounted) return;
     document.addEventListener('keydown', handleKeyDown);
@@ -120,21 +136,76 @@ export function Sheet({
     };
   }, [open, mounted, handleKeyDown]);
 
+  const canDrag = dismissible && side === 'bottom';
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!canDrag || e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('input, textarea, select, [data-sheet-no-drag]')) return;
+    dragStartY.current = e.clientY;
+    dragOrigin.current = dragY;
+    lastMove.current = { y: e.clientY, t: performance.now() };
+    velocity.current = 0;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging) return;
+    const delta = e.clientY - dragStartY.current;
+    const next = Math.max(0, dragOrigin.current + delta);
+    const now = performance.now();
+    if (lastMove.current) {
+      const dt = now - lastMove.current.t;
+      if (dt > 0) velocity.current = (e.clientY - lastMove.current.y) / dt;
+    }
+    lastMove.current = { y: e.clientY, t: now };
+    setDragY(next);
+  };
+
+  const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging) return;
+    setDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+    const shouldDismiss = dragY > DISMISS_PX || velocity.current > DISMISS_VELOCITY;
+    if (shouldDismiss) {
+      onCloseRef.current();
+      return;
+    }
+    setDragY(0);
+  };
+
   if (!mounted) return null;
 
   const backdropZ = zIndex - 1;
   const hideClass = hideFrom === 'lg' ? 'lg:hidden' : '';
   const slideClosed = side === 'bottom' ? 'translate-y-[110%]' : 'translate-y-[-110%]';
+  const useLiveDrag = dragging || dragY > 0;
+  const panelTransform = useLiveDrag
+    ? `translateY(${dragY}px)`
+    : visible
+      ? 'translateY(0)'
+      : undefined;
 
   return (
     <div className={hideClass}>
       <button
         type="button"
         className={cn(
-          'fixed inset-0 bg-black/40 transition-opacity ease-in-out motion-reduce:transition-none',
-          visible ? 'opacity-100' : 'opacity-0'
+          'fixed inset-0 bg-black/40 motion-reduce:transition-none',
+          !dragging && 'transition-opacity',
+          visible && dragY === 0 ? 'opacity-100' : dragY > 0 ? 'opacity-70' : 'opacity-0'
         )}
-        style={{ zIndex: backdropZ, transitionDuration: `${EXIT_MS}ms` }}
+        style={{
+          zIndex: backdropZ,
+          transitionDuration: `${EXIT_MS}ms`,
+          transitionTimingFunction: 'var(--ease-drawer)',
+          opacity: dragging || dragY > 0 ? Math.max(0.2, 1 - dragY / 320) : undefined,
+        }}
         aria-label={closeLabel}
         onClick={onClose}
       />
@@ -144,14 +215,25 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         aria-label={!title ? ariaLabel : undefined}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
         className={cn(
-          'fixed right-0 left-0 px-3 transition-transform ease-in-out motion-reduce:transform-none motion-reduce:transition-none',
+          'fixed right-0 left-0 touch-none px-3 motion-reduce:transform-none',
+          !useLiveDrag && 'transition-transform motion-reduce:transition-none',
           side === 'bottom' && !panelStyle?.bottom && 'bottom-0',
           side === 'top' && 'top-14',
-          visible ? 'translate-y-0' : slideClosed,
+          !useLiveDrag && (visible ? 'translate-y-0' : slideClosed),
           className
         )}
-        style={{ zIndex, transitionDuration: `${EXIT_MS}ms`, ...panelStyle }}
+        style={{
+          zIndex,
+          transitionDuration: `${EXIT_MS}ms`,
+          transitionTimingFunction: 'var(--ease-drawer)',
+          transform: panelTransform,
+          ...panelStyle,
+        }}
       >
         <div
           className={cn(
@@ -164,7 +246,10 @@ export function Sheet({
           )}
         >
           {showHandle && side === 'bottom' ? (
-            <div className="flex justify-center pb-1" aria-hidden>
+            <div
+              className="flex cursor-grab justify-center pb-1 active:cursor-grabbing"
+              aria-hidden
+            >
               <div className="bg-surface-overlay h-1 w-8 rounded-full" />
             </div>
           ) : null}
@@ -195,7 +280,12 @@ export function Sheet({
             </div>
           )}
           {scrollable ? (
-            <div className="min-h-0 overflow-y-auto overscroll-contain">{children}</div>
+            <div
+              className="min-h-0 touch-pan-y overflow-y-auto overscroll-contain"
+              data-sheet-no-drag
+            >
+              {children}
+            </div>
           ) : (
             children
           )}

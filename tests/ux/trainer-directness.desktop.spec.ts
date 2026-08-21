@@ -15,15 +15,25 @@ test.describe('Trainer directness', () => {
     await waitForMain(page);
     await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
+    const filtersBtn = page.getByRole('button', { name: /filtros/i });
+    if (await filtersBtn.isVisible().catch(() => false)) {
+      const expanded = await filtersBtn.getAttribute('aria-expanded');
+      if (expanded !== 'true') await filtersBtn.click();
+    }
+
     const attention = page.getByRole('tablist', { name: 'Filtrar miembros por atención' });
     await expect(attention.getByRole('tab', { name: 'Todos' })).toBeVisible();
     await expect(attention.getByRole('tab', { name: 'Sin evaluación' })).toBeVisible();
-    await expect(attention.getByRole('tab', { name: 'Check-in' })).toBeVisible();
+    await expect(attention.getByRole('tab', { name: 'Seguimiento' })).toBeVisible();
     await expect(attention.getByRole('tab', { name: 'Recuperación' })).toBeVisible();
 
     await page.goto('/members?needs=assessment');
     await waitForMain(page);
     await expect(page).toHaveURL(/needs=assessment/);
+    if (await filtersBtn.isVisible().catch(() => false)) {
+      const expanded = await filtersBtn.getAttribute('aria-expanded');
+      if (expanded !== 'true') await filtersBtn.click();
+    }
     await expect(attention.getByRole('tab', { name: 'Sin evaluación' })).toHaveAttribute(
       'aria-selected',
       'true'

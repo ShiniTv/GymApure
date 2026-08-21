@@ -15,7 +15,7 @@ test.describe('Trainer coaching context', () => {
     expect(memberId, 'member assigned to trainer').toBeTruthy();
 
     await page.goto(`/members/${memberId}/routines?tab=coaching`);
-    await expect(page.getByRole('tab', { name: /^coaching$/i })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: /^seguimiento$/i })).toHaveAttribute(
       'aria-selected',
       'true'
     );
@@ -31,8 +31,8 @@ test.describe('Trainer coaching context', () => {
     await page.getByLabel('Estrés').selectOption('2');
     await page.getByLabel('Molestias').selectOption('2');
     await page.getByLabel('Adherencia').selectOption('4');
-    await page.getByRole('button', { name: /guardar check-in/i }).click();
-    await expect(page.getByText('Check-in semanal guardado')).toBeVisible();
+    await page.getByRole('button', { name: /guardar seguimiento/i }).click();
+    await expect(page.getByText('Seguimiento semanal guardado')).toBeVisible();
   });
 
   test('muestra la referencia de carga al editar un ejercicio', async ({ page }) => {
@@ -65,12 +65,12 @@ test.describe('Trainer coaching context', () => {
     expect(memberId, 'member assigned to trainer').toBeTruthy();
 
     await page.goto(`/members/${memberId}/routines?tab=agenda`);
-    // Hub destilado: Agenda vive bajo Coaching; el tab primario seleccionado es Coaching
-    await expect(page.getByRole('tab', { name: /^coaching$/i })).toHaveAttribute(
+    // Hub destilado: Agenda vive en «Más en esta ficha»; el primario es Seguimiento
+    await expect(page.getByRole('tab', { name: /^seguimiento$/i })).toHaveAttribute(
       'aria-selected',
       'true'
     );
-    await expect(page.getByRole('button', { name: /^agenda$/i })).toBeVisible();
+    await expect(page.locator('#appointment-start')).toBeVisible();
 
     const start = new Date(Date.now() + 86_400_000);
     const end = new Date(start.getTime() + 60 * 60_000);
