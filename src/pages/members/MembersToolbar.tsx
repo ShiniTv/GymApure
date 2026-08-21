@@ -73,7 +73,7 @@ export function MembersToolbar({
 }: MembersToolbarProps) {
   const hasAdvancedNeeds = Boolean(needsFilter) && needsFilter !== '' && needsFilter !== 'expiring';
   const [filtersOpen, setFiltersOpen] = useState(
-    () => Boolean(roleFilter) || Boolean(shiftFilter) || expiringFilter || hasAdvancedNeeds
+    () => Boolean(shiftFilter) || expiringFilter || hasAdvancedNeeds
   );
 
   return (
@@ -180,21 +180,21 @@ export function MembersToolbar({
             </Button>
           )}
         </div>
+        {userRole === 'admin' && (
+          <FilterChips
+            className="w-fit max-w-full"
+            ariaLabel="Filtrar por rol"
+            options={MEMBER_ROLE_FILTER_OPTIONS}
+            value={roleFilter}
+            onChange={(v) => {
+              onRoleFilterChange(v as UserRole | '');
+              if (v && v !== 'member') onExpiringFilterChange(false);
+              onPageChange(1);
+            }}
+          />
+        )}
         {(userRole === 'admin' || userRole === 'receptionist' || isTrainer) && filtersOpen && (
           <div className="flex flex-col gap-2 sm:gap-2.5">
-            {userRole === 'admin' && (
-              <FilterChips
-                className="w-fit max-w-full"
-                ariaLabel="Filtrar por rol"
-                options={MEMBER_ROLE_FILTER_OPTIONS}
-                value={roleFilter}
-                onChange={(v) => {
-                  onRoleFilterChange(v as UserRole | '');
-                  if (v && v !== 'member') onExpiringFilterChange(false);
-                  onPageChange(1);
-                }}
-              />
-            )}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {(userRole === 'admin' || userRole === 'receptionist') && (
                 <ShiftFilter value={shiftFilter} onChange={onShiftFilterChange} label="Turno" />
