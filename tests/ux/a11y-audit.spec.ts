@@ -43,8 +43,11 @@ test.describe('Auditoría WCAG AA', () => {
   test('listado de miembros para staff no presenta violaciones WCAG AA', async ({ page }) => {
     await login(page, ADMIN_EMAIL, demoPassword());
     await page.goto('/members', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('tablist', { name: 'Filtrar por rol' })).toBeVisible({
+    await expect(page.getByPlaceholder(/buscar nombre o cédula/i)).toBeVisible({
       timeout: 15_000,
+    });
+    await expect(page.getByRole('tablist', { name: 'Filtrar por rol' })).toBeVisible({
+      timeout: 10_000,
     });
     await expectNoAccessibilityViolations(page);
   });
