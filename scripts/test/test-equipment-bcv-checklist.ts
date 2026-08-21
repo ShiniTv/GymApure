@@ -72,7 +72,7 @@ async function ensureAdmin() {
   }
   // Fallback: demo admin from restore-demo
   const demo = await jsonApi('POST', '/api/auth/login', {
-    email: process.env.DEMO_ADMIN_EMAIL ?? 'admin@gymapure.demo',
+    email: process.env.DEMO_ADMIN_EMAIL ?? 'admin@gym.com',
     password: process.env.DEMO_PASSWORD ?? 'Demo1234!',
   });
   if (demo.res.status === 200) {

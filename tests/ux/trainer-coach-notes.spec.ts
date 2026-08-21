@@ -31,7 +31,9 @@ test.describe('Trainer coach notes', () => {
 
     await expect(page).toHaveURL(/\/members\/\d+\/routines/, { timeout: 15_000 });
 
-    await page.getByRole('tab', { name: /^notas$/i }).click();
+    // Hub destilado: Notas es sub-tab bajo Coaching (no tab primario)
+    await page.getByRole('tab', { name: /^coaching$/i }).click();
+    await page.getByRole('button', { name: /^notas$/i }).click();
     await expect(page.getByText(/nueva nota/i)).toBeVisible({ timeout: 10_000 });
 
     const noteText = `QA nota automatizada ${Date.now()}`;

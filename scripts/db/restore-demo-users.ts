@@ -230,6 +230,43 @@ async function main() {
     }
     console.log('✓ 2 ejercicios demo en Demo CI Routine (tests workout pager)');
 
+    // Plantilla auto-asignable (autonomía guiada / test:member-agency)
+    let templateId: number;
+    const existingTemplate = await query<{ id: number }>(
+      `SELECT id FROM routines
+       WHERE trainer_id = $1 AND name = 'Plantilla Full Body Demo' AND member_selectable = true
+       LIMIT 1`,
+      [trainerId]
+    );
+    if (existingTemplate.rows[0]) {
+      templateId = existingTemplate.rows[0].id;
+    } else {
+      const insertedTpl = await query<{ id: number }>(
+        `INSERT INTO routines (name, difficulty, trainer_id, member_selectable)
+         VALUES ($1, $2, $3, true)
+         RETURNING id`,
+        ['Plantilla Full Body Demo', 'Beginner', trainerId]
+      );
+      templateId = insertedTpl.rows[0].id;
+    }
+    for (const ex of demoExercises) {
+      const exRow = await query<{ id: number }>(
+        `SELECT id FROM exercises WHERE name = $1 LIMIT 1`,
+        [ex.name]
+      );
+      const exerciseId = exRow.rows[0]?.id;
+      if (!exerciseId) continue;
+      await query(
+        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds)
+         SELECT $1, $2, 3, 12, 60
+         WHERE NOT EXISTS (
+           SELECT 1 FROM routine_exercises WHERE routine_id = $1 AND exercise_id = $2
+         )`,
+        [templateId, exerciseId]
+      );
+    }
+    console.log('✓ Plantilla Full Body Demo (member_selectable) para autonomía guiada');
+
     // Yesterday so trainer activity feed has data without blocking member FAB / Empezar hoy.
     await query(
       `DELETE FROM workout_sessions

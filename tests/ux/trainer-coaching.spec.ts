@@ -65,10 +65,12 @@ test.describe('Trainer coaching context', () => {
     expect(memberId, 'member assigned to trainer').toBeTruthy();
 
     await page.goto(`/members/${memberId}/routines?tab=agenda`);
-    await expect(page.getByRole('tab', { name: /^agenda$/i })).toHaveAttribute(
+    // Hub destilado: Agenda vive bajo Coaching; el tab primario seleccionado es Coaching
+    await expect(page.getByRole('tab', { name: /^coaching$/i })).toHaveAttribute(
       'aria-selected',
       'true'
     );
+    await expect(page.getByRole('button', { name: /^agenda$/i })).toBeVisible();
 
     const start = new Date(Date.now() + 86_400_000);
     const end = new Date(start.getTime() + 60 * 60_000);

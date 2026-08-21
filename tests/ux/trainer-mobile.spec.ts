@@ -61,7 +61,7 @@ test.describe('Entrenador móvil', () => {
   });
 
   test('el panel muestra sesiones 1:1 y destinos de atención', async ({ page }) => {
-    await expect(page.getByText(/sesiones 1:1/i)).toBeVisible();
+    await expect(page.getByText(/sesiones 1:1 ·/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /^agendar$/i })).toBeVisible();
 
     const assessment = page.getByRole('link', { name: /sin evaluación/i });

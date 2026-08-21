@@ -35,6 +35,35 @@ export function getSuggestedNutritionPlanDefaults() {
   return { ...SUGGESTED_NUTRITION_PLAN, is_suggested: true as const };
 }
 
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+function isMemberAgencySchemaMissing(err: unknown): boolean {
+  const msg = getErrorMessage(err).toLowerCase();
+  if (
+    !msg.includes('does not exist') &&
+    !msg.includes('undefined_table') &&
+    !msg.includes('undefined_column')
+  ) {
+    return false;
+  }
+  return (
+    msg.includes('member_activity_events') ||
+    msg.includes('member_daily_routine_choice') ||
+    msg.includes('member_selectable')
+  );
+}
+
+async function withMemberAgencyFallback<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isMemberAgencySchemaMissing(err)) return fallback;
+    throw err;
+  }
+}
+
 export async function getMemberAssignedTrainerIds(memberId: number): Promise<number[]> {
   const { rows } = await query<{ trainer_id: number }>(
     `SELECT trainer_id FROM trainer_member_assignments WHERE member_id = $1`,
@@ -177,28 +206,32 @@ export async function recordMemberActivityEvent(input: {
   routineId?: number | null;
   metadata?: Record<string, unknown>;
 }): Promise<number> {
-  const { rows } = await query<{ id: number }>(
-    `INSERT INTO member_activity_events (member_id, trainer_id, event_type, routine_id, metadata)
-     VALUES ($1, $2, $3, $4, $5::jsonb)
-     RETURNING id`,
-    [
-      input.memberId,
-      input.trainerId,
-      input.eventType,
-      input.routineId ?? null,
-      JSON.stringify(input.metadata ?? {}),
-    ]
-  );
-  return rows[0].id;
+  return withMemberAgencyFallback(0, async () => {
+    const { rows } = await query<{ id: number }>(
+      `INSERT INTO member_activity_events (member_id, trainer_id, event_type, routine_id, metadata)
+       VALUES ($1, $2, $3, $4, $5::jsonb)
+       RETURNING id`,
+      [
+        input.memberId,
+        input.trainerId,
+        input.eventType,
+        input.routineId ?? null,
+        JSON.stringify(input.metadata ?? {}),
+      ]
+    );
+    return rows[0].id;
+  });
 }
 
 export async function getTodayRoutineChoice(memberId: number): Promise<number | null> {
-  const { rows } = await query<{ routine_id: number }>(
-    `SELECT routine_id FROM member_daily_routine_choice
-     WHERE user_id = $1 AND choice_date = CURRENT_DATE`,
-    [memberId]
-  );
-  return rows[0]?.routine_id ?? null;
+  return withMemberAgencyFallback(null, async () => {
+    const { rows } = await query<{ routine_id: number }>(
+      `SELECT routine_id FROM member_daily_routine_choice
+       WHERE user_id = $1 AND choice_date = CURRENT_DATE`,
+      [memberId]
+    );
+    return rows[0]?.routine_id ?? null;
+  });
 }
 
 export async function setTodayRoutineChoice(memberId: number, routineId: number): Promise<void> {
@@ -219,16 +252,17 @@ export async function setTodayRoutineChoice(memberId: number, routineId: number)
 }
 
 export async function listSelectableTemplates(memberId: number) {
-  const trainerIds = await getMemberAssignedTrainerIds(memberId);
-  const params: unknown[] = [memberId];
-  let trainerFilter = '';
-  if (trainerIds.length > 0) {
-    trainerFilter = ` AND r.trainer_id = ANY($2::bigint[])`;
-    params.push(trainerIds);
-  }
+  return withMemberAgencyFallback([], async () => {
+    const trainerIds = await getMemberAssignedTrainerIds(memberId);
+    const params: unknown[] = [memberId];
+    let trainerFilter = '';
+    if (trainerIds.length > 0) {
+      trainerFilter = ` AND r.trainer_id = ANY($2::bigint[])`;
+      params.push(trainerIds);
+    }
 
-  const { rows } = await query(
-    `SELECT r.id, r.name, r.difficulty, r.trainer_id, u.full_name AS trainer_name,
+    const { rows } = await query(
+      `SELECT r.id, r.name, r.difficulty, r.trainer_id, u.full_name AS trainer_name,
             COALESCE(ec.exercise_count, 0)::int AS exercise_count,
             preview.exercise_preview,
             EXISTS (
@@ -256,21 +290,24 @@ export async function listSelectableTemplates(memberId: number) {
        AND COALESCE(ec.exercise_count, 0) > 0
        ${trainerFilter}
      ORDER BY r.name ASC`,
-    params
-  );
-  return rows;
+      params
+    );
+    return rows;
+  });
 }
 
 export async function listPendingMemberChoicesForTrainer(trainerId: number, limit = 20) {
-  const { rows } = await query<MemberActivityEventRow>(
-    `SELECT e.id, e.member_id, e.trainer_id, e.event_type, e.routine_id, e.metadata,
-            e.created_at, e.acknowledged_at, u.full_name AS member_name
-     FROM member_activity_events e
-     JOIN users u ON u.id = e.member_id
-     WHERE e.trainer_id = $1 AND e.acknowledged_at IS NULL
-     ORDER BY e.created_at DESC
-     LIMIT $2`,
-    [trainerId, limit]
-  );
-  return rows;
+  return withMemberAgencyFallback([], async () => {
+    const { rows } = await query<MemberActivityEventRow>(
+      `SELECT e.id, e.member_id, e.trainer_id, e.event_type, e.routine_id, e.metadata,
+              e.created_at, e.acknowledged_at, u.full_name AS member_name
+       FROM member_activity_events e
+       JOIN users u ON u.id = e.member_id
+       WHERE e.trainer_id = $1 AND e.acknowledged_at IS NULL
+       ORDER BY e.created_at DESC
+       LIMIT $2`,
+      [trainerId, limit]
+    );
+    return rows;
+  });
 }

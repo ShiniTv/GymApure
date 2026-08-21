@@ -16,9 +16,25 @@ function getQrBoxSize(): number {
   return Math.min(280, Math.max(200, Math.floor(window.innerWidth * 0.7)));
 }
 
+async function safeStopAndClear(instance: Html5Qrcode, wasStarted: boolean) {
+  try {
+    if (wasStarted) {
+      await instance.stop();
+    }
+  } catch {
+    // start() falló o el scanner ya no corre (Strict Mode / sin cámara)
+  }
+  try {
+    instance.clear();
+  } catch {
+    // clear() puede fallar si el nodo DOM ya no está
+  }
+}
+
 export function QrScannerPanel({ active, paused = false, onScan, className }: QrScannerPanelProps) {
   const regionId = useId().replace(/:/g, '');
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const startedRef = useRef(false);
   const onScanRef = useRef(onScan);
   const pausedRef = useRef(paused);
   const [initState, setInitState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -35,6 +51,7 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
     }
 
     let cancelled = false;
+    startedRef.current = false;
     setInitState('loading');
     setCameraError(null);
 
@@ -63,7 +80,12 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
         }
       )
       .then(() => {
-        if (!cancelled) setInitState('ready');
+        if (cancelled) {
+          void safeStopAndClear(scanner, true);
+          return;
+        }
+        startedRef.current = true;
+        setInitState('ready');
       })
       .catch((err: unknown) => {
         if (!cancelled) {
@@ -76,14 +98,11 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
     return () => {
       cancelled = true;
       const instance = scannerRef.current;
+      const wasStarted = startedRef.current;
       scannerRef.current = null;
+      startedRef.current = false;
       if (!instance) return;
-      void instance
-        .stop()
-        .then(() => instance.clear())
-        .catch(() => {
-          instance.clear();
-        });
+      void safeStopAndClear(instance, wasStarted);
     };
   }, [active, regionId]);
 
