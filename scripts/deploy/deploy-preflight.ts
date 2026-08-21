@@ -91,7 +91,19 @@ function main() {
     warn(
       'SENTRY_DSN (errores en producción)',
       sentryDsn.length > 0,
-      'Crear proyecto Sentry Node y pegar DSN en Render'
+      'Crear proyecto Sentry Node y pegar DSN en Render — docs/tecnico/SENTRY-Y-ALERTAS.md'
+    );
+    const viteSentry = process.env.VITE_SENTRY_DSN?.trim() ?? '';
+    warn(
+      'VITE_SENTRY_DSN (errores React / web-vitals)',
+      viteSentry.length > 0,
+      'Mismo proyecto o gymapure-web; requiere redeploy para el build Vite'
+    );
+    const mfaKey = process.env.MFA_ENCRYPTION_KEY?.trim() ?? '';
+    warn(
+      'MFA_ENCRYPTION_KEY dedicada (≠ JWT_SECRET)',
+      mfaKey.length >= 32 && mfaKey !== jwt,
+      'Copiar a Render Environment; luego npm run security:reencrypt-mfa:prod -- --allow-prod si hay legacy'
     );
     warn(
       'SMTP_HOST (correos transaccionales)',

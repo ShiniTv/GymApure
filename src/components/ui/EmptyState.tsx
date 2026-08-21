@@ -50,7 +50,7 @@ export function EmptyState({
   className,
   variant = 'default',
   compact = false,
-  framed = true,
+  framed = false,
 }: EmptyStateProps) {
   const isMotivational = variant === 'motivational';
 

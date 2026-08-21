@@ -35,12 +35,29 @@ El build Vite puede inyectar release vía plugin Sentry (`@sentry/vite-plugin`) 
 2. Confirmar evento en Sentry &lt; 2 min.
 3. `npm run lighthouse:ci` en CI ya mide budgets de login/panel.
 
-## Pendiente ops (auditoría 360° — 2026-07-28)
+## Pendiente ops (auditoría 360° — 2026-07-28 · Oleada 3)
 
-Checklist humano restante:
+Checklist humano restante (no automatizable desde el repo):
 
 1. Crear proyecto(s) Sentry (`gymapure-server` / `gymapure-web` o uno compartido).
-2. Pegar `SENTRY_DSN` y `VITE_SENTRY_DSN` en **Render Environment** y en `.env.prod` local.
+2. Pegar `SENTRY_DSN` y `VITE_SENTRY_DSN` en **Render → Environment** y en `.env.prod` local.
 3. Redeploy Render (para que el build Vite tome `VITE_SENTRY_DSN`).
 4. En staging local o preview: forzar un error controlado → confirmar evento + regla de alerta.
 5. Marcar el gate en [OPS-VERIFY-CHECKLIST.md](./OPS-VERIFY-CHECKLIST.md).
+
+### Render — pasos concretos
+
+1. Dashboard Sentry → Create project → Node + React (o uno solo).
+2. Copiar DSN → Render service `caribean-gym` → Environment:
+   - `SENTRY_DSN` = DSN server
+   - `VITE_SENTRY_DSN` = DSN browser (puede ser el mismo)
+3. Manual Deploy → Clear build cache & deploy.
+4. Verificar: `npm run deploy:preflight:prod` deja de avisar Sentry cuando `.env.prod` local también tenga los DSN.
+
+### MFA en Render (pareja)
+
+1. Confirmar `MFA_ENCRYPTION_KEY` en `.env.prod` local (`npm run deploy:preflight:prod`).
+2. Copiar **exactamente** la misma clave a Render Environment.
+3. Si hubo secrets MFA cifrados con JWT antiguo:
+   `npm run security:reencrypt-mfa:prod -- --allow-prod`
+4. No rotar MFA y JWT en el mismo deploy sin re-encrypt.

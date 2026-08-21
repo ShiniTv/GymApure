@@ -55,7 +55,7 @@ export default defineConfig({
   build: {
     target: 'es2022',
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 550,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -66,6 +66,8 @@ export default defineConfig({
           if (normalized.includes('react-qr-code') || normalized.includes('/qrcode/')) {
             return 'qr-display';
           }
+          if (normalized.includes('@sentry')) return 'sentry';
+          if (normalized.includes('react-virtuoso')) return 'virtuoso';
           if (normalized.includes('lucide-react')) return 'icons';
           if (normalized.includes('@tanstack')) return 'query';
           if (normalized.includes('date-fns')) return 'dateFns';

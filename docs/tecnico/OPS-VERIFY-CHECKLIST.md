@@ -11,12 +11,13 @@ este archivo.
       guards). Cloud Supabase staging bloqueado por Free 2-project limit; ver [STAGING.md](./STAGING.md).
 - [x] **Preparación de backup:** 2026-07-28 — `npm run db:backup-check` → controles locales OK.
       Confirmar PITR/retención en Supabase Dashboard (ítem manual del Dashboard sigue pendiente de captura).
-- [ ] **Alerta Sentry:** `SENTRY_DSN` / `VITE_SENTRY_DSN` ausentes en `.env.prod` local. Crear proyecto
-      Sentry, pegar DSN en Render + `.env.prod`, generar evento controlado en staging local, confirmar alerta.
-      Guía: [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md).
-- [x] **Clave MFA dedicada:** 2026-07-28 — `MFA_ENCRYPTION_KEY` escrita en `.env.prod` local (independiente
-      de `JWT_SECRET`). **Acción humana:** copiar la misma clave a Render Environment y ejecutar
-      `npm run security:reencrypt-mfa:prod -- --allow-prod` si hay secrets legacy.
+- [ ] **Alerta Sentry:** Pegar `SENTRY_DSN` + `VITE_SENTRY_DSN` en Render Environment (y `.env.prod`
+      local). Redeploy. Generar evento controlado en staging local → confirmar alerta &lt; 15 min.
+      Guía paso a paso: [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md). Preflight:
+      `npm run deploy:preflight:prod` (WARN si faltan).
+- [x] **Clave MFA dedicada (local):** 2026-07-28 — `MFA_ENCRYPTION_KEY` en `.env.prod` local.
+      **Acción humana restante:** copiar la misma clave a Render Environment; si hay secrets legacy,
+      `npm run security:reencrypt-mfa:prod -- --allow-prod`. Preflight avisa si falta o coincide con JWT.
 
 ## Ritual metrics autenticado (mensual)
 

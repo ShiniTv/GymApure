@@ -39,7 +39,15 @@ Snapshot re-eval 2026-07-25. Auditoría 360° 2026-07-28. MFA opcional (no es de
 - [x] `MFA_ENCRYPTION_KEY` + `CRON_SECRET` en `.env.prod` local
 - [ ] Sentry DSN + alerta live (humano / Render) — ver [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md)
 - [ ] Copiar `MFA_ENCRYPTION_KEY` a Render + re-encrypt si legacy
-- [ ] Filas device A4 / I2–I4 con evidencia física
+- [ ] Filas device A4 / I2–I4 con evidencia física — plantilla en [QA-DEVICE-10.md](../qa/QA-DEVICE-10.md)
+
+### Oleada 3 (código, 2026-08-21)
+
+- [x] Índice FK `member_activity_events.routine_id`
+- [x] Code-split `sentry` / `virtuoso` + umbral chunk charts/qr
+- [x] `EmptyState` sin Card por defecto (`framed={false}`)
+- [x] Preflight avisa `VITE_SENTRY_DSN` + `MFA_ENCRYPTION_KEY`
+- [ ] Gates humanos Sentry / MFA-on-Render / device A4·I2–I4 (arriba)
 
 ## God-files (estado 2026-07-28 cont.)
 
