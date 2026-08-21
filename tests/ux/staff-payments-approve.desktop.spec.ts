@@ -13,18 +13,26 @@ test.describe('Staff — aprobaciones de pagos desktop', () => {
     await expect(page.getByRole('heading', { name: /pagos/i }).first()).toBeVisible({
       timeout: 20_000,
     });
+
+    const filtersBtn = page.getByRole('button', { name: /filtros|más filtros/i });
+    if (await filtersBtn.isVisible().catch(() => false)) {
+      const expanded = await filtersBtn.getAttribute('aria-expanded');
+      if (expanded !== 'true') await filtersBtn.click();
+    }
+
     await expect(page.getByRole('tab', { name: /pendientes/i })).toHaveAttribute(
       'aria-selected',
       'true'
     );
 
-    const emptyCell = page.getByRole('cell', { name: /no hay pagos/i });
+    const empty = page
+      .getByRole('cell', { name: /sin pagos|no hay pagos/i })
+      .or(page.getByRole('heading', { name: /sin pagos/i }));
     const approve = page.getByRole('button', { name: /aprobar pago/i }).first();
 
-    await expect(emptyCell.or(approve)).toBeVisible({ timeout: 15_000 });
+    await expect(empty.or(approve)).toBeVisible({ timeout: 15_000 });
 
-    if (await emptyCell.isVisible().catch(() => false)) {
-      // Demo sin cola: al menos el filtro pendientes y registrar están disponibles.
+    if (await empty.isVisible().catch(() => false)) {
       await expect(page.getByLabel('Registrar pago')).toBeVisible();
       return;
     }

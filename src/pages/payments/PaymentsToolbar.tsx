@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { formatMoney } from '../../lib/utils';
 import {
   Button,
@@ -49,9 +48,6 @@ export function PaymentsToolbar({
   onClearStatusFilter,
   onOpenRegister,
 }: PaymentsToolbarProps) {
-  const hasActiveStatus = Boolean(statusFilter) || stalePending;
-  const [filtersOpen, setFiltersOpen] = useState(() => hasActiveStatus);
-
   return (
     <>
       <PageHeader
@@ -168,18 +164,6 @@ export function PaymentsToolbar({
               aria-label="Buscar pagos"
             />
             <Button
-              type="button"
-              size="sm"
-              variant={filtersOpen ? 'secondary' : 'ghost'}
-              className="h-10 min-h-10 w-10 shrink-0 p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
-              aria-expanded={filtersOpen}
-              aria-label="Más filtros"
-              onClick={() => setFiltersOpen((open) => !open)}
-            >
-              <SlidersHorizontal className="h-4 w-4 shrink-0" />
-              <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Filtros</span>
-            </Button>
-            <Button
               size="sm"
               className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
               onClick={onOpenRegister}
@@ -189,29 +173,27 @@ export function PaymentsToolbar({
               <span className="hidden text-xs font-semibold sm:inline sm:text-sm">Registrar</span>
             </Button>
           </div>
-          {filtersOpen ? (
-            <FilterChips
-              className="w-fit max-w-full"
-              ariaLabel="Filtrar por estado"
-              options={[
-                { value: '', label: 'Todos' },
-                {
-                  value: 'pending',
-                  label: 'Pendientes',
-                  count: adminStats?.stats?.pendingPayments,
-                },
-                {
-                  value: 'pending_old',
-                  label: '>2 días',
-                  count: adminStats?.stats?.pendingPaymentsOlderThan2Days,
-                },
-                { value: 'approved', label: 'Aprobados' },
-                { value: 'rejected', label: 'Rechazados' },
-              ]}
-              value={stalePending ? 'pending_old' : statusFilter}
-              onChange={onStatusFilterChange}
-            />
-          ) : null}
+          <FilterChips
+            className="w-fit max-w-full"
+            ariaLabel="Filtrar por estado"
+            options={[
+              { value: '', label: 'Todos' },
+              {
+                value: 'pending',
+                label: 'Pendientes',
+                count: adminStats?.stats?.pendingPayments,
+              },
+              {
+                value: 'pending_old',
+                label: '>2 días',
+                count: adminStats?.stats?.pendingPaymentsOlderThan2Days,
+              },
+              { value: 'approved', label: 'Aprobados' },
+              { value: 'rejected', label: 'Rechazados' },
+            ]}
+            value={stalePending ? 'pending_old' : statusFilter}
+            onChange={onStatusFilterChange}
+          />
         </div>
       ) : null}
     </>
