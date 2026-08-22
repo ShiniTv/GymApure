@@ -11,7 +11,7 @@ interface LogoutConfirmModalProps {
 export function LogoutConfirmModal({ open, onClose, onConfirm }: LogoutConfirmModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="¿Cerrar sesión?" maxWidth="sm">
-      <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-text-secondary mb-6 text-sm">
         Tendrás que volver a iniciar sesión para acceder a tu cuenta.
       </p>
       <div className="flex gap-3">

@@ -105,8 +105,8 @@ function ProtectedRoute({
 
   if (isLoading && !user) {
     return (
-      <div className="flex h-dvh flex-col bg-zinc-50 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+      <div className="bg-bg flex h-dvh flex-col">
+        <div className="border-border border-b px-4 py-3">
           <div className="bg-brand/20 h-6 w-32 animate-pulse rounded-md" />
         </div>
         <div className="flex flex-1 items-center justify-center p-6">

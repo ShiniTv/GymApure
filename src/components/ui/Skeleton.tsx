@@ -98,7 +98,7 @@ export function AuditLogsSkeleton() {
       </div>
       <div className="table-shell hidden overflow-hidden lg:block">
         <table className="w-full min-w-[52rem] text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+          <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
             <tr>
               {['Cuándo', 'Acción', 'Actor', 'Detalle'].map((col) => (
                 <th key={col} className="px-3 py-2.5">
@@ -107,7 +107,7 @@ export function AuditLogsSkeleton() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tbody className="divide-border-subtle divide-y">
             <TableRowSkeleton cols={4} />
             <TableRowSkeleton cols={4} />
             <TableRowSkeleton cols={4} />
@@ -135,7 +135,7 @@ export function CalendarViewSkeleton() {
           <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
         </div>
       </div>
-      <div className="hidden space-y-2 rounded-xl border border-zinc-200/70 p-2.5 lg:block dark:border-zinc-800/80">
+      <div className="border-border hidden space-y-2 rounded-xl border p-2.5 lg:block">
         <Skeleton className="h-3 w-40" />
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -143,15 +143,15 @@ export function CalendarViewSkeleton() {
           ))}
         </div>
       </div>
-      <div className="hidden overflow-hidden rounded-xl border border-zinc-200/70 xl:block dark:border-zinc-800/80">
-        <div className="grid grid-cols-7 gap-px border-b border-zinc-100 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <div className="border-border hidden overflow-hidden rounded-xl border xl:block">
+        <div className="border-border-subtle bg-surface-raised grid grid-cols-7 gap-px border-b p-2">
           {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="mx-auto h-3 w-8" />
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-px bg-zinc-100 p-1 dark:bg-zinc-800">
+        <div className="bg-border-subtle grid grid-cols-7 gap-px p-1">
           {Array.from({ length: 35 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-md bg-zinc-50 dark:bg-zinc-900/50" />
+            <Skeleton key={i} className="bg-surface h-16 rounded-md" />
           ))}
         </div>
       </div>
@@ -164,7 +164,7 @@ export function AssignmentsListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div className="space-y-2.5" aria-busy="true" aria-label="Cargando asignaciones">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-zinc-200/70 p-3 dark:border-zinc-800/80">
+        <div key={i} className="border-border rounded-xl border p-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
             <div className="min-w-0 flex-1 space-y-1.5">

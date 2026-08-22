@@ -221,7 +221,7 @@ export default function ExerciseRecords() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando marcas…</p>
+        <p className="text-text-muted mt-3 text-xs">Cargando marcas…</p>
       </PageState>
     );
   }
@@ -270,7 +270,7 @@ export default function ExerciseRecords() {
             <button
               type="button"
               onClick={() => navigate(historyHref)}
-              className="hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 sm:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="hover:text-brand text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors sm:hidden"
               aria-label="Volver al historial"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -280,7 +280,7 @@ export default function ExerciseRecords() {
       />
 
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <Search className="text-text-muted pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -311,23 +311,19 @@ export default function ExerciseRecords() {
           />
         ) : (
           <>
-            <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+            <div className="divide-border-subtle divide-y lg:hidden">
               {filteredRecords.map((row) => (
                 <button
                   key={row.exercise_id}
                   type="button"
                   onClick={() => void openDetail(row.exercise_id)}
-                  className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  className="hover:bg-surface-raised flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                        {row.name}
-                      </p>
+                      <p className="text-text truncate text-sm font-semibold">{row.name}</p>
                       {row.muscle_group && (
-                        <p className="text-[10px] text-zinc-500 capitalize dark:text-zinc-400">
-                          {row.muscle_group}
-                        </p>
+                        <p className="text-text-muted text-[10px] capitalize">{row.muscle_group}</p>
                       )}
                     </div>
                     <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
@@ -336,22 +332,22 @@ export default function ExerciseRecords() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p className="text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                      <p className="text-text text-sm font-bold tabular-nums">
                         {formatKg(row.max_weight_kg)}
                       </p>
-                      <p className="text-[9px] text-zinc-500">Peso máx.</p>
+                      <p className="text-text-muted text-[9px]">Peso máx.</p>
                     </div>
                     <div>
                       <p className="text-brand text-sm font-bold tabular-nums">
                         {formatKg(row.estimated_1rm_kg)}
                       </p>
-                      <p className="text-[9px] text-zinc-500">1RM est.</p>
+                      <p className="text-text-muted text-[9px]">1RM est.</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-900 tabular-nums dark:text-white">
+                      <p className="text-text text-sm font-bold tabular-nums">
                         {row.best_set ? `${row.best_set.reps}` : '—'}
                       </p>
-                      <p className="text-[9px] text-zinc-500">Reps mejor</p>
+                      <p className="text-text-muted text-[9px]">Reps mejor</p>
                     </div>
                   </div>
                 </button>
@@ -361,7 +357,7 @@ export default function ExerciseRecords() {
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                  <tr className="border-border-subtle text-text-muted border-b text-[11px]">
                     <th className="px-4 py-2.5 font-medium">Ejercicio</th>
                     <th className="px-4 py-2.5 font-medium">Grupo</th>
                     <th className="px-4 py-2.5 font-medium">Peso máx.</th>
@@ -371,23 +367,21 @@ export default function ExerciseRecords() {
                     <th className="px-4 py-2.5 font-medium">Sesiones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {filteredRecords.map((row) => (
                     <tr
                       key={row.exercise_id}
-                      className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                      className="hover:bg-surface-raised cursor-pointer transition-colors"
                       onClick={() => void openDetail(row.exercise_id)}
                     >
-                      <td className="px-4 py-2.5 font-medium text-zinc-900 dark:text-white">
-                        {row.name}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-zinc-500 capitalize">
+                      <td className="text-text px-4 py-2.5 font-medium">{row.name}</td>
+                      <td className="text-text-muted px-4 py-2.5 text-xs capitalize">
                         {row.muscle_group || '—'}
                       </td>
                       <td className="px-4 py-2.5 tabular-nums">
                         {formatKg(row.max_weight_kg)} kg
                         {row.max_weight_reps > 0 && (
-                          <span className="text-zinc-400"> × {row.max_weight_reps}</span>
+                          <span className="text-text-muted"> × {row.max_weight_reps}</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 tabular-nums">
@@ -398,12 +392,12 @@ export default function ExerciseRecords() {
                       <td className="text-brand px-4 py-2.5 font-semibold tabular-nums">
                         {formatKg(row.estimated_1rm_kg)} kg
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-zinc-500 tabular-nums">
+                      <td className="text-text-muted px-4 py-2.5 text-xs tabular-nums">
                         {row.last_performed
                           ? format(parseISO(row.last_performed), 'dd MMM yyyy', { locale: es })
                           : '—'}
                       </td>
-                      <td className="px-4 py-2.5 text-zinc-600 tabular-nums dark:text-zinc-300">
+                      <td className="text-text-secondary px-4 py-2.5 tabular-nums">
                         {row.session_count}
                       </td>
                     </tr>
@@ -423,7 +417,7 @@ export default function ExerciseRecords() {
             <>
               {detail.name}
               {detail.muscle_group ? (
-                <span className="ml-2 text-xs font-normal text-zinc-500 capitalize">
+                <span className="text-text-muted ml-2 text-xs font-normal capitalize">
                   {detail.muscle_group}
                 </span>
               ) : null}
@@ -442,31 +436,31 @@ export default function ExerciseRecords() {
         ) : detail ? (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold tabular-nums">
                   {formatKg(detail.summary.max_weight_kg)} kg
                 </p>
-                <p className="text-[10px] text-zinc-500">Peso máximo</p>
+                <p className="text-text-muted text-[10px]">Peso máximo</p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
+              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
                 <p className="text-brand text-lg font-bold tabular-nums">
                   {formatKg(detail.summary.estimated_1rm_kg)} kg
                 </p>
-                <p className="text-[10px] text-zinc-500">1RM estimado</p>
+                <p className="text-text-muted text-[10px]">1RM estimado</p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold tabular-nums">
                   {detail.summary.best_set
                     ? `${formatKg(detail.summary.best_set.weight)}×${detail.summary.best_set.reps}`
                     : '—'}
                 </p>
-                <p className="text-[10px] text-zinc-500">Mejor serie</p>
+                <p className="text-text-muted text-[10px]">Mejor serie</p>
               </div>
-              <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-center dark:border-zinc-800 dark:bg-zinc-800/50">
-                <p className="text-lg font-bold text-zinc-900 tabular-nums dark:text-white">
+              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
+                <p className="text-text text-lg font-bold tabular-nums">
                   {detail.summary.session_count}
                 </p>
-                <p className="text-[10px] text-zinc-500">Sesiones</p>
+                <p className="text-text-muted text-[10px]">Sesiones</p>
               </div>
             </div>
 
@@ -487,19 +481,19 @@ export default function ExerciseRecords() {
             {detail.reps_at_weight.length > 0 && (
               <div>
                 <h3 className="section-title mb-2">Repeticiones máximas por carga</h3>
-                <div className="overflow-x-auto rounded-lg border border-zinc-100 dark:border-zinc-800">
+                <div className="border-border-subtle overflow-x-auto rounded-lg border">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-zinc-100 bg-zinc-50 text-[10px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400">
+                      <tr className="border-border-subtle bg-surface-raised text-text-muted border-b text-[10px]">
                         <th className="px-3 py-2 font-medium">Peso</th>
                         <th className="px-3 py-2 font-medium">Máx. reps</th>
                         <th className="px-3 py-2 font-medium">1RM est.</th>
                         <th className="px-3 py-2 font-medium">Origen</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <tbody className="divide-border-subtle divide-y">
                       {detail.reps_at_weight.map((row) => (
-                        <tr key={row.weight_kg} className="text-zinc-700 dark:text-zinc-200">
+                        <tr key={row.weight_kg} className="text-text-secondary">
                           <td className="px-3 py-1.5 font-medium tabular-nums">
                             {formatKg(row.weight_kg)} kg
                           </td>
@@ -533,7 +527,7 @@ export default function ExerciseRecords() {
                 </Button>
               </div>
               {detail.manual_tests.length === 0 ? (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted text-xs">
                   No hay pruebas manuales. Registra un RM con una carga determinada para
                   complementar el historial de entrenamientos.
                 </p>
@@ -542,16 +536,16 @@ export default function ExerciseRecords() {
                   {detail.manual_tests.map((test) => (
                     <li
                       key={test.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
+                      className="border-border-subtle flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                        <p className="text-text text-sm font-semibold tabular-nums">
                           {formatKg(test.weight)} kg × {test.reps}
                           <span className="text-brand ml-2 text-xs font-medium">
                             ≈ {formatKg(test.estimated_1rm_kg)} kg 1RM
                           </span>
                         </p>
-                        <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <p className="text-text-muted mt-0.5 text-[10px]">
                           {format(parseISO(test.test_date), 'dd MMM yyyy', { locale: es })}
                           {test.recorded_by_name ? ` · ${test.recorded_by_name}` : ''}
                           {test.notes ? ` · ${test.notes}` : ''}
@@ -584,7 +578,7 @@ export default function ExerciseRecords() {
         title="Registrar prueba de RM"
       >
         <div className="space-y-3">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted text-xs">
             Anota el peso y las repeticiones máximas logradas en una prueba (p. ej. 80 kg × 5).
           </p>
           <div className="grid grid-cols-2 gap-3">

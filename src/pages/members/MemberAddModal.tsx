@@ -53,25 +53,20 @@ export function MemberAddModal({
       initialFocus="dialog"
     >
       {isTrainer && (
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted mb-4 text-sm">
           Tras crear la cuenta:{' '}
-          <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-            asigna una rutina
-          </strong>{' '}
-          en el calendario. La{' '}
-          <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
+          <strong className="text-text-secondary font-semibold">asigna una rutina</strong> en el
+          calendario. La{' '}
+          <strong className="text-text-secondary font-semibold">
             membresía la activa recepción
           </strong>{' '}
           en mostrador.
         </p>
       )}
       {isReceptionist && (
-        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted mb-4 text-sm">
           Crea la cuenta del socio. Para activar membresía y cobrar en el mostrador, use{' '}
-          <strong className="font-semibold text-zinc-700 dark:text-zinc-300">
-            Modo mostrador → Registro
-          </strong>
-          .
+          <strong className="text-text-secondary font-semibold">Modo mostrador → Registro</strong>.
         </p>
       )}
       <div className="form-stack">
@@ -126,7 +121,7 @@ export function MemberAddModal({
               }}
               placeholder="Ej: Gym2024!"
             />
-            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mt-1 text-[11px]">
               Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
             </p>
           </div>
@@ -148,7 +143,7 @@ export function MemberAddModal({
             <div>
               <Label>Rol de Usuario</Label>
               <select
-                className="focus:ring-brand w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold text-zinc-900 transition-all outline-none focus:ring-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-2xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
                 value={newMember.role}
                 onChange={(e) => {
                   onNewMemberChange({ ...newMember, role: e.target.value, training_shift: '' });
@@ -167,7 +162,7 @@ export function MemberAddModal({
                 {newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}
               </Label>
               <select
-                className="focus:ring-brand w-full appearance-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-bold text-zinc-900 transition-all outline-none focus:ring-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-2xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
                 value={newMember.training_shift}
                 onChange={(e) => {
                   onNewMemberChange({

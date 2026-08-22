@@ -149,24 +149,22 @@ export default function DemoLeads() {
         ) : (
           <>
             {/* Mobile: article cards */}
-            <div className="divide-y divide-zinc-100 lg:hidden dark:divide-zinc-800">
+            <div className="divide-border-subtle divide-y lg:hidden">
               {leads.map((lead) => (
                 <article key={lead.id} className="py-3 first:pt-0 last:pb-0 sm:py-4">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="truncate text-base font-bold text-zinc-900 dark:text-white">
-                          {lead.gym_name}
-                        </h2>
+                        <h2 className="text-text truncate text-base font-bold">{lead.gym_name}</h2>
                         <Badge variant={STATUS_BADGES[lead.status]}>
                           {STATUS_LABELS[lead.status]}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      <p className="text-text-secondary mt-1 text-sm font-medium">
                         {lead.contact_name}
                       </p>
                       <time
-                        className="mt-1 block text-xs text-zinc-500 dark:text-zinc-400"
+                        className="text-text-muted mt-1 block text-xs"
                         dateTime={lead.created_at}
                       >
                         {format(new Date(lead.created_at), "d 'de' MMMM, yyyy · HH:mm", {
@@ -200,7 +198,7 @@ export default function DemoLeads() {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                  <div className="text-text-secondary mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
                     <a
                       className="hover:text-brand inline-flex items-center gap-1.5"
                       href={`mailto:${lead.email}`}
@@ -226,7 +224,7 @@ export default function DemoLeads() {
                   </div>
 
                   {lead.message && (
-                    <p className="mt-3 rounded-xl bg-zinc-50 px-3 py-2.5 text-sm whitespace-pre-wrap text-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
+                    <p className="bg-surface-raised text-text-secondary mt-3 rounded-xl px-3 py-2.5 text-sm whitespace-pre-wrap">
                       {lead.message}
                     </p>
                   )}
@@ -237,7 +235,7 @@ export default function DemoLeads() {
             {/* Desktop: dense table */}
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[56rem] text-left text-sm">
-                <thead className="sticky top-0 z-[1] border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-400">
+                <thead className="border-border bg-surface-raised/95 text-text-muted sticky top-0 z-[1] border-b text-[11px] font-semibold tracking-wide uppercase backdrop-blur-sm">
                   <tr>
                     <th className="px-3 py-2.5">Gym</th>
                     <th className="px-3 py-2.5">Contacto</th>
@@ -246,38 +244,32 @@ export default function DemoLeads() {
                     <th className="px-3 py-2.5 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {leads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40">
+                    <tr key={lead.id} className="hover:bg-surface-raised/80">
                       <td className="max-w-[14rem] px-3 py-3">
-                        <p className="truncate font-semibold text-zinc-900 dark:text-white">
-                          {lead.gym_name}
-                        </p>
+                        <p className="text-text truncate font-semibold">{lead.gym_name}</p>
                         {lead.city ? (
-                          <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {lead.city}
-                          </p>
+                          <p className="text-text-muted truncate text-[11px]">{lead.city}</p>
                         ) : null}
                         {lead.message ? (
-                          <p className="mt-1 line-clamp-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                          <p className="text-text-muted mt-1 line-clamp-1 text-[11px]">
                             {lead.message}
                           </p>
                         ) : null}
                       </td>
                       <td className="max-w-[16rem] px-3 py-3">
-                        <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">
-                          {lead.contact_name}
-                        </p>
+                        <p className="text-text truncate font-medium">{lead.contact_name}</p>
                         <a
                           href={`mailto:${lead.email}`}
-                          className="hover:text-brand mt-0.5 block truncate text-[11px] text-zinc-500 dark:text-zinc-400"
+                          className="hover:text-brand text-text-muted mt-0.5 block truncate text-[11px]"
                         >
                           {lead.email}
                         </a>
                         {lead.phone ? (
                           <a
                             href={`tel:${lead.phone}`}
-                            className="hover:text-brand block truncate text-[11px] text-zinc-500 dark:text-zinc-400"
+                            className="hover:text-brand text-text-muted block truncate text-[11px]"
                           >
                             {lead.phone}
                           </a>
@@ -288,7 +280,7 @@ export default function DemoLeads() {
                           {STATUS_LABELS[lead.status]}
                         </Badge>
                       </td>
-                      <td className="px-3 py-3 text-xs whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">
+                      <td className="text-text-muted px-3 py-3 text-xs whitespace-nowrap tabular-nums">
                         <time dateTime={lead.created_at}>
                           {format(new Date(lead.created_at), 'dd MMM yyyy · HH:mm', {
                             locale: es,

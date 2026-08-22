@@ -17,7 +17,7 @@ export function ProofPreviewButton({
         onClick(e);
       }}
       className={cn(
-        'text-brand hover:bg-brand/10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 transition-colors dark:border-zinc-700',
+        'text-brand hover:bg-brand/10 border-border inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors',
         className
       )}
       aria-label="Ver comprobante"

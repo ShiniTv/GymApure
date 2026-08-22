@@ -51,7 +51,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
               className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
                 theme === 'light'
                   ? 'border-brand bg-brand/5 text-brand'
-                  : 'border-zinc-200 hover:border-zinc-300'
+                  : 'border-border hover:border-border'
               }`}
             >
               <Sun className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
               className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
                 theme === 'dark'
                   ? 'border-brand bg-brand/5 text-brand'
-                  : 'border-zinc-200 hover:border-zinc-300'
+                  : 'border-border hover:border-border'
               }`}
             >
               <Moon className="h-4 w-4" />

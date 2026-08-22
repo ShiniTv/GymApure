@@ -38,10 +38,9 @@ export function ReceptionCounterModals({
         title="¿Registrar salida?"
         maxWidth="sm"
       >
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-          Se registrará la salida de{' '}
-          <strong className="text-zinc-900 dark:text-white">{checkoutConfirm?.name}</strong> del
-          gym.
+        <p className="text-text-secondary mb-6 text-sm">
+          Se registrará la salida de <strong className="text-text">{checkoutConfirm?.name}</strong>{' '}
+          del gym.
         </p>
         <div className="flex gap-3">
           <Button variant="ghost" className="flex-1" onClick={onCloseCheckout}>

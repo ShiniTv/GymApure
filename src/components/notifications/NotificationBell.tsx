@@ -9,7 +9,7 @@ const NotificationPanel = lazy(() =>
   import('./NotificationPanel').then((m) => ({ default: m.NotificationPanel }))
 );
 const defaultBtnClass =
-  'relative inline-flex items-center justify-center h-11 w-11 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-manipulation';
+  'text-text-muted hover:bg-surface-raised relative inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-lg transition-colors';
 
 interface NotificationBellProps {
   className?: string;
@@ -36,7 +36,7 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
           compact
-            ? 'relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            ? 'text-text-muted hover:bg-surface-raised relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors'
             : defaultBtnClass,
           className
         )}
@@ -52,8 +52,8 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
               className={clsx(
                 'absolute flex items-center justify-center rounded-full font-bold tabular-nums ring-2',
                 compact
-                  ? 'bg-brand -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-[9px] text-white ring-white dark:text-zinc-900 dark:ring-zinc-900'
-                  : 'bg-brand -top-2 -right-2.5 h-[1.125rem] min-w-[1.125rem] px-1 text-[10px] leading-none text-white shadow-sm ring-white dark:text-zinc-900 dark:ring-zinc-950'
+                  ? 'bg-brand dark:text-bg dark:ring-bg -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-[9px] text-white ring-white'
+                  : 'bg-brand dark:text-bg dark:ring-bg -top-2 -right-2.5 h-[1.125rem] min-w-[1.125rem] px-1 text-[10px] leading-none text-white shadow-sm ring-white'
               )}
             >
               {badgeLabel}

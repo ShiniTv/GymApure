@@ -65,10 +65,7 @@ export function EquipmentConfigModal({
           </form>
           <ul className="space-y-2">
             {zones.map((zone) => (
-              <li
-                key={zone.id}
-                className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-              >
+              <li key={zone.id} className="border-border-subtle rounded-lg border px-3 py-2">
                 <span className="font-medium">{zone.name}</span>
               </li>
             ))}
@@ -103,13 +100,10 @@ export function EquipmentConfigModal({
           </form>
           <ul className="space-y-2">
             {vendors.map((vendor) => (
-              <li
-                key={vendor.id}
-                className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-              >
+              <li key={vendor.id} className="border-border-subtle rounded-lg border px-3 py-2">
                 <p className="font-medium">{vendor.name}</p>
                 {(vendor.contact_name || vendor.phone) && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-text-muted text-xs">
                     {[vendor.contact_name, vendor.phone].filter(Boolean).join(' · ')}
                   </p>
                 )}

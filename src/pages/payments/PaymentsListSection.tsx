@@ -181,7 +181,7 @@ export function PaymentsListSection({
         rounded="xl"
         className={cn(
           'min-w-0 overflow-hidden',
-          'border-0 bg-transparent shadow-none lg:border lg:border-zinc-200/70 lg:bg-white lg:shadow-sm dark:lg:border-zinc-800/80 dark:lg:bg-zinc-900'
+          'lg:border-border lg:bg-surface border-0 bg-transparent shadow-none lg:border lg:shadow-sm'
         )}
       >
         {isMember ? (
@@ -203,8 +203,8 @@ export function PaymentsListSection({
             </div>
 
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+              <table className="text-text-muted w-full text-left text-xs sm:text-sm">
+                <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
                   <tr>
                     <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
                     <th className="px-3 py-2.5 lg:px-5">Fecha</th>
@@ -214,7 +214,7 @@ export function PaymentsListSection({
                     <th className="px-3 py-2.5 lg:px-5">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {loading ? (
                     <>
                       <TableRowSkeleton cols={6} />
@@ -224,30 +224,24 @@ export function PaymentsListSection({
                     </>
                   ) : payments.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
-                      >
+                      <td colSpan={6} className="text-text-muted px-5 py-8 text-center text-sm">
                         No hay pagos registrados
                       </td>
                     </tr>
                   ) : (
                     payments.map((payment) => (
-                      <tr
-                        key={payment.id}
-                        className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
-                      >
-                        <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                      <tr key={payment.id} className="hover:bg-surface-raised transition-colors">
+                        <td className="text-text px-3 py-2.5 font-semibold tabular-nums lg:px-5">
                           ${payment.amount_usd}
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 whitespace-nowrap lg:px-5">
                           {formatPaymentDate(payment.created_at)}
                         </td>
-                        <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 capitalize lg:px-5">
                           {formatPaymentMethod(payment.method)}
                         </td>
                         <td
-                          className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
+                          className="text-text-muted max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] lg:max-w-[16rem] lg:px-5"
                           title={payment.reference}
                         >
                           {payment.reference}
@@ -256,7 +250,7 @@ export function PaymentsListSection({
                           {payment.proof_url ? (
                             <ProofPreviewButton onClick={() => onProofPreview(payment)} />
                           ) : (
-                            <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                            <span className="text-text-muted text-xs">—</span>
                           )}
                         </td>
                         <td className="px-3 py-2.5 lg:px-5">
@@ -349,8 +343,8 @@ export function PaymentsListSection({
               )}
             </div>
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-                <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+              <table className="text-text-muted w-full text-left text-xs sm:text-sm">
+                <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
                   <tr>
                     <th className="px-3 py-2.5 lg:px-5">Usuario</th>
                     <th className="px-3 py-2.5 lg:px-5">Fecha</th>
@@ -361,7 +355,7 @@ export function PaymentsListSection({
                     <th className="px-3 py-2.5 lg:px-5">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {loading ? (
                     <>
                       <TableRowSkeleton cols={7} />
@@ -371,10 +365,7 @@ export function PaymentsListSection({
                     </>
                   ) : displayPayments.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="px-5 py-8 text-center text-sm text-zinc-400 dark:text-zinc-300"
-                      >
+                      <td colSpan={7} className="text-text-muted px-5 py-8 text-center text-sm">
                         {(() => {
                           const copy = staffEmptyCopy({ search, stalePending, statusFilter });
                           return search || stalePending || statusFilter
@@ -391,25 +382,25 @@ export function PaymentsListSection({
                           'cursor-pointer transition-colors',
                           selectedPayment?.id === payment.id
                             ? 'bg-brand/5 dark:bg-brand/10'
-                            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
+                            : 'hover:bg-surface-raised'
                         )}
                         onClick={() => onSelectedPaymentChange(payment)}
                         aria-selected={selectedPayment?.id === payment.id}
                       >
-                        <td className="px-3 py-2.5 font-medium text-zinc-700 lg:px-5 dark:text-zinc-200">
+                        <td className="text-text-secondary px-3 py-2.5 font-medium lg:px-5">
                           {payment.user_name}
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap text-zinc-500 lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 whitespace-nowrap lg:px-5">
                           {formatPaymentDate(payment.created_at)}
                         </td>
-                        <td className="px-3 py-2.5 font-semibold text-zinc-900 tabular-nums lg:px-5 dark:text-white">
+                        <td className="text-text px-3 py-2.5 font-semibold tabular-nums lg:px-5">
                           ${payment.amount_usd}
                         </td>
-                        <td className="px-3 py-2.5 text-zinc-500 capitalize lg:px-5 dark:text-zinc-400">
+                        <td className="text-text-muted px-3 py-2.5 capitalize lg:px-5">
                           {formatPaymentMethod(payment.method)}
                         </td>
                         <td
-                          className="max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] text-zinc-400 lg:max-w-[16rem] lg:px-5 dark:text-zinc-300"
+                          className="text-text-muted max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] lg:max-w-[16rem] lg:px-5"
                           title={payment.reference}
                         >
                           {payment.reference}
@@ -418,7 +409,7 @@ export function PaymentsListSection({
                           {payment.proof_url ? (
                             <ProofPreviewButton onClick={() => onProofPreview(payment)} />
                           ) : (
-                            <span className="text-xs text-zinc-400 dark:text-zinc-300">—</span>
+                            <span className="text-text-muted text-xs">—</span>
                           )}
                         </td>
                         <td className="px-3 py-2.5 lg:px-5" onClick={(e) => e.stopPropagation()}>

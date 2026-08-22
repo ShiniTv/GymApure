@@ -128,14 +128,14 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
       title={trainer ? `Miembros de ${trainer.full_name}` : 'Miembros'}
       maxWidth="lg"
     >
-      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-text-muted mb-4 text-sm">
         Vincula miembros al turno del entrenador antes de crear rutinas. El entrenador solo verá a
         estos clientes.
       </p>
 
       {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="mb-4 space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+      <div className="border-border mb-4 space-y-2 rounded-lg border p-3">
         <Label htmlFor="assign-member-search">Vincular miembro</Label>
         <Input
           id="assign-member-search"
@@ -145,7 +145,7 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
         />
         {options.length > 0 && (
           <select
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+            className="border-border bg-surface w-full rounded-md border px-3 py-2 text-sm"
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
           >
@@ -181,14 +181,12 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
           description="Busca y vincula el primero."
         />
       ) : (
-        <ul className="max-h-72 divide-y divide-zinc-200 overflow-y-auto dark:divide-zinc-800">
+        <ul className="divide-border max-h-72 divide-y overflow-y-auto">
           {members.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-3 py-2.5">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">
-                  {m.full_name}
-                </p>
-                <p className="truncate text-xs text-zinc-500">{m.cedula || m.email}</p>
+                <p className="text-text truncate text-sm font-medium">{m.full_name}</p>
+                <p className="text-text-muted truncate text-xs">{m.cedula || m.email}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {m.has_active_routine ? (

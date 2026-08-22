@@ -698,7 +698,7 @@ export default function Routines() {
             (memberRoutineHighlights.upcoming.length > 0 ||
               memberRoutineHighlights.ending.length > 0) && (
               <Card padding="sm" rounded="xl" className="space-y-3">
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Asignaciones</h3>
+                <h3 className="text-text text-sm font-bold">Asignaciones</h3>
                 {memberRoutineHighlights.upcoming.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-small text-text-muted font-semibold tracking-wide uppercase">

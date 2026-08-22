@@ -28,9 +28,9 @@ export function RestTimerOverlay({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className="animate-in slide-in-from-bottom-8 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl md:right-8 md:bottom-4 md:left-auto md:w-80 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="border-border bg-surface animate-in slide-in-from-bottom-8 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 rounded-2xl border p-6 shadow-2xl md:right-8 md:bottom-4 md:left-auto md:w-80">
       <div className="mx-auto flex max-w-md flex-col items-center">
-        <span className="mb-3 text-xs font-medium text-zinc-400 dark:text-zinc-300">Descanso</span>
+        <span className="text-text-muted mb-3 text-xs font-medium">Descanso</span>
 
         <div className="relative mb-4">
           <svg width={size} height={size} className="-rotate-90" aria-hidden>
@@ -41,7 +41,7 @@ export function RestTimerOverlay({
               fill="none"
               stroke="currentColor"
               strokeWidth={strokeWidth}
-              className="text-zinc-100 dark:text-zinc-800"
+              className="text-border"
             />
             <circle
               cx={size / 2}
@@ -57,16 +57,14 @@ export function RestTimerOverlay({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono text-3xl font-bold text-zinc-900 tabular-nums dark:text-white">
+            <span className="text-text font-mono text-3xl font-bold tabular-nums">
               {formatWorkoutTime(restTimer)}
             </span>
           </div>
         </div>
 
         {notificationsEnabled ? (
-          <p className="mb-3 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
-            También en notificaciones
-          </p>
+          <p className="text-text-muted mb-3 text-center text-[11px]">También en notificaciones</p>
         ) : canRequestNotifications && onRequestNotifications ? (
           <button
             type="button"
@@ -81,7 +79,7 @@ export function RestTimerOverlay({
           <button
             type="button"
             onClick={() => onAddTime(30)}
-            className="min-h-[var(--touch-min)] flex-1 touch-manipulation rounded-2xl bg-zinc-50 py-3 text-xs font-semibold text-zinc-900 transition-all hover:bg-zinc-100 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+            className="bg-surface-raised text-text hover:bg-surface-overlay min-h-[var(--touch-min)] flex-1 touch-manipulation rounded-2xl py-3 text-xs font-semibold transition-all"
           >
             +30s
           </button>

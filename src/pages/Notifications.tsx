@@ -114,7 +114,7 @@ export default function Notifications() {
         <div className="space-y-4">
           {hasLive && (
             <section>
-              <h2 className="mb-2 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+              <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
                 Requiere atención
               </h2>
               <ul className="space-y-2">
@@ -129,7 +129,7 @@ export default function Notifications() {
 
           {hasPersisted && (
             <section>
-              <h2 className="mb-2 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+              <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
                 Novedades
               </h2>
               <ul className="space-y-2">
@@ -157,7 +157,7 @@ export default function Notifications() {
           )}
 
           {filter === 'unread' && !hasPersisted && hasLive && (
-            <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-center text-xs">
               Las alertas activas se ocultan cuando se resuelven en su pantalla correspondiente.
             </p>
           )}

@@ -43,17 +43,15 @@ function PanelBody({
   const isEmpty = !hasPersisted && !hasLive;
 
   if (isLoading && isEmpty) {
-    return (
-      <p className="px-1 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Cargando…</p>
-    );
+    return <p className="text-text-muted px-1 py-6 text-center text-sm">Cargando…</p>;
   }
 
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden />
-        <p className="text-sm font-semibold text-zinc-900 dark:text-white">Todo al día</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">No tienes alertas pendientes</p>
+        <p className="text-text text-sm font-semibold">Todo al día</p>
+        <p className="text-text-muted text-xs">No tienes alertas pendientes</p>
       </div>
     );
   }
@@ -63,7 +61,7 @@ function PanelBody({
       {hasPersisted && (
         <section>
           <div className="mb-2 flex items-center justify-between px-1">
-            <h3 className="text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+            <h3 className="text-text-muted text-[11px] font-bold tracking-wide uppercase">
               Novedades
             </h3>
             <button
@@ -87,7 +85,7 @@ function PanelBody({
 
       {hasLive && (
         <section>
-          <h3 className="mb-2 px-1 text-[11px] font-bold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+          <h3 className="text-text-muted mb-2 px-1 text-[11px] font-bold tracking-wide uppercase">
             Requiere atención
           </h3>
           <ul className="space-y-2">
@@ -101,7 +99,7 @@ function PanelBody({
       )}
 
       {showFooter && (
-        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+        <div className="border-border border-t pt-3">
           <Link
             to="/notifications"
             onClick={onClose}

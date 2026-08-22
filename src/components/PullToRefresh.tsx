@@ -25,7 +25,7 @@ export function PullToRefreshContainer({
         }}
       >
         {isRefreshing ? (
-          <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="text-text-muted flex items-center gap-2 text-xs font-medium">
             <svg className="text-brand h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle
                 className="opacity-25"
@@ -45,7 +45,7 @@ export function PullToRefreshContainer({
           </div>
         ) : (
           <div
-            className="text-zinc-400 dark:text-zinc-500"
+            className="text-text-muted"
             style={{ transform: `rotate(${String(rot(pullDistance))}deg)` }}
           >
             <svg

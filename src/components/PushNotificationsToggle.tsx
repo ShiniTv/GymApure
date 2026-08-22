@@ -11,7 +11,7 @@ export function PushNotificationsToggle() {
     return (
       <div className="border-brand/20 bg-brand/5 flex items-start gap-2 rounded-lg border px-2.5 py-2">
         <Share className="text-brand mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-        <p className="text-[11px] leading-snug text-zinc-600 dark:text-zinc-400">
+        <p className="text-text-secondary text-[11px] leading-snug">
           En iPhone: Compartir → <strong className="font-semibold">Añadir a Inicio</strong>, abre la
           app desde el icono y vuelve aquí para activar avisos de mensajes y recordatorios.
         </p>
@@ -21,7 +21,7 @@ export function PushNotificationsToggle() {
 
   if (!supported) {
     return (
-      <p className="text-[11px] text-zinc-400">Este navegador no soporta notificaciones push.</p>
+      <p className="text-text-muted text-[11px]">Este navegador no soporta notificaciones push.</p>
     );
   }
 
@@ -45,7 +45,7 @@ export function PushNotificationsToggle() {
         {isSubscribed ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
         <span>{isSubscribed ? 'Desactivar' : 'Activar'}</span>
       </Button>
-      <span className="min-w-0 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+      <span className="text-text-muted min-w-0 text-[11px] leading-snug">
         {isSubscribed
           ? 'Avisos de mensajes y recordatorios activos'
           : 'Recibe mensajes y recordatorios del gym'}

@@ -568,10 +568,8 @@ export default function AdminDashboard() {
               >
                 <CalendarClock className="text-brand h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-zinc-900 dark:text-white">
-                    Próximos vencimientos
-                  </p>
-                  <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <p className="text-text text-sm font-bold">Próximos vencimientos</p>
+                  <p className="text-text-muted truncate text-[11px]">
                     {expiringList.length} en {alertDays} días
                     {criticalExpiring > 0
                       ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}`
@@ -580,9 +578,9 @@ export default function AdminDashboard() {
                 </div>
                 {!isDesktop &&
                   (expiringExpanded ? (
-                    <ChevronUp className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
+                    <ChevronUp className="text-text-muted h-4 w-4 shrink-0" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-300" />
+                    <ChevronDown className="text-text-muted h-4 w-4 shrink-0" />
                   ))}
               </button>
 
@@ -594,7 +592,7 @@ export default function AdminDashboard() {
                       to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
                       className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
                     >
-                      <span className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                      <span className="text-text truncate text-xs font-semibold">
                         {item.full_name}
                       </span>
                       <Badge variant="danger" className="shrink-0 text-[10px]">
@@ -628,10 +626,10 @@ export default function AdminDashboard() {
                         className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors hover:opacity-90 ${classes.itemBorder}`}
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
+                          <p className="text-text truncate text-xs font-semibold">
                             {item.full_name}
                           </p>
-                          <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                          <p className="text-text-muted truncate text-[10px]">
                             {format(new Date(item.end_date), 'dd MMM', { locale: es })}
                           </p>
                         </div>
@@ -659,7 +657,7 @@ export default function AdminDashboard() {
 
           <Card padding="sm" rounded="xl">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Flujo de ingresos</h3>
+              <h3 className="text-text text-sm font-bold">Flujo de ingresos</h3>
               {!isDesktop && (
                 <Button
                   type="button"

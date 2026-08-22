@@ -32,7 +32,7 @@ export function ExerciseExecutionSteps({
       className={cn(
         compact
           ? 'bg-brand/5 dark:bg-brand/10 border-brand/20 rounded-2xl border p-4'
-          : 'rounded-2xl border border-zinc-100 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-800/50',
+          : 'border-border-subtle bg-surface-raised rounded-2xl border p-6',
         className
       )}
     >
@@ -50,12 +50,12 @@ export function ExerciseExecutionSteps({
       <div className={cn('space-y-4', compact && 'space-y-3')}>
         {steps.map((step, idx) => (
           <div key={idx} className={cn('flex gap-4', compact && 'gap-2.5')}>
-            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900">
+            <span className="bg-text text-bg flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg text-xs font-semibold">
               {idx + 1}
             </span>
             <p
               className={cn(
-                'min-w-0 flex-1 pt-0.5 leading-relaxed font-medium text-zinc-600 dark:text-zinc-300',
+                'text-text-secondary min-w-0 flex-1 pt-0.5 leading-relaxed font-medium',
                 compact ? 'text-sm leading-relaxed' : 'text-sm'
               )}
             >

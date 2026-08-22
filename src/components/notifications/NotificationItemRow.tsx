@@ -7,8 +7,8 @@ import type { NotificationItem, NotificationSeverity } from '../../lib/notificat
 function itemSeverityClasses(severity: NotificationSeverity = 'info') {
   if (severity === 'info') {
     return {
-      itemBorder: 'border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800/30',
-      text: 'text-zinc-700 dark:text-zinc-300',
+      itemBorder: 'border-border bg-surface-raised',
+      text: 'text-text-secondary',
     };
   }
   return expiryBannerClasses(severity);
@@ -36,14 +36,10 @@ export function NotificationItemRow({
           {isUnread && <span className="bg-brand mt-1 h-2 w-2 shrink-0 rounded-full" aria-hidden />}
         </div>
         {item.description && (
-          <p className="mt-0.5 text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
-            {item.description}
-          </p>
+          <p className="text-text-muted mt-0.5 text-xs sm:text-sm">{item.description}</p>
         )}
         {showTimestamp && item.createdAt && formatTime && (
-          <p className="mt-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-            {formatTime(item.createdAt)}
-          </p>
+          <p className="text-text-muted mt-2 text-[11px]">{formatTime(item.createdAt)}</p>
         )}
       </div>
       {item.count != null && item.count > 1 && (
@@ -51,7 +47,7 @@ export function NotificationItemRow({
           {item.count > 99 ? '99+' : item.count}
         </span>
       )}
-      <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+      <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
     </>
   );
 

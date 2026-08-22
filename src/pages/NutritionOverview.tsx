@@ -104,19 +104,19 @@ export default function NutritionOverview() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Card padding="sm" rounded="xl">
-              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
                 Clientes
               </p>
-              <p className="text-2xl font-black text-zinc-900 dark:text-white">{assignedTotal}</p>
+              <p className="text-text text-2xl font-black">{assignedTotal}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
                 Con plan
               </p>
-              <p className="text-2xl font-black text-zinc-900 dark:text-white">{data.with_plan}</p>
+              <p className="text-text text-2xl font-black">{data.with_plan}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
                 Sin plan
               </p>
               <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
@@ -124,12 +124,10 @@ export default function NutritionOverview() {
               </p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
                 Registrando
               </p>
-              <p className="text-2xl font-black text-zinc-900 dark:text-white">
-                {data.logging_active}
-              </p>
+              <p className="text-text text-2xl font-black">{data.logging_active}</p>
             </Card>
           </div>
 
@@ -169,13 +167,13 @@ export default function NutritionOverview() {
                       <div className="flex min-w-0 items-center gap-2.5">
                         <Avatar name={member.full_name} size="sm" className="shrink-0" />
                         <div className="min-w-0">
-                          <p className="truncate font-bold text-zinc-900 dark:text-white">
-                            {member.full_name}
-                          </p>
+                          <p className="text-text truncate font-bold">{member.full_name}</p>
                           {hasPlan ? (
                             <>
-                              <p className="truncate text-xs text-zinc-500">{member.plan_title}</p>
-                              <p className="mt-1 text-[11px] text-zinc-400">
+                              <p className="text-text-muted truncate text-xs">
+                                {member.plan_title}
+                              </p>
+                              <p className="text-text-muted mt-1 text-[11px]">
                                 {member.logged_days} día{member.logged_days !== 1 ? 's' : ''} con
                                 registro
                               </p>
@@ -207,7 +205,7 @@ export default function NutritionOverview() {
                         )}
                         <Link
                           to={`/members/${member.user_id}/nutrition`}
-                          className="hover:text-brand hover:bg-brand/10 rounded-lg p-2 text-zinc-400 transition-colors"
+                          className="hover:text-brand hover:bg-brand/10 text-text-muted rounded-lg p-2 transition-colors"
                           title={hasPlan ? 'Ver plan' : 'Asignar plan'}
                           aria-label={hasPlan ? 'Ver plan' : 'Asignar plan'}
                         >
@@ -232,7 +230,7 @@ export default function NutritionOverview() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[40rem] text-left text-sm">
-                  <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+                  <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="px-4 py-2.5">Miembro</th>
                       <th className="px-4 py-2.5">Plan</th>
@@ -241,30 +239,25 @@ export default function NutritionOverview() {
                       <th className="px-4 py-2.5 text-right"> </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-border-subtle divide-y">
                     {members.map((member) => {
                       const hasPlan = 'has_plan' in member ? member.has_plan : true;
                       return (
-                        <tr
-                          key={member.user_id}
-                          className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40"
-                        >
+                        <tr key={member.user_id} className="hover:bg-surface-raised/80">
                           <td className="px-4 py-3">
                             <div className="flex min-w-0 items-center gap-2.5">
                               <Avatar name={member.full_name} size="sm" className="shrink-0" />
-                              <p className="truncate font-semibold text-zinc-900 dark:text-white">
-                                {member.full_name}
-                              </p>
+                              <p className="text-text truncate font-semibold">{member.full_name}</p>
                             </div>
                           </td>
-                          <td className="max-w-[14rem] px-4 py-3 text-xs text-zinc-600 dark:text-zinc-300">
+                          <td className="text-text-secondary max-w-[14rem] px-4 py-3 text-xs">
                             {hasPlan ? (
                               <span className="truncate">{member.plan_title}</span>
                             ) : (
                               <span className="text-amber-600 dark:text-amber-400">Sin plan</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+                          <td className="text-text-muted px-4 py-3 text-xs tabular-nums">
                             {hasPlan ? `${member.logged_days}d` : '—'}
                           </td>
                           <td className="px-4 py-3">

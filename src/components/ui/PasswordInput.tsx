@@ -18,7 +18,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         <div className="relative">
           {showIcon && (
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3">
-              <Lock className="h-4 w-4 text-zinc-400 dark:text-zinc-300" />
+              <Lock className="text-text-muted h-4 w-4" />
             </div>
           )}
           <input
@@ -38,7 +38,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="focus-visible:ring-brand absolute inset-y-0 right-0 z-10 flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] items-center justify-center text-zinc-400 transition-colors hover:text-zinc-600 focus-visible:rounded-md focus-visible:ring-2 focus-visible:outline-none dark:text-zinc-300 dark:hover:text-zinc-300"
+            className="focus-visible:ring-brand text-text-muted hover:text-text-secondary absolute inset-y-0 right-0 z-10 flex min-h-[var(--touch-min)] min-w-[var(--touch-min)] items-center justify-center transition-colors focus-visible:rounded-md focus-visible:ring-2 focus-visible:outline-none"
             aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             aria-pressed={visible}
           >

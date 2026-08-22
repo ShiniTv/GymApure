@@ -108,7 +108,7 @@ export function MemberActionModals({
       >
         {deleteTarget?.role === 'trainer' ? (
           <div className="mb-6 space-y-3">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary text-sm">
               Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
               los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
               deberás desactivarlo o reasignarlas antes.
@@ -133,7 +133,7 @@ export function MemberActionModals({
           </div>
         ) : (
           <div className="mb-6 space-y-2">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary text-sm">
               ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
               deshacer.
             </p>
@@ -179,7 +179,7 @@ export function MemberActionModals({
       >
         {pauseTarget && (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-sm">
               ¿Pausar la membresía de <strong>{pauseTarget.full_name}</strong>? Los días restantes
               se congelan hasta reanudar.
             </p>

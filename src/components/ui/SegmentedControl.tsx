@@ -25,7 +25,7 @@ interface SegmentedControlProps<T extends string> {
 }
 
 const accentActive: Record<'brand' | 'check-out', string> = {
-  brand: 'brand-solid shadow-lg shadow-zinc-900/10',
+  brand: 'brand-solid shadow-lg shadow-black/10',
   'check-out':
     'bg-[var(--color-check-out)] text-white shadow-lg shadow-[var(--color-check-out)]/20',
 };
@@ -107,7 +107,7 @@ export function SegmentedControl<T extends string>({
       ref={scrollerRef}
       className={cn(
         isKiosk
-          ? 'flex gap-2 rounded-2xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-900'
+          ? 'border-border bg-surface-raised flex gap-2 rounded-2xl border p-1'
           : scroll
             ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : cn(
@@ -138,9 +138,7 @@ export function SegmentedControl<T extends string>({
               isKiosk
                 ? cn(
                     'rounded-xl py-3 text-xs font-semibold',
-                    active
-                      ? accentActive[accent]
-                      : 'text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+                    active ? accentActive[accent] : 'text-text-secondary hover:text-text'
                   )
                 : scroll
                   ? cn(
