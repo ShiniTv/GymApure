@@ -101,8 +101,8 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
   return (
     <div className="space-y-4">
       <Card padding="md" rounded="xl">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Nuevo bloque</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <h2 className="text-text text-sm font-semibold">Nuevo bloque</h2>
+        <p className="text-text-muted mt-1 text-xs">
           Define una etapa con objetivo e intensidad; las progresiones siempre requieren revisión
           del trainer.
         </p>
@@ -144,7 +144,7 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
             <select
               value={form.intensity_method}
               onChange={(e) => setForm({ ...form, intensity_method: e.target.value })}
-              className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="manual">Manual</option>
               <option value="rpe_rir">RPE / RIR</option>
@@ -164,15 +164,15 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
       </Card>
       {blocks.map((block) => (
         <Card key={block.id} padding="sm" rounded="xl">
-          <p className="text-sm font-semibold text-zinc-900 dark:text-white">{block.name}</p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-text text-sm font-semibold">{block.name}</p>
+          <p className="text-text-muted mt-1 text-xs">
             {block.objective} · {block.start_date} → {block.end_date}
           </p>
-          <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted mt-1 text-[11px]">
             {block.intensity_method.replaceAll('_', ' ')} · {block.status}
           </p>
           {block.status === 'active' && (
-            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mt-1 text-[11px]">
               {isReviewDue(block)
                 ? 'Revisión pendiente'
                 : `Última revisión: ${new Date(

@@ -44,21 +44,21 @@ export function MemberProfilePanel({
 
   return (
     <div className="space-y-2.5">
-      <div className="rounded-xl border border-zinc-200/70 px-3 py-2.5 dark:border-zinc-800/80">
+      <div className="border-border rounded-xl border px-3 py-2.5">
         <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <div>
-            <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
               Altura
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
               {heightCm != null ? `${heightCm} cm` : '—'}
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
               {latestMeasurement?.weight != null ? 'Peso actual' : 'Peso inicial'}
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+            <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
               {latestMeasurement?.weight != null
                 ? `${latestMeasurement.weight} kg`
                 : member.initial_weight != null
@@ -76,36 +76,36 @@ export function MemberProfilePanel({
             )}
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
               Objetivo
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-white">
+            <p className="text-text mt-0.5 text-sm font-semibold">
               {formatMemberGoal(member.goal) ?? '—'}
             </p>
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
               Meta semanal
             </p>
             {canEditWeeklyGoal ? (
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div className="border-border inline-flex items-center rounded-lg border">
                   <button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 disabled:opacity-40 sm:h-8 sm:w-8 dark:hover:text-white"
+                    className="text-text-muted hover:text-text inline-flex h-10 w-10 items-center justify-center transition-colors disabled:opacity-40 sm:h-8 sm:w-8"
                     aria-label="Bajar meta"
                     disabled={savingWeeklyGoal || weeklyGoal <= 1}
                     onClick={() => onWeeklyGoalChange(Math.max(1, weeklyGoal - 1))}
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="min-w-[2.5rem] text-center text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+                  <span className="text-text min-w-[2.5rem] text-center text-sm font-semibold tabular-nums">
                     {weeklyGoal}
-                    <span className="ml-0.5 text-[11px] font-medium text-zinc-500">d</span>
+                    <span className="text-text-muted ml-0.5 text-[11px] font-medium">d</span>
                   </span>
                   <button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 disabled:opacity-40 sm:h-8 sm:w-8 dark:hover:text-white"
+                    className="text-text-muted hover:text-text inline-flex h-10 w-10 items-center justify-center transition-colors disabled:opacity-40 sm:h-8 sm:w-8"
                     aria-label="Subir meta"
                     disabled={savingWeeklyGoal || weeklyGoal >= 7}
                     onClick={() => onWeeklyGoalChange(Math.min(7, weeklyGoal + 1))}
@@ -131,52 +131,48 @@ export function MemberProfilePanel({
                 ) : null}
               </div>
             ) : (
-              <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">
+              <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
                 {member.weekly_training_goal ?? 5} días
               </p>
             )}
           </div>
         </div>
 
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-zinc-100 pt-2 text-[11px] dark:border-zinc-800">
+        <div className="border-border-subtle mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2 text-[11px]">
           {subscription ? (
             <>
               <span className="font-semibold text-emerald-600 dark:text-emerald-500">
                 {subscription.membership_name}
               </span>
-              <span className="text-zinc-400 dark:text-zinc-500">·</span>
-              <span className="text-zinc-500 dark:text-zinc-400">
-                {subscription.days_remaining} días
-              </span>
-              <span className="text-zinc-400 dark:text-zinc-500">·</span>
-              <span className="text-zinc-500 dark:text-zinc-400">
+              <span className="text-text-muted">·</span>
+              <span className="text-text-muted">{subscription.days_remaining} días</span>
+              <span className="text-text-muted">·</span>
+              <span className="text-text-muted">
                 Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
               </span>
             </>
           ) : (
-            <span className="text-zinc-400 dark:text-zinc-500">Sin membresía activa</span>
+            <span className="text-text-muted">Sin membresía activa</span>
           )}
         </div>
       </div>
 
-      <details className="group rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+      <details className="border-border group rounded-xl border">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 items-center gap-2">
-            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-              Salud y limitaciones
-            </span>
+            <span className="text-text text-xs font-semibold">Salud y limitaciones</span>
             {showHealthAlert && (
               <Badge variant="danger" className="px-1.5 py-0 text-[9px]">
                 Revisar
               </Badge>
             )}
             {!showHealthAlert && !hasHealthNotes && (
-              <span className="text-[10px] font-medium text-zinc-400">Sin datos</span>
+              <span className="text-text-muted text-[10px] font-medium">Sin datos</span>
             )}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
+          <ChevronDown className="text-text-muted h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="border-t border-zinc-100 px-3 pt-2 pb-2.5 dark:border-zinc-800">
+        <div className="border-border-subtle border-t px-3 pt-2 pb-2.5">
           {healthProfile &&
           (healthProfile.condition_labels.length > 0 ||
             healthProfile.conditions_notes ||
@@ -195,40 +191,32 @@ export function MemberProfilePanel({
               )}
               {healthProfile.conditions_notes && (
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Patologías:</span>{' '}
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                    {healthProfile.conditions_notes}
-                  </span>
+                  <span className="text-text-muted">Patologías:</span>{' '}
+                  <span className="text-text font-medium">{healthProfile.conditions_notes}</span>
                 </p>
               )}
               {healthProfile.limitations_notes && (
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Limitaciones:</span>{' '}
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                    {healthProfile.limitations_notes}
-                  </span>
+                  <span className="text-text-muted">Limitaciones:</span>{' '}
+                  <span className="text-text font-medium">{healthProfile.limitations_notes}</span>
                 </p>
               )}
               {healthProfile.allergies_notes && (
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Alergias:</span>{' '}
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                    {healthProfile.allergies_notes}
-                  </span>
+                  <span className="text-text-muted">Alergias:</span>{' '}
+                  <span className="text-text font-medium">{healthProfile.allergies_notes}</span>
                 </p>
               )}
               {healthProfile.medications_notes && (
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">Medicación:</span>{' '}
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                    {healthProfile.medications_notes}
-                  </span>
+                  <span className="text-text-muted">Medicación:</span>{' '}
+                  <span className="text-text font-medium">{healthProfile.medications_notes}</span>
                 </p>
               )}
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="text-text-muted text-xs">
                 El miembro aún no ha completado su perfil de salud.
               </p>
               <button
@@ -243,38 +231,34 @@ export function MemberProfilePanel({
         </div>
       </details>
 
-      <details className="group rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+      <details className="border-border group rounded-xl border">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
-          <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-            Metabolismo estimado
-          </span>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" />
+          <span className="text-text text-xs font-semibold">Metabolismo estimado</span>
+          <ChevronDown className="text-text-muted h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="border-t border-zinc-100 px-3 pt-2 pb-2.5 dark:border-zinc-800">
+        <div className="border-border-subtle border-t px-3 pt-2 pb-2.5">
           {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null ? (
             <div className="space-y-1.5 text-xs sm:text-sm">
               <div className="flex flex-wrap gap-x-4 gap-y-1">
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">TMB</span>{' '}
-                  <span className="font-semibold text-zinc-900 dark:text-white">
-                    {healthProfile.bmr_kcal} kcal
-                  </span>
+                  <span className="text-text-muted">TMB</span>{' '}
+                  <span className="text-text font-semibold">{healthProfile.bmr_kcal} kcal</span>
                 </p>
                 <p>
-                  <span className="text-zinc-500 dark:text-zinc-400">GET</span>{' '}
+                  <span className="text-text-muted">GET</span>{' '}
                   <span className="font-semibold text-emerald-600 dark:text-emerald-500">
                     {healthProfile.tdee_kcal} kcal
                   </span>
                 </p>
               </div>
               {healthProfile.activity_level && (
-                <p className="text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted">
                   {ACTIVITY_LEVELS.find((l) => l.id === healthProfile.activity_level)?.label ??
                     healthProfile.activity_level}
                 </p>
               )}
               {healthProfile.metabolic_computed_at && (
-                <p className="text-[10px] text-zinc-400">
+                <p className="text-text-muted text-[10px]">
                   Calculado{' '}
                   {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy', {
                     locale: es,
@@ -282,14 +266,12 @@ export function MemberProfilePanel({
                   {healthProfile.weight_used_kg != null && ` · ${healthProfile.weight_used_kg} kg`}
                 </p>
               )}
-              <p className="text-[10px] text-zinc-400">
+              <p className="text-text-muted text-[10px]">
                 Estimación basada en datos declarados por el miembro.
               </p>
             </div>
           ) : (
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
-              Sin cálculo de TMB/GET registrado.
-            </p>
+            <p className="text-text-muted text-xs">Sin cálculo de TMB/GET registrado.</p>
           )}
         </div>
       </details>

@@ -52,7 +52,7 @@ export function PaginationBar({
 
   return (
     <div className="border-border/70 flex items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
-      <p className="min-w-0 truncate text-xs font-medium text-zinc-400 dark:text-zinc-300">
+      <p className="text-text-muted min-w-0 truncate text-xs font-medium">
         {total} {label} · Página {page} de {totalPages}
       </p>
       <div className="flex shrink-0 items-center gap-1">
@@ -74,7 +74,7 @@ export function PaginationBar({
           p === 'ellipsis' ? (
             <span
               key={`ellipsis-${i}`}
-              className="flex h-9 w-9 items-center justify-center text-xs text-zinc-400 select-none dark:text-zinc-500"
+              className="text-text-muted flex h-9 w-9 items-center justify-center text-xs select-none"
             >
               …
             </span>

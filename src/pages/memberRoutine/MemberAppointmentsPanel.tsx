@@ -132,10 +132,10 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
   return (
     <div className="space-y-4">
       <Card padding="md" rounded="xl">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
+        <h2 className="text-text text-sm font-semibold">
           {editingId ? 'Reprogramar sesión 1:1' : 'Agendar sesión 1:1'}
         </h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted mt-1 text-xs">
           Agenda tiempo individual y relaciónalo al bloque de entrenamiento cuando corresponda.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -163,7 +163,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
               id="appointment-block"
               value={form.training_block_id}
               onChange={(event) => setForm({ ...form, training_block_id: event.target.value })}
-              className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="">Sin bloque específico</option>
               {blocks
@@ -200,7 +200,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
 
       {appointments.length === 0 ? (
         <Card padding="md" rounded="xl">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted text-sm">
             No hay sesiones 1:1 registradas para este cliente.
           </p>
         </Card>
@@ -208,7 +208,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
         appointments.map((appointment) => (
           <Card key={appointment.id} padding="sm" rounded="xl">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+              <p className="text-text text-sm font-semibold">
                 {new Intl.DateTimeFormat('es-VE', {
                   dateStyle: 'medium',
                   timeStyle: 'short',
@@ -217,7 +217,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
               <Badge>{statusLabels[appointment.status]}</Badge>
             </div>
             {appointment.notes && (
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{appointment.notes}</p>
+              <p className="text-text-muted mt-1 text-xs">{appointment.notes}</p>
             )}
             {appointment.status === 'scheduled' && (
               <div className="mt-3 flex flex-wrap gap-2">

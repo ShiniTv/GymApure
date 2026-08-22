@@ -59,7 +59,7 @@ export function SettingsOpsHealthCard({
       className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
     >
       <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
-        <h2 className="flex min-w-0 items-center gap-2 text-sm font-bold text-zinc-900 dark:text-white">
+        <h2 className="text-text flex min-w-0 items-center gap-2 text-sm font-bold">
           <Activity className="text-brand h-4 w-4 shrink-0" />
           <span className="truncate">Salud operativa</span>
         </h2>
@@ -106,24 +106,24 @@ export function SettingsOpsHealthCard({
       ) : opsMetrics ? (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
-              <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
+              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                 DB ms
               </p>
-              <p className="mt-0.5 text-base font-bold text-zinc-900 tabular-nums sm:text-lg dark:text-white">
+              <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
                 {opsMetrics.db.latency_ms ?? '—'}
               </p>
             </div>
-            <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
-              <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
+              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                 Avg req ms
               </p>
-              <p className="mt-0.5 text-base font-bold text-zinc-900 tabular-nums sm:text-lg dark:text-white">
+              <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
                 {opsMetrics.request_metrics.avgResponseMs}
               </p>
             </div>
-            <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
-              <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
+              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                 Error rate
               </p>
               <p
@@ -136,8 +136,8 @@ export function SettingsOpsHealthCard({
                 {opsMetrics.request_metrics.errorRatePercent}%
               </p>
             </div>
-            <div className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
-              <p className="text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
+              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
                 Slow rate
               </p>
               <p
@@ -154,19 +154,19 @@ export function SettingsOpsHealthCard({
 
           {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
             <div className="mt-4 min-w-0">
-              <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+              <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
                 Top rutas lentas
               </p>
               <div className="space-y-1.5">
                 {opsMetrics.request_metrics.topSlowRoutes.map((route) => (
                   <div
                     key={`${route.method}-${route.path}`}
-                    className="min-w-0 rounded-lg border border-zinc-100 px-2.5 py-2 dark:border-zinc-800"
+                    className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2"
                   >
-                    <p className="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                    <p className="text-text-muted truncate text-[11px] font-medium">
                       {route.method} {route.path}
                     </p>
-                    <p className="mt-0.5 text-xs text-zinc-700 tabular-nums dark:text-zinc-200">
+                    <p className="text-text-secondary mt-0.5 text-xs tabular-nums">
                       avg {route.avgDurationMs}ms · max {route.maxDurationMs}ms · {route.count} req
                     </p>
                   </div>
@@ -176,7 +176,7 @@ export function SettingsOpsHealthCard({
           )}
 
           <div className="mt-4 min-w-0">
-            <p className="mb-1.5 text-[10px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
               Alertas activas
             </p>
             {opsAlerts.length === 0 ? (

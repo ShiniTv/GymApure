@@ -42,7 +42,7 @@ export function ProfileMembershipAlerts({ role, subscription }: ProfileMembershi
                 `plan ${subscription.membership_name}`
               )}
             </p>
-            <p className="mt-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mt-0.5 text-[10px]">
               Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
             </p>
           </div>

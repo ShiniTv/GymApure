@@ -27,31 +27,29 @@ export default function ThemePalettePicker() {
                 'focus-visible:ring-brand/50 focus:outline-none focus-visible:ring-2',
                 isActive
                   ? 'border-brand bg-brand/5 shadow-sm'
-                  : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700'
+                  : 'border-border bg-surface hover:border-border'
               )}
             >
               <div className="flex items-center gap-1.5">
                 <span
-                  className="h-5 w-5 shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700"
+                  className="border-border h-5 w-5 shrink-0 rounded-full border"
                   style={{ backgroundColor: item.swatch.light }}
                   aria-hidden
                 />
                 <span
-                  className="h-5 w-5 shrink-0 rounded-full border border-zinc-700"
+                  className="border-border h-5 w-5 shrink-0 rounded-full border"
                   style={{ backgroundColor: item.swatch.dark }}
                   aria-hidden
                 />
               </div>
               <div className="w-full min-w-0">
-                <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                  {item.label}
-                </p>
-                <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+                <p className="text-text truncate text-xs font-semibold">{item.label}</p>
+                <p className="text-text-muted mt-0.5 line-clamp-2 text-[10px] leading-snug">
                   {item.description}
                 </p>
               </div>
               <div
-                className="flex w-full items-center gap-2 border-t border-zinc-100 pt-1 dark:border-zinc-800"
+                className="border-border-subtle flex w-full items-center gap-2 border-t pt-1"
                 aria-hidden
               >
                 <span
@@ -81,7 +79,7 @@ export default function ThemePalettePicker() {
         <button
           type="button"
           onClick={() => setPalette(DEFAULT_PALETTE)}
-          className="hover:text-brand text-xs font-semibold text-zinc-500 transition-colors dark:text-zinc-400"
+          className="hover:text-brand text-text-muted text-xs font-semibold transition-colors"
         >
           Restablecer paleta predeterminada
         </button>
