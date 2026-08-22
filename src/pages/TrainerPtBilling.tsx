@@ -164,7 +164,7 @@ export default function TrainerPtBilling() {
         amount_usd: Number(amount),
         offer_id: offerId ? Number(offerId) : null,
       });
-      toast?.success('Cobro enviado al cliente');
+      toast?.success('Enviaste el cobro al cliente');
       setAmount('');
       setChargeOpen(false);
       setInvoiceFilter('awaiting');
@@ -180,7 +180,7 @@ export default function TrainerPtBilling() {
         price_usd: Number(offerPrice),
         billing_unit: 'session',
       });
-      toast?.success('Tarifa guardada');
+      toast?.success('Guardaste la tarifa');
       setOfferPrice('');
     } catch (err) {
       toast?.error(toDisplayErrorMessage(err));
@@ -189,7 +189,7 @@ export default function TrainerPtBilling() {
 
   const onSaveDest = () => {
     void updateDest.mutateAsync(destForm).then(
-      () => toast?.success('Datos de cobro PT guardados'),
+      () => toast?.success('Guardaste los datos de cobro PT'),
       (err) => toast?.error(toDisplayErrorMessage(err))
     );
   };
@@ -309,7 +309,7 @@ export default function TrainerPtBilling() {
                       title="Confirmar"
                       onClick={() =>
                         void confirmInv.mutateAsync(inv.id).then(
-                          () => toast?.success('Cobro confirmado'),
+                          () => toast?.success('Confirmaste el cobro'),
                           (err) => toast?.error(toDisplayErrorMessage(err))
                         )
                       }
@@ -338,7 +338,7 @@ export default function TrainerPtBilling() {
                     title="Cancelar"
                     onClick={() =>
                       void cancelInv.mutateAsync(inv.id).then(
-                        () => toast?.success('Cobro cancelado'),
+                        () => toast?.success('Cancelaste el cobro'),
                         (err) => toast?.error(toDisplayErrorMessage(err))
                       )
                     }
@@ -922,7 +922,7 @@ export default function TrainerPtBilling() {
                 if (rejectId == null) return;
                 void rejectInv.mutateAsync({ id: rejectId, reason: rejectReason.trim() }).then(
                   () => {
-                    toast?.success('Cobro rechazado');
+                    toast?.success('Rechazaste el cobro');
                     setRejectId(null);
                   },
                   (err) => toast?.error(toDisplayErrorMessage(err))

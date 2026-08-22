@@ -28,6 +28,7 @@ test.describe('Copy en español', () => {
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);
     expect(text).not.toMatch(/\bKiosk\b/);
+    expect(text).not.toMatch(/\bCheck-in\b/);
   });
 
   test('trainer: Panel sin Dashboard', async ({ page }) => {
@@ -36,6 +37,7 @@ test.describe('Copy en español', () => {
     await waitForDashboard(page);
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);
+    expect(text).not.toMatch(/\bCheck-in\b/);
     expect(text).toMatch(/Panel|entrenamiento/i);
   });
 
@@ -45,6 +47,7 @@ test.describe('Copy en español', () => {
     await waitForDashboard(page);
     const text = await page.locator('body').innerText();
     expect(text).not.toMatch(/\bDashboard\b/);
+    expect(text).not.toMatch(/\bKiosk\b/);
     expect(text).toMatch(/Panel/i);
   });
 });

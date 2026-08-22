@@ -97,13 +97,13 @@ export function ReceptionGuestPasses() {
         const err = await parseJsonResponse<{ error?: string }>(res);
         throw new Error(err.error || 'No se pudo crear el pase');
       }
-      toast?.success('Pase creado');
+      toast?.success('Creaste el pase de invitado');
       setForm(emptyForm);
       setHostSearch('');
       setHostResults([]);
       await load();
     } catch (err) {
-      toast?.error(toDisplayErrorMessage(err, 'Error al crear pase'));
+      toast?.error(toDisplayErrorMessage(err, 'No se pudo crear el pase'));
     } finally {
       setSaving(false);
     }
@@ -116,10 +116,10 @@ export function ReceptionGuestPasses() {
         const err = await parseJsonResponse<{ error?: string }>(res);
         throw new Error(err.error || 'No se pudo marcar');
       }
-      toast?.success('Pase usado');
+      toast?.success('Registraste el uso del pase');
       await load();
     } catch (err) {
-      toast?.error(toDisplayErrorMessage(err, 'Error'));
+      toast?.error(toDisplayErrorMessage(err, 'No se pudo registrar el pase'));
     }
   };
 

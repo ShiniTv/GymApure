@@ -90,6 +90,27 @@ function prefetchRouteData(path: string): void {
       queryFn: fetchExercisesCatalog,
       staleTime: 5 * 60_000,
     });
+    return;
+  }
+
+  if (path === '/reception' || path === '/check-in') {
+    dataPrefetched.add(path);
+    void queryClient.prefetchQuery({
+      queryKey: ['reception-inside'],
+      queryFn: async () => {
+        const res = await apiFetch('/api/attendance/inside');
+        return parseJsonResponse(res);
+      },
+      staleTime: 15_000,
+    });
+    void queryClient.prefetchQuery({
+      queryKey: ['reception-stats'],
+      queryFn: async () => {
+        const res = await apiFetch('/api/stats/reception');
+        return parseJsonResponse(res);
+      },
+      staleTime: 20_000,
+    });
   }
 }
 
