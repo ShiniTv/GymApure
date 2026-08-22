@@ -7,16 +7,16 @@
 
 ## Notas por dimensión
 
-| Dimensión                 | Baseline | Re-eval | Audit 360 | Meta ruta | Notas                                                              |
-| ------------------------- | -------- | ------- | --------- | --------- | ------------------------------------------------------------------ |
-| Producto / dominio        | 8.0      | 8.3     | 8.3       | 8.8       | Core profundo (sin clases grupales)                                |
-| Arquitectura / ingeniería | 7.5      | 8.0     | **8.2**   | 9.5       | God-files Profile/Equipment/Members/Messages partidos (2026-07-28) |
-| Seguridad                 | 7.5      | 8.5     | 8.5       | 9.3       | MFA opcional OK; `MFA_ENCRYPTION_KEY` en `.env.prod` local         |
-| Datos / ops / deploy      | 8.5      | 8.7     | **8.5**   | 9.3       | Health prod OK; staging cloud bloqueado (Free 2 proj); Sentry gap  |
-| UX / UI / design system   | 7.0      | 7.6     | **7.8**   | 9.2       | Linear DS + AA; device QA físico abierto                           |
-| Calidad / tests           | 7.5      | 8.1     | **8.2**   | 9.3       | CI Playwright+e2e; unit thin                                       |
-| Go-to-market / PWA        | 6.0      | 6.8     | 6.8       | 8.8       | PNG icons + screenshots; landing brand-first                       |
-| **Rendimiento**           | —        | —       | **8.5**   | 9.0       | Login LH 0.97 / LCP ~1.1s; prod DB ~21 ms                          |
+| Dimensión                 | Baseline | Re-eval | Audit 360 | Meta ruta | Notas                                                                |
+| ------------------------- | -------- | ------- | --------- | --------- | -------------------------------------------------------------------- |
+| Producto / dominio        | 8.0      | 8.3     | 8.3       | 8.8       | Core profundo (sin clases grupales)                                  |
+| Arquitectura / ingeniería | 7.5      | 8.0     | **8.2**   | 9.5       | God-files Profile/Equipment/Members/Messages partidos (2026-07-28)   |
+| Seguridad                 | 7.5      | 8.5     | 8.5       | 9.3       | MFA opcional; clave en Render; re-encrypt prod 0 legacy (2026-08-22) |
+| Datos / ops / deploy      | 8.5      | 8.7     | **8.5**   | 9.3       | Health prod OK; DSN Sentry en bundle 2026-08-22; alerta UI pendiente |
+| UX / UI / design system   | 7.0      | 7.6     | **7.8**   | 9.2       | Linear DS + AA; device QA físico abierto                             |
+| Calidad / tests           | 7.5      | 8.1     | **8.2**   | 9.3       | CI Playwright+e2e; unit thin                                         |
+| Go-to-market / PWA        | 6.0      | 6.8     | 6.8       | 8.8       | PNG icons + screenshots; landing brand-first                         |
+| **Rendimiento**           | —        | —       | **8.5**   | 9.0       | Login LH 0.97 / LCP ~1.1s; prod DB ~21 ms                            |
 
 **Global baseline: 7.4 / 10** · **Re-eval: ~8.1 / 10** · **Audit 360 (2026-07-28): ~8.3 / 10** · **Meta Fases A–D: ~9.4–9.5**
 
@@ -25,7 +25,8 @@
 - Prod `GET /api/health` → `ok`, `db_latency_ms` ≈ 21
 - `db:health:dev` OK · `db:health:prod` OK (purge 1 `password_reset_tokens` usado)
 - `db:verify-isolation` PASS
-- `deploy:preflight:prod` OK con avisos (Sentry/SSL/VAPID; Redis WARN en CLI local)
+- `deploy:preflight:prod` OK (2026-08-22): Sentry DSN + MFA key; avisos REDIS local / SSL CA
+- Prod JS incluye ingest Sentry; `security:reencrypt-mfa:prod` → 0 secretos legacy
 - Staging: PostgreSQL local `gymapure_staging` (Supabase Free = límite 2 proyectos)
 
 ### MFA (decisión de producto)
