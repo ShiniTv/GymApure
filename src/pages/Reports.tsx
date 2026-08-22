@@ -426,8 +426,8 @@ export default function Reports() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
-                  <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                <table className="text-text-muted w-full text-left text-xs">
+                  <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="pr-2 pb-2">Fecha</th>
                       <th className="pr-2 pb-2">Miembro</th>
@@ -435,16 +435,16 @@ export default function Reports() {
                       <th className="pb-2">Estado</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-border-subtle divide-y">
                     {preview?.samples?.payments.map((row, i) => (
                       <tr key={`${row.name}-${i}`}>
                         <td className="py-2 pr-2 whitespace-nowrap">
                           {formatSampleDate(row.date)}
                         </td>
-                        <td className="max-w-[8rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td className="text-text max-w-[8rem] truncate py-2 pr-2 font-medium">
                           {row.name}
                         </td>
-                        <td className="py-2 pr-2 text-right font-semibold text-zinc-900 tabular-nums dark:text-white">
+                        <td className="text-text py-2 pr-2 text-right font-semibold tabular-nums">
                           ${row.amountUsd}
                         </td>
                         <td className="py-2">
@@ -463,26 +463,26 @@ export default function Reports() {
               <EmptyState
                 icon={Fingerprint}
                 title="Sin asistencias en este rango"
-                description="Los check-ins del mostrador aparecerán aquí."
+                description="Los accesos del mostrador aparecerán aquí."
                 className="border-0 bg-transparent py-4 shadow-none"
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
-                  <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                <table className="text-text-muted w-full text-left text-xs">
+                  <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="pr-2 pb-2">Fecha</th>
                       <th className="pr-2 pb-2">Miembro</th>
                       <th className="pb-2 text-right">Min</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <tbody className="divide-border-subtle divide-y">
                     {preview?.samples?.attendance.map((row, i) => (
                       <tr key={`${row.name}-${i}`}>
                         <td className="py-2 pr-2 whitespace-nowrap">
                           {formatSampleDate(row.date)}
                         </td>
-                        <td className="max-w-[10rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                        <td className="text-text max-w-[10rem] truncate py-2 pr-2 font-medium">
                           {row.name}
                         </td>
                         <td className="py-2 text-right tabular-nums">
@@ -503,18 +503,18 @@ export default function Reports() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-zinc-500 dark:text-zinc-400">
-                <thead className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+              <table className="text-text-muted w-full text-left text-xs">
+                <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
                   <tr>
                     <th className="pr-2 pb-2">Miembro</th>
                     <th className="pr-2 pb-2">Plan</th>
                     <th className="pb-2 text-right">Días</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {preview?.samples?.members.map((row, i) => (
                     <tr key={`${row.name}-${i}`}>
-                      <td className="max-w-[9rem] truncate py-2 pr-2 font-medium text-zinc-800 dark:text-zinc-100">
+                      <td className="text-text max-w-[9rem] truncate py-2 pr-2 font-medium">
                         {row.name}
                       </td>
                       <td className="max-w-[7rem] truncate py-2 pr-2">
@@ -528,13 +528,13 @@ export default function Reports() {
             </div>
           )}
 
-          <p className="mt-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <p className="text-text-muted mt-3 text-[10px]">
             Muestra de hasta 8 filas. El export incluye el conjunto completo del rango.
           </p>
         </Card>
       </div>
 
-      <p className="flex items-start gap-2 px-0.5 text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400">
+      <p className="text-text-muted flex items-start gap-2 px-0.5 text-[11px] sm:text-xs">
         <FileSpreadsheet className="text-brand mt-0.5 h-3.5 w-3.5 shrink-0" />
         PDF con marca GymApure para compartir; CSV UTF-8 para Excel y contabilidad. Se generan en el
         servidor al descargar.

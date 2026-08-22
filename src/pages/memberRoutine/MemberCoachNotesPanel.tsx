@@ -73,8 +73,8 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-zinc-200/70 bg-white/80 p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-        <p className="mb-2 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+      <div className="border-border bg-surface rounded-xl border p-3">
+        <p className="text-text-muted mb-2 text-[11px] font-semibold tracking-wide uppercase">
           Nueva nota (solo staff)
         </p>
         <Textarea
@@ -122,16 +122,13 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
             const canEdit = user?.role === 'admin' || user?.id === note.author_id;
             const isEditing = editingId === note.id;
             return (
-              <li
-                key={note.id}
-                className="rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-              >
+              <li key={note.id} className="border-border bg-surface rounded-xl border px-3 py-2.5">
                 <div className="mb-1.5 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[12px] font-semibold text-zinc-800 dark:text-zinc-100">
+                    <p className="text-text truncate text-[12px] font-semibold">
                       {note.author_name}
                     </p>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                    <p className="text-text-muted text-[10px]">
                       {format(parseISO(note.created_at), 'd MMM yyyy · HH:mm', { locale: es })}
                       {note.updated_at !== note.created_at ? ' · editada' : ''}
                     </p>
@@ -188,7 +185,7 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
+                  <p className="text-text text-[13px] leading-relaxed whitespace-pre-wrap">
                     {note.body}
                   </p>
                 )}

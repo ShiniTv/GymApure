@@ -14,7 +14,7 @@ export const registerSchema = z.object({
   full_name: z.string().trim().min(1, 'Nombre requerido').max(200),
   email: z.string().trim().email('Email inválido'),
   password: passwordSchema,
-  cedula: z.string().trim().min(1, 'La cédula es obligatoria para el check-in en el gym').max(50),
+  cedula: z.string().trim().min(1, 'La cédula es obligatoria para el acceso al gym').max(50),
   phone: z.string().trim().max(50).optional(),
 });
 

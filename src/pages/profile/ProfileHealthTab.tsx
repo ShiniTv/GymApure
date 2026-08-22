@@ -119,12 +119,8 @@ export function ProfileHealthTab({
   if (isPending && !healthProfile) {
     return (
       <div className="w-full">
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-        >
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando perfil de salud…</p>
+        <Card padding="sm" rounded="xl" className="border-border bg-surface">
+          <p className="text-text-muted text-sm">Cargando perfil de salud…</p>
         </Card>
       </div>
     );
@@ -135,7 +131,7 @@ export function ProfileHealthTab({
       {(conditionLabels.length > 0 || healthProfile?.tdee_kcal != null) && (
         <div className="flex flex-wrap gap-1.5 px-0.5">
           {conditionLabels.length > 0 && (
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            <span className="bg-surface-raised text-text-secondary rounded-full px-2.5 py-1 text-[10px] font-medium">
               {conditionLabels.length} condición{conditionLabels.length === 1 ? '' : 'es'}
             </span>
           )}
@@ -145,7 +141,7 @@ export function ProfileHealthTab({
             </span>
           )}
           {healthProfile?.bmr_kcal != null && (
-            <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            <span className="bg-surface-raised text-text-secondary rounded-full px-2.5 py-1 text-[10px] font-medium">
               TMB {healthProfile.bmr_kcal} kcal
             </span>
           )}
@@ -153,17 +149,13 @@ export function ProfileHealthTab({
       )}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="border-zinc-200/70 bg-white/80 md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-        >
-          <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">Antecedentes</h2>
-          <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+        <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-4">
+          <h2 className="text-text text-[13px] font-semibold">Antecedentes</h2>
+          <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
             Lo ve tu entrenador · no sustituye criterio médico
           </p>
 
-          <p className="mt-3.5 mb-1.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+          <p className="text-text-muted mt-3.5 mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
             Condiciones
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -180,7 +172,7 @@ export function ProfileHealthTab({
                     'inline-flex h-7 items-center rounded-full border px-2.5 text-[11px] font-medium transition-colors',
                     active
                       ? 'border-brand/30 bg-brand/10 text-brand'
-                      : 'border-zinc-200/80 bg-transparent text-zinc-600 hover:border-zinc-300 dark:border-zinc-700/80 dark:text-zinc-300 dark:hover:border-zinc-600'
+                      : 'border-border text-text-secondary hover:border-border'
                   )}
                 >
                   {flag.shortLabel}
@@ -212,19 +204,19 @@ export function ProfileHealthTab({
             </div>
           </div>
 
-          <div className="mt-3 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+          <div className="border-border-subtle mt-3 border-t pt-2">
             <button
               type="button"
               onClick={() => setMoreOpen((v) => !v)}
               className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
               aria-expanded={moreOpen}
             >
-              <span className="text-[12px] font-semibold text-zinc-700 dark:text-zinc-200">
+              <span className="text-text-secondary text-[12px] font-semibold">
                 Alergias y medicación
               </span>
               <ChevronDown
                 className={cn(
-                  'h-4 w-4 shrink-0 text-zinc-400 transition-transform',
+                  'text-text-muted h-4 w-4 shrink-0 transition-transform',
                   moreOpen && 'rotate-180'
                 )}
               />
@@ -256,7 +248,7 @@ export function ProfileHealthTab({
           </div>
 
           {!hasConsent && (
-            <label className="mt-3 flex items-start gap-2 text-[11px] leading-snug text-zinc-600 dark:text-zinc-300">
+            <label className="text-text-secondary mt-3 flex items-start gap-2 text-[11px] leading-snug">
               <input
                 type="checkbox"
                 className="mt-0.5"
@@ -276,7 +268,7 @@ export function ProfileHealthTab({
             icon={<Activity className="text-brand h-4 w-4" />}
             className="rounded-xl"
           >
-            <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mb-3 text-[11px] leading-snug">
               TMB = reposo · GET = con tu actividad (Mifflin-St Jeor).
             </p>
 
@@ -298,7 +290,7 @@ export function ProfileHealthTab({
             )}
 
             {!missingAnthropometrics && (
-              <p className="mb-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted mb-3 text-[11px]">
                 {latestWeight} kg · {heightCm} cm · {age} años
               </p>
             )}
@@ -335,13 +327,13 @@ export function ProfileHealthTab({
 
             {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null && (
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-xl bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/40">
-                  <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
+                <div className="bg-surface-raised rounded-xl px-3 py-2.5">
+                  <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
                     TMB
                   </p>
-                  <p className="text-lg font-bold text-zinc-900 dark:text-white">
+                  <p className="text-text text-lg font-bold">
                     {healthProfile.bmr_kcal}{' '}
-                    <span className="text-xs font-medium text-zinc-500">kcal</span>
+                    <span className="text-text-muted text-xs font-medium">kcal</span>
                   </p>
                 </div>
                 <div className="rounded-xl bg-emerald-500/5 px-3 py-2.5">
@@ -356,7 +348,7 @@ export function ProfileHealthTab({
             )}
 
             {healthProfile?.metabolic_computed_at && (
-              <p className="mt-2 text-[10px] text-zinc-400">
+              <p className="text-text-muted mt-2 text-[10px]">
                 Último cálculo:{' '}
                 {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy · HH:mm', {
                   locale: es,

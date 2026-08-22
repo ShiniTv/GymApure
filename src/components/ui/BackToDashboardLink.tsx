@@ -35,7 +35,7 @@ export function BackToDashboardLink({ iconOnly, className, to, label }: BackToDa
       <Link
         to={home}
         className={cn(
-          'hover:text-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+          'hover:text-brand text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
           className
         )}
         aria-label={`Volver a ${homeLabel}`}
@@ -50,7 +50,7 @@ export function BackToDashboardLink({ iconOnly, className, to, label }: BackToDa
     <Link
       to={home}
       className={cn(
-        'hover:text-brand hover:border-brand/30 inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 text-[11px] font-semibold text-zinc-600 transition-colors sm:text-xs dark:border-zinc-700 dark:text-zinc-400',
+        'hover:text-brand hover:border-brand/30 text-text-secondary border-border inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors sm:text-xs',
         className
       )}
       title={`Volver a ${homeLabel}`}

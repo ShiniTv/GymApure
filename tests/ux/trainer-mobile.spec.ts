@@ -68,7 +68,7 @@ test.describe('Entrenador móvil', () => {
     if ((await assessment.count()) > 0) {
       await expect(assessment.first()).toHaveAttribute('href', '/members?needs=assessment');
     }
-    const checkin = page.getByRole('link', { name: /check-in semanal/i });
+    const checkin = page.getByRole('link', { name: /seguimiento semanal/i });
     if ((await checkin.count()) > 0) {
       await expect(checkin.first()).toHaveAttribute('href', '/members?needs=checkin');
     }

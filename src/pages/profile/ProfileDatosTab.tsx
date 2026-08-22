@@ -46,13 +46,7 @@ export function ProfileDatosTab({
 
   return (
     <div className="w-full">
-      <Card
-        padding="sm"
-        rounded="xl"
-        className={cn(
-          'border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50'
-        )}
-      >
+      <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-5">
         <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-4">
           <div className="mb-3.5 md:mb-0">
             <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
@@ -64,8 +58,8 @@ export function ProfileDatosTab({
                     className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl dark:bg-zinc-800">
-                    <User className="h-6 w-6 text-zinc-400 md:h-8 md:w-8 dark:text-zinc-300" />
+                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-xl sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl">
+                    <User className="text-text-muted h-6 w-6 md:h-8 md:w-8" />
                   </div>
                 )}
                 <label
@@ -86,14 +80,14 @@ export function ProfileDatosTab({
                 />
               </div>
               <div className="min-w-0 md:w-full">
-                <p className="truncate text-[15px] font-semibold text-zinc-900 md:text-base md:whitespace-normal dark:text-white">
+                <p className="text-text truncate text-[15px] font-semibold md:text-base md:whitespace-normal">
                   {profile.full_name}
                 </p>
-                <p className="mt-0.5 truncate text-[11px] text-zinc-500 md:text-xs md:whitespace-normal dark:text-zinc-400">
+                <p className="text-text-muted mt-0.5 truncate text-[11px] md:text-xs md:whitespace-normal">
                   {profile.email}
                 </p>
                 {profile.cedula && (
-                  <p className="mt-0.5 text-[10px] text-zinc-400 md:text-[11px] dark:text-zinc-500">
+                  <p className="text-text-muted mt-0.5 text-[10px] md:text-[11px]">
                     {profile.cedula}
                   </p>
                 )}
@@ -106,7 +100,7 @@ export function ProfileDatosTab({
                       type="button"
                       onClick={onRequestRemoveAvatar}
                       disabled={avatarRemoving}
-                      className="text-[10px] font-semibold text-zinc-500 transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:text-zinc-400 dark:hover:text-red-400"
+                      className="text-text-muted text-[10px] font-semibold transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:hover:text-red-400"
                     >
                       Quitar foto
                     </button>
@@ -117,21 +111,19 @@ export function ProfileDatosTab({
 
             {isTrainer && trainerProfile && (
               <div className="mt-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 md:mt-4">
-                <p className="text-xs font-bold text-zinc-900 dark:text-white">
-                  Perfil profesional
-                </p>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                <p className="text-text text-xs font-bold">Perfil profesional</p>
+                <p className="text-text-secondary text-[11px]">
                   Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
                 </p>
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                <p className="text-text-secondary text-[11px]">
                   Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
                 </p>
                 {trainerProfile.specialty && (
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400">
+                  <p className="text-text-secondary text-[11px]">
                     Especialidad: <strong>{trainerProfile.specialty}</strong>
                   </p>
                 )}
-                <p className="pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted pt-1 text-[10px]">
                   Para cambiar nivel, turno o especialidad, contacta al administrador (sección
                   Entrenadores).
                 </p>

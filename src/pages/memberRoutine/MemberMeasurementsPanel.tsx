@@ -51,7 +51,7 @@ export function MemberMeasurementsPanel({
           </div>
         )}
         {measurements.length > 0 ? (
-          <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/80">
+          <div className="border-border rounded-xl border">
             {measurements.map((measurement, index) => {
               const previous = measurements[index + 1];
               const weightDelta =
@@ -67,24 +67,20 @@ export function MemberMeasurementsPanel({
                 <div
                   key={measurement.id}
                   className={`flex items-start justify-between gap-2 px-3 py-2.5 text-xs sm:text-sm ${
-                    index < measurements.length - 1
-                      ? 'border-b border-zinc-100 dark:border-zinc-800'
-                      : ''
+                    index < measurements.length - 1 ? 'border-border-subtle border-b' : ''
                   }`}
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-zinc-600 dark:text-zinc-300">
+                    <p className="text-text-secondary font-medium">
                       {format(new Date(measurement.date), 'dd MMM yyyy', { locale: es })}
                     </p>
                     {extras.length > 0 && (
-                      <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
-                        {extras.join(' · ')} cm
-                      </p>
+                      <p className="text-text-muted mt-0.5 text-[10px]">{extras.join(' · ')} cm</p>
                     )}
                   </div>
                   <div className="shrink-0 text-right tabular-nums">
                     {measurement.weight != null ? (
-                      <p className="font-semibold text-zinc-900 dark:text-white">
+                      <p className="text-text font-semibold">
                         {measurement.weight} kg
                         {weightDelta != null && weightDelta !== 0 && (
                           <span
@@ -100,10 +96,10 @@ export function MemberMeasurementsPanel({
                         )}
                       </p>
                     ) : (
-                      <p className="text-zinc-400">—</p>
+                      <p className="text-text-muted">—</p>
                     )}
                     {measurement.body_fat_percentage != null && (
-                      <p className="text-[10px] text-zinc-400">
+                      <p className="text-text-muted text-[10px]">
                         {measurement.body_fat_percentage}% grasa
                       </p>
                     )}
@@ -113,7 +109,7 @@ export function MemberMeasurementsPanel({
             })}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center dark:border-zinc-700">
+          <div className="border-border rounded-xl border border-dashed px-3 py-6 text-center">
             <p className="text-text text-sm font-semibold">Sin mediciones</p>
             <p className="text-text-muted mt-1 text-xs">
               Registra la primera para ver el progreso en Perfil.

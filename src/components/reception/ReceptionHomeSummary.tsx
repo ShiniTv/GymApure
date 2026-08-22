@@ -205,14 +205,14 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
         <Link
           to="/reception?mode=counter&tab=access"
           className="border-brand/30 bg-brand/5 hover:bg-brand/10 active:bg-brand/15 flex min-h-11 touch-manipulation items-center gap-2.5 rounded-lg border px-3 py-2.5 transition-colors lg:hidden"
-          aria-label="Abrir mostrador: check-in y acceso"
+          aria-label="Abrir mostrador: acceso y registro"
         >
           <span className="brand-solid inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white">
             <Fingerprint className="h-4 w-4" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-text text-sm font-semibold">Abrir mostrador</p>
-            <p className="text-text-muted text-[11px]">Check-in y acceso</p>
+            <p className="text-text-muted text-[11px]">Acceso y registro</p>
           </div>
         </Link>
 

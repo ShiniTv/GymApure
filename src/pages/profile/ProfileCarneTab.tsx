@@ -20,10 +20,8 @@ export function ProfileCarneTab({
         <div className="flex flex-col items-center gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)] md:items-center md:gap-4">
           <div className="flex w-full flex-col items-center gap-3 md:items-start">
             <div className="w-full text-center md:text-left">
-              <h2 className="text-[13px] font-semibold text-zinc-900 md:text-sm dark:text-white">
-                Carné digital
-              </h2>
-              <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <h2 className="text-text text-[13px] font-semibold md:text-sm">Carné digital</h2>
+              <p className="text-text-muted mt-0.5 text-[11px]">
                 Muéstralo en recepción · sube el brillo
               </p>
             </div>
@@ -45,7 +43,7 @@ export function ProfileCarneTab({
             <button
               type="button"
               onClick={onShowBadgeModal}
-              className="text-[11px] font-medium text-zinc-500 underline-offset-2 hover:text-zinc-700 hover:underline md:text-center dark:text-zinc-400 dark:hover:text-zinc-200"
+              className="text-text-muted hover:text-text text-[11px] font-medium underline-offset-2 hover:underline md:text-center"
             >
               Ver carné completo / Imprimir
             </button>
@@ -59,7 +57,7 @@ export function ProfileCarneTab({
           action={
             <Link
               to="/messages"
-              className="brand-solid brand-solid-hover inline-flex min-h-[var(--touch-min)] items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide shadow-md shadow-zinc-900/10"
+              className="brand-solid brand-solid-hover inline-flex min-h-[var(--touch-min)] items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide shadow-md"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               Escribir a recepción

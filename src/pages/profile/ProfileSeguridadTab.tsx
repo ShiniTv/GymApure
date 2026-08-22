@@ -37,13 +37,13 @@ export function ProfileSeguridadTab({
         <Card
           padding="sm"
           rounded="xl"
-          className="min-w-0 border-zinc-200/70 bg-white/80 shadow-sm md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:shadow-none"
+          className="border-border bg-surface min-w-0 shadow-sm md:p-4 dark:shadow-none"
         >
-          <h2 className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 dark:text-white">
+          <h2 className="text-text mb-1 flex items-center gap-1.5 text-[13px] font-semibold">
             <Bell className="text-brand h-3.5 w-3.5" />
             Notificaciones
           </h2>
-          <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted mb-3 text-[11px] leading-snug">
             Pagos, mensajes y novedades en este dispositivo.
           </p>
           <PushNotificationsToggle />
@@ -53,12 +53,10 @@ export function ProfileSeguridadTab({
           <Card
             padding="sm"
             rounded="xl"
-            className="min-w-0 border-zinc-200/70 bg-white/80 shadow-sm md:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:shadow-none"
+            className="border-border bg-surface min-w-0 shadow-sm md:p-4 dark:shadow-none"
           >
-            <h2 className="mb-1 text-[13px] font-semibold text-zinc-900 dark:text-white">
-              Verificación en dos pasos
-            </h2>
-            <p className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <h2 className="text-text mb-1 text-[13px] font-semibold">Verificación en dos pasos</h2>
+            <p className="text-text-muted mb-2 text-[11px]">
               Protege tu cuenta de staff con MFA (TOTP).
             </p>
             <Link
@@ -75,9 +73,9 @@ export function ProfileSeguridadTab({
         <AccordionItem
           title="Cambiar contraseña"
           icon={<Lock className="text-brand h-4 w-4" />}
-          className="rounded-xl border border-zinc-200/70 bg-white/80 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:shadow-none"
+          className="border-border bg-surface rounded-xl border shadow-sm dark:shadow-none"
         >
-          <p className="mb-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted mb-3 text-[11px] leading-snug">
             Al actualizarla, cerraremos esta sesión para proteger tu cuenta.
           </p>
           {passwordError && (
@@ -125,12 +123,12 @@ export function ProfileSeguridadTab({
                                   : level === 2
                                     ? 'bg-yellow-500'
                                     : 'bg-emerald-500'
-                                : 'bg-zinc-200 dark:bg-zinc-700'
+                                : 'bg-surface-overlay'
                             )}
                           />
                         ))}
                       </div>
-                      <p className="text-xs font-medium text-zinc-400 dark:text-zinc-300">
+                      <p className="text-text-muted text-xs font-medium">
                         Fortaleza: {strength.label}
                       </p>
                     </div>

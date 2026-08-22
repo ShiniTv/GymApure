@@ -645,7 +645,7 @@ export function useMembersPage() {
       return {
         title: 'Aún no tienes miembros asignados',
         description:
-          '1) Crea la cuenta del miembro. 2) Asigna una rutina en Rutinas → Calendario. 3) Recepción activa la membresía para check-in y cobros.',
+          '1) Crea la cuenta del miembro. 2) Asigna una rutina en Rutinas → Calendario. 3) Recepción activa la membresía para acceso y cobros.',
       };
     }
     if (search) {

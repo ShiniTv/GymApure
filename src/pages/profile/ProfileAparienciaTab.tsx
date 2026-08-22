@@ -10,26 +10,20 @@ interface ProfileAparienciaTabProps {
 export function ProfileAparienciaTab({ theme, onThemeChange }: ProfileAparienciaTabProps) {
   return (
     <div className="w-full">
-      <Card
-        padding="sm"
-        rounded="xl"
-        className="border-zinc-200/70 bg-white/80 md:p-5 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-      >
-        <h2 className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900 md:text-sm dark:text-white">
+      <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-5">
+        <h2 className="text-text mb-3 flex items-center gap-1.5 text-[13px] font-semibold md:text-sm">
           <Palette className="text-brand h-3.5 w-3.5" />
           Apariencia
         </h2>
 
         <div className="md:grid md:grid-cols-2 md:gap-4">
           <div>
-            <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-              Color de acento
-            </p>
+            <p className="text-text-muted mb-2 text-[11px] font-medium">Color de acento</p>
             <ThemePalettePicker />
           </div>
 
-          <div className="mt-4 border-t border-zinc-100 pt-3 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:pl-8 dark:border-zinc-800">
-            <p className="mb-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="border-border-subtle mt-4 border-t pt-3 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:pl-8">
+            <p className="text-text-muted mb-2 text-[11px] font-medium">
               Fondo · también en la barra superior
             </p>
             <div className="flex gap-2">
