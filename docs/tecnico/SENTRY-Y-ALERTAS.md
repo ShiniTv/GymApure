@@ -35,15 +35,15 @@ El build Vite puede inyectar release vía plugin Sentry (`@sentry/vite-plugin`) 
 2. Confirmar evento en Sentry &lt; 2 min.
 3. `npm run lighthouse:ci` en CI ya mide budgets de login/panel.
 
-## Pendiente ops (auditoría 360° — 2026-07-28 · Oleada 3)
+## Pendiente ops (auditoría 360° — actualizado 2026-08-22)
 
-Checklist humano restante (no automatizable desde el repo):
+Hecho: proyecto Sentry, DSN en `.env.prod` y Render, bundle prod con ingest (2026-08-22),
+gate en [OPS-VERIFY-CHECKLIST.md](./OPS-VERIFY-CHECKLIST.md), MFA re-encrypt prod → 0 legacy.
 
-1. Crear proyecto(s) Sentry (`gymapure-server` / `gymapure-web` o uno compartido).
-2. Pegar `SENTRY_DSN` y `VITE_SENTRY_DSN` en **Render → Environment** y en `.env.prod` local.
-3. Redeploy Render (para que el build Vite tome `VITE_SENTRY_DSN`).
-4. En staging local o preview: forzar un error controlado → confirmar evento + regla de alerta.
-5. Marcar el gate en [OPS-VERIFY-CHECKLIST.md](./OPS-VERIFY-CHECKLIST.md).
+Restante (cuenta Sentry, no CLI):
+
+1. Alerts → Create Alert → **Issues nuevas** (email/Slack ops).
+2. Confirmar un evento real en staging si hace falta (no inyectar error en prod).
 
 ### Render — pasos concretos
 

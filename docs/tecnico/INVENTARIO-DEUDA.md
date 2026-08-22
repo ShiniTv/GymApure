@@ -37,8 +37,11 @@ Snapshot re-eval 2026-07-25. Auditoría 360° 2026-07-28. MFA opcional (no es de
 - [x] QA-DEVICE-10 plantilla de evidencia (cierre en dispositivo físico)
 - [x] Staging local PG + migrate/health/smoke (cloud Free limit)
 - [x] `MFA_ENCRYPTION_KEY` + `CRON_SECRET` en `.env.prod` local
-- [ ] Sentry DSN + alerta live (humano / Render) — ver [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md)
-- [ ] Copiar `MFA_ENCRYPTION_KEY` a Render + re-encrypt si legacy
+- [x] Sentry DSN live — 2026-08-22: `deploy:preflight:prod` OK; bundle de
+      `caribean-gym.onrender.com` incluye ingest Sentry; health prod `ok` (~21 ms)
+- [ ] Alerta Sentry “new issues” en la UI (cuenta Sentry; no hay `SENTRY_AUTH_TOKEN` en CLI)
+      — [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md)
+- [x] `MFA_ENCRYPTION_KEY` en Render — 2026-08-22: `security:reencrypt-mfa:prod` → 0 secretos legacy
 - [ ] Filas device A4 / I2–I4 con evidencia física — plantilla en [QA-DEVICE-10.md](../qa/QA-DEVICE-10.md)
 
 ### Oleada 3 (código, 2026-08-21)
@@ -47,7 +50,8 @@ Snapshot re-eval 2026-07-25. Auditoría 360° 2026-07-28. MFA opcional (no es de
 - [x] Code-split `sentry` / `virtuoso` + umbral chunk charts/qr
 - [x] `EmptyState` sin Card por defecto (`framed={false}`)
 - [x] Preflight avisa `VITE_SENTRY_DSN` + `MFA_ENCRYPTION_KEY`
-- [ ] Gates humanos Sentry / MFA-on-Render / device A4·I2–I4 (arriba)
+- [x] DSN Sentry + MFA en Render verificados 2026-08-22
+- [ ] Device A4 · I2–I4 (arriba; teléfono real)
 
 ## God-files (estado 2026-07-28 cont.)
 
