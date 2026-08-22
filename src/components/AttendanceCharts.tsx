@@ -17,7 +17,7 @@ interface DailyVolumePoint {
 export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-400 dark:text-zinc-300">
+      <div className="text-text-muted flex h-full items-center justify-center text-sm">
         Sin datos
       </div>
     );
@@ -30,12 +30,12 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
           strokeDasharray="3 3"
           vertical={false}
           stroke="currentColor"
-          className="text-zinc-100 dark:text-zinc-800"
+          className="text-border"
         />
         <XAxis
           dataKey="date"
           stroke="currentColor"
-          className="text-zinc-400 dark:text-zinc-300"
+          className="text-text-muted"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -47,7 +47,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
         />
         <YAxis
           stroke="currentColor"
-          className="text-zinc-400 dark:text-zinc-300"
+          className="text-text-muted"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -58,8 +58,8 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="mb-1 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                <div className="border-border bg-surface rounded-2xl border p-4 shadow-2xl">
+                  <p className="text-text-muted mb-1 text-xs font-medium">
                     {payload[0].payload.date}
                   </p>
                   <p className="text-brand text-lg font-semibold">{payload[0].value} ingresos</p>
@@ -90,7 +90,7 @@ interface HourlyVolumePoint {
 export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-400 dark:text-zinc-300">
+      <div className="text-text-muted flex h-full items-center justify-center text-sm">
         Sin datos
       </div>
     );
@@ -103,12 +103,12 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
           strokeDasharray="3 3"
           vertical={false}
           stroke="currentColor"
-          className="text-zinc-100 dark:text-zinc-800"
+          className="text-border"
         />
         <XAxis
           dataKey="hour"
           stroke="currentColor"
-          className="text-zinc-400 dark:text-zinc-300"
+          className="text-text-muted"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -117,7 +117,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
         />
         <YAxis
           stroke="currentColor"
-          className="text-zinc-400 dark:text-zinc-300"
+          className="text-text-muted"
           fontSize={10}
           fontWeight="900"
           tickLine={false}
@@ -128,11 +128,11 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="mb-1 text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                <div className="border-border bg-surface rounded-2xl border p-4 shadow-2xl">
+                  <p className="text-text-muted mb-1 text-xs font-medium">
                     {payload[0].payload.hour}:00
                   </p>
-                  <p className="text-lg font-semibold text-blue-500">{payload[0].value} ingresos</p>
+                  <p className="text-brand text-lg font-semibold">{payload[0].value} ingresos</p>
                 </div>
               );
             }
@@ -143,7 +143,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
           {data.map((_, index) => (
             <Cell
               key={`cell-h-${index}`}
-              className="fill-blue-500 opacity-80 transition-opacity hover:opacity-100"
+              className="fill-brand opacity-80 transition-opacity hover:opacity-100"
             />
           ))}
         </Bar>

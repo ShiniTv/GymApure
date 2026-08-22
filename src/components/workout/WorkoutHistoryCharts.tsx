@@ -45,7 +45,7 @@ function progressSummary(weeks: ProgressWeekPoint[]) {
 export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProps) {
   if (!hasProgressData(weeks)) {
     return (
-      <div className="flex min-h-[9rem] items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-6 text-center text-[11px] leading-snug text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/30 dark:text-zinc-400">
+      <div className="border-border bg-surface-raised/60 text-text-muted flex min-h-[9rem] items-center justify-center rounded-lg border border-dashed px-4 py-6 text-center text-[11px] leading-snug">
         Completa entrenamientos con series registradas para ver volumen y pesos máximos.
       </div>
     );
@@ -56,36 +56,28 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+      <div className="text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
         <span>
-          <span className="font-semibold text-zinc-700 dark:text-zinc-200">
-            {totalVolume.toLocaleString('es-VE')} kg
-          </span>{' '}
+          <span className="text-text font-semibold">{totalVolume.toLocaleString('es-VE')} kg</span>{' '}
           volumen total
         </span>
-        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+        <span className="text-text-muted">·</span>
         <span>
           Pico{' '}
-          <span className="font-semibold text-zinc-700 dark:text-zinc-200">
-            {peakWeight.toLocaleString('es-VE')} kg
-          </span>
+          <span className="text-text font-semibold">{peakWeight.toLocaleString('es-VE')} kg</span>
         </span>
-        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+        <span className="text-text-muted">·</span>
         <span className="text-brand font-medium">{weekLabel}</span>
       </div>
 
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
         <div className="h-36 sm:h-40">
-          <p className="mb-1.5 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <p className="text-text-muted mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
             Volumen (kg)
           </p>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeks}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                className="text-zinc-100 dark:text-zinc-800"
-              />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis
                 dataKey="week_start"
                 tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
@@ -105,16 +97,12 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
           </ResponsiveContainer>
         </div>
         <div className="h-36 sm:h-40">
-          <p className="mb-1.5 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <p className="text-text-muted mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
             Peso máximo (kg)
           </p>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weeks}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                className="text-zinc-100 dark:text-zinc-800"
-              />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis
                 dataKey="week_start"
                 tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
