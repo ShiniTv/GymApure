@@ -5,6 +5,7 @@ import {
   MEMBER_EMAIL,
   ADMIN_EMAIL,
   TRAINER_EMAIL,
+  RECEPTION_EMAIL,
 } from './helpers';
 
 async function waitForDashboard(page: import('@playwright/test').Page) {
@@ -39,6 +40,16 @@ test.describe('Copy en español', () => {
     expect(text).not.toMatch(/\bDashboard\b/);
     expect(text).not.toMatch(/\bCheck-in\b/);
     expect(text).toMatch(/Panel|entrenamiento/i);
+  });
+
+  test('receptionist: Inicio sin Check-in en chrome', async ({ page }) => {
+    await loginDesktop(page, RECEPTION_EMAIL, demoPassword());
+    await page.goto('/panel');
+    await waitForDashboard(page);
+    const text = await page.locator('body').innerText();
+    expect(text).not.toMatch(/\bDashboard\b/);
+    expect(text).not.toMatch(/\bKiosk\b/);
+    expect(text).not.toMatch(/\bCheck-in\b/);
   });
 
   test('admin: Panel sin Dashboard', async ({ page }) => {

@@ -150,7 +150,7 @@ export default function Attendance() {
             {member.cedula ?? member.email}
             {member.last_check_in
               ? ` · ${format(new Date(member.last_check_in), 'dd MMM', { locale: es })}`
-              : ' · sin check-ins'}
+              : ' · sin accesos'}
           </p>
         </Link>
         <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
@@ -238,7 +238,7 @@ export default function Attendance() {
               />
             </div>
             <p className="text-text-muted mb-2 text-[11px] leading-snug">
-              Sin check-in en {inactiveDays}d (o nunca)
+              Sin acceso en {inactiveDays}d (o nunca)
             </p>
             <div className="max-h-[min(42vh,22rem)] min-h-0 overflow-y-auto lg:max-h-none">
               {inactiveLoading ? (
@@ -250,7 +250,7 @@ export default function Attendance() {
                   compact
                   icon={Users}
                   title="Sin inactivos"
-                  description={`Nadie sin check-in en ${inactiveDays} días.`}
+                  description={`Nadie sin acceso en ${inactiveDays} días.`}
                 />
               ) : inactiveMembers.length > 12 ? (
                 <Virtuoso
@@ -286,7 +286,7 @@ export default function Attendance() {
                 compact
                 icon={Calendar}
                 title="Sin datos"
-                description="Aún no hay check-ins en 7 días."
+                description="Aún no hay accesos en 7 días."
               />
             ) : (
               <Suspense
@@ -317,7 +317,7 @@ export default function Attendance() {
                 compact
                 icon={Clock}
                 title="Sin horas pico"
-                description="Registra check-ins para ver el patrón."
+                description="Registra accesos para ver el patrón."
               />
             ) : (
               <Suspense

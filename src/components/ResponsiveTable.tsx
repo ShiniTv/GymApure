@@ -52,13 +52,13 @@ export function ResponsiveTable<T>({
   }
 
   const table = (
-    <table className="w-full text-left text-xs text-zinc-500 sm:text-sm dark:text-zinc-400">
+    <table className="text-text-muted w-full text-left text-xs sm:text-sm">
       {header && (
-        <thead className="bg-zinc-50 text-[10px] font-semibold text-zinc-500 sm:text-xs dark:bg-zinc-800/50 dark:text-zinc-400">
+        <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
           {header}
         </thead>
       )}
-      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+      <tbody className="divide-border-subtle divide-y">
         {items.map((item, index) => (
           <Fragment key={keyExtractor(item)}>{desktop(item, index)}</Fragment>
         ))}

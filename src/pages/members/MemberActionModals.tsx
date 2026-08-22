@@ -70,9 +70,9 @@ export function MemberActionModals({
       >
         {toggleTarget && (
           <>
-            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary mb-6 text-sm">
               {toggleTarget.status === 'active'
-                ? `¿Desactivar a ${toggleTarget.full_name}? No podrá hacer check-in ni acceder al sistema.`
+                ? `¿Desactivar a ${toggleTarget.full_name}? No podrá registrar acceso ni usar el sistema.`
                 : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
             </p>
             <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">

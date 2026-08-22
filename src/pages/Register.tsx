@@ -44,8 +44,7 @@ export default function Register() {
     if (!formData.email.trim()) next.email = 'El correo es obligatorio';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
       next.email = 'Email inválido';
-    if (!formData.cedula.trim())
-      next.cedula = 'La cédula es obligatoria para el check-in en el gym';
+    if (!formData.cedula.trim()) next.cedula = 'La cédula es obligatoria para el acceso al gym';
     setFieldErrors(next);
     setError(Object.values(next)[0] || '');
     return Object.keys(next).length === 0;

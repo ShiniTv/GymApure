@@ -173,7 +173,7 @@ export function MemberRoutineModals({
       >
         {substitutionTarget && (
           <div className="space-y-4">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted text-xs">
               Solo se muestran ejercicios del grupo{' '}
               <strong>{substitutionTarget.exercise.muscle_group}</strong> para conservar la
               intención del programa. Revisa las limitaciones de salud antes de confirmar.
@@ -197,7 +197,7 @@ export function MemberRoutineModals({
                 id="substitution-reason"
                 value={substitutionReason}
                 onChange={(event) => onSubstitutionReasonChange(event.target.value)}
-                className="mt-1 min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                className="border-border bg-surface text-text mt-1 min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
                 placeholder="Ej: limitación de rodilla; se conserva el patrón de empuje"
                 maxLength={500}
               />
@@ -294,16 +294,12 @@ export function MemberRoutineModals({
         {editingExercise && (
           <div className="space-y-4">
             <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2.5">
-              <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
-                Referencia de carga
-              </p>
+              <p className="text-text text-xs font-semibold">Referencia de carga</p>
               {loadingLoadSuggestion ? (
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Consultando historial…
-                </p>
+                <p className="text-text-muted mt-1 text-[11px]">Consultando historial…</p>
               ) : loadSuggestion?.last_session ? (
                 <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                  <p className="text-text-secondary text-[11px]">
                     Última sesión:{' '}
                     <strong>
                       {loadSuggestion.last_session.weight} kg × {loadSuggestion.last_session.reps}
@@ -323,12 +319,12 @@ export function MemberRoutineModals({
                   </Button>
                 </div>
               ) : loadSuggestion?.estimated_1rm_kg != null ? (
-                <p className="mt-1 text-[11px] text-zinc-600 dark:text-zinc-300">
+                <p className="text-text-secondary mt-1 text-[11px]">
                   1RM estimado: <strong>{loadSuggestion.estimated_1rm_kg} kg</strong>. Define la
                   intensidad según el objetivo del bloque.
                 </p>
               ) : (
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted mt-1 text-[11px]">
                   Sin sesiones previas ni pruebas RM registradas para este ejercicio.
                 </p>
               )}
@@ -399,7 +395,7 @@ export function MemberRoutineModals({
       </Modal>
 
       <Modal open={!!unassignTarget} onClose={onCloseUnassign} title="Quitar rutina">
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-text-secondary mb-6 text-sm">
           ¿Quitar <strong>{unassignTarget?.name}</strong> de {memberName}?
         </p>
         <div className="flex gap-3">
@@ -417,7 +413,7 @@ export function MemberRoutineModals({
       </Modal>
 
       <Modal open={!!deleteExerciseTarget} onClose={onCloseDeleteExercise} title="Quitar ejercicio">
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-text-secondary mb-6 text-sm">
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta rutina?
         </p>
         <div className="flex gap-3">

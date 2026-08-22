@@ -16,8 +16,8 @@ export function SettingsPushCard() {
           <span className="truncate">Notificaciones push</span>
         </h2>
       </div>
-      <p className="mb-3 text-[11px] leading-snug text-zinc-500 sm:text-xs dark:text-zinc-400">
-        Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes, check-ins).
+      <p className="text-text-muted mb-3 text-[11px] leading-snug sm:text-xs">
+        Recibe notificaciones en tu dispositivo cuando haya novedades (pagos, mensajes, accesos).
       </p>
       <div className="mt-auto">
         <PushNotificationsToggle />

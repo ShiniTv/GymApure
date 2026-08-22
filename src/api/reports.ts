@@ -439,7 +439,7 @@ router.get('/attendance', authorize(['admin']), async (req, res) => {
         title: 'Reporte de asistencias',
         subtitle: formatDateRangeSubtitle(from, to),
         summary: [
-          { label: 'Check-ins', value: String(rows.length) },
+          { label: 'Accesos', value: String(rows.length) },
           {
             label: 'Duración promedio',
             value: avgDuration != null ? `${avgDuration} min` : '—',
@@ -620,7 +620,7 @@ router.get('/retention', authorize(['admin']), async (req, res) => {
          SELECT 'Renovaciones', (SELECT v FROM renewed),
                 'Nuevas activas tras una suscripción previa'
          UNION ALL
-         SELECT 'Miembros con check-in', (SELECT v FROM checkins),
+         SELECT 'Miembros con acceso', (SELECT v FROM checkins),
                 'Únicos que asistieron en el rango'
        ) t`,
       [fromDate, toDate]

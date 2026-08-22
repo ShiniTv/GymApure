@@ -79,7 +79,7 @@ function ScoreField({
         id={inputId}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+        className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
       >
         {[1, 2, 3, 4, 5].map((score) => (
           <option key={score} value={score}>
@@ -281,10 +281,8 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
     <div className="space-y-4">
       <Card padding="md" rounded="xl">
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-            Evaluación de entrenamiento
-          </h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-text text-sm font-semibold">Evaluación de entrenamiento</h2>
+          <p className="text-text-muted mt-1 text-xs">
             Contexto no clínico para adaptar el programa. La información de salud permanece en
             Perfil.
           </p>
@@ -312,7 +310,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
                   experience_level: event.target.value as ExperienceLevel,
                 })
               }
-              className="h-10 w-full rounded-lg border border-zinc-200 bg-white px-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="">Sin definir</option>
               <option value="beginner">Principiante</option>
@@ -350,7 +348,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
               onChange={(event) =>
                 setAssessment({ ...assessment, mobility_notes: event.target.value })
               }
-              className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+              className="border-border bg-surface text-text min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
           <div className="sm:col-span-2">
@@ -361,7 +359,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
               onChange={(event) =>
                 setAssessment({ ...assessment, coaching_notes: event.target.value })
               }
-              className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+              className="border-border bg-surface text-text min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
         </div>
@@ -377,10 +375,8 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
 
       <Card padding="md" rounded="xl">
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-            Seguimiento de la semana
-          </h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-text text-sm font-semibold">Seguimiento de la semana</h2>
+          <p className="text-text-muted mt-1 text-xs">
             Registra cómo llega el cliente para decidir si mantienes, progresas o reduces la carga.
           </p>
         </div>
@@ -417,7 +413,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
             id="weekly-checkin-notes"
             value={checkin.notes}
             onChange={(event) => setCheckin({ ...checkin, notes: event.target.value })}
-            className="min-h-20 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+            className="border-border bg-surface text-text min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
             placeholder="Ej: durmió poco, ajustar volumen de pierna"
           />
         </div>
@@ -431,26 +427,19 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         </Button>
 
         {history.length > 0 && (
-          <div className="mt-5 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-            <h3 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Últimos check-ins
-            </h3>
+          <div className="border-border-subtle mt-5 border-t pt-4">
+            <h3 className="text-text-secondary text-xs font-semibold">Últimos registros</h3>
             <div className="mt-2 space-y-2">
               {history.slice(0, 4).map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-lg bg-zinc-50 px-3 py-2 text-xs dark:bg-zinc-800/60"
-                >
-                  <div className="flex flex-wrap justify-between gap-2 text-zinc-600 dark:text-zinc-300">
+                <div key={item.id} className="bg-surface-raised rounded-lg px-3 py-2 text-xs">
+                  <div className="text-text-secondary flex flex-wrap justify-between gap-2">
                     <span className="font-medium">{item.week_of}</span>
                     <span>
                       Energía {item.energy ?? '—'} · Sueño {item.sleep_quality ?? '—'} · Adherencia{' '}
                       {item.adherence_score ?? '—'}
                     </span>
                   </div>
-                  {item.notes && (
-                    <p className="mt-1 text-zinc-500 dark:text-zinc-400">{item.notes}</p>
-                  )}
+                  {item.notes && <p className="text-text-muted mt-1">{item.notes}</p>}
                 </div>
               ))}
             </div>
@@ -462,11 +451,9 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         <Card padding="md" rounded="xl">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                Sugerencias de programación
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Basadas en el último check-in y feedback reciente. Requieren tu aprobación.
+              <h2 className="text-text text-sm font-semibold">Sugerencias de programación</h2>
+              <p className="text-text-muted mt-1 text-xs">
+                Basadas en el último registro y feedback reciente. Requieren tu aprobación.
               </p>
             </div>
             <Button
@@ -483,28 +470,23 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
               <Spinner />
             </div>
           ) : suggestions.length === 0 ? (
-            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-              Aún no hay sugerencias generadas.
-            </p>
+            <p className="text-text-muted mt-4 text-sm">Aún no hay sugerencias generadas.</p>
           ) : (
             <div className="mt-4 space-y-3">
               {suggestions.map((suggestion) => (
-                <div
-                  key={suggestion.id}
-                  className="rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-700"
-                >
+                <div key={suggestion.id} className="border-border rounded-lg border p-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium text-zinc-900 dark:text-white">
+                    <p className="text-text font-medium">
                       {suggestion.exercise_name} · {suggestion.routine_name}
                     </p>
-                    <span className="text-xs text-zinc-500 capitalize dark:text-zinc-400">
+                    <span className="text-text-muted text-xs capitalize">
                       {suggestion.status === 'pending' ? 'Pendiente' : suggestion.status}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
+                  <p className="text-text-secondary mt-1 text-xs">
                     {suggestion.rationale.message ?? 'Revisar la sugerencia antes de aplicarla.'}
                   </p>
-                  <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-text-muted mt-2 text-xs">
                     Propuesta: {suggestion.proposed_snapshot.sets} series ×{' '}
                     {suggestion.proposed_snapshot.reps} reps
                     {suggestion.proposed_snapshot.weight_suggestion

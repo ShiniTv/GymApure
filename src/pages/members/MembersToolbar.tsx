@@ -241,19 +241,16 @@ export function MembersToolbar({
       {isTrainer && membersWithoutPlanCount > 0 && !loading && !noPlanAlertDismissed && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px]">
           <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="min-w-0 flex-1 text-zinc-600 dark:text-zinc-300">
-            <span className="font-semibold text-zinc-900 dark:text-white">
+          <p className="text-text-secondary min-w-0 flex-1">
+            <span className="text-text font-semibold">
               {membersWithoutPlanCount === 1 ? '1 sin plan' : `${membersWithoutPlanCount} sin plan`}
             </span>
-            <span className="text-zinc-500 dark:text-zinc-400">
-              {' '}
-              · recepción activa el check-in
-            </span>
+            <span className="text-text-muted"> · recepción activa el acceso</span>
           </p>
           <button
             type="button"
             onClick={onDismissNoPlanAlert}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-zinc-400 hover:bg-amber-500/10 hover:text-zinc-700 dark:hover:text-zinc-200"
+            className="text-text-muted hover:text-text inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-amber-500/10"
             aria-label="Cerrar aviso"
           >
             <X className="h-3.5 w-3.5" />

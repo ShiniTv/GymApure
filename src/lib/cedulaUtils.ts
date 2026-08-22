@@ -29,7 +29,7 @@ export function normalizeCedulaInput(raw: unknown): string | null {
 }
 
 export function validateCedula(value: string): string | null {
-  if (!value.trim()) return 'La cédula es obligatoria para el check-in';
+  if (!value.trim()) return 'La cédula es obligatoria para el acceso';
   const cedulaRegex = /^([VEve]-)?\d{5,10}$/;
   if (!cedulaRegex.test(value.trim())) return 'Formato de cédula inválido (ej: V-12345678)';
   return null;

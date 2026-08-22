@@ -388,7 +388,7 @@ router.post('/', authorize(['admin', 'trainer', 'receptionist']), async (req: Au
 
   const normalizedCedula = cedula?.trim() ? canonicalCedula(cedula.trim()) : null;
   if (!normalizedCedula) {
-    return res.status(400).json({ error: 'La cédula es obligatoria para el check-in en el gym' });
+    return res.status(400).json({ error: 'La cédula es obligatoria para el acceso al gym' });
   }
 
   try {

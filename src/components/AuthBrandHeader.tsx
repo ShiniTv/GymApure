@@ -38,17 +38,13 @@ export default function AuthBrandHeader({
         <h1 className="mt-6">
           <BrandName variant="inline" size={titleSize === 'lg' ? 'lg' : 'md'} />
         </h1>
-        {subtitle && <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+        {subtitle && <p className="text-text-muted mt-2 text-sm">{subtitle}</p>}
       </div>
 
       {splitAware && subtitle && (
         <div className="hidden lg:block lg:text-left">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {subtitle}
-          </h1>
-          {formHint && (
-            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">{formHint}</p>
-          )}
+          <h1 className="text-text text-2xl font-bold tracking-tight">{subtitle}</h1>
+          {formHint && <p className="text-text-muted mt-1.5 text-sm">{formHint}</p>}
         </div>
       )}
     </div>

@@ -463,7 +463,7 @@ export default function Reports() {
               <EmptyState
                 icon={Fingerprint}
                 title="Sin asistencias en este rango"
-                description="Los check-ins del mostrador aparecerán aquí."
+                description="Los accesos del mostrador aparecerán aquí."
                 className="border-0 bg-transparent py-4 shadow-none"
               />
             ) : (

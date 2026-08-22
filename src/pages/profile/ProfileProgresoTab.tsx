@@ -83,11 +83,7 @@ export function ProfileProgresoTab({
 
   return (
     <div className="w-full space-y-3">
-      <Card
-        padding="sm"
-        rounded="xl"
-        className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-      >
+      <Card padding="sm" rounded="xl" className="border-border bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-text-secondary text-xs font-semibold tracking-wide uppercase">
@@ -150,15 +146,9 @@ export function ProfileProgresoTab({
         <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
       </div>
 
-      <Card
-        padding="sm"
-        rounded="xl"
-        className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-      >
+      <Card padding="sm" rounded="xl" className="border-border bg-surface">
         <div className="mb-2.5 flex items-center justify-between gap-2">
-          <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-            Evolución de peso
-          </h2>
+          <h2 className="text-text text-[13px] font-semibold">Evolución de peso</h2>
           <div className="flex shrink-0 items-center gap-2">
             {weightDelta != null && (
               <span
@@ -167,7 +157,7 @@ export function ProfileProgresoTab({
                     ? 'bg-emerald-500/10 text-emerald-600'
                     : weightDelta > 0
                       ? 'text-brand bg-brand/10'
-                      : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                      : 'bg-surface-raised text-text-muted'
                 }`}
               >
                 {weightDelta < 0 ? (
@@ -208,17 +198,15 @@ export function ProfileProgresoTab({
         ) : chartData.length === 1 ? (
           <div className="flex h-40 flex-col items-center justify-center text-center sm:h-48">
             <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
-            <p className="mt-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+            <p className="text-text-muted mt-1.5 text-[11px]">
               {chartData[0].date} · Añade otra medición para la gráfica
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center px-2 pt-4 pb-5 text-center">
             <Scale className="text-brand/50 mb-2.5 h-7 w-7" aria-hidden />
-            <p className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">
-              Sin mediciones de peso
-            </p>
-            <p className="mt-1 max-w-[14rem] text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+            <p className="text-text text-[13px] font-semibold">Sin mediciones de peso</p>
+            <p className="text-text-muted mt-1 max-w-[14rem] text-[11px] leading-snug">
               Registra tu peso para ver la evolución.
             </p>
             <Button type="button" size="sm" className="mt-4 h-9 min-h-9" onClick={onAddMeasurement}>
@@ -230,26 +218,20 @@ export function ProfileProgresoTab({
       </Card>
 
       {measurements.length > 0 && (
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-        >
+        <Card padding="sm" rounded="xl" className="border-border bg-surface">
           <button
             type="button"
             onClick={() => onHistoryOpenChange(!historyOpen)}
             className="flex w-full items-center justify-between gap-2 text-left"
             aria-expanded={historyOpen}
           >
-            <h2 className="text-[13px] font-semibold text-zinc-900 dark:text-white">
+            <h2 className="text-text text-[13px] font-semibold">
               Historial
-              <span className="ml-1.5 font-normal text-zinc-400 dark:text-zinc-500">
-                · {measurements.length}
-              </span>
+              <span className="text-text-muted ml-1.5 font-normal">· {measurements.length}</span>
             </h2>
             <ChevronDown
               className={cn(
-                'h-4 w-4 shrink-0 text-zinc-400 transition-transform',
+                'text-text-muted h-4 w-4 shrink-0 transition-transform',
                 historyOpen && 'rotate-180'
               )}
             />
@@ -259,16 +241,16 @@ export function ProfileProgresoTab({
             <>
               <div className="mt-2.5 space-y-1.5 lg:hidden">
                 {measurements.map((m) => (
-                  <div key={m.id} className="rounded-xl px-2.5 py-2 dark:bg-zinc-950/40">
+                  <div key={m.id} className="bg-surface-raised rounded-xl px-2.5 py-2">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-[12px] font-semibold text-zinc-900 dark:text-white">
+                      <p className="text-text text-[12px] font-semibold">
                         {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                       </p>
-                      <p className="text-[12px] font-semibold text-zinc-800 tabular-nums dark:text-zinc-200">
+                      <p className="text-text text-[12px] font-semibold tabular-nums">
                         {m.weight != null ? `${m.weight} kg` : '—'}
                       </p>
                     </div>
-                    <p className="mt-0.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+                    <p className="text-text-muted mt-0.5 text-[10px]">
                       Grasa {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
                       {' · '}
                       Cintura {m.waist != null ? `${m.waist}` : '—'}
@@ -283,7 +265,7 @@ export function ProfileProgresoTab({
               <div className="-mx-1 mt-2.5 hidden overflow-x-auto px-1 lg:block">
                 <table className="w-full min-w-[28rem] text-left">
                   <thead>
-                    <tr className="border-b border-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                    <tr className="border-border-subtle text-text-muted border-b text-[10px] font-semibold">
                       <th className="pr-3 pb-2">Fecha</th>
                       <th className="pr-3 pb-2">Peso</th>
                       <th className="pr-3 pb-2">Grasa</th>
@@ -296,24 +278,24 @@ export function ProfileProgresoTab({
                     {measurements.map((m) => (
                       <tr
                         key={m.id}
-                        className="border-b border-zinc-50 text-xs last:border-0 sm:text-sm dark:border-zinc-800/50"
+                        className="border-border-subtle text-xs last:border-0 sm:text-sm"
                       >
-                        <td className="py-2 pr-3 font-medium whitespace-nowrap text-zinc-700 dark:text-zinc-300">
+                        <td className="text-text-secondary py-2 pr-3 font-medium whitespace-nowrap">
                           {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                         </td>
-                        <td className="py-2 pr-3 font-semibold text-zinc-900 dark:text-white">
+                        <td className="text-text py-2 pr-3 font-semibold">
                           {m.weight != null ? `${m.weight} kg` : '—'}
                         </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                        <td className="text-text-muted py-2 pr-3">
                           {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
                         </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                        <td className="text-text-muted py-2 pr-3">
                           {m.waist != null ? `${m.waist} cm` : '—'}
                         </td>
-                        <td className="py-2 pr-3 text-zinc-500 dark:text-zinc-400">
+                        <td className="text-text-muted py-2 pr-3">
                           {m.arm != null ? `${m.arm} cm` : '—'}
                         </td>
-                        <td className="py-2 text-zinc-500 dark:text-zinc-400">
+                        <td className="text-text-muted py-2">
                           {m.leg != null ? `${m.leg} cm` : '—'}
                         </td>
                       </tr>
@@ -327,24 +309,18 @@ export function ProfileProgresoTab({
       )}
 
       {workouts.length > 0 && (
-        <Card
-          padding="sm"
-          rounded="xl"
-          className="border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50"
-        >
-          <h2 className="mb-2 text-[13px] font-semibold text-zinc-900 dark:text-white">
-            Actividad reciente
-          </h2>
+        <Card padding="sm" rounded="xl" className="border-border bg-surface">
+          <h2 className="text-text mb-2 text-[13px] font-semibold">Actividad reciente</h2>
           <div className="space-y-0.5">
             {workouts.slice(0, 5).map((w) => (
               <div
                 key={w.id}
-                className="flex items-center justify-between gap-2 border-b border-zinc-100/80 py-2 last:border-0 dark:border-zinc-800/80"
+                className="border-border-subtle flex items-center justify-between gap-2 border-b py-2 last:border-0"
               >
-                <p className="truncate text-xs font-medium text-zinc-800 sm:text-sm dark:text-zinc-200">
+                <p className="text-text truncate text-xs font-medium sm:text-sm">
                   {w.routine_name}
                 </p>
-                <p className="shrink-0 text-[10px] text-zinc-400 tabular-nums sm:text-xs dark:text-zinc-500">
+                <p className="text-text-muted shrink-0 text-[10px] tabular-nums sm:text-xs">
                   {format(new Date(w.start_time), 'dd MMM · HH:mm', { locale: es })}
                 </p>
               </div>

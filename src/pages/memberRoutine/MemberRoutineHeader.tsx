@@ -79,7 +79,7 @@ const TAB_LABELS: Record<CoachingTab, string> = {
   progreso: 'Progreso',
   bloques: 'Bloques',
   agenda: 'Agenda',
-  coaching: 'Check-in semanal',
+  coaching: 'Registro semanal',
   notas: 'Notas',
   perfil: 'Perfil',
   mediciones: 'Progreso',
@@ -358,7 +358,7 @@ export function MemberRoutineHeader({
         ) : null}
         {primary === 'coaching' ? (
           <p className={cn(typography.small, 'text-text-muted px-0.5 pt-1.5 pb-2')}>
-            Check-in semanal. Notas y agenda en «Más en esta ficha».
+            Registro semanal. Notas y agenda en «Más en esta ficha».
           </p>
         ) : null}
       </div>
