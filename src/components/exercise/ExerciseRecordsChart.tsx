@@ -26,11 +26,7 @@ export default function ExerciseRecordsChart({ timeline }: ExerciseRecordsChartP
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={timeline}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            vertical={false}
-            className="text-zinc-100 dark:text-zinc-800"
-          />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
           <XAxis
             dataKey="date"
             tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}

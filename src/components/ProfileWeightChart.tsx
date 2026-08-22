@@ -25,13 +25,13 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="currentColor"
-            className="text-zinc-100 dark:text-zinc-800"
+            className="text-border"
             vertical={false}
           />
           <XAxis
             dataKey="date"
             stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-300"
+            className="text-text-muted"
             fontSize={10}
             fontWeight="900"
             tickLine={false}
@@ -39,7 +39,7 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           />
           <YAxis
             stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-300"
+            className="text-text-muted"
             fontSize={10}
             fontWeight="900"
             tickLine={false}

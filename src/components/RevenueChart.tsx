@@ -41,13 +41,13 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="currentColor"
-            className="text-zinc-100 dark:text-zinc-800"
+            className="text-border"
             vertical={false}
           />
           <XAxis
             dataKey="period"
             stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-300"
+            className="text-text-muted"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -57,7 +57,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           />
           <YAxis
             stroke="currentColor"
-            className="text-zinc-400 dark:text-zinc-300"
+            className="text-text-muted"
             fontSize={10}
             fontWeight="600"
             tickLine={false}
@@ -71,8 +71,8 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
               if (active && payload && payload.length) {
                 const point = payload[0].payload as RevenueChartPoint & { income: number };
                 return (
-                  <div className="rounded-xl border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-                    <p className="mb-0.5 text-[10px] text-zinc-500 dark:text-zinc-400">
+                  <div className="border-border bg-surface rounded-xl border p-3 shadow-xl">
+                    <p className="text-text-muted mb-0.5 text-[10px]">
                       {formatPeriodTitle(point.period, mode)}
                     </p>
                     <p className="text-brand text-base font-semibold tabular-nums">

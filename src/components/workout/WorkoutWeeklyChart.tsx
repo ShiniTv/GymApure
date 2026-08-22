@@ -8,7 +8,12 @@ const LazyChart = lazy(() =>
       return (
         <ResponsiveContainer width="100%" height={104}>
           <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-            <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="#a1a1aa" />
+            <XAxis
+              dataKey="day"
+              tick={{ fontSize: 10 }}
+              stroke="currentColor"
+              className="text-text-muted"
+            />
             <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
             <Bar dataKey="count" name="Entrenos" fill="var(--color-brand)" radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -45,10 +50,10 @@ export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
   if (total === 0) {
     return (
       <div>
-        <p className="mb-2 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <p className="text-text-muted mb-2 text-[10px] font-semibold tracking-wide uppercase">
           Últimos 7 días
         </p>
-        <div className="flex h-[6.5rem] items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/60 px-3 text-center text-[11px] leading-snug text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/30 dark:text-zinc-400">
+        <div className="border-border bg-surface-raised/60 text-text-muted flex h-[6.5rem] items-center justify-center rounded-lg border border-dashed px-3 text-center text-[11px] leading-snug">
           {insight}
         </div>
       </div>
@@ -58,7 +63,7 @@ export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <p className="text-[10px] font-semibold tracking-wide text-zinc-400 uppercase">
+        <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
           Últimos 7 días
         </p>
         <p className="text-brand text-[11px] font-medium">{insight}</p>
