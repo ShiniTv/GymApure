@@ -52,8 +52,7 @@ export interface RoutinesCalendarViewProps {
 }
 
 const SWIPE_THRESHOLD_PX = 48;
-const LIGHT =
-  'rounded-xl border border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
+const LIGHT = 'border-border bg-surface rounded-xl border';
 
 function parseAssignDrag(dataTransfer: DataTransfer): AssignDragPayload | null {
   const raw = dataTransfer.getData(ASSIGN_DND_MIME) || dataTransfer.getData('text/plain');
@@ -167,17 +166,17 @@ export function RoutinesCalendarView({
       {/* Header: month label + week nav + ghost assign */}
       <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-zinc-900 capitalize dark:text-white">
+          <p className="text-text truncate text-sm font-semibold capitalize">
             {format(currentDate, 'MMMM yyyy', { locale: es })}
           </p>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-text-muted text-[11px]">
             {isCurrentWeek
               ? 'Semana actual'
               : `Semana del ${format(weekStart, 'd MMM', { locale: es })}`}
             {' · '}
             {weekAssignmentCount} asignación{weekAssignmentCount !== 1 ? 'es' : ''}
             {showPalette ? (
-              <span className="hidden text-zinc-400 lg:inline">
+              <span className="text-text-muted hidden lg:inline">
                 {' '}
                 · Arrastra rutina o miembro a un día
               </span>
@@ -188,7 +187,7 @@ export function RoutinesCalendarView({
           <button
             type="button"
             onClick={() => shiftWeek('prev')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg"
             aria-label="Semana anterior"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -196,7 +195,7 @@ export function RoutinesCalendarView({
           <button
             type="button"
             onClick={() => shiftWeek('next')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg"
             aria-label="Semana siguiente"
           >
             <ChevronRight className="h-4 w-4" />
@@ -216,7 +215,7 @@ export function RoutinesCalendarView({
 
       {showPalette ? (
         <div className={cn(LIGHT, 'hidden space-y-2 p-2.5 lg:block')}>
-          <p className="px-0.5 text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <p className="text-text-muted px-0.5 text-[10px] font-semibold tracking-wide uppercase">
             Arrastra a un día para asignar
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -228,7 +227,7 @@ export function RoutinesCalendarView({
                 onDragStart={(e) => {
                   setAssignDrag(e.dataTransfer, { kind: 'routine', id: r.id });
                 }}
-                className="border-brand/20 bg-brand/5 inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1 text-[11px] font-semibold text-zinc-800 active:cursor-grabbing dark:text-zinc-100"
+                className="border-brand/20 bg-brand/5 text-text inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1 text-[11px] font-semibold active:cursor-grabbing"
                 title={`Arrastrar rutina «${r.name}»`}
               >
                 <Dumbbell className="text-brand h-3 w-3 shrink-0" aria-hidden />
@@ -243,10 +242,10 @@ export function RoutinesCalendarView({
                 onDragStart={(e) => {
                   setAssignDrag(e.dataTransfer, { kind: 'member', id: m.id });
                 }}
-                className="inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
+                className="border-border bg-surface-raised text-text-secondary inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1 text-[11px] font-semibold active:cursor-grabbing"
                 title={`Arrastrar miembro «${m.full_name}»`}
               >
-                <Users className="h-3 w-3 shrink-0 text-zinc-400" aria-hidden />
+                <Users className="text-text-muted h-3 w-3 shrink-0" aria-hidden />
                 <span className="truncate">{m.full_name}</span>
               </button>
             ))}
@@ -256,12 +255,12 @@ export function RoutinesCalendarView({
 
       {/* Desktop month grid — xl+ */}
       <div className={cn(LIGHT, 'hidden overflow-hidden xl:block')}>
-        <div className="flex items-center justify-between gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+        <div className="border-border-subtle flex items-center justify-between gap-2 border-b px-3 py-2">
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-8 w-8 items-center justify-center rounded-md"
               aria-label="Mes anterior"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -269,7 +268,7 @@ export function RoutinesCalendarView({
             <button
               type="button"
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-8 w-8 items-center justify-center rounded-md"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="h-4 w-4" />
@@ -277,11 +276,11 @@ export function RoutinesCalendarView({
           </div>
         </div>
         <div className="scroll-x-bleed">
-          <div className="grid min-w-[640px] grid-cols-7 gap-px bg-zinc-100 dark:bg-zinc-800">
+          <div className="bg-border-subtle grid min-w-[640px] grid-cols-7 gap-px">
             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
               <div
                 key={day}
-                className="bg-zinc-50 py-2 text-center text-[10px] font-semibold text-zinc-400 dark:bg-zinc-900/50 dark:text-zinc-300"
+                className="bg-surface-raised text-text-muted py-2 text-center text-[10px] font-semibold"
               >
                 {day}
               </div>
@@ -311,7 +310,7 @@ export function RoutinesCalendarView({
                   }}
                   onDrop={(e) => handleDayDrop(e, dateStr)}
                   className={cn(
-                    'group relative min-h-[100px] cursor-pointer border-t border-l border-zinc-100 bg-white p-1.5 transition-all dark:border-zinc-800 dark:bg-zinc-900',
+                    'border-border-subtle bg-surface group relative min-h-[100px] cursor-pointer border-t border-l p-1.5 transition-all',
                     isOtherMonth && 'opacity-30',
                     isSelected && 'bg-brand/5 dark:bg-brand/10',
                     dragOverDay === dateStr && 'bg-brand/15 ring-brand/40 ring-2 ring-inset'
@@ -323,7 +322,7 @@ export function RoutinesCalendarView({
                         'text-[10px] font-semibold',
                         isToday
                           ? 'brand-solid flex h-5 w-5 items-center justify-center rounded-full'
-                          : 'text-zinc-400 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-white'
+                          : 'text-text-muted group-hover:text-text'
                       )}
                     >
                       {format(day, 'd')}
@@ -355,14 +354,14 @@ export function RoutinesCalendarView({
                           e.stopPropagation();
                           onNavigateToMemberRoutines(a.member_id);
                         }}
-                        className="border-brand hover:bg-brand/10 w-full truncate rounded border-l-2 bg-zinc-100 px-1 py-0.5 text-left text-[8px] font-bold text-zinc-600 transition-colors dark:bg-zinc-800/50 dark:text-zinc-400"
+                        className="border-brand hover:bg-brand/10 bg-surface-raised text-text-secondary w-full truncate rounded border-l-2 px-1 py-0.5 text-left text-[8px] font-bold transition-colors"
                         title={`${a.member_name}: ${a.routine_name}`}
                       >
                         {a.member_name}: {a.routine_name}
                       </button>
                     ))}
                     {dayAssignments.length > 3 && (
-                      <div className="text-center text-[9px] font-medium text-zinc-400">
+                      <div className="text-text-muted text-center text-[9px] font-medium">
                         + {dayAssignments.length - 3} más
                       </div>
                     )}
@@ -406,7 +405,7 @@ export function RoutinesCalendarView({
                   'flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors',
                   isSelected
                     ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
-                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50',
+                    : 'text-text-secondary hover:bg-surface-raised',
                   isOtherMonth && 'opacity-45',
                   dragOverDay === dateStr && 'bg-brand/20 ring-brand/50 ring-2'
                 )}
@@ -453,10 +452,10 @@ export function RoutinesCalendarView({
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold text-zinc-900 capitalize dark:text-white">
+              <h3 className="text-text truncate text-sm font-semibold capitalize">
                 {format(selectedDay, 'EEE d MMM', { locale: es })}
               </h3>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted text-[10px]">
                 {selectedDayAssignments.length} asignación
                 {selectedDayAssignments.length !== 1 ? 'es' : ''}
               </p>
@@ -474,7 +473,7 @@ export function RoutinesCalendarView({
           </div>
 
           {selectedDayAssignments.length > 0 ? (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="divide-border-subtle divide-y">
               {selectedDayAssignments.map((a, i) => (
                 <li key={`${a.member_id}-${a.routine_name}-${i}`}>
                   <button
@@ -483,10 +482,8 @@ export function RoutinesCalendarView({
                     className="flex w-full items-center gap-2.5 py-2 text-left transition-colors first:pt-0 last:pb-0 hover:opacity-90"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                        {a.member_name}
-                      </p>
-                      <p className="mt-0.5 truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+                      <p className="text-text truncate text-xs font-semibold">{a.member_name}</p>
+                      <p className="text-text-muted mt-0.5 truncate text-[10px]">
                         {a.routine_name}
                       </p>
                     </div>
@@ -498,7 +495,7 @@ export function RoutinesCalendarView({
               ))}
             </ul>
           ) : (
-            <p className="rounded-lg border border-dashed border-zinc-200 py-5 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
+            <p className="border-border text-text-muted rounded-lg border border-dashed py-5 text-center text-xs">
               Sin asignaciones este día
             </p>
           )}

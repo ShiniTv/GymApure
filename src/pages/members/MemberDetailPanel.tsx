@@ -84,10 +84,8 @@ export function MemberDetailPanel({
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar name={member.full_name} size="sm" className="shrink-0" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
-                {member.full_name}
-              </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-text truncate text-sm font-bold">{member.full_name}</p>
+              <p className="text-text-muted text-[11px]">
                 {ROLE_LABELS[member.role] ?? member.role}
               </p>
             </div>
@@ -126,12 +124,10 @@ export function MemberDetailPanel({
             key={row.label}
             className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2"
           >
-            <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
               {row.label}
             </dt>
-            <dd className="mt-0.5 truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">
-              {row.value}
-            </dd>
+            <dd className="text-text mt-0.5 truncate text-xs font-medium">{row.value}</dd>
           </div>
         ))}
       </dl>
@@ -157,10 +153,7 @@ export function MemberDetailPanel({
                 onClick={() => run(action)}
                 className="border-border/60 bg-surface-raised/50 text-text-secondary hover:border-brand/30 hover:bg-surface-overlay flex min-h-[3.25rem] w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center transition-[background-color,border-color,transform] active:scale-[0.98]"
               >
-                <action.icon
-                  className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400"
-                  aria-hidden
-                />
+                <action.icon className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
                 <span className="text-[11px] leading-tight font-semibold">{action.label}</span>
               </button>
             </li>

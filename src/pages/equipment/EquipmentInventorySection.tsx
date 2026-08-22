@@ -383,10 +383,8 @@ export function EquipmentInventorySection({
               <section key={group.zoneId ?? 'none'}>
                 <div className="mb-2 flex items-center gap-2 px-0.5">
                   <MapPin className="text-brand h-4 w-4 shrink-0" />
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    {group.zoneName}
-                  </h3>
-                  <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500 tabular-nums dark:bg-zinc-800">
+                  <h3 className="text-text text-sm font-semibold">{group.zoneName}</h3>
+                  <span className="bg-surface-raised text-text-muted rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
                     {group.items.length}
                   </span>
                 </div>

@@ -39,15 +39,12 @@ export function AccordionItem({
         aria-expanded={open}
         aria-controls={panelId}
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+        <span className="text-text flex items-center gap-2 text-sm font-semibold">
           {icon}
           {title}
         </span>
         <ChevronDown
-          className={cn(
-            'h-5 w-5 text-zinc-400 transition-transform dark:text-zinc-300',
-            open && 'rotate-180'
-          )}
+          className={cn('text-text-muted h-5 w-5 transition-transform', open && 'rotate-180')}
         />
       </button>
       {open && (

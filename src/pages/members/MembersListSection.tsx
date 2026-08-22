@@ -107,12 +107,9 @@ export function MembersListSection({
             <>
               <div className="space-y-2 lg:hidden">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="space-y-1.5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-                  >
-                    <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-                    <div className="h-3 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                  <div key={i} className="border-border space-y-1.5 rounded-lg border p-3">
+                    <div className="bg-surface-overlay h-4 w-32 animate-pulse rounded" />
+                    <div className="bg-surface-overlay h-3 w-24 animate-pulse rounded" />
                   </div>
                 ))}
               </div>
@@ -122,8 +119,8 @@ export function MembersListSection({
                 className="table-shell hidden overflow-hidden lg:block"
               >
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-zinc-500 dark:text-zinc-400">
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  <table className="text-text-muted w-full text-left text-sm">
+                    <tbody className="divide-border-subtle divide-y">
                       <TableRowSkeleton cols={colCount} />
                       <TableRowSkeleton cols={colCount} />
                       <TableRowSkeleton cols={colCount} />

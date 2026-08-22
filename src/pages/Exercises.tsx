@@ -466,7 +466,7 @@ export default function Exercises() {
                 : 'Eliminar ejercicio'
             }
           >
-            <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary mb-2 text-sm">
               {deleteTarget?.is_system && !deleteTarget.owner_trainer_id ? (
                 <>
                   ¿Ocultar <strong>{deleteTarget?.name}</strong> de tu biblioteca?
@@ -477,7 +477,7 @@ export default function Exercises() {
                 </>
               )}
             </p>
-            <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mb-6 text-xs">
               {deleteTarget?.is_system && !deleteTarget.owner_trainer_id
                 ? 'Solo dejará de aparecer en tu catálogo. Otros entrenadores seguirán viéndolo.'
                 : 'No se podrá eliminar si está en alguna rutina.'}

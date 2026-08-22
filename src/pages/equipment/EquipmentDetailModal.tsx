@@ -113,7 +113,7 @@ export function EquipmentDetailModal({
                     align="end"
                   >
                     <div className="flex flex-col p-1">
-                      <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <label className="hover:bg-surface-raised flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium">
                         <Camera className="h-4 w-4" />
                         Subir foto
                         <input
@@ -130,7 +130,7 @@ export function EquipmentDetailModal({
                       {detail.status !== 'out_of_service' && (
                         <button
                           type="button"
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          className="hover:bg-surface-raised flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium"
                           onClick={() => {
                             onDetailMoreOpenChange(false);
                             onRetireOpen();
@@ -166,22 +166,20 @@ export function EquipmentDetailModal({
             />
           )}
 
-          <div className="grid gap-2 text-sm text-zinc-600 sm:grid-cols-2 dark:text-zinc-300">
+          <div className="text-text-secondary grid gap-2 text-sm sm:grid-cols-2">
             <p>
-              <span className="font-semibold text-zinc-900 dark:text-white">Zona:</span>{' '}
-              {detail.zone_name ?? '—'}
+              <span className="text-text font-semibold">Zona:</span> {detail.zone_name ?? '—'}
             </p>
             <p>
-              <span className="font-semibold text-zinc-900 dark:text-white">Categoría:</span>{' '}
+              <span className="text-text font-semibold">Categoría:</span>{' '}
               {detail.catalog_category ? EQUIPMENT_CATEGORY_LABELS[detail.catalog_category] : '—'}
             </p>
             <p>
-              <span className="font-semibold text-zinc-900 dark:text-white">Marca / modelo:</span>{' '}
+              <span className="text-text font-semibold">Marca / modelo:</span>{' '}
               {[detail.brand, detail.model].filter(Boolean).join(' ') || '—'}
             </p>
             <p>
-              <span className="font-semibold text-zinc-900 dark:text-white">Serie:</span>{' '}
-              {detail.serial_number ?? '—'}
+              <span className="text-text font-semibold">Serie:</span> {detail.serial_number ?? '—'}
             </p>
             {detail.next_inspection_at && (
               <p className="flex items-center gap-1 sm:col-span-2">
@@ -207,31 +205,26 @@ export function EquipmentDetailModal({
           )}
 
           <div>
-            <h4 className="mb-2 text-sm font-bold text-zinc-900 dark:text-white">Historial</h4>
+            <h4 className="text-text mb-2 text-sm font-bold">Historial</h4>
             {events.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin eventos registrados.</p>
+              <p className="text-text-muted text-sm">Sin eventos registrados.</p>
             ) : (
               <ul className="space-y-2">
                 {events.map((event) => (
-                  <li
-                    key={event.id}
-                    className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800"
-                  >
+                  <li key={event.id} className="border-border-subtle rounded-lg border px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-zinc-500">
+                      <span className="text-text-muted text-xs font-semibold">
                         {EQUIPMENT_EVENT_LABELS[
                           event.event_type as keyof typeof EQUIPMENT_EVENT_LABELS
                         ] ?? event.event_type}
                       </span>
-                      <span className="text-[10px] text-zinc-400">
+                      <span className="text-text-muted text-[10px]">
                         {new Date(event.performed_at).toLocaleString('es')}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-                      {event.description}
-                    </p>
+                    <p className="text-text-secondary mt-1 text-sm">{event.description}</p>
                     {(event.vendor_name || event.cost_usd != null) && (
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="text-text-muted mt-1 text-xs">
                         {[
                           event.vendor_name,
                           event.cost_usd != null && !Number.isNaN(Number(event.cost_usd))
@@ -243,7 +236,7 @@ export function EquipmentDetailModal({
                       </p>
                     )}
                     {event.created_by_name && (
-                      <p className="mt-1 text-[10px] text-zinc-400">{event.created_by_name}</p>
+                      <p className="text-text-muted mt-1 text-[10px]">{event.created_by_name}</p>
                     )}
                   </li>
                 ))}

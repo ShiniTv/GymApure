@@ -41,7 +41,7 @@ export function Avatar({ src, name = '', size = 'md', className }: AvatarProps) 
   return (
     <div
       className={cn(
-        'dark:bg-brand/10 dark:text-brand dark:ring-brand/20 flex items-center justify-center rounded-full bg-zinc-200 font-semibold text-zinc-800 ring-2 ring-zinc-300/80',
+        'bg-surface-overlay text-text ring-border dark:bg-brand/10 dark:text-brand dark:ring-brand/20 flex items-center justify-center rounded-full font-semibold ring-2',
         sizeMap[size],
         className
       )}

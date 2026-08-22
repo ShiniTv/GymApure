@@ -69,10 +69,10 @@ export function PushOnboardingCard() {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-zinc-900 dark:text-white">
+          <p className="text-text text-sm font-semibold">
             {showIosInstall ? 'Añadir a Inicio para avisos' : 'Activa avisos en el teléfono'}
           </p>
-          <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+          <p className="text-text-secondary mt-0.5 text-xs">
             {showIosInstall ? (
               <>
                 En iPhone, toca Compartir →{' '}

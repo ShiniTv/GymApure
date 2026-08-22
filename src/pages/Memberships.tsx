@@ -177,17 +177,15 @@ export default function Memberships() {
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-base leading-tight font-bold text-zinc-900 dark:text-white">
+                      <h3 className="text-text truncate text-base leading-tight font-bold">
                         {plan.name}
                       </h3>
                       <Badge variant="default">{plan.duration_days} días</Badge>
                     </div>
                     <p className="text-brand mt-2 text-xl font-bold tracking-tight tabular-nums">
                       ${plan.price_usd}
-                      <span className="ml-1 text-xs font-semibold text-zinc-400 dark:text-zinc-300">
-                        USD
-                      </span>
-                      <span className="ml-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                      <span className="text-text-muted ml-1 text-xs font-semibold">USD</span>
+                      <span className="text-text-muted ml-2 text-[11px] font-medium">
                         · ${dailyCost}/día
                       </span>
                     </p>
@@ -300,7 +298,7 @@ export default function Memberships() {
       >
         {deleteTarget && (
           <>
-            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mb-4 text-sm">
               ¿Eliminar el plan <strong>{deleteTarget.name}</strong>? Solo es posible si no tiene
               suscripciones activas.
             </p>

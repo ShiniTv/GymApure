@@ -120,10 +120,10 @@ export function ReceptionRenewPayWizard({
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="border-border bg-surface mx-auto w-full max-w-3xl space-y-3 rounded-xl border p-3 sm:p-4">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Renovar y cobrar</h2>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <h2 className="text-text text-sm font-semibold">Renovar y cobrar</h2>
+        <p className="text-text-muted mt-0.5 text-xs">
           Pago aprobado y membresía renovada en un paso.
         </p>
       </div>
@@ -150,7 +150,7 @@ export function ReceptionRenewPayWizard({
           </Button>
         </div>
         {members.length > 0 && (
-          <div className="mt-2 space-y-0.5 rounded-xl border border-zinc-200/70 dark:border-zinc-800">
+          <div className="border-border mt-2 space-y-0.5 rounded-xl border">
             {members.map((member) => (
               <button
                 type="button"
@@ -160,12 +160,12 @@ export function ReceptionRenewPayWizard({
                   setMembers([]);
                   setError('');
                 }}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                className="hover:bg-surface-raised w-full px-3 py-2 text-left text-sm"
               >
-                <span className="font-semibold text-zinc-900 dark:text-white">
-                  {member.full_name}
+                <span className="text-text font-semibold">{member.full_name}</span>
+                <span className="text-text-muted ml-2 text-xs">
+                  {member.cedula ?? 'Sin cédula'}
                 </span>
-                <span className="ml-2 text-xs text-zinc-500">{member.cedula ?? 'Sin cédula'}</span>
               </button>
             ))}
           </div>
@@ -181,7 +181,7 @@ export function ReceptionRenewPayWizard({
         <div>
           <Label>Plan</Label>
           <select
-            className="mt-1 min-h-11 w-full rounded-xl border border-zinc-200 bg-transparent px-3 text-sm font-medium dark:border-zinc-700"
+            className="border-border mt-1 min-h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium"
             value={membershipId}
             onChange={(event) => choosePlan(event.target.value)}
           >
@@ -208,7 +208,7 @@ export function ReceptionRenewPayWizard({
         <div>
           <Label>Método</Label>
           <select
-            className="mt-1 min-h-11 w-full rounded-xl border border-zinc-200 bg-transparent px-3 text-sm font-medium dark:border-zinc-700"
+            className="border-border mt-1 min-h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium"
             value={method}
             onChange={(event) => setMethod(event.target.value as typeof method)}
           >
@@ -231,7 +231,7 @@ export function ReceptionRenewPayWizard({
 
       <div>
         <Label>Comprobante (opcional)</Label>
-        <label className="mt-1 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-3 text-xs text-zinc-500 dark:border-zinc-700">
+        <label className="border-border text-text-muted mt-1 flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed px-3 text-xs">
           <Upload className="h-3.5 w-3.5" />
           {proof?.name ?? 'JPG, PNG, WebP o PDF'}
           <input

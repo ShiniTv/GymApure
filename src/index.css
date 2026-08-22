@@ -695,11 +695,11 @@ body,
 
 /* Fix for reacharts tooltip in light mode */
 .recharts-default-tooltip {
-  @apply !rounded-lg !border-zinc-200 !bg-white text-zinc-900 !shadow-sm;
+  @apply !border-border !bg-surface text-text !rounded-lg !shadow-sm;
 }
 
 .dark .recharts-default-tooltip {
-  @apply !rounded-lg !border-zinc-800 !bg-zinc-900 text-white !shadow-xl;
+  @apply !border-border !bg-surface text-text !rounded-lg !shadow-xl;
 }
 
 @keyframes scan-line {

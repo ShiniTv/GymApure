@@ -37,11 +37,9 @@ export function RoutinesAssignmentsView({
 
   if (activeMembers.length === 0) {
     return (
-      <div className="space-y-3 rounded-xl border border-dashed border-zinc-200 px-4 py-8 text-center dark:border-zinc-700">
-        <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-          Sin asignaciones activas
-        </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="border-border space-y-3 rounded-xl border border-dashed px-4 py-8 text-center">
+        <p className="text-text text-sm font-semibold">Sin asignaciones activas</p>
+        <p className="text-text-muted text-xs">
           Asigna una plantilla a un miembro para verla aquí.
         </p>
         {onAssign ? (
@@ -66,7 +64,7 @@ export function RoutinesAssignmentsView({
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="min-w-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted min-w-0 text-[11px]">
           {activeMembers.length} miembro{activeMembers.length !== 1 ? 's' : ''} · {totalRoutines}{' '}
           rutina
           {totalRoutines !== 1 ? 's' : ''} activa{totalRoutines !== 1 ? 's' : ''}
@@ -89,14 +87,11 @@ export function RoutinesAssignmentsView({
         {activeMembers.map((member) => {
           const routineCount = member.routines?.length ?? 0;
           return (
-            <div
-              key={member.id}
-              className="overflow-hidden rounded-xl border border-zinc-200/70 dark:border-zinc-800/80"
-            >
+            <div key={member.id} className="border-border overflow-hidden rounded-xl border">
               <button
                 type="button"
                 onClick={() => onNavigateToMemberRoutines(member.id)}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40"
+                className="hover:bg-surface-raised/80 flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors"
                 aria-label={`Ver rutinas de ${member.full_name}`}
               >
                 <Avatar
@@ -106,21 +101,19 @@ export function RoutinesAssignmentsView({
                   className="shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                    {member.full_name}
-                  </h3>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                  <h3 className="text-text truncate text-sm font-semibold">{member.full_name}</h3>
+                  <p className="text-text-muted text-[10px]">
                     {routineCount} rutina{routineCount !== 1 ? 's' : ''}
                   </p>
                 </div>
               </button>
 
-              <ul className="divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
+              <ul className="divide-border-subtle border-border-subtle divide-y border-t">
                 {member.routines?.map((routine) => (
                   <li key={routine.routine_id}>
                     <button
                       type="button"
-                      className="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30"
+                      className="hover:bg-surface-raised/60 flex w-full items-start gap-2 px-3 py-2 text-left transition-colors"
                       onClick={() => onNavigateToMemberRoutines(member.id)}
                     >
                       <div className="min-w-0 flex-1">
@@ -132,12 +125,12 @@ export function RoutinesAssignmentsView({
                             {formatDifficulty(routine.difficulty)}
                           </span>
                         </div>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                        <p className="text-text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium">
                           <span className="inline-flex items-center gap-1">
                             <Dumbbell className="text-brand h-3 w-3" />
                             {routine.exercise_count} ej.
                           </span>
-                          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                          <span className="text-text-muted">·</span>
                           <span className="inline-flex items-center gap-1 tabular-nums">
                             <Calendar className="h-3 w-3 shrink-0 opacity-70" />
                             {formatAssignmentDate(routine.start_date)} –{' '}
@@ -159,7 +152,7 @@ export function RoutinesAssignmentsView({
           type="button"
           onClick={onAssign}
           className={cn(
-            'text-brand hover:bg-brand/5 dark:hover:bg-brand/10 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-zinc-200 py-2.5 text-xs font-semibold transition-colors dark:border-zinc-700'
+            'text-brand hover:bg-brand/5 dark:hover:bg-brand/10 border-border flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed py-2.5 text-xs font-semibold transition-colors'
           )}
         >
           <Plus className="h-3.5 w-3.5" />

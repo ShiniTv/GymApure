@@ -177,14 +177,12 @@ export const MemberTableRow = memo(function MemberTableRow({
     <tr
       className={cn(
         'group cursor-pointer transition-colors',
-        selected ? 'bg-brand/5 dark:bg-brand/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
+        selected ? 'bg-brand/5 dark:bg-brand/10' : 'hover:bg-surface-raised'
       )}
       onClick={() => onSelect?.(member)}
       aria-selected={selected}
     >
-      <td className="px-4 py-2.5 font-semibold text-zinc-800 lg:px-5 dark:text-zinc-100">
-        {member.full_name}
-      </td>
+      <td className="text-text px-4 py-2.5 font-semibold lg:px-5">{member.full_name}</td>
       {!isStaffMember && (
         <td className="px-4 py-2.5 lg:px-5">
           <span className={roleBadgeClass(member.role)}>
@@ -192,9 +190,7 @@ export const MemberTableRow = memo(function MemberTableRow({
           </span>
         </td>
       )}
-      <td className="px-4 py-2.5 text-zinc-500 lg:px-5 dark:text-zinc-400">
-        {member.cedula || '-'}
-      </td>
+      <td className="text-text-muted px-4 py-2.5 lg:px-5">{member.cedula || '-'}</td>
       <td className="px-4 py-2.5 lg:px-5">
         {member.role === 'member' ? (
           <div className="space-y-1">
@@ -209,12 +205,12 @@ export const MemberTableRow = memo(function MemberTableRow({
                   )}
                   {badgeInfo && <Badge className={badgeInfo.className}>{badgeInfo.label}</Badge>}
                 </div>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-300">
+                <p className="text-text-muted text-[10px]">
                   {member.days_remaining ?? 0} días restantes
                 </p>
               </div>
             ) : (
-              <span className="text-xs text-zinc-400 dark:text-zinc-300">Sin plan</span>
+              <span className="text-text-muted text-xs">Sin plan</span>
             )}
             {member.training_shift ? (
               <button
@@ -247,7 +243,7 @@ export const MemberTableRow = memo(function MemberTableRow({
             <OnboardingStatus onboarding={member.onboarding} variant="chip" />
           </div>
         ) : (
-          <span className="text-zinc-400 dark:text-zinc-300">—</span>
+          <span className="text-text-muted">—</span>
         )}
       </td>
       <td className="px-4 py-2.5 lg:px-5">
@@ -264,7 +260,7 @@ export const MemberTableRow = memo(function MemberTableRow({
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-button)] p-1.5 text-zinc-400 transition-colors disabled:opacity-50 dark:text-zinc-300',
+                'text-text-muted inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
                 action.className
               )}
               title={action.label}

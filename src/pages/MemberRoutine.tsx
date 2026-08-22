@@ -47,12 +47,12 @@ export default function MemberRoutine() {
     return (
       <PageState>
         <Spinner />
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">Cargando miembro…</p>
+        <p className="text-text-muted mt-3 text-xs">Cargando miembro…</p>
       </PageState>
     );
   }
   if (!page.member) {
-    return <div className="p-6 text-zinc-500 dark:text-white">Miembro no encontrado</div>;
+    return <div className="text-text-muted p-6">Miembro no encontrado</div>;
   }
 
   const { member, modals } = page;

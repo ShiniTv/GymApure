@@ -103,9 +103,9 @@ export function EquipmentAddModal({
               })),
             ]}
           />
-          <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-800/80">
+          <div className="border-border bg-surface-raised max-h-64 space-y-1 overflow-y-auto rounded-lg border p-2">
             {filteredCatalog.length === 0 ? (
-              <p className="px-2 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted px-2 py-4 text-center text-sm">
                 {catalog.length === 0
                   ? 'Biblioteca vacía. Aplica las migraciones de base de datos.'
                   : 'No hay resultados para esta búsqueda.'}
@@ -121,8 +121,8 @@ export function EquipmentAddModal({
                     className={cn(
                       'flex w-full min-w-0 items-center justify-between gap-2 rounded-lg px-2 py-2.5 text-left text-sm transition-colors',
                       existing
-                        ? 'bg-zinc-100/80 text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800/80 dark:text-zinc-300'
-                        : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-700'
+                        ? 'bg-surface-raised/80 text-text-secondary hover:bg-surface-raised'
+                        : 'text-text hover:bg-surface-raised'
                     )}
                   >
                     <span className="min-w-0 truncate font-medium">{item.name}</span>
@@ -132,7 +132,7 @@ export function EquipmentAddModal({
                           Registrado
                         </Badge>
                       )}
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <span className="text-text-muted text-xs">
                         {EQUIPMENT_CATEGORY_LABELS[item.category]}
                       </span>
                     </div>
@@ -167,9 +167,9 @@ export function EquipmentAddModal({
             Cambiar tipo
           </Button>
           {selectedCatalogId && (
-            <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            <p className="bg-surface-raised text-text-secondary rounded-lg px-3 py-2 text-sm">
               Tipo:{' '}
-              <span className="font-semibold text-zinc-900 dark:text-white">
+              <span className="text-text font-semibold">
                 {catalog.find((c) => c.id === selectedCatalogId)?.name ?? equipmentForm.custom_name}
               </span>
             </p>
@@ -254,12 +254,12 @@ export function EquipmentAddModal({
                   className="h-24 w-24 shrink-0 rounded-xl object-cover"
                 />
               ) : (
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800">
-                  <Camera className="h-6 w-6 text-zinc-400" />
+                <div className="border-border bg-surface-raised flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-dashed">
+                  <Camera className="text-text-muted h-6 w-6" />
                 </div>
               )}
               <div className="flex flex-1 flex-col gap-2">
-                <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                <label className="border-border hover:bg-surface-raised inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors">
                   <Camera className="h-4 w-4" />
                   {addPhotoFile ? 'Cambiar foto' : 'Subir foto'}
                   <input

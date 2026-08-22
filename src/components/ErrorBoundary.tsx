@@ -58,8 +58,8 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="rounded-full bg-red-500/10 p-4">
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Algo salió mal</h2>
-            <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+            <h2 className="text-text text-lg font-bold">Algo salió mal</h2>
+            <p className="text-text-muted text-sm leading-relaxed">
               Ocurrió un error inesperado al cargar esta sección. Por favor, intenta recargar la
               página.
             </p>
@@ -71,7 +71,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={this.handleReset}
-              className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+              className="bg-text text-bg inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:opacity-90"
             >
               <RefreshCw className="h-4 w-4" />
               {this.state.isChunkError ? 'Recargar página' : 'Reintentar'}

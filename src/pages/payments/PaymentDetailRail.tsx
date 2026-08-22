@@ -34,10 +34,8 @@ export function PaymentDetailRail({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
-            {payment.user_name}
-          </p>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="text-text truncate text-sm font-bold">{payment.user_name}</p>
+          <p className="text-text-muted text-[11px]">
             <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
           </p>
         </div>
@@ -60,18 +58,18 @@ export function PaymentDetailRail({
 
       <dl className="mt-3 grid grid-cols-1 gap-2">
         <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
-          <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
             Método
           </dt>
-          <dd className="mt-0.5 text-xs font-medium text-zinc-900 capitalize dark:text-zinc-100">
+          <dd className="text-text mt-0.5 text-xs font-medium capitalize">
             {formatPaymentMethod(payment.method)}
           </dd>
         </div>
         <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
-          <dt className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
             Referencia
           </dt>
-          <dd className="mt-0.5 truncate font-mono text-xs font-medium text-zinc-900 dark:text-zinc-100">
+          <dd className="text-text mt-0.5 truncate font-mono text-xs font-medium">
             {payment.reference || '—'}
           </dd>
         </div>

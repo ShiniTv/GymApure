@@ -405,10 +405,10 @@ export function RoutineModals({
         onClose={() => !deletingRoutine && setDeleteRoutineTarget(null)}
         title="Eliminar rutina"
       >
-        <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-text-secondary mb-2 text-sm">
           ¿Eliminar <strong>{deleteRoutineTarget?.name}</strong>?
         </p>
-        <p className="mb-6 text-xs text-zinc-500">
+        <p className="text-text-muted mb-6 text-xs">
           Se eliminará la plantilla y todo el historial asociado. Esta acción no se puede deshacer.
         </p>
         {deleteRoutineError && <p className="mb-4 text-sm text-red-500">{deleteRoutineError}</p>}
@@ -439,7 +439,7 @@ export function RoutineModals({
         onClose={() => !deletingExercise && setDeleteExerciseTarget(null)}
         title="Quitar ejercicio"
       >
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-text-secondary mb-6 text-sm">
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta plantilla?
         </p>
         <div className="flex gap-3">

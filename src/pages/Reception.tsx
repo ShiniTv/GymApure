@@ -485,17 +485,13 @@ export default function Reception() {
         {isCounterMode && (
           <p className="text-text-muted hidden text-xs sm:block">
             Atajos:{' '}
-            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">
               Enter
             </kbd>{' '}
             buscar ·{' '}
-            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-              F1
-            </kbd>{' '}
+            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">F1</kbd>{' '}
             entrada ·{' '}
-            <kbd className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-              F2
-            </kbd>{' '}
+            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">F2</kbd>{' '}
             salida
           </p>
         )}
@@ -574,7 +570,7 @@ export default function Reception() {
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
                     {lookup.subscription.membership_name} — pausada
                   </p>
-                  <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <p className="text-text-muted mt-0.5 text-[11px]">
                     {lookup.subscription.days_remaining} día
                     {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados.
                   </p>
@@ -594,7 +590,7 @@ export default function Reception() {
                 <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   {lookup.subscription.membership_name}
                 </p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted text-[11px]">
                   {lookup.subscription.days_remaining} días · vence{' '}
                   {lookup.subscription.end_date
                     ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })

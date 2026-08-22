@@ -111,11 +111,8 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
       >
         <form onSubmit={onUpdate} className="space-y-4">
           {detail?.catalog_name && (
-            <p className="rounded-lg bg-zinc-50 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-              Tipo:{' '}
-              <span className="font-semibold text-zinc-900 dark:text-white">
-                {detail.catalog_name}
-              </span>
+            <p className="bg-surface-raised text-text-secondary rounded-lg px-3 py-2 text-sm">
+              Tipo: <span className="text-text font-semibold">{detail.catalog_name}</span>
             </p>
           )}
           <div>
@@ -244,11 +241,11 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
       >
         {detail && (
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-text-secondary text-sm">
               ¿Eliminar <strong>{equipmentDisplayName(detail)}</strong> del inventario? Se borrará
               también su historial de mantenimiento. Esta acción no se puede deshacer.
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-text-muted text-xs">
               Si el equipo ya no está en el gym pero quieres conservar el historial, usa{' '}
               <strong>Retirar</strong> en lugar de eliminar.
             </p>
@@ -377,7 +374,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
         initialFocus="dialog"
       >
         <form onSubmit={onRetire} className="space-y-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-text-secondary text-sm">
             El equipo pasará a <strong>fuera de servicio</strong> y quedará en el historial. Úsalo
             cuando ya no esté en el local (vendido, sustituido, etc.).
           </p>

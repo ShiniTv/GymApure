@@ -125,15 +125,13 @@ export function ReceptionGuestPasses() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-3">
-      <div className="space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+      <div className="border-border bg-surface space-y-3 rounded-xl border p-3">
         <div>
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+          <h3 className="text-text flex items-center gap-2 text-sm font-semibold">
             <Ticket className="text-brand h-4 w-4" />
             Invitados
           </h3>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            Pase de un día · marca al ingresar
-          </p>
+          <p className="text-text-muted mt-0.5 text-xs">Pase de un día · marca al ingresar</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -179,10 +177,8 @@ export function ReceptionGuestPasses() {
           <div className="sm:col-span-2">
             <Label htmlFor="guest-host">Anfitrión (socio)</Label>
             {form.host_user_id ? (
-              <div className="mt-1 flex min-h-11 items-center justify-between gap-2 rounded-xl border border-zinc-200 px-3 dark:border-zinc-700">
-                <span className="truncate text-sm font-medium text-zinc-900 dark:text-white">
-                  {form.host_name}
-                </span>
+              <div className="border-border mt-1 flex min-h-11 items-center justify-between gap-2 rounded-xl border px-3">
+                <span className="text-text truncate text-sm font-medium">{form.host_name}</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -221,12 +217,12 @@ export function ReceptionGuestPasses() {
                   </Button>
                 </div>
                 {hostResults.length > 0 && (
-                  <ul className="mt-1.5 divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-700">
+                  <ul className="divide-border-subtle border-border mt-1.5 divide-y overflow-hidden rounded-xl border">
                     {hostResults.map((m) => (
                       <li key={m.id}>
                         <button
                           type="button"
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                          className="hover:bg-surface-raised flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm"
                           onClick={() => {
                             setForm((f) => ({
                               ...f,
@@ -237,11 +233,9 @@ export function ReceptionGuestPasses() {
                             setHostSearch('');
                           }}
                         >
-                          <span className="font-medium text-zinc-900 dark:text-white">
-                            {m.full_name}
-                          </span>
+                          <span className="text-text font-medium">{m.full_name}</span>
                           {m.cedula ? (
-                            <span className="text-[11px] text-zinc-500">{m.cedula}</span>
+                            <span className="text-text-muted text-[11px]">{m.cedula}</span>
                           ) : null}
                         </button>
                       </li>
@@ -258,25 +252,23 @@ export function ReceptionGuestPasses() {
       </div>
 
       {loading ? (
-        <p className="px-1 text-xs text-zinc-500">Cargando…</p>
+        <p className="text-text-muted px-1 text-xs">Cargando…</p>
       ) : passes.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 px-3 py-5 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
+        <p className="border-border text-text-muted rounded-xl border border-dashed px-3 py-5 text-center text-xs">
           Sin pases hoy. Crea uno cuando llegue un invitado.
         </p>
       ) : (
-        <ul className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200/70 dark:divide-zinc-800 dark:border-zinc-800/80">
+        <ul className="divide-border-subtle border-border divide-y overflow-hidden rounded-xl border">
           {passes.map((p) => (
             <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
-                  {p.full_name}
-                </p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-text truncate text-sm font-semibold">{p.full_name}</p>
+                <p className="text-text-muted text-[11px]">
                   {p.cedula || 'Sin cédula'}
                   {p.host_name ? ` · anfitrión ${p.host_name}` : ''}
                   {p.notes ? ` · ${p.notes}` : ''}
                   {p.used_at ? (
-                    <span className="text-zinc-400"> · usado</span>
+                    <span className="text-text-muted"> · usado</span>
                   ) : (
                     <span className="text-amber-600 dark:text-amber-400"> · pendiente</span>
                   )}

@@ -24,9 +24,7 @@ export function EquipmentListCard({
       type="button"
       onClick={() => onOpen(item.id)}
       className={cn(
-        'flex w-full min-w-0 items-center gap-2.5 rounded-xl border border-l-4 p-2.5 text-left transition-colors sm:gap-3 sm:p-3',
-        'border-zinc-200/70 bg-white hover:border-zinc-300',
-        'dark:border-zinc-800/80 dark:bg-zinc-900/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80',
+        'border-border bg-surface hover:bg-surface-raised flex w-full min-w-0 items-center gap-2.5 rounded-xl border border-l-4 p-2.5 text-left transition-colors sm:gap-3 sm:p-3',
         STATUS_BORDER_STYLES[item.status]
       )}
     >
@@ -37,21 +35,19 @@ export function EquipmentListCard({
           className="h-11 w-11 shrink-0 rounded-lg object-cover sm:h-12 sm:w-12"
         />
       ) : (
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-zinc-100 sm:h-12 sm:w-12 dark:bg-zinc-800/80">
-          <Wrench className="h-4 w-4 text-zinc-400 sm:h-5 sm:w-5" />
+        <div className="bg-surface-raised flex h-11 w-11 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12">
+          <Wrench className="text-text-muted h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold text-zinc-900 sm:text-sm dark:text-white">
+        <p className="text-text truncate text-[13px] font-semibold sm:text-sm">
           {equipmentDisplayName(item)}
           {item.quantity > 1 && (
-            <span className="ml-1.5 text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
-              ×{item.quantity}
-            </span>
+            <span className="text-text-muted ml-1.5 text-[10px] font-bold">×{item.quantity}</span>
           )}
         </p>
         {!hideZone && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-zinc-500 sm:text-xs">
+          <p className="text-text-muted mt-0.5 flex items-center gap-1 truncate text-[11px] sm:text-xs">
             <MapPin className="h-3 w-3 shrink-0" />
             {item.zone_name ?? 'Sin zona'}
           </p>

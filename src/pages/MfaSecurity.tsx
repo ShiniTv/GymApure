@@ -26,7 +26,7 @@ interface MfaSetupResponse {
   manual_entry_key: string;
 }
 
-const SURFACE = 'border-zinc-200/70 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/50';
+const SURFACE = 'border-border bg-surface';
 
 const STEPS = [
   { n: '1', title: 'App', detail: 'Abre Authenticator o Authy' },
@@ -185,14 +185,14 @@ export default function MfaSecurity() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[15px] font-semibold text-zinc-900 dark:text-white">
+                      <p className="text-text text-[15px] font-semibold">
                         {enabled ? 'MFA activo' : 'MFA inactivo'}
                       </p>
                       <Badge variant={enabled ? 'success' : 'warning'}>
                         {enabled ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </div>
-                    <p className="mt-0.5 text-[12px] leading-snug text-zinc-500 sm:text-[13px] dark:text-zinc-400">
+                    <p className="text-text-muted mt-0.5 text-[12px] leading-snug sm:text-[13px]">
                       {enabled
                         ? 'Se pedirá un código al iniciar sesión.'
                         : 'Recomendado si gestionas miembros o pagos.'}
@@ -225,16 +225,16 @@ export default function MfaSecurity() {
           {!enabled && setup ? (
             <Card padding="sm" rounded="xl" className={cn(SURFACE, 'space-y-4 lg:p-4')}>
               <div>
-                <p className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                <p className="text-text-muted text-[11px] font-semibold tracking-wide uppercase">
                   Paso 1 · Escanea
                 </p>
                 <img
                   src={setup.qr_data_url}
                   alt="Código QR MFA"
-                  className="mx-auto mt-3 h-44 w-44 rounded-xl border border-zinc-200/80 bg-white p-2 sm:h-48 sm:w-48 dark:border-zinc-700"
+                  className="border-border bg-surface mx-auto mt-3 h-44 w-44 rounded-xl border p-2 sm:h-48 sm:w-48"
                 />
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-zinc-200/70 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-950/40">
-                  <p className="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-600 dark:text-zinc-300">
+                <div className="border-border bg-surface-raised mt-3 flex items-center gap-2 rounded-xl border px-3 py-2">
+                  <p className="text-text-secondary min-w-0 flex-1 truncate font-mono text-[11px]">
                     {setup.manual_entry_key}
                   </p>
                   <Button
@@ -260,7 +260,7 @@ export default function MfaSecurity() {
               </div>
 
               <div>
-                <p className="mb-2 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+                <p className="text-text-muted mb-2 text-[11px] font-semibold tracking-wide uppercase">
                   Paso 2 · Código
                 </p>
                 <Label htmlFor="enable-code">Código de 6 dígitos</Label>
@@ -301,15 +301,13 @@ export default function MfaSecurity() {
           {enabled ? (
             <div
               className={cn(
-                'space-y-3 rounded-xl border border-zinc-200/60 px-3 py-3 sm:px-4 sm:py-4',
-                'bg-zinc-50/50 dark:border-zinc-800/60 dark:bg-zinc-950/30'
+                'border-border space-y-3 rounded-xl border px-3 py-3 sm:px-4 sm:py-4',
+                'bg-surface-raised/50'
               )}
             >
               <div>
-                <p className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-200">
-                  Desactivar MFA
-                </p>
-                <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">
+                <p className="text-text text-[13px] font-semibold">Desactivar MFA</p>
+                <p className="text-text-muted mt-0.5 text-[12px]">
                   Requiere tu contraseña y un código actual.
                 </p>
               </div>
@@ -353,8 +351,8 @@ export default function MfaSecurity() {
           <aside
             className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
           >
-            <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">Cómo funciona</p>
-            <p className="mt-1 text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
+            <p className="text-text text-[13px] font-semibold">Cómo funciona</p>
+            <p className="text-text-muted mt-1 text-[12px] leading-snug">
               Un código de tu teléfono confirma que eres tú, además de la contraseña.
             </p>
             <ol className="mt-3 space-y-2.5">
@@ -364,10 +362,8 @@ export default function MfaSecurity() {
                     {step.n}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">
-                      {step.title}
-                    </p>
-                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{step.detail}</p>
+                    <p className="text-text text-[13px] font-semibold">{step.title}</p>
+                    <p className="text-text-muted text-[12px]">{step.detail}</p>
                   </div>
                 </li>
               ))}
@@ -377,10 +373,8 @@ export default function MfaSecurity() {
           <aside
             className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
           >
-            <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-              Protección activa
-            </p>
-            <p className="mt-1 text-[12px] leading-snug text-zinc-500 dark:text-zinc-400">
+            <p className="text-text text-[13px] font-semibold">Protección activa</p>
+            <p className="text-text-muted mt-1 text-[12px] leading-snug">
               En cada inicio de sesión te pediremos el código de 6 dígitos de tu app.
             </p>
           </aside>
@@ -388,9 +382,7 @@ export default function MfaSecurity() {
           <aside
             className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
           >
-            <p className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-              Mientras configuras
-            </p>
+            <p className="text-text text-[13px] font-semibold">Mientras configuras</p>
             <ol className="mt-3 space-y-2.5">
               {STEPS.map((step) => (
                 <li key={step.n} className="flex gap-2.5">
@@ -398,10 +390,8 @@ export default function MfaSecurity() {
                     {step.n}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-100">
-                      {step.title}
-                    </p>
-                    <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{step.detail}</p>
+                    <p className="text-text text-[13px] font-semibold">{step.title}</p>
+                    <p className="text-text-muted text-[12px]">{step.detail}</p>
                   </div>
                 </li>
               ))}

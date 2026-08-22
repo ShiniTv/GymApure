@@ -132,7 +132,7 @@ function AuditTimelineItem({ log, isLast }: { log: AuditLogRow; isLast: boolean 
       <div className="min-w-0 flex-1 pt-0.5">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <Badge variant={variant}>{actionLabel(log.action)}</Badge>
-          <time className="text-xs text-zinc-400 dark:text-zinc-300" dateTime={log.created_at}>
+          <time className="text-text-muted text-xs" dateTime={log.created_at}>
             {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', { locale: es })}
           </time>
         </div>
@@ -252,7 +252,7 @@ export default function AuditLogs() {
             {/* Desktop: dense table */}
             <div className="table-shell hidden min-w-0 overflow-x-auto lg:block">
               <table className="w-full min-w-[52rem] text-left text-sm">
-                <thead className="border-b border-zinc-200 bg-zinc-50/90 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
+                <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
                   <tr>
                     <th className="px-3 py-2.5">Cuándo</th>
                     <th className="px-3 py-2.5">Acción</th>
@@ -260,15 +260,12 @@ export default function AuditLogs() {
                     <th className="min-w-0 px-3 py-2.5">Detalle</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-border-subtle divide-y">
                   {logs.map((log) => {
                     const variant = actionBadgeVariant(log.action);
                     const detailText = formatDetails(log.details);
                     return (
-                      <tr
-                        key={log.id}
-                        className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
-                      >
+                      <tr key={log.id} className="hover:bg-surface-raised transition-colors">
                         <td className="text-text-secondary px-3 py-2.5 text-xs whitespace-nowrap tabular-nums">
                           <time dateTime={log.created_at}>
                             {format(new Date(log.created_at), 'dd MMM yyyy · HH:mm', {

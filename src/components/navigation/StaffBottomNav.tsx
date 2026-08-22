@@ -111,10 +111,10 @@ export function StaffBottomNav({
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-white">
+              <p className="text-text truncate text-sm font-semibold">
                 Hola, {greetingName.split(/\s+/)[0]}
               </p>
-              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">{greetingSubtitle}</p>
+              <p className="text-text-muted text-[11px]">{greetingSubtitle}</p>
             </div>
           </div>
         )}
@@ -122,7 +122,7 @@ export function StaffBottomNav({
         <div className="space-y-2.5">
           {moreSections.map((section) => (
             <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="mb-1 px-0.5 text-[10px] font-semibold tracking-wide text-zinc-400 uppercase dark:text-zinc-500">
+              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-wide uppercase">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -175,12 +175,12 @@ export function StaffBottomNav({
                         <span className="relative inline-flex">
                           <item.icon className="h-5 w-5" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
                           {!item.showUnreadBadge && itemBadge > 0 ? (
-                            <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
                               {itemBadge > 99 ? '99+' : itemBadge}
                             </span>
                           ) : null}
@@ -195,7 +195,7 @@ export function StaffBottomNav({
           ))}
         </div>
 
-        <div className="mt-2.5 border-t border-zinc-100 pt-1.5 dark:border-zinc-800">
+        <div className="border-border-subtle mt-2.5 border-t pt-1.5">
           <button
             type="button"
             onClick={() => {
@@ -251,7 +251,7 @@ export function StaffBottomNav({
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {moreMenuBadgeCount > 0 ? (
-                          <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                          <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
                             {moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount}
                           </span>
                         ) : null}
@@ -287,7 +287,7 @@ export function StaffBottomNav({
                         <item.icon className="h-5 w-5" aria-hidden />
                       </span>
                       {item.showUnreadBadge && chatUnread > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2 ring-white dark:ring-zinc-950">
+                        <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
                           {chatUnread > 99 ? '99+' : chatUnread}
                         </span>
                       )}

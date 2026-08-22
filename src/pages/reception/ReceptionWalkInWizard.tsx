@@ -253,28 +253,24 @@ export default function ReceptionWalkInWizard({
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Registro completado</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              {success.user.full_name} ya puede usar el gym
-            </p>
+            <h3 className="text-text text-lg font-bold">Registro completado</h3>
+            <p className="text-text-muted text-sm">{success.user.full_name} ya puede usar el gym</p>
           </div>
         </div>
 
-        <div className="space-y-2 rounded-2xl border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+        <div className="border-border space-y-2 rounded-2xl border p-4 text-sm">
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Cédula:</span>{' '}
-            <strong>{success.user.cedula}</strong>
+            <span className="text-text-muted">Cédula:</span> <strong>{success.user.cedula}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Email:</span>{' '}
-            <strong>{success.user.email}</strong>
+            <span className="text-text-muted">Email:</span> <strong>{success.user.email}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Plan:</span>{' '}
+            <span className="text-text-muted">Plan:</span>{' '}
             <strong>{success.membership_name}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Vigencia:</span>{' '}
+            <span className="text-text-muted">Vigencia:</span>{' '}
             <strong>
               {success.subscription.startDate} → {success.subscription.endDate}
             </strong>
@@ -283,7 +279,7 @@ export default function ReceptionWalkInWizard({
             <p
               className={cn(
                 'flex items-center gap-2 font-bold',
-                checkedOut ? 'text-zinc-500 dark:text-zinc-400' : 'text-emerald-600'
+                checkedOut ? 'text-text-muted' : 'text-emerald-600'
               )}
             >
               {checkedOut ? (
@@ -307,11 +303,11 @@ export default function ReceptionWalkInWizard({
               <Mail className="h-4 w-4" />
               Correo enviado
             </p>
-            <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+            <p className="text-text-secondary text-sm leading-relaxed">
               Se envió un correo a <strong>{success.user.email}</strong> con un enlace para crear su
               contraseña. Válido 48 horas.
             </p>
-            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mt-2 text-xs">
               Indique al cliente que revise bandeja de entrada y spam.
             </p>
           </div>
@@ -328,7 +324,7 @@ export default function ReceptionWalkInWizard({
               <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
                 <p className="label-caps text-brand mb-2">Enlace para crear contraseña</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 font-mono text-xs font-semibold break-all text-zinc-900 dark:text-white">
+                  <code className="text-text flex-1 font-mono text-xs font-semibold break-all">
                     {success.password_setup_url}
                   </code>
                   <Button variant="secondary" size="sm" onClick={() => void copySetupUrl()}>
@@ -336,7 +332,7 @@ export default function ReceptionWalkInWizard({
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-text-muted mt-2 text-xs">
                   El cliente abre el enlace y elige su contraseña. No comparta contraseñas en claro.
                 </p>
               </div>
@@ -365,13 +361,13 @@ export default function ReceptionWalkInWizard({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-3 rounded-xl border border-zinc-200/70 bg-white p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+    <div className="border-border bg-surface mx-auto w-full max-w-3xl space-y-3 rounded-xl border p-3 sm:p-4">
       <div>
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+        <h3 className="text-text flex items-center gap-2 text-sm font-semibold">
           <UserPlus className="text-brand h-4 w-4" />
           Registro en mostrador
         </h3>
-        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-text-muted mt-0.5 text-xs">
           Cuenta + plan + pago.{' '}
           <Link to="/members" className="text-brand font-medium hover:underline">
             Solo cuenta →
@@ -399,7 +395,7 @@ export default function ReceptionWalkInWizard({
                 ? 'border-brand/40 bg-brand/10 text-brand'
                 : i < step
                   ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600'
-                  : 'border-zinc-200/80 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500'
+                  : 'border-border text-text-muted'
             )}
           >
             <span className="tabular-nums opacity-70">{i + 1}</span>
@@ -484,7 +480,7 @@ export default function ReceptionWalkInWizard({
             </div>
           ) : plans.length === 0 ? (
             <div className="space-y-3 py-6 text-center">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted text-sm">
                 No hay planes de membresía disponibles. El administrador debe crear al menos un
                 plan.
               </p>
@@ -495,7 +491,7 @@ export default function ReceptionWalkInWizard({
                   </Button>
                 </Link>
               ) : (
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                <p className="text-text-muted text-xs">
                   Pide al administrador que configure los planes en Membresías.
                 </p>
               )}
@@ -513,13 +509,11 @@ export default function ReceptionWalkInWizard({
                     'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-all',
                     form.membership_id === String(plan.id)
                       ? 'border-brand/40 bg-brand/10'
-                      : 'hover:border-brand/30 border-zinc-200/80 dark:border-zinc-800'
+                      : 'hover:border-brand/30 border-border'
                   )}
                 >
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{plan.name}</p>
-                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                    {plan.duration_days} días
-                  </p>
+                  <p className="text-text text-sm font-semibold">{plan.name}</p>
+                  <p className="text-text-muted mt-0.5 text-xs">{plan.duration_days} días</p>
                   <p className="text-brand mt-1 text-base font-bold">${plan.price_usd}</p>
                 </button>
               ))}
@@ -560,9 +554,9 @@ export default function ReceptionWalkInWizard({
           <div>
             <Label>Comprobante (opcional)</Label>
             <div className="flex w-full items-center justify-center">
-              <label className="hover:bg-brand/5 hover:border-brand/50 group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 transition-all dark:border-zinc-700 dark:bg-zinc-800/10">
-                <Upload className="group-hover:text-brand mb-2 h-7 w-7 text-zinc-400 transition-colors dark:text-zinc-300" />
-                <p className="group-hover:text-brand text-xs font-medium text-zinc-500 transition-colors dark:text-zinc-400">
+              <label className="hover:bg-brand/5 hover:border-brand/50 border-border bg-surface-raised group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all">
+                <Upload className="group-hover:text-brand text-text-muted mb-2 h-7 w-7 transition-colors" />
+                <p className="group-hover:text-brand text-text-muted text-xs font-medium transition-colors">
                   Adjuntar captura de pago
                 </p>
                 <input
@@ -579,19 +573,19 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <div className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-800/50">
+          <div className="bg-surface-raised rounded-2xl p-4">
             <p className="stat-label">Monto a cobrar</p>
             <p className="stat-value mt-1">${selectedPlan?.price_usd ?? '—'} USD</p>
             {needsBsRate && amountBs && exchangeRate && (
-              <p className="mt-2 text-sm font-semibold text-zinc-700 tabular-nums dark:text-zinc-300">
+              <p className="text-text-secondary mt-2 text-sm font-semibold tabular-nums">
                 ≈ {Number(amountBs).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
-                <span className="ml-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                <span className="text-text-muted ml-1 text-xs font-normal">
                   (tasa BCV {exchangeRate.effective_date})
                 </span>
               </p>
             )}
           </div>
-          <label className="flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border p-4">
             <input
               type="checkbox"
               checked={form.check_in}
@@ -600,7 +594,7 @@ export default function ReceptionWalkInWizard({
               }}
               className="accent-brand h-5 w-5 rounded"
             />
-            <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+            <span className="text-text-secondary text-sm font-bold">
               Autorizar entrada al gym al finalizar
             </span>
           </label>
@@ -608,40 +602,34 @@ export default function ReceptionWalkInWizard({
       )}
 
       {step === 3 && (
-        <div className="space-y-3 rounded-2xl border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+        <div className="border-border space-y-3 rounded-2xl border p-4 text-sm">
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Nombre:</span>{' '}
-            <strong>{form.full_name}</strong>
+            <span className="text-text-muted">Nombre:</span> <strong>{form.full_name}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Cédula:</span>{' '}
-            <strong>{form.cedula}</strong>
+            <span className="text-text-muted">Cédula:</span> <strong>{form.cedula}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Email:</span>{' '}
-            <strong>{form.email}</strong>
+            <span className="text-text-muted">Email:</span> <strong>{form.email}</strong>
           </p>
           {form.phone && (
             <p>
-              <span className="text-zinc-500 dark:text-zinc-400">Teléfono:</span>{' '}
-              <strong>{form.phone}</strong>
+              <span className="text-text-muted">Teléfono:</span> <strong>{form.phone}</strong>
             </p>
           )}
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Plan:</span>{' '}
+            <span className="text-text-muted">Plan:</span>{' '}
             <strong>
               {selectedPlan?.name} — ${selectedPlan?.price_usd}
             </strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Pago:</span>{' '}
+            <span className="text-text-muted">Pago:</span>{' '}
             <strong>{PAYMENT_METHODS.find((m) => m.value === form.method)?.label}</strong>
           </p>
           <p>
-            <span className="text-zinc-500 dark:text-zinc-400">Entrada hoy:</span>{' '}
-            <strong
-              className={form.check_in ? 'text-emerald-600' : 'text-zinc-500 dark:text-zinc-400'}
-            >
+            <span className="text-text-muted">Entrada hoy:</span>{' '}
+            <strong className={form.check_in ? 'text-emerald-600' : 'text-text-muted'}>
               {form.check_in ? 'Sí' : 'No'}
             </strong>
           </p>

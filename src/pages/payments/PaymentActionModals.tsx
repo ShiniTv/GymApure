@@ -65,7 +65,7 @@ export function PaymentActionModals({
         {approveTarget && (
           <>
             <div className="mb-6 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-text-muted text-sm">
                 {approveTarget.user_name} — ${approveTarget.amount_usd}
                 {approveTarget.reference ? ` · Ref: ${approveTarget.reference}` : ''}
               </p>
@@ -129,7 +129,7 @@ export function PaymentActionModals({
       >
         {rejectTarget && (
           <>
-            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mb-4 text-sm">
               ¿Rechazar el pago de <strong>{rejectTarget.user_name}</strong> por $
               {rejectTarget.amount_usd}?
             </p>
@@ -179,12 +179,12 @@ export function PaymentActionModals({
       >
         {proofPreview && (
           <>
-            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-text-muted mb-4 text-sm">
               {proofPreview.user_name && <span>{proofPreview.user_name} · </span>}$
               {proofPreview.amount_usd}
               {proofPreview.reference ? ` · Ref: ${proofPreview.reference}` : ''}
             </p>
-            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="border-border bg-surface-raised overflow-hidden rounded-xl border">
               <img
                 src={paymentProofUrl(proofPreview.id)}
                 alt="Comprobante de pago"
