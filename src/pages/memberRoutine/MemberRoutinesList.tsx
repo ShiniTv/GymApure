@@ -16,6 +16,7 @@ import { formatDateOnly } from '../../lib/dates';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import { formatSetPrescriptionSummary } from '../../lib/setPrescription';
 import { formatDifficulty } from '../../lib/utils';
+import { RoutineExerciseOrderControls } from '../../components/routines/RoutineExerciseOrderControls';
 import { AnchoredMenu, Badge, Button, Card, EmptyState, IconButton } from '../../components/ui';
 import type { Exercise, MemberUser, Routine } from './types';
 
@@ -39,6 +40,7 @@ interface MemberRoutinesListProps {
   onEditExercise: (routineId: number, exercise: Exercise) => void;
   onSubstituteExercise: (routineId: number, exercise: Exercise) => void;
   onDeleteExercise: (routineId: number, exercise: Exercise) => void;
+  onReorderExercise: (routineId: number, fromIndex: number, direction: -1 | 1) => void;
   onEditRoutine: (routine: Routine) => void;
   onCloneRoutine: (routine: Routine) => void;
   onUnassignRoutine: (routine: Routine) => void;
@@ -60,6 +62,7 @@ export function MemberRoutinesList({
   onEditExercise,
   onSubstituteExercise,
   onDeleteExercise,
+  onReorderExercise,
   onEditRoutine,
   onCloneRoutine,
   onUnassignRoutine,
@@ -195,7 +198,9 @@ export function MemberRoutinesList({
                     </p>
                   )}
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-text-secondary text-xs font-semibold">Ejercicios</h4>
+                    <h4 className="text-text-secondary text-xs font-semibold">
+                      Orden de ejecución
+                    </h4>
                     <Button
                       type="button"
                       size="sm"
@@ -207,13 +212,19 @@ export function MemberRoutinesList({
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {routine.exercises?.map((exercise) => (
+                  <div className="flex flex-col gap-2">
+                    {routine.exercises?.map((exercise, index) => (
                       <div
                         key={exercise.routine_exercise_id}
-                        className="border-border/70 bg-surface-raised flex items-start justify-between gap-2 rounded-lg border px-2.5 py-2"
+                        className="border-border/70 bg-surface-raised flex items-start gap-2 rounded-lg border px-2.5 py-2"
                       >
-                        <div className="min-w-0">
+                        <RoutineExerciseOrderControls
+                          index={index}
+                          total={routine.exercises?.length ?? 0}
+                          name={exercise.name}
+                          onMove={(direction) => onReorderExercise(routine.id, index, direction)}
+                        />
+                        <div className="min-w-0 flex-1">
                           <h5 className="text-text truncate text-xs font-semibold">
                             {exercise.name}
                           </h5>

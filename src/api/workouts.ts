@@ -574,7 +574,7 @@ router.get(
        FROM routine_exercises re
        JOIN exercises e ON e.id = re.exercise_id
        WHERE re.routine_id = $1
-       ORDER BY re.id`,
+       ORDER BY re.sort_order ASC, re.id ASC`,
         [session.routine_id]
       ),
       query<{

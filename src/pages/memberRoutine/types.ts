@@ -19,6 +19,7 @@ export interface Exercise {
   reps: number;
   rest_seconds: number;
   weight_suggestion: string;
+  sort_order?: number;
   set_prescription?: import('../../lib/setPrescription').SetPrescriptionRow[] | null;
 }
 

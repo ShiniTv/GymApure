@@ -7,6 +7,7 @@ import { logger } from '../lib/logger.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import {
   routineCreateSchema,
+  routineExerciseOrderSchema,
   routineExerciseSchema,
   routineUpdateSchema,
 } from '../lib/routineSchemas.ts';
@@ -74,22 +75,41 @@ function isMissingColumnError(err: unknown, column: string): boolean {
   );
 }
 
+const ROUTINE_EXERCISES_ORDER_SQL = ' ORDER BY re.sort_order ASC, re.id ASC';
+const ROUTINE_EXERCISES_ORDER_LEGACY_SQL = ' ORDER BY re.id ASC';
+
 const ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION = `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.set_prescription,
-              re.id as routine_exercise_id
+              re.sort_order, re.id as routine_exercise_id
        FROM routine_exercises re
        JOIN exercises e ON re.exercise_id = e.id
-       WHERE re.routine_id = $1`;
+       WHERE re.routine_id = $1${ROUTINE_EXERCISES_ORDER_SQL}`;
 
 const ROUTINE_EXERCISES_SELECT_LEGACY = `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion,
               re.id as routine_exercise_id
        FROM routine_exercises re
        JOIN exercises e ON re.exercise_id = e.id
-       WHERE re.routine_id = $1`;
+       WHERE re.routine_id = $1${ROUTINE_EXERCISES_ORDER_LEGACY_SQL}`;
+
+const ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION_NO_SORT = `SELECT e.*, re.sets, re.reps, re.rest_seconds, re.weight_suggestion, re.set_prescription,
+              re.id as routine_exercise_id
+       FROM routine_exercises re
+       JOIN exercises e ON re.exercise_id = e.id
+       WHERE re.routine_id = $1${ROUTINE_EXERCISES_ORDER_LEGACY_SQL}`;
 
 async function fetchRoutineExercisesRows(routineId: string | number) {
   try {
     return await query(ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION, [routineId]);
   } catch (err) {
+    if (isMissingColumnError(err, 'sort_order')) {
+      try {
+        return await query(ROUTINE_EXERCISES_SELECT_WITH_PRESCRIPTION_NO_SORT, [routineId]);
+      } catch (inner) {
+        if (isMissingColumnError(inner, 'set_prescription')) {
+          return await query(ROUTINE_EXERCISES_SELECT_LEGACY, [routineId]);
+        }
+        throw inner;
+      }
+    }
     if (isMissingColumnError(err, 'set_prescription')) {
       return await query(ROUTINE_EXERCISES_SELECT_LEGACY, [routineId]);
     }
@@ -104,7 +124,7 @@ const ROUTINE_EXERCISE_PREVIEW_SQL = `LEFT JOIN LATERAL (
          FROM routine_exercises re
          JOIN exercises e ON e.id = re.exercise_id
          WHERE re.routine_id = r.id
-         ORDER BY re.id
+         ORDER BY re.sort_order ASC, re.id ASC
          LIMIT 3
        ) preview_names
      ) preview ON true
@@ -497,10 +517,10 @@ router.post('/:id/clone', authorize(['trainer', 'admin']), async (req: AuthReque
       const routineId = created.rows[0].id;
       await client.query(
         `INSERT INTO routine_exercises (
-           routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
+           routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription, sort_order
          )
-         SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
-         FROM routine_exercises WHERE routine_id = $2 ORDER BY id`,
+         SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription, sort_order
+         FROM routine_exercises WHERE routine_id = $2 ORDER BY sort_order ASC, id ASC`,
         [routineId, sourceRoutineId]
       );
       return created.rows[0];
@@ -626,16 +646,26 @@ router.post('/:id/exercises', authorize(['trainer', 'admin']), async (req: AuthR
 
     try {
       ({ rows } = await query<{ id: number }>(
-        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO routine_exercises (
+           routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription, sort_order
+         )
+         VALUES (
+           $1, $2, $3, $4, $5, $6, $7,
+           COALESCE((SELECT MAX(sort_order) FROM routine_exercises WHERE routine_id = $1), 0) + 1
+         )
          RETURNING id`,
         [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion, prescriptionJson]
       ));
     } catch (err) {
       if (!isMissingColumnError(err, 'set_prescription')) throw err;
       ({ rows } = await query<{ id: number }>(
-        `INSERT INTO routine_exercises (routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO routine_exercises (
+           routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, sort_order
+         )
+         VALUES (
+           $1, $2, $3, $4, $5, $6,
+           COALESCE((SELECT MAX(sort_order) FROM routine_exercises WHERE routine_id = $1), 0) + 1
+         )
          RETURNING id`,
         [routineId, exercise_id, sets, reps, rest_seconds, weight_suggestion]
       ));
@@ -646,6 +676,53 @@ router.post('/:id/exercises', authorize(['trainer', 'admin']), async (req: AuthR
     res.status(500).json({ error: getErrorMessage(err) });
   }
 });
+
+router.put(
+  '/:id/exercises/order',
+  authorize(['trainer', 'admin']),
+  async (req: AuthRequest, res) => {
+    const parsed = routineExerciseOrderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: formatZodError(parsed.error) });
+    }
+
+    const trainerId = await getRoutineTrainerId(req.params.id);
+    if (trainerId === null) return res.status(404).json({ error: 'Rutina no encontrada' });
+    if (!assertTrainerOwnsRoutine(req, trainerId)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar esta rutina' });
+    }
+
+    const orderedIds = parsed.data.routine_exercise_ids;
+    try {
+      await withTransaction(async (client: PoolClient) => {
+        const existing = await client.query<{ id: number }>(
+          'SELECT id FROM routine_exercises WHERE routine_id = $1',
+          [req.params.id]
+        );
+        const existingIds = existing.rows.map((row) => Number(row.id));
+        if (existingIds.length !== orderedIds.length) {
+          throw new Error('El orden debe incluir todos los ejercicios de la rutina');
+        }
+        const existingSet = new Set(existingIds);
+        if (orderedIds.some((id) => !existingSet.has(id))) {
+          throw new Error('Hay ejercicios que no pertenecen a esta rutina');
+        }
+
+        for (let index = 0; index < orderedIds.length; index += 1) {
+          await client.query(
+            'UPDATE routine_exercises SET sort_order = $1 WHERE id = $2 AND routine_id = $3',
+            [index + 1, orderedIds[index], req.params.id]
+          );
+        }
+      });
+      res.json({ success: true });
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      const status = message.includes('ejercicios') ? 400 : 500;
+      res.status(status).json({ error: message });
+    }
+  }
+);
 
 router.put(
   '/:id/exercises/:routineExerciseId',

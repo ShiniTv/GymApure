@@ -24,7 +24,7 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 
 1. **Rutinas** → **Nueva rutina** o desde ficha del miembro.
 2. Nombre, descripción, días de la semana.
-3. Añade ejercicios desde biblioteca (sistema o propios).
+3. Añade ejercicios desde biblioteca (sistema o propios). El **orden de la lista** es el de ejecución: usa las flechas para subir o bajar cada ejercicio.
 4. Por ejercicio: cómo se mide la serie (repeticiones o **tiempo**), carga (**kg**, **placas** de polea/máquina, o sin carga), descanso y nota.
 5. Opcional: variar reps, segundos o placas entre series.
 6. Asigna al **miembro**.

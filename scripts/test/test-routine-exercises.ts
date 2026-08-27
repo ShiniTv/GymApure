@@ -143,6 +143,58 @@ async function main() {
   const added = routineExercises.find((e) => e.routine_exercise_id === createdRoutineExerciseId);
   ok('weight_suggestion persisted', added?.weight_suggestion === WEIGHT_SUGGESTION);
 
+  const secondExerciseId = exercises[1]?.id ?? exerciseId;
+  const addSecond = await api(
+    'POST',
+    `/api/routines/${createdRoutineId}/exercises`,
+    {
+      exercise_id: secondExerciseId,
+      sets: 2,
+      reps: 8,
+      rest_seconds: 45,
+    },
+    trainerCookie
+  );
+  ok('POST second exercise', addSecond.res.status === 200);
+  const secondRoutineExerciseId = Number(addSecond.data.id);
+
+  const orderAfterAdd = await api(
+    'GET',
+    `/api/routines/${createdRoutineId}`,
+    undefined,
+    trainerCookie
+  );
+  const idsAfterAdd = (
+    (orderAfterAdd.data.exercises ?? []) as Array<{ routine_exercise_id: number }>
+  ).map((row) => row.routine_exercise_id);
+  ok(
+    'GET preserves add order',
+    idsAfterAdd[0] === createdRoutineExerciseId && idsAfterAdd[1] === secondRoutineExerciseId
+  );
+
+  const reorder = await api(
+    'PUT',
+    `/api/routines/${createdRoutineId}/exercises/order`,
+    { routine_exercise_ids: [secondRoutineExerciseId, createdRoutineExerciseId] },
+    trainerCookie
+  );
+  ok('PUT exercise order', reorder.res.status === 200);
+
+  const orderAfterReorder = await api(
+    'GET',
+    `/api/routines/${createdRoutineId}`,
+    undefined,
+    trainerCookie
+  );
+  const idsAfterReorder = (
+    (orderAfterReorder.data.exercises ?? []) as Array<{ routine_exercise_id: number }>
+  ).map((row) => row.routine_exercise_id);
+  ok(
+    'GET respects assigned execution order',
+    idsAfterReorder[0] === secondRoutineExerciseId &&
+      idsAfterReorder[1] === createdRoutineExerciseId
+  );
+
   const updateExercise = await api(
     'PUT',
     `/api/routines/${createdRoutineId}/exercises/${createdRoutineExerciseId}`,

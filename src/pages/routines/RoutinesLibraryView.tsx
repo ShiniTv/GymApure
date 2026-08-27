@@ -22,6 +22,7 @@ import {
 } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
+import { RoutineExerciseOrderControls } from '../../components/routines/RoutineExerciseOrderControls';
 import type { Routine, RoutineExercise } from './types';
 
 export interface RoutinesLibraryViewProps {
@@ -46,6 +47,7 @@ export interface RoutinesLibraryViewProps {
   ) => void;
   onEditExercise: (exercise: RoutineExercise) => void;
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
+  onReorderExercise?: (routineId: number, fromIndex: number, direction: -1 | 1) => void;
   onStartWorkout?: (routineId: number) => void;
   onSubstituteExercise?: (routineId: number, exercise: RoutineExercise) => void;
   completedRoutineIdsToday?: number[];
@@ -58,13 +60,16 @@ function StaffRoutineExercises({
   onInlineUpdate,
   onEditExercise,
   onDeleteExercise,
+  onReorderExercise,
 }: {
   routine: Routine;
   onAddExercise: (routineId: number) => void;
   onInlineUpdate: RoutinesLibraryViewProps['onInlineUpdate'];
   onEditExercise: (exercise: RoutineExercise) => void;
   onDeleteExercise: (routineId: number, exercise: RoutineExercise) => void;
+  onReorderExercise?: RoutinesLibraryViewProps['onReorderExercise'];
 }) {
+  const exercises = routine.exercises ?? [];
   return (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -80,13 +85,30 @@ function StaffRoutineExercises({
           <span className="hidden sm:inline">Añadir</span>
         </Button>
       </div>
+      {exercises.length > 1 ? (
+        <p className="text-small text-text-muted -mt-1 leading-snug">
+          Este orden es el de ejecución del cliente.
+        </p>
+      ) : null}
 
       <ul className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
-        {routine.exercises?.map((exercise) => (
+        {exercises.map((exercise, index) => (
           <li
             key={exercise.routine_exercise_id}
             className="flex items-start justify-between gap-2 px-2.5 py-2"
           >
+            {onReorderExercise ? (
+              <RoutineExerciseOrderControls
+                index={index}
+                total={exercises.length}
+                name={exercise.name}
+                onMove={(direction) => onReorderExercise(routine.id, index, direction)}
+              />
+            ) : (
+              <span className="text-text-muted w-5 shrink-0 pt-0.5 text-center text-xs font-semibold tabular-nums">
+                {index + 1}
+              </span>
+            )}
             <div className="min-w-0 flex-1">
               <h5 className="text-text truncate text-sm font-medium">{exercise.name}</h5>
               <p className="text-small text-text-muted mt-0.5">
@@ -177,6 +199,7 @@ export function RoutinesLibraryView({
   onInlineUpdate,
   onEditExercise,
   onDeleteExercise,
+  onReorderExercise,
   onStartWorkout,
   onSubstituteExercise,
   completedRoutineIdsToday = [],
@@ -605,12 +628,15 @@ export function RoutinesLibraryView({
                       )}
                       {isMember ? (
                         <div className="space-y-0">
-                          {routine.exercises?.map((exercise) => (
+                          {routine.exercises?.map((exercise, index) => (
                             <div
                               key={exercise.routine_exercise_id}
                               className="border-border/60 flex items-start justify-between gap-2 border-b px-0.5 py-2 last:border-0"
                             >
-                              <div className="min-w-0">
+                              <span className="text-text-muted w-5 shrink-0 pt-0.5 text-center text-xs font-semibold tabular-nums">
+                                {index + 1}
+                              </span>
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-baseline justify-between gap-2">
                                   <h5 className="text-text truncate text-sm font-medium">
                                     {exercise.name}
@@ -650,6 +676,7 @@ export function RoutinesLibraryView({
                           onInlineUpdate={onInlineUpdate}
                           onEditExercise={onEditExercise}
                           onDeleteExercise={onDeleteExercise}
+                          onReorderExercise={onReorderExercise}
                         />
                       )}
                     </div>
@@ -718,6 +745,7 @@ export function RoutinesLibraryView({
                     onInlineUpdate={onInlineUpdate}
                     onEditExercise={onEditExercise}
                     onDeleteExercise={onDeleteExercise}
+                    onReorderExercise={onReorderExercise}
                   />
                 </div>
               ) : (

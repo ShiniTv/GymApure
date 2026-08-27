@@ -199,6 +199,9 @@ export default function MemberRoutine() {
           onDeleteExercise={(routineId, exercise) =>
             page.setDeleteExerciseTarget({ routineId, exercise })
           }
+          onReorderExercise={(routineId, fromIndex, direction) =>
+            void page.handleReorderExercise(routineId, fromIndex, direction)
+          }
           onEditRoutine={page.openEditModal}
           onCloneRoutine={(routine) => void page.handleCloneRoutine(routine)}
           onUnassignRoutine={page.setUnassignTarget}

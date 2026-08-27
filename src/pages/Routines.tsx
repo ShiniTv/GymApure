@@ -58,6 +58,7 @@ import {
   buildRoutineExerciseUpdatePayload,
   defaultRoutineExerciseForm,
 } from '../lib/routineExercisePayload';
+import { moveItemAt, routineExerciseOrderIds } from '../lib/routineExerciseOrder';
 import { deriveSetPrescription, parseSetPrescriptionFromApi } from '../lib/setPrescription';
 import { MemberTemplatesSection } from '../components/member/MemberTemplatesSection';
 import { MemberTodayRoutinePicker } from '../components/member/MemberTodayRoutinePicker';
@@ -365,6 +366,32 @@ export default function Routines() {
       );
     } catch (err) {
       clientLogger.error('Failed to inline update exercise', err);
+    }
+  };
+
+  const handleReorderExercise = async (routineId: number, fromIndex: number, direction: -1 | 1) => {
+    const routine = routines.find((row) => row.id === routineId);
+    const exercises = routine?.exercises ?? [];
+    const next = moveItemAt(exercises, fromIndex, fromIndex + direction);
+    if (next === exercises) return;
+    setRoutines((prev) =>
+      prev.map((row) => (row.id === routineId ? { ...row, exercises: next } : row))
+    );
+    try {
+      const res = await apiFetch(`/api/routines/${routineId}/exercises/order`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routine_exercise_ids: routineExerciseOrderIds(next) }),
+      });
+      await parseJsonResponse(res);
+    } catch (err) {
+      clientLogger.error('Failed to reorder routine exercises', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo guardar el orden');
+      try {
+        await refreshRoutineExercises(routineId);
+      } catch {
+        /* refresh is best-effort after a failed save */
+      }
     }
   };
 
@@ -929,6 +956,9 @@ export default function Routines() {
                 }}
                 onDeleteExercise={(routineId, exercise) => {
                   setDeleteExerciseTarget({ routineId, exercise });
+                }}
+                onReorderExercise={(routineId, fromIndex, direction) => {
+                  void handleReorderExercise(routineId, fromIndex, direction);
                 }}
                 onStartWorkout={handleStartWorkout}
                 onSubstituteExercise={

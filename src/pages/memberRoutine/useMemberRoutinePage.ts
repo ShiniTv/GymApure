@@ -21,6 +21,7 @@ import {
   buildRoutineExerciseUpdatePayload,
   defaultRoutineExerciseForm,
 } from '../../lib/routineExercisePayload';
+import { moveItemAt, routineExerciseOrderIds } from '../../lib/routineExerciseOrder';
 import { deriveSetPrescription } from '../../lib/setPrescription';
 import type { Exercise, Measurement, MemberUser, Routine, Subscription } from './types';
 import type { AssignFormState } from './MemberRoutineModals';
@@ -318,6 +319,32 @@ export function useMemberRoutinePage(id: string | undefined) {
       );
     } catch (err) {
       clientLogger.error('Failed to inline update routine exercise', err);
+    }
+  };
+
+  const handleReorderExercise = async (routineId: number, fromIndex: number, direction: -1 | 1) => {
+    const routine = routines.find((row) => row.id === routineId);
+    const exercises = routine?.exercises ?? [];
+    const next = moveItemAt(exercises, fromIndex, fromIndex + direction);
+    if (next === exercises) return;
+    setRoutines((prev) =>
+      prev.map((row) => (row.id === routineId ? { ...row, exercises: next } : row))
+    );
+    try {
+      const res = await apiFetch(`/api/routines/${routineId}/exercises/order`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routine_exercise_ids: routineExerciseOrderIds(next) }),
+      });
+      await parseJsonResponse(res);
+    } catch (err) {
+      clientLogger.error('Failed to reorder routine exercises', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo guardar el orden');
+      try {
+        await refreshRoutineExercises(routineId);
+      } catch {
+        /* refresh is best-effort after a failed save */
+      }
     }
   };
 
@@ -711,6 +738,7 @@ export function useMemberRoutinePage(id: string | undefined) {
     },
     toggleExpandRoutine,
     handleInlineUpdate,
+    handleReorderExercise,
     openEditExercise,
     openSubstitution,
     setDeleteExerciseTarget,

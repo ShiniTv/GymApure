@@ -132,19 +132,19 @@ export async function cloneRoutineForMember(
   try {
     await client.query(
       `INSERT INTO routine_exercises (
-         routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
+         routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription, sort_order
        )
-       SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription
-       FROM routine_exercises WHERE routine_id = $2 ORDER BY id`,
+       SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, set_prescription, sort_order
+       FROM routine_exercises WHERE routine_id = $2 ORDER BY sort_order ASC, id ASC`,
       [routineId, sourceRoutineId]
     );
   } catch {
     await client.query(
       `INSERT INTO routine_exercises (
-         routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion
+         routine_id, exercise_id, sets, reps, rest_seconds, weight_suggestion, sort_order
        )
-       SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion
-       FROM routine_exercises WHERE routine_id = $2 ORDER BY id`,
+       SELECT $1, exercise_id, sets, reps, rest_seconds, weight_suggestion, sort_order
+       FROM routine_exercises WHERE routine_id = $2 ORDER BY sort_order ASC, id ASC`,
       [routineId, sourceRoutineId]
     );
   }
@@ -283,7 +283,7 @@ export async function listSelectableTemplates(memberId: number) {
        FROM (
          SELECT ex.name FROM routine_exercises re
          JOIN exercises ex ON ex.id = re.exercise_id
-         WHERE re.routine_id = r.id ORDER BY re.id LIMIT 3
+         WHERE re.routine_id = r.id ORDER BY re.sort_order ASC, re.id ASC LIMIT 3
        ) e
      ) preview ON true
      WHERE r.member_selectable = true

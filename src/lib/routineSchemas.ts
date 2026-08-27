@@ -26,6 +26,14 @@ export const assignRoutineSchema = z.object({
     .optional(),
 });
 
+export const routineExerciseOrderSchema = z.object({
+  routine_exercise_ids: z
+    .array(z.coerce.number().int().positive())
+    .min(1, 'Indica el orden de los ejercicios')
+    .max(200)
+    .refine((ids) => new Set(ids).size === ids.length, 'No repitas ejercicios'),
+});
+
 export const routineExerciseSchema = z.object({
   exercise_id: z.coerce.number().int().positive(),
   sets: z.coerce.number().int().positive().max(50),

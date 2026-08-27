@@ -205,7 +205,7 @@ async function getAccessibleRoutineExercises(
      JOIN routine_exercises re ON re.routine_id = r.id
      JOIN exercises e ON e.id = re.exercise_id
      WHERE ur.user_id = $1${trainerFilter}
-     ORDER BY r.id, re.id`,
+     ORDER BY r.id, re.sort_order ASC, re.id ASC`,
     params
   );
   return rows;

@@ -20,7 +20,7 @@ const ROUTINE_EXERCISE_PREVIEW_JOIN = `LEFT JOIN LATERAL (
       FROM routine_exercises re
       JOIN exercises e ON e.id = re.exercise_id
       WHERE re.routine_id = r.id
-      ORDER BY re.id
+      ORDER BY re.sort_order ASC, re.id ASC
       LIMIT 3
     ) preview_names
   ) preview ON true`;
