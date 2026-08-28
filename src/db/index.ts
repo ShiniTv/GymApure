@@ -3,6 +3,7 @@ import { env } from '../config/env.ts';
 import { isSupabaseStorageConfigured, getSupabaseServiceKey } from '../lib/supabaseAdmin.ts';
 import { logger } from '../lib/logger.ts';
 import { getPgSslConfig } from '../lib/dbSsl.ts';
+import { isSupabaseTransactionPooler, resolvePgPoolMax } from '../lib/dbPoolConfig.ts';
 
 // BIGINT (OID 20) → number — ids del gym caben en Number.MAX_SAFE_INTEGER
 pg.types.setTypeParser(20, (value) => parseInt(value, 10));
@@ -10,10 +11,11 @@ pg.types.setTypeParser(20, (value) => parseInt(value, 10));
 const SLOW_QUERY_MS = parseInt(process.env.SLOW_QUERY_MS ?? '2000', 10);
 
 const isCI = process.env.CI === 'true';
+const poolMax = resolvePgPoolMax(env.DATABASE_URL);
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
-  max: 20,
+  max: poolMax,
   idleTimeoutMillis: 30_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
   // CI: ráfagas de Playwright + bcrypt necesitan más margen antes de fallar la cola del pool.
@@ -56,22 +58,28 @@ async function reportSlowQuery(durationMs: number, text: string): Promise<void> 
   }
 }
 
+function isSeverePoolPressure(waitingCount: number, totalCount: number): boolean {
+  // Ignore brief queue blips; alert only when many clients are waiting near pool capacity.
+  return waitingCount >= 3 && totalCount >= Math.max(6, Math.floor(poolMax * 0.75));
+}
+
 async function reportPoolPressure(): Promise<void> {
   const { waitingCount, totalCount } = getPoolMetrics();
-  if (waitingCount <= 0) return;
+  if (!isSeverePoolPressure(waitingCount, totalCount)) return;
 
   const now = Date.now();
-  if (now - lastPoolWaitLogAt < 30_000) return;
+  if (now - lastPoolWaitLogAt < 120_000) return;
   lastPoolWaitLogAt = now;
 
-  logger.warn('Pool de BD bajo presión', { waitingCount, totalCount });
+  logger.warn('Pool de BD bajo presión', { waitingCount, totalCount, poolMax });
 
   if (env.SENTRY_DSN) {
     try {
       const Sentry = await import('@sentry/node');
       Sentry.captureMessage('Database pool waiting', {
         level: 'warning',
-        extra: { waitingCount, totalCount },
+        extra: { waitingCount, totalCount, poolMax },
+        fingerprint: ['database-pool-waiting'],
       });
     } catch {
       /* Sentry no disponible */
@@ -116,10 +124,13 @@ export async function withTransaction<T>(fn: (client: pg.PoolClient) => Promise<
 export async function initDb() {
   await query('SELECT 1');
 
-  if (env.DATABASE_URL.includes('supabase') && !env.DATABASE_URL.includes(':6543/')) {
+  if (env.DATABASE_URL.includes('supabase') && !isSupabaseTransactionPooler(env.DATABASE_URL)) {
     logger.warn('DATABASE_URL no usa el pooler de Supabase (puerto 6543)', {
       hint: 'En producción usa Transaction mode pooler para evitar agotar conexiones directas.',
+      poolMax,
     });
+  } else if (isSupabaseTransactionPooler(env.DATABASE_URL)) {
+    logger.debug('Pool PG ajustado para Supabase transaction pooler', { poolMax });
   }
 
   const { rows } = await query<{ count: string }>('SELECT COUNT(*)::text AS count FROM users');

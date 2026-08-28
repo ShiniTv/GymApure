@@ -2,7 +2,7 @@ import { getActiveUsdRate, refreshBcvUsdRate } from '../lib/exchangeRate.ts';
 import { logger } from '../lib/logger.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
-const STARTUP_DEFER_MS = 30_000;
+const STARTUP_DEFER_MS = 60_000;
 
 function resolveIntervalMs(): number {
   const raw = parseInt(

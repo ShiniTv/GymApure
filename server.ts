@@ -22,6 +22,7 @@ import { configureEmail } from './src/lib/email.ts';
 import { apiVersionHeader } from './src/api/middleware/apiVersion.ts';
 import { initWebSocket } from './src/lib/wsServer.ts';
 import { configurePush } from './src/lib/pushNotifications.ts';
+import { serverBeforeSend } from './src/lib/sentryFilters.ts';
 
 // Preferir IPv4 para SMTP y otras conexiones salientes (Gmail en Windows)
 dns.setDefaultResultOrder('ipv4first');
@@ -34,6 +35,7 @@ async function initSentry() {
     environment: env.NODE_ENV,
     integrations: [Sentry.expressIntegration()],
     tracesSampleRate: 0.1,
+    beforeSend: serverBeforeSend,
   });
   return Sentry;
 }
@@ -79,6 +81,7 @@ async function startServer() {
               directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'"],
+                workerSrc: ["'self'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co'],
                 mediaSrc: ["'self'", 'blob:', 'https://*.supabase.co'],
@@ -169,6 +172,14 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const swPath = path.join(distPath, 'sw.js');
+    if (fs.existsSync(swPath)) {
+      app.get('/sw.js', (_req, res) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        res.sendFile(swPath);
+      });
+    }
     app.use(
       express.static(distPath, {
         maxAge: '1y',

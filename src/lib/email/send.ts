@@ -57,6 +57,9 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions): Prom
       secure,
       requireTLS: port === 587,
       auth: { user: sender!.user, pass: sender!.pass },
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 30_000,
       tls: {
         servername: smtpHost,
         minVersion: 'TLSv1.2',

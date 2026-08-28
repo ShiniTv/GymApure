@@ -70,33 +70,33 @@ export async function runDbMaintenance(): Promise<DbMaintenanceResult> {
   const chatRetention = await getChatRetentionSettings();
   const chatMessageRetentionDays = chatRetention.chat_message_retention_days;
 
-  const [audit, notifLog, readNotifications, resetTokens, pushSubscriptions, chatMessagesDeleted] =
-    await Promise.all([
-      query(`DELETE FROM audit_logs WHERE created_at < NOW() - ($1::text || ' days')::interval`, [
-        auditRetentionDays,
-      ]),
-      query(`DELETE FROM chat_system_log WHERE sent_at < NOW() - ($1::text || ' days')::interval`, [
-        notifLogRetentionDays,
-      ]),
-      query(
-        `DELETE FROM user_notifications
+  // Run retention deletes sequentially to avoid saturating the PG pool during cron + API traffic.
+  const audit = await query(
+    `DELETE FROM audit_logs WHERE created_at < NOW() - ($1::text || ' days')::interval`,
+    [auditRetentionDays]
+  );
+  const notifLog = await query(
+    `DELETE FROM chat_system_log WHERE sent_at < NOW() - ($1::text || ' days')::interval`,
+    [notifLogRetentionDays]
+  );
+  const readNotifications = await query(
+    `DELETE FROM user_notifications
        WHERE read_at IS NOT NULL
          AND read_at < NOW() - ($1::text || ' days')::interval`,
-        [readNotificationsRetentionDays]
-      ),
-      query(
-        `DELETE FROM password_reset_tokens
+    [readNotificationsRetentionDays]
+  );
+  const resetTokens = await query(
+    `DELETE FROM password_reset_tokens
        WHERE expires_at < NOW() - ($1::text || ' days')::interval
           OR (used_at IS NOT NULL AND used_at < NOW() - ($1::text || ' days')::interval)`,
-        [resetTokenRetentionDays]
-      ),
-      query(
-        `DELETE FROM push_subscriptions
+    [resetTokenRetentionDays]
+  );
+  const pushSubscriptions = await query(
+    `DELETE FROM push_subscriptions
        WHERE updated_at < NOW() - ($1::text || ' days')::interval`,
-        [pushSubscriptionRetentionDays]
-      ),
-      purgeExpiredChatMessages(chatMessageRetentionDays),
-    ]);
+    [pushSubscriptionRetentionDays]
+  );
+  const chatMessagesDeleted = await purgeExpiredChatMessages(chatMessageRetentionDays);
 
   const result: DbMaintenanceResult = {
     auditDeleted: audit.rowCount ?? 0,

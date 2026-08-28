@@ -5,6 +5,7 @@ import App from './App.tsx';
 import { queryClient } from './lib/queryClient.ts';
 import { loadBaseFonts } from './lib/fonts.ts';
 import { startWebVitalsReporting } from './lib/webVitals.ts';
+import { browserBeforeSend } from './lib/sentryFilters.ts';
 import './index.css';
 
 loadBaseFonts();
@@ -31,6 +32,7 @@ if (SENTRY_DSN) {
       tracesSampleRate: 0.1,
       replaysSessionSampleRate: 0.01,
       replaysOnErrorSampleRate: 0.1,
+      beforeSend: browserBeforeSend,
     });
   });
 }

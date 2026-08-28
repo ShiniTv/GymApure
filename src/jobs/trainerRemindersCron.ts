@@ -2,7 +2,7 @@ import { logger } from '../lib/logger.ts';
 import { runTrainerAppointmentReminders } from '../lib/trainerRemindersJob.ts';
 
 const DEFAULT_INTERVAL_MS = 60 * 60 * 1000;
-const STARTUP_DEFER_MS = 45_000;
+const STARTUP_DEFER_MS = 75_000;
 
 function resolveIntervalMs(): number {
   const raw = parseInt(
