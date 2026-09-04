@@ -20,6 +20,8 @@ export interface Routine {
   trainer_id?: number;
   trainer_name?: string;
   trainer_shift?: 'diurno' | 'vespertino' | 'nocturno' | null;
+  owner_member_id?: number | null;
+  source?: 'trainer' | 'member_created' | 'member_clone' | string;
   exercises?: RoutineExercise[];
 }
 

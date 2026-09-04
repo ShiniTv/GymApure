@@ -1,4 +1,5 @@
 import { useState, FormEvent, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { UtensilsCrossed, Plus, Trash2, Pencil, Beef, Wheat, Droplet, Camera } from 'lucide-react';
 import {
@@ -55,6 +56,7 @@ interface FoodAnalysisPreview {
 }
 
 export default function Nutrition() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const invalidate = useInvalidateNutrition();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -240,7 +242,12 @@ export default function Nutrition() {
         <EmptyState
           icon={UtensilsCrossed}
           title="Sin plan nutricional"
-          description="Tu entrenador aún no ha definido tu plan."
+          description="Tu entrenador aún no ha definido tu plan. Puedes escribirle para pedirlo."
+          action={
+            <Button size="sm" onClick={() => navigate('/messages?channel=trainer')}>
+              Escribir al entrenador
+            </Button>
+          }
         />
       </div>
     );

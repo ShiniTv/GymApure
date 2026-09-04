@@ -239,20 +239,36 @@ export const ChatBubble = memo(function ChatBubble({
             aria-label={manageable ? 'Mensaje, opciones disponibles' : undefined}
           >
             {attachmentSrc ? (
-              <a
-                href={attachmentSrc}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="mb-1.5 block overflow-hidden rounded-xl"
-              >
-                <img
-                  src={attachmentSrc}
-                  alt={attachment?.name || 'Imagen adjunta'}
-                  className="max-h-56 max-w-full object-cover"
-                  loading="lazy"
-                />
-              </a>
+              attachment?.mime === 'application/pdf' ||
+              attachment?.name?.toLowerCase().endsWith('.pdf') ? (
+                <a
+                  href={attachmentSrc}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className={clsx(
+                    'mb-1.5 flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium',
+                    isOutgoing ? 'bg-white/15 text-white' : 'bg-surface-raised text-text'
+                  )}
+                >
+                  <span className="truncate">{attachment?.name || 'Documento PDF'}</span>
+                </a>
+              ) : (
+                <a
+                  href={attachmentSrc}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mb-1.5 block overflow-hidden rounded-xl"
+                >
+                  <img
+                    src={attachmentSrc}
+                    alt={attachment?.name || 'Imagen adjunta'}
+                    className="max-h-56 max-w-full object-cover"
+                    loading="lazy"
+                  />
+                </a>
+              )
             ) : null}
             {showCaption || !attachmentSrc ? (
               <p className="text-sm leading-snug break-words whitespace-pre-wrap text-inherit">

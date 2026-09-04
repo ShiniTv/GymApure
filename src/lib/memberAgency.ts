@@ -3,7 +3,7 @@ import { query, withTransaction } from '../db/index.ts';
 import { ensureTrainerMemberAssignment } from './trainerAccess.ts';
 
 export type MemberActivityEventType =
-  'self_assigned_template' | 'exercise_substituted' | 'exercise_skipped';
+  'self_assigned_template' | 'exercise_substituted' | 'exercise_skipped' | 'member_created_routine';
 
 export interface MemberActivityEventRow {
   id: number;
@@ -72,6 +72,63 @@ export async function getMemberAssignedTrainerIds(memberId: number): Promise<num
   return rows.map((r) => r.trainer_id);
 }
 
+/** Resolve coaching trainer for a member-created routine (assignment first, else any trainer). */
+export async function resolveTrainerIdForMemberOwnedRoutine(
+  memberId: number
+): Promise<number | null> {
+  const assigned = await getMemberAssignedTrainerIds(memberId);
+  if (assigned[0]) return assigned[0];
+  const { rows } = await query<{ id: number }>(
+    `SELECT id FROM users WHERE role = 'trainer' ORDER BY id ASC LIMIT 1`
+  );
+  return rows[0]?.id ?? null;
+}
+
+export async function createMemberOwnedRoutine(input: {
+  memberId: number;
+  name: string;
+  difficulty: string;
+}): Promise<{ id: number; name: string; trainerId: number }> {
+  const trainerId = await resolveTrainerIdForMemberOwnedRoutine(input.memberId);
+  if (!trainerId) {
+    throw new Error('No hay entrenador disponible para vincular la rutina');
+  }
+
+  const result = await withTransaction(async (client) => {
+    const created = await client.query<{ id: number; name: string }>(
+      `INSERT INTO routines (name, difficulty, trainer_id, member_selectable, owner_member_id, source)
+       VALUES ($1, $2, $3, false, $4, 'member_created')
+       RETURNING id, name`,
+      [input.name, input.difficulty, trainerId, input.memberId]
+    );
+    const routineId = created.rows[0].id;
+    await client.query(
+      `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
+       VALUES ($1, $2, $1, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days')`,
+      [input.memberId, routineId]
+    );
+    await client.query(
+      `INSERT INTO member_daily_routine_choice (user_id, choice_date, routine_id, updated_at)
+       VALUES ($1, CURRENT_DATE, $2, NOW())
+       ON CONFLICT (user_id, choice_date) DO UPDATE
+       SET routine_id = EXCLUDED.routine_id, updated_at = NOW()`,
+      [input.memberId, routineId]
+    );
+    return created.rows[0];
+  });
+
+  await ensureTrainerMemberAssignment(trainerId, input.memberId, input.memberId);
+  await recordMemberActivityEvent({
+    memberId: input.memberId,
+    trainerId,
+    eventType: 'member_created_routine',
+    routineId: result.id,
+    metadata: { routine_name: result.name },
+  });
+
+  return { id: result.id, name: result.name, trainerId };
+}
+
 export async function memberCanSelectTemplate(
   memberId: number,
   templateRoutineId: number
@@ -121,12 +178,22 @@ export async function cloneRoutineForMember(
   if (!sourceRoutine) throw new Error('Plantilla no encontrada');
 
   const routineName = name?.trim() || sourceRoutine.name;
-  const created = await client.query<{ id: number; name: string }>(
-    `INSERT INTO routines (name, difficulty, trainer_id, member_selectable)
-     VALUES ($1, $2, $3, false)
-     RETURNING id, name`,
-    [routineName, sourceRoutine.difficulty, trainerId]
-  );
+  let created: { rows: { id: number; name: string }[] };
+  try {
+    created = await client.query<{ id: number; name: string }>(
+      `INSERT INTO routines (name, difficulty, trainer_id, member_selectable, owner_member_id, source)
+       VALUES ($1, $2, $3, false, $4, 'member_clone')
+       RETURNING id, name`,
+      [routineName, sourceRoutine.difficulty, trainerId, memberId]
+    );
+  } catch {
+    created = await client.query<{ id: number; name: string }>(
+      `INSERT INTO routines (name, difficulty, trainer_id, member_selectable)
+       VALUES ($1, $2, $3, false)
+       RETURNING id, name`,
+      [routineName, sourceRoutine.difficulty, trainerId]
+    );
+  }
   const routineId = created.rows[0].id;
 
   try {

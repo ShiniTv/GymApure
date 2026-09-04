@@ -331,7 +331,7 @@ export function paymentProofUrl(paymentId: number): string {
 }
 
 export async function downloadReport(
-  type: 'payments' | 'attendance' | 'members' | 'retention',
+  type: 'payments' | 'attendance' | 'members' | 'retention' | 'reconciliation',
   options?: { from?: string; to?: string; format?: 'csv' | 'pdf' }
 ): Promise<void> {
   const format = options?.format ?? 'csv';

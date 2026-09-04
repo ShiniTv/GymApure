@@ -22,7 +22,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
     if (!goTrain) return;
     const routineId =
       memberStats?.stats?.todayRoutineId ?? memberStats?.stats?.primaryRoutine?.id ?? null;
-    navigate(routineId ? `/workout/${routineId}` : '/routines?tab=templates');
+    navigate(routineId ? `/workout/${routineId}` : '/routines?view=templates');
   };
 
   return (

@@ -122,7 +122,16 @@ export default function Layout() {
     return true;
   };
 
-  const allFiltered = useMemo(() => getNavigationForRole(user?.role ?? 'member'), [user?.role]);
+  const allFiltered = useMemo(() => {
+    const nav = getNavigationForRole(user?.role ?? 'member');
+    if (user?.role !== 'member') return nav;
+    const showPt = memberStats?.stats?.showPtBilling === true;
+    if (showPt) return nav;
+    return nav.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.href !== '/pt-billing'),
+    }));
+  }, [user?.role, memberStats?.stats?.showPtBilling]);
 
   const portalTitle = PORTAL_TITLES[user?.role ?? 'member'];
 

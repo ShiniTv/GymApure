@@ -56,7 +56,12 @@ export function MemberBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const { first, initials } = useMemo(() => memberDisplayName(user?.name), [user?.name]);
-  const moreSections = useMemo(() => groupMoreItems(MEMBER_MORE_ITEMS), []);
+  const moreItems = useMemo(() => {
+    const showPt = memberStats?.stats?.showPtBilling === true;
+    if (showPt) return MEMBER_MORE_ITEMS;
+    return MEMBER_MORE_ITEMS.filter((item) => item.href !== '/pt-billing');
+  }, [memberStats?.stats?.showPtBilling]);
+  const moreSections = useMemo(() => groupMoreItems(moreItems), [moreItems]);
 
   const primaryRoutine = memberStats?.stats?.primaryRoutine;
   const todayRoutineId =
@@ -64,7 +69,7 @@ export function MemberBottomNav() {
   const fabRoutineId = todayRoutineId ?? primaryRoutine?.id ?? null;
   const completedToday = new Set(memberStats?.stats?.completedRoutineIdsToday ?? []);
   const primaryCompletedToday = fabRoutineId != null ? completedToday.has(fabRoutineId) : false;
-  const workoutHref = fabRoutineId ? `/workout/${fabRoutineId}` : '/routines?tab=templates';
+  const workoutHref = fabRoutineId ? `/workout/${fabRoutineId}` : '/routines?view=templates';
 
   const showWorkoutFab =
     fabRoutineId != null && isMemberFabRoute(location.pathname) && !primaryCompletedToday;
@@ -80,7 +85,7 @@ export function MemberBottomNav() {
     };
   }, [showWorkoutFab]);
 
-  const isMoreItemActive = MEMBER_MORE_ITEMS.some(
+  const isMoreItemActive = moreItems.some(
     (item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`)
   );
 

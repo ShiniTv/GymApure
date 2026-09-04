@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { format, subDays, startOfMonth } from 'date-fns';
 
-type ReportType = 'payments' | 'attendance' | 'members' | 'retention';
+type ReportType = 'payments' | 'attendance' | 'members' | 'retention' | 'reconciliation';
 type ReportFormat = 'csv' | 'pdf';
 
 interface ReportPreview {
@@ -36,6 +36,7 @@ interface ReportPreview {
   attendance: number;
   members: number;
   retention?: number;
+  reconciliation?: number;
   paymentsTotalUsd?: number;
   paymentsApproved?: number;
   paymentsPending?: number;
@@ -68,7 +69,10 @@ const REPORTS: {
   description: string;
   icon: typeof DollarSign;
   hasDateRange: boolean;
-  previewKey: keyof Pick<ReportPreview, 'payments' | 'attendance' | 'members' | 'retention'>;
+  previewKey: keyof Pick<
+    ReportPreview,
+    'payments' | 'attendance' | 'members' | 'retention' | 'reconciliation'
+  >;
 }[] = [
   {
     type: 'payments',
@@ -101,6 +105,14 @@ const REPORTS: {
     icon: FileText,
     hasDateRange: true,
     previewKey: 'retention',
+  },
+  {
+    type: 'reconciliation',
+    title: 'Conciliación',
+    description: 'Pendientes viejos, activos sin pago y pagos sin membresía.',
+    icon: FileSpreadsheet,
+    hasDateRange: true,
+    previewKey: 'reconciliation',
   },
 ];
 

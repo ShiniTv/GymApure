@@ -149,7 +149,7 @@ const ROLE_QUICK: Record<string, CommandAction[]> = {
     {
       id: 'qa:templates',
       label: 'Plantillas para empezar',
-      href: '/routines?tab=templates',
+      href: '/routines?view=templates',
       section: 'Acciones',
       keywords: 'plantilla template empezar',
     },

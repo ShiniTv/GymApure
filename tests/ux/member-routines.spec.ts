@@ -17,8 +17,13 @@ test.describe('Member rutinas preview', () => {
     const routineCard = await getMemberRoutineCard(page);
     assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
+    // RegExp de role name hace match del nombre accesible completo (no substring).
     await expect(
-      page.getByRole('button', { name: /entrenar|continuar|completada hoy/i })
+      page
+        .getByRole('button', {
+          name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|completada hoy)$/i,
+        })
+        .first()
     ).toBeVisible();
     await expect(page).toHaveURL(/\/routines$/);
   });

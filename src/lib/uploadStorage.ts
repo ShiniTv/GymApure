@@ -120,11 +120,11 @@ export const foodImageUpload = multer({
   fileFilter: avatarFilter,
 });
 
-/** Chat image attachment (memory — stored via chat/attachments helper). */
+/** Chat attachment: images + PDF (memory — stored via chat/attachments helper). */
 export const chatAttachmentUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: avatarFilter,
+  fileFilter: proofFilter,
 });
 
 export function resolveFilePath(

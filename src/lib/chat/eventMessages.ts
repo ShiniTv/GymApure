@@ -154,6 +154,28 @@ export async function notifyMemberSelfAssignedTemplate(
   });
 }
 
+export async function notifyMemberCreatedRoutine(
+  memberId: number,
+  trainerId: number,
+  routineName: string
+): Promise<void> {
+  const fullName = await fetchMemberName(memberId);
+  if (!fullName) return;
+
+  void createUserNotification({
+    userId: trainerId,
+    type: 'member_created_routine',
+    title: 'Cliente creó una rutina',
+    body: `${fullName} armó "${routineName}". Puedes revisarla y ajustarla.`,
+    href: `/members/${memberId}/routines`,
+    severity: 'info',
+    metadata: { member_id: memberId, routine_name: routineName },
+    dedupeKey: `member_created_routine:${memberId}:${routineName}`,
+  }).catch((err) => {
+    console.error('[notify] member created routine in-app', err);
+  });
+}
+
 export async function notifyMemberExerciseSubstituted(
   memberId: number,
   trainerId: number,

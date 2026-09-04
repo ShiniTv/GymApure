@@ -151,29 +151,40 @@ async function main() {
     }
   }
 
-  // Miembro no puede crear rutinas genéricas
-  const createRoutine = await api('POST', '/api/routines', {
-    name: 'Rutina ilegal miembro',
+  // Miembro puede crear rutina propia; no puede editar rutinas ajenas
+  const createOwn = await api('POST', '/api/routines', {
+    name: `Rutina propia ${Date.now()}`,
     difficulty: 'Beginner',
   });
   ok(
-    'Member POST /api/routines bloqueado → 4xx',
-    createRoutine.res.status >= 400 && createRoutine.res.status < 500,
-    `status ${createRoutine.res.status}`
+    'Member POST /api/routines self-owned → 200/201',
+    createOwn.res.status === 200 || createOwn.res.status === 201,
+    `status ${createOwn.res.status}`
   );
+  const ownId = (createOwn.data as { id?: number }).id;
 
-  // Trainer ve elecciones del cliente
-  cookie = '';
-  ok('Login trainer demo', await loginAs('trainer@gym.com'));
-  const trainerStats = await api('GET', '/api/stats/trainer');
-  ok('GET /api/stats/trainer → 200', trainerStats.res.status === 200);
-  ok(
-    'Trainer stats incluye memberChoices',
-    Array.isArray((trainerStats.data as { memberChoices?: unknown[] }).memberChoices),
-    'memberChoices missing'
-  );
+  if (ownId) {
+    const renameOwn = await api('PUT', `/api/routines/${ownId}`, {
+      name: 'Rutina propia editada',
+      difficulty: 'Beginner',
+    });
+    ok('Member PUT propia → 200', renameOwn.res.status === 200, `status ${renameOwn.res.status}`);
 
-  // IDOR: miembro aislado no sustituye rutina ajena
+    const forgeSelectable = await api('PUT', `/api/routines/${ownId}`, {
+      name: 'Rutina propia editada',
+      difficulty: 'Beginner',
+      member_selectable: true,
+    });
+    ok(
+      'Member no puede marcar member_selectable → 4xx o se ignora',
+      forgeSelectable.res.status === 403 ||
+        forgeSelectable.res.status === 200 ||
+        (forgeSelectable.res.status >= 400 && forgeSelectable.res.status < 500),
+      `status ${forgeSelectable.res.status}`
+    );
+  }
+
+  // IDOR: miembro aislado no edita la rutina del demo
   cookie = '';
   ok('Login admin', await loginAs('admin@gym.com'));
   const isolatedEmail = `member-agency-${Date.now()}@test.local`;
@@ -187,6 +198,20 @@ async function main() {
   });
   ok('Admin crea miembro aislado', createIsolated.res.status === 201);
   const isolatedId = (createIsolated.data as { id?: number }).id;
+
+  cookie = '';
+  if (isolatedEmail && ownId) {
+    ok('Login miembro aislado', await loginAs(isolatedEmail, 'IsolatedPass123!'));
+    const crossEdit = await api('PUT', `/api/routines/${ownId}`, {
+      name: 'Hack',
+      difficulty: 'Beginner',
+    });
+    ok(
+      'Member no edita rutina ajena → 4xx',
+      crossEdit.res.status >= 400 && crossEdit.res.status < 500,
+      `status ${crossEdit.res.status}`
+    );
+  }
 
   cookie = '';
   await loginAs('member@gym.com');
@@ -203,7 +228,7 @@ async function main() {
 
   cookie = '';
   if (isolatedEmail) {
-    ok('Login miembro aislado', await loginAs(isolatedEmail, 'IsolatedPass123!'));
+    ok('Login miembro aislado (re)', await loginAs(isolatedEmail, 'IsolatedPass123!'));
     if (templateId) {
       const crossAssign = await api('POST', `/api/routines/${templateId}/self-assign`);
       ok(
@@ -224,6 +249,17 @@ async function main() {
       `status ${blockedNutrition.res.status}`
     );
   }
+
+  // Trainer ve elecciones del cliente
+  cookie = '';
+  ok('Login trainer demo', await loginAs('trainer@gym.com'));
+  const trainerStats = await api('GET', '/api/stats/trainer');
+  ok('GET /api/stats/trainer → 200', trainerStats.res.status === 200);
+  ok(
+    'Trainer stats incluye memberChoices',
+    Array.isArray((trainerStats.data as { memberChoices?: unknown[] }).memberChoices),
+    'memberChoices missing'
+  );
 
   console.log(`\n=== Resultado: ${passed} OK, ${failed} FAIL ===`);
   process.exit(failed > 0 ? 1 : 0);

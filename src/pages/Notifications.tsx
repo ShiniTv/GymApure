@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import {
@@ -15,8 +15,11 @@ import {
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
 } from '../hooks/queries/useNotificationsQuery';
-import { mapPersistedToItem } from '../lib/notifications/types';
-import type { NotificationItem } from '../lib/notifications/types';
+import {
+  mapPersistedToItem,
+  notificationTypeGroupLabel,
+  type NotificationItem,
+} from '../lib/notifications/types';
 import { formatNotificationTime } from '../components/notifications/NotificationPanel';
 import { NotificationItemRow } from '../components/notifications/NotificationItemRow';
 
@@ -44,6 +47,17 @@ export default function Notifications() {
   const hasPersisted = persistedItems.length > 0;
   const isEmpty = !hasLive && !hasPersisted;
   const isLoading = itemsLoading || listLoading;
+
+  const persistedGroups = useMemo(() => {
+    const map = new Map<string, NotificationItem[]>();
+    for (const item of persistedItems) {
+      const key = notificationTypeGroupLabel(item.type);
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    }
+    return [...map.entries()];
+  }, [persistedItems]);
 
   const handleActivate = (item: NotificationItem) => {
     if (item.source === 'persisted' && item.notificationId != null) {
@@ -128,22 +142,26 @@ export default function Notifications() {
           )}
 
           {hasPersisted && (
-            <section>
-              <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
-                Novedades
-              </h2>
-              <ul className="space-y-2">
-                {persistedItems.map((item) => (
-                  <li key={item.id}>
-                    <NotificationItemRow
-                      item={item}
-                      onActivate={handleActivate}
-                      showTimestamp
-                      formatTime={formatNotificationTime}
-                    />
-                  </li>
-                ))}
-              </ul>
+            <section className="space-y-4">
+              {persistedGroups.map(([groupLabel, items]) => (
+                <div key={groupLabel}>
+                  <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
+                    {groupLabel}
+                  </h2>
+                  <ul className="space-y-2">
+                    {items.map((item) => (
+                      <li key={item.id}>
+                        <NotificationItemRow
+                          item={item}
+                          onActivate={handleActivate}
+                          showTimestamp
+                          formatTime={formatNotificationTime}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
               {total > limit && (
                 <PaginationBar
                   page={page}

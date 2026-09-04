@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, Send, X } from 'lucide-react';
+import { FileText, Paperclip, Send, X } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { fieldClassName } from '../../components/ui/Input';
 import { useToastOptional } from '../../context/ToastContext';
@@ -7,6 +7,8 @@ import { useChatTyping } from '../../hooks/useChatTyping';
 import { useSendChatMessage } from '../../hooks/queries/useChatQuery';
 import { toDisplayErrorMessage } from '../../lib/api';
 import { cn } from '../../lib/utils';
+
+const CHAT_ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf';
 
 export function ChatComposer({
   conversationId,
@@ -26,9 +28,10 @@ export function ChatComposer({
   const sendMessage = useSendChatMessage();
   const toast = useToastOptional();
   const { typingLabel, emitTyping } = useChatTyping(conversationId);
+  const isPdf = file?.type === 'application/pdf';
 
   useEffect(() => {
-    if (!file) {
+    if (!file || file.type === 'application/pdf') {
       setPreviewUrl(null);
       return;
     }
@@ -59,35 +62,47 @@ export function ChatComposer({
   return (
     <div className="border-border/80 sm:bg-surface shrink-0 border-t bg-transparent px-2 py-2 sm:px-3">
       {typingLabel ? (
-        <p className="text-text-muted text-small mb-1.5 px-1 font-medium">{typingLabel}</p>
+        <p className="text-text-muted mb-1.5 px-1 text-xs italic">{typingLabel}</p>
       ) : null}
-      {quickReplies.length > 0 ? (
-        <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {quickReplies.length > 0 && !body && !file ? (
+        <div className="mb-2 flex flex-wrap gap-1.5">
           {quickReplies.map((reply) => (
             <button
               key={reply}
               type="button"
               disabled={disabled}
               onClick={() => setBody(reply)}
-              className="hover:border-brand/30 hover:bg-brand/5 border-border bg-surface-raised text-text-secondary hover:text-text text-small shrink-0 rounded-full border px-2.5 py-1 font-medium transition-colors"
+              className="border-border bg-surface-raised text-text-secondary hover:bg-surface-overlay rounded-full border px-2.5 py-1 text-xs"
             >
-              {reply.length > 42 ? `${reply.slice(0, 40)}…` : reply}
+              {reply}
             </button>
           ))}
         </div>
       ) : null}
-      {previewUrl ? (
+      {file ? (
         <div className="border-border bg-surface-raised mb-2 flex items-center gap-2 rounded-xl border p-2">
-          <img src={previewUrl} alt="Vista previa" className="h-14 w-14 rounded-lg object-cover" />
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Vista previa"
+              className="h-14 w-14 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="bg-brand/10 text-brand flex h-14 w-14 items-center justify-center rounded-lg">
+              <FileText className="h-6 w-6" />
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="text-text truncate text-xs font-medium">{file?.name}</p>
-            <p className="text-text-muted text-small">Se enviará con el mensaje</p>
+            <p className="text-text truncate text-xs font-medium">{file.name}</p>
+            <p className="text-text-muted text-small">
+              {isPdf ? 'PDF · máx. 5 MB' : 'Se enviará con el mensaje'}
+            </p>
           </div>
           <button
             type="button"
             onClick={clearFile}
             className="text-text-muted hover:bg-surface-overlay inline-flex h-8 w-8 items-center justify-center rounded-lg"
-            aria-label="Quitar imagen"
+            aria-label="Quitar adjunto"
           >
             <X className="h-4 w-4" />
           </button>
@@ -97,13 +112,21 @@ export function ChatComposer({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept={CHAT_ACCEPT}
           className="hidden"
           onChange={(e) => {
             const next = e.target.files?.[0] ?? null;
             if (!next) return;
             if (next.size > 5 * 1024 * 1024) {
-              toast?.error('La imagen no puede superar 5 MB');
+              toast?.error('El adjunto no puede superar 5 MB');
+              return;
+            }
+            const ok =
+              next.type.startsWith('image/') ||
+              next.type === 'application/pdf' ||
+              next.name.toLowerCase().endsWith('.pdf');
+            if (!ok) {
+              toast?.error('Usa JPG, PNG, WebP o PDF');
               return;
             }
             setFile(next);
@@ -114,9 +137,9 @@ export function ChatComposer({
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
           className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
-          aria-label="Adjuntar imagen"
+          aria-label="Adjuntar imagen o PDF"
         >
-          <ImagePlus className="h-4 w-4" />
+          <Paperclip className="h-4 w-4" />
         </button>
         <textarea
           value={body}

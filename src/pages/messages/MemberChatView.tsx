@@ -196,6 +196,13 @@ export function MemberChatView() {
 
   const channelList = (
     <div className="flex flex-col gap-2">
+      <div className="border-border bg-surface-raised/60 rounded-xl border px-3.5 py-3">
+        <p className="text-text text-sm font-semibold">Tres canales, un solo chat</p>
+        <p className="text-text-secondary text-small mt-1 leading-relaxed">
+          <strong>Recepción</strong> · pagos y membresía · <strong>Admin</strong> · consultas del
+          gym · <strong>Entrenador</strong> · rutinas y coaching. Cada hilo es independiente.
+        </p>
+      </div>
       {MEMBER_CHANNEL_ORDER.map((channel) => (
         <MemberChannelButton
           key={channel}
