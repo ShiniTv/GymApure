@@ -56,7 +56,8 @@ test.describe('Entrenador móvil', () => {
     await expect(sheet.getByRole('link', { name: 'Notificaciones' })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /oscuro|claro/i })).toBeVisible();
     await expect(sheet.getByText('Coaching', { exact: true })).toBeVisible();
-    await expect(sheet.getByText('Cobros', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Cuenta', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Cobros', { exact: true })).toHaveCount(0);
 
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();

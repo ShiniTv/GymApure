@@ -1,5 +1,14 @@
 import React from 'react';
-import { Button, Modal, Label, Input, DifficultySelect, Select } from '../../components/ui';
+import {
+  Button,
+  Modal,
+  ModalActions,
+  Label,
+  Input,
+  DifficultySelect,
+  Select,
+} from '../../components/ui';
+import { Trash2 } from 'lucide-react';
 import { AssignRoutineForm } from '../../components/routines/AssignRoutineForm';
 import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
@@ -404,65 +413,67 @@ export function RoutineModals({
         open={!!deleteRoutineTarget}
         onClose={() => !deletingRoutine && setDeleteRoutineTarget(null)}
         title="Eliminar rutina"
+        description={
+          <>
+            Se eliminará <strong className="text-text">{deleteRoutineTarget?.name}</strong> y todo
+            el historial asociado. Esta acción no se puede deshacer.
+          </>
+        }
+        icon={Trash2}
+        tone="danger"
+        maxWidth="sm"
+        initialFocus="dialog"
+        footer={
+          <ModalActions>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeleteRoutineTarget(null);
+              }}
+              disabled={deletingRoutine}
+            >
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={confirmDeleteRoutine} disabled={deletingRoutine}>
+              {deletingRoutine ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </ModalActions>
+        }
       >
-        <p className="text-text-secondary mb-2 text-sm">
-          ¿Eliminar <strong>{deleteRoutineTarget?.name}</strong>?
-        </p>
-        <p className="text-text-muted mb-6 text-xs">
-          Se eliminará la plantilla y todo el historial asociado. Esta acción no se puede deshacer.
-        </p>
-        {deleteRoutineError && <p className="text-danger mb-4 text-sm">{deleteRoutineError}</p>}
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            className="flex-1"
-            onClick={() => {
-              setDeleteRoutineTarget(null);
-            }}
-            disabled={deletingRoutine}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            className="flex-1"
-            onClick={confirmDeleteRoutine}
-            disabled={deletingRoutine}
-          >
-            {deletingRoutine ? 'Eliminando...' : 'Eliminar'}
-          </Button>
-        </div>
+        {deleteRoutineError ? <p className="text-danger text-sm">{deleteRoutineError}</p> : null}
       </Modal>
 
       <Modal
         open={!!deleteExerciseTarget}
         onClose={() => !deletingExercise && setDeleteExerciseTarget(null)}
         title="Quitar ejercicio"
-      >
-        <p className="text-text-secondary mb-6 text-sm">
-          ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta plantilla?
-        </p>
-        <div className="flex gap-3">
-          <Button
-            variant="secondary"
-            className="flex-1"
-            onClick={() => {
-              setDeleteExerciseTarget(null);
-            }}
-            disabled={deletingExercise}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            className="flex-1"
-            onClick={confirmDeleteExercise}
-            disabled={deletingExercise}
-          >
-            {deletingExercise ? 'Quitando...' : 'Quitar'}
-          </Button>
-        </div>
-      </Modal>
+        description={
+          <>
+            ¿Quitar <strong className="text-text">{deleteExerciseTarget?.exercise.name}</strong> de
+            esta plantilla?
+          </>
+        }
+        icon={Trash2}
+        tone="danger"
+        maxWidth="sm"
+        initialFocus="dialog"
+        footer={
+          <ModalActions>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeleteExerciseTarget(null);
+              }}
+              disabled={deletingExercise}
+            >
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={confirmDeleteExercise} disabled={deletingExercise}>
+              {deletingExercise ? 'Quitando…' : 'Quitar'}
+            </Button>
+          </ModalActions>
+        }
+      />
     </>
   );
 }

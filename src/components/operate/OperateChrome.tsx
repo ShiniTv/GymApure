@@ -48,17 +48,17 @@ export function OperateHeader({
   return (
     <header
       className={cn(
-        'flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4',
+        'flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3',
         className
       )}
     >
-      <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
         {leading ? (
           <div className="shrink-0">{leading}</div>
         ) : icon ? (
           <OperateIcon icon={icon} tone={iconTone} well size="lg" />
         ) : null}
-        <div className="min-w-0 pt-0.5">
+        <div className="min-w-0">
           <h1 className={typography.pageTitle}>{title}</h1>
           {subtitle ? (
             typeof subtitle === 'string' ? (
@@ -69,7 +69,9 @@ export function OperateHeader({
           ) : null}
         </div>
       </div>
-      {action ? <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div> : null}
+      {action ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">{action}</div>
+      ) : null}
     </header>
   );
 }
@@ -234,7 +236,7 @@ export function OperateMetricStrip({
           </>
         );
         const cellClass =
-          'tap-feedback group hover:bg-surface-raised/60 flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 px-1 py-2.5 transition-colors';
+          'tap-feedback group hover:bg-surface-raised/60 flex min-h-[var(--touch-min)] flex-col items-center justify-center gap-0.5 px-1.5 py-2 transition-colors sm:min-h-[3.25rem]';
 
         if (item.to) {
           return (

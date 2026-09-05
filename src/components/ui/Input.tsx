@@ -16,9 +16,9 @@ export function Label({ children, htmlFor, className }: LabelProps) {
   );
 }
 
-/** Shared field styles for Input, Select, PasswordInput — Linear-quiet */
+/** Shared field styles for Input, Select, PasswordInput — Operate quiet */
 export const fieldClassName = cn(
-  'w-full bg-surface border rounded-[var(--radius-input)] px-3 py-2.5',
+  'w-full bg-surface border rounded-[var(--radius-input)] px-3 py-2',
   'text-sm text-text font-medium outline-none',
   'placeholder:text-text-muted',
   'min-h-[var(--touch-min)]',

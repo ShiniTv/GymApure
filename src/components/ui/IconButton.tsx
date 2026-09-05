@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '../../lib/utils';
 
-type IconButtonSize = 'sm' | 'md';
+type IconButtonSize = 'sm' | 'md' | 'lg';
 type IconButtonVariant = 'ghost' | 'secondary' | 'tertiary' | 'danger';
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,6 +16,8 @@ const sizes: Record<IconButtonSize, string> = {
   sm: 'h-8 w-8 min-h-8 min-w-8 rounded-[var(--radius-button)]',
   /** Default — acciones en cabeceras / modales */
   md: 'h-9 w-9 min-h-9 min-w-9 rounded-[var(--radius-button)]',
+  /** Form-aligned — same optical height as Input / Select (--touch-min) */
+  lg: 'h-11 w-11 min-h-[var(--touch-min)] min-w-[var(--touch-min)] rounded-[var(--radius-button)]',
 };
 
 const variants: Record<IconButtonVariant, string> = {

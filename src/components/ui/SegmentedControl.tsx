@@ -111,8 +111,8 @@ export function SegmentedControl<T extends string>({
           : scroll
             ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : cn(
-                'border-border/70 bg-surface-raised inline-flex flex-wrap gap-0.5 rounded-[var(--radius-chip)] border p-0.5',
-                fullWidth ? 'w-full' : 'w-fit max-w-full'
+                'border-border/70 bg-surface-raised gap-0.5 rounded-[var(--radius-chip)] border p-0.5',
+                fullWidth ? 'flex w-full flex-nowrap' : 'inline-flex w-fit max-w-full flex-wrap'
               ),
         !scroll && className
       )}
@@ -133,8 +133,9 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-2 transition-[background-color,color,box-shadow,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)] focus-visible:ring-2 focus-visible:outline-none',
-              fullWidth && !scroll && 'flex-1',
+              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-1.5 transition-[background-color,color,box-shadow,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)] focus-visible:ring-2 focus-visible:outline-none',
+              /* Equal segment widths: basis-0 so label length does not dominate */
+              fullWidth && !scroll && 'min-w-0 flex-1 basis-0 px-1.5',
               isKiosk
                 ? cn(
                     'rounded-[var(--radius-button)] py-3 text-xs font-semibold',
@@ -150,8 +151,9 @@ export function SegmentedControl<T extends string>({
                     )
                   : cn(
                       isCompact
-                        ? 'text-small min-h-8 rounded-md px-2.5 py-1.5 font-semibold'
-                        : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-semibold',
+                        ? 'text-small min-h-8 rounded-md py-1.5 font-semibold'
+                        : 'min-h-[var(--touch-min)] rounded-md py-1.5 text-xs font-semibold',
+                      !fullWidth && (isCompact ? 'px-2.5' : 'px-3'),
                       active
                         ? 'bg-surface text-text dark:bg-bg shadow-xs'
                         : 'text-text-secondary hover:text-text'
@@ -161,7 +163,7 @@ export function SegmentedControl<T extends string>({
             {Icon && (
               <Icon className={cn('shrink-0', isCompact || scroll ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
             )}
-            <span>{option.label}</span>
+            <span className={cn(fullWidth && !scroll && 'truncate')}>{option.label}</span>
             {option.count != null && option.count > 0 && (
               <span
                 className={cn(

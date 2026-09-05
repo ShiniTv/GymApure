@@ -805,7 +805,8 @@ export default function Routines() {
           {user?.role !== 'member' && (
             <SegmentedControl
               layout="wrap"
-              className="w-fit max-w-full"
+              fullWidth
+              className="w-full"
               value={view}
               onChange={changeView}
               options={[
@@ -900,7 +901,8 @@ export default function Routines() {
             <SegmentedControl
               variant="compact"
               layout="wrap"
-              className="w-fit max-w-full"
+              fullWidth
+              className="w-full"
               value={showMemberTemplates ? 'templates' : 'assigned'}
               onChange={(next) => {
                 if (next === 'templates') setSearchParams({ view: 'templates' });

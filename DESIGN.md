@@ -124,8 +124,9 @@ GymApure usa **Apple Operate**: tipografía de sistema (SF Pro / Segoe), aire ge
 
 - Gutters: 16px móvil → **20px** desktop (`ds-4` / `ds-5`).
 - Gaps de página: `page-stack` 12→16px; `page-stack-tight` 10→12px.
-- Mobile: bottom nav pill icon-only + `aria-label`; clearance `--*-nav-stack`; sin hamburger (sheet Más).
-- Desktop: sidebar **224px** (`lg:w-56`), filas nav `min-h-8`, gaps 2px; footer pegado al fondo.
+- Mobile: bottom nav pill icon-only + `aria-label`; clearance `--*-nav-stack`; sin hamburger (sheet Más); isla inferior con glass Operate y selección hairline; top pad con fade suave (sin chrome flotante).
+- Command palette (Ctrl/⌘K): mismo lenguaje que Modal (`surface-modal`, acciones agrupadas).
+- Desktop: sidebar **224px** (`lg:w-56`), filas nav quietas (pill + hairline, sin brand wash), footer cuenta en `.nav-user-card`; drawer móvil con scrim blur.
 - Viewports de QA: 390×844, 834×1194, 1280×720 — ver `docs/qa/UX-QA.md`.
 
 ## Elevation & Depth
@@ -145,16 +146,16 @@ GymApure usa **Apple Operate**: tipografía de sistema (SF Pro / Segoe), aire ge
 
 Primitivos en `src/components/ui/`:
 
-| Componente                                   | Notas                                                                          |
-| -------------------------------------------- | ------------------------------------------------------------------------------ |
-| `Button`                                     | `md` 44px / `sm` toolbar / `lg` 48px; no `h-*` en className                    |
-| `Modal`                                      | maxWidth honesto sm→3xl (ver [docs/qa/UI-CONTRACT.md](docs/qa/UI-CONTRACT.md)) |
-| `Sheet`                                      | bottom sheet móvil (Más, acciones)                                             |
-| `Card`                                       | radio 10px; no anidar; padding `ds-*`                                          |
-| `Input` / `Select` / `Textarea`              | radius-input; `Label` = `typography.label`; error `danger`                     |
-| `PageHeader` / `PageState` / `EmptyState`    | jerarquía de página                                                            |
-| `SegmentedControl` / `FilterChips` / `Badge` | `text-small`; filtros y estado                                                 |
-| `Alert` / `Skeleton` / `Spinner`             | feedback                                                                       |
+| Componente                                   | Notas                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `Button`                                     | `md` 44px / `sm` toolbar / `lg` 48px; no `h-*` en className                          |
+| `Modal`                                      | Premium Operate dialog; móvil sheet-dock; `footer` + `ModalActions`; ver UI-CONTRACT |
+| `Sheet`                                      | bottom sheet móvil (Más, acciones)                                                   |
+| `Card`                                       | radio 10px; no anidar; padding `ds-*`                                                |
+| `Input` / `Select` / `Textarea`              | radius-input; `Label` = `typography.label`; error `danger`                           |
+| `PageHeader` / `PageState` / `EmptyState`    | jerarquía de página                                                                  |
+| `SegmentedControl` / `FilterChips` / `Badge` | `text-small`; filtros y estado                                                       |
+| `Alert` / `Skeleton` / `Spinner`             | feedback                                                                             |
 
 Motion: `animate-page-enter` (~120ms opacity), landing-rise / kenburns (marketing), auth-fade-in; respetar `prefers-reduced-motion`.
 

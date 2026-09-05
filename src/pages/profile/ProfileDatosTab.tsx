@@ -46,29 +46,29 @@ export function ProfileDatosTab({
 
   return (
     <div className="w-full">
-      <Card padding="md" rounded="xl" className="border-border bg-surface">
-        <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-4">
-          <div className="mb-3.5 md:mb-0">
-            <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
+      <Card padding="sm" className="border-border/80">
+        <div className="md:grid md:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] md:items-start md:gap-4">
+          <div className="mb-3 md:mb-0">
+            <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2.5">
               <div className="relative shrink-0">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={profile.full_name}
-                    className="ring-brand/25 h-12 w-12 rounded-[var(--radius-card)] object-cover ring-2 sm:h-14 sm:w-14"
+                    className="ring-border h-11 w-11 rounded-[var(--radius-card)] object-cover ring-1 sm:h-12 sm:w-12"
                   />
                 ) : (
-                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-[var(--radius-card)] sm:h-14 sm:w-14">
-                    <User className="text-text-muted h-6 w-6" />
+                  <div className="bg-surface-raised flex h-11 w-11 items-center justify-center rounded-[var(--radius-card)] sm:h-12 sm:w-12">
+                    <User className="text-text-muted h-5 w-5" />
                   </div>
                 )}
                 <label
                   htmlFor="avatar-upload"
-                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-[var(--radius-button)] shadow-md transition-colors"
+                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-[var(--radius-button)] transition-colors"
                   title="Cambiar foto"
                   aria-label="Cambiar foto de perfil"
                 >
-                  <Camera className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <Camera className="h-3 w-3" />
                 </label>
                 <input
                   id="avatar-upload"
@@ -80,60 +80,56 @@ export function ProfileDatosTab({
                 />
               </div>
               <div className="min-w-0 md:w-full">
-                <p className="text-text truncate text-sm font-semibold md:text-base md:whitespace-normal">
+                <p className="text-text truncate text-sm font-semibold tracking-[-0.011em]">
                   {profile.full_name}
                 </p>
-                <p className="text-text-muted text-small mt-0.5 truncate md:text-xs md:whitespace-normal">
-                  {profile.email}
-                </p>
-                {profile.cedula && (
-                  <p className="text-text-muted text-small md:text-small mt-0.5">
-                    {profile.cedula}
-                  </p>
-                )}
-                {avatarUploading && (
+                <p className="text-text-muted text-small mt-0.5 truncate">{profile.email}</p>
+                {profile.cedula ? (
+                  <p className="text-text-muted text-small mt-0.5">{profile.cedula}</p>
+                ) : null}
+                {avatarUploading ? (
                   <p className="text-brand text-small mt-1 font-medium">Subiendo foto…</p>
-                )}
-                {avatarUrl && !avatarUploading && (
-                  <div className="mt-1 flex flex-wrap items-center gap-2 md:mt-2">
-                    <button
-                      type="button"
-                      onClick={onRequestRemoveAvatar}
-                      disabled={avatarRemoving}
-                      className="text-text-muted text-small hover:text-danger font-semibold transition-colors disabled:opacity-50 sm:text-xs dark:hover:text-red-400"
-                    >
-                      Quitar foto
-                    </button>
-                  </div>
-                )}
+                ) : null}
+                {avatarUrl && !avatarUploading ? (
+                  <button
+                    type="button"
+                    onClick={onRequestRemoveAvatar}
+                    disabled={avatarRemoving}
+                    className="text-text-muted text-small hover:text-danger mt-1.5 font-semibold transition-colors disabled:opacity-50"
+                  >
+                    Quitar foto
+                  </button>
+                ) : null}
               </div>
             </div>
 
-            {isTrainer && trainerProfile && (
-              <div className="mt-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 md:mt-4">
-                <p className="text-text text-xs font-bold">Perfil profesional</p>
+            {isTrainer && trainerProfile ? (
+              <div className="border-border/70 bg-surface-raised mt-3 space-y-1 rounded-[var(--radius-card)] border px-3 py-2.5">
+                <p className="text-text text-small font-semibold tracking-[-0.01em]">
+                  Perfil profesional
+                </p>
                 <p className="text-text-secondary text-small">
                   Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
                 </p>
                 <p className="text-text-secondary text-small">
                   Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
                 </p>
-                {trainerProfile.specialty && (
+                {trainerProfile.specialty ? (
                   <p className="text-text-secondary text-small">
                     Especialidad: <strong>{trainerProfile.specialty}</strong>
                   </p>
-                )}
-                <p className="text-text-muted text-small pt-1">
+                ) : null}
+                <p className="text-text-muted text-small pt-1 leading-snug">
                   Para cambiar nivel, turno o especialidad, contacta al administrador (sección
                   Entrenadores).
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
 
-          <form onSubmit={onSave} className="min-w-0 space-y-2.5 md:space-y-3">
-            <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
-              <div>
+          <form onSubmit={onSave} className="form-stack min-w-0">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
                 <Label>Teléfono</Label>
                 <Input
                   type="tel"
@@ -145,7 +141,7 @@ export function ProfileDatosTab({
                   placeholder="+58 412 0000000"
                 />
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Fecha de nacimiento</Label>
                 <Input
                   type="date"
@@ -156,8 +152,8 @@ export function ProfileDatosTab({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <Label>Peso inicial (kg)</Label>
                 <Input
                   type="number"
@@ -170,7 +166,7 @@ export function ProfileDatosTab({
                   placeholder="70"
                 />
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Altura (cm)</Label>
                 <Input
                   type="number"
@@ -184,7 +180,7 @@ export function ProfileDatosTab({
                 />
               </div>
             </div>
-            <div className="max-w-xl">
+            <div className="max-w-xl space-y-1.5">
               <Label>Objetivo</Label>
               <Textarea
                 value={form.goal}
@@ -192,7 +188,7 @@ export function ProfileDatosTab({
                   setForm({ ...form, goal: e.target.value });
                 }}
                 rows={2}
-                className="min-h-[4rem] resize-none rounded-xl px-3 py-2.5 text-sm md:min-h-[4.5rem]"
+                className="min-h-[4rem] resize-none"
                 placeholder="Ej: bajar grasa, ganar músculo…"
               />
             </div>
@@ -200,16 +196,15 @@ export function ProfileDatosTab({
               type="submit"
               variant="primary"
               disabled={saving || !isProfileDirty}
-              size="sm"
+              size="md"
               className={cn(
-                'mt-0.5 h-10 min-h-10 w-full sm:w-auto sm:px-4',
+                'w-full sm:w-auto',
                 isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
               )}
               aria-label="Guardar perfil"
             >
               <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">{saving ? 'Guardando…' : 'Guardar perfil'}</span>
-              <span className="sm:hidden">{saving ? '…' : 'Guardar'}</span>
+              {saving ? 'Guardando…' : 'Guardar'}
             </Button>
           </form>
         </div>

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
-import { Search, CornerDownLeft } from 'lucide-react';
+import { Search, CornerDownLeft, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getNavigationForRole } from '../config/navigation';
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { prefetchRoute } from '../lib/routePrefetch';
-import type { LucideIcon } from 'lucide-react';
+import { typography } from '../lib/typography';
 
 export interface CommandAction {
   id: string;
@@ -24,6 +24,8 @@ interface CommandPaletteProps {
   onClose: () => void;
   extraActions?: CommandAction[];
 }
+
+const EXIT_MS = 220;
 
 function normalize(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
@@ -175,8 +177,12 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useScrollLock(open);
 
@@ -202,13 +208,36 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
     });
   }, [allActions, query]);
 
+  const grouped = useMemo(() => {
+    const map = new Map<string, { action: CommandAction; index: number }[]>();
+    filtered.forEach((action, index) => {
+      const list = map.get(action.section) ?? [];
+      list.push({ action, index });
+      map.set(action.section, list);
+    });
+    return Array.from(map.entries());
+  }, [filtered]);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      const frame = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    setVisible(false);
+    const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+
   useEffect(() => {
     if (!open) {
       setQuery('');
       setActiveIndex(0);
       return;
     }
-    const t = window.setTimeout(() => inputRef.current?.focus(), 10);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 20);
     return () => window.clearTimeout(t);
   }, [open]);
 
@@ -223,7 +252,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
 
   const runAction = useCallback(
     (action: CommandAction) => {
-      onClose();
+      onCloseRef.current();
       if (action.run) {
         action.run();
         return;
@@ -233,7 +262,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
         void navigate(action.href);
       }
     },
-    [navigate, onClose]
+    [navigate]
   );
 
   useEffect(() => {
@@ -241,7 +270,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key === 'ArrowDown') {
@@ -261,89 +290,144 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, filtered, activeIndex, onClose, runAction]);
+  }, [open, filtered, activeIndex, runAction]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-start justify-center px-4 pt-[12vh] sm:pt-[15vh]">
+    <div
+      className={cn(
+        'fixed inset-0 z-[200] flex items-start justify-center px-3 pt-[max(4rem,10dvh)] sm:px-4 sm:pt-[14vh]',
+        'transition-opacity motion-reduce:transition-none'
+      )}
+      style={{
+        transitionDuration: `${EXIT_MS}ms`,
+        transitionTimingFunction: 'var(--ease-drawer)',
+        opacity: visible ? 1 : 0,
+      }}
+    >
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] dark:bg-black/70"
         aria-label="Cerrar búsqueda"
-        onClick={onClose}
+        onClick={() => onCloseRef.current()}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Buscar y navegar"
-        className="border-border/70 bg-surface shadow-elevated relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-[var(--radius-card)] border"
+        className={cn(
+          'surface-modal relative z-10 flex w-full max-w-lg flex-col overflow-hidden',
+          'transition-[opacity,transform] motion-reduce:transform-none motion-reduce:transition-none',
+          '[transition-timing-function:var(--ease-drawer)]',
+          visible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-2 scale-[0.98] opacity-0'
+        )}
+        style={{ transitionDuration: `${EXIT_MS}ms` }}
       >
-        <div className="border-border/60 flex items-center gap-2 border-b px-3 py-2.5">
-          <Search className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+        <div className="border-border/50 flex items-center gap-2.5 border-b px-3.5 py-3">
+          <Search
+            className="operate-icon text-text-muted h-4 w-4 shrink-0"
+            strokeWidth={1.75}
+            aria-hidden
+          />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar páginas y acciones…"
-            className="text-text placeholder:text-text-muted min-w-0 flex-1 bg-transparent text-sm outline-none"
+            className="text-text placeholder:text-text-muted min-w-0 flex-1 bg-transparent text-sm font-medium tracking-[-0.011em] outline-none"
             aria-autocomplete="list"
             aria-controls="cmdk-list"
           />
-          <kbd className="text-text-muted border-border/70 text-small hidden rounded border px-1.5 py-0.5 font-medium sm:inline">
+          <kbd className="text-text-muted border-border/60 bg-surface-raised text-small hidden rounded-[var(--radius-chip)] border px-1.5 py-0.5 font-semibold sm:inline">
             Esc
           </kbd>
         </div>
+
         <div
           id="cmdk-list"
           ref={listRef}
           role="listbox"
-          className="scroll-area max-h-[min(50vh,22rem)] overflow-y-auto py-1.5"
+          className="scroll-area max-h-[min(52vh,24rem)] overflow-y-auto py-2"
         >
           {filtered.length === 0 ? (
-            <p className="text-text-muted px-3 py-6 text-center text-sm">Sin resultados</p>
+            <p className="text-text-muted px-4 py-8 text-center text-sm">Sin resultados</p>
           ) : (
-            filtered.map((action, index) => {
-              const Icon = action.icon;
-              const active = index === activeIndex;
-              return (
-                <button
-                  key={action.id}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  data-cmd-index={index}
-                  onMouseEnter={() => {
-                    setActiveIndex(index);
-                    if (action.href) prefetchRoute(action.href);
-                  }}
-                  onClick={() => runAction(action)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
-                    active
-                      ? 'bg-surface-overlay text-text'
-                      : 'text-text-secondary hover:bg-surface-raised'
-                  )}
-                >
-                  {Icon ? (
-                    <Icon className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
-                  ) : (
-                    <span className="h-4 w-4 shrink-0" />
-                  )}
-                  <span className="min-w-0 flex-1 truncate font-medium">{action.label}</span>
-                  <span className="text-text-muted text-small shrink-0 tracking-wide uppercase">
-                    {action.section}
-                  </span>
-                  {active && <CornerDownLeft className="text-text-muted h-3.5 w-3.5 shrink-0" />}
-                </button>
-              );
-            })
+            grouped.map(([section, items]) => (
+              <div key={section} className="mb-1.5 last:mb-0">
+                <p className="text-text-muted text-small px-3.5 pt-1.5 pb-1 font-semibold tracking-[-0.01em]">
+                  {section}
+                </p>
+                <ul className="px-1.5">
+                  {items.map(({ action, index }) => {
+                    const Icon = action.icon;
+                    const active = index === activeIndex;
+                    return (
+                      <li key={action.id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={active}
+                          data-cmd-index={index}
+                          onMouseEnter={() => {
+                            setActiveIndex(index);
+                            if (action.href) prefetchRoute(action.href);
+                          }}
+                          onClick={() => runAction(action)}
+                          className={cn(
+                            'flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-button)] px-2.5 py-2 text-left text-sm transition-colors',
+                            active
+                              ? 'bg-surface-raised text-text dark:bg-surface-overlay shadow-xs'
+                              : 'text-text-secondary hover:bg-surface-overlay/50 hover:text-text'
+                          )}
+                        >
+                          {Icon ? (
+                            <Icon
+                              className={cn(
+                                'operate-icon h-4 w-4 shrink-0',
+                                active ? 'text-text' : 'text-text-muted'
+                              )}
+                              strokeWidth={1.75}
+                              aria-hidden
+                            />
+                          ) : (
+                            <span className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className="min-w-0 flex-1 truncate font-medium tracking-[-0.011em]">
+                            {action.label}
+                          </span>
+                          {active ? (
+                            <CornerDownLeft
+                              className="operate-icon text-text-muted h-3.5 w-3.5 shrink-0"
+                              strokeWidth={1.75}
+                              aria-hidden
+                            />
+                          ) : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
           )}
         </div>
-        <div className="border-border/50 text-text-muted text-small flex items-center gap-3 border-t px-3 py-1.5">
-          <span>↑↓ navegar</span>
-          <span>↵ abrir</span>
-          <span className="ml-auto hidden sm:inline">Ctrl/⌘ K</span>
+
+        <div
+          className={cn(
+            'border-border/50 text-text-muted text-small flex items-center gap-2 border-t px-3.5 py-2',
+            typography.small
+          )}
+        >
+          <span className="border-border/50 bg-surface-raised inline-flex items-center rounded-[var(--radius-chip)] border px-1.5 py-0.5 font-semibold">
+            ↑↓
+          </span>
+          <span>navegar</span>
+          <span className="border-border/50 bg-surface-raised ml-1 inline-flex items-center rounded-[var(--radius-chip)] border px-1.5 py-0.5 font-semibold">
+            ↵
+          </span>
+          <span>abrir</span>
+          <span className="ml-auto hidden font-medium sm:inline">Ctrl / ⌘ K</span>
         </div>
       </div>
     </div>,

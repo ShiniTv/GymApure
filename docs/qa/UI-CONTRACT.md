@@ -25,8 +25,8 @@ No mezclar CTA de piso con `size="sm"`.
 
 ## IconButton
 
-- `sm` (32px) listas densas; `md` (36px) headers / close de overlay.
-- Icono hijo `h-3.5` o `h-4`. No usar como CTA de piso (usar `Button`).
+- `sm` (32px) listas densas; `md` (36px) headers / close de overlay; `lg` (44px) alineado con Input/Select en toolbars.
+- Icono hijo `h-3.5` o `h-4`. No usar como CTA de piso con etiqueta (usar `Button`).
 
 ## Modal
 
@@ -38,6 +38,14 @@ No mezclar CTA de piso con `size="sm"`.
 | `xl`  | Detalle / preview compacto | `max-w-xl`     |
 | `2xl` | Detalle amplio             | `max-w-2xl`    |
 | `3xl` | Formularios densos / altas | `max-w-3xl`    |
+
+Chrome premium Operate:
+
+- Scrim `black/55` + blur ligero; panel `.surface-modal` (`--radius-modal` 14px, `--shadow-modal`).
+- Móvil: dock inferior con radio sheet; desktop: flotante centrado.
+- Header con título + `description` opcional + `icon`/`tone`; cierre en well.
+- Acciones: prop `footer` + `ModalActions` (stack móvil → trailing desktop). CTAs `md`.
+- Confirms destructivos: `tone="danger"`, `initialFocus="dialog"`, copy en `description`.
 
 Sheet: acciones móviles y menú «Más». No modal centrado bajo 768px para esos casos.
 

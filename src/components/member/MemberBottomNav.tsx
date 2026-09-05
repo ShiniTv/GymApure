@@ -157,16 +157,13 @@ export function MemberBottomNav() {
                           : `${notificationUnread > 99 ? '99+' : notificationUnread} sin leer`
                         : null;
                   return (
-                    <li
-                      key={item.href}
-                      className={section.items.length === 1 ? 'col-span-2' : undefined}
-                    >
+                    <li key={item.href}>
                       <Link
                         to={item.href}
                         {...routePrefetchHandlers(item.href)}
                         onClick={closeMore}
                         className={cn(
-                          'tap-feedback relative flex min-h-[3.25rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-[var(--radius-card)] border px-1.5 py-1.5 text-center transition-colors',
+                          'tap-feedback relative flex h-[3.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-[var(--radius-card)] border px-1.5 py-1.5 text-center transition-colors',
                           itemActive
                             ? 'border-border bg-surface-raised text-text'
                             : 'border-border/60 text-text-secondary hover:bg-surface-raised/70 hover:text-text bg-transparent'
