@@ -49,7 +49,7 @@ export default function AccessDenied() {
         subtitle={`${portalTitle} — esta sección no corresponde a tu rol.`}
       />
 
-      <div className="border-border bg-surface space-y-4 rounded-2xl border p-6 text-center">
+      <div className="border-border bg-surface space-y-4 rounded-[var(--radius-card)] border p-6 text-center">
         <ShieldAlert className="text-brand mx-auto h-12 w-12 opacity-80" aria-hidden />
         <p className="text-text-secondary text-sm leading-relaxed">
           {routinesBlocked

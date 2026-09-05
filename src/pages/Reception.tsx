@@ -17,7 +17,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, connectionOrApiError } from '../lib/api';
-import { Button, Card, Badge, Spinner, CedulaInput, Label } from '../components/ui';
+import { Button, Card, Badge, CedulaInput, Label, PageHeader, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
@@ -528,8 +528,19 @@ export default function Reception() {
       className={cn('border-border/80 bg-surface rounded-lg border p-3', !isCounterMode && 'p-4')}
     >
       {lookupLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Spinner />
+        <div className="space-y-3 py-1" aria-busy="true" aria-label="Cargando miembro">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+            <Skeleton className="h-6 w-16 rounded-[var(--radius-chip)]" />
+          </div>
+          <Skeleton className="h-14 w-full rounded-[var(--radius-card)]" />
+          <div className="grid grid-cols-2 gap-2">
+            <Skeleton className="h-10 w-full rounded-[var(--radius-button)]" />
+            <Skeleton className="h-10 w-full rounded-[var(--radius-button)]" />
+          </div>
         </div>
       ) : lookup?.found && lookup.user ? (
         <div className="space-y-2.5">
@@ -730,14 +741,13 @@ export default function Reception() {
     return (
       <div className="page-stack-tight mx-auto w-full max-w-5xl">
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-text truncate text-base font-semibold">Acceso</h1>
-            <p className="text-text-muted text-small truncate">
-              {/* Count lives in tab + lista Dentro; avoid triple KPI on md+ access desk. */}
-              <span className="md:hidden">{insideCount} dentro</span>
-              <span className="hidden md:inline">F1 entrada · F2 salida</span>
-            </p>
-          </div>
+          <PageHeader
+            variant="floor"
+            showTitleOnMobile
+            className="min-w-0 flex-1 gap-0.5 sm:gap-0.5"
+            title="Acceso"
+            subtitle={isMobileShell ? `${insideCount} dentro` : 'F1 entrada · F2 salida'}
+          />
           <div className="flex shrink-0 items-center gap-0.5">
             <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
               <Button

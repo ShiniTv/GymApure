@@ -40,7 +40,7 @@ export function SettingsExpiryCard({
       )}
 
       {settingsLoading && !expirySettings && !settingsLoadError && (
-        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+        <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
           <div className="space-y-3">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-10 w-full" />

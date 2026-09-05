@@ -43,7 +43,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              <p className="text-brand text-[15px] leading-none font-bold tabular-nums">
+              <p className="text-brand text-sm leading-none font-bold tabular-nums">
                 ${payment.amount_usd}
               </p>
               <Badge

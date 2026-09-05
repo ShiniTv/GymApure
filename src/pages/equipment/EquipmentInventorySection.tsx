@@ -109,15 +109,21 @@ export function EquipmentInventorySection({
       <PageHeader
         compact
         title={
-          <>
-            Equipamiento <span className="text-brand">del gym</span>
-          </>
+          isAdmin ? (
+            <>
+              Equipamiento <span className="text-brand">del gym</span>
+            </>
+          ) : (
+            <>
+              Reportar <span className="text-brand">equipo</span>
+            </>
+          )
         }
         subtitle={
           isAdmin
             ? 'Inventario y mantenimiento'
             : allItems.length === 0
-              ? undefined
+              ? 'Avisa si algo falla en el piso'
               : 'Estado e incidencias'
         }
         action={

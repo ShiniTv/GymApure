@@ -50,7 +50,7 @@ export default function ResetPassword() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+      <Card className="auth-linear-panel page-stack w-full" padding="lg">
         <AuthLinearHeader
           title="Nueva contraseña"
           subtitle="Elige una contraseña segura para tu cuenta."

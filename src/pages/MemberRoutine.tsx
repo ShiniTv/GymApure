@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { useParams } from 'react-router';
-import { PageState, Spinner } from '../components/ui';
+import { Skeleton, ListRowSkeleton, AssignmentsListSkeleton } from '../components/ui';
 import { PanelFallback } from './memberRoutine/PanelFallback';
 import { MemberRoutineHeader } from './memberRoutine/MemberRoutineHeader';
 import { MemberProfilePanel } from './memberRoutine/MemberProfilePanel';
@@ -45,10 +45,27 @@ export default function MemberRoutine() {
 
   if (page.loading) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted mt-3 text-xs">Cargando miembro…</p>
-      </PageState>
+      <div
+        className="page-stack-tight mx-auto w-full max-w-5xl"
+        aria-busy="true"
+        aria-label="Cargando miembro"
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-36" />
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <Skeleton className="h-7 w-48" />
+          </div>
+          <Skeleton className="h-3 w-56" />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <Skeleton className="h-9 w-20 rounded-[var(--radius-button)]" />
+          <Skeleton className="h-9 w-24 rounded-[var(--radius-button)]" />
+          <Skeleton className="h-9 w-20 rounded-[var(--radius-button)]" />
+        </div>
+        <AssignmentsListSkeleton rows={3} />
+        <ListRowSkeleton rows={3} />
+      </div>
     );
   }
   if (!page.member) {

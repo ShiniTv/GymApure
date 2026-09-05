@@ -6,6 +6,7 @@ import {
   FilterChips,
   BackToDashboardLink,
   SearchInput,
+  StatTile,
 } from '../../components/ui';
 import { paymentStatusLabel, type Payment } from './helpers';
 
@@ -30,8 +31,6 @@ export interface PaymentsToolbarProps {
   onClearStatusFilter: () => void;
   onOpenRegister: () => void;
 }
-
-const STAT_TILE = 'border-border/80 bg-surface rounded-xl border px-3 py-2.5';
 
 export function PaymentsToolbar({
   isMember,
@@ -89,36 +88,13 @@ export function PaymentsToolbar({
 
       {isStaffPayment && adminStats?.stats ? (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
-          <div className={STAT_TILE}>
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              Pendientes
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
-              {adminStats.stats.pendingPayments}
-            </p>
-          </div>
-          <div className={STAT_TILE}>
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              &gt;2 días
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
-              {adminStats.stats.pendingPaymentsOlderThan2Days ?? 0}
-            </p>
-          </div>
-          <div className={STAT_TILE}>
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              Ingresos mes
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
-              {formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
-            </p>
-          </div>
-          <div className={STAT_TILE}>
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              En lista
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
-          </div>
+          <StatTile label="Pendientes" value={adminStats.stats.pendingPayments} />
+          <StatTile label=">2 días" value={adminStats.stats.pendingPaymentsOlderThan2Days ?? 0} />
+          <StatTile
+            label="Ingresos mes"
+            value={formatMoney(adminStats.stats.revenueThisMonth ?? 0)}
+          />
+          <StatTile label="En lista" value={total} />
         </div>
       ) : null}
 

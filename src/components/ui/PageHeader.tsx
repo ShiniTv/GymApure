@@ -2,6 +2,8 @@ import { type ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 
+export type PageHeaderVariant = 'operate' | 'floor' | 'immersive';
+
 interface PageHeaderProps {
   title: ReactNode;
   subtitle?: string;
@@ -9,9 +11,17 @@ interface PageHeaderProps {
   badge?: string;
   className?: string;
   compact?: boolean;
+  /** operate = staff desktop; floor = Reception/counter; immersive = workout/kiosk */
+  variant?: PageHeaderVariant;
   /** Muestra el título también en móvil (p. ej. saludo personalizado). Por defecto el layout ya muestra la sección. */
   showTitleOnMobile?: boolean;
 }
+
+const titleClass: Record<PageHeaderVariant, string> = {
+  operate: typography.pageTitle,
+  floor: typography.floorTitle,
+  immersive: typography.immersiveTitle,
+};
 
 export function PageHeader({
   title,
@@ -20,9 +30,11 @@ export function PageHeader({
   badge,
   className,
   compact,
+  variant = 'operate',
   showTitleOnMobile = false,
 }: PageHeaderProps) {
-  const hideTitleOnMobile = !showTitleOnMobile;
+  const hideTitleOnMobile = !showTitleOnMobile && variant === 'operate';
+  const titleScale = titleClass[variant];
 
   return (
     <div
@@ -36,8 +48,8 @@ export function PageHeader({
       <div className="min-w-0 flex-1">
         <h1
           className={cn(
-            typography.pageTitle,
-            compact && 'text-lg sm:text-xl lg:text-2xl',
+            titleScale,
+            compact && variant === 'operate' && 'text-lg sm:text-xl lg:text-2xl',
             hideTitleOnMobile && 'hidden lg:block'
           )}
         >

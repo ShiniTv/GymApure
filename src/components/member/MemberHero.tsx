@@ -81,9 +81,7 @@ export function MemberHero({
       <div className="relative flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <p className={typography.labelCaps}>{getGreeting()}</p>
-          <h2 className={cn(typography.pageTitle, 'mt-1 truncate text-xl sm:text-2xl')}>
-            {firstName}
-          </h2>
+          <h2 className={cn(typography.pageTitle, 'mt-1 truncate')}>{firstName}</h2>
           <p className={cn(typography.pageSubtitle, 'truncate')}>
             {routineName
               ? `Hoy toca: ${routineName}`
@@ -136,7 +134,7 @@ export function MemberHero({
       </div>
 
       <Button
-        size="sm"
+        size="md"
         className="relative mt-3.5 w-full sm:mt-4 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
         onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines?view=templates')}

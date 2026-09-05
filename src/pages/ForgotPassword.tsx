@@ -34,7 +34,7 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+      <Card className="auth-linear-panel page-stack w-full" padding="lg">
         <AuthLinearHeader
           title="Recupera tu acceso"
           subtitle="Te enviaremos un enlace seguro a tu correo."

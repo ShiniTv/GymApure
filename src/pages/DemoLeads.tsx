@@ -131,7 +131,7 @@ export default function DemoLeads() {
         ]}
       />
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
+      <Card padding="md" rounded="xl">
         {loading ? (
           <div className="flex justify-center py-8">
             <Spinner />

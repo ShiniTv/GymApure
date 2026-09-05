@@ -102,6 +102,7 @@ export default function MemberDashboard() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accesoExtrasOpen, setAccesoExtrasOpen] = useState(false);
   const memberStatsCtx = useMemberStatsOptional();
   const memberStats = memberStatsCtx?.stats ?? null;
   const statsError = memberStatsCtx?.error;
@@ -177,8 +178,27 @@ export default function MemberDashboard() {
 
       <MemberPriorityBanners pending={pending} subscription={sub ?? null} alertDays={alertDays} />
 
-      <MemberSelfCheckInCard />
-      <MemberRemoteTrainingCard />
+      <Card padding="sm" rounded="xl">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          onClick={() => setAccesoExtrasOpen((v) => !v)}
+          aria-expanded={accesoExtrasOpen}
+        >
+          <span className="text-text text-sm font-bold">Acceso y extras</span>
+          {accesoExtrasOpen ? (
+            <ChevronUp className="text-text-muted h-4 w-4" />
+          ) : (
+            <ChevronDown className="text-text-muted h-4 w-4" />
+          )}
+        </button>
+        <Collapse open={accesoExtrasOpen}>
+          <div className="mt-3 space-y-3">
+            <MemberSelfCheckInCard />
+            <MemberRemoteTrainingCard />
+          </div>
+        </Collapse>
+      </Card>
 
       {/* Desktop: full routine + membership cards. Mobile: one quiet list; hero owns the train CTA. */}
       {isMobile ? (
@@ -256,7 +276,7 @@ export default function MemberDashboard() {
             {routine ? (
               <>
                 <div className="flex items-center gap-4">
-                  <div className="bg-brand/10 rounded-2xl p-4">
+                  <div className="bg-brand/10 rounded-[var(--radius-card)] p-4">
                     <Dumbbell className="text-brand h-6 w-6" />
                   </div>
                   <div className="min-w-0">
@@ -275,14 +295,9 @@ export default function MemberDashboard() {
                     )}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="mt-3 w-full"
-                  onClick={() => navigate('/routines')}
-                >
+                <Link to="/routines" className={cn(LINK_BRAND, 'mt-3 block')}>
                   Ver rutinas
-                </Button>
+                </Link>
                 {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
                   <p className="text-text-secondary mt-2 text-center text-xs">
                     Tienes un entrenamiento en curso. Continúa desde el hero o Rutinas.
@@ -356,11 +371,21 @@ export default function MemberDashboard() {
                 variant="motivational"
                 icon={CreditCard}
                 title="Sin membresía activa"
-                description="Usa el aviso de arriba para reportar tu pago y activar el acceso."
+                description={
+                  pending > 0
+                    ? 'Usa el aviso de arriba para seguir el pago en revisión.'
+                    : 'Reporta tu pago para activar el acceso.'
+                }
                 action={
-                  <Button size="sm" variant="secondary" onClick={() => navigate('/payments')}>
-                    Ver pagos
-                  </Button>
+                  pending > 0 ? (
+                    <Link to="/payments" className={LINK_BRAND}>
+                      Ir a pagos
+                    </Link>
+                  ) : (
+                    <Button size="sm" variant="secondary" onClick={() => navigate('/payments')}>
+                      Ver pagos
+                    </Button>
+                  )
                 }
               />
             )}

@@ -722,7 +722,7 @@ export default function Routines() {
                   ? (() => {
                       const active = assignments.filter((m) => m.routines && m.routines.length > 0);
                       const total = active.reduce((sum, m) => sum + (m.routines?.length ?? 0), 0);
-                      if (loadingAssignments) return 'Cargando asignaciones…';
+                      if (loadingAssignments) return 'Asignaciones activas';
                       return `${active.length} miembro${active.length !== 1 ? 's' : ''} · ${total} rutina${total !== 1 ? 's' : ''} activa${total !== 1 ? 's' : ''}`;
                     })()
                   : view === 'calendar'

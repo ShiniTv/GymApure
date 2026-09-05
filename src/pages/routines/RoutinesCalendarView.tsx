@@ -354,7 +354,7 @@ export function RoutinesCalendarView({
                           e.stopPropagation();
                           onNavigateToMemberRoutines(a.member_id);
                         }}
-                        className="border-brand hover:bg-brand/10 bg-surface-raised text-text-secondary w-full truncate rounded border-l-2 px-1 py-0.5 text-left text-[8px] font-bold transition-colors"
+                        className="border-brand hover:bg-brand/10 bg-surface-raised text-text-secondary text-small w-full truncate rounded border-l-2 px-1 py-0.5 text-left font-bold transition-colors"
                         title={`${a.member_name}: ${a.routine_name}`}
                       >
                         {a.member_name}: {a.routine_name}

@@ -596,7 +596,7 @@ function AppRoutes() {
             <Route
               path="members/:id/history"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -610,7 +610,7 @@ function AppRoutes() {
             <Route
               path="members/:id/records"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);

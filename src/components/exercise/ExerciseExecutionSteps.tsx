@@ -31,8 +31,8 @@ export function ExerciseExecutionSteps({
     <div
       className={cn(
         compact
-          ? 'bg-brand/5 dark:bg-brand/10 border-brand/20 rounded-2xl border p-4'
-          : 'border-border-subtle bg-surface-raised rounded-2xl border p-6',
+          ? 'bg-brand/5 dark:bg-brand/10 border-brand/20 rounded-[var(--radius-card)] border p-4'
+          : 'border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border p-6',
         className
       )}
     >

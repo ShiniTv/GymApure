@@ -107,11 +107,11 @@ export function SegmentedControl<T extends string>({
       ref={scrollerRef}
       className={cn(
         isKiosk
-          ? 'border-border bg-surface-raised flex gap-2 rounded-2xl border p-1'
+          ? 'border-border bg-surface-raised flex gap-2 rounded-[var(--radius-card)] border p-1'
           : scroll
             ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : cn(
-                'border-border/70 bg-surface-raised inline-flex flex-wrap gap-0.5 rounded-lg border p-0.5',
+                'border-border/70 bg-surface-raised inline-flex flex-wrap gap-0.5 rounded-[var(--radius-chip)] border p-0.5',
                 fullWidth ? 'w-full' : 'w-fit max-w-full'
               ),
         !scroll && className
@@ -137,7 +137,7 @@ export function SegmentedControl<T extends string>({
               fullWidth && !scroll && 'flex-1',
               isKiosk
                 ? cn(
-                    'rounded-xl py-3 text-xs font-semibold',
+                    'rounded-[var(--radius-button)] py-3 text-xs font-semibold',
                     active ? accentActive[accent] : 'text-text-secondary hover:text-text'
                   )
                 : scroll

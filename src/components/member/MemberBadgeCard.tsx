@@ -137,7 +137,7 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
         <span className="text-small mt-1 font-semibold tracking-wide text-zinc-900 uppercase">
           {BRAND.name}
         </span>
-        <p className="mt-2 text-[8px] leading-snug text-zinc-500">
+        <p className="text-small mt-2 leading-snug text-zinc-500">
           Carné personal e intransferible. Presentar en recepción para acceso. El titular es
           responsable del uso de este documento conforme a las normas del gimnasio.
         </p>

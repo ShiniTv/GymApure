@@ -4,6 +4,15 @@ Fuente de verdad de tokens: `src/index.css`. Tipografía: `src/lib/typography.ts
 
 El acento de marca en runtime es la paleta sky (`#0c98ff` vía `src/config/themes.ts`). `--color-brand` en `@theme` puede ser más oscuro en light por contraste AA; no inventar un segundo azul en call sites.
 
+## Densidad
+
+| Contexto                                    | Controles                                               | Notas                                  |
+| ------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| **Comfortable** (piso / formularios / CTAs) | `Button` `md` 44px / `lg` 48px                          | Member FAB, Reception counter, modales |
+| **Compact** (desktop nav, toolbars, tablas) | `.nav-link` 32px, `IconButton` `sm` 32px, `Button` `sm` | Solo chrome denso — no CTAs de piso    |
+
+No mezclar CTA de piso con `size="sm"`.
+
 ## Botón
 
 - Acciones de formulario, piso y modales: `Button` `size="md"` (44px) o `lg` (48px).
@@ -32,15 +41,19 @@ Sheet: acciones móviles y menú «Más». No modal centrado bajo 768px para eso
 
 ## Tipografía
 
-Usar `typography.*`, `text-small`, `text-sm`, `text-h1`/`text-h2`. Prohibido `text-[Npx]` en UI (ejes SVG de charts: `chartTheme`, allowlist).
+Usar `typography.*` (`pageTitle`, `floorTitle`, `immersiveTitle`, `sectionTitle`, `statLabel`, …). Prohibido `text-[Npx]` en UI (ejes SVG de charts: `chartTheme`, allowlist).
 
 Labels de form: `Label` / `typography.label`. Meta uppercase: `statLabel` / `labelCaps`.
 
+`PageHeader` variantes: `operate` (default), `floor` (mostrador), `immersive` (workout / kiosk).
+
 ## Caja
 
-- Un nivel de `Card`. Padding canónico `sm`/`md`/`lg` (`p-ds-*`); no `md:p-4` / `!p-2.5`.
-- Radio de card: `rounded-[var(--radius-card)]` (8px). No `rounded-2xl` en paneles Operate.
+- Un nivel de `Card`. Padding canónico `sm`/`md`/`lg` (`p-ds-*`); no `md:p-4` / `!p-2.5` en `className`.
+- Radio de card: `rounded-[var(--radius-card)]` (8px). No `rounded-2xl` en paneles Operate (allowlist: sheets, chat bubbles, pills).
+- KPIs de toolbar: `StatTile` (no divs ad hoc).
 - Empty: `EmptyState`; `framed={false}` si ya hay panel.
+- Canvas gutter: `px-ds-4` (16px) — no `px-3.5`.
 
 ## Gráfico
 
@@ -49,3 +62,7 @@ Alturas: mini 180px, panel 240px (`chartTheme`). Ejes `fontSize` 12, peso 500, c
 ## Motion
 
 `animate-spin` solo en `Spinner` (y pull-to-refresh). Lucide estático. Overlays ~200ms. Respetar `prefers-reduced-motion`.
+
+## Lint
+
+`npm run lint:ui-contract` — `text-[Npx]`, `Button` height overrides, `rounded-2xl|3xl` fuera de allowlist, `Card` + padding escape.

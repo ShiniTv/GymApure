@@ -1,5 +1,5 @@
 import { CheckCircle, Dumbbell } from 'lucide-react';
-import { Button, EmptyState, Breadcrumbs, WorkoutShellSkeleton } from '../components/ui';
+import { Alert, Button, EmptyState, Breadcrumbs, WorkoutShellSkeleton } from '../components/ui';
 import { hasNotificationPermission } from '../lib/restTimerNotifications';
 import { WorkoutCelebration } from '../components/workout/WorkoutCelebration';
 import { RestTimerOverlay } from './activeWorkout/RestTimerOverlay';
@@ -83,26 +83,23 @@ export default function ActiveWorkout() {
       />
 
       {page.pendingSyncCount > 0 && (
-        <div
-          className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-800 dark:text-amber-200"
-          role="status"
-        >
+        <Alert variant="warning" className="font-bold">
           {page.pendingSyncCount} serie{page.pendingSyncCount === 1 ? '' : 's'} pendiente
           {page.pendingSyncCount === 1 ? '' : 's'} de sincronizar. Se enviarán al recuperar
           conexión.
-        </div>
+        </Alert>
       )}
 
       {page.sessionError && (
-        <div className="border-danger/30 text-danger dark:text-danger rounded-2xl border bg-red-500/10 px-4 py-3 text-sm font-bold">
+        <Alert variant="error" className="font-bold">
           {page.sessionError}
-        </div>
+        </Alert>
       )}
 
       {page.setValidationError && (
-        <div className="border-brand/30 bg-brand/10 text-brand dark:text-brand rounded-2xl border px-4 py-3 text-sm font-bold">
+        <Alert variant="info" className="font-bold">
           {page.setValidationError}
-        </div>
+        </Alert>
       )}
 
       {!page.isMember && (

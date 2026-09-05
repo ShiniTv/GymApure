@@ -18,6 +18,8 @@ import {
   PageState,
   Modal,
   Skeleton,
+  ListRowSkeleton,
+  StatCardSkeleton,
 } from '../components/ui';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -374,10 +376,24 @@ export default function WorkoutHistory() {
 
   if (loading && history.length === 0 && !displayName) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted mt-3 text-xs">Cargando historial…</p>
-      </PageState>
+      <div
+        className="page-stack-tight mx-auto w-full max-w-5xl"
+        aria-busy="true"
+        aria-label="Cargando historial"
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+        <Skeleton className="h-40 w-full rounded-[var(--radius-card)] sm:h-44" />
+        <ListRowSkeleton rows={5} />
+      </div>
     );
   }
 

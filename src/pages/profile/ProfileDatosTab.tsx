@@ -55,10 +55,10 @@ export function ProfileDatosTab({
                   <img
                     src={avatarUrl}
                     alt={profile.full_name}
-                    className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl"
+                    className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14 md:h-20 md:w-20"
                   />
                 ) : (
-                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-xl sm:h-14 sm:w-14 md:h-20 md:w-20 md:rounded-2xl">
+                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-xl sm:h-14 sm:w-14 md:h-20 md:w-20">
                     <User className="text-text-muted h-6 w-6 md:h-8 md:w-8" />
                   </div>
                 )}
@@ -80,7 +80,7 @@ export function ProfileDatosTab({
                 />
               </div>
               <div className="min-w-0 md:w-full">
-                <p className="text-text truncate text-[15px] font-semibold md:text-base md:whitespace-normal">
+                <p className="text-text truncate text-sm font-semibold md:text-base md:whitespace-normal">
                   {profile.full_name}
                 </p>
                 <p className="text-text-muted text-small mt-0.5 truncate md:text-xs md:whitespace-normal">

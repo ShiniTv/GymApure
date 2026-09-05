@@ -234,7 +234,7 @@ export default function CheckIn() {
             ) : !isKioskMode ? (
               <div
                 className={cn(
-                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-3xl border-2 transition-all',
+                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-[var(--radius-card)] border-2 transition-all',
                   'h-32 w-32',
                   status === 'scanning'
                     ? isCheckIn
@@ -494,7 +494,7 @@ export default function CheckIn() {
               <div className="w-full max-w-md space-y-6">
                 <Suspense
                   fallback={
-                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-2xl">
+                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-[var(--radius-card)]">
                       <Spinner size="lg" />
                     </div>
                   }

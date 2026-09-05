@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ArrowLeft, Clock, MoreVertical, Pause, Play, RotateCcw } from 'lucide-react';
 import { AnchoredMenu, Button } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { formatWorkoutTime } from './utils';
 import { workoutIconBtn } from './styles';
 
@@ -50,9 +51,7 @@ export function WorkoutHeader({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0">
-            <h1 className="text-text truncate text-sm font-bold tracking-[-0.02em] sm:text-base md:text-lg">
-              {routineName}
-            </h1>
+            <h1 className={cn(typography.immersiveTitle, 'truncate')}>{routineName}</h1>
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               <span
                 className={cn(
@@ -137,12 +136,7 @@ export function WorkoutHeader({
           >
             <RotateCcw className="h-4 w-4" />
           </button>
-          <Button
-            onClick={onFinish}
-            disabled={!sessionId}
-            size="sm"
-            className="h-9 px-3 text-xs sm:px-4 sm:text-sm"
-          >
+          <Button onClick={onFinish} disabled={!sessionId} size="sm" className="px-3 sm:px-4">
             Finalizar
           </Button>
         </div>

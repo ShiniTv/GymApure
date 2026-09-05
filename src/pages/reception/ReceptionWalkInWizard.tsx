@@ -20,7 +20,16 @@ import {
   toDisplayErrorMessage,
 } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  Select,
+  Spinner,
+  CedulaInput,
+  Alert,
+} from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
 import { useExchangeRateQuery } from '../../hooks/queries/useExchangeRateQuery';
@@ -249,7 +258,7 @@ export default function ReceptionWalkInWizard({
 
   if (success) {
     return (
-      <Card padding="sm" rounded="xl" className="mx-auto w-full max-w-3xl md:p-4">
+      <Card padding="md" rounded="xl" className="mx-auto w-full max-w-3xl">
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
@@ -258,7 +267,7 @@ export default function ReceptionWalkInWizard({
           </div>
         </div>
 
-        <div className="border-border space-y-2 rounded-2xl border p-4 text-sm">
+        <div className="border-border space-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
           <p>
             <span className="text-text-muted">Cédula:</span> <strong>{success.user.cedula}</strong>
           </p>
@@ -298,33 +307,35 @@ export default function ReceptionWalkInWizard({
         </div>
 
         {success.email_sent ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="label-caps mb-2 flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+          <Alert variant="success">
+            <p className="label-caps mb-2 flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Correo enviado
             </p>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed">
               Se envió un correo a <strong>{success.user.email}</strong> con un enlace para crear su
               contraseña. Válido 48 horas.
             </p>
-            <p className="text-text-muted mt-2 text-xs">
+            <p className="mt-2 text-xs opacity-80">
               Indique al cliente que revise bandeja de entrada y spam.
             </p>
-          </div>
+          </Alert>
         ) : (
           <>
-            <div className="flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                No se pudo enviar el correo. Copie el enlace de un solo uso y entréguelo al cliente
-                (WhatsApp, QR o escrito). Válido 48 horas.
-              </p>
-            </div>
+            <Alert variant="warning">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  No se pudo enviar el correo. Copie el enlace de un solo uso y entréguelo al
+                  cliente (WhatsApp, QR o escrito). Válido 48 horas.
+                </p>
+              </div>
+            </Alert>
             {success.password_setup_url && (
-              <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
-                <p className="label-caps text-brand mb-2">Enlace para crear contraseña</p>
+              <Alert variant="info">
+                <p className="label-caps mb-2">Enlace para crear contraseña</p>
                 <div className="flex items-center gap-2">
-                  <code className="text-text flex-1 font-mono text-xs font-semibold break-all">
+                  <code className="flex-1 font-mono text-xs font-semibold break-all">
                     {success.password_setup_url}
                   </code>
                   <Button variant="secondary" size="sm" onClick={() => void copySetupUrl()}>
@@ -332,10 +343,10 @@ export default function ReceptionWalkInWizard({
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
-                <p className="text-text-muted mt-2 text-xs">
+                <p className="mt-2 text-xs opacity-80">
                   El cliente abre el enlace y elige su contraseña. No comparta contraseñas en claro.
                 </p>
-              </div>
+              </Alert>
             )}
           </>
         )}
@@ -573,7 +584,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <div className="bg-surface-raised rounded-2xl p-4">
+          <div className="bg-surface-raised rounded-[var(--radius-card)] p-4">
             <p className="stat-label">Monto a cobrar</p>
             <p className="stat-value mt-1">${selectedPlan?.price_usd ?? '—'} USD</p>
             {needsBsRate && amountBs && exchangeRate && (
@@ -585,7 +596,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border p-4">
+          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-[var(--radius-card)] border p-4">
             <input
               type="checkbox"
               checked={form.check_in}
@@ -602,7 +613,7 @@ export default function ReceptionWalkInWizard({
       )}
 
       {step === 3 && (
-        <div className="border-border space-y-3 rounded-2xl border p-4 text-sm">
+        <div className="border-border space-y-3 rounded-[var(--radius-card)] border p-4 text-sm">
           <p>
             <span className="text-text-muted">Nombre:</span> <strong>{form.full_name}</strong>
           </p>

@@ -104,7 +104,7 @@ export default function Register() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+      <Card className="auth-linear-panel page-stack w-full" padding="lg">
         <AuthLinearHeader title="Crea tu cuenta" subtitle="Completa tus datos para comenzar." />
 
         <ol

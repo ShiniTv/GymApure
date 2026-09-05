@@ -149,7 +149,7 @@ export function ProfileHealthTab({
       )}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
-        <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-4">
+        <Card padding="md" rounded="xl" className="border-border bg-surface">
           <h2 className="text-text text-sm font-semibold">Antecedentes</h2>
           <p className="text-text-muted text-small mt-0.5 leading-snug">
             Lo ve tu entrenador · no sustituye criterio médico

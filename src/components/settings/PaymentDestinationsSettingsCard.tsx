@@ -40,7 +40,7 @@ export function PaymentDestinationsSettingsCard({
 
   if (isPending) {
     return (
-      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
         <Skeleton className="mb-3 h-4 w-48" />
         <Skeleton className="h-24 w-full" />
       </Card>
@@ -49,7 +49,7 @@ export function PaymentDestinationsSettingsCard({
 
   if (isError && !data) {
     return (
-      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
         <p className="text-danger dark:text-danger text-sm font-semibold">
           No se pudieron cargar los datos de cobro.
         </p>

@@ -95,7 +95,7 @@ export function QuickAction({
       <div className={cn('relative shrink-0', iconOnlyMobile && 'max-sm:mx-auto')}>
         <Icon className={cn('h-4 w-4', toneMap[tone])} aria-hidden />
         {showCount && iconOnlyMobile && (
-          <span className="bg-danger absolute -top-1.5 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[8px] font-bold text-white sm:hidden">
+          <span className="bg-danger text-small absolute -top-1.5 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 font-bold text-white sm:hidden">
             {count > 99 ? '99+' : count}
           </span>
         )}

@@ -214,7 +214,7 @@ export default function Layout() {
               <div className="min-w-0">
                 {currentPage ? (
                   <>
-                    <p className="text-text truncate text-sm leading-tight font-semibold tracking-[-0.02em]">
+                    <p className="text-text truncate text-sm leading-tight font-semibold tracking-[-0.015em]">
                       {mobileHeaderTitle}
                     </p>
                     <p className="text-text-muted text-small truncate leading-tight font-medium">
@@ -503,7 +503,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'app-canvas h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto px-3.5 py-3 transition-colors duration-300 sm:p-5 lg:p-6',
+              'app-canvas px-ds-4 py-ds-3 sm:p-ds-5 lg:p-ds-6 h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto transition-colors duration-300',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',

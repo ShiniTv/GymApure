@@ -26,7 +26,7 @@ import {
   PageHeader,
   PageState,
   Skeleton,
-  Spinner,
+  ListRowSkeleton,
 } from '../components/ui';
 
 const ExerciseRecordsChart = lazy(() => import('../components/exercise/ExerciseRecordsChart'));
@@ -219,10 +219,19 @@ export default function ExerciseRecords() {
 
   if (loading && records.length === 0) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted mt-3 text-xs">Cargando marcas…</p>
-      </PageState>
+      <div
+        className="page-stack-tight mx-auto w-full max-w-5xl"
+        aria-busy="true"
+        aria-label="Cargando marcas"
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-8 w-52" />
+          <Skeleton className="h-3 w-64 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-[var(--radius-card)]" />
+        <ListRowSkeleton rows={6} />
+      </div>
     );
   }
 
@@ -430,8 +439,15 @@ export default function ExerciseRecords() {
         scrollable
       >
         {detailLoading ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
+          <div className="space-y-4 py-2" aria-busy="true" aria-label="Cargando detalle">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Skeleton className="h-16 rounded-[var(--radius-card)]" />
+              <Skeleton className="h-16 rounded-[var(--radius-card)]" />
+              <Skeleton className="h-16 rounded-[var(--radius-card)]" />
+              <Skeleton className="h-16 rounded-[var(--radius-card)]" />
+            </div>
+            <Skeleton className="h-48 w-full rounded-[var(--radius-card)]" />
+            <ListRowSkeleton rows={3} />
           </div>
         ) : detail ? (
           <div className="space-y-5">

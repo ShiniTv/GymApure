@@ -173,7 +173,7 @@ export default function Memberships() {
           {plans.map((plan) => {
             const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
             return (
-              <Card key={plan.id} padding="sm" rounded="xl" className="flex flex-col md:p-4">
+              <Card key={plan.id} padding="md" rounded="xl" className="flex flex-col">
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

@@ -378,6 +378,7 @@ body,
     color: #fff;
   }
 
+  /* Align with typography.pageTitle — single scale */
   .type-h1,
   .page-title {
     font-family: var(--font-display);
@@ -388,15 +389,9 @@ body,
     color: var(--color-text);
   }
 
-  @media (min-width: 640px) {
-    .page-title {
-      font-size: 1.875rem;
-    }
-  }
-
   @media (min-width: 1024px) {
     .page-title {
-      font-size: 2rem;
+      font-size: 1.875rem;
     }
   }
 
@@ -458,7 +453,7 @@ body,
 
   .stat-value {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.03em;
     color: var(--color-text);
   }
@@ -968,6 +963,12 @@ body,
   --member-fab-size: 3.25rem;
   --member-fab-overlap: 0.875rem;
   --member-fab-protrude: calc(var(--member-fab-size) - var(--member-fab-overlap));
+  /*
+   * Chat / shell viewport chrome (subtracted from 100dvh).
+   * Defaults match prior hard-coded rem stacks on member chat panel.
+   */
+  --shell-top-chrome: 10.5rem;
+  --shell-bottom-stack: 4.75rem;
 }
 
 .member-bottom-nav {
@@ -1085,125 +1086,118 @@ html.member-has-workout-fab .offline-banner-above-nav {
 }
 
 .member-chat-panel {
-  height: calc(100dvh - 10.5rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+  height: calc(
+    100dvh - var(--shell-top-chrome) - var(--shell-bottom-stack) - env(safe-area-inset-bottom, 0px)
+  );
 }
 
 .member-chat-shell {
-  --chat-top-chrome: 11rem;
-  height: calc(100dvh - var(--chat-top-chrome) - env(safe-area-inset-bottom, 0px));
+  --shell-top-chrome: 11rem;
+  height: calc(100dvh - var(--shell-top-chrome) - env(safe-area-inset-bottom, 0px));
   min-height: 22rem;
 }
 
 @media (min-width: 640px) {
   .member-chat-panel {
-    height: calc(100dvh - 11rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+    --shell-top-chrome: 11rem;
   }
 }
 
 html.member-has-workout-fab .member-chat-panel {
-  height: calc(
-    100dvh - 10.5rem - var(--member-nav-stack) - var(--member-fab-protrude) -
-      env(safe-area-inset-bottom, 0px)
-  );
+  --shell-bottom-stack: calc(var(--member-nav-stack) + var(--member-fab-protrude));
 }
 
 .staff-chat-shell {
-  --chat-top-chrome: 11rem;
-  height: calc(100dvh - var(--chat-top-chrome) - env(safe-area-inset-bottom, 0px));
+  --shell-top-chrome: 11rem;
+  height: calc(100dvh - var(--shell-top-chrome) - env(safe-area-inset-bottom, 0px));
   min-height: 22rem;
 }
 
 .staff-chat-mobile-thread {
+  --shell-bottom-stack: calc(var(--trainer-nav-stack) + 1.25rem);
   height: calc(
-    100dvh - var(--mobile-top-chrome) - var(--trainer-nav-stack) - 1.25rem -
-      env(safe-area-inset-bottom, 0px)
+    100dvh - var(--mobile-top-chrome) - var(--shell-bottom-stack) - env(safe-area-inset-bottom, 0px)
   );
   min-height: 16rem;
 }
 
 .reception-main-pad .staff-chat-mobile-thread {
-  height: calc(
-    100dvh - var(--mobile-top-chrome) - var(--reception-nav-stack) - 1.25rem -
-      env(safe-area-inset-bottom, 0px)
-  );
+  --shell-bottom-stack: calc(var(--reception-nav-stack) + 1.25rem);
 }
 
 .admin-main-pad .staff-chat-mobile-thread {
-  height: calc(
-    100dvh - var(--mobile-top-chrome) - var(--admin-nav-stack) - 1.25rem -
-      env(safe-area-inset-bottom, 0px)
-  );
+  --shell-bottom-stack: calc(var(--admin-nav-stack) + 1.25rem);
 }
 
 .reception-main-pad .staff-chat-shell {
+  --shell-bottom-stack: var(--reception-nav-stack);
   height: calc(
-    100dvh - var(--chat-top-chrome) - var(--reception-nav-stack) - env(safe-area-inset-bottom, 0px)
+    100dvh - var(--shell-top-chrome) - var(--shell-bottom-stack) - env(safe-area-inset-bottom, 0px)
   );
 }
 
 .trainer-main-pad .staff-chat-shell {
+  --shell-bottom-stack: var(--trainer-nav-stack);
   height: calc(
-    100dvh - var(--chat-top-chrome) - var(--trainer-nav-stack) - env(safe-area-inset-bottom, 0px)
+    100dvh - var(--shell-top-chrome) - var(--shell-bottom-stack) - env(safe-area-inset-bottom, 0px)
   );
 }
 
 .admin-main-pad .staff-chat-shell {
+  --shell-bottom-stack: var(--admin-nav-stack);
   height: calc(
-    100dvh - var(--chat-top-chrome) - var(--admin-nav-stack) - env(safe-area-inset-bottom, 0px)
+    100dvh - var(--shell-top-chrome) - var(--shell-bottom-stack) - env(safe-area-inset-bottom, 0px)
   );
 }
 
 @media (min-width: 640px) {
   .staff-chat-shell {
-    --chat-top-chrome: 11.25rem;
+    --shell-top-chrome: 11.25rem;
   }
 
   .member-chat-panel {
-    height: calc(100dvh - 11rem - 4.75rem - env(safe-area-inset-bottom, 0px));
+    --shell-top-chrome: 11rem;
+  }
+
+  html.member-has-workout-fab .member-chat-panel {
+    --shell-top-chrome: 11rem;
   }
 }
 
 @media (min-width: 768px) {
   .staff-chat-shell {
-    --chat-top-chrome: 11.5rem;
-    height: calc(100dvh - 11.5rem - env(safe-area-inset-bottom, 0px));
+    --shell-top-chrome: 11.5rem;
+    height: calc(100dvh - var(--shell-top-chrome) - env(safe-area-inset-bottom, 0px));
   }
 
   .reception-main-pad .staff-chat-shell,
   .trainer-main-pad .staff-chat-shell,
   .admin-main-pad .staff-chat-shell {
-    height: calc(100dvh - 11.5rem - env(safe-area-inset-bottom, 0px));
+    --shell-top-chrome: 11.5rem;
+    height: calc(100dvh - var(--shell-top-chrome) - env(safe-area-inset-bottom, 0px));
   }
 }
 
 @media (min-width: 1024px) {
   .staff-chat-shell {
-    --chat-top-chrome: 12rem;
-    height: calc(100dvh - 12rem);
+    --shell-top-chrome: 12rem;
+    height: calc(100dvh - var(--shell-top-chrome));
   }
 
   .reception-main-pad .staff-chat-shell,
   .trainer-main-pad .staff-chat-shell,
   .admin-main-pad .staff-chat-shell {
-    height: calc(100dvh - 12rem);
+    --shell-top-chrome: 12rem;
+    height: calc(100dvh - var(--shell-top-chrome));
   }
 
   .member-chat-shell {
-    --chat-top-chrome: 11.5rem;
-    height: calc(100dvh - 11.5rem);
+    --shell-top-chrome: 11.5rem;
+    height: calc(100dvh - var(--shell-top-chrome));
   }
 
   .member-chat-shell .member-chat-panel {
     height: 100%;
-  }
-}
-
-@media (min-width: 640px) {
-  html.member-has-workout-fab .member-chat-panel {
-    height: calc(
-      100dvh - 11rem - var(--member-nav-stack) - var(--member-fab-protrude) -
-        env(safe-area-inset-bottom, 0px)
-    );
   }
 }
 

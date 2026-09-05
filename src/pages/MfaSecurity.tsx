@@ -185,7 +185,7 @@ export default function MfaSecurity() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-text text-[15px] font-semibold">
+                      <p className="text-text text-sm font-semibold">
                         {enabled ? 'MFA activo' : 'MFA inactivo'}
                       </p>
                       <Badge variant={enabled ? 'success' : 'warning'}>
