@@ -54,8 +54,17 @@ test.describe('Member pull-to-refresh', () => {
     await page.waitForFunction(() => !document.body.textContent?.includes('Cargando rutinas'), undefined, {
       timeout: 20_000,
     });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForFunction(() => window.scrollY === 0, undefined, { timeout: 5_000 });
 
     await pullToRefresh(page);
-    await expect(page.getByText('Actualizando…')).toBeVisible({ timeout: 10_000 });
+    // Refresco rápido puede retirar el texto; aceptar indicador o fin de pull (margin reset).
+    const updating = page.getByText(/Actualizando/i);
+    try {
+      await expect(updating).toBeVisible({ timeout: 5_000 });
+    } catch {
+      await pullToRefresh(page);
+      await expect(updating).toBeVisible({ timeout: 10_000 });
+    }
   });
 });

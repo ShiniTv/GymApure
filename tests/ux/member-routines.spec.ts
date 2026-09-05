@@ -17,9 +17,10 @@ test.describe('Member rutinas preview', () => {
     const routineCard = await getMemberRoutineCard(page);
     assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
-    // RegExp de role name hace match del nombre accesible completo (no substring).
     await expect(
       page
+        .locator('.touch-manipulation')
+        .filter({ hasText: /[1-9]\d*\s*ejercicios?/i })
         .getByRole('button', {
           name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|completada hoy)$/i,
         })

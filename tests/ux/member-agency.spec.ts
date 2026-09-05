@@ -41,6 +41,11 @@ test.describe('Member autonomía guiada', () => {
     const cardHeading = page.getByRole('heading', { level: 3 }).filter({ hasText: name });
     await expect(cardHeading).toBeVisible({ timeout: 15_000 });
     await expect(cardHeading.getByText(/^mía$/i)).toBeVisible();
+
+    // Cleanup: no dejar rutinas vacías que contaminen specs posteriores (nav/workout/trainer).
+    await page.getByRole('button', { name: new RegExp(`Eliminar ${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) }).click();
+    await page.getByRole('button', { name: /^eliminar$/i }).click();
+    await expect(cardHeading).toHaveCount(0, { timeout: 10_000 });
   });
 
   test('Nutrición: plan sugerido permite registrar', async ({ page }) => {

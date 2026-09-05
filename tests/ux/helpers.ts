@@ -7,6 +7,22 @@ export const RECEPTION_EMAIL = 'receptionist@gym.com';
 export const TRAINER_EMAIL = 'trainer@gym.com';
 const THEME_ONBOARDING_KEY = 'gymapure-theme-onboarding-done';
 
+/** ID del miembro demo (member@gym.com), no el primer item de /api/users (puede ser Chat Member sin rutinas). */
+export async function getDemoMemberId(page: Page): Promise<number> {
+  const memberId = await page.evaluate(async (email) => {
+    const res = await fetch('/api/users?role=member&page=1&pageSize=50', {
+      credentials: 'include',
+    });
+    const data = (await res.json()) as { items?: Array<{ id: number; email?: string }> };
+    const demo = data.items?.find((m) => m.email === email);
+    return demo?.id ?? null;
+  }, MEMBER_EMAIL);
+  if (memberId == null) {
+    throw new Error(`Miembro demo ${MEMBER_EMAIL} no encontrado para el entrenador.`);
+  }
+  return memberId;
+}
+
 export function demoPassword(): string {
   const pwd = process.env.DEMO_PASSWORD;
   if (!pwd) {
@@ -108,21 +124,32 @@ export async function getMemberRoutineCard(page: Page) {
     { timeout: 20_000 }
   ).catch(() => undefined);
 
+  // Preferir rutinas con ≥1 ejercicio (evitar propias vacías / "0 ejercicios").
+  const withExercises = page
+    .getByRole('button')
+    .filter({ hasText: /[1-9]\d*\s*ejercicios?/i })
+    .first();
+  if (await withExercises.isVisible().catch(() => false)) return withExercises;
+
   const card = page.getByRole('button').filter({ hasText: /ejercicio/i }).first();
   return (await card.isVisible()) ? card : null;
 }
 
-/** Rutinas → expandir → Empezar entrenamiento. Exige rutina demo sembrada. */
+const WORKOUT_START_NAME =
+  /^(empezar( entrenamiento)?|continuar( entrenamiento)?|entrenar( ahora)?|completada hoy)$/i;
+
+/** Rutinas → Empezar entrenamiento. Exige rutina demo sembrada. */
 export async function goToActiveWorkout(page: Page): Promise<void> {
   await page.goto('/routines');
   const routineCard = await getMemberRoutineCard(page);
   assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
-  await routineCard.click();
-  // Labels: library + hero usan "Empezar/Continuar entrenamiento" (o FAB "Entrenar").
-  const startBtn = page.getByRole('button', {
-    name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|entrenar( ahora)?)$/i,
-  });
+  // CTA por tarjeta; elegir una con ≥1 ejercicio (propias vacías suelen ir primero).
+  const startBtn = page
+    .locator('.touch-manipulation')
+    .filter({ hasText: /[1-9]\d*\s*ejercicios?/i })
+    .getByRole('button', { name: WORKOUT_START_NAME })
+    .first();
   await expect(startBtn).toBeVisible({ timeout: 10_000 });
   await startBtn.click();
   await page.waitForURL(/\/workout\//, { timeout: 15_000 });
