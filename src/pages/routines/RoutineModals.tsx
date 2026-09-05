@@ -214,7 +214,7 @@ export function RoutineModals({
           )}
           <Button
             className="w-full"
-            size="lg"
+            size="md"
             onClick={handleCreateRoutine}
             disabled={!newRoutine.clone_from_id && !newRoutine.name.trim()}
           >

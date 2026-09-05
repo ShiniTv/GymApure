@@ -173,7 +173,7 @@ export default function MfaSecurity() {
                 <div className="flex min-w-0 items-start gap-3">
                   <div
                     className={cn(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)]',
                       enabled ? 'bg-emerald-500/10' : 'bg-amber-500/10'
                     )}
                   >

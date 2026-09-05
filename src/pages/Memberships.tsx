@@ -13,6 +13,8 @@ import {
   EmptyState,
   BackToDashboardLink,
 } from '../components/ui';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 
 interface Membership {
   id: number;
@@ -177,12 +179,12 @@ export default function Memberships() {
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-text truncate text-base leading-tight font-bold">
+                      <h3 className="text-text text-h2 truncate leading-tight font-semibold">
                         {plan.name}
                       </h3>
                       <Badge variant="default">{plan.duration_days} días</Badge>
                     </div>
-                    <p className="text-brand mt-2 text-xl font-bold tracking-tight tabular-nums">
+                    <p className={cn(typography.statValueSm, 'text-brand mt-2')}>
                       ${plan.price_usd}
                       <span className="text-text-muted ml-1 text-xs font-semibold">USD</span>
                       <span className="text-text-muted text-small ml-2 font-medium">
@@ -277,7 +279,7 @@ export default function Memberships() {
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" size="lg" loading={saving}>
+          <Button type="submit" className="w-full" size="md" loading={saving}>
             Guardar
           </Button>
         </form>

@@ -53,25 +53,25 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex min-h-[50dvh] items-center justify-center p-8">
-          <div className="flex max-w-md flex-col items-center gap-4 text-center">
-            <div className="rounded-full bg-red-500/10 p-4">
-              <AlertTriangle className="h-8 w-8 text-red-500" />
+        <div className="flex min-h-[40dvh] items-center justify-center p-4">
+          <div className="flex max-w-md flex-col items-center gap-3 text-center">
+            <div className="rounded-[var(--radius-card)] bg-red-500/10 p-3">
+              <AlertTriangle className="h-6 w-6 text-red-500" />
             </div>
-            <h2 className="text-text text-lg font-bold">Algo salió mal</h2>
+            <h2 className="text-text text-h2 font-semibold">Algo salió mal</h2>
             <p className="text-text-muted text-sm leading-relaxed">
               Ocurrió un error inesperado al cargar esta sección. Por favor, intenta recargar la
               página.
             </p>
             {import.meta.env.DEV && this.state.error?.message ? (
-              <p className="max-w-full rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs break-words text-red-600 dark:text-red-400">
+              <p className="max-w-full rounded-[var(--radius-card)] border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs break-words text-red-600 dark:text-red-400">
                 {this.state.error.message}
               </p>
             ) : null}
             <button
               type="button"
               onClick={this.handleReset}
-              className="bg-text text-bg inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:opacity-90"
+              className="bg-text text-bg inline-flex min-h-[var(--touch-min)] items-center gap-2 rounded-[var(--radius-button)] px-4 py-2.5 text-sm font-semibold transition-colors hover:opacity-90"
             >
               <RefreshCw className="h-4 w-4" />
               {this.state.isChunkError ? 'Recargar página' : 'Reintentar'}

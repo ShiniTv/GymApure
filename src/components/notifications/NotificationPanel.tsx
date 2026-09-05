@@ -49,7 +49,7 @@ function PanelBody({
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
-        <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden />
+        <CheckCircle2 className="h-8 w-8 text-emerald-500" aria-hidden />
         <p className="text-text text-sm font-semibold">Todo al día</p>
         <p className="text-text-muted text-xs">No tienes alertas pendientes</p>
       </div>

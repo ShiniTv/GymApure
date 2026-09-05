@@ -262,7 +262,7 @@ export default function ReceptionWalkInWizard({
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
-            <h3 className="text-text text-lg font-bold">Registro completado</h3>
+            <h3 className="text-text text-h2 font-semibold">Registro completado</h3>
             <p className="text-text-muted text-sm">{success.user.full_name} ya puede usar el gym</p>
           </div>
         </div>
@@ -525,7 +525,7 @@ export default function ReceptionWalkInWizard({
                 >
                   <p className="text-text text-sm font-semibold">{plan.name}</p>
                   <p className="text-text-muted mt-0.5 text-xs">{plan.duration_days} días</p>
-                  <p className="text-brand mt-1 text-base font-bold">${plan.price_usd}</p>
+                  <p className="text-brand mt-1 text-lg font-semibold">${plan.price_usd}</p>
                 </button>
               ))}
             </div>
@@ -605,7 +605,7 @@ export default function ReceptionWalkInWizard({
               }}
               className="accent-brand h-5 w-5 rounded"
             />
-            <span className="text-text-secondary text-sm font-bold">
+            <span className="text-text-secondary text-sm font-semibold">
               Autorizar entrada al gym al finalizar
             </span>
           </label>

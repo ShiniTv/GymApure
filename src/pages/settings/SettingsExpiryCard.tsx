@@ -56,7 +56,7 @@ export function SettingsExpiryCard({
           className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
         >
           <div className="mb-2.5 flex min-w-0 items-center gap-2">
-            <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-bold">
+            <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
               <Settings2 className="text-brand h-4 w-4 shrink-0" />
               <span className="truncate">Avisos de membresía</span>
             </h2>

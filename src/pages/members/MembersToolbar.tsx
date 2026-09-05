@@ -7,6 +7,8 @@ import {
   SearchInput,
   BackToDashboardLink,
 } from '../../components/ui';
+import { typography } from '../../lib/typography';
+import { cn } from '../../lib/utils';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
 import { type TrainingShift } from '../../lib/trainingShift';
 import { type UserRole } from '../../lib/roles';
@@ -107,35 +109,25 @@ export function MembersToolbar({
 
       {userRole === 'admin' && adminStats?.stats && (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
-          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              Activas
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
+          <div className="border-border/80 bg-surface rounded-[var(--radius-card)] border px-3 py-2.5">
+            <p className={cn(typography.statLabel)}>Activas</p>
+            <p className={cn(typography.statValueSm, 'mt-0.5')}>
               {adminStats.stats.activeSubscriptions}
             </p>
           </div>
-          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              Por vencer ({alertDays}d)
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
-              {adminStats.stats.expiringSoon}
-            </p>
+          <div className="border-border/80 bg-surface rounded-[var(--radius-card)] border px-3 py-2.5">
+            <p className={cn(typography.statLabel)}>Por vencer ({alertDays}d)</p>
+            <p className={cn(typography.statValueSm, 'mt-0.5')}>{adminStats.stats.expiringSoon}</p>
           </div>
-          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              Pagos pend.
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
+          <div className="border-border/80 bg-surface rounded-[var(--radius-card)] border px-3 py-2.5">
+            <p className={cn(typography.statLabel)}>Pagos pend.</p>
+            <p className={cn(typography.statValueSm, 'mt-0.5')}>
               {adminStats.stats.pendingPayments}
             </p>
           </div>
-          <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-              En lista
-            </p>
-            <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
+          <div className="border-border/80 bg-surface rounded-[var(--radius-card)] border px-3 py-2.5">
+            <p className={cn(typography.statLabel)}>En lista</p>
+            <p className={cn(typography.statValueSm, 'mt-0.5')}>{total}</p>
           </div>
         </div>
       )}

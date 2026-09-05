@@ -21,7 +21,7 @@ const paddingMap = {
   lg: 'p-ds-4 sm:p-ds-5',
 };
 
-/** Linear-like window panels — hairline edge, no heavy shadow. All map to radius-card (8px). */
+/** Window panels — hairline edge. Radius from `--radius-card`. */
 const roundedMap = {
   xl: 'rounded-[var(--radius-card)]',
   '2xl': 'rounded-[var(--radius-card)]',

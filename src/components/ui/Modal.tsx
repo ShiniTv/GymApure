@@ -179,7 +179,7 @@ export function Modal({
               scrollable ? 'border-border/60 px-ds-4 sm:px-ds-5 border-b py-3' : 'mb-4'
             )}
           >
-            <h2 id={titleId} className={cn(typography.sectionTitle, 'text-text sm:text-base')}>
+            <h2 id={titleId} className={cn(typography.cardTitle, 'text-text')}>
               {title}
             </h2>
             <IconButton

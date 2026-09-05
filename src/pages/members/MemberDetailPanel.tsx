@@ -84,7 +84,7 @@ export function MemberDetailPanel({
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar name={member.full_name} size="sm" className="shrink-0" />
             <div className="min-w-0">
-              <p className="text-text truncate text-sm font-bold">{member.full_name}</p>
+              <p className="text-text truncate text-sm font-semibold">{member.full_name}</p>
               <p className="text-text-muted text-small">
                 {ROLE_LABELS[member.role] ?? member.role}
               </p>
@@ -133,7 +133,7 @@ export function MemberDetailPanel({
       </dl>
 
       {primary && (
-        <Button type="button" size="lg" className="mt-3.5 w-full" onClick={() => run(primary)}>
+        <Button type="button" size="md" className="mt-3.5 w-full" onClick={() => run(primary)}>
           <primary.icon className="h-4 w-4" aria-hidden />
           {primary.label}
         </Button>

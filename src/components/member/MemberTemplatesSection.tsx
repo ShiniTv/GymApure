@@ -44,7 +44,7 @@ export function MemberTemplatesSection({ onAssigned, className }: MemberTemplate
 
   return (
     <Card padding="md" rounded="xl" className={className}>
-      <h3 className="text-text text-sm font-bold">Plantillas para empezar</h3>
+      <h3 className="text-text text-sm font-semibold">Plantillas para empezar</h3>
       <p className="text-text-secondary text-small mt-1 leading-relaxed">
         Elige una plantilla; tu entrenador puede ajustarla después.
       </p>

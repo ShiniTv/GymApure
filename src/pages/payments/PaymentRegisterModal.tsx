@@ -262,7 +262,7 @@ export function PaymentRegisterModal({
               <Input
                 type="number"
                 required
-                className="text-xl font-semibold"
+                className="text-lg font-semibold tabular-nums"
                 value={amountUsd}
                 error={fieldErrors.amount}
                 readOnly={isCashUsd && Object.values(billCounts).some((n) => n > 0)}
@@ -281,7 +281,7 @@ export function PaymentRegisterModal({
                 <Input
                   type="number"
                   required={step === 2 || !useWizard}
-                  className="text-xl font-semibold"
+                  className="text-lg font-semibold tabular-nums"
                   value={amountUsd}
                   error={fieldErrors.amount}
                   readOnly={isCashUsd && Object.values(billCounts).some((n) => n > 0)}

@@ -120,7 +120,7 @@ function AuditTimelineItem({ log, isLast }: { log: AuditLogRow; isLast: boolean 
       )}
       <div
         className={cn(
-          'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-[var(--color-surface)]',
+          'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] ring-4 ring-[var(--color-surface)]',
           variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
           variant === 'danger' && 'text-danger bg-red-500/10',
           variant === 'accent' && 'bg-brand/10 text-brand',
@@ -219,7 +219,7 @@ export default function AuditLogs() {
             <AuditLogsSkeleton />
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-6">
+          <div className="p-4">
             <EmptyState
               icon={Shield}
               title="No hay registros"

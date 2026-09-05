@@ -110,7 +110,7 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
         </div>
 
         <div className="px-3 pt-2 pb-3 text-center">
-          <h2 className="line-clamp-2 text-sm font-bold tracking-tight text-zinc-900">
+          <h2 className="line-clamp-2 text-sm font-semibold tracking-tight text-zinc-900">
             {member.full_name}
           </h2>
           <p className="text-small mt-0.5 line-clamp-2 font-medium text-zinc-500">{subtitle}</p>

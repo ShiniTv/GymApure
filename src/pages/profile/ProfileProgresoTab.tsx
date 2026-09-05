@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { Button, Card, Spinner } from '../../components/ui';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
@@ -100,7 +101,7 @@ export function ProfileProgresoTab({
             >
               <Minus className="h-4 w-4" />
             </button>
-            <span className="text-text min-w-[2rem] text-center text-lg font-bold tabular-nums">
+            <span className={cn(typography.statValueSm, 'min-w-[2rem] text-center')}>
               {weeklyGoal}
             </span>
             <button
@@ -197,7 +198,7 @@ export function ProfileProgresoTab({
           </Suspense>
         ) : chartData.length === 1 ? (
           <div className="flex h-40 flex-col items-center justify-center text-center sm:h-48">
-            <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
+            <p className={cn(typography.statValue, 'text-brand')}>{chartData[0].weight} kg</p>
             <p className="text-text-muted text-small mt-1.5">
               {chartData[0].date} · Añade otra medición para la gráfica
             </p>

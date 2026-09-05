@@ -24,7 +24,7 @@ function MotivationalIllustration() {
   return (
     <svg
       viewBox="0 0 120 80"
-      className="text-brand/40 mx-auto mb-3 h-16 w-24"
+      className="text-brand/40 mx-auto mb-3 h-12 w-20"
       aria-hidden
       fill="none"
     >
@@ -60,7 +60,7 @@ export function EmptyState({
         <MotivationalIllustration />
       ) : (
         <Icon
-          className={cn('text-text-muted mx-auto', compact ? 'mb-2.5 h-7 w-7' : 'mb-3.5 h-9 w-9')}
+          className={cn('text-text-muted mx-auto', compact ? 'mb-2 h-6 w-6' : 'mb-3 h-8 w-8')}
         />
       )}
       <h3 className={cn(typography.sectionTitle, 'text-text', compact ? 'text-small' : 'text-sm')}>

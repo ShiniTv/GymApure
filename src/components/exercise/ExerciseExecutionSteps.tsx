@@ -32,7 +32,7 @@ export function ExerciseExecutionSteps({
       className={cn(
         compact
           ? 'bg-brand/5 dark:bg-brand/10 border-brand/20 rounded-[var(--radius-card)] border p-4'
-          : 'border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border p-6',
+          : 'border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border p-4',
         className
       )}
     >

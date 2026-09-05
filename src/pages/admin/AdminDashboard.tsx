@@ -217,7 +217,7 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5 [&>*]:h-full">
         <StatCard
           title="Ingresos (mes)"
           value={formatMoney(revenueThisMonth)}

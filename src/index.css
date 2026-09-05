@@ -6,39 +6,40 @@
 
 /*
  * Design tokens — GymApure chrome
- * Direction: Linear-inspired dense shell (calm surfaces, soft nav pills, hairline borders).
+ * Direction: Apple Operate — calm product UI, system type, balanced (not oversized) scale.
  * Surfaces: bg (canvas) → surface (panel) → surface-raised → surface-overlay.
- * Brand blue stays for CTAs / status — not for sidebar selection.
- * Desktop density: tighter radii (6–8px). Mobile keeps --touch-* targets.
- * Figma mobile: https://www.figma.com/design/WwEtNcIqpDNxYZx4ZpiE7m/Mobile-App-UI
+ * Brand sky stays for CTAs / status — not for sidebar selection.
+ * One rhythm: titles ~20px, body 15–16, chrome 13, KPIs 18–20. Floor keeps --touch-*.
  */
 @theme {
-  /* —— Typography —— */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* —— Typography (system / SF Pro stack) —— */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', system-ui,
+    sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  --text-h1: 1.375rem; /* 22px — Operate page titles (Linear-dense) */
-  --text-h1--line-height: 1.2;
-  --text-h1--letter-spacing: -0.025em;
-  --text-h1--font-weight: 600; /* matches .page-title / typography.pageTitle */
+  --text-h1: 1.25rem; /* 20px — page titles */
+  --text-h1--line-height: 1.25;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 600;
 
-  --text-h2: 1rem; /* 16px — card / panel titles */
+  --text-h2: 0.9375rem; /* 15px — card / section titles */
   --text-h2--line-height: 1.3;
   --text-h2--letter-spacing: -0.015em;
   --text-h2--font-weight: 600;
 
-  --text-base: 1rem; /* 16px — body */
+  --text-base: 0.9375rem; /* 15px — body */
   --text-base--line-height: 1.5;
   --text-base--letter-spacing: -0.011em;
   --text-base--font-weight: 400;
 
   --text-small: 0.75rem; /* 12px — labels / meta */
   --text-small--line-height: 1.35;
-  --text-small--letter-spacing: 0.01em;
+  --text-small--letter-spacing: -0.006em;
   --text-small--font-weight: 500;
 
-  /* Sidebar / dense chrome (between small and base) */
+  /* Sidebar / chrome */
   --text-chrome: 0.8125rem; /* 13px */
   --text-chrome--line-height: 1.35;
   --text-chrome--letter-spacing: -0.01em;
@@ -58,11 +59,11 @@
   --color-info: #0c98ff;
 
   /* —— Surfaces (light defaults; dark overrides in :root / .dark) —— */
-  --color-bg: #f4f4f5;
+  --color-bg: #f5f5f7;
   --color-bg-elevated: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-raised: #f4f4f5;
-  --color-surface-overlay: #e4e4e7;
+  --color-surface-raised: #f5f5f7;
+  --color-surface-overlay: #e8e8ed;
   --color-surface-dark: #141414;
   --color-border: #e4e4e7;
   --color-border-subtle: #f4f4f5;
@@ -83,11 +84,11 @@
   --spacing-ds-6: 1.5rem; /* 24 — section gap */
   --spacing-ds-8: 2rem; /* 32 — block gap */
 
-  /* —— Radii (dense Linear panels; sheets stay softer for mobile) —— */
+  /* —— Radii (balanced Operate; sheets stay softer for mobile) —— */
   --radius-chip: 0.375rem; /* 6 */
   --radius-input: 0.5rem; /* 8 */
   --radius-button: 0.5rem; /* 8 */
-  --radius-card: 0.5rem; /* 8 — window panels */
+  --radius-card: 0.625rem; /* 10 — window panels */
   --radius-sheet: 1.25rem; /* 20 — bottom sheets */
   --radius-pill: 9999px;
 
@@ -188,13 +189,13 @@
 /* Base Styles */
 @layer base {
   :root {
-    --color-bg: #f4f4f5;
+    --color-bg: #f5f5f7;
     --color-bg-elevated: #ffffff;
     --color-surface: #ffffff;
-    --color-surface-raised: #f4f4f5;
-    --color-surface-overlay: #e4e4e7;
+    --color-surface-raised: #f5f5f7;
+    --color-surface-overlay: #e8e8ed;
     --color-border: #e4e4e7;
-    --color-border-subtle: #f4f4f5;
+    --color-border-subtle: #f5f5f7;
     --color-text: #18181b;
     /* AA: secondary/muted ≥4.5:1 on light surfaces */
     --color-text-secondary: #3f3f46;
@@ -202,20 +203,20 @@
   }
 
   .dark {
-    /* Linear-like dark: deep canvas, slightly lifted sidebar/surfaces */
-    --color-bg: #09090b;
-    --color-bg-elevated: #111113;
-    --color-surface: #18181b;
-    --color-surface-raised: #1f1f23;
-    --color-surface-overlay: #27272a;
-    --color-surface-dark: #111113;
-    --color-border: #27272a;
-    --color-border-subtle: #1f1f23;
+    /* Apple Operate dark: deep canvas, lifted sidebar/surfaces */
+    --color-bg: #000000;
+    --color-bg-elevated: #1c1c1e;
+    --color-surface: #1c1c1e;
+    --color-surface-raised: #2c2c2e;
+    --color-surface-overlay: #3a3a3c;
+    --color-surface-dark: #1c1c1e;
+    --color-border: #38383a;
+    --color-border-subtle: #2c2c2e;
     --color-text: #fafafa;
     /* AA: secondary/muted on near-black */
     --color-text-secondary: #d4d4d8;
     --color-text-muted: #a1a1aa;
-    --color-text-inverse: #09090b;
+    --color-text-inverse: #000000;
     --color-brand: #3aadff;
     --color-brand-hover: #0c98ff;
     --color-warning: #c9b35a;
@@ -440,9 +441,10 @@ body,
   }
 
   .section-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    font-weight: var(--text-h2--font-weight);
+    letter-spacing: var(--text-h2--letter-spacing);
     color: var(--color-text-secondary);
   }
 
@@ -455,16 +457,11 @@ body,
   }
 
   .stat-value {
-    font-size: 1.25rem; /* 20px */
+    font-size: 1.25rem; /* 20px — hero KPI, no responsive jump */
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--color-text);
-  }
-
-  @media (min-width: 640px) {
-    .stat-value {
-      font-size: 1.5rem; /* 24px — hero KPI cap */
-    }
+    font-variant-numeric: tabular-nums;
   }
 
   /* Toolbar / Operate KPI — quieter than hero */
@@ -513,7 +510,7 @@ body,
   }
 
   .page-stack-loose {
-    @apply space-y-3.5 sm:space-y-4 lg:space-y-5;
+    @apply space-y-4 sm:space-y-5 lg:space-y-6;
   }
 
   /* Constrain form / panel width so content does not stretch on tablet widths */
@@ -562,17 +559,17 @@ body,
     border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
   }
 
-  /* App shell — Linear/Cursor chrome (sidebar vs canvas) */
+  /* App shell — Apple Operate (sidebar vs canvas) */
   .app-sidebar {
     background-color: var(--color-bg-elevated);
-    border-color: color-mix(in srgb, var(--color-border) 85%, transparent);
+    border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
   }
 
   .app-canvas {
     background-color: var(--color-bg);
   }
 
-  /* Sidebar / navigation — soft pills, muted section labels */
+  /* Sidebar / navigation — one rhythm with the canvas */
   .nav-stack {
     @apply flex flex-col gap-0.5;
   }
@@ -582,11 +579,11 @@ body,
   }
 
   .nav-section-label {
-    @apply text-text-muted text-small mb-1 px-2.5 font-medium tracking-[0.08em] uppercase;
+    @apply text-text-muted text-small mb-1 px-2.5 leading-snug font-semibold tracking-[-0.01em];
   }
 
   .nav-link {
-    @apply text-chrome flex min-h-8 touch-manipulation items-center gap-2 rounded-md px-2.5 py-1.5 leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
+    @apply text-chrome flex min-h-8 touch-manipulation items-center gap-2 rounded-[var(--radius-button)] px-2.5 py-1.5 leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
   }
 
   .nav-link:active {
@@ -600,7 +597,7 @@ body,
     }
   }
 
-  /* Active = quiet surface pill (not brand wash) — Linear/Cursor pattern */
+  /* Active = quiet surface pill (not brand wash) */
   .nav-link-active {
     @apply bg-surface-overlay text-text shadow-none;
   }

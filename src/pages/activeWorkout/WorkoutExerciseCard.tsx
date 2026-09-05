@@ -76,7 +76,7 @@ export function WorkoutExerciseCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-start gap-2">
-            <h3 className="text-text min-w-0 flex-1 text-base leading-snug font-bold sm:text-lg">
+            <h3 className="text-text text-h2 min-w-0 flex-1 leading-snug font-semibold">
               <span className="break-words">{exercise.name}</span>
             </h3>
             <button

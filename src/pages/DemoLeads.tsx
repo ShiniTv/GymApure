@@ -155,7 +155,9 @@ export default function DemoLeads() {
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-text truncate text-base font-bold">{lead.gym_name}</h2>
+                        <h2 className="text-text truncate text-sm font-semibold">
+                          {lead.gym_name}
+                        </h2>
                         <Badge variant={STATUS_BADGES[lead.status]}>
                           {STATUS_LABELS[lead.status]}
                         </Badge>

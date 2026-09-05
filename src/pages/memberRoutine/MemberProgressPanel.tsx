@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { ExerciseRecordSummary } from '../../lib/exerciseRecords';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 
 const WorkoutHistoryCharts = lazy(() => import('../../components/workout/WorkoutHistoryCharts'));
 
@@ -71,18 +72,17 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         <div className="text-center">
-          <p className="text-small text-text-muted font-semibold tracking-wide uppercase">Semana</p>
-          <p className="text-text mt-0.5 text-xl font-semibold tabular-nums">
+          <p className={cn(typography.statLabel)}>Semana</p>
+          <p className={cn(typography.statValueSm, 'mt-0.5')}>
             {progress ? `${progress.workouts_this_week}/${progress.weekly_goal}` : '—'}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
-            Adherencia
-          </p>
+          <p className={cn(typography.statLabel)}>Adherencia</p>
           <p
             className={cn(
-              'mt-0.5 text-xl font-semibold tabular-nums',
+              typography.statValueSm,
+              'mt-0.5',
               progress ? adherenceTone(progress.goal_completion_percent) : 'text-text-muted'
             )}
           >
@@ -90,10 +90,8 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
           </p>
         </div>
         <div className="text-center">
-          <p className="text-small text-text-muted font-semibold tracking-wide uppercase">Marcas</p>
-          <p className="text-text mt-0.5 text-xl font-semibold tabular-nums">
-            {records?.length ?? 0}
-          </p>
+          <p className={cn(typography.statLabel)}>Marcas</p>
+          <p className={cn(typography.statValueSm, 'mt-0.5')}>{records?.length ?? 0}</p>
         </div>
       </div>
 

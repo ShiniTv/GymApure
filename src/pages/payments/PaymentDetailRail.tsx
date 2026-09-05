@@ -1,5 +1,7 @@
 import { Badge, Button, Card } from '../../components/ui';
 import { Check, X } from 'lucide-react';
+import { typography } from '../../lib/typography';
+import { cn } from '../../lib/utils';
 import {
   formatPaymentDate,
   formatPaymentMethod,
@@ -34,7 +36,7 @@ export function PaymentDetailRail({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-text truncate text-sm font-bold">{payment.user_name}</p>
+          <p className="text-text truncate text-sm font-semibold">{payment.user_name}</p>
           <p className="text-text-muted text-small">
             <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
           </p>
@@ -50,7 +52,7 @@ export function PaymentDetailRail({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-brand text-xl font-bold tabular-nums">${payment.amount_usd}</p>
+        <p className={cn(typography.statValueSm, 'text-brand')}>${payment.amount_usd}</p>
         <Badge variant={paymentStatusVariant(payment.status)} className="text-small">
           {paymentStatusLabel(payment.status)}
         </Badge>

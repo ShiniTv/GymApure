@@ -15,6 +15,7 @@ import {
 } from '../components/ui';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { cn } from '../lib/utils';
+import { typography } from '../lib/typography';
 import { useState, useMemo, useEffect } from 'react';
 
 function adherenceBadgeClass(percent: number): string {
@@ -102,30 +103,22 @@ export default function NutritionOverview() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
-                Clientes
-              </p>
-              <p className="text-text text-2xl font-semibold">{assignedTotal}</p>
+              <p className={cn(typography.statLabel)}>Clientes</p>
+              <p className={cn(typography.statValueSm, 'mt-0.5')}>{assignedTotal}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
-                Con plan
-              </p>
-              <p className="text-text text-2xl font-semibold">{data.with_plan}</p>
+              <p className={cn(typography.statLabel)}>Con plan</p>
+              <p className={cn(typography.statValueSm, 'mt-0.5')}>{data.with_plan}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
-                Sin plan
-              </p>
-              <p className="text-warning text-2xl font-semibold">{withoutPlan}</p>
+              <p className={cn(typography.statLabel)}>Sin plan</p>
+              <p className={cn(typography.statValueSm, 'text-warning mt-0.5')}>{withoutPlan}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
-                Registrando
-              </p>
-              <p className="text-text text-2xl font-semibold">{data.logging_active}</p>
+              <p className={cn(typography.statLabel)}>Registrando</p>
+              <p className={cn(typography.statValueSm, 'mt-0.5')}>{data.logging_active}</p>
             </Card>
           </div>
 
@@ -165,7 +158,9 @@ export default function NutritionOverview() {
                       <div className="flex min-w-0 items-center gap-2.5">
                         <Avatar name={member.full_name} size="sm" className="shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-text truncate font-bold">{member.full_name}</p>
+                          <p className="text-text truncate text-sm font-semibold">
+                            {member.full_name}
+                          </p>
                           {hasPlan ? (
                             <>
                               <p className="text-text-muted truncate text-xs">

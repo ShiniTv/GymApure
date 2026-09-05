@@ -43,9 +43,9 @@ Software de gym de barrio / cadena local con roles reales (member, trainer, rece
 ## Brand Commitments
 
 - Nombre de producto: **GymApure**.
-- Dirección visual: shell denso inspirado en Linear (superficies calmadas, pills de nav, bordes hairline); acento de marca por defecto azul `#0c98ff` (palette sky), no púrpura genérico como identidad.
+- Dirección visual: **Apple Operate** — tipografía de sistema (SF Pro / Segoe), escala equilibrada (títulos ~20px, no marketing-large), sidebar ~224px; superficies calmadas y bordes hairline; acento de marca por defecto azul `#0c98ff` (palette sky), no púrpura genérico como identidad.
 - Figma móvil de referencia: Mobile App UI (`WwEtNcIqpDNxYZx4ZpiE7m`).
-- Touch targets: `--touch-min` 44px / `--touch-comfort` 48px.
+- Touch targets: `--touch-min` 44px / `--touch-comfort` 48px (piso / CTAs).
 - Idioma de interfaz: español.
 
 ## Evidence on Hand
@@ -59,7 +59,7 @@ Software de gym de barrio / cadena local con roles reales (member, trainer, rece
 
 1. **Un trabajo por pantalla** — el miembro entrena; recepción registra acceso; admin opera. No meter marketing ni stats decorativos en el primer viewport operativo.
 2. **Móvil primero para member/reception** — bottom nav icon-only con `aria-label`; sin hamburger; clearance sobre la isla.
-3. **Preservar el sistema visual** — tokens, radii densos (6–8px desktop), sheets más suaves; no sustituir por “AI slop” (purple gradients, cards por doquier, glow).
+3. **Apple Operate, no Linear denso** — tipografía profesional, gutters amplios en desktop, chrome legible; sheets móviles suaves; no “AI slop” (purple gradients, cards por doquier, glow).
 4. **Copy ES y roles** — terminología del gym local; Access Denied cuando el rol no corresponde.
 5. **Motion con propósito** — page-enter / sheets / modales cortos; respetar `prefers-reduced-motion`.
 

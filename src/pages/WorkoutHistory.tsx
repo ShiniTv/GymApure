@@ -26,6 +26,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
 import { cn } from '../lib/utils';
+import { typography } from '../lib/typography';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -694,7 +695,7 @@ export default function WorkoutHistory() {
             {/* Mobile card list */}
             <div className="divide-border divide-y lg:hidden">
               {loading ? (
-                <div className="flex justify-center p-8">
+                <div className="flex justify-center p-4">
                   <Spinner />
                 </div>
               ) : (
@@ -946,19 +947,19 @@ export default function WorkoutHistory() {
             )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold">{sessionDetail.summary.sets_logged}</p>
-                <p className="text-small text-text-muted">Series hechas</p>
+              <div className="border-border bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>{sessionDetail.summary.sets_logged}</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Series hechas</p>
               </div>
-              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold">{sessionDetail.summary.sets_planned}</p>
-                <p className="text-small text-text-muted">Series planeadas</p>
+              <div className="border-border bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>{sessionDetail.summary.sets_planned}</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Series planeadas</p>
               </div>
-              <div className="border-border bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold">
+              <div className="border-border bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>
                   {sessionDetail.summary.total_volume_kg} kg
                 </p>
-                <p className="text-small text-text-muted">Volumen total</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Volumen total</p>
               </div>
             </div>
 

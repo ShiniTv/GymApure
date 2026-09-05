@@ -547,10 +547,7 @@ export default function Reception() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3
-                className={cn(
-                  'text-text font-semibold',
-                  isCounterMode ? 'text-sm' : 'text-lg font-bold'
-                )}
+                className={cn('text-text font-semibold', isCounterMode ? 'text-sm' : 'text-base')}
               >
                 {lookup.user.full_name}
               </h3>

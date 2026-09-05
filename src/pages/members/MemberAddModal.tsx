@@ -182,7 +182,7 @@ export function MemberAddModal({
         {errors.submit && (
           <p className="text-danger text-center text-xs font-medium">{errors.submit}</p>
         )}
-        <Button onClick={onSubmit} className="mt-4 w-full" size="lg">
+        <Button onClick={onSubmit} className="mt-4 w-full" size="md">
           Crear Usuario
         </Button>
       </div>

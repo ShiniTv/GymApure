@@ -90,7 +90,7 @@ export function QuickAction({
               'flex items-center gap-2.5',
               useCompact
                 ? 'min-h-[var(--touch-min)] px-3 py-2.5 sm:min-h-0'
-                : 'min-h-[72px] items-start gap-3 p-4'
+                : 'min-h-[var(--touch-comfort)] items-start gap-2.5 px-3 py-3'
             )
       )}
     >

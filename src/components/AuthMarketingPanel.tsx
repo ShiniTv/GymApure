@@ -25,10 +25,10 @@ export default function AuthMarketingPanel() {
           fetchPriority="high"
           className="h-12 w-12 rounded-xl ring-1 ring-white/15"
         />
-        <h2 className="mt-8 text-2xl font-semibold tracking-[-0.035em]">
+        <h2 className="text-h1 mt-6 font-semibold tracking-[-0.02em]">
           <BrandName variant="inline" onDark />
         </h2>
-        <p className="mt-5 max-w-md text-[1.75rem] leading-[1.12] font-semibold tracking-[-0.04em] text-zinc-100 xl:text-[2.25rem]">
+        <p className="mt-3 max-w-md text-base leading-snug font-medium tracking-[-0.015em] text-zinc-100">
           La operación de tu gimnasio, enfocada.
         </p>
         <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-400">

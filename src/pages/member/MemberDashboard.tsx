@@ -280,7 +280,7 @@ export default function MemberDashboard() {
                     <Dumbbell className="text-brand h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-text truncate text-base font-semibold">{routine.name}</p>
+                    <p className="text-text text-h2 truncate font-semibold">{routine.name}</p>
                     <p className="text-text-secondary text-small mt-0.5">
                       {routineScheduledToday ? 'Hoy toca' : 'No está programada para hoy'} ·{' '}
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}

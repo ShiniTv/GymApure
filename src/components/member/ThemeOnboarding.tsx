@@ -77,7 +77,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
           <ThemePalettePicker />
         </div>
 
-        <Button size="lg" className="w-full" onClick={() => finish(true)}>
+        <Button size="md" className="w-full" onClick={() => finish(true)}>
           Empezar a entrenar
         </Button>
       </div>

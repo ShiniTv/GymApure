@@ -338,7 +338,7 @@ export default function Trainers() {
           <Card padding="sm" rounded="xl" className="relative">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-text truncate font-bold">{trainer.full_name}</p>
+                <p className="text-text truncate text-sm font-semibold">{trainer.full_name}</p>
                 <p className="text-text-muted truncate text-xs">{trainer.email}</p>
                 {trainer.specialty && (
                   <p className="text-text-muted mt-1 truncate text-xs">{trainer.specialty}</p>
@@ -590,7 +590,7 @@ export default function Trainers() {
               {errors.submit}
             </p>
           )}
-          <Button className="w-full" size="lg" onClick={handleCreate} loading={saving}>
+          <Button className="w-full" size="md" onClick={handleCreate} loading={saving}>
             Crear entrenador
           </Button>
         </div>

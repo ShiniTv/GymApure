@@ -14,8 +14,8 @@ interface BrandNameProps {
 
 const inlineSizeClasses: Record<BrandNameSize, string> = {
   sm: 'text-sm',
-  md: 'text-3xl',
-  lg: 'text-4xl sm:text-5xl',
+  md: 'text-xl',
+  lg: 'text-xl',
 };
 
 export default function BrandName({
@@ -46,7 +46,7 @@ export default function BrandName({
       <span className={cn('flex min-w-0 flex-col leading-none', className)}>
         <span
           className={cn(
-            'truncate text-sm font-bold tracking-tight',
+            'truncate text-sm font-semibold tracking-tight',
             onDark ? 'text-white' : 'text-zinc-900 dark:text-white'
           )}
         >
@@ -62,7 +62,7 @@ export default function BrandName({
   return (
     <span
       className={cn(
-        'font-bold tracking-tight',
+        'font-semibold tracking-tight',
         onDark ? 'text-white' : 'text-zinc-900 dark:text-white',
         inlineSizeClasses[size],
         className

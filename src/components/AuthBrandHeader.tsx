@@ -21,8 +21,7 @@ export default function AuthBrandHeader({
   className,
   splitAware = false,
 }: AuthBrandHeaderProps) {
-  const logoSize = size === 'lg' ? 'h-16 w-16' : 'h-14 w-14';
-  const titleSize = size === 'lg' ? 'lg' : 'md';
+  const logoSize = size === 'lg' ? 'h-11 w-11' : 'h-10 w-10';
 
   return (
     <div className={cn('text-center', className)}>
@@ -35,15 +34,15 @@ export default function AuthBrandHeader({
             )}
           />
         </div>
-        <h1 className="mt-6">
-          <BrandName variant="inline" size={titleSize === 'lg' ? 'lg' : 'md'} />
+        <h1 className="mt-4">
+          <BrandName variant="inline" size="md" />
         </h1>
-        {subtitle && <p className="text-text-muted mt-2 text-sm">{subtitle}</p>}
+        {subtitle && <p className="text-text-muted mt-1.5 text-sm">{subtitle}</p>}
       </div>
 
       {splitAware && subtitle && (
         <div className="hidden lg:block lg:text-left">
-          <h1 className="text-text text-2xl font-bold tracking-tight">{subtitle}</h1>
+          <h1 className="text-text text-h1 font-semibold tracking-[-0.02em]">{subtitle}</h1>
           {formHint && <p className="text-text-muted mt-1.5 text-sm">{formHint}</p>}
         </div>
       )}

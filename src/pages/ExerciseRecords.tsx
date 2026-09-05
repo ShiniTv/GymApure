@@ -8,6 +8,8 @@ import { useToastOptional } from '../context/ToastContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { clientLogger } from '../lib/clientLogger';
 import { dateLocale as es } from '../lib/dateLocale';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 import type {
   ExerciseRecordDetail,
   ExerciseRecordSummary,
@@ -450,33 +452,31 @@ export default function ExerciseRecords() {
             <ListRowSkeleton rows={3} />
           </div>
         ) : detail ? (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold tabular-nums">
+              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>
                   {formatKg(detail.summary.max_weight_kg)} kg
                 </p>
-                <p className="text-text-muted text-small">Peso máximo</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Peso máximo</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-brand text-lg font-bold tabular-nums">
+              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm, 'text-brand')}>
                   {formatKg(detail.summary.estimated_1rm_kg)} kg
                 </p>
-                <p className="text-text-muted text-small">1RM estimado</p>
+                <p className={cn(typography.small, 'mt-0.5')}>1RM estimado</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold tabular-nums">
+              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>
                   {detail.summary.best_set
                     ? `${formatKg(detail.summary.best_set.weight)}×${detail.summary.best_set.reps}`
                     : '—'}
                 </p>
-                <p className="text-text-muted text-small">Mejor serie</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Mejor serie</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
-                <p className="text-text text-lg font-bold tabular-nums">
-                  {detail.summary.session_count}
-                </p>
-                <p className="text-text-muted text-small">Sesiones</p>
+              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
+                <p className={cn(typography.statValueSm)}>{detail.summary.session_count}</p>
+                <p className={cn(typography.small, 'mt-0.5')}>Sesiones</p>
               </div>
             </div>
 

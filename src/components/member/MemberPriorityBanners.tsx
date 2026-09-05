@@ -68,7 +68,7 @@ export function MemberPriorityBanners({
   if (showActivate) {
     return (
       <Card padding="md" rounded="xl" className="bg-brand/5 dark:bg-brand/[0.08]">
-        <h3 className="text-text text-sm font-bold">Activa tu membresía</h3>
+        <h3 className="text-text text-sm font-semibold">Activa tu membresía</h3>
         <ol className="text-text-secondary mt-4 space-y-3 text-xs leading-relaxed">
           <li>
             <span className="text-brand font-semibold">1.</span> Elige un plan al reportar el pago
@@ -99,7 +99,7 @@ export function MemberPriorityBanners({
     return (
       <div className={cn(BANNER, classes.container)}>
         <div>
-          <p className={cn('text-sm font-bold', classes.text)}>
+          <p className={cn('text-sm font-semibold', classes.text)}>
             {formatExpiryCountdown(sub.days_remaining) + suffix}
           </p>
           <p className={cn('text-small mt-1.5 leading-relaxed opacity-80', classes.text)}>

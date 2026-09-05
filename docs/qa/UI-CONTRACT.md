@@ -9,7 +9,8 @@ El acento de marca en runtime es la paleta sky (`#0c98ff` vía `src/config/theme
 | Contexto                                    | Controles                                               | Notas                                                        |
 | ------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------ |
 | **Comfortable** (piso / formularios / CTAs) | `Button` `md` 44px / `lg` 48px                          | Member FAB, Reception counter, modales, workout pager, kiosk |
-| **Compact** (desktop nav, toolbars, tablas) | `.nav-link` 32px, `IconButton` `sm` 32px, `Button` `sm` | Solo chrome denso — no CTAs de piso                          |
+| **Readable chrome** (desktop nav / headers) | `.nav-link` 32px, sidebar `lg:w-56`, canvas `lg:p-ds-5` | Escala equilibrada — mismo ritmo título/KPI/chip             |
+| **Compact** (toolbars / tablas)             | `IconButton` `sm` 32px, `Button` `sm`                   | Solo filas densas de datos — no CTAs de piso                 |
 
 No mezclar CTA de piso con `size="sm"`.
 
@@ -44,22 +45,22 @@ Sheet: acciones móviles y menú «Más». No modal centrado bajo 768px para eso
 
 Usar `typography.*` (`pageTitle`, `heroName`, `floorTitle`, `immersiveTitle`, `sectionTitle`, `statLabel`, `statValue`, `statValueSm`, `chromeNav`, …). Prohibido `text-[Npx]` en UI (ejes SVG de charts: `chartTheme`, allowlist).
 
-Escala Operate densa: page **22px** → card **16px** → body 16 → chrome **13px** → meta **12px**.
+Escala Apple Operate equilibrada: page **20px** → card **15px** → body **15px** → chrome **13px** → meta **12px**.
 
-Labels de form: `Label` / `typography.label`. Meta uppercase: `statLabel` / `labelCaps`.
+Labels de form: `Label` / `typography.label`. Meta uppercase: `statLabel` / `labelCaps` solo cuando aporta.
 
 `PageHeader` variantes: `operate` (default; oculta H1 en móvil solo si hay `subtitle`), `floor` (mostrador), `immersive` (workout / kiosk).
 
 ## KPI
 
-- Toolbar / Operate grids: `StatTile` o `StatCard` minimal → `typography.statValueSm` (~18px).
-- Hero / dashboard grande: `typography.statValue` (20→24px).
+- Toolbar / Operate grids: `StatTile` o `StatCard` minimal → `typography.statValueSm` (**18px**).
+- Hero / dashboard grande: `typography.statValue` (**20px**).
 - No inventar `text-lg`/`text-xl` ad hoc para números KPI.
 
 ## Caja
 
 - Un nivel de `Card`. Padding canónico `sm`/`md`/`lg` (`p-ds-*`); no `md:p-4` / `!p-2.5` en `className`.
-- Radio de card: `rounded-[var(--radius-card)]` (8px). Props `rounded="xl|2xl|3xl"` son alias legacy del mismo 8px.
+- Radio de card: `rounded-[var(--radius-card)]` (**10px**). Props `rounded="xl|2xl|3xl"` son alias legacy del mismo radio de card.
 - No `rounded-2xl` en paneles Operate (allowlist: sheets, chat bubbles, pills).
 - Inputs/alerts/accordion: `--radius-input` / `--radius-card`.
 - Empty: `EmptyState`; `framed={false}` si ya hay panel.

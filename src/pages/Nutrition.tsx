@@ -436,7 +436,7 @@ export default function Nutrition() {
           ) : null}
           {logs.length === 0 ? (
             <div className="flex flex-col items-center gap-2.5 py-5 text-center">
-              <div className="bg-surface-raised flex h-10 w-10 items-center justify-center rounded-[var(--radius-card)]">
+              <div className="bg-surface-raised flex h-8 w-8 items-center justify-center rounded-[var(--radius-card)]">
                 <UtensilsCrossed className="text-text-muted h-4 w-4" />
               </div>
               <p className="text-text-muted text-sm">Aún no registraste comidas hoy.</p>

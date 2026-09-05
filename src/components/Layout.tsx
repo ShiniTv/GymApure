@@ -181,7 +181,7 @@ export default function Layout() {
     setIsSidebarOpen(false);
   }, []);
 
-  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16.5rem)] lg:w-56';
+  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16rem)] lg:w-56';
   const hideBackToDashboard =
     showMemberBottomNav || showReceptionBottomNav || showTrainerBottomNav || showAdminBottomNav;
 
@@ -251,10 +251,10 @@ export default function Layout() {
         </div>
 
         <div className="flex min-h-0">
-          {/* Sidebar — Linear-like elevated panel */}
+          {/* Sidebar — Apple Operate elevated panel */}
           <aside
             className={clsx(
-              'app-sidebar border-border/70 fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
+              'app-sidebar border-border/60 fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -263,13 +263,13 @@ export default function Layout() {
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
-              <div className="border-border/50 hidden h-14 shrink-0 items-center justify-center border-b lg:flex">
+              <div className="border-border/40 hidden h-14 shrink-0 items-center justify-center border-b lg:flex">
                 <Link
                   to={homeHref}
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors"
+                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-[var(--radius-input)] transition-colors"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
@@ -277,18 +277,18 @@ export default function Layout() {
                 </Link>
               </div>
             ) : (
-              <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:flex">
+              <div className="border-border/40 hidden h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:flex">
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-[var(--radius-input)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
                   <Logo className="h-7 w-7 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
                     {brandMark}
-                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
@@ -310,18 +310,18 @@ export default function Layout() {
             )}
 
             {!sidebarCollapsed && (
-              <div className="border-border/50 flex h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:hidden">
+              <div className="border-border/40 flex h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:hidden">
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[var(--radius-input)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
                   <Logo className="h-7 w-7 shrink-0" />
                   <div className="min-w-0 flex-1">
                     {brandMark}
-                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
@@ -409,7 +409,7 @@ export default function Layout() {
 
               <div
                 className={clsx(
-                  'border-border/50 shrink-0 space-y-0.5 border-t',
+                  'border-border/40 shrink-0 space-y-0.5 border-t',
                   sidebarCollapsed ? 'px-1.5 py-2.5' : 'px-2 py-2.5',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
@@ -473,10 +473,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="text-text truncate text-sm leading-snug font-medium">
+                      <p className="text-text text-chrome truncate leading-snug font-medium">
                         {user?.name}
                       </p>
-                      <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.02em]">
+                      <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.008em]">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>

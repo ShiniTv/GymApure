@@ -252,7 +252,7 @@ export default function Register() {
                 </div>
               </div>
 
-              <Button type="submit" className="auth-linear-primary w-full" size="lg">
+              <Button type="submit" className="auth-linear-primary w-full" size="md">
                 Continuar
               </Button>
             </div>
@@ -346,7 +346,7 @@ export default function Register() {
                   type="submit"
                   loading={loading}
                   className="auth-linear-primary flex-1"
-                  size="lg"
+                  size="md"
                 >
                   Crear cuenta
                 </Button>

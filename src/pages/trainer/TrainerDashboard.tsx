@@ -53,7 +53,7 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised text-small inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-[var(--radius-button)] border px-3 leading-snug font-medium transition-colors lg:text-sm"
+      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised text-small inline-flex h-9 shrink-0 touch-manipulation items-center gap-1.5 rounded-[var(--radius-button)] border px-3 font-medium transition-colors sm:text-sm"
     >
       <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
       {label}
@@ -111,15 +111,15 @@ function AttentionSummaryLink({
     <Link
       to={to}
       className={cn(
-        'flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 transition-colors lg:px-3.5',
+        'flex min-h-10 items-center gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors',
         toneClass
       )}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span className="text-text text-small min-w-0 flex-1 truncate font-semibold lg:text-sm">
+      <span className="text-text text-small min-w-0 flex-1 truncate font-semibold sm:text-sm">
         {label}
       </span>
-      <span className="text-small font-bold tabular-nums">{count}</span>
+      <span className="text-small font-semibold tabular-nums">{count}</span>
       <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
     </Link>
   );
@@ -513,7 +513,7 @@ export default function TrainerDashboard() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
         {loading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <Skeleton key={index} className="h-[70px] rounded-lg" />
@@ -552,7 +552,7 @@ export default function TrainerDashboard() {
           <div className="space-y-3">
             {(staleCheckinsCount > 0 || recoveryAlertsCount > 0 || expiringCount > 0) && (
               <div className="space-y-1.5">
-                <p className="text-text-muted text-xs font-semibold tracking-wide uppercase">Hoy</p>
+                <p className="text-text-muted text-small font-medium tracking-[-0.008em]">Hoy</p>
                 <div className="grid gap-1.5 sm:grid-cols-2">
                   {staleCheckinsCount > 0 && (
                     <AttentionSummaryLink
@@ -589,7 +589,7 @@ export default function TrainerDashboard() {
               withoutAssessmentCount > 0 ||
               memberChoicesCount > 0) && (
               <div className="space-y-1.5">
-                <p className="text-text-muted text-xs font-semibold tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-[-0.008em]">
                   Pendiente de plan
                 </p>
                 <div className="grid gap-1.5 sm:grid-cols-2">
@@ -635,7 +635,7 @@ export default function TrainerDashboard() {
         </DashboardSection>
       )}
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start md:gap-4">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start md:gap-3">
         <TodayPanel
           loading={loading}
           quiet={todayQuiet}

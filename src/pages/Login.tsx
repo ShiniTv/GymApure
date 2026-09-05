@@ -200,7 +200,7 @@ export default function Login() {
   return (
     <AuthShell aesthetic="linear">
       <Card
-        className="auth-linear-panel page-stack w-full p-6 sm:p-7"
+        className="auth-linear-panel page-stack w-full p-4 sm:p-5"
         data-testid="login-panel"
         padding="none"
       >

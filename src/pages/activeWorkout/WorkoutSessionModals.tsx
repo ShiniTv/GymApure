@@ -35,8 +35,8 @@ export function FinishWorkoutModal({
       title={<>¡Felicidades!</>}
     >
       <div className="mb-5 text-center">
-        <div className="brand-solid ring-brand/10 animate-success-pop mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[var(--radius-card)] shadow-lg ring-4">
-          <CheckCircle className="h-8 w-8" />
+        <div className="brand-solid ring-brand/10 animate-success-pop mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-[var(--radius-card)] shadow-md ring-2">
+          <CheckCircle className="h-5 w-5" />
         </div>
         <p className="text-text text-sm font-semibold">¿Completaste tu rutina exitosamente?</p>
         <div className="text-small mt-3 flex items-center justify-center gap-2">

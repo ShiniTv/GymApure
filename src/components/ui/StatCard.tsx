@@ -82,7 +82,9 @@ function StatCardContent({
           >
             {title}
           </p>
-          <p className={cn('stat-value tabular-nums', compact && 'text-lg sm:text-2xl')}>{value}</p>
+          <p className={cn('stat-value tabular-nums', compact && typography.statValueSm)}>
+            {value}
+          </p>
         </div>
         <div
           className={cn(

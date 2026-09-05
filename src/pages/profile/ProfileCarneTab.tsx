@@ -36,7 +36,7 @@ export function ProfileCarneTab({
           </div>
 
           <div className="flex w-full flex-col items-center gap-2.5 md:items-stretch">
-            <Button size="lg" className="w-full" onClick={onShowScan}>
+            <Button size="md" className="w-full" onClick={onShowScan}>
               <ScanLine className="h-4 w-4" />
               Mostrar QR
             </Button>

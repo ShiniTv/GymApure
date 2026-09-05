@@ -264,7 +264,7 @@ export function Sheet({
                 id={titleId}
                 className={cn(
                   'text-text tracking-[-0.02em]',
-                  compact ? 'text-sm font-semibold' : 'text-sm font-semibold sm:text-base'
+                  compact ? 'text-sm font-semibold' : 'text-sm font-semibold'
                 )}
               >
                 {title}

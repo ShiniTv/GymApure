@@ -55,16 +55,16 @@ export function ProfileDatosTab({
                   <img
                     src={avatarUrl}
                     alt={profile.full_name}
-                    className="ring-brand/25 h-12 w-12 rounded-xl object-cover ring-2 sm:h-14 sm:w-14 md:h-20 md:w-20"
+                    className="ring-brand/25 h-12 w-12 rounded-[var(--radius-card)] object-cover ring-2 sm:h-14 sm:w-14"
                   />
                 ) : (
-                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-xl sm:h-14 sm:w-14 md:h-20 md:w-20">
-                    <User className="text-text-muted h-6 w-6 md:h-8 md:w-8" />
+                  <div className="bg-surface-raised flex h-12 w-12 items-center justify-center rounded-[var(--radius-card)] sm:h-14 sm:w-14">
+                    <User className="text-text-muted h-6 w-6" />
                   </div>
                 )}
                 <label
                   htmlFor="avatar-upload"
-                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg shadow-md transition-colors md:h-7 md:w-7"
+                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-[var(--radius-button)] shadow-md transition-colors"
                   title="Cambiar foto"
                   aria-label="Cambiar foto de perfil"
                 >

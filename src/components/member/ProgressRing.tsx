@@ -1,4 +1,5 @@
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 
 interface ProgressRingProps {
   value: number;
@@ -51,7 +52,7 @@ export function ProgressRing({
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-text text-sm font-bold tabular-nums">
+          <p className={cn(typography.statValueSm, 'leading-none')}>
             {value}
             <span className="text-text-muted font-semibold"> / {max}</span>
           </p>

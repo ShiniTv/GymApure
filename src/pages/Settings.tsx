@@ -50,7 +50,7 @@ export default function Settings() {
       <div className="xl:grid xl:grid-cols-[12rem_minmax(0,1fr)] xl:items-start xl:gap-5">
         <SettingsNav />
 
-        <div className="min-w-0 space-y-6 lg:space-y-8">
+        <div className="min-w-0 space-y-4 lg:space-y-5">
           <SettingsGroup title="Operación">
             <div className="grid min-w-0 gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
               <SettingsPushCard />

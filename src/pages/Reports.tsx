@@ -383,7 +383,7 @@ export default function Reports() {
                 <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Total USD
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : formatMoney(preview?.paymentsTotalUsd ?? 0)}
                 </p>
               </div>
@@ -391,7 +391,7 @@ export default function Reports() {
                 <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Aprobados
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsApproved ?? 0)}
                 </p>
               </div>
@@ -399,7 +399,7 @@ export default function Reports() {
                 <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsPending ?? 0)}
                 </p>
               </div>
@@ -407,7 +407,7 @@ export default function Reports() {
                 <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Rechazados
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsRejected ?? 0)}
                 </p>
               </div>

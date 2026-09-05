@@ -59,7 +59,7 @@ export function SettingsOpsHealthCard({
       className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
     >
       <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
-        <h2 className="text-text flex min-w-0 items-center gap-2 text-sm font-bold">
+        <h2 className="text-text flex min-w-0 items-center gap-2 text-sm font-semibold">
           <Activity className="text-brand h-4 w-4 shrink-0" />
           <span className="truncate">Salud operativa</span>
         </h2>
@@ -110,7 +110,7 @@ export function SettingsOpsHealthCard({
               <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 DB ms
               </p>
-              <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
+              <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                 {opsMetrics.db.latency_ms ?? '—'}
               </p>
             </div>
@@ -118,7 +118,7 @@ export function SettingsOpsHealthCard({
               <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 Avg req ms
               </p>
-              <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
+              <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                 {opsMetrics.request_metrics.avgResponseMs}
               </p>
             </div>
@@ -127,7 +127,7 @@ export function SettingsOpsHealthCard({
                 Error rate
               </p>
               <p
-                className={`mt-0.5 text-base font-bold tabular-nums sm:text-lg ${
+                className={`mt-0.5 text-lg font-semibold tabular-nums ${
                   opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
                     ? 'text-danger'
                     : 'text-emerald-500'
@@ -141,7 +141,7 @@ export function SettingsOpsHealthCard({
                 Slow rate
               </p>
               <p
-                className={`mt-0.5 text-base font-bold tabular-nums sm:text-lg ${
+                className={`mt-0.5 text-lg font-semibold tabular-nums ${
                   opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
                     ? 'text-brand'
                     : 'text-emerald-500'

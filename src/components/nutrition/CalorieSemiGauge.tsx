@@ -110,7 +110,7 @@ export function CalorieSemiGauge({ consumed, target, date, className }: CalorieS
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center px-4 pb-1 text-center">
         <p className="text-small text-text-muted font-medium capitalize">{dateLabel}</p>
-        <p className="text-text mt-1.5 text-[2rem] leading-none font-bold tracking-tight tabular-nums">
+        <p className="text-text mt-1.5 text-xl leading-none font-semibold tracking-tight tabular-nums">
           {Math.round(animatedConsumed).toLocaleString('es')}
           <span className="text-text-muted ml-1.5 text-sm font-medium">kcal</span>
         </p>

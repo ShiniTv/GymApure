@@ -205,7 +205,7 @@ export function EquipmentDetailModal({
           )}
 
           <div>
-            <h4 className="text-text mb-2 text-sm font-bold">Historial</h4>
+            <h4 className="text-text mb-2 text-sm font-semibold">Historial</h4>
             {events.length === 0 ? (
               <p className="text-text-muted text-sm">Sin eventos registrados.</p>
             ) : (

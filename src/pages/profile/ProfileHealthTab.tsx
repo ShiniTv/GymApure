@@ -20,6 +20,7 @@ import type { UserProfile, Measurement } from '../../hooks/queries/useProfileQue
 import { HEALTH_CONDITION_FLAGS } from '../../lib/healthConditions';
 import { ACTIVITY_LEVELS, getAgeFromDob, type ActivityLevel } from '../../lib/metabolicRate';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { heightCmNumber } from './utils';
 
 interface ProfileHealthTabProps {
@@ -327,21 +328,19 @@ export function ProfileHealthTab({
 
             {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null && (
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="bg-surface-raised rounded-xl px-3 py-2.5">
-                  <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-                    TMB
-                  </p>
-                  <p className="text-text text-lg font-bold">
+                <div className="bg-surface-raised rounded-[var(--radius-card)] px-3 py-2.5">
+                  <p className={cn(typography.statLabel)}>TMB</p>
+                  <p className={cn(typography.statValueSm, 'mt-0.5')}>
                     {healthProfile.bmr_kcal}{' '}
-                    <span className="text-text-muted text-xs font-medium">kcal</span>
+                    <span className="text-text-muted text-small font-medium">kcal</span>
                   </p>
                 </div>
-                <div className="rounded-xl bg-emerald-500/5 px-3 py-2.5">
-                  <p className="text-small font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
+                <div className="rounded-[var(--radius-card)] bg-emerald-500/5 px-3 py-2.5">
+                  <p className="text-small font-medium tracking-[-0.006em] text-emerald-700 dark:text-emerald-400">
                     GET
                   </p>
-                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                    {healthProfile.tdee_kcal} <span className="text-xs font-medium">kcal</span>
+                  <p className="mt-0.5 text-lg font-semibold text-emerald-700 tabular-nums dark:text-emerald-400">
+                    {healthProfile.tdee_kcal} <span className="text-small font-medium">kcal</span>
                   </p>
                 </div>
               </div>
