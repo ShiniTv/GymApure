@@ -121,6 +121,7 @@ export default function AdminDashboard() {
   const previewExpiring = expiringList.slice(0, isDesktop ? 12 : 5);
   const revenueThisMonth = stats?.revenueThisMonth ?? 0;
   const revenueLastMonth = stats?.revenueLastMonth ?? 0;
+  const revenueToday = stats?.revenueToday ?? 0;
   const yesterdayCheckIns = stats?.yesterdayCheckIns ?? 0;
   const totalRevenue = stats?.totalRevenue ?? 0;
   const checkInTrend = checkInsTrend(stats?.todayCheckIns ?? 0, yesterdayCheckIns);
@@ -259,12 +260,37 @@ export default function AdminDashboard() {
       </StaggerContainer>
 
       {totalRevenue > 0 && (
-        <p className="text-text-muted px-0.5 text-[10px]">
-          Ingresos acumulados{' '}
-          <span className="text-text-secondary font-semibold tabular-nums">
-            {formatMoney(totalRevenue)}
-          </span>
-        </p>
+        <Card padding="sm" rounded="xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
+                Cierre de caja · hoy
+              </p>
+              <p className="text-text mt-1 text-xl font-bold tabular-nums sm:text-2xl">
+                {formatMoney(revenueToday)}
+              </p>
+              <p className="text-text-secondary text-small mt-1">
+                Mes {formatMoney(revenueThisMonth)} · acumulado {formatMoney(totalRevenue)}
+                {pendingPayments > 0
+                  ? ` · CxC ${pendingPayments}${pendingOld > 0 ? ` (${pendingOld} +2d)` : ''}`
+                  : ''}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/payments?status=pending">
+                <Button size="sm" variant="secondary">
+                  Cola CxC
+                </Button>
+              </Link>
+              <Link to="/reports">
+                <Button size="sm" variant="secondary">
+                  <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
+                  Conciliación
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">

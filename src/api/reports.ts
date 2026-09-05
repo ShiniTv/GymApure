@@ -191,6 +191,7 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
       attendance,
       members,
       retention,
+      reconciliation,
       paymentsAgg,
       paymentSamples,
       attendanceSamples,
@@ -213,6 +214,21 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
          WHERE status IN ('expired', 'inactive')
            AND end_date >= COALESCE($1::date, CURRENT_DATE - 30)
            AND end_date <= COALESCE($2::date, CURRENT_DATE)`,
+        [from, to]
+      ),
+      query<{ count: string }>(
+        `SELECT (
+           (SELECT COUNT(*) FROM payments WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days')
+           +
+           (SELECT COUNT(*) FROM subscriptions s
+            WHERE s.status = 'active' AND s.end_date >= CURRENT_DATE
+              AND NOT EXISTS (
+                SELECT 1 FROM payments p
+                WHERE p.user_id = s.user_id AND p.status = 'approved'
+                  AND p.created_at::date >= COALESCE($1::date, CURRENT_DATE - 30)
+                  AND p.created_at::date <= COALESCE($2::date, CURRENT_DATE)
+              ))
+         )::text AS count`,
         [from, to]
       ),
       query<{
@@ -292,6 +308,7 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
       attendance: parseInt(attendance.rows[0]?.count || '0', 10),
       members: parseInt(members.rows[0]?.count || '0', 10),
       retention: parseInt(retention.rows[0]?.count || '0', 10),
+      reconciliation: parseInt(reconciliation.rows[0]?.count || '0', 10),
       paymentsTotalUsd: Number(agg.total_usd),
       paymentsApproved: parseInt(agg.approved, 10),
       paymentsPending: parseInt(agg.pending, 10),
@@ -655,6 +672,119 @@ router.get('/retention', authorize(['admin']), async (req, res) => {
       `retencion-${fromDate}-${toDate}.csv`,
       ['Métrica', 'Valor', 'Detalle'],
       rows.map((r) => [r.metric, r.value, r.detail])
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error interno';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get('/reconciliation', authorize(['admin']), async (req, res) => {
+  const from = parseDateParam(req.query.from);
+  const to = parseDateParam(req.query.to);
+  const rangeError = validateExportDateRange(from, to);
+  if (rangeError) {
+    return res.status(400).json({ error: rangeError });
+  }
+  const format = parseExportFormat(req.query.format);
+  const fromDate =
+    from ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const toDate = to ?? new Date().toISOString().slice(0, 10);
+
+  try {
+    const { rows } = await query<{
+      issue: string;
+      member_name: string;
+      member_email: string;
+      detail: string;
+      amount_usd: string | null;
+    }>(
+      `WITH bounds AS (SELECT $1::date AS d_from, $2::date AS d_to)
+       SELECT * FROM (
+         SELECT
+           'Pago pendiente (>2 días)' AS issue,
+           u.full_name AS member_name,
+           u.email AS member_email,
+           CONCAT('Pago #', p.id::text, ' · ', COALESCE(p.method, '—')) AS detail,
+           p.amount_usd::text AS amount_usd
+         FROM payments p
+         JOIN users u ON u.id = p.user_id
+         WHERE p.status = 'pending'
+           AND p.created_at < NOW() - INTERVAL '2 days'
+         UNION ALL
+         SELECT
+           'Membresía activa sin pago aprobado en periodo' AS issue,
+           u.full_name,
+           u.email,
+           CONCAT(COALESCE(m.name, 'Plan'), ' · vence ', s.end_date::text) AS detail,
+           NULL::text
+         FROM subscriptions s
+         JOIN users u ON u.id = s.user_id
+         LEFT JOIN memberships m ON m.id = s.membership_id
+         , bounds b
+         WHERE s.status = 'active'
+           AND s.end_date >= CURRENT_DATE
+           AND NOT EXISTS (
+             SELECT 1 FROM payments p
+             WHERE p.user_id = s.user_id
+               AND p.status = 'approved'
+               AND p.created_at::date BETWEEN b.d_from AND b.d_to
+           )
+         UNION ALL
+         SELECT
+           'Pago aprobado sin membresía activa' AS issue,
+           u.full_name,
+           u.email,
+           CONCAT('Pago #', p.id::text, ' · ', p.created_at::date::text) AS detail,
+           p.amount_usd::text
+         FROM payments p
+         JOIN users u ON u.id = p.user_id
+         , bounds b
+         WHERE p.status = 'approved'
+           AND p.created_at::date BETWEEN b.d_from AND b.d_to
+           AND NOT EXISTS (
+             SELECT 1 FROM subscriptions s
+             WHERE s.user_id = p.user_id
+               AND s.status = 'active'
+               AND s.end_date >= CURRENT_DATE
+           )
+       ) t
+       ORDER BY issue, member_name
+       LIMIT ${MAX_EXPORT_ROWS}`,
+      [fromDate, toDate]
+    );
+
+    if (format === 'pdf') {
+      const buffer = await buildReportPdf({
+        title: 'Conciliación ligera',
+        subtitle: formatDateRangeSubtitle(fromDate, toDate),
+        summary: [
+          { label: 'Hallazgos', value: String(rows.length) },
+          { label: 'Desde', value: fromDate },
+          { label: 'Hasta', value: toDate },
+        ],
+        columns: [
+          { key: 'issue', label: 'Hallazgo', width: 1.8 },
+          { key: 'member_name', label: 'Miembro', width: 1.2 },
+          { key: 'detail', label: 'Detalle', width: 1.6 },
+          { key: 'amount_usd', label: 'USD', width: 0.6, align: 'right' },
+        ],
+        rows: rows.map((r) => ({
+          issue: r.issue,
+          member_name: r.member_name,
+          detail: r.detail,
+          amount_usd: r.amount_usd ? formatReportMoney(Number(r.amount_usd)) : '—',
+        })),
+      });
+      sendPdf(res, `conciliacion-${fromDate}-${toDate}.pdf`, buffer);
+      return;
+    }
+
+    sendCsv(
+      res,
+      `conciliacion-${fromDate}-${toDate}.csv`,
+      ['Hallazgo', 'Miembro', 'Email', 'Detalle', 'USD'],
+      rows.map((r) => [r.issue, r.member_name, r.member_email, r.detail, r.amount_usd ?? ''])
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

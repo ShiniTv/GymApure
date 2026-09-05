@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Landmark, Upload } from 'lucide-react';
 import {
   Badge,
@@ -114,7 +115,14 @@ export default function MemberPtBilling() {
           compact
           icon={Landmark}
           title="Nada por pagar"
-          description="Cuando tu entrenador te envíe un cobro, lo verás aquí."
+          description="Cuando tu entrenador te envíe un cobro de sesión 1:1, lo verás aquí. La membresía del gym se gestiona en Pagos."
+          action={
+            <Link to="/payments">
+              <Button size="sm" variant="secondary">
+                Ir a Pagos
+              </Button>
+            </Link>
+          }
         />
       ) : (
         <div className="space-y-2">

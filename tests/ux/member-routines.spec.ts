@@ -18,7 +18,13 @@ test.describe('Member rutinas preview', () => {
     assertDemoSeed(routineCard, 'Sin rutinas asignadas en demo para member@gym.com.');
 
     await expect(
-      page.getByRole('button', { name: /entrenar|continuar|completada hoy/i })
+      page
+        .locator('.touch-manipulation')
+        .filter({ hasText: /[1-9]\d*\s*ejercicios?/i })
+        .getByRole('button', {
+          name: /^(empezar( entrenamiento)?|continuar( entrenamiento)?|completada hoy)$/i,
+        })
+        .first()
     ).toBeVisible();
     await expect(page).toHaveURL(/\/routines$/);
   });

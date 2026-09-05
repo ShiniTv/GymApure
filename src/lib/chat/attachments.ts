@@ -8,7 +8,7 @@ import {
   supabaseStorageStream,
   supabaseStorageRemove,
 } from '../supabaseAdmin.ts';
-import { assertImageUpload } from '../uploadValidation.ts';
+import { assertChatAttachmentUpload, safeExtensionForMime } from '../uploadValidation.ts';
 import { optimizeAvatar } from '../imageOptimizer.ts';
 
 export const CHAT_ATTACHMENTS_BUCKET = 'chat-attachments';
@@ -62,22 +62,26 @@ export async function storeChatAttachment(
   conversationId: number,
   file: Express.Multer.File
 ): Promise<ChatAttachmentMeta> {
-  assertImageUpload(file);
+  assertChatAttachmentUpload(file);
 
   let body = file.buffer ?? (file.path ? fs.readFileSync(file.path) : null);
   if (!body) throw new Error('No se pudo leer el archivo');
 
   let mime = file.mimetype;
-  try {
-    const optimized = await optimizeAvatar(body);
-    body = optimized.buffer;
-    mime = optimized.mime;
-  } catch {
-    /* keep original */
+  const isPdf = mime === 'application/pdf';
+  if (!isPdf) {
+    try {
+      const optimized = await optimizeAvatar(body);
+      body = optimized.buffer;
+      mime = optimized.mime;
+    } catch {
+      /* keep original */
+    }
   }
 
-  const originalName = (file.originalname || 'imagen').slice(0, 120);
-  const objectKey = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+  const originalName = (file.originalname || (isPdf ? 'documento.pdf' : 'imagen')).slice(0, 120);
+  const ext = safeExtensionForMime(mime, isPdf ? 'proof' : 'avatar');
+  const objectKey = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
   if (isSupabaseStorageConfigured()) {
     await supabaseStorageUpload(

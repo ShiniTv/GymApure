@@ -13,6 +13,8 @@ export interface NotificationItem {
   notificationId?: number;
   readAt?: string | null;
   createdAt?: string;
+  /** Persisted notification type for grouping */
+  type?: string;
 }
 
 export interface PersistedNotification {
@@ -46,7 +48,28 @@ export function mapPersistedToItem(row: PersistedNotification): NotificationItem
     readAt: row.read_at,
     createdAt: row.created_at,
     count: 1,
+    type: row.type,
   };
+}
+
+const TYPE_GROUP_LABELS: Record<string, string> = {
+  payment_reported: 'Pagos reportados',
+  payment_approved: 'Pagos aprobados',
+  payment_rejected: 'Pagos rechazados',
+  routine_assigned: 'Rutinas',
+  member_self_assigned: 'Clientes · plantillas',
+  member_created_routine: 'Clientes · rutinas propias',
+  member_exercise_substituted: 'Clientes · sustituciones',
+  expiring_soon: 'Membresías por vencer',
+  expired: 'Membresías vencidas',
+  equipment_inspection: 'Equipamiento',
+  appointment_reminder: 'Citas',
+  training_block_review: 'Bloques de entrenamiento',
+};
+
+export function notificationTypeGroupLabel(type: string | undefined): string {
+  if (!type) return 'Otros';
+  return TYPE_GROUP_LABELS[type] ?? 'Otros';
 }
 
 export function notificationItemWeight(item: NotificationItem): number {

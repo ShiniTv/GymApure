@@ -86,6 +86,11 @@ export function assertProofUpload(file: Express.Multer.File): void {
   assertAllowedUpload(file, PROOF_MIMES, 'comprobante');
 }
 
+/** Chat attachments: images + PDF (same MIME set as payment proofs). */
+export function assertChatAttachmentUpload(file: Express.Multer.File): void {
+  assertAllowedUpload(file, PROOF_MIMES, 'adjunto de chat');
+}
+
 export function safeExtensionForMime(mime: string, kind: 'proof' | 'video' | 'avatar'): string {
   switch (mime) {
     case 'image/jpeg':

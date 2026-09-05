@@ -277,21 +277,15 @@ export default function MemberDashboard() {
                 </div>
                 <Button
                   size="sm"
+                  variant="secondary"
                   className="mt-3 w-full"
-                  disabled={primaryRoutineCompletedToday || !routineScheduledToday}
-                  onClick={() => navigate(`/workout/${routine.id}`)}
+                  onClick={() => navigate('/routines')}
                 >
-                  {!routineScheduledToday
-                    ? 'Descanso programado'
-                    : primaryRoutineCompletedToday
-                      ? 'Completada hoy'
-                      : primaryRoutineInProgress
-                        ? 'Continuar entrenamiento'
-                        : 'Empezar entrenamiento'}
+                  Ver rutinas
                 </Button>
                 {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
                   <p className="text-text-secondary mt-2 text-center text-xs">
-                    Tienes un entrenamiento en curso. Puedes retomarlo cuando quieras.
+                    Tienes un entrenamiento en curso. Continúa desde el hero o Rutinas.
                   </p>
                 )}
                 {primaryRoutineCompletedToday && (
@@ -362,10 +356,10 @@ export default function MemberDashboard() {
                 variant="motivational"
                 icon={CreditCard}
                 title="Sin membresía activa"
-                description="Reporta tu pago para activar el acceso al gym."
+                description="Usa el aviso de arriba para reportar tu pago y activar el acceso."
                 action={
-                  <Button size="sm" onClick={() => navigate('/payments')}>
-                    Reportar pago
+                  <Button size="sm" variant="secondary" onClick={() => navigate('/payments')}>
+                    Ver pagos
                   </Button>
                 }
               />

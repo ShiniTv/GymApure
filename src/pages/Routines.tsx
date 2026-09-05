@@ -86,7 +86,7 @@ function getMemberRoutineStatus(
 
 export default function Routines() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const viewFromUrl = searchParams.get('view');
+  const viewFromUrl = searchParams.get('view') ?? searchParams.get('tab');
   const showMemberTemplates = viewFromUrl === 'templates';
   const initialView: RoutinesView =
     viewFromUrl === 'assignments' || viewFromUrl === 'calendar' ? viewFromUrl : 'library';
@@ -238,11 +238,14 @@ export default function Routines() {
   };
 
   useEffect(() => {
-    const param = searchParams.get('view');
+    const param = searchParams.get('view') ?? searchParams.get('tab');
     if (param === 'assignments' || param === 'calendar') {
       setView(param);
-    } else if (!param || param === 'library') {
+    } else if (!param || param === 'library' || param === 'templates') {
       setView('library');
+    }
+    if (param === 'templates' && searchParams.get('tab') && !searchParams.get('view')) {
+      setSearchParams({ view: 'templates' }, { replace: true });
     }
     if (searchParams.get('assign') === '1') {
       setIsAssigningFromCalendar(true);
@@ -251,7 +254,7 @@ export default function Routines() {
         setAssignForm((prev) => ({ ...prev, user_id: memberId }));
       }
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   // Deep link: /routines?routine=&addExercise= — abre el modal en la rutina elegida
   useEffect(() => {
@@ -403,6 +406,10 @@ export default function Routines() {
 
     try {
       if (isClone) {
+        if (isMember) {
+          toast?.error('Para usar una plantilla, elige desde Plantillas');
+          return;
+        }
         const body: { name?: string } = {};
         if (newRoutine.name.trim()) body.name = newRoutine.name.trim();
         const res = await apiFetch(`/api/routines/${cloneFromId}/clone`, {
@@ -414,22 +421,26 @@ export default function Routines() {
         toast?.success(`${cloned.name} creada desde plantilla`);
         setExpandedRoutineId(cloned.id);
       } else {
+        const payload: Record<string, unknown> = {
+          name: newRoutine.name.trim(),
+          difficulty: newRoutine.difficulty,
+        };
+        if (!isMember) {
+          payload.trainer_id = user.id;
+        }
         const res = await apiFetch('/api/routines', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: newRoutine.name.trim(),
-            difficulty: newRoutine.difficulty,
-            trainer_id: user.id,
-          }),
+          body: JSON.stringify(payload),
         });
         const created = await parseJsonResponse<{ id?: number }>(res);
-        toast?.success('Rutina creada');
+        toast?.success(isMember ? 'Tu rutina está lista — añade ejercicios' : 'Rutina creada');
         if (created.id != null) setExpandedRoutineId(created.id);
       }
       setIsCreating(false);
       setNewRoutine({ name: '', difficulty: 'Beginner', clone_from_id: '' });
       refreshRoutines();
+      if (isMember) void memberStatsCtx?.refresh();
     } catch (err) {
       clientLogger.error('Failed to create routine', err);
       toast?.error(err instanceof Error ? err.message : 'No se pudo crear la rutina');
@@ -823,11 +834,15 @@ export default function Routines() {
             newRoutine={newRoutine}
             setNewRoutine={setNewRoutine}
             handleCreateRoutine={handleCreateRoutine}
-            libraryRoutines={routines.map((r) => ({
-              id: r.id,
-              name: r.name,
-              difficulty: r.difficulty,
-            }))}
+            libraryRoutines={
+              isMember
+                ? []
+                : routines.map((r) => ({
+                    id: r.id,
+                    name: r.name,
+                    difficulty: r.difficulty,
+                  }))
+            }
             editingRoutine={editingRoutine}
             setEditingRoutine={setEditingRoutine}
             handleUpdateRoutine={handleUpdateRoutine}
@@ -970,6 +985,10 @@ export default function Routines() {
                       }
                     : undefined
                 }
+                onShowTemplates={
+                  isMember ? () => setSearchParams({ view: 'templates' }) : undefined
+                }
+                currentUserId={isMember ? user?.id : undefined}
                 completedRoutineIdsToday={
                   isMember ? (memberStatsCtx?.stats?.completedRoutineIdsToday ?? []) : undefined
                 }

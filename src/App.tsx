@@ -127,7 +127,13 @@ function ProtectedRoute({
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/access-denied" replace />;
+    return (
+      <Navigate
+        to="/access-denied"
+        replace
+        state={{ from: { pathname: location.pathname, search: location.search } }}
+      />
+    );
   }
 
   return children;

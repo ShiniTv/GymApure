@@ -14,6 +14,7 @@ export interface AdminStats {
   yesterdayCheckIns: number;
   revenueThisMonth: number;
   revenueLastMonth: number;
+  revenueToday?: number;
   expiringSoon: number;
   expiredThisWeek: number;
   expiringList: {

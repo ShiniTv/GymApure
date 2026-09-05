@@ -66,6 +66,7 @@ export interface AdminStatsPayload {
   yesterdayCheckIns: number;
   revenueThisMonth: number;
   revenueLastMonth: number;
+  revenueToday: number;
   expiringSoon: number;
   expiredThisWeek: number;
   expiringList: Awaited<ReturnType<typeof getExpiringSubscriptions>>;
@@ -98,7 +99,7 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     pausedSubs,
     demoPending,
   ] = await Promise.all([
-    query<{ total_all: string; this_month: string; last_month: string }>(
+    query<{ total_all: string; this_month: string; last_month: string; today: string }>(
       `SELECT
          COALESCE(SUM(amount_usd), 0)::text AS total_all,
          COALESCE(SUM(amount_usd) FILTER (
@@ -107,7 +108,10 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
          COALESCE(SUM(amount_usd) FILTER (
            WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
              AND created_at < DATE_TRUNC('month', CURRENT_DATE)
-         ), 0)::text AS last_month
+         ), 0)::text AS last_month,
+         COALESCE(SUM(amount_usd) FILTER (
+           WHERE ${sqlTodayRange('created_at')}
+         ), 0)::text AS today
        FROM payments
        WHERE status = 'approved'`
     ),
@@ -174,6 +178,7 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     yesterdayCheckIns: parseInt(attendanceAgg.rows[0]?.yesterday || '0', 10),
     revenueThisMonth: parseFloat(paymentAgg.rows[0]?.this_month || '0'),
     revenueLastMonth: parseFloat(paymentAgg.rows[0]?.last_month || '0'),
+    revenueToday: parseFloat(paymentAgg.rows[0]?.today || '0'),
     expiringSoon: expiringList.length,
     expiredThisWeek,
     expiringList,
@@ -209,6 +214,7 @@ function pickAdminStatsParts(
       yesterdayCheckIns: payload.yesterdayCheckIns,
       revenueThisMonth: payload.revenueThisMonth,
       revenueLastMonth: payload.revenueLastMonth,
+      revenueToday: payload.revenueToday,
       expiringSoon: payload.expiringSoon,
       expiredThisWeek: payload.expiredThisWeek,
       equipmentOperational: payload.equipmentOperational,
@@ -621,6 +627,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       completedTodayRows,
       activeSessionRows,
       todayChoiceId,
+      ptContext,
     ] = await Promise.all([
       getActiveSubscriptionByUserId({ query }, userId).then((sub) => ({ rows: [sub] })),
       query(
@@ -697,6 +704,16 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
         [userId]
       ),
       getTodayRoutineChoice(userId),
+      query<{ has_trainer: boolean; has_pt_invoice: boolean }>(
+        `SELECT
+           EXISTS (
+             SELECT 1 FROM trainer_member_assignments WHERE member_id = $1
+           ) AS has_trainer,
+           EXISTS (
+             SELECT 1 FROM trainer_invoices WHERE member_id = $1
+           ) AS has_pt_invoice`,
+        [userId]
+      ),
     ]);
 
     const sub = subscription.rows[0] as
@@ -737,6 +754,8 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       weeklyTrainingGoal: memberProfile.rows[0]?.weekly_training_goal ?? 5,
       completedRoutineIdsToday: completedTodayRows.rows.map((r) => r.routine_id),
       activeSessions: activeSessionRows.rows,
+      hasTrainerAssignment: Boolean(ptContext.rows[0]?.has_trainer),
+      showPtBilling: Boolean(ptContext.rows[0]?.has_trainer || ptContext.rows[0]?.has_pt_invoice),
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Error interno';

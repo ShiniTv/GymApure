@@ -3,6 +3,7 @@
 | Documento                                              | Uso                                            |
 | ------------------------------------------------------ | ---------------------------------------------- |
 | [UX-QA.md](./UX-QA.md)                                 | Matriz UX manual por rol/viewport              |
+| [VNEXT-DEAD-ENDS-AUDIT.md](./VNEXT-DEAD-ENDS-AUDIT.md) | Auditoría dead-ends / claridad vNext           |
 | [QA-VISUAL-CHECKLIST.md](./QA-VISUAL-CHECKLIST.md)     | Checklist visual pre-release                   |
 | [QA-DEVICE-10.md](./QA-DEVICE-10.md)                   | PWA / push en dispositivo real                 |
 | [SMOKE-CHECKLIST-ROLES.md](./SMOKE-CHECKLIST-ROLES.md) | Smoke manual por rol                           |

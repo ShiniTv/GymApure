@@ -38,6 +38,7 @@
 | Escalabilidad diferida (P3) | [ROADMAP-P3-ESCALABILIDAD.md](./ROADMAP-P3-ESCALABILIDAD.md)               |
 | Equipamiento (CMMS)         | [modulos/EQUIPAMIENTO.md](./modulos/EQUIPAMIENTO.md)                       |
 | Pagos y tipo de cambio BCV  | [modulos/PAGOS-Y-TIPO-DE-CAMBIO.md](./modulos/PAGOS-Y-TIPO-DE-CAMBIO.md)   |
+| Finanzas operativas (vNext) | [modulos/FINANZAS-OPERATIVAS.md](./modulos/FINANZAS-OPERATIVAS.md)         |
 | Rutinas y entrenamiento     | [modulos/RUTINAS-Y-ENTRENAMIENTO.md](./modulos/RUTINAS-Y-ENTRENAMIENTO.md) |
 | Chat y notificaciones       | [modulos/CHAT-Y-NOTIFICACIONES.md](./modulos/CHAT-Y-NOTIFICACIONES.md)     |
 | Nutrición                   | [modulos/NUTRICION.md](./modulos/NUTRICION.md)                             |
@@ -64,6 +65,7 @@
 | [DEPLOY-RAILWAY.md](./DEPLOY-RAILWAY.md)                                     | Alternativa de hosting (Railway)                   |
 | [TESTING.md](./TESTING.md)                                                   | Tests automatizados y CI                           |
 | [UX-QA.md](./qa/UX-QA.md)                                                    | Matriz UX manual por rol/viewport                  |
+| [VNEXT-DEAD-ENDS-AUDIT.md](./qa/VNEXT-DEAD-ENDS-AUDIT.md)                    | Auditoría dead-ends vNext                          |
 | [QA-VISUAL-CHECKLIST.md](./qa/QA-VISUAL-CHECKLIST.md)                        | Checklist visual pre-release                       |
 | [QA-DEVICE-10.md](./qa/QA-DEVICE-10.md)                                      | Checklist PWA / push en dispositivo real           |
 | [SMOKE-CHECKLIST-ROLES.md](./qa/SMOKE-CHECKLIST-ROLES.md)                    | Smoke manual por rol post-UI                       |

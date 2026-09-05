@@ -42,6 +42,9 @@ export interface MemberStats {
     routine_name: string;
     start_time: string;
   }[];
+  hasTrainerAssignment?: boolean;
+  /** Show Cobros PT in nav when member has trainer or PT invoices */
+  showPtBilling?: boolean;
 }
 
 interface MemberStatsContextValue {

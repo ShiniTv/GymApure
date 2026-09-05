@@ -20,6 +20,14 @@
 
 **Global baseline: 7.4 / 10** · **Re-eval: ~8.1 / 10** · **Audit 360 (2026-07-28): ~8.3 / 10** · **Meta Fases A–D: ~9.4–9.5**
 
+### vNext (2026-09) — en curso / entregado en código
+
+- Member: dead-ends P0/P1, Cobros PT condicional, constructor de rutinas propias (migración `owner_member_id`)
+- Comms: adjuntos PDF, notifs agrupadas, onboarding canales
+- Admin: caja del día, reporte conciliación
+- Ops: alerta Sentry documentada (UI cuenta); device push sigue pendiente de hardware
+- Gates locales: `lint` + `build` OK (2026-09-04); migrate/tests requieren BD dev alcanzable
+
 ### Evidencia runtime (2026-07-28)
 
 - Prod `GET /api/health` → `ok`, `db_latency_ms` ≈ 21

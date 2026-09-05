@@ -9,9 +9,10 @@ Guía para el rol **member** — uso de la app como cliente del gimnasio.
 ### Puede hacer
 
 - Ver su dashboard, rutinas y entrenamientos
+- **Crear y editar sus propias rutinas** (badge “Mía”); las del entrenador solo se sustituyen/entrenan
 - Iniciar sesión de entrenamiento activa
 - Consultar biblioteca de ejercicios, nutrición, pagos e historial
-- Mensajes con entrenador/staff
+- Mensajes con recepción / admin / entrenador (canales separados)
 - Editar su perfil
 
 ### No puede hacer

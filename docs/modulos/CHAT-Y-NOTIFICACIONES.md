@@ -30,7 +30,7 @@ Los mensajes de un canal **no** aparecen en los otros. Admin no ve el hilo de re
 - Respuestas rápidas por rol; buscar dentro del hilo (staff)
 - Checks de envío/lectura (`read_at`)
 - Indicador “está escribiendo…” (WebSocket, room por conversación)
-- Adjuntos de imagen (JPG/PNG/WebP, máx. 5 MB) en el composer
+- Adjuntos de imagen (JPG/PNG/WebP) y **PDF** (máx. 5 MB) en el composer
 - Bucket Storage `chat-attachments` (o `uploads/chat` en local)
 
 ### Flujos

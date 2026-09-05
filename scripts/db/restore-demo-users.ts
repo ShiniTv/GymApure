@@ -268,14 +268,24 @@ async function main() {
     console.log('✓ Plantilla Full Body Demo (member_selectable) para autonomía guiada');
 
     // Yesterday so trainer activity feed has data without blocking member FAB / Empezar hoy.
+    // Clear any open session for this pair first (unique active index).
     await query(
-      `DELETE FROM workout_sessions
-       WHERE user_id = $1 AND routine_id = $2 AND start_time >= CURRENT_DATE`,
+      `DELETE FROM workout_logs
+       WHERE session_id IN (
+         SELECT id FROM workout_sessions
+         WHERE user_id = $1 AND routine_id = $2 AND end_time IS NULL
+       )`,
       [memberId, routineId]
     );
     await query(
-      `INSERT INTO workout_sessions (user_id, routine_id, start_time)
-       SELECT $1, $2, NOW() - INTERVAL '1 day'
+      `DELETE FROM workout_sessions
+       WHERE user_id = $1 AND routine_id = $2
+         AND (end_time IS NULL OR start_time >= CURRENT_DATE)`,
+      [memberId, routineId]
+    );
+    await query(
+      `INSERT INTO workout_sessions (user_id, routine_id, start_time, end_time, success)
+       SELECT $1, $2, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day' + INTERVAL '45 minutes', 1
        WHERE NOT EXISTS (
          SELECT 1 FROM workout_sessions
          WHERE user_id = $1 AND routine_id = $2

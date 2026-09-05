@@ -50,6 +50,10 @@ export interface RoutinesLibraryViewProps {
   onReorderExercise?: (routineId: number, fromIndex: number, direction: -1 | 1) => void;
   onStartWorkout?: (routineId: number) => void;
   onSubstituteExercise?: (routineId: number, exercise: RoutineExercise) => void;
+  /** Member empty-state CTA to open plantillas tab */
+  onShowTemplates?: () => void;
+  /** Logged-in member id — used to detect self-owned routines */
+  currentUserId?: number;
   completedRoutineIdsToday?: number[];
   activeRoutineIds?: number[];
 }
@@ -202,6 +206,8 @@ export function RoutinesLibraryView({
   onReorderExercise,
   onStartWorkout,
   onSubstituteExercise,
+  onShowTemplates,
+  currentUserId,
   completedRoutineIdsToday = [],
   activeRoutineIds = [],
 }: RoutinesLibraryViewProps) {
@@ -213,6 +219,11 @@ export function RoutinesLibraryView({
   const isStaff = userRole === 'trainer' || userRole === 'admin';
   const isMember = userRole === 'member';
   const lightCards = isMember || userRole === 'trainer';
+  const isOwnedByMember = (routine: Routine) =>
+    isMember &&
+    currentUserId != null &&
+    routine.owner_member_id != null &&
+    Number(routine.owner_member_id) === currentUserId;
 
   const filteredRoutines = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -252,10 +263,22 @@ export function RoutinesLibraryView({
           </div>
         ) : (
           <EmptyState
+            framed={false}
             variant="motivational"
             icon={Dumbbell}
             title="Aún sin rutina"
-            description="Ve a Plantillas para empezar por tu cuenta. Tu entrenador puede ajustarla después."
+            description="Elige una plantilla del gym o crea la tuya. Tu entrenador puede ajustarla después."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button size="sm" onClick={() => onShowTemplates?.()}>
+                  Ver plantillas
+                </Button>
+                <Button size="sm" variant="secondary" onClick={onCreateRoutine}>
+                  <Plus className="h-4 w-4" />
+                  Crear mi rutina
+                </Button>
+              </div>
+            }
             className="border-0 bg-transparent shadow-none"
           />
         )}
@@ -297,9 +320,9 @@ export function RoutinesLibraryView({
           {filteredRoutines.length !== 1 ? 's' : ''} · {totalExercises} ejercicio
           {totalExercises !== 1 ? 's' : ''}
         </p>
-        {isStaff && (
+        {(isStaff || isMember) && (
           <div className="flex shrink-0 items-center gap-1">
-            {onCreateFromTemplate && routines.length > 0 ? (
+            {isStaff && onCreateFromTemplate && routines.length > 0 ? (
               <Button
                 size="sm"
                 variant="ghost"
@@ -315,10 +338,10 @@ export function RoutinesLibraryView({
               variant="ghost"
               className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
               onClick={onCreateRoutine}
-              aria-label="Nueva rutina"
+              aria-label={isMember ? 'Crear mi rutina' : 'Nueva rutina'}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden text-xs sm:inline">Nueva</span>
+              <span className="hidden text-xs sm:inline">{isMember ? 'Crear' : 'Nueva'}</span>
             </Button>
           </div>
         )}
@@ -433,6 +456,11 @@ export function RoutinesLibraryView({
                       <div className="min-w-0 flex-1">
                         <h3 className="text-text truncate text-sm leading-snug font-semibold">
                           {routine.name}
+                          {isMember ? (
+                            <span className="text-text-muted ml-1.5 text-[10px] font-semibold tracking-wide uppercase">
+                              {isOwnedByMember(routine) ? 'Mía' : 'Entrenador'}
+                            </span>
+                          ) : null}
                         </h3>
                         <p className="text-small text-text-muted mt-0.5 font-medium">
                           {formatDifficulty(routine.difficulty)}
@@ -533,27 +561,57 @@ export function RoutinesLibraryView({
                         </>
                       )}
                       {isMember && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void onToggleExpandRoutine(routine.id);
-                          }}
-                          className={cn(
-                            'text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
-                            isExpanded && 'bg-surface-overlay text-text'
-                          )}
-                          aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
-                          aria-expanded={isExpanded}
-                          title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
-                        >
-                          <ChevronDown
+                        <>
+                          {isOwnedByMember(routine) ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditRoutine(routine);
+                                }}
+                                className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                                aria-label={`Configurar ${routine.name}`}
+                                title="Configurar"
+                              >
+                                <Settings2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteRoutine(routine);
+                                }}
+                                className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                                aria-label={`Eliminar ${routine.name}`}
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onToggleExpandRoutine(routine.id);
+                            }}
                             className={cn(
-                              'h-4 w-4 transition-transform',
-                              isExpanded && 'rotate-180'
+                              'text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                              isExpanded && 'bg-surface-overlay text-text'
                             )}
-                          />
-                        </button>
+                            aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
+                            aria-expanded={isExpanded}
+                            title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
+                          >
+                            <ChevronDown
+                              className={cn(
+                                'h-4 w-4 transition-transform',
+                                isExpanded && 'rotate-180'
+                              )}
+                            />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -626,7 +684,7 @@ export function RoutinesLibraryView({
                           </Button>
                         </div>
                       )}
-                      {isMember ? (
+                      {isMember && !isOwnedByMember(routine) ? (
                         <div className="space-y-0">
                           {routine.exercises?.map((exercise, index) => (
                             <div

@@ -46,12 +46,14 @@ Creación de rutinas, prescripción por serie, sesión activa e historial.
 
 | Acción                 | API / UI                                                                   |
 | ---------------------- | -------------------------------------------------------------------------- |
+| Crear rutina propia    | `POST /api/routines` (`owner_member_id=self`, `source=member_created`)     |
+| Editar/borrar propia   | `PUT/DELETE /api/routines/:id` + ejercicios (solo si es dueño)             |
 | Elegir rutina de hoy   | `PUT /api/stats/member/today-routine`                                      |
 | Auto-asignar plantilla | `POST /api/routines/:id/self-assign` (solo `member_selectable`)            |
 | Sustituir ejercicio    | `POST /api/routines/:id/exercises/:reId/substitute` (mismo grupo muscular) |
 | Saltar en sesión       | `POST /api/workouts/sessions/:id/skip-exercise`                            |
 
-El entrenador recibe aviso in-app de auto-asignación, sustitución y saltos (`member_activity_events`).
+En la lista, las rutinas muestran badge **Mía** vs **Entrenador**. El entrenador recibe aviso in-app de creación, auto-asignación, sustitución y saltos (`member_activity_events`).
 
 ### Durante la sesión
 

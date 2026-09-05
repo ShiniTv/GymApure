@@ -14,6 +14,10 @@ const ROLE_HINTS: Partial<Record<UserRole, string>> = {
   receptionist: 'Como recepcionista, tu área de trabajo es el mostrador: acceso, registro y pagos.',
 };
 
+interface AccessDeniedLocationState {
+  from?: { pathname?: string; search?: string };
+}
+
 export default function AccessDenied() {
   const { user } = useAuth();
   const location = useLocation();
@@ -22,7 +26,10 @@ export default function AccessDenied() {
   const homeLabel = role === 'receptionist' || role === 'member' ? 'Inicio' : 'Panel';
   const portalTitle = PORTAL_TITLES[role];
   const roleHint = ROLE_HINTS[role];
-  const path = location.pathname;
+  const fromState = (location.state as AccessDeniedLocationState | null)?.from;
+  const attemptedPath =
+    `${fromState?.pathname ?? ''}${fromState?.search ?? ''}` || location.pathname;
+  const path = fromState?.pathname ?? location.pathname;
   const routinesBlocked =
     role === 'admin' &&
     (path.includes('/routines') ||
@@ -49,6 +56,11 @@ export default function AccessDenied() {
             ? 'Las rutinas y la nutrición las asigna el entrenador desde su portal. Desde aquí puedes gestionar miembros, membresías y el mostrador.'
             : 'Esta sección no está disponible para tu cuenta.'}
         </p>
+        {fromState?.pathname ? (
+          <p className="text-text-muted text-xs leading-relaxed">
+            Intentaste abrir <span className="font-mono">{attemptedPath}</span>.
+          </p>
+        ) : null}
         {roleHint && !routinesBlocked ? (
           <p className="text-text-muted text-xs leading-relaxed">{roleHint}</p>
         ) : null}

@@ -35,15 +35,19 @@ El build Vite puede inyectar release vía plugin Sentry (`@sentry/vite-plugin`) 
 2. Confirmar evento en Sentry &lt; 2 min.
 3. `npm run lighthouse:ci` en CI ya mide budgets de login/panel.
 
-## Pendiente ops (auditoría 360° — actualizado 2026-08-22)
+## Pendiente ops (auditoría 360° — actualizado 2026-09-04)
 
 Hecho: proyecto Sentry, DSN en `.env.prod` y Render, bundle prod con ingest (2026-08-22),
 gate en [OPS-VERIFY-CHECKLIST.md](./OPS-VERIFY-CHECKLIST.md), MFA re-encrypt prod → 0 legacy.
 
-Restante (cuenta Sentry, no CLI):
+**Alerta “new issues” (cuenta Sentry UI — no automatizable por CLI sin `SENTRY_AUTH_TOKEN`):**
 
-1. Alerts → Create Alert → **Issues nuevas** (email/Slack ops).
-2. Confirmar un evento real en staging si hace falta (no inyectar error en prod).
+1. Sentry → Alerts → Create Alert → **Issues** → “A new issue is created”.
+2. Condición: environment Production (o All).
+3. Acción: email del equipo ops / Slack webhook.
+4. Guardar como `GymApure — new issues`.
+
+Verificación post-deploy: forzar error solo en staging; confirmar evento &lt; 2 min.
 
 ### Render — pasos concretos
 

@@ -1,18 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { demoPassword, login, TRAINER_EMAIL } from './helpers';
+import { demoPassword, getDemoMemberId, login, TRAINER_EMAIL } from './helpers';
 
 test.describe('Trainer coaching context', () => {
   test('guarda evaluación y check-in de un miembro asignado', async ({ page }) => {
     await login(page, TRAINER_EMAIL, demoPassword());
-
-    const memberId = await page.evaluate(async () => {
-      const res = await fetch('/api/users?role=member&page=1&pageSize=20', {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { items?: Array<{ id: number }> };
-      return data.items?.[0]?.id ?? null;
-    });
-    expect(memberId, 'member assigned to trainer').toBeTruthy();
+    const memberId = await getDemoMemberId(page);
 
     await page.goto(`/members/${memberId}/routines?tab=coaching`);
     await expect(page.getByRole('tab', { name: /^seguimiento$/i })).toHaveAttribute(
@@ -37,32 +29,26 @@ test.describe('Trainer coaching context', () => {
 
   test('muestra la referencia de carga al editar un ejercicio', async ({ page }) => {
     await login(page, TRAINER_EMAIL, demoPassword());
-    const memberId = await page.evaluate(async () => {
-      const res = await fetch('/api/users?role=member&page=1&pageSize=20', {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { items?: Array<{ id: number }> };
-      return data.items?.[0]?.id ?? null;
-    });
-    expect(memberId, 'member assigned to trainer').toBeTruthy();
+    const memberId = await getDemoMemberId(page);
 
     await page.goto(`/members/${memberId}/routines`);
-    const expand = page.getByRole('button', { name: /ver ejercicios/i }).first();
-    await expand.click();
-    await page.locator('button[aria-label^="Editar "]:visible').last().click();
+    // Evitar rutinas member-created vacías (trainer_id vinculado) que quedan arriba por assigned_at.
+    const seededCard = page
+      .locator('.touch-manipulation')
+      .filter({ hasText: /[1-9]\d*\s*ejercicios?/i })
+      .filter({ has: page.getByRole('button', { name: /ver ejercicios/i }) })
+      .first();
+    await expect(seededCard).toBeVisible({ timeout: 15_000 });
+    await seededCard.getByRole('button', { name: /ver ejercicios/i }).click();
+    const editBtn = page.locator('button[aria-label^="Editar "]:visible').first();
+    await expect(editBtn).toBeVisible({ timeout: 15_000 });
+    await editBtn.click();
     await expect(page.getByText('Referencia de carga')).toBeVisible();
   });
 
   test('agenda y completa una sesión 1:1 del miembro asignado', async ({ page }) => {
     await login(page, TRAINER_EMAIL, demoPassword());
-    const memberId = await page.evaluate(async () => {
-      const res = await fetch('/api/users?role=member&page=1&pageSize=20', {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { items?: Array<{ id: number }> };
-      return data.items?.[0]?.id ?? null;
-    });
-    expect(memberId, 'member assigned to trainer').toBeTruthy();
+    const memberId = await getDemoMemberId(page);
 
     await page.goto(`/members/${memberId}/routines?tab=agenda`);
     // Hub destilado: Agenda vive en «Más en esta ficha»; el primario es Seguimiento
