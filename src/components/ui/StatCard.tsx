@@ -49,7 +49,7 @@ function StatCardContent({
     return (
       <>
         <p className={cn(typography.statLabel, 'leading-tight')}>{title}</p>
-        <p className="text-text mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
+        <p className={cn(typography.statValueSm, 'mt-0.5')}>{value}</p>
         {trend ? (
           <span
             className={cn(

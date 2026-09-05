@@ -22,18 +22,18 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];
 
-/** Sheet items — synced with secondary items in trainerNav.ts */
+/** Sheet — Coaching / Cobros / Cuenta (not a flat dump). Synced with trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Miembros' },
-  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Miembros' },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Coaching' },
   {
     name: 'Calendario',
     href: '/routines?view=calendar',
     icon: CalendarDays,
-    section: 'Programación',
+    section: 'Coaching',
   },
-  { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Contenido' },
-  { name: 'Reportar equipo', href: '/equipment', icon: Wrench, section: 'Contenido' },
+  { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Coaching' },
+  { name: 'Reportar equipo', href: '/equipment', icon: Wrench, section: 'Coaching' },
+  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Cobros' },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];

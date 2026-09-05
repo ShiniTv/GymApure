@@ -23,11 +23,11 @@ export default function ThemePalettePicker() {
               aria-checked={isActive}
               onClick={() => setPalette(item.id)}
               className={cn(
-                'relative flex touch-manipulation flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
+                'relative flex touch-manipulation flex-col items-start gap-2 rounded-xl border p-3 text-left transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 'focus-visible:ring-brand/50 focus:outline-none focus-visible:ring-2',
                 isActive
                   ? 'border-brand bg-brand/5 shadow-sm'
-                  : 'border-border bg-surface hover:border-border'
+                  : 'border-border bg-surface can-hover:hover:border-border'
               )}
             >
               <div className="flex items-center gap-1.5">

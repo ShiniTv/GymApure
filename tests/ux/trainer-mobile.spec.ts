@@ -53,7 +53,9 @@ test.describe('Entrenador móvil', () => {
     await expect(sheet.getByRole('link', { name: 'Calendario' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Ejercicios' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Reportar equipo' })).toBeVisible();
-    await expect(sheet.getByText('Programación')).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Cobros PT' })).toBeVisible();
+    await expect(sheet.getByText('Coaching', { exact: true })).toBeVisible();
+    await expect(sheet.getByText('Cobros', { exact: true })).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(sheet).toBeHidden();

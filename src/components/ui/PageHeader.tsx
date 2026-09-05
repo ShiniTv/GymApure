@@ -33,13 +33,16 @@ export function PageHeader({
   variant = 'operate',
   showTitleOnMobile = false,
 }: PageHeaderProps) {
-  const hideTitleOnMobile = !showTitleOnMobile && variant === 'operate';
+  // Operate: island chrome often shows the section — hide H1 on mobile when a subtitle
+  // can stand in. If there is no subtitle, keep the title so the page is never untitled.
+  const hideTitleOnMobile =
+    !showTitleOnMobile && variant === 'operate' && Boolean(subtitle?.trim());
   const titleScale = titleClass[variant];
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-2.5 sm:gap-3',
+        'flex flex-col gap-2',
         (badge || action) &&
           'max-lg:flex-row max-lg:items-start max-lg:justify-between lg:flex-row lg:items-center lg:justify-between',
         className
@@ -49,7 +52,7 @@ export function PageHeader({
         <h1
           className={cn(
             titleScale,
-            compact && variant === 'operate' && 'text-lg sm:text-xl lg:text-2xl',
+            compact && variant === 'operate' && 'text-base sm:text-lg',
             hideTitleOnMobile && 'hidden lg:block'
           )}
         >

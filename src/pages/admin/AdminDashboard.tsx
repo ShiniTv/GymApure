@@ -42,6 +42,7 @@ import {
   EmptyState,
 } from '../../components/ui';
 import { cn, formatMoney } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
@@ -99,7 +100,7 @@ export default function AdminDashboard() {
           title="No se pudo cargar el panel"
           description="Revisa tu conexión e inténtalo de nuevo."
           action={
-            <Button variant="secondary" size="sm" onClick={() => void adminStats.refresh()}>
+            <Button variant="secondary" size="md" onClick={() => void adminStats.refresh()}>
               Reintentar
             </Button>
           }
@@ -156,7 +157,7 @@ export default function AdminDashboard() {
         >
           <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Correo SMTP no configurado
             </p>
             <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
@@ -172,7 +173,7 @@ export default function AdminDashboard() {
         {pendingPayments > 0 && (
           <Link
             to="/payments?status=pending"
-            className="border-danger/30 flex items-center justify-between gap-2 rounded-xl border bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
+            className="border-danger/30 flex items-center justify-between gap-2 rounded-[var(--radius-card)] border bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
               <AlertTriangle className="text-danger h-4 w-4 shrink-0" />
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
         {equipmentOutOfService > 0 && (
           <Link
             to="/equipment"
-            className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
               <Wrench className="h-4 w-4 shrink-0 text-orange-500" />
@@ -202,7 +203,7 @@ export default function AdminDashboard() {
         {demoLeadsPending > 0 && (
           <Link
             to="/demo-leads"
-            className="flex items-center justify-between gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-2 transition-colors hover:bg-sky-500/10"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-sky-500/30 bg-sky-500/5 px-3 py-2 transition-colors hover:bg-sky-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
               <UsersRound className="h-4 w-4 shrink-0 text-sky-500" />
@@ -254,12 +255,8 @@ export default function AdminDashboard() {
         <Card padding="sm" rounded="xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-                Cierre de caja · hoy
-              </p>
-              <p className="text-text mt-1 text-xl font-bold tabular-nums sm:text-2xl">
-                {formatMoney(revenueToday)}
-              </p>
+              <p className={cn(typography.statLabel, 'leading-tight')}>Cierre de caja · hoy</p>
+              <p className={cn(typography.statValue, 'mt-1')}>{formatMoney(revenueToday)}</p>
               <p className="text-text-secondary text-small mt-1">
                 Mes {formatMoney(revenueThisMonth)} · acumulado {formatMoney(totalRevenue)}
                 {pendingPayments > 0
@@ -284,8 +281,8 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
-        <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
+        <div className="space-y-3">
           <DashboardSection title="Requiere acción" compact>
             {(() => {
               const actionItems: {
@@ -419,14 +416,14 @@ export default function AdminDashboard() {
                       key={item.key}
                       to={item.to}
                       className={cn(
-                        'flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 transition-colors',
+                        'flex items-center justify-between gap-3 rounded-[var(--radius-card)] border px-3 py-2.5 transition-colors',
                         item.tone
                       )}
                     >
                       <div className="flex min-w-0 items-center gap-2.5">
                         <item.icon className="h-4 w-4 shrink-0" aria-hidden />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold">
+                          <p className="truncate text-sm font-semibold">
                             {item.title}
                             {typeof item.count === 'number' ? (
                               <span className="ml-1.5 tabular-nums">({item.count})</span>
@@ -585,7 +582,7 @@ export default function AdminDashboard() {
               >
                 <CalendarClock className="text-brand h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-text text-sm font-bold">Próximos vencimientos</p>
+                  <p className="text-text text-sm font-semibold">Próximos vencimientos</p>
                   <p className="text-text-muted text-small truncate">
                     {expiringList.length} en {alertDays} días
                     {criticalExpiring > 0
@@ -674,7 +671,7 @@ export default function AdminDashboard() {
 
           <Card padding="sm" rounded="xl">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-text text-sm font-bold">Flujo de ingresos</h3>
+              <h3 className="text-text text-sm font-semibold">Flujo de ingresos</h3>
               {!isDesktop && (
                 <Button
                   type="button"
@@ -717,7 +714,11 @@ export default function AdminDashboard() {
                     { value: '6m', label: '6m' },
                   ]}
                 />
-                <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
+                <Suspense
+                  fallback={
+                    <Skeleton className="h-40 w-full rounded-[var(--radius-card)] sm:h-56" />
+                  }
+                >
                   <RevenueChart
                     data={revenueChartData}
                     mode={revenueChartMode}

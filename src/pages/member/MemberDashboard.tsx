@@ -39,7 +39,7 @@ const ASSIGNMENT_ENDING =
   'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const LINK_BRAND = 'text-brand inline-block text-xs font-bold hover:underline';
 const MOBILE_LIST_ROW =
-  'tap-feedback flex min-h-12 items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-raised';
+  'tap-feedback flex min-h-[var(--touch-min)] items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-raised';
 
 const MEMBER_LINKS = [
   { to: '/routines', icon: Dumbbell, label: 'Rutinas', detail: 'Asignaciones activas' },
@@ -185,7 +185,7 @@ export default function MemberDashboard() {
           onClick={() => setAccesoExtrasOpen((v) => !v)}
           aria-expanded={accesoExtrasOpen}
         >
-          <span className="text-text text-sm font-bold">Acceso y extras</span>
+          <span className="text-text text-sm font-semibold">Acceso y extras</span>
           {accesoExtrasOpen ? (
             <ChevronUp className="text-text-muted h-4 w-4" />
           ) : (
@@ -202,10 +202,10 @@ export default function MemberDashboard() {
 
       {/* Desktop: full routine + membership cards. Mobile: one quiet list; hero owns the train CTA. */}
       {isMobile ? (
-        <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
+        <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
           {routine ? (
             <Link to="/routines" className={MOBILE_LIST_ROW}>
-              <div className="bg-brand/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+              <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
                 <Dumbbell className="text-brand h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -218,7 +218,7 @@ export default function MemberDashboard() {
             </Link>
           ) : (
             <Link to="/routines?view=templates" className={MOBILE_LIST_ROW}>
-              <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+              <div className="bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
                 <Dumbbell className="text-text-muted h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -232,7 +232,7 @@ export default function MemberDashboard() {
           )}
 
           <Link to="/payments" className={MOBILE_LIST_ROW}>
-            <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+            <div className="bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
               <CreditCard className="text-text-secondary h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -249,7 +249,7 @@ export default function MemberDashboard() {
                   </p>
                   <div className="bg-surface-overlay mt-1.5 h-1 w-full max-w-48 rounded-full">
                     <div
-                      className="h-1 rounded-full transition-[width,background-color] duration-500"
+                      className="h-1 rounded-full transition-[width,background-color] duration-250 [transition-timing-function:var(--ease-out)]"
                       style={{
                         width: `${subscriptionBarStyle.widthPercent}%`,
                         backgroundColor: subscriptionBarStyle.backgroundColor,
@@ -275,13 +275,13 @@ export default function MemberDashboard() {
             <h3 className="section-title mb-3">Tu rutina</h3>
             {routine ? (
               <>
-                <div className="flex items-center gap-4">
-                  <div className="bg-brand/10 rounded-[var(--radius-card)] p-4">
-                    <Dumbbell className="text-brand h-6 w-6" />
+                <div className="flex items-center gap-3">
+                  <div className="bg-brand/10 p-ds-3 rounded-[var(--radius-card)]">
+                    <Dumbbell className="text-brand h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-text truncate text-xl font-bold">{routine.name}</p>
-                    <p className="text-text-secondary mt-1 text-xs">
+                    <p className="text-text truncate text-base font-semibold">{routine.name}</p>
+                    <p className="text-text-secondary text-small mt-0.5">
                       {routineScheduledToday ? 'Hoy toca' : 'No está programada para hoy'} ·{' '}
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                     </p>
@@ -336,20 +336,20 @@ export default function MemberDashboard() {
               <>
                 <p
                   className={cn(
-                    'text-2xl font-bold',
+                    'text-lg font-semibold tabular-nums',
                     subscriptionPlanNameClass(sub.days_remaining, alertDays)
                   )}
                 >
                   {sub.membership_name}
                 </p>
-                <p className="text-text-secondary mt-2 text-sm">
+                <p className="text-text-secondary text-small mt-1">
                   {formatRemainingDaysShort(sub.days_remaining)}
                   {' · '}
                   Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
                 </p>
-                <div className="bg-surface-overlay mt-4 h-3 w-full rounded-full">
+                <div className="bg-surface-overlay mt-3 h-1.5 w-full rounded-full">
                   <div
-                    className="h-3 rounded-full transition-[width,background-color] duration-500"
+                    className="h-1.5 rounded-full transition-[width,background-color] duration-250 [transition-timing-function:var(--ease-out)]"
                     style={{
                       width: `${subscriptionBarStyle.widthPercent}%`,
                       backgroundColor: subscriptionBarStyle.backgroundColor,
@@ -401,7 +401,7 @@ export default function MemberDashboard() {
           >
             Explorar
           </h2>
-          <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
+          <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
             {MEMBER_LINKS.map(({ to, icon: Icon, label, detail }) => (
               <Link key={to} to={to} className={MOBILE_LIST_ROW}>
                 <Icon className="text-text-secondary h-4 w-4 shrink-0" aria-hidden />
@@ -460,7 +460,7 @@ export default function MemberDashboard() {
             onClick={() => setMoreOpen((v) => !v)}
             aria-expanded={moreOpen}
           >
-            <span className="text-text text-sm font-bold">Más de tu plan</span>
+            <span className="text-text text-sm font-semibold">Más de tu plan</span>
             {moreOpen ? (
               <ChevronUp className="text-text-muted h-4 w-4" />
             ) : (
@@ -510,7 +510,7 @@ export default function MemberDashboard() {
                   <p className="text-text-secondary mb-1 text-xs font-semibold">
                     Último entrenamiento
                   </p>
-                  <p className="text-text text-sm font-bold">
+                  <p className="text-text text-sm font-semibold">
                     {memberStats.lastWorkout.routine_name}
                   </p>
                   <p className="text-text-secondary text-small mt-0.5">
@@ -568,7 +568,7 @@ export default function MemberDashboard() {
           {memberStats?.lastWorkout && (
             <Card padding="md" rounded="xl">
               <h3 className="section-title mb-3">Último entrenamiento</h3>
-              <p className="text-text font-bold">{memberStats.lastWorkout.routine_name}</p>
+              <p className="text-text font-semibold">{memberStats.lastWorkout.routine_name}</p>
               <p className="text-text-secondary mt-1 text-xs">
                 {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
                   locale: es,

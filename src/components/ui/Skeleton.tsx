@@ -7,6 +7,7 @@ interface SkeletonProps {
 export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
+      aria-hidden
       className={cn(
         'bg-surface-overlay/70 relative animate-pulse overflow-hidden rounded-[var(--radius-card)]',
         'after:animate-shimmer after:absolute after:inset-0 after:rounded-[var(--radius-card)]',
@@ -18,7 +19,11 @@ export function Skeleton({ className }: SkeletonProps) {
 
 export function StatCardSkeleton() {
   return (
-    <div className="border-border/80 bg-surface p-ds-4 sm:p-ds-5 rounded-[var(--radius-card)] border shadow-xs">
+    <div
+      className="border-border/80 bg-surface p-ds-4 sm:p-ds-5 rounded-[var(--radius-card)] border shadow-xs"
+      aria-busy="true"
+      aria-label="Cargando indicador"
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-24" />
@@ -44,7 +49,7 @@ export function TableRowSkeleton({ cols = 5 }: { cols?: number }) {
 
 export function DashboardSkeleton({ statCount = 4 }: { statCount?: number }) {
   return (
-    <div className="page-stack">
+    <div className="page-stack" aria-busy="true" aria-label="Cargando panel">
       <div className="space-y-2">
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-3 w-40" />

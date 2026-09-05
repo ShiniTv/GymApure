@@ -65,7 +65,7 @@ export function WorkoutExerciseCard({
     <article
       id={`active-workout-exercise-${exercise.id}`}
       className={cn(
-        'rounded-card border-border bg-surface border p-3 transition-all sm:p-4',
+        'rounded-card border-border bg-surface border p-3 transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)] sm:p-4',
         completed ? 'scale-[0.99] opacity-55 ring-1 ring-emerald-500/40' : '',
         hidden && 'hidden'
       )}
@@ -83,10 +83,10 @@ export function WorkoutExerciseCard({
               type="button"
               onClick={onToggleComplete}
               className={cn(
-                'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all',
+                'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 completed
                   ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-900/20'
-                  : 'bg-surface-overlay text-text-secondary hover:bg-surface-raised hover:text-text'
+                  : 'bg-surface-overlay text-text-secondary can-hover:hover:bg-surface-raised can-hover:hover:text-text'
               )}
               aria-label={completed ? 'Marcar ejercicio como pendiente' : 'Completar ejercicio'}
               title={completed ? 'Hecho' : 'Completar'}
@@ -97,7 +97,7 @@ export function WorkoutExerciseCard({
               <button
                 type="button"
                 onClick={onSkip}
-                className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+                className="text-text-muted can-hover:hover:bg-surface-overlay can-hover:hover:text-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
                 aria-label={`Saltar ${exercise.name}`}
                 title="Saltar hoy"
               >
@@ -206,7 +206,7 @@ export function WorkoutExerciseCard({
             <div
               key={setNum}
               className={cn(
-                'grid items-center gap-2 rounded-lg px-0.5 py-1 transition-all',
+                'grid items-center gap-2 rounded-lg px-0.5 py-1 transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 setGridClass,
                 isCompleted ? 'bg-emerald-500/5 opacity-80' : 'bg-transparent'
               )}
@@ -277,7 +277,7 @@ export function WorkoutExerciseCard({
                   <button
                     type="button"
                     onClick={() => onEditSet(setNum)}
-                    className="bg-brand/10 text-brand hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-md transition-all"
+                    className="bg-brand/10 text-brand can-hover:hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-md transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
                     title="Editar serie"
                     aria-label={`Editar serie ${setNum}`}
                   >
@@ -287,7 +287,7 @@ export function WorkoutExerciseCard({
                   <button
                     type="button"
                     onClick={() => onToggleSetComplete(setNum)}
-                    className="border-border bg-surface-raised text-text-muted hover:border-brand hover:text-brand flex h-9 w-9 items-center justify-center rounded-md border transition-all"
+                    className="border-border bg-surface-raised text-text-muted can-hover:hover:border-brand can-hover:hover:text-brand flex h-9 w-9 items-center justify-center rounded-md border transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
                     aria-label={`Marcar serie ${setNum} como hecha`}
                   >
                     <CheckCircle className="h-4 w-4" />
@@ -302,7 +302,7 @@ export function WorkoutExerciseCard({
           <button
             type="button"
             onClick={onAddSet}
-            className="hover:text-brand hover:bg-brand/5 hover:border-brand/40 border-border text-text-muted flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed px-2 text-xs font-medium transition-all"
+            className="can-hover:hover:text-brand can-hover:hover:bg-brand/5 can-hover:hover:border-brand/40 border-border text-text-muted flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed px-2 text-xs font-medium transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
           >
             <Plus className="h-3.5 w-3.5" />
             Añadir serie
@@ -311,7 +311,7 @@ export function WorkoutExerciseCard({
             <button
               type="button"
               onClick={onRemoveLastSet}
-              className="border-border text-text-muted hover:border-danger/35 hover:text-danger inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-all hover:bg-red-500/10"
+              className="border-border text-text-muted can-hover:hover:border-danger/35 can-hover:hover:text-danger can-hover:hover:bg-red-500/10 inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
               aria-label="Eliminar última serie"
               title="Eliminar última serie"
             >

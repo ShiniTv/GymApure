@@ -517,10 +517,10 @@ export default function ReceptionWalkInWizard({
                     setForm({ ...form, membership_id: String(plan.id) });
                   }}
                   className={cn(
-                    'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-all',
+                    'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                     form.membership_id === String(plan.id)
                       ? 'border-brand/40 bg-brand/10'
-                      : 'hover:border-brand/30 border-border'
+                      : 'can-hover:hover:border-brand/30 border-border'
                   )}
                 >
                   <p className="text-text text-sm font-semibold">{plan.name}</p>
@@ -565,7 +565,7 @@ export default function ReceptionWalkInWizard({
           <div>
             <Label>Comprobante (opcional)</Label>
             <div className="flex w-full items-center justify-center">
-              <label className="hover:bg-brand/5 hover:border-brand/50 border-border bg-surface-raised group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all">
+              <label className="can-hover:hover:bg-brand/5 can-hover:hover:border-brand/50 border-border bg-surface-raised group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]">
                 <Upload className="group-hover:text-brand text-text-muted mb-2 h-7 w-7 transition-colors" />
                 <p className="group-hover:text-brand text-text-muted text-xs font-medium transition-colors">
                   Adjuntar captura de pago

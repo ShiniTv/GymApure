@@ -55,7 +55,7 @@ export function WorkoutHeader({
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               <span
                 className={cn(
-                  'bg-brand/10 text-brand text-small inline-flex items-center gap-1 rounded-[var(--radius-chip)] px-2 py-0.5 font-mono font-semibold tabular-nums transition-all',
+                  'bg-brand/10 text-brand text-small inline-flex items-center gap-1 rounded-[var(--radius-chip)] px-2 py-0.5 font-mono font-semibold tabular-nums transition-colors duration-150',
                   pausePulse ? 'animate-pulse' : ''
                 )}
               >
@@ -65,7 +65,7 @@ export function WorkoutHeader({
               {isPaused ? (
                 <span
                   className={cn(
-                    'bg-surface-overlay text-text-secondary text-small rounded-[var(--radius-chip)] px-2 py-0.5 font-medium transition-all',
+                    'bg-surface-overlay text-text-secondary text-small rounded-[var(--radius-chip)] px-2 py-0.5 font-medium transition-colors duration-150',
                     pausePulse ? 'animate-pulse' : ''
                   )}
                 >
@@ -155,7 +155,7 @@ export function WorkoutHeader({
           aria-label={`Progreso de sesión ${progressPct}%`}
         >
           <div
-            className="bg-brand h-full rounded-full transition-all duration-500"
+            className="bg-brand h-full rounded-full transition-[width] duration-250 [transition-timing-function:var(--ease-out)]"
             style={{ width: `${progressPct}%` }}
           />
         </div>

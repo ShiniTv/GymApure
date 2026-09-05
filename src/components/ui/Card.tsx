@@ -5,6 +5,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   key?: Key;
   children?: ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  /**
+   * Legacy size names — all resolve to `--radius-card` (8px). Prefer omitting;
+   * kept so call sites do not imply soft 16–24px corners.
+   */
   rounded?: 'xl' | '2xl' | '3xl';
   variant?: 'default' | 'elevated' | 'interactive' | 'dashed' | 'alert';
   className?: string;

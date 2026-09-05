@@ -34,6 +34,7 @@ export const ADMIN_MORE_ITEMS: StaffBottomNavMoreItem[] = [
     icon: Fingerprint,
     section: 'Operación',
   },
+  /** Tablet floor only — not a duplicate of Mostrador */
   { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
   { name: 'Membresías', href: '/memberships', icon: BadgeDollarSign, section: 'Operación' },
   { name: 'Entrenadores', href: '/trainers', icon: UserCog, section: 'Operación' },

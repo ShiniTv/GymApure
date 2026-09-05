@@ -310,7 +310,7 @@ export function RoutinesCalendarView({
                   }}
                   onDrop={(e) => handleDayDrop(e, dateStr)}
                   className={cn(
-                    'border-border-subtle bg-surface group relative min-h-[100px] cursor-pointer border-t border-l p-1.5 transition-all',
+                    'border-border-subtle bg-surface group relative min-h-[100px] cursor-pointer border-t border-l p-1.5 transition-[background-color,opacity] duration-150',
                     isOtherMonth && 'opacity-30',
                     isSelected && 'bg-brand/5 dark:bg-brand/10',
                     dragOverDay === dateStr && 'bg-brand/15 ring-brand/40 ring-2 ring-inset'

@@ -115,7 +115,7 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
           autoCapitalize="characters"
           aria-label="Cédula de identidad"
           className={cn(
-            'w-full text-center font-mono tracking-widest transition-all outline-none',
+            'w-full text-center font-mono tracking-widest transition-[border-color,box-shadow,background-color,color] duration-150 outline-none',
             isCompact
               ? 'min-h-[52px] rounded-xl py-3 text-xl'
               : 'min-h-[80px] rounded-xl py-6 text-3xl md:text-4xl',

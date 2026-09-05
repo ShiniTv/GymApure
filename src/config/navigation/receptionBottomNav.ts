@@ -8,7 +8,7 @@ import {
   UserCircle,
   Wrench,
   ShieldCheck,
-  LayoutDashboard,
+  CalendarDays,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -26,9 +26,13 @@ export const RECEPTION_PRIMARY_TABS: ReceptionBottomTab[] = [
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];
 
+/**
+ * Acceso (primary) is home. “Vista del día” is a subtarea under Operación — not a second home.
+ * Kiosk only as “Modo tablet”.
+ */
 export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
-  { name: 'Resumen', href: '/reception', icon: LayoutDashboard, section: 'Operación' },
   { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
+  { name: 'Vista del día', href: '/reception', icon: CalendarDays, section: 'Operación' },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
@@ -82,7 +86,7 @@ export function isReceptionMoreItemActive(pathname: string, search: string, href
 
 export function isReceptionMoreTabActive(pathname: string, search: string): boolean {
   return RECEPTION_MORE_ITEMS.some((item) => {
-    // Resumen lives under Acceso in the primary pill; don't light Más on home
+    // Vista del día lives under Acceso in the primary pill; don't light Más on home
     if (item.href === '/reception') return false;
     return isReceptionMoreItemActive(pathname, search, item.href);
   });

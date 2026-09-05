@@ -31,7 +31,7 @@ export default function NotFound() {
 
         <Link
           to={home}
-          className="bg-text text-bg inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold shadow-md transition-all hover:opacity-90 active:scale-95"
+          className="bg-text text-bg inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold shadow-md transition-[opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:opacity-90 active:scale-[0.97]"
         >
           <Home className="h-4 w-4" />
           Volver a {homeLabel}

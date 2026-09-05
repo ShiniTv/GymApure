@@ -58,7 +58,7 @@ const variants: Record<ButtonVariant, string> = {
   ),
 };
 
-/** Padding + radius match Figma: 16px radius, 12–16px pad, 44/48 touch targets */
+/** Padding + radius use `--radius-button` (8px); touch: md 44px / lg 48px / sm compact chrome */
 const sizes = {
   sm: 'min-h-9 px-ds-3 py-ds-2 text-small rounded-button gap-1.5',
   md: 'min-h-[var(--touch-min)] px-ds-4 py-ds-3 text-sm rounded-button',
@@ -74,7 +74,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className={cn(
         'inline-flex touch-manipulation items-center justify-center gap-2',
         typography.button,
-        'tap-feedback transition-[background-color,border-color,color,box-shadow,transform,opacity] duration-150',
+        'tap-feedback transition-[background-color,border-color,color,box-shadow,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
         'focus-visible:ring-offset-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         'disabled:cursor-not-allowed disabled:active:scale-100 disabled:active:opacity-100',
         sizes[size],

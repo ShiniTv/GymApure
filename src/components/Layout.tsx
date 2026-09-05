@@ -503,7 +503,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'app-canvas px-ds-4 py-ds-3 sm:p-ds-5 lg:p-ds-6 h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto transition-colors duration-300',
+              'app-canvas px-ds-4 py-ds-3 sm:p-ds-4 lg:p-ds-5 h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto transition-colors duration-300',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',

@@ -143,7 +143,7 @@ export function MemberAddModal({
             <div>
               <Label>Rol de Usuario</Label>
               <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
                 value={newMember.role}
                 onChange={(e) => {
                   onNewMemberChange({ ...newMember, role: e.target.value, training_shift: '' });
@@ -162,7 +162,7 @@ export function MemberAddModal({
                 {newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}
               </Label>
               <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
                 value={newMember.training_shift}
                 onChange={(e) => {
                   onNewMemberChange({

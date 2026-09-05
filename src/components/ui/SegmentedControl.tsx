@@ -133,7 +133,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
+              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-2 transition-[background-color,color,box-shadow,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)] focus-visible:ring-2 focus-visible:outline-none',
               fullWidth && !scroll && 'flex-1',
               isKiosk
                 ? cn(
@@ -142,7 +142,8 @@ export function SegmentedControl<T extends string>({
                   )
                 : scroll
                   ? cn(
-                      'text-small h-7 shrink-0 rounded-full px-2.5 font-semibold',
+                      /* Toolbar chips — min 36px; Comfortable floor uses default/kiosk variants */
+                      'text-small min-h-8 shrink-0 rounded-full px-2.5 py-1 font-semibold',
                       active
                         ? 'bg-surface-overlay text-text'
                         : 'text-text-secondary hover:text-text bg-transparent'

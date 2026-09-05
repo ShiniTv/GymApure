@@ -18,7 +18,7 @@ export function StatTile({ label, value, className }: StatTileProps) {
       )}
     >
       <p className={cn(typography.statLabel, 'leading-tight')}>{label}</p>
-      <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{value}</p>
+      <p className={cn(typography.statValueSm, 'mt-0.5')}>{value}</p>
     </div>
   );
 }

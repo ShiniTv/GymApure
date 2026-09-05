@@ -35,16 +35,16 @@ typography:
     fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, monospace'
   h1:
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.75rem'
+    fontSize: '1.375rem'
     fontWeight: 600
-    lineHeight: 1.15
+    lineHeight: 1.2
     letterSpacing: '-0.025em'
   h2:
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif'
-    fontSize: '1.25rem'
+    fontSize: '1rem'
     fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: '-0.02em'
+    lineHeight: 1.3
+    letterSpacing: '-0.015em'
   body:
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif'
     fontSize: '1rem'
@@ -114,14 +114,16 @@ GymApure usa un chrome denso inspirado en Linear: canvas calmado, paneles con bo
 ## Typography
 
 - Familia UI: **Inter**; mono: **JetBrains Mono**.
-- Escala: h1 28px / h2 20px / base 16px / small 12px con tracking negativo en títulos.
-- Usar `typography.*` (`pageTitle`, `sectionTitle`, `label`, `labelCaps`, `body`, `statValue`) en vez de inventar pesos o tamaños ad hoc.
+- Escala Operate densa: h1 **22px** / h2 **16px** / base 16px / chrome 13px / small 12px.
+- Usar `typography.*` (`pageTitle`, `heroName`, `sectionTitle`, `label`, `labelCaps`, `body`, `statValue`, `statValueSm`) en vez de inventar pesos o tamaños ad hoc.
+- KPIs: `statValueSm` (~18px) en toolbars/`StatTile`; `statValue` (20→24px) solo en héroes.
 - Labels de form: `typography.label`; meta uppercase: `labelCaps` / `statLabel`.
+- Chrome mínimo 12px (`text-small`); nav `text-chrome` 13px.
 
 ## Layout
 
-- Gutters y card pad: 16px (`ds-4`); gaps de sección 24px (`ds-6`).
-- Mobile: bottom nav pill icon-only + `aria-label`; clearance `--*-nav-stack` (~4.75rem + safe-area); sin hamburger (sheet Más).
+- Gutters: 16px móvil → 20px desktop (`ds-4` / `ds-5`); gaps de sección 24px (`ds-6`) solo entre bloques mayores.
+- Mobile: bottom nav pill icon-only + `aria-label`; clearance `--*-nav-stack` (~5rem + safe-area); sin hamburger (sheet Más).
 - Desktop: densidades más apretadas; sidebar con footer pegado al fondo.
 - Viewports de QA: 390×844, 834×1194, 1280×720 — ver `docs/qa/UX-QA.md`.
 

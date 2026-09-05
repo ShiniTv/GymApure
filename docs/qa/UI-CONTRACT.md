@@ -6,10 +6,10 @@ El acento de marca en runtime es la paleta sky (`#0c98ff` vía `src/config/theme
 
 ## Densidad
 
-| Contexto                                    | Controles                                               | Notas                                  |
-| ------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
-| **Comfortable** (piso / formularios / CTAs) | `Button` `md` 44px / `lg` 48px                          | Member FAB, Reception counter, modales |
-| **Compact** (desktop nav, toolbars, tablas) | `.nav-link` 32px, `IconButton` `sm` 32px, `Button` `sm` | Solo chrome denso — no CTAs de piso    |
+| Contexto                                    | Controles                                               | Notas                                                        |
+| ------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------ |
+| **Comfortable** (piso / formularios / CTAs) | `Button` `md` 44px / `lg` 48px                          | Member FAB, Reception counter, modales, workout pager, kiosk |
+| **Compact** (desktop nav, toolbars, tablas) | `.nav-link` 32px, `IconButton` `sm` 32px, `Button` `sm` | Solo chrome denso — no CTAs de piso                          |
 
 No mezclar CTA de piso con `size="sm"`.
 
@@ -20,6 +20,7 @@ No mezclar CTA de piso con `size="sm"`.
 - No pasar `h-*` ni `min-h-*` en `className` de `Button` (el primitivo las ignora).
 - Preferir `secondary` sobre `ghost` (alias deprecado).
 - Footer de modal: CTAs `md`, alineados, sticky.
+- Radio: `--radius-button` (8px).
 
 ## IconButton
 
@@ -41,19 +42,35 @@ Sheet: acciones móviles y menú «Más». No modal centrado bajo 768px para eso
 
 ## Tipografía
 
-Usar `typography.*` (`pageTitle`, `floorTitle`, `immersiveTitle`, `sectionTitle`, `statLabel`, …). Prohibido `text-[Npx]` en UI (ejes SVG de charts: `chartTheme`, allowlist).
+Usar `typography.*` (`pageTitle`, `heroName`, `floorTitle`, `immersiveTitle`, `sectionTitle`, `statLabel`, `statValue`, `statValueSm`, `chromeNav`, …). Prohibido `text-[Npx]` en UI (ejes SVG de charts: `chartTheme`, allowlist).
+
+Escala Operate densa: page **22px** → card **16px** → body 16 → chrome **13px** → meta **12px**.
 
 Labels de form: `Label` / `typography.label`. Meta uppercase: `statLabel` / `labelCaps`.
 
-`PageHeader` variantes: `operate` (default), `floor` (mostrador), `immersive` (workout / kiosk).
+`PageHeader` variantes: `operate` (default; oculta H1 en móvil solo si hay `subtitle`), `floor` (mostrador), `immersive` (workout / kiosk).
+
+## KPI
+
+- Toolbar / Operate grids: `StatTile` o `StatCard` minimal → `typography.statValueSm` (~18px).
+- Hero / dashboard grande: `typography.statValue` (20→24px).
+- No inventar `text-lg`/`text-xl` ad hoc para números KPI.
 
 ## Caja
 
 - Un nivel de `Card`. Padding canónico `sm`/`md`/`lg` (`p-ds-*`); no `md:p-4` / `!p-2.5` en `className`.
-- Radio de card: `rounded-[var(--radius-card)]` (8px). No `rounded-2xl` en paneles Operate (allowlist: sheets, chat bubbles, pills).
-- KPIs de toolbar: `StatTile` (no divs ad hoc).
+- Radio de card: `rounded-[var(--radius-card)]` (8px). Props `rounded="xl|2xl|3xl"` son alias legacy del mismo 8px.
+- No `rounded-2xl` en paneles Operate (allowlist: sheets, chat bubbles, pills).
+- Inputs/alerts/accordion: `--radius-input` / `--radius-card`.
 - Empty: `EmptyState`; `framed={false}` si ya hay panel.
-- Canvas gutter: `px-ds-4` (16px) — no `px-3.5`.
+- Canvas gutter: `px-ds-4` → `sm:p-ds-4` → `lg:p-ds-5` — no `px-3.5`.
+
+## Shell móvil
+
+- Island top: `--mobile-top-chrome` (~4.125rem).
+- Bottom stack: `--*-nav-stack` = clearance 1rem + pill 3.5rem + pad 0.5rem (+ safe-area).
+- Pill tabs: hit area `min-h-[var(--touch-min)]`; icon circle 36px; badge `text-small`.
+- Clases pill: `.member-bottom-nav-pill` / alias `.app-bottom-nav-pill`.
 
 ## Gráfico
 

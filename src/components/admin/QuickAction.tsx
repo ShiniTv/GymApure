@@ -13,6 +13,7 @@ interface QuickActionProps {
   description: string;
   count?: number;
   tone?: 'brand' | 'orange' | 'red' | 'blue' | 'emerald';
+  /** Default true — Operate grids use compact density; set false for hero tiles. */
   compact?: boolean;
   /** En móvil muestra solo el icono (con badge si hay count). */
   iconOnlyMobile?: boolean;
@@ -58,6 +59,7 @@ export function QuickAction({
   showDescriptionFrom = 'sm',
   prefetchPaymentsPending,
 }: QuickActionProps) {
+  const useCompact = compact ?? true;
   const showCount = count != null && count > 0;
   const descriptionFromClass =
     showDescriptionFrom === 'lg'
@@ -81,12 +83,12 @@ export function QuickAction({
       onMouseEnter={maybePrefetch}
       onFocus={maybePrefetch}
       className={cn(
-        'group border-border/60 bg-surface hover:bg-surface-raised/80 tap-feedback relative touch-manipulation rounded-[var(--radius-card)] border transition-colors duration-150',
+        'group border-border/60 bg-surface can-hover:hover:bg-surface-raised/80 tap-feedback relative touch-manipulation rounded-[var(--radius-card)] border transition-[background-color,border-color,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
         iconOnlyMobile
           ? 'flex max-sm:min-h-[var(--touch-min)] max-sm:flex-col max-sm:items-center max-sm:justify-center max-sm:px-1 max-sm:py-2 sm:min-h-0 sm:flex-row sm:items-center sm:gap-2.5 sm:px-3 sm:py-2.5'
           : cn(
               'flex items-center gap-2.5',
-              compact
+              useCompact
                 ? 'min-h-[var(--touch-min)] px-3 py-2.5 sm:min-h-0'
                 : 'min-h-[72px] items-start gap-3 p-4'
             )
@@ -110,7 +112,7 @@ export function QuickAction({
           <p
             className={cn(
               'text-text truncate font-medium',
-              compact || iconOnlyMobile ? 'text-xs sm:text-sm' : 'text-sm'
+              useCompact || iconOnlyMobile ? 'text-xs sm:text-sm' : 'text-sm'
             )}
           >
             {title}
@@ -129,7 +131,7 @@ export function QuickAction({
         <p
           className={cn(
             'text-text-muted',
-            compact || iconOnlyMobile
+            useCompact || iconOnlyMobile
               ? cn(descriptionFromClass, 'text-small mt-0.5 line-clamp-1')
               : 'mt-0.5 text-xs'
           )}

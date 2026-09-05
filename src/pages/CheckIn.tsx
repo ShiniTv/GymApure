@@ -234,7 +234,7 @@ export default function CheckIn() {
             ) : !isKioskMode ? (
               <div
                 className={cn(
-                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-[var(--radius-card)] border-2 transition-all',
+                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-[var(--radius-card)] border-2 transition-[border-color,box-shadow,background-color,opacity] duration-200 [transition-timing-function:var(--ease-out)]',
                   'h-32 w-32',
                   status === 'scanning'
                     ? isCheckIn
@@ -298,7 +298,7 @@ export default function CheckIn() {
                 <button
                   type="button"
                   onClick={() => setShowManualCedula(true)}
-                  className="border-border bg-surface-raised text-text hover:bg-surface-overlay flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors"
+                  className="border-border bg-surface-raised text-text hover:bg-surface-overlay flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-[var(--radius-card)] border px-4 py-3 text-sm font-semibold transition-colors"
                 >
                   Ingresar cédula manualmente
                   <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />

@@ -390,10 +390,10 @@ export function PaymentRegisterModal({
               <div className="sm:col-span-2">
                 <Label>Comprobante (Captura)</Label>
                 <div className="flex w-full items-center justify-center">
-                  <label className="border-border bg-surface-raised hover:border-brand/50 hover:bg-brand/5 group flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all">
+                  <label className="border-border bg-surface-raised can-hover:hover:border-brand/50 can-hover:hover:bg-brand/5 group flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-[background-color,border-color,opacity] duration-150 [transition-timing-function:var(--ease-out)]">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="text-text-muted group-hover:text-brand mb-3 h-8 w-8 transition-colors" />
-                      <p className="text-text-muted group-hover:text-brand text-xs font-medium transition-colors">
+                      <Upload className="text-text-muted can-hover:group-hover:text-brand mb-3 h-8 w-8 transition-colors" />
+                      <p className="text-text-muted can-hover:group-hover:text-brand text-xs font-medium transition-colors">
                         Adjuntar comprobante
                       </p>
                     </div>

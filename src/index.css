@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* Hover styles only on real pointing devices — avoid sticky tap hover on touch */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 /*
  * Design tokens — GymApure chrome
@@ -16,14 +18,14 @@
   --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  --text-h1: 1.75rem; /* 28px — large titles */
-  --text-h1--line-height: 1.15;
-  --text-h1--letter-spacing: -0.03em;
-  --text-h1--font-weight: 700;
+  --text-h1: 1.375rem; /* 22px — Operate page titles (Linear-dense) */
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 600; /* matches .page-title / typography.pageTitle */
 
-  --text-h2: 1.25rem; /* 20px — section / card titles */
-  --text-h2--line-height: 1.25;
-  --text-h2--letter-spacing: -0.02em;
+  --text-h2: 1rem; /* 16px — card / panel titles */
+  --text-h2--line-height: 1.3;
+  --text-h2--letter-spacing: -0.015em;
   --text-h2--font-weight: 600;
 
   --text-base: 1rem; /* 16px — body */
@@ -35,6 +37,12 @@
   --text-small--line-height: 1.35;
   --text-small--letter-spacing: 0.01em;
   --text-small--font-weight: 500;
+
+  /* Sidebar / dense chrome (between small and base) */
+  --text-chrome: 0.8125rem; /* 13px */
+  --text-chrome--line-height: 1.35;
+  --text-chrome--letter-spacing: -0.01em;
+  --text-chrome--font-weight: 500;
 
   /* —— Brand & status (Figma dark accents) —— */
   --color-brand: #0369a1;
@@ -110,7 +118,8 @@
   }
 
   .animate-page-enter {
-    animation: page-enter 0.2s ease-out;
+    /* Frequent route changes — opacity only, snappy; no translate (would feel like lag) */
+    animation: page-enter 0.12s var(--ease-out);
   }
 
   @keyframes landing-rise {
@@ -378,7 +387,7 @@ body,
     color: #fff;
   }
 
-  /* Align with typography.pageTitle — single scale */
+  /* Align with typography.pageTitle — single scale (no lg bump) */
   .type-h1,
   .page-title {
     font-family: var(--font-display);
@@ -387,12 +396,6 @@ body,
     letter-spacing: var(--text-h1--letter-spacing);
     font-weight: 600;
     color: var(--color-text);
-  }
-
-  @media (min-width: 1024px) {
-    .page-title {
-      font-size: 1.875rem;
-    }
   }
 
   .type-h2,
@@ -426,7 +429,7 @@ body,
     font-size: var(--text-small);
     font-weight: 500;
     letter-spacing: 0.01em;
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted); /* aligns with typography.pageSubtitle */
   }
 
   @media (min-width: 640px) {
@@ -452,16 +455,25 @@ body,
   }
 
   .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.25rem; /* 20px */
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: var(--color-text);
   }
 
   @media (min-width: 640px) {
     .stat-value {
-      font-size: 1.875rem;
+      font-size: 1.5rem; /* 24px — hero KPI cap */
     }
+  }
+
+  /* Toolbar / Operate KPI — quieter than hero */
+  .stat-value-sm {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
   }
 
   .stat-label {
@@ -469,7 +481,7 @@ body,
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--color-text-secondary);
+    color: var(--color-text-muted);
   }
 
   .surface-card {
@@ -570,16 +582,16 @@ body,
   }
 
   .nav-section-label {
-    @apply text-text-muted mb-1 px-2.5 text-[10px] font-medium tracking-[0.08em] uppercase;
+    @apply text-text-muted text-small mb-1 px-2.5 font-medium tracking-[0.08em] uppercase;
   }
 
   .nav-link {
-    @apply flex min-h-8 touch-manipulation items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
+    @apply text-chrome flex min-h-8 touch-manipulation items-center gap-2 rounded-md px-2.5 py-1.5 leading-snug font-medium transition-[background-color,color,transform,opacity] duration-150;
   }
 
   .nav-link:active {
-    transform: scale(0.98);
-    opacity: 0.85;
+    transform: scale(0.97);
+    opacity: 0.88;
   }
 
   @media (max-width: 1023px) {
@@ -594,11 +606,11 @@ body,
   }
 
   .nav-link-inactive {
-    @apply text-text-secondary hover:bg-surface-overlay/70 hover:text-text;
+    @apply text-text-secondary can-hover:hover:bg-surface-overlay/70 can-hover:hover:text-text;
   }
 
   .nav-badge {
-    @apply flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[9px] leading-none font-bold;
+    @apply text-small flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold;
   }
 
   .nav-badge-soft {
@@ -782,58 +794,65 @@ body,
   }
 }
 
-/* Press feedback — buttons, nav links, menu tiles (respects reduced-motion via global rule) */
+/* Press feedback — buttons, nav links, menu tiles */
 .tap-feedback {
   transition-property: transform, opacity;
-  transition-duration: 120ms;
-  transition-timing-function: ease-out;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out);
 }
 
 .tap-feedback:active {
-  transform: scale(0.98);
-  opacity: 0.85;
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap-feedback:active {
+    transform: none;
+    opacity: 0.88;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .stagger-fade-in > * {
-    animation: slide-up 0.28s ease-out both;
+    animation: slide-up 0.2s var(--ease-out) both;
   }
 
   .stagger-fade-in > *:nth-child(1) {
     animation-delay: 0ms;
   }
   .stagger-fade-in > *:nth-child(2) {
-    animation-delay: 45ms;
+    animation-delay: 35ms;
   }
   .stagger-fade-in > *:nth-child(3) {
-    animation-delay: 90ms;
+    animation-delay: 70ms;
   }
   .stagger-fade-in > *:nth-child(4) {
-    animation-delay: 135ms;
+    animation-delay: 105ms;
   }
   .stagger-fade-in > *:nth-child(5) {
-    animation-delay: 180ms;
+    animation-delay: 140ms;
   }
   .stagger-fade-in > *:nth-child(6) {
-    animation-delay: 225ms;
+    animation-delay: 175ms;
   }
   .stagger-fade-in > *:nth-child(7) {
-    animation-delay: 270ms;
+    animation-delay: 210ms;
   }
   .stagger-fade-in > *:nth-child(8) {
-    animation-delay: 315ms;
+    animation-delay: 245ms;
   }
   .stagger-fade-in > *:nth-child(9) {
-    animation-delay: 360ms;
+    animation-delay: 280ms;
   }
   .stagger-fade-in > *:nth-child(10) {
-    animation-delay: 405ms;
+    animation-delay: 315ms;
   }
   .stagger-fade-in > *:nth-child(11) {
-    animation-delay: 450ms;
+    animation-delay: 350ms;
   }
   .stagger-fade-in > *:nth-child(12) {
-    animation-delay: 495ms;
+    animation-delay: 385ms;
   }
 }
 
@@ -940,9 +959,9 @@ body,
    * leaving only ~8px above — content still looked glued to the island.
    */
   /* Icon-only tabs: icon circle + py (labels vía aria-label) */
-  --nav-pill-height: 3.75rem;
+  --nav-pill-height: 3.5rem;
   --nav-pad-below-pill: 0.5rem;
-  --nav-clearance-above-pill: 1.25rem;
+  --nav-clearance-above-pill: 1rem;
   --reception-nav-pill-height: var(--nav-pill-height);
   --reception-nav-stack: calc(
     var(--nav-clearance-above-pill) + var(--nav-pill-height) + var(--nav-pad-below-pill)
@@ -988,27 +1007,30 @@ body,
   );
 }
 
-/* Mobile chrome — same language as desktop shell (lighter glass, quieter shadow) */
+/* Mobile chrome — light glass (cheaper blur for mid-tier phones) */
 .mobile-chrome-glass,
-.member-bottom-nav-pill {
+.member-bottom-nav-pill,
+.app-bottom-nav-pill {
   border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
-  background: color-mix(in srgb, var(--color-bg-elevated) 88%, transparent);
-  backdrop-filter: blur(20px) saturate(1.2);
+  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
   box-shadow:
     0 2px 16px rgb(0 0 0 / 0.06),
     0 1px 2px rgb(0 0 0 / 0.03);
 }
 
 .dark .mobile-chrome-glass,
-.dark .member-bottom-nav-pill {
+.dark .member-bottom-nav-pill,
+.dark .app-bottom-nav-pill {
   border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
-  background: color-mix(in srgb, var(--color-bg-elevated) 86%, transparent);
+  background: color-mix(in srgb, var(--color-bg-elevated) 90%, transparent);
   box-shadow:
     0 2px 20px rgb(0 0 0 / 0.35),
     0 1px 2px rgb(0 0 0 / 0.2);
 }
 
-.member-bottom-nav-pill {
+.member-bottom-nav-pill,
+.app-bottom-nav-pill {
   border-radius: var(--radius-pill);
 }
 
@@ -1019,7 +1041,8 @@ body,
 
 @media (min-width: 1024px) {
   .mobile-top-pad {
-    padding-top: 2rem !important; /* matches lg:p-8 */
+    /* Canvas uses lg:p-ds-5 (20px) */
+    padding-top: 1.25rem !important;
   }
 }
 
@@ -1027,8 +1050,11 @@ body,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Visual mark 36px; parent tab hit area stays --touch-min (44px) */
   width: 2.25rem;
   height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
   border-radius: 9999px;
   transition:
     background-color 0.2s ease,
@@ -1041,7 +1067,7 @@ body,
 }
 
 .member-bottom-nav-unread {
-  @apply bg-danger ring-bg absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2;
+  @apply bg-danger ring-bg text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold text-white tabular-nums ring-2;
 }
 
 .reception-main-pad {
@@ -1239,10 +1265,13 @@ html.member-has-workout-fab .member-chat-panel {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Kill decorative / positional motion; keep opacity & color for comprehension */
   .animate-in,
   .animate-scan-line,
-  .auth-linear [class*='auth-fade-in'],
+  .animate-page-enter,
   .animate-shimmer,
+  .animate-success-pop,
+  .auth-linear [class*='auth-fade-in'],
   .fade-in,
   .slide-in-from-top-2,
   .slide-in-from-bottom-2,
@@ -1250,14 +1279,26 @@ html.member-has-workout-fab .member-chat-panel {
   .slide-in-from-bottom-8,
   .streak-badge,
   .confetti-piece {
-    animation: none;
+    animation: none !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* Drop transform/translate from common press & enter helpers */
+  .tap-feedback,
+  .stagger-fade-in > *,
+  .animate-page-enter {
+    transition-property: opacity, background-color, border-color, color, box-shadow !important;
+    transform: none !important;
   }
 }
 

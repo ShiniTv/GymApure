@@ -38,7 +38,7 @@ test.describe('Recepción bottom nav', () => {
     await nav.getByRole('button', { name: /^más$/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('link', { name: /resumen/i })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: /vista del d[ií]a/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /modo tablet/i })).toBeVisible();
     await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
   });

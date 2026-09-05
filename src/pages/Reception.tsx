@@ -752,8 +752,8 @@ export default function Reception() {
             <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
               <Button
                 variant="secondary"
-                size="sm"
-                className="h-11 w-11 p-0"
+                size="md"
+                className="w-11 px-0"
                 title="Modo tablet"
                 aria-label="Modo tablet"
               >
@@ -762,8 +762,8 @@ export default function Reception() {
             </Link>
             <Button
               variant="secondary"
-              size="sm"
-              className="h-11 w-11 p-0"
+              size="md"
+              className="w-11 px-0"
               onClick={() => setCounterMode(false)}
               title="Salir del mostrador"
               aria-label="Salir del mostrador"
