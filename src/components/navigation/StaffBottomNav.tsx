@@ -53,7 +53,7 @@ export function StaffBottomNav({
 
   useEffect(() => {
     setMoreOpen(false);
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   const moreTabHighlighted = isMoreTabActive(location.pathname, location.search) || moreOpen;
 
@@ -114,7 +114,7 @@ export function StaffBottomNav({
               <p className="text-text truncate text-sm font-semibold">
                 Hola, {greetingName.split(/\s+/)[0]}
               </p>
-              <p className="text-text-muted text-[11px]">{greetingSubtitle}</p>
+              <p className="text-text-muted text-small">{greetingSubtitle}</p>
             </div>
           </div>
         )}
@@ -122,7 +122,7 @@ export function StaffBottomNav({
         <div className="space-y-2.5">
           {moreSections.map((section) => (
             <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-wide uppercase">
+              <p className="text-text-muted text-small mb-1 px-0.5 font-semibold tracking-wide uppercase">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -175,17 +175,17 @@ export function StaffBottomNav({
                         <span className="relative inline-flex">
                           <item.icon className="h-5 w-5" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
-                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                            <span className="ring-surface bg-danger text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold text-white tabular-nums ring-2">
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
                           {!item.showUnreadBadge && itemBadge > 0 ? (
-                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                            <span className="ring-surface text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 leading-none font-bold text-white tabular-nums ring-2">
                               {itemBadge > 99 ? '99+' : itemBadge}
                             </span>
                           ) : null}
                         </span>
-                        <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
+                        <span className="text-small leading-tight font-semibold">{item.name}</span>
                       </Link>
                     </li>
                   );
@@ -202,7 +202,7 @@ export function StaffBottomNav({
               closeMore();
               requestLogout();
             }}
-            className="tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-[background-color,transform,opacity] duration-150 hover:bg-red-500/10 dark:text-red-400"
+            className="tap-feedback text-danger hover:bg-danger/10 flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition-[background-color,transform,opacity] duration-150"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Cerrar sesión
@@ -251,7 +251,7 @@ export function StaffBottomNav({
                           <item.icon className="h-5 w-5" aria-hidden />
                         </span>
                         {moreMenuBadgeCount > 0 ? (
-                          <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                          <span className="ring-surface text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 leading-none font-bold text-white tabular-nums ring-2">
                             {moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount}
                           </span>
                         ) : null}
@@ -287,7 +287,7 @@ export function StaffBottomNav({
                         <item.icon className="h-5 w-5" aria-hidden />
                       </span>
                       {item.showUnreadBadge && chatUnread > 0 && (
-                        <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                        <span className="ring-surface bg-danger text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold text-white tabular-nums ring-2">
                           {chatUnread > 99 ? '99+' : chatUnread}
                         </span>
                       )}

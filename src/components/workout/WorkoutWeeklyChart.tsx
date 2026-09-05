@@ -1,20 +1,35 @@
 import { lazy, Suspense } from 'react';
 import { Spinner } from '../ui';
+import {
+  chartAxisTick,
+  chartEmptyClass,
+  chartHeights,
+  chartLabelClass,
+} from '../../lib/chartTheme';
+import { typography } from '../../lib/typography';
+import { cn } from '../../lib/utils';
 
 const LazyChart = lazy(() =>
   import('recharts').then((mod) => ({
     default: function WeeklyVolumeMiniChart({ data }: { data: { day: string; count: number }[] }) {
       const { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } = mod;
       return (
-        <ResponsiveContainer width="100%" height={104}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 10 }}
+              tick={chartAxisTick}
               stroke="currentColor"
               className="text-text-muted"
             />
-            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+            <Tooltip
+              contentStyle={{
+                fontSize: 12,
+                borderRadius: 8,
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+              }}
+            />
             <Bar dataKey="count" name="Entrenos" fill="var(--color-brand)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -50,10 +65,8 @@ export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
   if (total === 0) {
     return (
       <div>
-        <p className="text-text-muted mb-2 text-[10px] font-semibold tracking-wide uppercase">
-          Últimos 7 días
-        </p>
-        <div className="border-border bg-surface-raised/60 text-text-muted flex h-[6.5rem] items-center justify-center rounded-lg border border-dashed px-3 text-center text-[11px] leading-snug">
+        <p className={cn(chartLabelClass, 'mb-2')}>Últimos 7 días</p>
+        <div className={cn(chartEmptyClass, chartHeights.mini, 'text-small min-h-0')}>
           {insight}
         </div>
       </div>
@@ -63,19 +76,19 @@ export function WorkoutWeeklyChart({ history }: WorkoutWeeklyChartProps) {
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
-          Últimos 7 días
-        </p>
-        <p className="text-brand text-[11px] font-medium">{insight}</p>
+        <p className={chartLabelClass}>Últimos 7 días</p>
+        <p className={cn(typography.small, 'text-brand font-medium')}>{insight}</p>
       </div>
       <Suspense
         fallback={
-          <div className="flex h-[6.5rem] items-center justify-center">
+          <div className={cn(chartHeights.mini, 'flex items-center justify-center')}>
             <Spinner size="sm" />
           </div>
         }
       >
-        <LazyChart data={data} />
+        <div className={chartHeights.mini}>
+          <LazyChart data={data} />
+        </div>
       </Suspense>
     </div>
   );

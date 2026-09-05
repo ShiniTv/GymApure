@@ -142,7 +142,7 @@ export function WorkoutExerciseCard({
               >
                 <BookOpen className="h-3.5 w-3.5" />
                 <span>{showExecution ? 'Ocultar' : 'Ver ejecución'}</span>
-                <span className="bg-brand/10 text-brand dark:bg-brand/20 rounded px-1.5 py-0.5 text-[10px] font-bold">
+                <span className="bg-brand/10 text-brand dark:bg-brand/20 text-small rounded px-1.5 py-0.5 font-bold">
                   {executionStepCount(exercise.execution)} pasos
                 </span>
               </button>
@@ -180,7 +180,7 @@ export function WorkoutExerciseCard({
       <div className="space-y-2">
         <div
           className={cn(
-            'text-text-muted grid items-center gap-2 text-[11px] font-semibold tracking-wide uppercase',
+            'text-text-muted text-small grid items-center gap-2 font-semibold tracking-wide uppercase',
             setGridClass
           )}
         >
@@ -239,7 +239,7 @@ export function WorkoutExerciseCard({
                     }
                   />
                   {lastHintLabel ? (
-                    <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
+                    <p className="text-text-muted text-small mt-0.5 truncate text-center">
                       {lastHintLabel}
                     </p>
                   ) : null}
@@ -267,7 +267,7 @@ export function WorkoutExerciseCard({
                   }
                 />
                 {!showLoad && lastHintLabel ? (
-                  <p className="text-text-muted mt-0.5 truncate text-center text-[10px]">
+                  <p className="text-text-muted text-small mt-0.5 truncate text-center">
                     {lastHintLabel}
                   </p>
                 ) : null}
@@ -311,7 +311,7 @@ export function WorkoutExerciseCard({
             <button
               type="button"
               onClick={onRemoveLastSet}
-              className="border-border text-text-muted inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-all hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-500"
+              className="border-border text-text-muted hover:border-danger/35 hover:text-danger inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-all hover:bg-red-500/10"
               aria-label="Eliminar última serie"
               title="Eliminar última serie"
             >

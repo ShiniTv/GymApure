@@ -253,7 +253,7 @@ export function RoutineModals({
             </div>
             <div className="flex gap-3">
               <Button
-                variant="ghost"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => {
                   setEditingRoutine(null);
@@ -280,7 +280,7 @@ export function RoutineModals({
         }}
         initialFocus="dialog"
         title="Añadir ejercicio"
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         <div className="space-y-4">
@@ -334,7 +334,7 @@ export function RoutineModals({
               </div>
             </>
           ) : null}
-          {addExerciseError && <p className="text-sm text-red-500">{addExerciseError}</p>}
+          {addExerciseError && <p className="text-danger text-sm">{addExerciseError}</p>}
           <Button
             className="w-full"
             onClick={handleAddWorkoutExercise}
@@ -352,7 +352,7 @@ export function RoutineModals({
         }}
         initialFocus="dialog"
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar ejercicio'}
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         {editingExercise && (
@@ -392,7 +392,7 @@ export function RoutineModals({
                 />
               </div>
             </div>
-            {editExerciseError && <p className="text-sm text-red-500">{editExerciseError}</p>}
+            {editExerciseError && <p className="text-danger text-sm">{editExerciseError}</p>}
             <Button className="w-full" onClick={handleUpdateExercise}>
               Guardar Cambios
             </Button>
@@ -411,10 +411,10 @@ export function RoutineModals({
         <p className="text-text-muted mb-6 text-xs">
           Se eliminará la plantilla y todo el historial asociado. Esta acción no se puede deshacer.
         </p>
-        {deleteRoutineError && <p className="mb-4 text-sm text-red-500">{deleteRoutineError}</p>}
+        {deleteRoutineError && <p className="text-danger mb-4 text-sm">{deleteRoutineError}</p>}
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => {
               setDeleteRoutineTarget(null);
@@ -444,7 +444,7 @@ export function RoutineModals({
         </p>
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => {
               setDeleteExerciseTarget(null);

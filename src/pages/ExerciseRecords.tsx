@@ -323,10 +323,10 @@ export default function ExerciseRecords() {
                     <div className="min-w-0">
                       <p className="text-text truncate text-sm font-semibold">{row.name}</p>
                       {row.muscle_group && (
-                        <p className="text-text-muted text-[10px] capitalize">{row.muscle_group}</p>
+                        <p className="text-text-muted text-small capitalize">{row.muscle_group}</p>
                       )}
                     </div>
-                    <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                    <Badge variant="default" className="text-small shrink-0 px-1.5 py-0">
                       {row.session_count} ses.
                     </Badge>
                   </div>
@@ -335,19 +335,19 @@ export default function ExerciseRecords() {
                       <p className="text-text text-sm font-bold tabular-nums">
                         {formatKg(row.max_weight_kg)}
                       </p>
-                      <p className="text-text-muted text-[9px]">Peso máx.</p>
+                      <p className="text-text-muted text-small">Peso máx.</p>
                     </div>
                     <div>
                       <p className="text-brand text-sm font-bold tabular-nums">
                         {formatKg(row.estimated_1rm_kg)}
                       </p>
-                      <p className="text-text-muted text-[9px]">1RM est.</p>
+                      <p className="text-text-muted text-small">1RM est.</p>
                     </div>
                     <div>
                       <p className="text-text text-sm font-bold tabular-nums">
                         {row.best_set ? `${row.best_set.reps}` : '—'}
                       </p>
-                      <p className="text-text-muted text-[9px]">Reps mejor</p>
+                      <p className="text-text-muted text-small">Reps mejor</p>
                     </div>
                   </div>
                 </button>
@@ -357,7 +357,7 @@ export default function ExerciseRecords() {
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-border-subtle text-text-muted border-b text-[11px]">
+                  <tr className="border-border-subtle text-text-muted text-small border-b">
                     <th className="px-4 py-2.5 font-medium">Ejercicio</th>
                     <th className="px-4 py-2.5 font-medium">Grupo</th>
                     <th className="px-4 py-2.5 font-medium">Peso máx.</th>
@@ -426,7 +426,7 @@ export default function ExerciseRecords() {
             'Detalle de marca'
           )
         }
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         {detailLoading ? (
@@ -440,13 +440,13 @@ export default function ExerciseRecords() {
                 <p className="text-text text-lg font-bold tabular-nums">
                   {formatKg(detail.summary.max_weight_kg)} kg
                 </p>
-                <p className="text-text-muted text-[10px]">Peso máximo</p>
+                <p className="text-text-muted text-small">Peso máximo</p>
               </div>
               <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
                 <p className="text-brand text-lg font-bold tabular-nums">
                   {formatKg(detail.summary.estimated_1rm_kg)} kg
                 </p>
-                <p className="text-text-muted text-[10px]">1RM estimado</p>
+                <p className="text-text-muted text-small">1RM estimado</p>
               </div>
               <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
                 <p className="text-text text-lg font-bold tabular-nums">
@@ -454,13 +454,13 @@ export default function ExerciseRecords() {
                     ? `${formatKg(detail.summary.best_set.weight)}×${detail.summary.best_set.reps}`
                     : '—'}
                 </p>
-                <p className="text-text-muted text-[10px]">Mejor serie</p>
+                <p className="text-text-muted text-small">Mejor serie</p>
               </div>
               <div className="border-border-subtle bg-surface-raised rounded-lg border px-3 py-2 text-center">
                 <p className="text-text text-lg font-bold tabular-nums">
                   {detail.summary.session_count}
                 </p>
-                <p className="text-text-muted text-[10px]">Sesiones</p>
+                <p className="text-text-muted text-small">Sesiones</p>
               </div>
             </div>
 
@@ -484,7 +484,7 @@ export default function ExerciseRecords() {
                 <div className="border-border-subtle overflow-x-auto rounded-lg border">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-border-subtle bg-surface-raised text-text-muted border-b text-[10px]">
+                      <tr className="border-border-subtle bg-surface-raised text-text-muted text-small border-b">
                         <th className="px-3 py-2 font-medium">Peso</th>
                         <th className="px-3 py-2 font-medium">Máx. reps</th>
                         <th className="px-3 py-2 font-medium">1RM est.</th>
@@ -502,7 +502,7 @@ export default function ExerciseRecords() {
                             {formatKg(row.estimated_1rm_kg)} kg
                           </td>
                           <td className="px-3 py-1.5">
-                            <Badge variant="default" className="px-1.5 py-0 text-[9px]">
+                            <Badge variant="default" className="text-small px-1.5 py-0">
                               {row.source === 'both'
                                 ? 'Log + manual'
                                 : row.source === 'manual'
@@ -545,7 +545,7 @@ export default function ExerciseRecords() {
                             ≈ {formatKg(test.estimated_1rm_kg)} kg 1RM
                           </span>
                         </p>
-                        <p className="text-text-muted mt-0.5 text-[10px]">
+                        <p className="text-text-muted text-small mt-0.5">
                           {format(parseISO(test.test_date), 'dd MMM yyyy', { locale: es })}
                           {test.recorded_by_name ? ` · ${test.recorded_by_name}` : ''}
                           {test.notes ? ` · ${test.notes}` : ''}

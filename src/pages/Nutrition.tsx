@@ -160,6 +160,8 @@ export default function Nutrition() {
     setSaving(true);
     setError('');
     try {
+      // Always pin to the selected local day. Omitting logged_at uses DB NOW() (UTC),
+      // which after evening in UTC−4 lands on the next UTC date and disappears from "hoy".
       const body: Record<string, unknown> = {
         meal_type: mealForm.meal_type,
         description: mealForm.description.trim(),
@@ -167,10 +169,8 @@ export default function Nutrition() {
         protein_g: parseFloat(mealForm.protein_g) || 0,
         carbs_g: parseFloat(mealForm.carbs_g) || 0,
         fat_g: parseFloat(mealForm.fat_g) || 0,
+        logged_at: `${selectedDate}T12:00:00.000Z`,
       };
-      if (selectedDate !== formatLocalDate(new Date())) {
-        body.logged_at = `${selectedDate}T12:00:00.000Z`;
-      }
       if (editingLog) {
         const res = await apiFetch(`/api/nutrition/logs/${editingLog.id}`, {
           method: 'PATCH',
@@ -356,7 +356,7 @@ export default function Nutrition() {
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="section-title">Comidas del día</h2>
             {canEditLogs && (
-              <Button size="sm" variant="ghost" onClick={openAddMeal} className="text-brand">
+              <Button size="sm" variant="secondary" onClick={openAddMeal} className="text-brand">
                 <Plus className="h-4 w-4" />
                 Añadir
               </Button>
@@ -402,7 +402,7 @@ export default function Nutrition() {
                   key={preset.meal_type}
                   type="button"
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   className="h-8 px-2.5 text-xs"
                   onClick={() => openQuickMeal(preset)}
                 >
@@ -584,7 +584,7 @@ export default function Nutrition() {
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               onClick={() => setShowMealModal(false)}
               disabled={saving || analyzing}
             >
@@ -616,7 +616,7 @@ export default function Nutrition() {
         <p className="text-text-muted mb-6 text-xs">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => setDeleteTarget(null)}
             disabled={deleting}

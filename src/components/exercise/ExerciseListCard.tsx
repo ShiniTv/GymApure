@@ -57,13 +57,13 @@ export function ExerciseListCard({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-text truncate text-[13px] font-semibold sm:text-sm">{exercise.name}</p>
+        <p className="text-text truncate text-sm font-semibold sm:text-sm">{exercise.name}</p>
         {!hideMuscle ? (
-          <p className="text-text-muted mt-0.5 truncate text-[11px] sm:text-xs">{muscleLabel}</p>
+          <p className="text-text-muted text-small mt-0.5 truncate sm:text-xs">{muscleLabel}</p>
         ) : null}
       </div>
       {badge ? (
-        <Badge variant={badge.variant} className="shrink-0 text-[10px]">
+        <Badge variant={badge.variant} className="text-small shrink-0">
           {badge.label}
         </Badge>
       ) : null}

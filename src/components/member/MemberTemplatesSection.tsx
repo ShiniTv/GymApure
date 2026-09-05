@@ -65,7 +65,7 @@ export function MemberTemplatesSection({ onAssigned, className }: MemberTemplate
                   {formatDifficulty(template.difficulty)} · {summary.preview}
                 </p>
                 {template.trainer_name ? (
-                  <p className="text-text-muted mt-0.5 text-[11px]">{template.trainer_name}</p>
+                  <p className="text-text-muted text-small mt-0.5">{template.trainer_name}</p>
                 ) : null}
               </div>
               <Button

@@ -142,14 +142,14 @@ export function SegmentedControl<T extends string>({
                   )
                 : scroll
                   ? cn(
-                      'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
+                      'text-small h-7 shrink-0 rounded-full px-2.5 font-semibold',
                       active
                         ? 'bg-surface-overlay text-text'
                         : 'text-text-secondary hover:text-text bg-transparent'
                     )
                   : cn(
                       isCompact
-                        ? 'min-h-8 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
+                        ? 'text-small min-h-8 rounded-md px-2.5 py-1.5 font-semibold'
                         : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-semibold',
                       active
                         ? 'bg-surface text-text dark:bg-bg shadow-xs'
@@ -164,7 +164,7 @@ export function SegmentedControl<T extends string>({
             {option.count != null && option.count > 0 && (
               <span
                 className={cn(
-                  'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
+                  'text-small min-w-[1.25rem] rounded-md px-1.5 py-0.5 leading-none font-semibold tabular-nums',
                   active
                     ? 'bg-surface-overlay text-text-secondary'
                     : 'bg-surface-overlay/80 text-text-muted'

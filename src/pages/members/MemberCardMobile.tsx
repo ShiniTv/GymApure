@@ -35,15 +35,12 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   }
 
   return (
-    <DataCard
-      className="active:bg-surface-raised !space-y-0 !p-2.5 sm:!p-3"
-      onClick={() => onOpenDetail(member)}
-    >
+    <DataCard className="active:bg-surface-raised !space-y-0" onClick={() => onOpenDetail(member)}>
       <div className="flex min-w-0 items-center gap-2.5">
         <Avatar name={member.full_name} size="sm" className="shrink-0" />
         <div className="min-w-0 flex-1 text-left">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="text-text min-w-0 truncate text-[13px] leading-tight font-semibold">
+            <p className="text-text min-w-0 truncate text-sm leading-tight font-semibold">
               {member.full_name}
             </p>
             <span
@@ -56,7 +53,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
             />
             {isStaffMember && <OnboardingStatus onboarding={member.onboarding} variant="chip" />}
           </div>
-          <div className="text-text-muted mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-snug">
+          <div className="text-text-muted text-small mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug">
             {metaParts.length > 0 ? (
               <span className="truncate">{metaParts.join(' · ')}</span>
             ) : (
@@ -65,7 +62,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
             {!isStaffMember && (
               <span
                 className={cn(
-                  'inline-flex shrink-0 rounded px-1 py-0 text-[10px] font-semibold',
+                  'text-small inline-flex shrink-0 rounded px-1 py-0 font-semibold',
                   roleBadgeClass(member.role)
                 )}
               >
@@ -73,12 +70,12 @@ export const MemberCardMobile = memo(function MemberCardMobile({
               </span>
             )}
             {member.subscription_status === 'paused' && (
-              <Badge variant="warning" className="px-1.5 py-0 text-[10px]">
+              <Badge variant="warning" className="text-small px-1.5 py-0">
                 Pausada
               </Badge>
             )}
             {expiryBadge && (
-              <Badge className={cn('shrink-0 px-1.5 py-0 text-[10px]', expiryBadge.className)}>
+              <Badge className={cn('text-small shrink-0 px-1.5 py-0', expiryBadge.className)}>
                 {expiryBadge.label}
               </Badge>
             )}

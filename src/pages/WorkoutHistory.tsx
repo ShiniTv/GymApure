@@ -423,7 +423,7 @@ export default function WorkoutHistory() {
           id ? (
             <div className="flex items-center gap-1.5">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
                 onClick={() => navigate(`/members/${id}/records`)}
@@ -449,7 +449,7 @@ export default function WorkoutHistory() {
             </div>
           ) : (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
               onClick={() => navigate('/history/records')}
@@ -471,7 +471,7 @@ export default function WorkoutHistory() {
               className="border-brand/30 bg-brand/5 dark:border-brand/25 order-1"
             >
               <h3 className="section-title mb-2">Entrenamientos en curso</h3>
-              <p className="text-text-muted mb-3 text-[11px] leading-snug">
+              <p className="text-text-muted text-small mb-3 leading-snug">
                 Puedes salir y volver cuando quieras. Solo se registrará al pulsar Finalizar.
               </p>
               <div className="space-y-2">
@@ -482,7 +482,7 @@ export default function WorkoutHistory() {
                   >
                     <div className="min-w-0">
                       <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
-                      <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
+                      <p className="text-text-muted text-small mt-0.5 tabular-nums">
                         Iniciado {formatSessionDate(session.start_time)} ·{' '}
                         {formatSessionTime(session.start_time)} · {session.sets_completed} series
                       </p>
@@ -520,7 +520,7 @@ export default function WorkoutHistory() {
             >
               <div className="mb-3">
                 <h3 className="section-title">{isMemberSelf ? 'Tu actividad' : 'Actividad'}</h3>
-                <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
+                <p className="text-text-muted text-small mt-0.5 leading-snug">
                   Sesiones y ritmo de la semana
                 </p>
               </div>
@@ -565,7 +565,7 @@ export default function WorkoutHistory() {
               >
                 <div className="mb-3">
                   <h3 className="section-title">Progreso de fuerza</h3>
-                  <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
+                  <p className="text-text-muted text-small mt-0.5 leading-snug">
                     {progressLoading
                       ? 'Cargando tendencia de las últimas 8 semanas…'
                       : progress && progress.goal_completion_percent > 0
@@ -601,7 +601,7 @@ export default function WorkoutHistory() {
               >
                 <div className="min-w-0">
                   <p className="text-brand text-sm font-semibold">{session.routine_name}</p>
-                  <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
+                  <p className="text-text-muted text-small mt-0.5 tabular-nums">
                     Iniciado {formatSessionDate(session.start_time)} ·{' '}
                     {formatSessionTime(session.start_time)} · {session.sets_completed} series
                   </p>
@@ -627,8 +627,8 @@ export default function WorkoutHistory() {
       <Card padding="none" rounded="xl" className="border-border/70 overflow-hidden">
         {(filteredHistory.length > 0 || filteredActiveSessions.length > 0 || loading) && !id && (
           <div className="border-border bg-surface-raised/50 border-b px-3 py-2.5 sm:px-4">
-            <h3 className="text-text text-[13px] font-semibold">Sesiones registradas</h3>
-            <p className="text-text-muted mt-0.5 text-[11px]">
+            <h3 className="text-text text-sm font-semibold">Sesiones registradas</h3>
+            <p className="text-text-muted text-small mt-0.5">
               <span className="lg:hidden">Toca una sesión para ver detalle y series</span>
               <span className="hidden lg:inline">
                 Selecciona una sesión para ver detalle y series
@@ -702,16 +702,16 @@ export default function WorkoutHistory() {
                         <p className="text-brand dark:text-brand truncate text-sm font-semibold">
                           {session.routine_name}
                         </p>
-                        <p className="text-text-muted mt-0.5 text-[10px] tabular-nums">
+                        <p className="text-text-muted text-small mt-0.5 tabular-nums">
                           {formatSessionDate(session.start_time)} ·{' '}
                           {formatSessionTime(session.start_time)}
                         </p>
                       </div>
-                      <Badge variant="default" className="shrink-0 px-1.5 py-0 text-[9px]">
+                      <Badge variant="default" className="text-small shrink-0 px-1.5 py-0">
                         Finalizado
                       </Badge>
                     </div>
-                    <div className="text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium">
+                    <div className="text-text-muted text-small flex flex-wrap items-center gap-x-3 gap-y-1 font-medium">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="text-brand h-3 w-3" />
                         {formatDuration(session.start_time, session.end_time)}
@@ -720,7 +720,7 @@ export default function WorkoutHistory() {
                       {id ? (
                         <Badge
                           variant={session.success === 1 ? 'success' : 'danger'}
-                          className="px-1.5 py-0 text-[9px]"
+                          className="text-small px-1.5 py-0"
                         >
                           {session.success === 1 ? 'Exitoso' : 'Fallido'}
                         </Badge>
@@ -735,7 +735,7 @@ export default function WorkoutHistory() {
                         >
                           <Badge
                             variant={session.success === 1 ? 'success' : 'danger'}
-                            className="px-1.5 py-0 text-[9px]"
+                            className="text-small px-1.5 py-0"
                           >
                             {session.success === 1 ? 'Exitoso' : 'Fallido'}
                           </Badge>
@@ -798,7 +798,7 @@ export default function WorkoutHistory() {
                           {id ? (
                             <Badge
                               variant={session.success === 1 ? 'success' : 'danger'}
-                              className="px-1.5 py-0 text-[9px]"
+                              className="text-small px-1.5 py-0"
                             >
                               {session.success === 1 ? 'Exitoso' : 'Fallido'}
                             </Badge>
@@ -812,7 +812,7 @@ export default function WorkoutHistory() {
                             >
                               <Badge
                                 variant={session.success === 1 ? 'success' : 'danger'}
-                                className="px-1.5 py-0 text-[9px]"
+                                className="text-small px-1.5 py-0"
                               >
                                 {session.success === 1 ? 'Exitoso' : 'Fallido'}
                               </Badge>
@@ -820,7 +820,7 @@ export default function WorkoutHistory() {
                           )}
                         </td>
                         <td className="px-3 py-2.5 lg:px-5">
-                          <Badge variant="default" className="px-1.5 py-0 text-[9px]">
+                          <Badge variant="default" className="text-small px-1.5 py-0">
                             Finalizado
                           </Badge>
                         </td>
@@ -854,7 +854,7 @@ export default function WorkoutHistory() {
             'Detalle de sesión'
           )
         }
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         {detailLoading ? (
@@ -881,7 +881,7 @@ export default function WorkoutHistory() {
                         : 'danger'
                       : 'warning'
                   }
-                  className="px-1.5 py-0 text-[9px]"
+                  className="text-small px-1.5 py-0"
                 >
                   {sessionDetail.end_time
                     ? sessionDetail.success
@@ -956,7 +956,7 @@ export default function WorkoutHistory() {
                         <div className="flex flex-wrap items-center gap-1.5">
                           <p className="text-text text-sm font-semibold">{exercise.name}</p>
                           {exercise.is_all_time_pr && (
-                            <Badge variant="success" className="px-1.5 py-0 text-[9px]">
+                            <Badge variant="success" className="text-small px-1.5 py-0">
                               Nueva marca
                             </Badge>
                           )}
@@ -975,18 +975,18 @@ export default function WorkoutHistory() {
                           </p>
                         )}
                       </div>
-                      <p className="text-text-muted text-[10px]">
+                      <p className="text-text-muted text-small">
                         Plan: {exercise.planned_sets}×{exercise.planned_reps}
                       </p>
                     </div>
                     {omitted ? (
-                      <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                      <p className="text-small text-amber-600 dark:text-amber-400">
                         Sin series registradas
                       </p>
                     ) : (
                       <table className="w-full text-left text-xs">
                         <thead>
-                          <tr className="text-text-muted text-[10px]">
+                          <tr className="text-text-muted text-small">
                             <th className="pb-1 font-medium">Serie</th>
                             <th className="pb-1 font-medium">Peso</th>
                             <th className="pb-1 font-medium">Reps</th>

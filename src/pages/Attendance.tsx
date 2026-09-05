@@ -143,22 +143,22 @@ export default function Attendance() {
     return (
       <div className="border-border/60 flex items-center gap-2 border-b px-0.5 py-2 last:border-b-0">
         <Link to={`/members?q=${encodeURIComponent(member.full_name)}`} className="min-w-0 flex-1">
-          <p className="text-text truncate text-[13px] leading-tight font-semibold">
+          <p className="text-text truncate text-sm leading-tight font-semibold">
             {member.full_name}
           </p>
-          <p className="text-text-muted mt-0.5 truncate text-[11px]">
+          <p className="text-text-muted text-small mt-0.5 truncate">
             {member.cedula ?? member.email}
             {member.last_check_in
               ? ` · ${format(new Date(member.last_check_in), 'dd MMM', { locale: es })}`
               : ' · sin accesos'}
           </p>
         </Link>
-        <Badge variant="warning" className="shrink-0 px-1.5 py-0 text-[9px]">
+        <Badge variant="warning" className="text-small shrink-0 px-1.5 py-0">
           {member.days_since == null ? 'Nunca' : `${member.days_since}d`}
         </Badge>
         <IconButton
           size="sm"
-          variant="ghost"
+          variant="secondary"
           aria-label={`Mensaje a ${member.full_name}`}
           title="Mensaje"
           onClick={() => void navigate(`/messages?member=${member.id}`)}
@@ -204,7 +204,7 @@ export default function Attendance() {
       <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
         <Card padding="sm" rounded="xl" className="min-w-0">
           <div className="mb-2.5 space-y-2.5">
-            <h3 className="text-text flex items-center gap-2 text-[13px] font-semibold">
+            <h3 className="text-text flex items-center gap-2 text-sm font-semibold">
               <Fingerprint className="text-brand h-3.5 w-3.5 shrink-0" />
               Entradas y salidas de hoy
             </h3>
@@ -222,7 +222,7 @@ export default function Attendance() {
         {isAdmin ? (
           <Card padding="sm" rounded="xl" className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-text flex items-center gap-2 text-[13px] font-semibold">
+              <h3 className="text-text flex items-center gap-2 text-sm font-semibold">
                 <Users className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                 Miembros inactivos
               </h3>
@@ -237,7 +237,7 @@ export default function Attendance() {
                 onChange={setInactiveDays}
               />
             </div>
-            <p className="text-text-muted mb-2 text-[11px] leading-snug">
+            <p className="text-text-muted text-small mb-2 leading-snug">
               Sin acceso en {inactiveDays}d (o nunca)
             </p>
             <div className="max-h-[min(42vh,22rem)] min-h-0 overflow-y-auto lg:max-h-none">
@@ -272,7 +272,7 @@ export default function Attendance() {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         <Card padding="sm" rounded="xl">
-          <h3 className="text-text mb-2.5 flex items-center gap-2 text-[13px] font-semibold">
+          <h3 className="text-text mb-2.5 flex items-center gap-2 text-sm font-semibold">
             <Calendar className="text-brand h-3.5 w-3.5 shrink-0" />
             Volumen diario (7d)
           </h3>
@@ -303,7 +303,7 @@ export default function Attendance() {
         </Card>
 
         <Card padding="sm" rounded="xl">
-          <h3 className="text-text mb-2.5 flex items-center gap-2 text-[13px] font-semibold">
+          <h3 className="text-text mb-2.5 flex items-center gap-2 text-sm font-semibold">
             <Clock className="h-3.5 w-3.5 shrink-0 text-blue-500" />
             Horas pico (30d)
           </h3>
@@ -335,7 +335,7 @@ export default function Attendance() {
       </div>
 
       <Card padding="sm" rounded="xl">
-        <h3 className="text-text mb-2.5 flex items-center gap-2 text-[13px] font-semibold">
+        <h3 className="text-text mb-2.5 flex items-center gap-2 text-sm font-semibold">
           <AlertTriangle className="text-brand h-3.5 w-3.5 shrink-0" />
           Por vencer ({alertDays}d)
         </h3>
@@ -348,10 +348,10 @@ export default function Attendance() {
                   .container
               )}
             >
-              <p className="text-[10px] font-semibold tracking-wide uppercase opacity-80">
+              <p className="text-small font-semibold tracking-wide uppercase opacity-80">
                 Última alerta en puerta
               </p>
-              <p className="mt-1 text-[13px] font-medium">
+              <p className="mt-1 text-sm font-medium">
                 {lastDoorAlert.full_name} — {lastDoorAlert.membership_name} —{' '}
                 {formatExpiryLabel(lastDoorAlert.days_remaining) === 'Hoy'
                   ? 'vence hoy'
@@ -359,7 +359,7 @@ export default function Attendance() {
                     ? 'vence mañana'
                     : `vence en ${lastDoorAlert.days_remaining} días`}
               </p>
-              <p className="text-text-muted mt-0.5 text-[10px]">
+              <p className="text-text-muted text-small mt-0.5">
                 {format(new Date(lastDoorAlert.check_in_time), 'dd MMM · HH:mm', {
                   locale: es,
                 })}
@@ -367,7 +367,7 @@ export default function Attendance() {
             </div>
           )}
           {expiring.length === 0 ? (
-            <p className="text-text-muted text-[13px]">
+            <p className="text-text-muted text-sm">
               No hay membresías por vencer en {alertDays} días.
             </p>
           ) : (
@@ -378,20 +378,18 @@ export default function Attendance() {
                 return (
                   <li key={member.user_id} className="flex items-center justify-between gap-2 py-2">
                     <Link to="/members?expiring=true" className="min-w-0 flex-1">
-                      <p className="text-text truncate text-[13px] font-medium">
-                        {member.full_name}
-                      </p>
-                      <p className="text-text-muted truncate text-[11px]">
+                      <p className="text-text truncate text-sm font-medium">{member.full_name}</p>
+                      <p className="text-text-muted text-small truncate">
                         {member.membership_name}
                       </p>
                     </Link>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Badge className={cn(classes.badge, 'px-1.5 py-0 text-[9px]')}>
+                      <Badge className={cn(classes.badge, 'text-small px-1.5 py-0')}>
                         {formatExpiryLabel(member.days_remaining)}
                       </Badge>
                       <IconButton
                         size="sm"
-                        variant="ghost"
+                        variant="secondary"
                         aria-label={`Mensaje a ${member.full_name}`}
                         title="Mensaje"
                         onClick={() => void navigate(`/messages?member=${member.user_id}`)}

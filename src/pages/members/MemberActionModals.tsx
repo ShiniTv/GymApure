@@ -77,7 +77,7 @@ export function MemberActionModals({
             </p>
             <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
-                variant="ghost"
+                variant="secondary"
                 className="sm:min-w-28"
                 onClick={onCloseToggle}
                 disabled={toggling}
@@ -129,7 +129,7 @@ export function MemberActionModals({
                 disabled={deleting}
               />
             </div>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            {deleteError ? <p className="text-danger text-sm">{deleteError}</p> : null}
           </div>
         ) : (
           <div className="mb-6 space-y-2">
@@ -137,12 +137,12 @@ export function MemberActionModals({
               ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
               deshacer.
             </p>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            {deleteError ? <p className="text-danger text-sm">{deleteError}</p> : null}
           </div>
         )}
         <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="sm:min-w-28"
             onClick={onCloseDelete}
             disabled={deleting}
@@ -195,11 +195,11 @@ export function MemberActionModals({
                 required
               />
             </div>
-            {pauseError && <p className="text-sm font-bold text-red-500">{pauseError}</p>}
+            {pauseError && <p className="text-danger text-sm font-bold">{pauseError}</p>}
             <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="sm:min-w-28"
                 disabled={pausing}
                 onClick={onClosePause}
@@ -243,7 +243,7 @@ export function MemberActionModals({
             />
             <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
-                variant="ghost"
+                variant="secondary"
                 className="sm:min-w-28"
                 onClick={onCloseEditShift}
                 disabled={savingShift}

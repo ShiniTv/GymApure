@@ -290,7 +290,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
             aria-autocomplete="list"
             aria-controls="cmdk-list"
           />
-          <kbd className="text-text-muted border-border/70 hidden rounded border px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+          <kbd className="text-text-muted border-border/70 text-small hidden rounded border px-1.5 py-0.5 font-medium sm:inline">
             Esc
           </kbd>
         </div>
@@ -331,7 +331,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
                     <span className="h-4 w-4 shrink-0" />
                   )}
                   <span className="min-w-0 flex-1 truncate font-medium">{action.label}</span>
-                  <span className="text-text-muted shrink-0 text-[10px] tracking-wide uppercase">
+                  <span className="text-text-muted text-small shrink-0 tracking-wide uppercase">
                     {action.section}
                   </span>
                   {active && <CornerDownLeft className="text-text-muted h-3.5 w-3.5 shrink-0" />}
@@ -340,7 +340,7 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
             })
           )}
         </div>
-        <div className="border-border/50 text-text-muted flex items-center gap-3 border-t px-3 py-1.5 text-[10px]">
+        <div className="border-border/50 text-text-muted text-small flex items-center gap-3 border-t px-3 py-1.5">
           <span>↑↓ navegar</span>
           <span>↵ abrir</span>
           <span className="ml-auto hidden sm:inline">Ctrl/⌘ K</span>

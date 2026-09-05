@@ -312,7 +312,7 @@ export default function Login() {
             <p className="-mt-1 text-right">
               <Link
                 to="/forgot-password"
-                className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-200"
+                className="text-small font-medium text-zinc-500 transition-colors hover:text-zinc-200"
               >
                 ¿Olvidaste tu contraseña?
               </Link>
@@ -328,7 +328,7 @@ export default function Login() {
             </Button>
 
             {registerAllowed && (
-              <p className="pt-1 text-center text-[11px] text-zinc-500">
+              <p className="text-small pt-1 text-center text-zinc-500">
                 ¿No tienes una cuenta?{' '}
                 <Link
                   to="/register"

@@ -20,8 +20,8 @@ export function ProfileCarneTab({
         <div className="flex flex-col items-center gap-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)] md:items-center md:gap-4">
           <div className="flex w-full flex-col items-center gap-3 md:items-start">
             <div className="w-full text-center md:text-left">
-              <h2 className="text-text text-[13px] font-semibold md:text-sm">Carné digital</h2>
-              <p className="text-text-muted mt-0.5 text-[11px]">
+              <h2 className="text-text text-sm font-semibold md:text-sm">Carné digital</h2>
+              <p className="text-text-muted text-small mt-0.5">
                 Muéstralo en recepción · sube el brillo
               </p>
             </div>
@@ -36,14 +36,14 @@ export function ProfileCarneTab({
           </div>
 
           <div className="flex w-full flex-col items-center gap-2.5 md:items-stretch">
-            <Button className="h-11 min-h-11 w-full" onClick={onShowScan}>
+            <Button size="lg" className="w-full" onClick={onShowScan}>
               <ScanLine className="h-4 w-4" />
               Mostrar QR
             </Button>
             <button
               type="button"
               onClick={onShowBadgeModal}
-              className="text-text-muted hover:text-text text-[11px] font-medium underline-offset-2 hover:underline md:text-center"
+              className="text-text-muted hover:text-text text-small font-medium underline-offset-2 hover:underline md:text-center"
             >
               Ver carné completo / Imprimir
             </button>

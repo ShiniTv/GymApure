@@ -21,12 +21,12 @@ export function StaffPortalBanner({
     <div className={cn('relative', className)}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-text-muted text-[10px] font-medium tracking-[0.08em] uppercase">
+          <p className="text-text-muted text-small font-medium tracking-[0.08em] uppercase">
             {eyebrow}
           </p>
-          <div className="text-text mt-1 text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
+          <h1 className="text-text mt-1 text-xl font-semibold tracking-[-0.03em] sm:text-2xl">
             {title}
-          </div>
+          </h1>
           {subtitle ? <p className="text-text-muted mt-1 text-sm">{subtitle}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}

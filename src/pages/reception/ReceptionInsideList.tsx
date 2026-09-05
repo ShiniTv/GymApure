@@ -34,7 +34,7 @@ export function ReceptionInsideList({
           <span className="text-text-muted ml-1.5 tabular-nums">({insideCount})</span>
         </h3>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           className="h-11 w-11 px-0"
           onClick={onRefresh}
@@ -49,13 +49,13 @@ export function ReceptionInsideList({
           <div key={m.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
             <div className="min-w-0 flex-1">
               <p className="text-text truncate text-sm font-semibold">{m.full_name}</p>
-              <p className="text-text-muted text-[11px]">{m.cedula || 'Sin cédula'}</p>
+              <p className="text-text-muted text-small">{m.cedula || 'Sin cédula'}</p>
             </div>
-            <p className="shrink-0 text-[11px] font-medium text-emerald-600 tabular-nums dark:text-emerald-400">
+            <p className="text-small shrink-0 font-medium text-emerald-600 tabular-nums dark:text-emerald-400">
               {format(new Date(m.check_in_time), 'HH:mm', { locale: es })}
             </p>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-11 w-11 shrink-0 px-0"
               disabled={!m.cedula || actionLoading}

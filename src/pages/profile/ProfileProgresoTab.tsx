@@ -148,11 +148,11 @@ export function ProfileProgresoTab({
 
       <Card padding="sm" rounded="xl" className="border-border bg-surface">
         <div className="mb-2.5 flex items-center justify-between gap-2">
-          <h2 className="text-text text-[13px] font-semibold">Evolución de peso</h2>
+          <h2 className="text-text text-sm font-semibold">Evolución de peso</h2>
           <div className="flex shrink-0 items-center gap-2">
             {weightDelta != null && (
               <span
-                className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                className={`text-small flex items-center gap-1 rounded-md px-2 py-0.5 font-semibold ${
                   weightDelta < 0
                     ? 'bg-emerald-500/10 text-emerald-600'
                     : weightDelta > 0
@@ -198,18 +198,18 @@ export function ProfileProgresoTab({
         ) : chartData.length === 1 ? (
           <div className="flex h-40 flex-col items-center justify-center text-center sm:h-48">
             <p className="text-brand text-3xl font-bold">{chartData[0].weight} kg</p>
-            <p className="text-text-muted mt-1.5 text-[11px]">
+            <p className="text-text-muted text-small mt-1.5">
               {chartData[0].date} · Añade otra medición para la gráfica
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center px-2 pt-4 pb-5 text-center">
             <Scale className="text-brand/50 mb-2.5 h-7 w-7" aria-hidden />
-            <p className="text-text text-[13px] font-semibold">Sin mediciones de peso</p>
-            <p className="text-text-muted mt-1 max-w-[14rem] text-[11px] leading-snug">
+            <p className="text-text text-sm font-semibold">Sin mediciones de peso</p>
+            <p className="text-text-muted text-small mt-1 max-w-[14rem] leading-snug">
               Registra tu peso para ver la evolución.
             </p>
-            <Button type="button" size="sm" className="mt-4 h-9 min-h-9" onClick={onAddMeasurement}>
+            <Button type="button" size="sm" className="mt-4" onClick={onAddMeasurement}>
               <Plus className="h-3.5 w-3.5" />
               Registrar peso
             </Button>
@@ -225,7 +225,7 @@ export function ProfileProgresoTab({
             className="flex w-full items-center justify-between gap-2 text-left"
             aria-expanded={historyOpen}
           >
-            <h2 className="text-text text-[13px] font-semibold">
+            <h2 className="text-text text-sm font-semibold">
               Historial
               <span className="text-text-muted ml-1.5 font-normal">· {measurements.length}</span>
             </h2>
@@ -243,14 +243,14 @@ export function ProfileProgresoTab({
                 {measurements.map((m) => (
                   <div key={m.id} className="bg-surface-raised rounded-xl px-2.5 py-2">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-text text-[12px] font-semibold">
+                      <p className="text-text text-small font-semibold">
                         {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
                       </p>
-                      <p className="text-text text-[12px] font-semibold tabular-nums">
+                      <p className="text-text text-small font-semibold tabular-nums">
                         {m.weight != null ? `${m.weight} kg` : '—'}
                       </p>
                     </div>
-                    <p className="text-text-muted mt-0.5 text-[10px]">
+                    <p className="text-text-muted text-small mt-0.5">
                       Grasa {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
                       {' · '}
                       Cintura {m.waist != null ? `${m.waist}` : '—'}
@@ -265,7 +265,7 @@ export function ProfileProgresoTab({
               <div className="-mx-1 mt-2.5 hidden overflow-x-auto px-1 lg:block">
                 <table className="w-full min-w-[28rem] text-left">
                   <thead>
-                    <tr className="border-border-subtle text-text-muted border-b text-[10px] font-semibold">
+                    <tr className="border-border-subtle text-text-muted text-small border-b font-semibold">
                       <th className="pr-3 pb-2">Fecha</th>
                       <th className="pr-3 pb-2">Peso</th>
                       <th className="pr-3 pb-2">Grasa</th>
@@ -310,7 +310,7 @@ export function ProfileProgresoTab({
 
       {workouts.length > 0 && (
         <Card padding="sm" rounded="xl" className="border-border bg-surface">
-          <h2 className="text-text mb-2 text-[13px] font-semibold">Actividad reciente</h2>
+          <h2 className="text-text mb-2 text-sm font-semibold">Actividad reciente</h2>
           <div className="space-y-0.5">
             {workouts.slice(0, 5).map((w) => (
               <div
@@ -320,7 +320,7 @@ export function ProfileProgresoTab({
                 <p className="text-text truncate text-xs font-medium sm:text-sm">
                   {w.routine_name}
                 </p>
-                <p className="text-text-muted shrink-0 text-[10px] tabular-nums sm:text-xs">
+                <p className="text-text-muted text-small shrink-0 tabular-nums sm:text-xs">
                   {format(new Date(w.start_time), 'dd MMM · HH:mm', { locale: es })}
                 </p>
               </div>

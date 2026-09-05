@@ -1,5 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
-import { cn } from '../../lib/utils';
+import { cn, stripHeightUtilities } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { Spinner } from './Spinner';
 
@@ -79,7 +79,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'disabled:cursor-not-allowed disabled:active:scale-100 disabled:active:opacity-100',
         sizes[size],
         variants[variant],
-        className
+        stripHeightUtilities(className)
       )}
       {...props}
     >

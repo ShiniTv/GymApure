@@ -325,7 +325,7 @@ export function RoutinesLibraryView({
             {isStaff && onCreateFromTemplate && routines.length > 0 ? (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 className="h-9 gap-1.5 px-2.5"
                 onClick={onCreateFromTemplate}
               >
@@ -335,7 +335,7 @@ export function RoutinesLibraryView({
             ) : null}
             <Button
               size="sm"
-              variant="ghost"
+              variant="secondary"
               className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
               onClick={onCreateRoutine}
               aria-label={isMember ? 'Crear mi rutina' : 'Nueva rutina'}
@@ -375,7 +375,7 @@ export function RoutinesLibraryView({
           <p className="text-text-muted text-small mt-1">Prueba otro nombre o quita el filtro.</p>
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
             className="mt-3"
             onClick={() => {
               setSearch('');
@@ -457,7 +457,7 @@ export function RoutinesLibraryView({
                         <h3 className="text-text truncate text-sm leading-snug font-semibold">
                           {routine.name}
                           {isMember ? (
-                            <span className="text-text-muted ml-1.5 text-[10px] font-semibold tracking-wide uppercase">
+                            <span className="text-text-muted text-small ml-1.5 font-semibold tracking-wide uppercase">
                               {isOwnedByMember(routine) ? 'Mía' : 'Entrenador'}
                             </span>
                           ) : null}
@@ -621,7 +621,7 @@ export function RoutinesLibraryView({
                       <Button
                         type="button"
                         size="sm"
-                        className="min-h-10 w-full text-[13px] font-semibold shadow-none sm:min-h-9 sm:w-auto sm:text-sm"
+                        className="min-h-10 w-full text-sm font-semibold shadow-none sm:min-h-9 sm:w-auto sm:text-sm"
                         disabled={completedToday}
                         aria-label={workoutLabel}
                         onClick={(e) => {
@@ -653,7 +653,7 @@ export function RoutinesLibraryView({
                             <Button
                               type="button"
                               size="sm"
-                              variant="ghost"
+                              variant="secondary"
                               className="h-9 flex-1 text-xs"
                               disabled={cloning}
                               onClick={() => onCloneRoutine(routine)}
@@ -665,7 +665,7 @@ export function RoutinesLibraryView({
                           <Button
                             type="button"
                             size="sm"
-                            variant="ghost"
+                            variant="secondary"
                             className="h-9 flex-1 text-xs"
                             onClick={() => onEditRoutine(routine)}
                           >
@@ -675,7 +675,7 @@ export function RoutinesLibraryView({
                           <Button
                             type="button"
                             size="sm"
-                            variant="ghost"
+                            variant="secondary"
                             className="text-danger h-9 flex-1 text-xs"
                             onClick={() => onDeleteRoutine(routine)}
                           >
@@ -712,7 +712,7 @@ export function RoutinesLibraryView({
                                 <Button
                                   type="button"
                                   size="sm"
-                                  variant="ghost"
+                                  variant="secondary"
                                   className="h-8 shrink-0 px-2 text-xs"
                                   onClick={() => onSubstituteExercise(routine.id, exercise)}
                                 >

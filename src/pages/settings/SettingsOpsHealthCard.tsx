@@ -67,7 +67,7 @@ export function SettingsOpsHealthCard({
           <div className="flex shrink-0 flex-wrap items-center gap-1">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
               onClick={onExportJson}
@@ -78,7 +78,7 @@ export function SettingsOpsHealthCard({
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
               onClick={onExportCsv}
@@ -102,12 +102,12 @@ export function SettingsOpsHealthCard({
           <Skeleton className="h-16 w-full" />
         </div>
       ) : !opsMetrics && opsMetricsError ? (
-        <p className="text-xs font-bold text-red-600 dark:text-red-400">{opsMetricsError}</p>
+        <p className="text-danger dark:text-danger text-xs font-bold">{opsMetricsError}</p>
       ) : opsMetrics ? (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
-              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+              <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 DB ms
               </p>
               <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
@@ -115,7 +115,7 @@ export function SettingsOpsHealthCard({
               </p>
             </div>
             <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
-              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+              <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 Avg req ms
               </p>
               <p className="text-text mt-0.5 text-base font-bold tabular-nums sm:text-lg">
@@ -123,13 +123,13 @@ export function SettingsOpsHealthCard({
               </p>
             </div>
             <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
-              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+              <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 Error rate
               </p>
               <p
                 className={`mt-0.5 text-base font-bold tabular-nums sm:text-lg ${
                   opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
-                    ? 'text-red-500'
+                    ? 'text-danger'
                     : 'text-emerald-500'
                 }`}
               >
@@ -137,7 +137,7 @@ export function SettingsOpsHealthCard({
               </p>
             </div>
             <div className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2">
-              <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+              <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                 Slow rate
               </p>
               <p
@@ -154,7 +154,7 @@ export function SettingsOpsHealthCard({
 
           {opsMetrics.request_metrics.topSlowRoutes.length > 0 && (
             <div className="mt-4 min-w-0">
-              <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
+              <p className="text-text-muted text-small mb-1.5 font-medium tracking-wide uppercase">
                 Top rutas lentas
               </p>
               <div className="space-y-1.5">
@@ -163,7 +163,7 @@ export function SettingsOpsHealthCard({
                     key={`${route.method}-${route.path}`}
                     className="border-border-subtle min-w-0 rounded-lg border px-2.5 py-2"
                   >
-                    <p className="text-text-muted truncate text-[11px] font-medium">
+                    <p className="text-text-muted text-small truncate font-medium">
                       {route.method} {route.path}
                     </p>
                     <p className="text-text-secondary mt-0.5 text-xs tabular-nums">
@@ -176,11 +176,11 @@ export function SettingsOpsHealthCard({
           )}
 
           <div className="mt-4 min-w-0">
-            <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
+            <p className="text-text-muted text-small mb-1.5 font-medium tracking-wide uppercase">
               Alertas activas
             </p>
             {opsAlerts.length === 0 ? (
-              <p className="text-[11px] font-bold text-emerald-600">
+              <p className="text-small font-bold text-emerald-600">
                 Sin alertas. Operación normal.
               </p>
             ) : (
@@ -188,9 +188,9 @@ export function SettingsOpsHealthCard({
                 {opsAlerts.map((alert) => (
                   <div
                     key={alert}
-                    className="rounded-lg border border-red-500/20 bg-red-500/5 px-2.5 py-2"
+                    className="border-danger/20 rounded-lg border bg-red-500/5 px-2.5 py-2"
                   >
-                    <p className="text-[11px] font-bold text-red-600 dark:text-red-400">{alert}</p>
+                    <p className="text-small text-danger dark:text-danger font-bold">{alert}</p>
                   </div>
                 ))}
               </div>

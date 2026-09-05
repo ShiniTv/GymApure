@@ -65,7 +65,7 @@ export function EquipmentDetailModal({
       open={open}
       onClose={onClose}
       title={detail ? equipmentDisplayName(detail) : 'Detalle del equipo'}
-      maxWidth="xl"
+      maxWidth="2xl"
     >
       {detailLoading || !detail ? (
         <div className="flex justify-center py-8">
@@ -97,7 +97,7 @@ export function EquipmentDetailModal({
                   <Button
                     ref={detailMoreRef}
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     className="h-9 w-9 px-0"
                     onClick={() => onDetailMoreOpenChange(!detailMoreOpen)}
@@ -142,7 +142,7 @@ export function EquipmentDetailModal({
                       )}
                       <button
                         type="button"
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                        className="text-danger dark:text-danger flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-red-500/10"
                         onClick={() => {
                           onDetailMoreOpenChange(false);
                           onDeleteOpen();
@@ -218,7 +218,7 @@ export function EquipmentDetailModal({
                           event.event_type as keyof typeof EQUIPMENT_EVENT_LABELS
                         ] ?? event.event_type}
                       </span>
-                      <span className="text-text-muted text-[10px]">
+                      <span className="text-text-muted text-small">
                         {new Date(event.performed_at).toLocaleString('es')}
                       </span>
                     </div>
@@ -236,7 +236,7 @@ export function EquipmentDetailModal({
                       </p>
                     )}
                     {event.created_by_name && (
-                      <p className="text-text-muted mt-1 text-[10px]">{event.created_by_name}</p>
+                      <p className="text-text-muted text-small mt-1">{event.created_by_name}</p>
                     )}
                   </li>
                 ))}

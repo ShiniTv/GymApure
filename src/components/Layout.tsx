@@ -19,7 +19,7 @@ import { useTrainerInvoicesQuery } from '../hooks/queries/useTrainerBillingQuery
 import clsx from 'clsx';
 import { ROLE_LABELS, PORTAL_TITLES, getDefaultRouteForRole } from '../lib/roles';
 import { getNavigationForRole } from '../config/navigation';
-import { Avatar } from './ui';
+import { Avatar, IconButton } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
 import { ReceptionBottomNav } from './reception/ReceptionBottomNav';
 import { TrainerBottomNav } from './trainer/TrainerBottomNav';
@@ -36,9 +36,6 @@ import { routePrefetchHandlers } from '../lib/routePrefetch';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
-
-const iconBtnClass =
-  'inline-flex items-center justify-center h-10 w-10 rounded-full text-text-secondary hover:bg-surface-overlay transition-[background-color,transform,opacity] duration-150 touch-manipulation tap-feedback';
 
 const SIDEBAR_MOTION_MS = 300;
 
@@ -217,10 +214,10 @@ export default function Layout() {
               <div className="min-w-0">
                 {currentPage ? (
                   <>
-                    <p className="text-text truncate text-[13px] leading-tight font-semibold tracking-[-0.02em]">
+                    <p className="text-text truncate text-sm leading-tight font-semibold tracking-[-0.02em]">
                       {mobileHeaderTitle}
                     </p>
-                    <p className="text-text-muted truncate text-[10px] leading-tight font-medium">
+                    <p className="text-text-muted text-small truncate leading-tight font-medium">
                       {BRAND.name}
                     </p>
                   </>
@@ -240,14 +237,15 @@ export default function Layout() {
             <div className="flex shrink-0 items-center gap-0.5">
               <InstallPrompt />
               <NotificationBell />
-              <button
+              <IconButton
                 type="button"
+                size="md"
+                variant="tertiary"
                 onClick={toggleTheme}
-                className={iconBtnClass}
                 aria-label="Cambiar tema"
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </button>
+              </IconButton>
             </div>
           </div>
         </div>
@@ -290,23 +288,24 @@ export default function Layout() {
                   <Logo className="h-7 w-7 shrink-0" />
                   <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
                     {brandMark}
-                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.04em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
                 </Link>
                 <NotificationBell compact className="shrink-0" />
-                <button
+                <IconButton
                   type="button"
+                  size="sm"
+                  variant="tertiary"
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="text-text-muted hover:bg-surface-overlay flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
                   <PanelLeftClose className="h-3.5 w-3.5" />
-                </button>
+                </IconButton>
               </div>
             )}
 
@@ -322,7 +321,7 @@ export default function Layout() {
                   <Logo className="h-7 w-7 shrink-0" />
                   <div className="min-w-0 flex-1">
                     {brandMark}
-                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.04em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
@@ -474,10 +473,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="text-text truncate text-[13px] leading-snug font-medium">
+                      <p className="text-text truncate text-sm leading-snug font-medium">
                         {user?.name}
                       </p>
-                      <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.02em]">
+                      <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[0.02em]">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>

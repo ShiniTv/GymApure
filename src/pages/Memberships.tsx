@@ -185,7 +185,7 @@ export default function Memberships() {
                     <p className="text-brand mt-2 text-xl font-bold tracking-tight tabular-nums">
                       ${plan.price_usd}
                       <span className="text-text-muted ml-1 text-xs font-semibold">USD</span>
-                      <span className="text-text-muted ml-2 text-[11px] font-medium">
+                      <span className="text-text-muted text-small ml-2 font-medium">
                         · ${dailyCost}/día
                       </span>
                     </p>
@@ -193,7 +193,7 @@ export default function Memberships() {
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       className="h-9 w-9 rounded-xl px-0"
                       onClick={() => {
@@ -273,7 +273,7 @@ export default function Memberships() {
             />
           </div>
           {error && (
-            <p className="text-center text-xs font-bold text-red-500" role="alert">
+            <p className="text-danger text-center text-xs font-bold" role="alert">
               {error}
             </p>
           )}
@@ -292,7 +292,7 @@ export default function Memberships() {
         }}
         title={
           <>
-            Eliminar <span className="text-red-500">plan</span>
+            Eliminar <span className="text-danger">plan</span>
           </>
         }
       >
@@ -303,14 +303,14 @@ export default function Memberships() {
               suscripciones activas.
             </p>
             {deleteError && (
-              <p className="mb-4 text-sm font-bold text-red-500" role="alert">
+              <p className="text-danger mb-4 text-sm font-bold" role="alert">
                 {deleteError}
               </p>
             )}
             <div className="flex gap-4">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="flex-1"
                 disabled={deleting}
                 onClick={() => {

@@ -23,7 +23,7 @@ export function ExerciseFocusNav({
       <div className="mx-auto flex max-w-lg items-center gap-3">
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
           className="shrink-0"
           disabled={focusedIndex === 0}
@@ -59,7 +59,7 @@ export function ExerciseFocusNav({
         </div>
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
           className="shrink-0"
           disabled={focusedIndex >= exercises.length - 1}

@@ -48,7 +48,7 @@ export function MemberAddModal({
           Nuevo <span className="text-brand">usuario</span>
         </>
       }
-      maxWidth="2xl"
+      maxWidth="3xl"
       scrollable
       initialFocus="dialog"
     >
@@ -121,7 +121,7 @@ export function MemberAddModal({
               }}
               placeholder="Ej: Gym2024!"
             />
-            <p className="text-text-muted mt-1 text-[11px]">
+            <p className="text-text-muted text-small mt-1">
               Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
             </p>
           </div>
@@ -180,7 +180,7 @@ export function MemberAddModal({
           )}
         </div>
         {errors.submit && (
-          <p className="text-center text-xs font-medium text-red-500">{errors.submit}</p>
+          <p className="text-danger text-center text-xs font-medium">{errors.submit}</p>
         )}
         <Button onClick={onSubmit} className="mt-4 w-full" size="lg">
           Crear Usuario

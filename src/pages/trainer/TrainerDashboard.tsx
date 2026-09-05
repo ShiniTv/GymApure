@@ -53,12 +53,12 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-[var(--radius-button)] border px-3 text-[12px] leading-snug font-medium transition-colors lg:text-[13px]"
+      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised text-small inline-flex h-9 shrink-0 touch-manipulation items-center gap-2 rounded-[var(--radius-button)] border px-3 leading-snug font-medium transition-colors lg:text-sm"
     >
       <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
       {label}
       {count != null && count > 0 ? (
-        <span className="bg-brand/15 text-brand ml-0.5 rounded-[var(--radius-chip)] px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+        <span className="bg-brand/15 text-brand text-small ml-0.5 rounded-[var(--radius-chip)] px-1.5 py-0.5 font-semibold tabular-nums">
           {count > 99 ? '99+' : count}
         </span>
       ) : null}
@@ -98,16 +98,14 @@ function AttentionSummaryLink({
 }) {
   const toneClass =
     tone === 'amber'
-      ? 'border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+      ? 'border-warning/20 bg-warning/5 hover:bg-warning/10 text-warning'
       : tone === 'violet'
-        ? 'border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/10 text-violet-700 dark:text-violet-300'
+        ? 'border-secondary/20 bg-secondary/5 hover:bg-secondary/10 text-secondary'
         : tone === 'sky'
-          ? 'border-sky-500/20 bg-sky-500/5 hover:bg-sky-500/10 text-sky-700 dark:text-sky-300'
-          : tone === 'rose'
-            ? 'border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-700 dark:text-rose-300'
-            : tone === 'red'
-              ? 'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-300'
-              : 'bg-brand/5 border-brand/20 hover:bg-brand/10 text-brand';
+          ? 'border-brand/20 bg-brand/5 hover:bg-brand/10 text-brand'
+          : tone === 'rose' || tone === 'red'
+            ? 'border-danger/20 bg-danger/5 hover:bg-danger/10 text-danger'
+            : 'bg-brand/5 border-brand/20 hover:bg-brand/10 text-brand';
 
   return (
     <Link
@@ -118,10 +116,10 @@ function AttentionSummaryLink({
       )}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span className="text-text min-w-0 flex-1 truncate text-[12px] font-semibold lg:text-[13px]">
+      <span className="text-text text-small min-w-0 flex-1 truncate font-semibold lg:text-sm">
         {label}
       </span>
-      <span className="text-[11px] font-bold tabular-nums">{count}</span>
+      <span className="text-small font-bold tabular-nums">{count}</span>
       <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
     </Link>
   );
@@ -169,13 +167,13 @@ function TodayPanel({
       action={
         <div className="flex items-center gap-2">
           {trainingCount > 0 ? (
-            <Badge variant="success" className="text-[10px]">
+            <Badge variant="success" className="text-small">
               {trainingCount} entrenando
             </Badge>
           ) : null}
           <Link
             to="/members"
-            className="text-brand inline-flex min-h-11 items-center text-[11px] font-semibold hover:underline"
+            className="text-brand text-small inline-flex min-h-11 items-center font-semibold hover:underline"
           >
             Agendar
           </Link>
@@ -188,25 +186,25 @@ function TodayPanel({
         className={cn(SURFACE, quiet && !loading ? 'py-3' : undefined)}
       >
         <div className="border-border/60 mb-3 border-b pb-3">
-          <p className="text-text-secondary mb-1.5 text-[11px] font-semibold">
+          <p className="text-text-secondary text-small mb-1.5 font-semibold">
             Sesiones 1:1 · {appointmentsLoading ? '…' : todaysAppointments.length}
           </p>
           {appointmentsLoading ? (
             <Skeleton className="h-8 w-full" />
           ) : todaysAppointments.length === 0 ? (
-            <p className="text-text-secondary text-[12px]">No hay sesiones 1:1 hoy</p>
+            <p className="text-text-secondary text-small">No hay sesiones 1:1 hoy</p>
           ) : (
             <ul className="space-y-0.5">
               {todaysAppointments.slice(0, TODAY_LIST_CAP).map((appointment) => (
                 <li key={appointment.id}>
                   <Link
                     to={`/members/${appointment.member_id}/routines?tab=agenda`}
-                    className="hover:text-brand text-text flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                    className="hover:text-brand text-text text-small flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                   >
                     <span className="min-w-0 truncate">
                       {appointment.member_name ?? `Miembro ${appointment.member_id}`}
                     </span>
-                    <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
+                    <span className="text-brand text-small shrink-0 font-semibold tabular-nums">
                       {formatCheckIn(appointment.starts_at)}
                     </span>
                   </Link>
@@ -223,14 +221,14 @@ function TodayPanel({
         ) : quiet ? (
           <div className="sm:divide-border/60 grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x lg:gap-0">
             <div className="sm:pr-4 lg:pr-5">
-              <p className="text-text-secondary text-[11px] font-semibold">Entrenando · 0</p>
-              <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
+              <p className="text-text-secondary text-small font-semibold">Entrenando · 0</p>
+              <p className="text-text-secondary text-small mt-1 lg:text-sm">
                 Nadie en gym ni remoto
               </p>
             </div>
             <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
-              <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
-              <p className="text-text-secondary mt-1 text-[12px] lg:text-[13px]">
+              <p className="text-text-secondary text-small font-semibold">Sin entrenar · ≥3d</p>
+              <p className="text-text-secondary text-small mt-1 lg:text-sm">
                 Sin alertas de inactividad
               </p>
             </div>
@@ -240,20 +238,20 @@ function TodayPanel({
             <div className="space-y-3 sm:pr-4 lg:pr-5">
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <p className="text-text-secondary text-[11px] font-semibold">
+                  <p className="text-text-secondary text-small font-semibold">
                     En el gym · {trainingToday.length}
                   </p>
                   {trainingToday.length > TODAY_LIST_CAP && (
                     <Link
                       to="/members"
-                      className="text-brand inline-flex min-h-11 items-center text-[10px] font-semibold hover:underline"
+                      className="text-brand text-small inline-flex min-h-11 items-center font-semibold hover:underline"
                     >
                       Ver todos
                     </Link>
                   )}
                 </div>
                 {trainingToday.length === 0 ? (
-                  <p className="text-text-secondary text-[12px]">Nadie en el gym</p>
+                  <p className="text-text-secondary text-small">Nadie en el gym</p>
                 ) : (
                   <ul className="space-y-0.5">
                     {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
@@ -262,11 +260,11 @@ function TodayPanel({
                         <li key={`gym-${m.id}`} className="flex items-center gap-1">
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {checkIn ? (
-                              <span className="shrink-0 text-[10px] font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                              <span className="text-small shrink-0 font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
                                 {checkIn}
                               </span>
                             ) : (
@@ -282,13 +280,13 @@ function TodayPanel({
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <p className="text-text-secondary flex items-center gap-1 text-[11px] font-semibold">
+                  <p className="text-text-secondary text-small flex items-center gap-1 font-semibold">
                     <Radio className="h-3 w-3" aria-hidden />
                     Remoto · {remoteTraining.length}
                   </p>
                 </div>
                 {remoteTraining.length === 0 ? (
-                  <p className="text-text-secondary text-[12px]">Nadie en remoto</p>
+                  <p className="text-text-secondary text-small">Nadie en remoto</p>
                 ) : (
                   <ul className="space-y-0.5">
                     {remoteTraining.slice(0, TODAY_LIST_CAP).map((m) => {
@@ -297,11 +295,11 @@ function TodayPanel({
                         <li key={`remote-${m.id}`}>
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {started ? (
-                              <span className="text-brand shrink-0 text-[10px] font-semibold tabular-nums">
+                              <span className="text-brand text-small shrink-0 font-semibold tabular-nums">
                                 {started}
                               </span>
                             ) : null}
@@ -316,28 +314,28 @@ function TodayPanel({
 
             <div className="border-border/60 border-t pt-3 sm:border-0 sm:pt-0 sm:pl-4 lg:pl-5">
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <p className="text-text-secondary text-[11px] font-semibold">Sin entrenar · ≥3d</p>
+                <p className="text-text-secondary text-small font-semibold">Sin entrenar · ≥3d</p>
                 {inactiveMembers.length > TODAY_LIST_CAP && (
                   <Link
                     to="/members"
-                    className="text-brand inline-flex min-h-11 items-center text-[10px] font-semibold hover:underline"
+                    className="text-brand text-small inline-flex min-h-11 items-center font-semibold hover:underline"
                   >
                     Ver todos
                   </Link>
                 )}
               </div>
               {inactiveMembers.length === 0 ? (
-                <p className="text-text-secondary text-[12px]">Sin alertas de inactividad</p>
+                <p className="text-text-secondary text-small">Sin alertas de inactividad</p>
               ) : (
                 <ul className="space-y-0.5">
                   {inactiveMembers.slice(0, TODAY_LIST_CAP).map((m) => (
                     <li key={m.id} className="flex items-center gap-1">
                       <Link
                         to={`/members/${m.id}/routines`}
-                        className="hover:text-brand text-text flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 text-[12px] font-medium lg:text-[13px]"
+                        className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                       >
                         <span className="min-w-0 truncate">{m.full_name}</span>
-                        <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                        <span className="text-small shrink-0 font-semibold text-amber-600 dark:text-amber-400">
                           {m.days_since}d
                         </span>
                       </Link>
@@ -391,7 +389,7 @@ function ActivityPanel({
         </div>
       ) : !activities?.length ? (
         <div className={cn('rounded-[var(--radius-card)] border px-3 py-4', SURFACE)}>
-          <p className="text-text-secondary text-[12px] leading-relaxed lg:text-[13px]">
+          <p className="text-text-secondary text-small leading-relaxed lg:text-sm">
             Cuando entrenen, verás sus sesiones aquí.{' '}
             <button
               type="button"
@@ -415,14 +413,10 @@ function ActivityPanel({
               >
                 <Dumbbell className="text-brand h-3.5 w-3.5 shrink-0" aria-hidden />
                 <div className="min-w-0 flex-1">
-                  <p className="text-text truncate text-[13px] font-semibold">
-                    {activity.full_name}
-                  </p>
-                  <p className="text-text-secondary truncate text-[11px]">
-                    {activity.routine_name}
-                  </p>
+                  <p className="text-text truncate text-sm font-semibold">{activity.full_name}</p>
+                  <p className="text-text-secondary text-small truncate">{activity.routine_name}</p>
                 </div>
-                <span className="text-text-muted shrink-0 text-[11px] font-medium tabular-nums">
+                <span className="text-text-muted text-small shrink-0 font-medium tabular-nums">
                   {new Date(activity.start_time).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',

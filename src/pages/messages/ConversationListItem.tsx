@@ -33,7 +33,7 @@ export const ConversationListItem = memo(function ConversationListItem({
           src={item.member_avatar}
           name={item.member_name}
           size="sm"
-          className="mt-0.5 !h-9 !w-9 shrink-0 !text-[10px] !ring-1"
+          className="!text-small mt-0.5 !h-9 !w-9 shrink-0 !ring-1"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

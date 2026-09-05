@@ -74,7 +74,7 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
   return (
     <div className="space-y-3">
       <div className="border-border bg-surface rounded-xl border p-3">
-        <p className="text-text-muted mb-2 text-[11px] font-semibold tracking-wide uppercase">
+        <p className="text-text-muted text-small mb-2 font-semibold tracking-wide uppercase">
           Nueva nota (solo staff)
         </p>
         <Textarea
@@ -125,10 +125,10 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
               <li key={note.id} className="border-border bg-surface rounded-xl border px-3 py-2.5">
                 <div className="mb-1.5 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-text truncate text-[12px] font-semibold">
+                    <p className="text-text text-small truncate font-semibold">
                       {note.author_name}
                     </p>
-                    <p className="text-text-muted text-[10px]">
+                    <p className="text-text-muted text-small">
                       {format(parseISO(note.created_at), 'd MMM yyyy · HH:mm', { locale: es })}
                       {note.updated_at !== note.created_at ? ' · editada' : ''}
                     </p>
@@ -185,7 +185,7 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
                     </div>
                   </div>
                 ) : (
-                  <p className="text-text text-[13px] leading-relaxed whitespace-pre-wrap">
+                  <p className="text-text text-sm leading-relaxed whitespace-pre-wrap">
                     {note.body}
                   </p>
                 )}

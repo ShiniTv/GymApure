@@ -20,7 +20,7 @@ import { useState, useMemo, useEffect } from 'react';
 function adherenceBadgeClass(percent: number): string {
   if (percent >= 75) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
   if (percent >= 50) return 'bg-amber-500/10 text-amber-700 dark:text-amber-400';
-  return 'bg-red-500/10 text-red-600 dark:text-red-400';
+  return 'bg-red-500/10 text-danger dark:text-danger';
 }
 
 export default function NutritionOverview() {
@@ -104,30 +104,28 @@ export default function NutritionOverview() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
                 Clientes
               </p>
-              <p className="text-text text-2xl font-black">{assignedTotal}</p>
+              <p className="text-text text-2xl font-semibold">{assignedTotal}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
                 Con plan
               </p>
-              <p className="text-text text-2xl font-black">{data.with_plan}</p>
+              <p className="text-text text-2xl font-semibold">{data.with_plan}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
                 Sin plan
               </p>
-              <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
-                {withoutPlan}
-              </p>
+              <p className="text-warning text-2xl font-semibold">{withoutPlan}</p>
             </Card>
             <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
+              <p className="text-text-muted text-small font-bold tracking-wider uppercase">
                 Registrando
               </p>
-              <p className="text-text text-2xl font-black">{data.logging_active}</p>
+              <p className="text-text text-2xl font-semibold">{data.logging_active}</p>
             </Card>
           </div>
 
@@ -173,7 +171,7 @@ export default function NutritionOverview() {
                               <p className="text-text-muted truncate text-xs">
                                 {member.plan_title}
                               </p>
-                              <p className="text-text-muted mt-1 text-[11px]">
+                              <p className="text-text-muted text-small mt-1">
                                 {member.logged_days} día{member.logged_days !== 1 ? 's' : ''} con
                                 registro
                               </p>
@@ -230,7 +228,7 @@ export default function NutritionOverview() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[40rem] text-left text-sm">
-                  <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
+                  <thead className="border-border bg-surface-raised text-text-muted text-small border-b font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="px-4 py-2.5">Miembro</th>
                       <th className="px-4 py-2.5">Plan</th>

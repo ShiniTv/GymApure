@@ -536,7 +536,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         ) : null}
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => setSharedRoutineTarget(null)}
             disabled={!!reviewingSuggestionId}

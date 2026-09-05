@@ -46,7 +46,7 @@ export function ProfileDatosTab({
 
   return (
     <div className="w-full">
-      <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-5">
+      <Card padding="md" rounded="xl" className="border-border bg-surface">
         <div className="md:grid md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:items-start md:gap-4">
           <div className="mb-3.5 md:mb-0">
             <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-3">
@@ -83,16 +83,16 @@ export function ProfileDatosTab({
                 <p className="text-text truncate text-[15px] font-semibold md:text-base md:whitespace-normal">
                   {profile.full_name}
                 </p>
-                <p className="text-text-muted mt-0.5 truncate text-[11px] md:text-xs md:whitespace-normal">
+                <p className="text-text-muted text-small mt-0.5 truncate md:text-xs md:whitespace-normal">
                   {profile.email}
                 </p>
                 {profile.cedula && (
-                  <p className="text-text-muted mt-0.5 text-[10px] md:text-[11px]">
+                  <p className="text-text-muted text-small md:text-small mt-0.5">
                     {profile.cedula}
                   </p>
                 )}
                 {avatarUploading && (
-                  <p className="text-brand mt-1 text-[10px] font-medium">Subiendo foto…</p>
+                  <p className="text-brand text-small mt-1 font-medium">Subiendo foto…</p>
                 )}
                 {avatarUrl && !avatarUploading && (
                   <div className="mt-1 flex flex-wrap items-center gap-2 md:mt-2">
@@ -100,7 +100,7 @@ export function ProfileDatosTab({
                       type="button"
                       onClick={onRequestRemoveAvatar}
                       disabled={avatarRemoving}
-                      className="text-text-muted text-[10px] font-semibold transition-colors hover:text-red-500 disabled:opacity-50 sm:text-xs dark:hover:text-red-400"
+                      className="text-text-muted text-small hover:text-danger font-semibold transition-colors disabled:opacity-50 sm:text-xs dark:hover:text-red-400"
                     >
                       Quitar foto
                     </button>
@@ -112,18 +112,18 @@ export function ProfileDatosTab({
             {isTrainer && trainerProfile && (
               <div className="mt-3.5 space-y-1 rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 md:mt-4">
                 <p className="text-text text-xs font-bold">Perfil profesional</p>
-                <p className="text-text-secondary text-[11px]">
+                <p className="text-text-secondary text-small">
                   Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
                 </p>
-                <p className="text-text-secondary text-[11px]">
+                <p className="text-text-secondary text-small">
                   Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
                 </p>
                 {trainerProfile.specialty && (
-                  <p className="text-text-secondary text-[11px]">
+                  <p className="text-text-secondary text-small">
                     Especialidad: <strong>{trainerProfile.specialty}</strong>
                   </p>
                 )}
-                <p className="text-text-muted pt-1 text-[10px]">
+                <p className="text-text-muted text-small pt-1">
                   Para cambiar nivel, turno o especialidad, contacta al administrador (sección
                   Entrenadores).
                 </p>

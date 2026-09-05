@@ -168,7 +168,7 @@ export const MemberTableRow = memo(function MemberTableRow({
       label: member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar',
       icon: Trash2,
       onClick: () => onDelete(member),
-      className: 'hover:bg-red-500/10 hover:text-red-500',
+      className: 'hover:bg-red-500/10 hover:text-danger',
       danger: true,
     });
   }
@@ -205,7 +205,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   )}
                   {badgeInfo && <Badge className={badgeInfo.className}>{badgeInfo.label}</Badge>}
                 </div>
-                <p className="text-text-muted text-[10px]">
+                <p className="text-text-muted text-small">
                   {member.days_remaining ?? 0} días restantes
                 </p>
               </div>
@@ -220,7 +220,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   if (isAdmin || userRole === 'receptionist') onEditShift(member);
                 }}
                 className={cn(
-                  'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold transition-opacity',
+                  'text-small inline-flex rounded-md border px-2 py-0.5 font-bold transition-opacity',
                   SHIFT_BADGE_CLASSES[member.training_shift],
                   (isAdmin || userRole === 'receptionist') && 'cursor-pointer hover:opacity-80'
                 )}
@@ -235,7 +235,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   e.stopPropagation();
                   onEditShift(member);
                 }}
-                className="text-brand text-[10px] font-semibold hover:underline"
+                className="text-brand text-small font-semibold hover:underline"
               >
                 Asignar turno
               </button>

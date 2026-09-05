@@ -401,7 +401,7 @@ export default function CheckIn() {
           ) : (
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               className={cn(isKioskMode ? 'mt-8' : 'mt-4')}
               onClick={() => setStatus('idle')}
             >
@@ -549,7 +549,7 @@ export default function CheckIn() {
           { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
         ]}
       />
-      <Card padding="sm" rounded="xl" className="md:p-5">
+      <Card padding="md" rounded="xl">
         {formContent}
       </Card>
       <div className="mt-4 flex flex-col items-center gap-3 sm:mt-6">

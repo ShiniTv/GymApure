@@ -40,27 +40,27 @@ export function EquipmentListCard({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-text truncate text-[13px] font-semibold sm:text-sm">
+        <p className="text-text truncate text-sm font-semibold sm:text-sm">
           {equipmentDisplayName(item)}
           {item.quantity > 1 && (
-            <span className="text-text-muted ml-1.5 text-[10px] font-bold">×{item.quantity}</span>
+            <span className="text-text-muted text-small ml-1.5 font-bold">×{item.quantity}</span>
           )}
         </p>
         {!hideZone && (
-          <p className="text-text-muted mt-0.5 flex items-center gap-1 truncate text-[11px] sm:text-xs">
+          <p className="text-text-muted text-small mt-0.5 flex items-center gap-1 truncate sm:text-xs">
             <MapPin className="h-3 w-3 shrink-0" />
             {item.zone_name ?? 'Sin zona'}
           </p>
         )}
         {isInspectionDue(item.next_inspection_at) && (
-          <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+          <p className="text-small mt-1 flex items-center gap-1 font-semibold text-orange-600 dark:text-orange-400">
             <Clock className="h-3 w-3" />
             <span className="sm:hidden">Revisión</span>
             <span className="hidden sm:inline">Revisión pendiente</span>
           </p>
         )}
       </div>
-      <Badge variant={EQUIPMENT_STATUS_BADGE[item.status]} className="shrink-0 text-[10px]">
+      <Badge variant={EQUIPMENT_STATUS_BADGE[item.status]} className="text-small shrink-0">
         <span className="sm:hidden">{STATUS_SHORT_LABELS[item.status]}</span>
         <span className="hidden sm:inline">{EQUIPMENT_STATUS_LABELS[item.status]}</span>
       </Badge>

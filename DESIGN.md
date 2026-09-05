@@ -142,16 +142,16 @@ GymApure usa un chrome denso inspirado en Linear: canvas calmado, paneles con bo
 
 Primitivos en `src/components/ui/`:
 
-| Componente                                   | Notas                                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------------- |
-| `Button`                                     | primary / secondary (outline) / tertiary / danger; touch 44–48px            |
-| `Modal`                                      | portal, Escape, focus trap, footer sticky opcional, animación visible corta |
-| `Sheet`                                      | bottom sheet móvil (Más, acciones)                                          |
-| `Card`                                       | superficie; preferir no anidar cards en hero/operación                      |
-| `Input` / `Select` / `Textarea`              | radius-input; labels vía typography                                         |
-| `PageHeader` / `PageState` / `EmptyState`    | jerarquía de página                                                         |
-| `SegmentedControl` / `FilterChips` / `Badge` | filtros y estado                                                            |
-| `Alert` / `Skeleton` / `Spinner`             | feedback                                                                    |
+| Componente                                   | Notas                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------ |
+| `Button`                                     | `md` 44px / `sm` toolbar / `lg` 48px; no `h-*` en className                    |
+| `Modal`                                      | maxWidth honesto sm→3xl (ver [docs/qa/UI-CONTRACT.md](docs/qa/UI-CONTRACT.md)) |
+| `Sheet`                                      | bottom sheet móvil (Más, acciones)                                             |
+| `Card`                                       | radio 8px; no anidar; padding `ds-*`                                           |
+| `Input` / `Select` / `Textarea`              | radius-input; `Label` = `typography.label`; error `danger`                     |
+| `PageHeader` / `PageState` / `EmptyState`    | jerarquía de página                                                            |
+| `SegmentedControl` / `FilterChips` / `Badge` | `text-small`; filtros y estado                                                 |
+| `Alert` / `Skeleton` / `Spinner`             | feedback                                                                       |
 
 Motion existente: `animate-page-enter` (~200ms), landing-rise / kenburns (marketing), auth-fade-in; respetar `prefers-reduced-motion`.
 

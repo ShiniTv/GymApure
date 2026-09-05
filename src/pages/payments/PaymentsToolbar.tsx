@@ -90,7 +90,7 @@ export function PaymentsToolbar({
       {isStaffPayment && adminStats?.stats ? (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
           <div className={STAT_TILE}>
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               Pendientes
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -98,7 +98,7 @@ export function PaymentsToolbar({
             </p>
           </div>
           <div className={STAT_TILE}>
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               &gt;2 días
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -106,7 +106,7 @@ export function PaymentsToolbar({
             </p>
           </div>
           <div className={STAT_TILE}>
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               Ingresos mes
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -114,7 +114,7 @@ export function PaymentsToolbar({
             </p>
           </div>
           <div className={STAT_TILE}>
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               En lista
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
@@ -124,7 +124,7 @@ export function PaymentsToolbar({
 
       {isMember && !loading && (paymentsCount > 0 || Boolean(statusFilter)) && (
         <div className="flex items-center justify-between gap-2 px-0.5">
-          <p className="text-text-muted min-w-0 truncate text-[11px]">
+          <p className="text-text-muted text-small min-w-0 truncate">
             {total} pago{total !== 1 ? 's' : ''}
             {statusFilter ? ` · ${paymentStatusLabel(statusFilter as Payment['status'])}` : ''}
           </p>
@@ -132,7 +132,7 @@ export function PaymentsToolbar({
             <button
               type="button"
               onClick={onClearStatusFilter}
-              className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+              className="text-brand text-small shrink-0 font-semibold hover:underline"
             >
               Ver todos
             </button>

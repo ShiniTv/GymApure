@@ -56,7 +56,7 @@ export function WorkoutHeader({
             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
               <span
                 className={cn(
-                  'bg-brand/10 text-brand inline-flex items-center gap-1 rounded-[var(--radius-chip)] px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums transition-all',
+                  'bg-brand/10 text-brand text-small inline-flex items-center gap-1 rounded-[var(--radius-chip)] px-2 py-0.5 font-mono font-semibold tabular-nums transition-all',
                   pausePulse ? 'animate-pulse' : ''
                 )}
               >
@@ -66,14 +66,14 @@ export function WorkoutHeader({
               {isPaused ? (
                 <span
                   className={cn(
-                    'bg-surface-overlay text-text-secondary rounded-[var(--radius-chip)] px-2 py-0.5 text-[10px] font-medium transition-all',
+                    'bg-surface-overlay text-text-secondary text-small rounded-[var(--radius-chip)] px-2 py-0.5 font-medium transition-all',
                     pausePulse ? 'animate-pulse' : ''
                   )}
                 >
                   Pausado
                 </span>
               ) : null}
-              <span className="text-text-secondary hidden text-[10px] font-medium sm:inline">
+              <span className="text-text-secondary text-small hidden font-medium sm:inline">
                 {completedCount}/{totalExercises} ejercicios
               </span>
             </div>
@@ -148,7 +148,7 @@ export function WorkoutHeader({
         </div>
       </div>
       <div className="mt-2.5">
-        <div className="text-text-secondary mb-1 flex items-center justify-between text-[10px] font-medium sm:hidden">
+        <div className="text-text-secondary text-small mb-1 flex items-center justify-between font-medium sm:hidden">
           <span>Progreso</span>
           <span className="text-brand">{progressPct}%</span>
         </div>

@@ -127,11 +127,11 @@ export default function MemberPtBilling() {
       ) : (
         <div className="space-y-2">
           {invoices.map((inv) => (
-            <DataCard key={inv.id} className="!space-y-0 !p-2.5 sm:!p-3">
+            <DataCard key={inv.id} className="!space-y-0">
               <div className="flex min-w-0 items-center gap-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <p className="text-text min-w-0 flex-1 truncate text-[13px] leading-tight font-semibold">
+                    <p className="text-text min-w-0 flex-1 truncate text-sm leading-tight font-semibold">
                       {inv.title}
                       {inv.trainer_name ? (
                         <span className="text-text-muted font-medium"> · {inv.trainer_name}</span>
@@ -139,17 +139,17 @@ export default function MemberPtBilling() {
                     </p>
                     <Badge
                       variant={statusVariant(inv.status)}
-                      className="shrink-0 px-1.5 py-0 text-[9px]"
+                      className="text-small shrink-0 px-1.5 py-0"
                     >
                       {statusLabel(inv.status)}
                     </Badge>
                   </div>
-                  <p className="text-text-secondary mt-0.5 truncate text-[11px] leading-snug">
+                  <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
                     <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
                     {inv.reference ? (
                       <>
                         <span className="text-text-muted mx-1.5">·</span>
-                        <span className="font-mono text-[10px]">Ref. {inv.reference}</span>
+                        <span className="text-small font-mono">Ref. {inv.reference}</span>
                       </>
                     ) : null}
                     {inv.rejection_reason ? (
@@ -181,7 +181,7 @@ export default function MemberPtBilling() {
           <>
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="flex-1"
               onClick={() => setReporting(null)}

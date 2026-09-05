@@ -61,14 +61,14 @@ function PanelBody({
       {hasPersisted && (
         <section>
           <div className="mb-2 flex items-center justify-between px-1">
-            <h3 className="text-text-muted text-[11px] font-bold tracking-wide uppercase">
+            <h3 className="text-text-muted text-small font-bold tracking-wide uppercase">
               Novedades
             </h3>
             <button
               type="button"
               onClick={onMarkAll}
               disabled={isMarkingAll}
-              className="text-brand text-[11px] font-semibold disabled:opacity-50"
+              className="text-brand text-small font-semibold disabled:opacity-50"
             >
               {isMarkingAll ? 'Marcando…' : 'Marcar todas'}
             </button>
@@ -85,7 +85,7 @@ function PanelBody({
 
       {hasLive && (
         <section>
-          <h3 className="text-text-muted mb-2 px-1 text-[11px] font-bold tracking-wide uppercase">
+          <h3 className="text-text-muted text-small mb-2 px-1 font-bold tracking-wide uppercase">
             Requiere atención
           </h3>
           <ul className="space-y-2">

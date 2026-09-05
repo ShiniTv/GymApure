@@ -15,7 +15,7 @@ export function LogoutConfirmModal({ open, onClose, onConfirm }: LogoutConfirmMo
         Tendrás que volver a iniciar sesión para acceder a tu cuenta.
       </p>
       <div className="flex gap-3">
-        <Button variant="ghost" className="flex-1" onClick={onClose}>
+        <Button variant="secondary" className="flex-1" onClick={onClose}>
           Cancelar
         </Button>
         <Button variant="danger" className="flex-1" onClick={onConfirm}>

@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { IconButton } from './IconButton';
+import { typography } from '../../lib/typography';
 
 const EXIT_MS = 200;
 
@@ -20,13 +22,14 @@ interface ModalProps {
   initialFocus?: 'input' | 'dialog' | false;
 }
 
+/** Honest Tailwind max-width map — see docs/qa/UI-CONTRACT.md */
 const maxWidthMap = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
-  xl: 'max-w-2xl',
-  '2xl': 'max-w-3xl',
-  '3xl': 'max-w-4xl',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
 };
 
 export function Modal({
@@ -176,24 +179,22 @@ export function Modal({
               scrollable ? 'border-border/60 px-ds-4 sm:px-ds-5 border-b py-3' : 'mb-4'
             )}
           >
-            <h2
-              id={titleId}
-              className="text-text text-sm font-semibold tracking-[-0.02em] sm:text-base"
-            >
+            <h2 id={titleId} className={cn(typography.sectionTitle, 'text-text sm:text-base')}>
               {title}
             </h2>
-            <button
+            <IconButton
               type="button"
+              size="md"
+              variant="tertiary"
               onClick={onClose}
-              className="text-text-muted hover:bg-surface-overlay hover:text-text shrink-0 rounded-md p-1.5 transition-colors"
               aria-label="Cerrar"
             >
               <X className="h-4 w-4" />
-            </button>
+            </IconButton>
           </div>
           <div
             id={contentId}
-            className={cn(scrollable && 'scroll-area flex-1 overflow-y-auto p-3.5 sm:p-4')}
+            className={cn(scrollable && 'scroll-area p-ds-4 sm:p-ds-5 flex-1 overflow-y-auto')}
           >
             {children}
           </div>

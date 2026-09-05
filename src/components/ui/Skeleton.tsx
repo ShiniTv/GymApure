@@ -98,7 +98,7 @@ export function AuditLogsSkeleton() {
       </div>
       <div className="table-shell hidden overflow-hidden lg:block">
         <table className="w-full min-w-[52rem] text-left text-sm">
-          <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
+          <thead className="border-border bg-surface-raised text-text-muted text-small border-b font-semibold tracking-wide uppercase">
             <tr>
               {['Cuándo', 'Acción', 'Actor', 'Detalle'].map((col) => (
                 <th key={col} className="px-3 py-2.5">

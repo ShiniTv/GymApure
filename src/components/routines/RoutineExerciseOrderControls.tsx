@@ -14,7 +14,7 @@ export function RoutineExerciseOrderControls({
 }) {
   return (
     <div className="flex shrink-0 flex-col items-center gap-0.5">
-      <span className="text-text-muted text-[11px] font-semibold tabular-nums" aria-hidden>
+      <span className="text-text-muted text-small font-semibold tabular-nums" aria-hidden>
         {index + 1}
       </span>
       <button

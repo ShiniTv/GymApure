@@ -85,7 +85,7 @@ export function MemberDetailPanel({
             <Avatar name={member.full_name} size="sm" className="shrink-0" />
             <div className="min-w-0">
               <p className="text-text truncate text-sm font-bold">{member.full_name}</p>
-              <p className="text-text-muted text-[11px]">
+              <p className="text-text-muted text-small">
                 {ROLE_LABELS[member.role] ?? member.role}
               </p>
             </div>
@@ -104,16 +104,16 @@ export function MemberDetailPanel({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant={member.status === 'active' ? 'success' : 'danger'} className="text-[10px]">
+        <Badge variant={member.status === 'active' ? 'success' : 'danger'} className="text-small">
           {member.status === 'active' ? 'Activo' : 'Inactivo'}
         </Badge>
         {member.subscription_status === 'paused' && (
-          <Badge variant="warning" className="text-[10px]">
+          <Badge variant="warning" className="text-small">
             Pausada
           </Badge>
         )}
         {expiryBadge && (
-          <Badge className={cn('text-[10px]', expiryBadge.className)}>{expiryBadge.label}</Badge>
+          <Badge className={cn('text-small', expiryBadge.className)}>{expiryBadge.label}</Badge>
         )}
         <OnboardingStatus onboarding={member.onboarding} variant="chip" />
       </div>
@@ -124,7 +124,7 @@ export function MemberDetailPanel({
             key={row.label}
             className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2"
           >
-            <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <dt className="text-text-muted text-small font-semibold tracking-wide uppercase">
               {row.label}
             </dt>
             <dd className="text-text mt-0.5 truncate text-xs font-medium">{row.value}</dd>
@@ -133,7 +133,7 @@ export function MemberDetailPanel({
       </dl>
 
       {primary && (
-        <Button type="button" className="mt-3.5 h-11 min-h-11 w-full" onClick={() => run(primary)}>
+        <Button type="button" size="lg" className="mt-3.5 w-full" onClick={() => run(primary)}>
           <primary.icon className="h-4 w-4" aria-hidden />
           {primary.label}
         </Button>
@@ -154,7 +154,7 @@ export function MemberDetailPanel({
                 className="border-border/60 bg-surface-raised/50 text-text-secondary hover:border-brand/30 hover:bg-surface-overlay flex min-h-[3.25rem] w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center transition-[background-color,border-color,transform] active:scale-[0.98]"
               >
                 <action.icon className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
-                <span className="text-[11px] leading-tight font-semibold">{action.label}</span>
+                <span className="text-small leading-tight font-semibold">{action.label}</span>
               </button>
             </li>
           ))}
@@ -168,7 +168,7 @@ export function MemberDetailPanel({
               key={action.key}
               type="button"
               onClick={() => run(action)}
-              className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl py-2 text-[13px] font-medium text-red-600 dark:text-red-400"
+              className="text-danger dark:text-danger flex min-h-10 w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium"
             >
               <action.icon className="h-4 w-4 shrink-0" aria-hidden />
               {action.label}

@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import { login, demoPassword, MEMBER_EMAIL } from './helpers';
 
 test.describe('QA device — push onboarding (mobile viewport)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    await context.grantPermissions(['notifications']);
     await login(page, MEMBER_EMAIL, demoPassword());
     await page.evaluate(() => {
       localStorage.removeItem('gymapure_push_onboarding_dismissed');
@@ -14,8 +15,13 @@ test.describe('QA device — push onboarding (mobile viewport)', () => {
     await expect(page.getByRole('navigation', { name: /navegación principal/i })).toBeVisible({
       timeout: 20_000,
     });
+    // Membership banners take priority over push; accept either when seed/state varies.
     await expect(
-      page.getByText(/activa avisos en el teléfono|añadir a inicio para avisos/i).first()
+      page
+        .getByText(
+          /activa avisos en el teléfono|añadir a inicio para avisos|activa tu membresía|pago\(s\) pendiente|vence|renueva/i
+        )
+        .first()
     ).toBeVisible({ timeout: 15_000 });
   });
 

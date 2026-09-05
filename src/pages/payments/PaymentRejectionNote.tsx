@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 
 export function PaymentRejectionNote({ reason }: { reason?: string | null }) {
   return (
-    <p className="mt-1 text-[10px] leading-snug text-red-500/90">
+    <p className="text-small text-danger/90 mt-1 leading-snug">
       {reason?.trim() ? <>Motivo: {reason.trim()}. </> : <>Comprobante no verificado. </>}
       <Link to="/messages" className="font-semibold underline hover:text-red-400">
         Consulta Mensajes

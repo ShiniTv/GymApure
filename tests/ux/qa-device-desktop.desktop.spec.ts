@@ -13,7 +13,14 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
 
   test('D1 Panel usa skeleton (sin “Cargando…” como estado principal)', async ({ page }) => {
     await page.goto('/panel');
-    await expect(page.getByRole('heading', { name: /panel|inicio|resumen|requiere acción/i }).first()).toBeVisible({
+    await expect(
+      page
+        .getByRole('heading', {
+          name: /panel|inicio|resumen|requiere acción|administración general/i,
+        })
+        .or(page.getByText(/administración general/i))
+        .first()
+    ).toBeVisible({
       timeout: 20_000,
     });
     // Shell/route loaders use DashboardSkeleton (pulse), not a bare “Cargando…” title.

@@ -47,7 +47,7 @@ export function PageHeader({
           <p
             className={cn(
               typography.pageSubtitle,
-              compact && 'text-[11px]',
+              compact && 'text-small',
               hideTitleOnMobile &&
                 'max-lg:text-text-secondary max-lg:text-sm max-lg:leading-snug max-lg:font-medium'
             )}
@@ -58,11 +58,7 @@ export function PageHeader({
       </div>
       {(badge || action) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 self-center sm:gap-3">
-          {badge && (
-            <div className="border-border/70 bg-surface text-text-secondary rounded-chip border px-2.5 py-1 text-xs font-medium">
-              {badge}
-            </div>
-          )}
+          {badge && <p className={cn(typography.small, 'text-text-muted self-center')}>{badge}</p>}
           {action}
         </div>
       )}

@@ -135,7 +135,7 @@ export function MemberBottomNav() {
         <div className="space-y-2.5">
           {moreSections.map((section) => (
             <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
+              <p className="text-text-muted text-small mb-1 px-0.5 font-semibold tracking-[0.06em] uppercase">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -181,9 +181,9 @@ export function MemberBottomNav() {
                             </span>
                           )}
                         </span>
-                        <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
+                        <span className="text-small leading-tight font-semibold">{item.name}</span>
                         {unreadLabel ? (
-                          <span className="text-text-muted text-[9px] leading-none font-medium">
+                          <span className="text-text-muted text-small leading-none font-medium">
                             {unreadLabel}
                           </span>
                         ) : null}
@@ -203,7 +203,7 @@ export function MemberBottomNav() {
               closeMore();
               requestLogout();
             }}
-            className="text-danger hover:bg-danger/10 rounded-card tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 px-2.5 py-2 text-[13px] font-medium transition-[background-color,transform,opacity] duration-150"
+            className="text-danger hover:bg-danger/10 rounded-card tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 px-2.5 py-2 text-sm font-medium transition-[background-color,transform,opacity] duration-150"
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Cerrar sesión

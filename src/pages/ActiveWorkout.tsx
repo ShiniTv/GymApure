@@ -94,7 +94,7 @@ export default function ActiveWorkout() {
       )}
 
       {page.sessionError && (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600 dark:text-red-400">
+        <div className="border-danger/30 text-danger dark:text-danger rounded-2xl border bg-red-500/10 px-4 py-3 text-sm font-bold">
           {page.sessionError}
         </div>
       )}

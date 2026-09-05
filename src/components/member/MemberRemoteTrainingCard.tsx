@@ -93,7 +93,7 @@ export function MemberRemoteTrainingCard() {
         <p className="text-text text-sm leading-snug font-semibold">
           {active ? 'Entrenando ahora (remoto)' : 'Entrenamiento fuera del gym'}
         </p>
-        <p className="text-text-secondary mt-0.5 text-[11px] leading-relaxed">
+        <p className="text-text-secondary text-small mt-0.5 leading-relaxed">
           {active
             ? 'Tu entrenador ya puede ver que estás en sesión. Sin PIN del gym.'
             : 'Si no estás en las instalaciones, confirma aquí para que tu entrenador lo sepa.'}

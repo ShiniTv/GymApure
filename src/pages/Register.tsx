@@ -227,7 +227,7 @@ export default function Register() {
                       if (fieldErrors.cedula) setFieldErrors((prev) => ({ ...prev, cedula: '' }));
                     }}
                   />
-                  <p className="text-text-muted mt-1 text-[10px]">
+                  <p className="text-text-muted text-small mt-1">
                     Formato: V-12345678 · Para identificarte en recepción
                   </p>
                 </div>
@@ -276,7 +276,7 @@ export default function Register() {
                     if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
                   }}
                 />
-                <p className="text-text-muted mt-1 text-[11px]">
+                <p className="text-text-muted text-small mt-1">
                   Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
                 </p>
                 {formData.password && (
@@ -333,7 +333,7 @@ export default function Register() {
               <div className="flex gap-3 pt-2">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   className="auth-linear-secondary flex-1"
                   onClick={() => {
                     setStep(0);

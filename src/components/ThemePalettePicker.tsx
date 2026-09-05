@@ -44,7 +44,7 @@ export default function ThemePalettePicker() {
               </div>
               <div className="w-full min-w-0">
                 <p className="text-text truncate text-xs font-semibold">{item.label}</p>
-                <p className="text-text-muted mt-0.5 line-clamp-2 text-[10px] leading-snug">
+                <p className="text-text-muted text-small mt-0.5 line-clamp-2 leading-snug">
                   {item.description}
                 </p>
               </div>
@@ -53,13 +53,13 @@ export default function ThemePalettePicker() {
                 aria-hidden
               >
                 <span
-                  className="flex h-5 shrink-0 items-center rounded-md px-2 text-[9px] font-semibold text-white"
+                  className="text-small flex h-5 shrink-0 items-center rounded-md px-2 font-semibold text-white"
                   style={{ backgroundColor: item.swatch.light }}
                 >
                   Btn
                 </span>
                 <span
-                  className="truncate text-[10px] font-semibold"
+                  className="text-small truncate font-semibold"
                   style={{ color: item.swatch.light }}
                 >
                   Enlace

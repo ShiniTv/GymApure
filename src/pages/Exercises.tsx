@@ -360,7 +360,7 @@ export default function Exercises() {
           ) : null}
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             className={cn(
               'h-9 gap-1.5 px-2.5',
@@ -375,7 +375,7 @@ export default function Exercises() {
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden md:inline">Filtros</span>
             {filterChipCount > 0 ? (
-              <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+              <span className="bg-brand/15 text-brand text-small rounded-md px-1.5 font-bold tabular-nums">
                 {filterChipCount}
               </span>
             ) : null}
@@ -414,7 +414,7 @@ export default function Exercises() {
             />
           ) : null}
           {filterChipCount > 0 ? (
-            <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
+            <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
               Limpiar filtros
             </Button>
           ) : null}
@@ -422,12 +422,12 @@ export default function Exercises() {
       ) : null}
 
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="text-text-muted min-w-0 truncate text-[11px]">{resultsLabel}</p>
+        <p className="text-text-muted text-small min-w-0 truncate">{resultsLabel}</p>
         {hasActiveFilters ? (
           <button
             type="button"
             onClick={clearFilters}
-            className="text-brand shrink-0 text-[11px] font-semibold hover:underline"
+            className="text-brand text-small shrink-0 font-semibold hover:underline"
           >
             Limpiar
           </button>
@@ -482,10 +482,10 @@ export default function Exercises() {
                 ? 'Solo dejará de aparecer en tu catálogo. Otros entrenadores seguirán viéndolo.'
                 : 'No se podrá eliminar si está en alguna rutina.'}
             </p>
-            {deleteError && <p className="mb-4 text-sm text-red-500">{deleteError}</p>}
+            {deleteError && <p className="text-danger mb-4 text-sm">{deleteError}</p>}
             <div className="flex gap-3">
               <Button
-                variant="ghost"
+                variant="secondary"
                 className="flex-1"
                 onClick={() => {
                   setDeleteTarget(null);
@@ -521,7 +521,7 @@ export default function Exercises() {
               <>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="flex-1"
                   onClick={() => setIsModalOpen(false)}
@@ -589,7 +589,7 @@ export default function Exercises() {
                   <Label className="mb-0">Ejecución</Label>
                   <button
                     type="button"
-                    className="text-brand text-[11px] font-semibold hover:underline"
+                    className="text-brand text-small font-semibold hover:underline"
                     onClick={() => setExecutionSteps((steps) => [...steps, ''])}
                   >
                     + Paso
@@ -598,7 +598,7 @@ export default function Exercises() {
                 <div className="space-y-1.5">
                   {executionSteps.map((step, index) => (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="text-text-muted w-4 shrink-0 text-center text-[11px] tabular-nums">
+                      <span className="text-text-muted text-small w-4 shrink-0 text-center tabular-nums">
                         {index + 1}
                       </span>
                       <Input
@@ -612,7 +612,7 @@ export default function Exercises() {
                       />
                       <IconButton
                         size="sm"
-                        variant="ghost"
+                        variant="secondary"
                         aria-label={`Quitar paso ${index + 1}`}
                         disabled={executionSteps.length <= 1}
                         onClick={() =>
@@ -636,7 +636,7 @@ export default function Exercises() {
                   aria-expanded={videoOpen}
                 >
                   <Video className="text-text-muted h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="text-text min-w-0 flex-1 text-[13px] font-medium">
+                  <span className="text-text min-w-0 flex-1 text-sm font-medium">
                     Video (opcional)
                   </span>
                   <ChevronDown
@@ -684,23 +684,23 @@ export default function Exercises() {
                       className="border-border/70 hover:border-brand/40 bg-surface-overlay/40 flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-input)] border border-dashed px-3 py-2 transition-colors"
                     >
                       <Plus className="text-text-muted h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span className="text-text-secondary min-w-0 truncate text-[11px] font-medium">
+                      <span className="text-text-secondary text-small min-w-0 truncate font-medium">
                         {videoFile ? videoFile.name : 'Subir MP4/MOV'}
                       </span>
                     </label>
-                    <p className="text-text-muted text-[10px] leading-snug">
+                    <p className="text-text-muted text-small leading-snug">
                       {mediaCapabilities?.directUpload
                         ? `Máx. ${mediaCapabilities.recommendedMaxMb} MB · ${mediaCapabilities.maxDurationSec}s · 720p`
                         : 'Máx. 60s · 50 MB · se comprime a 720p'}
                     </p>
                     {videoUploadProgress ? (
-                      <p className="text-brand text-[11px] font-medium">{videoUploadProgress}</p>
+                      <p className="text-brand text-small font-medium">{videoUploadProgress}</p>
                     ) : null}
                   </div>
                 ) : null}
               </div>
 
-              {saveError ? <p className="text-sm text-red-500">{saveError}</p> : null}
+              {saveError ? <p className="text-danger text-sm">{saveError}</p> : null}
             </form>
           </Modal>
         </>

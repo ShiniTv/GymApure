@@ -122,7 +122,7 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
             'border border-zinc-700 bg-zinc-900/50 text-white',
             'focus:ring-brand/30 focus-visible:ring-brand focus:ring-2 focus-visible:ring-2',
             tapToType && 'cursor-pointer',
-            error && 'border-red-500',
+            error && 'border-danger',
             className
           )}
           placeholder="V-00000000"
@@ -132,7 +132,7 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
           {...props}
         />
         {error && (
-          <p className="mt-2 text-center text-xs font-medium text-red-500" role="alert">
+          <p className="text-danger text-small mt-2 text-center font-medium" role="alert">
             {error}
           </p>
         )}

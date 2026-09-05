@@ -125,7 +125,7 @@ export function EquipmentInventorySection({
             <div className="flex shrink-0 items-center gap-1">
               <BackToDashboardLink iconOnly className="lg:hidden" />
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-9 w-9 px-0"
                 onClick={() => onOpenConfig()}
@@ -199,7 +199,7 @@ export function EquipmentInventorySection({
             </p>
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-7 shrink-0 px-2 text-orange-700 dark:text-orange-300"
               onClick={() => {
@@ -243,7 +243,7 @@ export function EquipmentInventorySection({
             ) : null}
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className={cn(
                 'h-9 gap-1.5 px-2.5',
@@ -258,7 +258,7 @@ export function EquipmentInventorySection({
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden md:inline">Filtros</span>
               {activeFilterCount > 0 && (
-                <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+                <span className="bg-brand/15 text-brand text-small rounded-md px-1.5 font-bold tabular-nums">
                   {activeFilterCount}
                 </span>
               )}
@@ -266,7 +266,7 @@ export function EquipmentInventorySection({
             {isAdmin && items.length > 0 && (
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-9 w-9 shrink-0 px-0"
                 onClick={() => downloadEquipmentCsv(items)}
@@ -332,7 +332,7 @@ export function EquipmentInventorySection({
               />
             </div>
             {activeFilterCount > 0 && (
-              <Button type="button" variant="ghost" size="sm" onClick={onClearFilters}>
+              <Button type="button" variant="secondary" size="sm" onClick={onClearFilters}>
                 Limpiar filtros
               </Button>
             )}
@@ -384,7 +384,7 @@ export function EquipmentInventorySection({
                 <div className="mb-2 flex items-center gap-2 px-0.5">
                   <MapPin className="text-brand h-4 w-4 shrink-0" />
                   <h3 className="text-text text-sm font-semibold">{group.zoneName}</h3>
-                  <span className="bg-surface-raised text-text-muted rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+                  <span className="bg-surface-raised text-text-muted text-small rounded-md px-1.5 py-0.5 font-bold tabular-nums">
                     {group.items.length}
                   </span>
                 </div>

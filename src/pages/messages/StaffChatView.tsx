@@ -494,7 +494,7 @@ export function StaffChatView() {
             src={selected.member_avatar}
             name={selected.member_name}
             size="sm"
-            className="!h-8 !w-8 shrink-0 !text-[10px] !ring-1"
+            className="!text-small !h-8 !w-8 shrink-0 !ring-1"
           />
           <div className="min-w-0 flex-1">
             <p className="text-text truncate text-sm font-semibold">{selected.member_name}</p>

@@ -77,7 +77,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
           <ThemePalettePicker />
         </div>
 
-        <Button className="min-h-[var(--touch-comfort)] w-full" onClick={() => finish(true)}>
+        <Button size="lg" className="w-full" onClick={() => finish(true)}>
           Empezar a entrenar
         </Button>
       </div>

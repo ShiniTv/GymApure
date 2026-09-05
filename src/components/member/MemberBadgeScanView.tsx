@@ -58,7 +58,7 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
       </button>
 
       <div className="flex w-full max-w-sm flex-col items-center text-center">
-        <p className="text-text-muted text-[11px] font-semibold tracking-wide uppercase">
+        <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
           Escaneo en recepción
         </p>
         <h2 className="mt-1 text-xl font-bold tracking-tight">{member.full_name}</h2>
@@ -68,11 +68,11 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
           <QRCode value={qrValue} size={280} level="H" fgColor="#18181b" bgColor="#ffffff" />
         </div>
 
-        <p className="text-text-muted mt-5 max-w-[16rem] text-[13px] leading-snug">
+        <p className="text-text-muted mt-5 max-w-[16rem] text-sm leading-snug">
           Sube el brillo al máximo para un escaneo limpio.
         </p>
 
-        <Button variant="ghost" className="mt-8 w-full" onClick={onClose}>
+        <Button variant="secondary" className="mt-8 w-full" onClick={onClose}>
           Cerrar
         </Button>
       </div>

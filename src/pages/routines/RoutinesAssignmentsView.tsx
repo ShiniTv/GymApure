@@ -1,6 +1,6 @@
 import { Calendar, Dumbbell, UserPlus, Plus } from 'lucide-react';
 import { formatDateOnly } from '../../lib/dates';
-import { Button, Avatar, AssignmentsListSkeleton } from '../../components/ui';
+import { Button, Avatar, AssignmentsListSkeleton, EmptyState } from '../../components/ui';
 import { formatDifficulty, cn } from '../../lib/utils';
 import type { RoutineAssignmentMember, RoutinesView } from './types';
 
@@ -37,34 +37,30 @@ export function RoutinesAssignmentsView({
 
   if (activeMembers.length === 0) {
     return (
-      <div className="border-border space-y-3 rounded-xl border border-dashed px-4 py-8 text-center">
-        <p className="text-text text-sm font-semibold">Sin asignaciones activas</p>
-        <p className="text-text-muted text-xs">
-          Asigna una plantilla a un miembro para verla aquí.
-        </p>
-        {onAssign ? (
-          <Button size="sm" className="mx-auto" onClick={onAssign}>
-            <UserPlus className="h-4 w-4" />
-            Asignar rutina
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="mx-auto"
-            onClick={() => onChangeView('calendar')}
-          >
-            Ir al calendario
-          </Button>
-        )}
-      </div>
+      <EmptyState
+        icon={Dumbbell}
+        title="Sin asignaciones activas"
+        description="Asigna una plantilla a un miembro para verla aquí."
+        action={
+          onAssign ? (
+            <Button size="sm" onClick={onAssign}>
+              <UserPlus className="h-4 w-4" />
+              Asignar rutina
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" onClick={() => onChangeView('calendar')}>
+              Ir al calendario
+            </Button>
+          )
+        }
+      />
     );
   }
 
   return (
     <div className="space-y-2.5">
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="text-text-muted min-w-0 text-[11px]">
+        <p className="text-text-muted text-small min-w-0">
           {activeMembers.length} miembro{activeMembers.length !== 1 ? 's' : ''} · {totalRoutines}{' '}
           rutina
           {totalRoutines !== 1 ? 's' : ''} activa{totalRoutines !== 1 ? 's' : ''}
@@ -72,7 +68,7 @@ export function RoutinesAssignmentsView({
         {onAssign && (
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
             className="h-9 shrink-0 gap-1.5 px-2.5"
             onClick={onAssign}
             aria-label="Asignar rutina"
@@ -102,7 +98,7 @@ export function RoutinesAssignmentsView({
                 />
                 <div className="min-w-0 flex-1">
                   <h3 className="text-text truncate text-sm font-semibold">{member.full_name}</h3>
-                  <p className="text-text-muted text-[10px]">
+                  <p className="text-text-muted text-small">
                     {routineCount} rutina{routineCount !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -125,7 +121,7 @@ export function RoutinesAssignmentsView({
                             {formatDifficulty(routine.difficulty)}
                           </span>
                         </div>
-                        <p className="text-text-muted mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-medium">
+                        <p className="text-text-muted text-small mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium">
                           <span className="inline-flex items-center gap-1">
                             <Dumbbell className="text-brand h-3 w-3" />
                             {routine.exercise_count} ej.

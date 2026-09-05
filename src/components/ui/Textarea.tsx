@@ -24,13 +24,13 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           'placeholder:text-text-muted',
           'focus:ring-brand/30 focus-visible:ring-brand transition-all focus:ring-2 focus-visible:ring-2',
           'dark:[color-scheme:dark]',
-          error ? 'border-red-500' : 'border-border',
+          error ? 'border-danger' : 'border-border',
           className
         )}
         {...props}
       />
       {error && (
-        <p id={errorId} className="mt-1 ml-1 text-xs font-medium text-red-500" role="alert">
+        <p id={errorId} className="text-danger text-small mt-1 ml-1 font-medium" role="alert">
           {error}
         </p>
       )}

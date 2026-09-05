@@ -251,7 +251,7 @@ export default function MemberDashboard() {
         </div>
       ) : (
         <div className="stagger-fade-in grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card padding="sm" rounded="2xl" className="md:p-5">
+          <Card padding="md" rounded="xl">
             <h3 className="section-title mb-3">Tu rutina</h3>
             {routine ? (
               <>
@@ -315,7 +315,7 @@ export default function MemberDashboard() {
             )}
           </Card>
 
-          <Card padding="sm" rounded="2xl" className="md:p-5">
+          <Card padding="md" rounded="xl">
             <h3 className="section-title mb-3">Membresía</h3>
             {sub ? (
               <>
@@ -504,7 +504,7 @@ export default function MemberDashboard() {
       ) : (
         <>
           {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
-            <Card padding="sm" rounded="2xl" className="md:p-5">
+            <Card padding="md" rounded="xl">
               <h3 className="section-title mb-3">Próximas asignaciones</h3>
               <div className="space-y-2">
                 {upcomingRoutines.map((r) => {
@@ -541,7 +541,7 @@ export default function MemberDashboard() {
           )}
 
           {memberStats?.lastWorkout && (
-            <Card padding="sm" rounded="2xl" className="md:p-5">
+            <Card padding="md" rounded="xl">
               <h3 className="section-title mb-3">Último entrenamiento</h3>
               <p className="text-text font-bold">{memberStats.lastWorkout.routine_name}</p>
               <p className="text-text-secondary mt-1 text-xs">

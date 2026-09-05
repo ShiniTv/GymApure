@@ -29,9 +29,13 @@ test.describe('Recepción bottom nav', () => {
 
   test('sin hamburger; Más abre sheet con scroll', async ({ page }) => {
     await page.goto('/reception');
+    const nav = page.locator(receptionBottomNav);
+    await expect(nav).toBeVisible();
+    // Mobile reception may replace into counter mode; wait so Más isn't closed by search churn.
+    await expect(page).toHaveURL(/\/reception/);
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
 
-    await page.getByRole('button', { name: /^más$/i }).click();
+    await nav.getByRole('button', { name: /^más$/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: /resumen/i })).toBeVisible();

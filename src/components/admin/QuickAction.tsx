@@ -25,7 +25,7 @@ interface QuickActionProps {
 const toneMap = {
   brand: 'text-brand',
   orange: 'text-orange-600 dark:text-orange-500',
-  red: 'text-red-600 dark:text-red-500',
+  red: 'text-danger dark:text-danger',
   blue: 'text-blue-600 dark:text-blue-500',
   emerald: 'text-emerald-600 dark:text-emerald-500',
 };
@@ -101,7 +101,7 @@ export function QuickAction({
         )}
       </div>
       {iconOnlyMobile && (
-        <span className="text-text-secondary mt-1 max-w-full truncate text-center text-[10px] leading-tight font-medium sm:hidden">
+        <span className="text-text-secondary text-small mt-1 max-w-full truncate text-center leading-tight font-medium sm:hidden">
           {title}
         </span>
       )}
@@ -118,7 +118,7 @@ export function QuickAction({
           {showCount && (
             <span
               className={cn(
-                'bg-surface-overlay text-text-secondary rounded-chip flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center px-1.5 text-[10px] font-semibold',
+                'bg-surface-overlay text-text-secondary rounded-chip text-small flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center px-1.5 font-semibold',
                 iconOnlyMobile && 'hidden sm:flex'
               )}
             >
@@ -130,7 +130,7 @@ export function QuickAction({
           className={cn(
             'text-text-muted',
             compact || iconOnlyMobile
-              ? cn(descriptionFromClass, 'mt-0.5 line-clamp-1 text-[11px]')
+              ? cn(descriptionFromClass, 'text-small mt-0.5 line-clamp-1')
               : 'mt-0.5 text-xs'
           )}
         >

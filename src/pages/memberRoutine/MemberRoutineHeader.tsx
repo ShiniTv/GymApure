@@ -162,7 +162,7 @@ export function MemberRoutineHeader({
             ) : (
               <IconButton
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 aria-label={headerPrimary.label}
                 title={headerPrimary.label}
                 onClick={headerPrimary.run}
@@ -173,7 +173,7 @@ export function MemberRoutineHeader({
             <IconButton
               ref={moreMenuAnchorRef}
               size="sm"
-              variant="ghost"
+              variant="secondary"
               aria-label="Más en esta ficha"
               aria-expanded={moreMenuOpen}
               aria-haspopup="menu"

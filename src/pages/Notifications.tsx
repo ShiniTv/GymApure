@@ -82,7 +82,7 @@ export default function Notifications() {
         action={
           unreadPersisted > 0 ? (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => void markAllRead.mutateAsync()}
               disabled={markAllRead.isPending}
@@ -128,7 +128,7 @@ export default function Notifications() {
         <div className="space-y-4">
           {hasLive && (
             <section>
-              <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
+              <h2 className="text-text-muted text-small mb-2 font-bold tracking-wide uppercase">
                 Requiere atención
               </h2>
               <ul className="space-y-2">
@@ -145,7 +145,7 @@ export default function Notifications() {
             <section className="space-y-4">
               {persistedGroups.map(([groupLabel, items]) => (
                 <div key={groupLabel}>
-                  <h2 className="text-text-muted mb-2 text-[11px] font-bold tracking-wide uppercase">
+                  <h2 className="text-text-muted text-small mb-2 font-bold tracking-wide uppercase">
                     {groupLabel}
                   </h2>
                   <ul className="space-y-2">

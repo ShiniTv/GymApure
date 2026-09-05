@@ -38,7 +38,7 @@ export function ExerciseDetailModal({
       open={open}
       onClose={onClose}
       title={detail?.name ?? 'Detalle del ejercicio'}
-      maxWidth="2xl"
+      maxWidth="3xl"
       scrollable
       initialFocus="dialog"
     >
@@ -71,7 +71,7 @@ export function ExerciseDetailModal({
                   Editar
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="text-danger hover:bg-danger/10"
                   onClick={() => {

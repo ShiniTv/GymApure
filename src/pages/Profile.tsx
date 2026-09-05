@@ -55,7 +55,7 @@ export default function Profile() {
           (page.isProfileDirty && page.profileTab === 'datos') || user.role !== 'member' ? (
             <div className="flex shrink-0 items-center gap-2">
               {page.isProfileDirty && page.profileTab === 'datos' && (
-                <span className="text-[10px] font-semibold text-amber-600 sm:text-xs dark:text-amber-400">
+                <span className="text-small font-semibold text-amber-600 sm:text-xs dark:text-amber-400">
                   Sin guardar
                 </span>
               )}

@@ -35,7 +35,7 @@ export function PaymentDetailRail({
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-text truncate text-sm font-bold">{payment.user_name}</p>
-          <p className="text-text-muted text-[11px]">
+          <p className="text-text-muted text-small">
             <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
           </p>
         </div>
@@ -51,14 +51,14 @@ export function PaymentDetailRail({
 
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-brand text-xl font-bold tabular-nums">${payment.amount_usd}</p>
-        <Badge variant={paymentStatusVariant(payment.status)} className="text-[10px]">
+        <Badge variant={paymentStatusVariant(payment.status)} className="text-small">
           {paymentStatusLabel(payment.status)}
         </Badge>
       </div>
 
       <dl className="mt-3 grid grid-cols-1 gap-2">
         <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
-          <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+          <dt className="text-text-muted text-small font-semibold tracking-wide uppercase">
             Método
           </dt>
           <dd className="text-text mt-0.5 text-xs font-medium capitalize">
@@ -66,7 +66,7 @@ export function PaymentDetailRail({
           </dd>
         </div>
         <div className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2">
-          <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+          <dt className="text-text-muted text-small font-semibold tracking-wide uppercase">
             Referencia
           </dt>
           <dd className="text-text mt-0.5 truncate font-mono text-xs font-medium">
@@ -97,7 +97,7 @@ export function PaymentDetailRail({
           <Button
             type="button"
             className="h-11 min-h-11 w-full border-emerald-500/35 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
-            variant="ghost"
+            variant="secondary"
             onClick={() => onApprove(payment)}
           >
             <Check className="h-4 w-4" aria-hidden />
@@ -105,8 +105,8 @@ export function PaymentDetailRail({
           </Button>
           <Button
             type="button"
-            className="h-11 min-h-11 w-full border-red-500/35 bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400"
-            variant="ghost"
+            className="border-danger/35 text-danger dark:text-danger h-11 min-h-11 w-full bg-red-500/10 hover:bg-red-500/20"
+            variant="secondary"
             onClick={() => onReject(payment)}
           >
             <X className="h-4 w-4" aria-hidden />

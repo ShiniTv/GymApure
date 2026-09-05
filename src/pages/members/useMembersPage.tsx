@@ -810,7 +810,7 @@ export function useMembersPage() {
       </Button>
       <Button
         size="sm"
-        variant="ghost"
+        variant="secondary"
         onClick={() => {
           setIsAdding(true);
         }}

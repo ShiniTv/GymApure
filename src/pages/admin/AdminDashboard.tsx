@@ -42,7 +42,6 @@ import {
   EmptyState,
 } from '../../components/ui';
 import { cn, formatMoney } from '../../lib/utils';
-import { StaggerContainer, StaggerItem } from '../../components/animations';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
@@ -173,16 +172,16 @@ export default function AdminDashboard() {
         {pendingPayments > 0 && (
           <Link
             to="/payments?status=pending"
-            className="flex items-center justify-between gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
+            className="border-danger/30 flex items-center justify-between gap-2 rounded-xl border bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-              <span className="truncate text-xs font-semibold text-red-700 dark:text-red-400">
+              <AlertTriangle className="text-danger h-4 w-4 shrink-0" />
+              <span className="dark:text-danger truncate text-xs font-semibold text-red-700">
                 {pendingPayments} pago{pendingPayments !== 1 ? 's' : ''} pendiente
                 {pendingPayments !== 1 ? 's' : ''}
               </span>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
+            <ChevronRight className="text-danger h-4 w-4 shrink-0" />
           </Link>
         )}
         {equipmentOutOfService > 0 && (
@@ -217,47 +216,39 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
-        <StaggerItem>
-          <StatCard
-            title="Ingresos (mes)"
-            value={formatMoney(revenueThisMonth)}
-            icon={DollarSign}
-            trend={monthTrend.label}
-            trendTone={monthTrend.tone}
-            to="/payments"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title="Activas"
-            value={stats?.activeSubscriptions || 0}
-            icon={Activity}
-            to="/memberships"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title="Accesos hoy"
-            value={stats?.todayCheckIns || 0}
-            icon={Clock}
-            trend={checkInTrend.label}
-            trendTone={checkInTrend.tone}
-            to="/attendance"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title={`Por vencer (${alertDays}d)`}
-            value={expiringSoon}
-            icon={CalendarClock}
-            withIcon={expiringSoon > 0}
-            color="orange"
-            to="/members?expiring=true"
-            className={expiringSoon > 0 ? 'border-warning/40' : undefined}
-          />
-        </StaggerItem>
-      </StaggerContainer>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
+        <StatCard
+          title="Ingresos (mes)"
+          value={formatMoney(revenueThisMonth)}
+          icon={DollarSign}
+          trend={monthTrend.label}
+          trendTone={monthTrend.tone}
+          to="/payments"
+        />
+        <StatCard
+          title="Activas"
+          value={stats?.activeSubscriptions || 0}
+          icon={Activity}
+          to="/memberships"
+        />
+        <StatCard
+          title="Accesos hoy"
+          value={stats?.todayCheckIns || 0}
+          icon={Clock}
+          trend={checkInTrend.label}
+          trendTone={checkInTrend.tone}
+          to="/attendance"
+        />
+        <StatCard
+          title={`Por vencer (${alertDays}d)`}
+          value={expiringSoon}
+          icon={CalendarClock}
+          withIcon={expiringSoon > 0}
+          color="orange"
+          to="/members?expiring=true"
+          className={expiringSoon > 0 ? 'border-warning/40' : undefined}
+        />
+      </div>
 
       {totalRevenue > 0 && (
         <Card padding="sm" rounded="xl">
@@ -317,7 +308,7 @@ export default function AdminDashboard() {
                       ? `${pendingOld} con más de 2 días sin revisar`
                       : 'Revisa comprobantes y aprueba renovaciones',
                   count: pendingPayments,
-                  tone: 'border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-400',
+                  tone: 'border-danger/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-danger',
                   icon: AlertTriangle,
                 });
               }
@@ -375,7 +366,7 @@ export default function AdminDashboard() {
                 return (
                   <Card padding="sm" rounded="xl" className="border-border/60">
                     <p className="text-text text-sm font-medium">Nada urgente por ahora</p>
-                    <p className="text-text-muted mt-0.5 text-[11px]">
+                    <p className="text-text-muted text-small mt-0.5">
                       Sin pagos pendientes, vencimientos ni alertas de equipos.
                     </p>
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -441,7 +432,7 @@ export default function AdminDashboard() {
                               <span className="ml-1.5 tabular-nums">({item.count})</span>
                             ) : null}
                           </p>
-                          <p className="truncate text-[11px] opacity-80">{item.description}</p>
+                          <p className="text-small truncate opacity-80">{item.description}</p>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
@@ -538,19 +529,19 @@ export default function AdminDashboard() {
           <DashboardSection title="Finanzas y supervisión" compact>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pagos &gt;2 días
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pendingOld}</p>
               </Card>
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pausadas
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pausedSubs}</p>
               </Card>
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pendingPayments}</p>
@@ -595,7 +586,7 @@ export default function AdminDashboard() {
                 <CalendarClock className="text-brand h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-text text-sm font-bold">Próximos vencimientos</p>
-                  <p className="text-text-muted truncate text-[11px]">
+                  <p className="text-text-muted text-small truncate">
                     {expiringList.length} en {alertDays} días
                     {criticalExpiring > 0
                       ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}`
@@ -616,12 +607,12 @@ export default function AdminDashboard() {
                     <Link
                       key={item.user_id}
                       to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
+                      className="border-danger/15 flex items-center justify-between gap-2 rounded-lg border bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
                     >
                       <span className="text-text truncate text-xs font-semibold">
                         {item.full_name}
                       </span>
-                      <Badge variant="danger" className="shrink-0 text-[10px]">
+                      <Badge variant="danger" className="text-small shrink-0">
                         {formatExpiryLabel(item.days_remaining)}
                       </Badge>
                     </Link>
@@ -629,7 +620,7 @@ export default function AdminDashboard() {
                   {criticalItems.length > 1 && (
                     <button
                       type="button"
-                      className="text-brand hover:text-brand w-full py-0.5 text-[11px] font-semibold"
+                      className="text-brand hover:text-brand text-small w-full py-0.5 font-semibold"
                       onClick={() => {
                         setShowExpiringList(true);
                       }}
@@ -655,13 +646,13 @@ export default function AdminDashboard() {
                           <p className="text-text truncate text-xs font-semibold">
                             {item.full_name}
                           </p>
-                          <p className="text-text-muted truncate text-[10px]">
+                          <p className="text-text-muted text-small truncate">
                             {format(new Date(item.end_date), 'dd MMM', { locale: es })}
                           </p>
                         </div>
                         <Badge
                           variant={severity === 'critical' ? 'danger' : 'warning'}
-                          className="shrink-0 text-[10px]"
+                          className="text-small shrink-0"
                         >
                           {formatExpiryLabel(item.days_remaining)}
                         </Badge>
@@ -671,7 +662,7 @@ export default function AdminDashboard() {
                   {expiringList.length > previewExpiring.length && (
                     <Link
                       to="/members?expiring=true"
-                      className="text-brand hover:text-brand block py-0.5 text-center text-[11px] font-semibold"
+                      className="text-brand hover:text-brand text-small block py-0.5 text-center font-semibold"
                     >
                       +{expiringList.length - previewExpiring.length} más en Miembros
                     </Link>
@@ -687,7 +678,7 @@ export default function AdminDashboard() {
               {!isDesktop && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="h-9 px-2.5"
                   onClick={() => {
@@ -730,7 +721,7 @@ export default function AdminDashboard() {
                   <RevenueChart
                     data={revenueChartData}
                     mode={revenueChartMode}
-                    className="h-40 sm:h-56 lg:h-52"
+                    className="h-60 sm:h-64"
                   />
                 </Suspense>
               </div>

@@ -108,7 +108,7 @@ export function MembersToolbar({
       {userRole === 'admin' && adminStats?.stats && (
         <div className="hidden grid-cols-4 gap-2 lg:grid">
           <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               Activas
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -116,7 +116,7 @@ export function MembersToolbar({
             </p>
           </div>
           <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               Por vencer ({alertDays}d)
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -124,7 +124,7 @@ export function MembersToolbar({
             </p>
           </div>
           <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               Pagos pend.
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">
@@ -132,7 +132,7 @@ export function MembersToolbar({
             </p>
           </div>
           <div className="border-border/80 bg-surface rounded-xl border px-3 py-2.5">
-            <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+            <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
               En lista
             </p>
             <p className="text-text mt-0.5 text-xl font-bold tabular-nums">{total}</p>
@@ -239,7 +239,7 @@ export function MembersToolbar({
       </div>
 
       {isTrainer && membersWithoutPlanCount > 0 && !loading && !noPlanAlertDismissed && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-[11px]">
+        <div className="text-small flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5">
           <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-text-secondary min-w-0 flex-1">
             <span className="text-text font-semibold">

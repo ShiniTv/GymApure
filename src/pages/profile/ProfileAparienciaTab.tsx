@@ -10,20 +10,20 @@ interface ProfileAparienciaTabProps {
 export function ProfileAparienciaTab({ theme, onThemeChange }: ProfileAparienciaTabProps) {
   return (
     <div className="w-full">
-      <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-5">
-        <h2 className="text-text mb-3 flex items-center gap-1.5 text-[13px] font-semibold md:text-sm">
+      <Card padding="md" rounded="xl" className="border-border bg-surface">
+        <h2 className="text-text mb-3 flex items-center gap-1.5 text-sm font-semibold md:text-sm">
           <Palette className="text-brand h-3.5 w-3.5" />
           Apariencia
         </h2>
 
         <div className="md:grid md:grid-cols-2 md:gap-4">
           <div>
-            <p className="text-text-muted mb-2 text-[11px] font-medium">Color de acento</p>
+            <p className="text-text-muted text-small mb-2 font-medium">Color de acento</p>
             <ThemePalettePicker />
           </div>
 
           <div className="border-border-subtle mt-4 border-t pt-3 md:mt-0 md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:pl-8">
-            <p className="text-text-muted mb-2 text-[11px] font-medium">
+            <p className="text-text-muted text-small mb-2 font-medium">
               Fondo · también en la barra superior
             </p>
             <div className="flex gap-2">

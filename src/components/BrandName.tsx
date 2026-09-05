@@ -52,7 +52,7 @@ export default function BrandName({
         >
           {BRAND.nameParts.primary}
         </span>
-        <span className="text-brand -mt-px truncate text-[10px] font-semibold tracking-[0.14em] uppercase">
+        <span className="text-brand text-small -mt-px truncate font-semibold tracking-[0.14em] uppercase">
           {BRAND.nameParts.accent}
         </span>
       </span>

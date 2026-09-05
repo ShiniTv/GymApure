@@ -33,7 +33,7 @@ export function ProfileMembershipAlerts({ role, subscription }: ProfileMembershi
       >
         <div className="flex min-w-0 items-start gap-2">
           <AlertTriangle
-            className={`mt-0.5 h-4 w-4 shrink-0 ${severity === 'critical' ? 'text-red-500' : 'text-warning'}`}
+            className={`mt-0.5 h-4 w-4 shrink-0 ${severity === 'critical' ? 'text-danger' : 'text-warning'}`}
           />
           <div className="min-w-0">
             <p className={`text-xs leading-snug font-semibold sm:text-sm ${classes.text}`}>
@@ -42,7 +42,7 @@ export function ProfileMembershipAlerts({ role, subscription }: ProfileMembershi
                 `plan ${subscription.membership_name}`
               )}
             </p>
-            <p className="text-text-muted mt-0.5 text-[10px]">
+            <p className="text-text-muted text-small mt-0.5">
               Vence {format(new Date(subscription.end_date), 'dd MMM yyyy', { locale: es })}
             </p>
           </div>

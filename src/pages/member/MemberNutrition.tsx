@@ -186,7 +186,7 @@ export default function MemberNutrition() {
           <div className="flex shrink-0 items-center gap-1.5">
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/routines`)}
@@ -196,7 +196,7 @@ export default function MemberNutrition() {
               <Dumbbell className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/history`)}
@@ -206,7 +206,7 @@ export default function MemberNutrition() {
               <History className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/messages?member=${memberId}`)}

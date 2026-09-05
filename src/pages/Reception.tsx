@@ -386,7 +386,7 @@ export default function Reception() {
       >
         <KeyRound className="text-brand h-4 w-4 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+          <p className="text-text-muted text-small font-medium tracking-wide uppercase">
             PIN del día
           </p>
           <p className="text-text font-mono text-lg font-bold tracking-[0.18em]">
@@ -396,12 +396,12 @@ export default function Reception() {
         {user?.role === 'admin' ? (
           <Link
             to="/settings"
-            className="text-text-muted inline-flex min-h-11 shrink-0 items-center text-[11px] font-semibold underline"
+            className="text-text-muted text-small inline-flex min-h-11 shrink-0 items-center font-semibold underline"
           >
             Cambiar
           </Link>
         ) : (
-          <span className="text-text-muted shrink-0 text-[10px]">Solo admin</span>
+          <span className="text-text-muted text-small shrink-0">Solo admin</span>
         )}
       </div>
     ) : checkInPin && !checkInPin.configured ? (
@@ -435,7 +435,7 @@ export default function Reception() {
     ) : (
       <div
         className={cn(
-          'flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-400',
+          'border-danger/20 dark:text-danger flex items-center gap-2 rounded-xl border bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700',
           isCounterMode && 'px-3 py-2.5'
         )}
       >
@@ -485,13 +485,13 @@ export default function Reception() {
         {isCounterMode && (
           <p className="text-text-muted hidden text-xs sm:block">
             Atajos:{' '}
-            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">
+            <kbd className="bg-surface-raised text-small rounded px-1.5 py-0.5 font-mono">
               Enter
             </kbd>{' '}
             buscar ·{' '}
-            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">F1</kbd>{' '}
+            <kbd className="bg-surface-raised text-small rounded px-1.5 py-0.5 font-mono">F1</kbd>{' '}
             entrada ·{' '}
-            <kbd className="bg-surface-raised rounded px-1.5 py-0.5 font-mono text-[10px]">F2</kbd>{' '}
+            <kbd className="bg-surface-raised text-small rounded px-1.5 py-0.5 font-mono">F2</kbd>{' '}
             salida
           </p>
         )}
@@ -549,7 +549,7 @@ export default function Reception() {
               </p>
               {!isCounterMode && (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="mt-2 min-h-11 px-2 text-xs"
                   onClick={openCedulaEdit}
@@ -570,7 +570,7 @@ export default function Reception() {
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
                     {lookup.subscription.membership_name} — pausada
                   </p>
-                  <p className="text-text-muted mt-0.5 text-[11px]">
+                  <p className="text-text-muted text-small mt-0.5">
                     {lookup.subscription.days_remaining} día
                     {lookup.subscription.days_remaining !== 1 ? 's' : ''} congelados.
                   </p>
@@ -590,7 +590,7 @@ export default function Reception() {
                 <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                   {lookup.subscription.membership_name}
                 </p>
-                <p className="text-text-muted text-[11px]">
+                <p className="text-text-muted text-small">
                   {lookup.subscription.days_remaining} días · vence{' '}
                   {lookup.subscription.end_date
                     ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
@@ -600,7 +600,7 @@ export default function Reception() {
               {lookup.subscription.days_remaining <= 7 && (
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   className="min-h-11 px-2 text-xs"
                   onClick={openRenewForLookup}
                 >
@@ -621,7 +621,7 @@ export default function Reception() {
                 <div className="flex flex-wrap gap-1.5">
                   <Button
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                     className="min-h-11 px-2 text-xs"
                     onClick={openRenewForLookup}
                   >
@@ -632,12 +632,12 @@ export default function Reception() {
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="sm" variant="ghost" className="min-h-11 px-2 text-xs">
+                    <Button size="md" variant="secondary" className="text-small px-2">
                       Pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
-                    <Button size="sm" variant="ghost" className="min-h-11 px-2 text-xs">
+                    <Button size="md" variant="secondary" className="text-small px-2">
                       Asignar plan
                     </Button>
                   </Link>
@@ -652,7 +652,7 @@ export default function Reception() {
             <button
               type="button"
               onClick={openCedulaEdit}
-              className="text-text-muted hover:text-text inline-flex min-h-11 items-center text-[11px] font-medium"
+              className="text-text-muted hover:text-text text-small inline-flex min-h-11 items-center font-medium"
             >
               Corregir cédula
             </button>
@@ -674,13 +674,13 @@ export default function Reception() {
           <p className="text-text-secondary text-sm font-medium">{lookup.error}</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             <Link to={walkInHref(cedula)}>
-              <Button size="sm" className="min-h-11 px-3 text-xs">
+              <Button size="md" className="text-small px-3">
                 <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                 Registrar
               </Button>
             </Link>
             <Link to="/members">
-              <Button variant="ghost" size="sm" className="min-h-11 px-3 text-xs">
+              <Button variant="secondary" size="md" className="text-small px-3">
                 Solo cuenta
               </Button>
             </Link>
@@ -688,7 +688,7 @@ export default function Reception() {
         </div>
       ) : (
         <div className="text-text-muted py-3 text-center">
-          <p className="text-[11px] font-medium">Ingresa una cédula para consultar</p>
+          <p className="text-small font-medium">Ingresa una cédula para consultar</p>
         </div>
       )}
     </div>
@@ -732,7 +732,7 @@ export default function Reception() {
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h1 className="text-text truncate text-base font-semibold">Acceso</h1>
-            <p className="text-text-muted truncate text-[11px]">
+            <p className="text-text-muted text-small truncate">
               {/* Count lives in tab + lista Dentro; avoid triple KPI on md+ access desk. */}
               <span className="md:hidden">{insideCount} dentro</span>
               <span className="hidden md:inline">F1 entrada · F2 salida</span>
@@ -741,7 +741,7 @@ export default function Reception() {
           <div className="flex shrink-0 items-center gap-0.5">
             <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-11 w-11 p-0"
                 title="Modo tablet"
@@ -751,7 +751,7 @@ export default function Reception() {
               </Button>
             </Link>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-11 w-11 p-0"
               onClick={() => setCounterMode(false)}

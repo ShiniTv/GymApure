@@ -24,8 +24,7 @@ export function DashboardSection({
       <div className="flex min-h-8 items-center justify-between gap-3">
         <h2
           className={cn(
-            'text-text flex min-w-0 items-center gap-2 font-semibold tracking-[-0.015em]',
-            compact ? 'text-sm' : 'text-sm'
+            'text-text flex min-w-0 items-center gap-2 text-sm font-semibold tracking-[-0.015em]'
           )}
         >
           {Icon && (

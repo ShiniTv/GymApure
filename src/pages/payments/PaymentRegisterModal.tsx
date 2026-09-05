@@ -120,7 +120,7 @@ export function PaymentRegisterModal({
     <>
       <Button
         type="button"
-        variant="ghost"
+        variant="secondary"
         size="sm"
         className="flex-1"
         disabled={submitting}
@@ -158,7 +158,7 @@ export function PaymentRegisterModal({
     <>
       <Button
         type="button"
-        variant="ghost"
+        variant="secondary"
         size="sm"
         className="flex-1"
         disabled={submitting}
@@ -198,7 +198,7 @@ export function PaymentRegisterModal({
           </>
         )
       }
-      maxWidth="2xl"
+      maxWidth="3xl"
       scrollable
       footer={footer}
     >
@@ -352,7 +352,7 @@ export function PaymentRegisterModal({
                       </p>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={onRefetchExchangeRate}
                       >

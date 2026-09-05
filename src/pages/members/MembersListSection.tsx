@@ -5,7 +5,6 @@ import { ResponsiveTable } from '../../components/ResponsiveTable';
 import { MemberCardMobile } from './MemberCardMobile';
 import { MemberDetailRail } from './MemberDetailPanel';
 import { MemberTableRow } from './MemberTableRow';
-import { StaggerContainer, StaggerItem } from '../../components/animations';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 import type { MemberQuickAction } from './MemberQuickSheet';
 import type { ReactNode } from 'react';
@@ -142,25 +141,23 @@ export function MembersListSection({
           }
           mobileClassName=""
           mobileWrapper={(children) => (
-            <StaggerContainer
+            <div
               className={cn(
                 'grid grid-cols-1 gap-2.5',
                 showDetailRail && detailMember ? 'md:grid-cols-1' : 'md:grid-cols-2'
               )}
             >
               {children}
-            </StaggerContainer>
+            </div>
           )}
           mobile={(member) => (
-            <StaggerItem>
-              <MemberCardMobile
-                member={member}
-                isStaffMember={isStaffMember}
-                alertDays={alertDays}
-                roleBadgeClass={roleBadgeClass}
-                onOpenDetail={onDetailMemberChange}
-              />
-            </StaggerItem>
+            <MemberCardMobile
+              member={member}
+              isStaffMember={isStaffMember}
+              alertDays={alertDays}
+              roleBadgeClass={roleBadgeClass}
+              onOpenDetail={onDetailMemberChange}
+            />
           )}
           header={
             <tr>

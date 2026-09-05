@@ -157,7 +157,7 @@ export function MemberRoutinesList({
                 <div className="flex shrink-0 items-center gap-0.5">
                   <IconButton
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleExpand(routine.id);
@@ -172,7 +172,7 @@ export function MemberRoutinesList({
                   </IconButton>
                   <IconButton
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (routineMenuId === routine.id) {

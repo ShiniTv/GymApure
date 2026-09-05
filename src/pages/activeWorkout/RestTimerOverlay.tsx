@@ -64,12 +64,12 @@ export function RestTimerOverlay({
         </div>
 
         {notificationsEnabled ? (
-          <p className="text-text-muted mb-3 text-center text-[11px]">También en notificaciones</p>
+          <p className="text-text-muted text-small mb-3 text-center">También en notificaciones</p>
         ) : canRequestNotifications && onRequestNotifications ? (
           <button
             type="button"
             onClick={onRequestNotifications}
-            className="text-brand mb-3 text-center text-[11px] font-medium underline-offset-2 hover:underline"
+            className="text-brand text-small mb-3 text-center font-medium underline-offset-2 hover:underline"
           >
             Avisarme al terminar
           </button>

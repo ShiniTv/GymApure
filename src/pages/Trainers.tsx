@@ -473,7 +473,7 @@ export default function Trainers() {
             Nuevo <span className="text-brand">entrenador</span>
           </>
         }
-        maxWidth="2xl"
+        maxWidth="3xl"
         scrollable
       >
         <div className="form-stack">
@@ -586,7 +586,7 @@ export default function Trainers() {
             />
           </div>
           {errors.submit && (
-            <p className="text-center text-xs text-red-500" role="alert">
+            <p className="text-danger text-center text-xs" role="alert">
               {errors.submit}
             </p>
           )}
@@ -606,7 +606,7 @@ export default function Trainers() {
             Editar <span className="text-brand">perfil</span>
           </>
         }
-        maxWidth="2xl"
+        maxWidth="3xl"
         scrollable
       >
         {editTarget && (
@@ -661,7 +661,7 @@ export default function Trainers() {
                 rows={3}
               />
             </div>
-            {errors.submit && <p className="text-center text-xs text-red-500">{errors.submit}</p>}
+            {errors.submit && <p className="text-danger text-center text-xs">{errors.submit}</p>}
             <Button className="w-full" onClick={handleUpdate} disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
@@ -693,9 +693,14 @@ export default function Trainers() {
                 disabled={deleting}
               />
             </div>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            {deleteError ? <p className="text-danger text-sm">{deleteError}</p> : null}
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={closeDelete} disabled={deleting}>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={closeDelete}
+                disabled={deleting}
+              >
                 Cancelar
               </Button>
               <Button
