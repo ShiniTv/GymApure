@@ -1,24 +1,17 @@
 import { Link } from 'react-router';
-import { Trophy, History, ChevronRight } from 'lucide-react';
+import { Trophy, History, ChevronRight, CalendarDays, Target } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { Badge, Button, Card, EmptyState, Spinner } from '../../components/ui';
+import { OperateMetricStrip } from '../../components/operate/OperateChrome';
 import { useMemberProgressQuery } from '../../hooks/queries/useCoachNotesQuery';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { ExerciseRecordSummary } from '../../lib/exerciseRecords';
-import { cn } from '../../lib/utils';
-import { typography } from '../../lib/typography';
 
 const WorkoutHistoryCharts = lazy(() => import('../../components/workout/WorkoutHistoryCharts'));
 
 interface MemberProgressPanelProps {
   memberId: number;
-}
-
-function adherenceTone(percent: number): string {
-  if (percent >= 75) return 'text-success';
-  if (percent >= 50) return 'text-warning';
-  return 'text-danger';
 }
 
 export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
@@ -70,30 +63,25 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
-        <div className="text-center">
-          <p className={cn(typography.statLabel)}>Semana</p>
-          <p className={cn(typography.statValueSm, 'mt-0.5')}>
-            {progress ? `${progress.workouts_this_week}/${progress.weekly_goal}` : '—'}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className={cn(typography.statLabel)}>Adherencia</p>
-          <p
-            className={cn(
-              typography.statValueSm,
-              'mt-0.5',
-              progress ? adherenceTone(progress.goal_completion_percent) : 'text-text-muted'
-            )}
-          >
-            {progress ? `${progress.goal_completion_percent}%` : '—'}
-          </p>
-        </div>
-        <div className="text-center">
-          <p className={cn(typography.statLabel)}>Marcas</p>
-          <p className={cn(typography.statValueSm, 'mt-0.5')}>{records?.length ?? 0}</p>
-        </div>
-      </div>
+      <OperateMetricStrip
+        items={[
+          {
+            label: 'Semana',
+            value: progress ? `${progress.workouts_this_week}/${progress.weekly_goal}` : '—',
+            icon: CalendarDays,
+          },
+          {
+            label: 'Adherencia',
+            value: progress ? `${progress.goal_completion_percent}%` : '—',
+            icon: Target,
+          },
+          {
+            label: 'Marcas',
+            value: records?.length ?? 0,
+            icon: Trophy,
+          },
+        ]}
+      />
 
       {progress?.weeks?.length ? (
         <Card padding="sm" rounded="xl">
@@ -126,11 +114,16 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
             Aún no hay marcas registradas en entrenamientos.
           </p>
         ) : (
-          <ul className="divide-border divide-y">
+          <ul className="border-border/80 overflow-hidden rounded-[var(--radius-card)] border">
             {topRecords.map((row) => (
-              <li key={row.exercise_id} className="flex items-center justify-between gap-2 py-2">
+              <li
+                key={row.exercise_id}
+                className="border-border/60 flex items-center justify-between gap-2 border-b px-3 py-2.5 last:border-b-0"
+              >
                 <div className="min-w-0">
-                  <p className="text-text truncate text-sm font-semibold">{row.name}</p>
+                  <p className="text-text truncate text-sm font-medium tracking-[-0.011em]">
+                    {row.name}
+                  </p>
                   <p className="text-text-muted text-small capitalize">{row.muscle_group}</p>
                 </div>
                 <div className="shrink-0 text-right">

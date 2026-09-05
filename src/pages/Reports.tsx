@@ -9,13 +9,13 @@ import {
   Card,
   Input,
   Label,
-  PageHeader,
   Skeleton,
   BackToDashboardLink,
   Badge,
   EmptyState,
   FilterChips,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
   FileSpreadsheet,
@@ -227,9 +227,9 @@ export default function Reports() {
           : '';
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={FileSpreadsheet}
         title={<>Reportes</>}
         subtitle="PDF / CSV por rango · vista previa"
         action={<BackToDashboardLink iconOnly />}
@@ -551,6 +551,6 @@ export default function Reports() {
         PDF con marca GymApure para compartir; CSV UTF-8 para Excel y contabilidad. Se generan en el
         servidor al descargar.
       </p>
-    </div>
+    </OperatePage>
   );
 }

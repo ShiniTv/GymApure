@@ -20,6 +20,7 @@ import {
   Select,
   Label,
 } from '../../components/ui';
+import { OperateIcon } from '../../components/operate/OperateIcon';
 import { formatDifficulty, cn } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import { RoutineExerciseOrderControls } from '../../components/routines/RoutineExerciseOrderControls';
@@ -326,7 +327,7 @@ export function RoutinesLibraryView({
               <Button
                 size="sm"
                 variant="secondary"
-                className="h-9 gap-1.5 px-2.5"
+                className="min-h-11 gap-1.5 px-2.5"
                 onClick={onCreateFromTemplate}
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -336,7 +337,7 @@ export function RoutinesLibraryView({
             <Button
               size="sm"
               variant="secondary"
-              className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
+              className="min-h-11 w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
               onClick={onCreateRoutine}
               aria-label={isMember ? 'Crear mi rutina' : 'Nueva rutina'}
             >
@@ -427,8 +428,8 @@ export function RoutinesLibraryView({
                     lightCards && 'border-border/70 bg-surface/80',
                     isExpanded &&
                       (isStaff
-                        ? 'ring-brand/25 border-brand/30 ring-2'
-                        : 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4')
+                        ? 'border-border/80 bg-surface-raised/40'
+                        : 'bg-surface-raised/40 sm:col-span-2 xl:col-span-4')
                   )}
                 >
                   <div className="flex items-center gap-2.5">
@@ -441,23 +442,19 @@ export function RoutinesLibraryView({
                       )}
                     >
                       {!(lightCards && isStaff) && (
-                        <div
-                          className={cn(
-                            'bg-brand/10 flex shrink-0 items-center justify-center',
-                            lightCards ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'
-                          )}
-                        >
-                          <Dumbbell
-                            className={cn('text-brand', lightCards ? 'h-3.5 w-3.5' : 'h-4 w-4')}
-                          />
-                        </div>
+                        <OperateIcon
+                          icon={Dumbbell}
+                          tone="brand"
+                          well
+                          size={lightCards ? 'sm' : 'md'}
+                        />
                       )}
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-text truncate text-sm leading-snug font-semibold">
+                        <h3 className="text-text truncate text-sm leading-snug font-medium tracking-[-0.011em]">
                           {routine.name}
                           {isMember ? (
-                            <span className="text-text-muted text-small ml-1.5 font-semibold tracking-wide uppercase">
+                            <span className="text-text-muted text-small ml-1.5 font-medium">
                               {isOwnedByMember(routine) ? 'Mía' : 'Entrenador'}
                             </span>
                           ) : null}
@@ -482,11 +479,11 @@ export function RoutinesLibraryView({
                           <>
                             <span className="text-text-secondary text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
                               Ver ejercicios
-                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                              <ChevronRight className="operate-icon ml-0.5 h-3.5 w-3.5" />
                             </span>
                             <span className="text-text-secondary text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
                               Seleccionar
-                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                              <ChevronRight className="operate-icon ml-0.5 h-3.5 w-3.5" />
                             </span>
                           </>
                         )}

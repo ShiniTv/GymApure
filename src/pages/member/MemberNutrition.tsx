@@ -7,7 +7,6 @@ import { UtensilsCrossed, Target, Save, History, MessageSquare, Dumbbell } from 
 import {
   Button,
   Card,
-  PageHeader,
   Label,
   Input,
   Textarea,
@@ -18,6 +17,7 @@ import {
   ListRowSkeleton,
   StatCardSkeleton,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { AdherenceBar } from '../../components/nutrition/MacroProgressBar';
 import {
   useNutritionPlanQuery,
@@ -150,7 +150,7 @@ export default function MemberNutrition() {
   if (memberLoading || planLoading) {
     return (
       <div
-        className="page-stack-tight mx-auto w-full max-w-5xl"
+        className="page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl"
         aria-busy="true"
         aria-label="Cargando nutrición"
       >
@@ -184,7 +184,7 @@ export default function MemberNutrition() {
       : null;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <OperatePage maxWidth="max-w-5xl">
       <Breadcrumbs
         items={[
           { label: 'Miembros', href: '/members' },
@@ -193,8 +193,8 @@ export default function MemberNutrition() {
         ]}
       />
 
-      <PageHeader
-        compact
+      <OperateHeader
+        icon={UtensilsCrossed}
         title={
           <>
             Nutrición de <span className="text-brand">{member.full_name}</span>
@@ -202,7 +202,7 @@ export default function MemberNutrition() {
         }
         subtitle="Metas diarias y adherencia"
         action={
-          <div className="flex shrink-0 items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <Button
               variant="secondary"
@@ -234,7 +234,7 @@ export default function MemberNutrition() {
             >
               <MessageSquare className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -447,6 +447,6 @@ export default function MemberNutrition() {
           )}
         </Card>
       </div>
-    </div>
+    </OperatePage>
   );
 }

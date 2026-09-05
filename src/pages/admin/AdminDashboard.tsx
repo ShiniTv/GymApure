@@ -34,13 +34,13 @@ import { dateLocale as es } from '../../lib/dateLocale';
 import {
   StatCard,
   Card,
-  PageHeader,
   Badge,
   Button,
   Skeleton,
   SegmentedControl,
   EmptyState,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { cn, formatMoney } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { usePageTitle } from '../../hooks/usePageTitle';
@@ -93,8 +93,8 @@ export default function AdminDashboard() {
 
   if (adminStats.error && !stats) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-7xl">
-        <PageHeader compact title={<>Administración general</>} />
+      <OperatePage>
+        <OperateHeader icon={Monitor} title={<>Administración general</>} />
         <EmptyState
           icon={AlertTriangle}
           title="No se pudo cargar el panel"
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   const expiringExpanded = showExpiringList || isDesktop;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
+    <OperatePage>
       <StaffPortalBanner
         eyebrow="GymApure · Panel administrativo"
         title={<>Administración general</>}
@@ -730,6 +730,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

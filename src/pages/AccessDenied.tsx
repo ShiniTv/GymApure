@@ -2,7 +2,8 @@ import { Link, useLocation } from 'react-router';
 import { ShieldAlert, Home, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDefaultRouteForRole, PORTAL_TITLES, type UserRole } from '../lib/roles';
-import { Button, PageHeader } from '../components/ui';
+import { Button } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
 const ROLE_HINTS: Partial<Record<UserRole, string>> = {
   admin:
@@ -37,10 +38,9 @@ export default function AccessDenied() {
       /\/members\/\d+\/(routines|nutrition)/.test(path));
 
   return (
-    <div className="page-stack mx-auto max-w-lg">
-      <PageHeader
-        compact
-        showTitleOnMobile
+    <OperatePage maxWidth="max-w-lg">
+      <OperateHeader
+        icon={ShieldAlert}
         title={
           <>
             Acceso <span className="text-brand">restringido</span>
@@ -84,6 +84,6 @@ export default function AccessDenied() {
           </Link>
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

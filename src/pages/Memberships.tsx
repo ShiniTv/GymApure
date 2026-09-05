@@ -7,12 +7,12 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Spinner,
   Badge,
   EmptyState,
   BackToDashboardLink,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { typography } from '../lib/typography';
 import { cn } from '../lib/utils';
 
@@ -122,9 +122,9 @@ export default function Memberships() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={DollarSign}
         title={
           <>
             Planes de <span className="text-brand">membresía</span>
@@ -132,7 +132,7 @@ export default function Memberships() {
         }
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
         action={
-          <div className="flex shrink-0 items-center gap-2">
+          <>
             <BackToDashboardLink />
             <Button
               size="sm"
@@ -143,7 +143,7 @@ export default function Memberships() {
               <Plus className="h-5 w-5" />
               <span className="hidden sm:inline">Nuevo plan</span>
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -334,6 +334,6 @@ export default function Memberships() {
           </>
         )}
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

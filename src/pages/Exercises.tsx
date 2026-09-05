@@ -15,7 +15,6 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Select,
   Textarea,
   SearchInput,
@@ -27,6 +26,7 @@ import {
   Card,
   Skeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import {
   MUSCLE_GROUPS,
   filterExercises,
@@ -258,9 +258,9 @@ export default function Exercises() {
 
   if (exercisesError && !loading) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-6xl">
-        <PageHeader
-          compact
+      <OperatePage maxWidth="max-w-6xl">
+        <OperateHeader
+          icon={Dumbbell}
           title={
             <>
               Biblioteca de <span className="text-brand">ejercicios</span>
@@ -278,15 +278,15 @@ export default function Exercises() {
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
   if (loading) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-6xl">
-        <PageHeader
-          compact
+      <OperatePage maxWidth="max-w-6xl">
+        <OperateHeader
+          icon={Dumbbell}
           title={
             <>
               <span className="text-brand">Ejercicios</span>
@@ -301,14 +301,14 @@ export default function Exercises() {
             <Skeleton key={index} className="h-[4.25rem] rounded-xl" />
           ))}
         </div>
-      </div>
+      </OperatePage>
     );
   }
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-6xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-6xl">
+      <OperateHeader
+        icon={Dumbbell}
         title={
           readOnly ? (
             <>
@@ -316,22 +316,25 @@ export default function Exercises() {
             </>
           ) : (
             <>
-              <span className="text-brand">Ejercicios</span>
+              Biblioteca de <span className="text-brand">ejercicios</span>
             </>
           )
         }
         subtitle={readOnly ? 'Movimientos y videos' : 'Catálogo para armar rutinas'}
         action={
-          <div className="flex shrink-0 items-center gap-1">
+          <>
             <BackToDashboardLink iconOnly />
             {canEdit ? (
-              <Button onClick={() => void handleOpenModal()} className="h-9 gap-1.5 px-2.5 sm:px-4">
+              <Button
+                onClick={() => void handleOpenModal()}
+                className="min-h-11 gap-1.5 px-2.5 sm:px-4"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Nuevo ejercicio</span>
                 <span className="sr-only sm:hidden">Nuevo ejercicio</span>
               </Button>
             ) : null}
-          </div>
+          </>
         }
       />
 
@@ -375,7 +378,7 @@ export default function Exercises() {
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden md:inline">Filtros</span>
             {filterChipCount > 0 ? (
-              <span className="bg-brand/15 text-brand text-small rounded-md px-1.5 font-bold tabular-nums">
+              <span className="text-text-muted text-small rounded-md px-1.5 font-semibold tabular-nums">
                 {filterChipCount}
               </span>
             ) : null}
@@ -705,6 +708,6 @@ export default function Exercises() {
           </Modal>
         </>
       )}
-    </div>
+    </OperatePage>
   );
 }

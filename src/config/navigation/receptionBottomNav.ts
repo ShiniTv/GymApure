@@ -9,6 +9,7 @@ import {
   Wrench,
   ShieldCheck,
   CalendarDays,
+  Bell,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -34,6 +35,13 @@ export const RECEPTION_MORE_ITEMS: ReceptionMoreItem[] = [
   { name: 'Modo tablet', href: '/check-in?kiosk=1', icon: LogIn, section: 'Operación' },
   { name: 'Vista del día', href: '/reception', icon: CalendarDays, section: 'Operación' },
   { name: 'Equipamiento', href: '/equipment', icon: Wrench, section: 'Operación' },
+  {
+    name: 'Notificaciones',
+    href: '/notifications',
+    icon: Bell,
+    showNotificationBadge: true,
+    section: 'Cuenta',
+  },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];

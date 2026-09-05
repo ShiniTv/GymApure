@@ -52,7 +52,7 @@ export function PageHeader({
         <h1
           className={cn(
             titleScale,
-            compact && variant === 'operate' && 'text-base tracking-[-0.015em]',
+            /* Operate keeps ~20px titles; compact only tightens stack spacing. */
             hideTitleOnMobile && 'hidden lg:block'
           )}
         >

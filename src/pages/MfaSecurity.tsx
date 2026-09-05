@@ -9,10 +9,16 @@ import {
   Card,
   Input,
   Label,
-  PageHeader,
   PasswordInput,
   Skeleton,
+  BackToDashboardLink,
 } from '../components/ui';
+import {
+  OperateHeader,
+  OperateIcon,
+  OperatePage,
+  OPERATE_SURFACE,
+} from '../components/operate/OperateChrome';
 import { cn } from '../lib/utils';
 
 interface MfaStatus {
@@ -25,8 +31,6 @@ interface MfaSetupResponse {
   qr_data_url: string;
   manual_entry_key: string;
 }
-
-const SURFACE = 'border-border bg-surface';
 
 const STEPS = [
   { n: '1', title: 'App', detail: 'Abre Authenticator o Authy' },
@@ -145,21 +149,23 @@ export default function MfaSecurity() {
   const showGuide = !enabled && !setup;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-3xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-3xl">
+      <OperateHeader
+        icon={ShieldCheck}
+        iconTone={enabled ? 'success' : 'warn'}
         title={
           <>
             Seguridad <span className="text-brand">MFA</span>
           </>
         }
         subtitle="Verificación en 2 pasos para tu cuenta de staff"
+        action={<BackToDashboardLink />}
       />
 
       <div className="grid gap-3 lg:grid-cols-1 lg:gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-stretch">
         <div className="space-y-3 sm:space-y-4">
           {/* Status row */}
-          <Card padding="sm" rounded="xl" className={cn(SURFACE, 'lg:p-4')}>
+          <Card padding="sm" rounded="xl" className={cn(OPERATE_SURFACE, 'lg:p-4')}>
             {statusLoading ? (
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-xl" />
@@ -171,18 +177,12 @@ export default function MfaSecurity() {
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex min-w-0 items-start gap-3">
-                  <div
-                    className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)]',
-                      enabled ? 'bg-emerald-500/10' : 'bg-amber-500/10'
-                    )}
-                  >
-                    {enabled ? (
-                      <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <ShieldOff className="h-5 w-5 text-amber-500" />
-                    )}
-                  </div>
+                  <OperateIcon
+                    icon={enabled ? ShieldCheck : ShieldOff}
+                    tone={enabled ? 'success' : 'warn'}
+                    well
+                    size="lg"
+                  />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-text text-sm font-semibold">
@@ -221,9 +221,9 @@ export default function MfaSecurity() {
 
           {/* Setup flow */}
           {!enabled && setup ? (
-            <Card padding="sm" rounded="xl" className={cn(SURFACE, 'space-y-4 lg:p-4')}>
+            <Card padding="sm" rounded="xl" className={cn(OPERATE_SURFACE, 'space-y-4 lg:p-4')}>
               <div>
-                <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
+                <p className="text-text-muted text-small font-semibold tracking-[-0.01em]">
                   Paso 1 · Escanea
                 </p>
                 <img
@@ -258,7 +258,7 @@ export default function MfaSecurity() {
               </div>
 
               <div>
-                <p className="text-text-muted text-small mb-2 font-semibold tracking-wide uppercase">
+                <p className="text-text-muted text-small mb-2 font-semibold tracking-[-0.01em]">
                   Paso 2 · Código
                 </p>
                 <Label htmlFor="enable-code">Código de 6 dígitos</Label>
@@ -347,7 +347,10 @@ export default function MfaSecurity() {
         {/* Guide — fills empty space when inactive */}
         {showGuide || statusLoading ? (
           <aside
-            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+            className={cn(
+              'flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4',
+              OPERATE_SURFACE
+            )}
           >
             <p className="text-text text-sm font-semibold">Cómo funciona</p>
             <p className="text-text-muted text-small mt-1 leading-snug">
@@ -369,7 +372,10 @@ export default function MfaSecurity() {
           </aside>
         ) : enabled ? (
           <aside
-            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+            className={cn(
+              'flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4',
+              OPERATE_SURFACE
+            )}
           >
             <p className="text-text text-sm font-semibold">Protección activa</p>
             <p className="text-text-muted text-small mt-1 leading-snug">
@@ -378,7 +384,10 @@ export default function MfaSecurity() {
           </aside>
         ) : (
           <aside
-            className={cn('flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4', SURFACE)}
+            className={cn(
+              'flex flex-col rounded-xl border px-3 py-3 sm:px-4 sm:py-4',
+              OPERATE_SURFACE
+            )}
           >
             <p className="text-text text-sm font-semibold">Mientras configuras</p>
             <ol className="mt-3 space-y-2.5">
@@ -397,6 +406,6 @@ export default function MfaSecurity() {
           </aside>
         )}
       </div>
-    </div>
+    </OperatePage>
   );
 }

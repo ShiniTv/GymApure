@@ -1,13 +1,13 @@
-import { Plus } from 'lucide-react';
+import { Plus, CreditCard } from 'lucide-react';
 import { formatMoney } from '../../lib/utils';
 import {
   Button,
-  PageHeader,
   FilterChips,
   BackToDashboardLink,
   SearchInput,
   StatTile,
 } from '../../components/ui';
+import { OperateHeader } from '../../components/operate/OperateChrome';
 import { paymentStatusLabel, type Payment } from './helpers';
 
 export interface PaymentsToolbarProps {
@@ -49,9 +49,8 @@ export function PaymentsToolbar({
 }: PaymentsToolbarProps) {
   return (
     <>
-      <PageHeader
-        compact
-        showTitleOnMobile
+      <OperateHeader
+        icon={CreditCard}
         title={
           isMember ? (
             <>
@@ -68,7 +67,7 @@ export function PaymentsToolbar({
         }
         action={
           isMember ? (
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <>
               <BackToDashboardLink />
               <Button
                 size="sm"
@@ -79,7 +78,7 @@ export function PaymentsToolbar({
                 <Plus className="h-4 w-4" />
                 <span>Reportar pago</span>
               </Button>
-            </div>
+            </>
           ) : (
             <BackToDashboardLink />
           )

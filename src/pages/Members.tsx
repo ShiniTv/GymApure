@@ -17,7 +17,10 @@ export default function Members() {
 
   return (
     <PullToRefreshContainer pullDistance={page.pullMembers} isRefreshing={page.refreshingMembers}>
-      <div className="page-stack-tight mx-auto w-full max-w-7xl" {...page.membersHandlers}>
+      <div
+        className="page-stack-tight stagger-fade-in mx-auto w-full max-w-7xl"
+        {...page.membersHandlers}
+      >
         <MembersToolbar
           isTrainer={page.isTrainer}
           isReceptionist={page.isReceptionist}

@@ -18,7 +18,6 @@ test.describe('Entrenador móvil', () => {
 
     await nav.getByRole('link', { name: 'Miembros' }).click();
     await expect(page).toHaveURL(/\/members$/);
-    // Mobile island shows "Miembros"; desktop h1 "Mis miembros" is hidden lg:block
     await expect(page.getByRole('searchbox', { name: /buscar nombre o cédula/i })).toBeVisible();
 
     await nav.getByRole('link', { name: 'Rutinas' }).click();
@@ -54,6 +53,8 @@ test.describe('Entrenador móvil', () => {
     await expect(sheet.getByRole('link', { name: 'Ejercicios' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Reportar equipo' })).toBeVisible();
     await expect(sheet.getByRole('link', { name: 'Cobros PT' })).toBeVisible();
+    await expect(sheet.getByRole('link', { name: 'Notificaciones' })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /oscuro|claro/i })).toBeVisible();
     await expect(sheet.getByText('Coaching', { exact: true })).toBeVisible();
     await expect(sheet.getByText('Cobros', { exact: true })).toBeVisible();
 

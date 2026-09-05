@@ -11,7 +11,6 @@ import BrandName from './BrandName';
 import { ScrollToTop } from './ScrollToTop';
 import { InstallPrompt } from './InstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
-import { BRAND } from '../config/brand';
 import { MobileShellProvider } from '../context/MobileShellContext';
 import { LogOut, Sun, Moon, PanelLeftClose } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
@@ -174,7 +173,6 @@ export default function Layout() {
   }, [isSidebarOpen]);
 
   const brandMark = <BrandName variant="split" />;
-  const mobileHeaderTitle = currentPage ?? BRAND.name;
   const homeHref = getDefaultRouteForRole(user?.role ?? 'member');
 
   const goHome = useCallback(() => {
@@ -198,63 +196,12 @@ export default function Layout() {
         >
           Saltar al contenido
         </a>
-        {/* Mobile Header — fixed glass island (content scrolls underneath) */}
-        <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
-          <div className="mobile-chrome-glass pointer-events-auto flex h-11 items-center justify-between gap-2 rounded-xl px-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Link
-                to={homeHref}
-                onClick={goHome}
-                className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
-                aria-label="Ir al inicio"
-                title="Ir al inicio"
-              >
-                <Logo className="h-7 w-7 shrink-0" />
-              </Link>
-              <div className="min-w-0">
-                {currentPage ? (
-                  <>
-                    <p className="text-text truncate text-sm leading-tight font-semibold tracking-[-0.015em]">
-                      {mobileHeaderTitle}
-                    </p>
-                    <p className="text-text-muted text-small truncate leading-tight font-medium">
-                      {BRAND.name}
-                    </p>
-                  </>
-                ) : (
-                  <Link
-                    to={homeHref}
-                    onClick={goHome}
-                    className="block min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
-                    aria-label="Ir al inicio"
-                    title="Ir al inicio"
-                  >
-                    <BrandName variant="inline" size="sm" className="truncate leading-tight" />
-                  </Link>
-                )}
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <InstallPrompt />
-              <NotificationBell />
-              <IconButton
-                type="button"
-                size="md"
-                variant="tertiary"
-                onClick={toggleTheme}
-                aria-label="Cambiar tema"
-              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </IconButton>
-            </div>
-          </div>
-        </div>
 
         <div className="flex min-h-0">
           {/* Sidebar — Apple Operate elevated panel */}
           <aside
             className={clsx(
-              'app-sidebar border-border/60 fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
+              'app-sidebar border-border/60 fixed inset-y-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
               isMobileShell && isSidebarOpen && 'z-[60]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'

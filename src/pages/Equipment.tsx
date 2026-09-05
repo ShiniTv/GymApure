@@ -11,7 +11,8 @@ export default function Equipment() {
 
   if (page.loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl min-w-0 space-y-3 sm:space-y-4">
+      <div className="mx-auto w-full max-w-7xl min-w-0 space-y-3 sm:space-y-4">
+        <Skeleton className="h-11 w-11 rounded-[var(--radius-button)]" />
         <Skeleton className="h-8 w-48 rounded-lg" />
         <Skeleton className="h-11 w-full rounded-xl" />
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -24,7 +25,7 @@ export default function Equipment() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl min-w-0 space-y-3 sm:space-y-4">
+    <>
       <EquipmentInventorySection
         isAdmin={page.isAdmin}
         allItems={page.allItems}
@@ -168,6 +169,6 @@ export default function Equipment() {
         retiring={page.retiring}
         onRetire={page.handleRetire}
       />
-    </div>
+    </>
   );
 }

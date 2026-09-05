@@ -32,7 +32,6 @@ import {
   Button,
   EmptyState,
   FilterChips,
-  PageHeader,
   PaginationBar,
   SearchInput,
   Spinner,
@@ -40,6 +39,7 @@ import {
   ListRowSkeleton,
   ChatBubbleSkeleton,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { toDisplayErrorMessage } from '../../lib/api';
 import { useToastOptional } from '../../context/ToastContext';
@@ -240,8 +240,8 @@ export function StaffChatView() {
     return (
       <>
         {startableMembers.length > 0 && (
-          <div className="border-border mb-2 space-y-1 border-b pb-2">
-            <p className="text-small text-text-muted px-1 font-semibold tracking-wide uppercase">
+          <div className="border-border/80 bg-surface mb-2 overflow-hidden rounded-[var(--radius-card)] border">
+            <p className="text-text border-border/60 border-b px-3 py-2 text-sm font-semibold tracking-[-0.01em]">
               Iniciar chat
             </p>
             {startableMembers.map((member) => (
@@ -250,11 +250,15 @@ export function StaffChatView() {
                 type="button"
                 disabled={openWithMember.isPending}
                 onClick={() => startChatWithMember(member.id)}
-                className="hover:bg-surface-raised flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors"
+                className="tap-feedback border-border/60 hover:bg-surface-raised/80 flex w-full items-center gap-3 border-b px-3 py-2.5 text-left transition-colors last:border-b-0"
               >
-                <UserPlus className="text-brand h-4 w-4 shrink-0" />
+                <span className="operate-icon-well bg-brand/10 text-brand inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)]">
+                  <UserPlus className="operate-icon h-3.5 w-3.5" aria-hidden />
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-text truncate text-sm font-semibold">{member.full_name}</p>
+                  <p className="text-text truncate text-sm font-medium tracking-[-0.011em]">
+                    {member.full_name}
+                  </p>
                   {member.cedula ? (
                     <p className="text-text-muted text-small truncate">{member.cedula}</p>
                   ) : null}
@@ -268,18 +272,21 @@ export function StaffChatView() {
             <Spinner size="xs" />
           </div>
         ) : null}
-        {conversations.map((item) => (
-          <div key={item.id} className="pb-1">
-            <ConversationListItem
-              item={item}
-              selected={item.id === selectedId}
-              alertDays={alertDays}
-              onSelect={() => {
-                handleSelectConversation(item.id);
-              }}
-            />
+        {conversations.length > 0 ? (
+          <div className="border-border/80 bg-surface overflow-hidden rounded-[var(--radius-card)] border">
+            {conversations.map((item) => (
+              <ConversationListItem
+                key={item.id}
+                item={item}
+                selected={item.id === selectedId}
+                alertDays={alertDays}
+                onSelect={() => {
+                  handleSelectConversation(item.id);
+                }}
+              />
+            ))}
           </div>
-        ))}
+        ) : null}
         {conversationsTotal > conversationsPageSize ? (
           <div className="border-border border-t pt-2">
             <PaginationBar
@@ -327,9 +334,7 @@ export function StaffChatView() {
     selected && selected.member_id > 0 ? (
       <div className="border-border/70 bg-surface hidden min-h-0 flex-col overflow-hidden rounded-xl border lg:flex">
         <div className="border-border/80 shrink-0 border-b px-3 py-3">
-          <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
-            Contexto
-          </p>
+          <p className="text-small text-text-muted font-semibold tracking-[-0.01em]">Contexto</p>
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
           <div className="flex flex-col items-center gap-2 text-center">
@@ -342,9 +347,7 @@ export function StaffChatView() {
             </div>
           </div>
           <div className="bg-surface-raised space-y-2 rounded-xl p-3">
-            <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
-              Membresía
-            </p>
+            <p className="text-small text-text-muted font-semibold tracking-[-0.01em]">Membresía</p>
             <p className="text-text text-sm font-medium">
               {selected.membership_name ?? 'Sin plan activo'}
             </p>
@@ -355,7 +358,7 @@ export function StaffChatView() {
             ) : null}
           </div>
           <div className="space-y-1.5">
-            <p className="text-small text-text-muted px-0.5 font-semibold tracking-wide uppercase">
+            <p className="text-small text-text-muted px-0.5 font-semibold tracking-[-0.01em]">
               Atajos
             </p>
             {(isAdmin || isReception) && (
@@ -596,10 +599,10 @@ export function StaffChatView() {
   const threadOpenOnMobile = showChatOnMobile && selected != null;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-[90rem]">
+    <OperatePage maxWidth="max-w-[90rem]">
       <div className={clsx('space-y-3 md:hidden', threadOpenOnMobile && 'hidden')}>
-        <PageHeader
-          compact
+        <OperateHeader
+          icon={MessageSquare}
           title={
             <>
               Mensajes <span className="text-brand">del gym</span>
@@ -619,8 +622,8 @@ export function StaffChatView() {
       ) : null}
 
       <div className="hidden md:block">
-        <PageHeader
-          compact
+        <OperateHeader
+          icon={MessageSquare}
           title={
             <>
               Mensajes <span className="text-brand">del gym</span>
@@ -629,7 +632,7 @@ export function StaffChatView() {
           subtitle={staffSubtitle}
           action={<BackToDashboardLink />}
         />
-        <div className="staff-chat-shell mt-0 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)_minmax(200px,240px)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
+        <div className="staff-chat-shell mt-3 grid min-h-0 grid-cols-[minmax(240px,300px)_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)_minmax(200px,240px)] xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(220px,260px)]">
           <div className="border-border/70 bg-surface flex min-h-0 flex-col overflow-hidden rounded-xl border">
             <div className="border-border/80 shrink-0 space-y-2 border-b p-3">{listToolbar}</div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
@@ -642,6 +645,6 @@ export function StaffChatView() {
           {contextRail}
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

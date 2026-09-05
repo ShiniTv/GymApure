@@ -25,11 +25,11 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   PageState,
   Skeleton,
   ListRowSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
 const ExerciseRecordsChart = lazy(() => import('../components/exercise/ExerciseRecordsChart'));
 
@@ -221,24 +221,22 @@ export default function ExerciseRecords() {
 
   if (loading && records.length === 0) {
     return (
-      <div
-        className="page-stack-tight mx-auto w-full max-w-5xl"
-        aria-busy="true"
-        aria-label="Cargando marcas"
-      >
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-40" />
-          <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-3 w-64 max-w-full" />
+      <OperatePage maxWidth="max-w-5xl">
+        <div aria-busy="true" aria-label="Cargando marcas">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-8 w-52" />
+            <Skeleton className="h-3 w-64 max-w-full" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-[var(--radius-card)]" />
+          <ListRowSkeleton rows={6} />
         </div>
-        <Skeleton className="h-10 w-full rounded-[var(--radius-card)]" />
-        <ListRowSkeleton rows={6} />
-      </div>
+      </OperatePage>
     );
   }
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <OperatePage maxWidth="max-w-5xl">
       {isTrainerView && (
         <Breadcrumbs
           items={[
@@ -253,8 +251,8 @@ export default function ExerciseRecords() {
         <Breadcrumbs items={[{ label: 'Historial', href: '/history' }, { label: 'Marcas' }]} />
       )}
 
-      <PageHeader
-        compact
+      <OperateHeader
+        icon={Trophy}
         title={
           isTrainerView ? (
             <>
@@ -654,6 +652,6 @@ export default function ExerciseRecords() {
           </div>
         </div>
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

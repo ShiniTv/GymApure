@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import {
+  AlertTriangle,
   ChevronRight,
   History,
   MessageSquare,
@@ -11,14 +12,8 @@ import {
   User,
   UtensilsCrossed,
 } from 'lucide-react';
-import {
-  AnchoredMenu,
-  Avatar,
-  Breadcrumbs,
-  Button,
-  IconButton,
-  PageHeader,
-} from '../../components/ui';
+import { AnchoredMenu, Avatar, Breadcrumbs, Button, IconButton } from '../../components/ui';
+import { OperateCallout } from '../../components/operate/OperateChrome';
 import { typography } from '../../lib/typography';
 import { cn } from '../../lib/utils';
 import type { MemberUser, Routine, Subscription } from './types';
@@ -86,7 +81,7 @@ const TAB_LABELS: Record<CoachingTab, string> = {
 };
 
 const MENU_ITEM =
-  'text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm';
+  'tap-feedback text-text hover:bg-surface-raised flex min-h-10 w-full items-center gap-2.5 px-3 py-2 text-left text-sm font-medium tracking-[-0.011em]';
 
 export function MemberRoutineHeader({
   member,
@@ -107,13 +102,21 @@ export function MemberRoutineHeader({
 }: MemberRoutineHeaderProps) {
   const primary = hubPrimaryTab(coachingTab);
 
+  const metaBits = [
+    coachingTab === 'rutinas' || coachingTab === 'bloques'
+      ? `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`
+      : null,
+    subscription ? `${subscription.membership_name} · ${subscription.days_remaining}d` : null,
+    member.goal ? formatMemberGoal(member.goal) : null,
+  ].filter(Boolean) as string[];
+
   return (
-    <>
+    <div className="space-y-3">
       <Link
         to="/members"
-        className="text-text-muted hover:text-text inline-flex items-center gap-1 text-xs font-medium sm:hidden"
+        className="text-text-muted hover:text-text -ml-0.5 inline-flex items-center gap-0.5 text-xs font-medium sm:hidden"
       >
-        <ChevronRight className="h-3.5 w-3.5 rotate-180" aria-hidden />
+        <ChevronRight className="operate-icon h-3.5 w-3.5 rotate-180" aria-hidden />
         Miembros
       </Link>
       <Breadcrumbs
@@ -125,71 +128,66 @@ export function MemberRoutineHeader({
         ]}
       />
 
-      <PageHeader
-        compact
-        showTitleOnMobile
-        title={
-          <span className="flex min-w-0 items-center gap-2.5">
-            <Avatar name={member.full_name} size="sm" className="shrink-0" />
-            <span className="truncate">{member.full_name}</span>
-          </span>
-        }
-        subtitle={
-          [
-            coachingTab === 'rutinas'
-              ? `${routines.length} rutina${routines.length !== 1 ? 's' : ''}`
-              : null,
-            subscription
-              ? `${subscription.membership_name} · ${subscription.days_remaining} días`
-              : null,
-            member.goal ? formatMemberGoal(member.goal) : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || undefined
-        }
-        action={
-          <div className="flex shrink-0 items-center gap-1">
-            {headerPrimary.solid ? (
-              <Button
-                size="sm"
-                className="h-8 gap-1.5 px-2.5 text-xs"
-                onClick={headerPrimary.run}
-                aria-label={headerPrimary.label}
-              >
-                {headerPrimary.label === 'Asignar' ? <Plus className="h-3.5 w-3.5" /> : null}
-                <span>{headerPrimary.label}</span>
-              </Button>
-            ) : (
-              <IconButton
-                size="sm"
-                variant="secondary"
-                aria-label={headerPrimary.label}
-                title={headerPrimary.label}
-                onClick={headerPrimary.run}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-              </IconButton>
-            )}
-            <IconButton
-              ref={moreMenuAnchorRef}
+      {/* Identity row — compact coach desk */}
+      <header className="flex items-center gap-3">
+        <Avatar
+          name={member.full_name}
+          size="lg"
+          className="shrink-0 ring-1 ring-[color:var(--color-border)] !ring-offset-0"
+        />
+        <div className="min-w-0 flex-1">
+          <h1 className={cn(typography.pageTitle, 'truncate text-[1.125rem] leading-tight')}>
+            {member.full_name}
+          </h1>
+          {metaBits.length > 0 ? (
+            <p className="text-text-muted mt-0.5 truncate text-[0.8125rem] leading-snug tracking-[-0.01em]">
+              {metaBits.join(' · ')}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {headerPrimary.solid ? (
+            <Button
               size="sm"
-              variant="secondary"
-              aria-label="Más en esta ficha"
-              aria-expanded={moreMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => onMoreMenuOpenChange(!moreMenuOpen)}
+              className="h-9 min-h-9 gap-1 px-2.5 text-xs"
+              onClick={headerPrimary.run}
+              aria-label={headerPrimary.label}
             >
-              <MoreHorizontal className="h-3.5 w-3.5" />
+              {headerPrimary.label === 'Asignar' ? (
+                <Plus className="operate-icon h-3.5 w-3.5" aria-hidden />
+              ) : null}
+              <span>{headerPrimary.label}</span>
+            </Button>
+          ) : (
+            <IconButton
+              size="md"
+              variant="secondary"
+              aria-label={headerPrimary.label}
+              title={headerPrimary.label}
+              onClick={headerPrimary.run}
+            >
+              <MessageSquare className="operate-icon h-4 w-4" />
             </IconButton>
-          </div>
-        }
-      />
+          )}
+          <IconButton
+            ref={moreMenuAnchorRef}
+            size="md"
+            variant="secondary"
+            aria-label="Más en esta ficha"
+            aria-expanded={moreMenuOpen}
+            aria-haspopup="menu"
+            onClick={() => onMoreMenuOpenChange(!moreMenuOpen)}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </IconButton>
+        </div>
+      </header>
 
       <AnchoredMenu
         open={moreMenuOpen}
         onClose={() => onMoreMenuOpenChange(false)}
         anchorRef={moreMenuAnchorRef}
-        className="min-w-[12rem]"
+        className="min-w-[12.5rem] overflow-hidden rounded-[var(--radius-card)]"
       >
         {headerPrimary.label !== 'Mensaje' && (
           <button
@@ -201,7 +199,7 @@ export function MemberRoutineHeader({
               onNavigate(`/messages?member=${memberId}`);
             }}
           >
-            <MessageSquare className="h-4 w-4" />
+            <MessageSquare className="operate-icon text-text-muted h-4 w-4" />
             Mensaje
           </button>
         )}
@@ -214,7 +212,7 @@ export function MemberRoutineHeader({
             onChangeTab('perfil');
           }}
         >
-          <User className="h-4 w-4" />
+          <User className="operate-icon text-text-muted h-4 w-4" />
           Perfil
         </button>
         <button
@@ -226,7 +224,7 @@ export function MemberRoutineHeader({
             onChangeTab('notas');
           }}
         >
-          <NotebookPen className="h-4 w-4" />
+          <NotebookPen className="operate-icon text-text-muted h-4 w-4" />
           Notas
         </button>
         <button
@@ -238,7 +236,7 @@ export function MemberRoutineHeader({
             onChangeTab('agenda');
           }}
         >
-          <CalendarDays className="h-4 w-4" />
+          <CalendarDays className="operate-icon text-text-muted h-4 w-4" />
           Agenda
         </button>
         <button
@@ -250,7 +248,7 @@ export function MemberRoutineHeader({
             onNavigate(`/members/${memberId}/history`);
           }}
         >
-          <History className="h-4 w-4" />
+          <History className="operate-icon text-text-muted h-4 w-4" />
           Historial
         </button>
         <button
@@ -262,7 +260,7 @@ export function MemberRoutineHeader({
             onNavigate(`/members/${memberId}/records`);
           }}
         >
-          <Trophy className="h-4 w-4" />
+          <Trophy className="operate-icon text-text-muted h-4 w-4" />
           Marcas
         </button>
         <button
@@ -274,7 +272,7 @@ export function MemberRoutineHeader({
             onNavigate(`/members/${memberId}/nutrition`);
           }}
         >
-          <UtensilsCrossed className="h-4 w-4" />
+          <UtensilsCrossed className="operate-icon text-text-muted h-4 w-4" />
           Nutrición
         </button>
         <button
@@ -286,7 +284,7 @@ export function MemberRoutineHeader({
             onCreateRoutine();
           }}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="operate-icon text-text-muted h-4 w-4" />
           Crear rutina
         </button>
         <button
@@ -298,22 +296,22 @@ export function MemberRoutineHeader({
             onAssignRoutine();
           }}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="operate-icon text-text-muted h-4 w-4" />
           Asignar rutina
         </button>
       </AnchoredMenu>
 
       {showHealthAlert ? (
-        <p className={cn(typography.small, 'text-danger font-medium')}>
+        <OperateCallout icon={AlertTriangle} tone="danger" onClick={() => onChangeTab('perfil')}>
           Alerta de salud activa — revisa el perfil del miembro.
-        </p>
+        </OperateCallout>
       ) : null}
 
-      <div className="border-border/60 -mx-0.5 border-b">
+      {/* Primary tabs — underline, not heavy boxes */}
+      <nav aria-label="Secciones del miembro">
         <div
-          className="flex items-end gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="border-border/70 flex gap-4 overflow-x-auto overscroll-x-contain border-b [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
-          aria-label="Secciones del miembro"
         >
           {PRIMARY_TABS.map((tab) => {
             const active = primary === tab.value;
@@ -324,31 +322,36 @@ export function MemberRoutineHeader({
                 role="tab"
                 aria-selected={active}
                 onClick={() => onChangeTab(primaryTabToDefault(tab.value))}
-                className={
+                className={cn(
+                  'tap-feedback relative -mb-px shrink-0 pb-2 text-[0.8125rem] whitespace-nowrap transition-colors',
                   active
-                    ? 'text-text border-brand shrink-0 border-b-2 px-2.5 pt-0.5 pb-2 text-sm font-semibold whitespace-nowrap'
-                    : 'text-text-muted hover:text-text shrink-0 border-b-2 border-transparent px-2.5 pt-0.5 pb-2 text-sm font-medium whitespace-nowrap'
-                }
+                    ? 'text-text border-brand border-b-2 font-semibold tracking-[-0.012em]'
+                    : 'text-text-muted hover:text-text border-b-2 border-transparent font-medium'
+                )}
               >
                 {tab.label}
               </button>
             );
           })}
         </div>
+
         {primary === 'plan' ? (
-          <div className="mt-1 flex gap-1 px-0.5 pb-2">
+          <div className="mt-2 flex items-center gap-1" role="tablist" aria-label="Plan">
             {PLAN_SUB_TABS.map((tab) => {
               const active = coachingTab === tab.value;
               return (
                 <button
                   key={tab.value}
                   type="button"
+                  role="tab"
+                  aria-selected={active}
                   onClick={() => onChangeTab(tab.value)}
-                  className={
+                  className={cn(
+                    'tap-feedback h-8 rounded-[var(--radius-chip)] px-2.5 text-xs transition-colors',
                     active
-                      ? 'bg-brand/10 text-brand rounded-[var(--radius-chip)] px-2.5 py-0.5 text-xs font-semibold'
-                      : 'text-text-muted hover:text-text rounded-[var(--radius-chip)] px-2.5 py-0.5 text-xs font-medium'
-                  }
+                      ? 'bg-surface-raised text-text font-semibold'
+                      : 'text-text-muted hover:text-text hover:bg-surface-raised/60 font-medium'
+                  )}
                 >
                   {tab.label}
                 </button>
@@ -356,35 +359,28 @@ export function MemberRoutineHeader({
             })}
           </div>
         ) : null}
+
         {primary === 'coaching' ? (
-          <p className={cn(typography.small, 'text-text-muted px-0.5 pt-1.5 pb-2')}>
+          <p className={cn(typography.small, 'text-text-muted mt-2')}>
             Registro semanal. Notas y agenda en «Más en esta ficha».
           </p>
         ) : null}
-      </div>
+      </nav>
 
       {coachingInsight ? (
-        <div
-          className={cn(
-            'flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs',
-            coachingInsight.tone === 'danger'
-              ? 'bg-danger/10 text-danger'
-              : 'bg-warning/10 text-warning'
-          )}
-          role="status"
+        <OperateCallout
+          icon={AlertTriangle}
+          tone={coachingInsight.tone === 'danger' ? 'danger' : 'warn'}
+          onClick={coachingInsight.run}
         >
-          <p className="min-w-0 flex-1 leading-snug">{coachingInsight.message}</p>
-          {coachingInsight.actionLabel && coachingInsight.run ? (
-            <button
-              type="button"
-              onClick={coachingInsight.run}
-              className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold underline-offset-2 hover:underline"
-            >
-              {coachingInsight.actionLabel}
-            </button>
-          ) : null}
-        </div>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span>{coachingInsight.message}</span>
+            {coachingInsight.actionLabel ? (
+              <span className="text-text font-semibold">{coachingInsight.actionLabel}</span>
+            ) : null}
+          </span>
+        </OperateCallout>
       ) : null}
-    </>
+    </div>
   );
 }

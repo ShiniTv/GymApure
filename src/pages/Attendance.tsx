@@ -17,15 +17,18 @@ import { Virtuoso } from 'react-virtuoso';
 import {
   Badge,
   Card,
-  PageHeader,
   Spinner,
-  StatCard,
   BackToDashboardLink,
   EmptyState,
   SearchInput,
   FilterChips,
   IconButton,
 } from '../components/ui';
+import {
+  OperateHeader,
+  OperateMetricStrip,
+  OperatePage,
+} from '../components/operate/OperateChrome';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { expiryBannerClasses, formatExpiryLabel, getExpirySeverity } from '../lib/expiryUtils';
@@ -182,24 +185,25 @@ export default function Attendance() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={Fingerprint}
         title={<>Asistencias</>}
         subtitle="Hoy · volumen · inactivos"
         action={user?.role === 'admin' ? <BackToDashboardLink iconOnly /> : undefined}
       />
 
-      <div className="grid grid-cols-3 gap-2">
-        <StatCard minimal title="7d" value={totalEntries} icon={Fingerprint} />
-        <StatCard minimal title="Promedio" value={avgEntries} icon={TrendingUp} />
-        <StatCard
-          minimal
-          title="Pico"
-          value={data.length > 0 ? Math.max(...data.map((d) => d.count)) : 0}
-          icon={Users}
-        />
-      </div>
+      <OperateMetricStrip
+        items={[
+          { label: '7d', value: totalEntries, icon: Fingerprint },
+          { label: 'Promedio', value: avgEntries, icon: TrendingUp },
+          {
+            label: 'Pico',
+            value: data.length > 0 ? Math.max(...data.map((d) => d.count)) : 0,
+            icon: Users,
+          },
+        ]}
+      />
 
       <div className="grid gap-3 lg:grid-cols-2 lg:items-start lg:gap-4">
         <Card padding="sm" rounded="xl" className="min-w-0">
@@ -404,6 +408,6 @@ export default function Attendance() {
           )}
         </div>
       </Card>
-    </div>
+    </OperatePage>
   );
 }

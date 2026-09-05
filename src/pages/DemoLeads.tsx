@@ -12,9 +12,9 @@ import {
   Card,
   EmptyState,
   FilterChips,
-  PageHeader,
   Spinner,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
 type LeadStatus = 'pending' | 'contacted' | 'closed';
 
@@ -90,9 +90,9 @@ export default function DemoLeads() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={UsersRound}
         title={
           <>
             Solicitudes de <span className="text-brand">demo</span>
@@ -100,7 +100,7 @@ export default function DemoLeads() {
         }
         subtitle="Leads recibidos desde la página pública de GymApure"
         action={
-          <div className="flex items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <BackToDashboardLink className="hidden sm:inline-flex" />
             <Button
@@ -115,7 +115,7 @@ export default function DemoLeads() {
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -322,6 +322,6 @@ export default function DemoLeads() {
           </>
         )}
       </Card>
-    </div>
+    </OperatePage>
   );
 }

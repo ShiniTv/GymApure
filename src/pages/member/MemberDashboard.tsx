@@ -28,11 +28,11 @@ import { MemberTemplatesSection } from '../../components/member/MemberTemplatesS
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
 import { MemberRemoteTrainingCard } from '../../components/member/MemberRemoteTrainingCard';
 import { MemberPriorityBanners } from '../../components/member/MemberPriorityBanners';
-import { Button, Card, Collapse, EmptyState, PageHeader } from '../../components/ui';
+import { Button, Card, Collapse, EmptyState } from '../../components/ui';
+import { OperateHeader, OperateIcon, OperatePage } from '../../components/operate/OperateChrome';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 
-const PAGE = 'page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl';
 const ASSIGNMENT_UPCOMING =
   'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const ASSIGNMENT_ENDING =
@@ -138,9 +138,9 @@ export default function MemberDashboard() {
 
   if (statsError && !memberStats) {
     return (
-      <div className={PAGE}>
-        <PageHeader
-          showTitleOnMobile
+      <OperatePage maxWidth="max-w-5xl">
+        <OperateHeader
+          icon={Dumbbell}
           title={
             <>
               Hola, <span className="text-brand">{user?.name}</span>
@@ -154,12 +154,12 @@ export default function MemberDashboard() {
           description={statsError}
           action={<Button onClick={() => void memberStatsCtx?.refresh()}>Reintentar</Button>}
         />
-      </div>
+      </OperatePage>
     );
   }
 
   return (
-    <div className={PAGE}>
+    <OperatePage maxWidth="max-w-5xl">
       <MemberHero
         className="shadow-none"
         name={user?.name ?? 'Atleta'}
@@ -205,36 +205,30 @@ export default function MemberDashboard() {
         <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
           {routine ? (
             <Link to="/routines" className={MOBILE_LIST_ROW}>
-              <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
-                <Dumbbell className="text-brand h-4 w-4" />
-              </div>
+              <OperateIcon icon={Dumbbell} tone="brand" well size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Tu rutina</p>
                 <p className="text-text-secondary text-small mt-0.5 truncate">
                   {routineScheduledToday ? 'Hoy toca' : 'Próximo día de rutina'} · {routine.name}
                 </p>
               </div>
-              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+              <ChevronRight className="text-text-muted operate-icon h-4 w-4 shrink-0" aria-hidden />
             </Link>
           ) : (
             <Link to="/routines?view=templates" className={MOBILE_LIST_ROW}>
-              <div className="bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
-                <Dumbbell className="text-text-muted h-4 w-4" />
-              </div>
+              <OperateIcon icon={Dumbbell} tone="neutral" well size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Sin rutina aún</p>
                 <p className="text-text-secondary text-small mt-0.5">
                   Elige una plantilla para empezar
                 </p>
               </div>
-              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+              <ChevronRight className="text-text-muted operate-icon h-4 w-4 shrink-0" aria-hidden />
             </Link>
           )}
 
           <Link to="/payments" className={MOBILE_LIST_ROW}>
-            <div className="bg-surface-overlay flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)]">
-              <CreditCard className="text-text-secondary h-4 w-4" />
-            </div>
+            <OperateIcon icon={CreditCard} tone="neutral" well size="sm" />
             <div className="min-w-0 flex-1">
               <p className="text-text text-sm leading-snug font-medium">Membresía</p>
               {sub ? (
@@ -404,12 +398,15 @@ export default function MemberDashboard() {
           <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
             {MEMBER_LINKS.map(({ to, icon: Icon, label, detail }) => (
               <Link key={to} to={to} className={MOBILE_LIST_ROW}>
-                <Icon className="text-text-secondary h-4 w-4 shrink-0" aria-hidden />
+                <OperateIcon icon={Icon} tone="brand" well size="sm" />
                 <span className="text-text min-w-0 flex-1 text-sm font-medium">{label}</span>
                 <span className="text-text-muted text-small hidden truncate min-[360px]:block">
                   {detail}
                 </span>
-                <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+                <ChevronRight
+                  className="text-text-muted operate-icon h-4 w-4 shrink-0"
+                  aria-hidden
+                />
               </Link>
             ))}
           </div>
@@ -581,6 +578,6 @@ export default function MemberDashboard() {
           )}
         </>
       )}
-    </div>
+    </OperatePage>
   );
 }

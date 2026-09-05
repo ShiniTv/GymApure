@@ -1,4 +1,6 @@
-import { Card, PageHeader, BackToDashboardLink } from '../components/ui';
+import { Settings2 } from 'lucide-react';
+import { Card, BackToDashboardLink } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { PaymentDestinationsSettingsCard } from '../components/settings/PaymentDestinationsSettingsCard';
 import { SettingsOpsHealthCard } from './settings/SettingsOpsHealthCard';
 import { SettingsNav } from './settings/SettingsNav';
@@ -24,10 +26,9 @@ export default function Settings() {
   const page = useSettingsPage();
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-6xl min-w-0">
-      <PageHeader
-        compact
-        showTitleOnMobile
+    <OperatePage maxWidth="max-w-6xl" className="min-w-0">
+      <OperateHeader
+        icon={Settings2}
         title={
           <>
             Configuración <span className="text-brand">del sistema</span>
@@ -116,6 +117,6 @@ export default function Settings() {
           </SettingsGroup>
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

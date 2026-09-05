@@ -123,56 +123,6 @@
     animation: page-enter 0.12s var(--ease-out);
   }
 
-  @keyframes landing-rise {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes landing-kenburns {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.06);
-    }
-  }
-
-  .landing-hero-img {
-    animation: landing-kenburns 18s ease-out forwards;
-  }
-
-  .landing-brand {
-    animation: landing-rise 0.55s ease-out both;
-  }
-
-  .landing-headline {
-    animation: landing-rise 0.65s ease-out 0.08s both;
-  }
-
-  .landing-support {
-    animation: landing-rise 0.65s ease-out 0.16s both;
-  }
-
-  .landing-ctas {
-    animation: landing-rise 0.65s ease-out 0.24s both;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .landing-hero-img,
-    .landing-brand,
-    .landing-headline,
-    .landing-support,
-    .landing-ctas {
-      animation: none;
-    }
-  }
-
   @keyframes auth-fade-in {
     from {
       opacity: 0;
@@ -283,39 +233,38 @@ body,
       0 8px 24px rgb(0 0 0 / 0.32);
   }
 
-  /* Authentication — dark, restrained surface inspired by Linear's visual language. */
+  /* Authentication — centered card on a night canvas. */
   .auth-linear {
     color-scheme: dark;
+    background: #000;
   }
 
-  .auth-linear-grid {
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    opacity: 0.32;
-    background-image:
-      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: linear-gradient(to bottom, black, transparent 72%);
+  .auth-linear ::selection {
+    background: color-mix(in srgb, var(--color-brand) 35%, #000);
+    color: #fff;
   }
 
-  .auth-linear-marketing {
-    border-right: 1px solid rgb(255 255 255 / 0.08);
-    background: #111113;
+  .auth-linear-card {
+    width: 100%;
+    padding: 1.75rem 1.5rem 1.5rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 10px;
+    background: #1c1c1e;
   }
 
-  .auth-linear-panel {
-    border: 1px solid rgb(255 255 255 / 0.1) !important;
-    border-radius: 0.875rem;
-    /* Solid fallback so computed backgroundColor stays opaque (tests + older browsers). */
-    background-color: rgb(24 24 27) !important;
-    background-image: linear-gradient(
-      180deg,
-      rgb(28 28 31 / 0.96),
-      rgb(22 22 24 / 0.96)
-    ) !important;
-    box-shadow: 0 18px 48px rgb(0 0 0 / 0.24);
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .auth-linear-header + .auth-form,
+  .auth-linear-header + .auth-form-wrap .auth-form {
+    margin-top: 1.5rem;
+  }
+
+  .auth-form .auth-linear-primary {
+    margin-top: 6px;
   }
 
   .auth-linear-header {
@@ -323,28 +272,29 @@ body,
   }
 
   .auth-linear .auth-linear-label {
-    color: #b4b4bd;
+    color: #d4d4d8;
     font-size: 0.75rem;
     font-weight: 500;
-    letter-spacing: 0.01em;
+    letter-spacing: -0.006em;
   }
 
   .auth-linear .auth-linear-field {
     min-height: 2.875rem;
     border-color: rgb(255 255 255 / 0.12) !important;
-    border-radius: 0.55rem;
-    background: rgb(12 12 14 / 0.9) !important;
+    border-radius: 8px;
+    background: #2c2c2e !important;
     color: #fafafa !important;
     box-shadow: none !important;
+    caret-color: var(--color-brand);
   }
 
   .auth-linear .auth-linear-field:hover {
-    border-color: rgb(255 255 255 / 0.18);
+    border-color: rgb(255 255 255 / 0.2);
   }
 
   .auth-linear .auth-linear-field:focus {
-    border-color: rgb(255 255 255 / 0.28);
-    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.06);
+    border-color: color-mix(in srgb, var(--color-brand) 70%, #fff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent);
   }
 
   .auth-linear .auth-linear-field::placeholder {
@@ -352,25 +302,25 @@ body,
   }
 
   .auth-linear .auth-linear-primary {
-    border: 1px solid rgb(255 255 255 / 0.08) !important;
-    border-radius: 0.55rem;
-    background: #f4f4f5 !important;
-    color: #18181b !important;
+    border: 0 !important;
+    border-radius: 8px;
+    background: var(--color-brand) !important;
+    color: #fff !important;
     box-shadow: none !important;
     font-weight: 600;
   }
 
   .auth-linear .auth-linear-primary:hover {
-    background: #e7e7ea !important;
+    background: var(--color-brand-hover) !important;
   }
 
   .auth-linear .auth-linear-primary:focus-visible {
-    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.14);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 35%, transparent);
   }
 
   .auth-linear .auth-linear-secondary {
     border-color: rgb(255 255 255 / 0.14) !important;
-    border-radius: 0.625rem;
+    border-radius: 8px;
     background: transparent !important;
     color: #d4d4d8 !important;
   }
@@ -386,6 +336,12 @@ body,
 
   .auth-linear .auth-linear-link:hover {
     color: #fff;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-linear-card {
+      animation: none;
+    }
   }
 
   /* Align with typography.pageTitle — single scale (no lg bump) */
@@ -803,10 +759,50 @@ body,
   opacity: 0.88;
 }
 
+/* Operate icons — hover lift on interactive parents only */
+.operate-icon {
+  transition-property: transform, opacity, color;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+  transform-origin: center;
+}
+
+.operate-icon-well {
+  transition-property: transform, background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a:hover .operate-icon,
+  button:hover .operate-icon,
+  [role='button']:hover .operate-icon,
+  .group:hover .operate-icon {
+    transform: translateY(-1px) scale(1.06);
+  }
+
+  a:hover .operate-icon-well,
+  button:hover .operate-icon-well,
+  .group:hover .operate-icon-well {
+    transform: scale(1.04);
+  }
+
+  a:active .operate-icon,
+  button:active .operate-icon,
+  .group:active .operate-icon {
+    transform: scale(0.94);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tap-feedback:active {
     transform: none;
     opacity: 0.88;
+  }
+
+  .operate-icon,
+  .operate-icon-well {
+    transition: none !important;
   }
 }
 
@@ -947,8 +943,8 @@ body,
 }
 
 :root {
-  /* Floating header: pt-2.5 + h-12 + pb-2 ≈ 4.125rem */
-  --mobile-top-chrome: 4.125rem;
+  /* No floating top island — only the device safe area */
+  --mobile-top-chrome: env(safe-area-inset-top, 0px);
   /*
    * Bottom island stack (content/sheet clearance):
    * clearance above pill + pill height + pad under pill (.member-bottom-nav).
@@ -1004,8 +1000,7 @@ body,
   );
 }
 
-/* Mobile chrome — light glass (cheaper blur for mid-tier phones) */
-.mobile-chrome-glass,
+/* Bottom nav pill — light glass (cheaper blur for mid-tier phones) */
 .member-bottom-nav-pill,
 .app-bottom-nav-pill {
   border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
@@ -1016,7 +1011,6 @@ body,
     0 1px 2px rgb(0 0 0 / 0.03);
 }
 
-.dark .mobile-chrome-glass,
 .dark .member-bottom-nav-pill,
 .dark .app-bottom-nav-pill {
   border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
@@ -1031,9 +1025,9 @@ body,
   border-radius: var(--radius-pill);
 }
 
-/* Compensates fixed mobile header island so content clears it */
+/* Safe-area only — no floating top chrome */
 .mobile-top-pad {
-  padding-top: calc(var(--mobile-top-chrome) + 1rem) !important;
+  padding-top: max(1rem, calc(var(--mobile-top-chrome) + 0.75rem)) !important;
 }
 
 @media (min-width: 1024px) {
@@ -1054,13 +1048,20 @@ body,
   min-height: 2.25rem;
   border-radius: 9999px;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease;
+    background-color 0.2s var(--ease-out),
+    color 0.2s var(--ease-out),
+    transform 0.16s var(--ease-out);
 }
 
 .member-bottom-nav-tab-icon--active {
   @apply bg-surface-overlay text-text;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  a:hover .member-bottom-nav-tab-icon,
+  button:hover .member-bottom-nav-tab-icon {
+    transform: translateY(-1px) scale(1.05);
+  }
 }
 
 .member-bottom-nav-unread {
@@ -1268,6 +1269,7 @@ html.member-has-workout-fab .member-chat-panel {
   .animate-page-enter,
   .animate-shimmer,
   .animate-success-pop,
+  .auth-unroll-beat,
   .auth-linear [class*='auth-fade-in'],
   .fade-in,
   .slide-in-from-top-2,
@@ -1293,7 +1295,9 @@ html.member-has-workout-fab .member-chat-panel {
   /* Drop transform/translate from common press & enter helpers */
   .tap-feedback,
   .stagger-fade-in > *,
-  .animate-page-enter {
+  .animate-page-enter,
+  .operate-icon,
+  .operate-icon-well {
     transition-property: opacity, background-color, border-color, color, box-shadow !important;
     transform: none !important;
   }

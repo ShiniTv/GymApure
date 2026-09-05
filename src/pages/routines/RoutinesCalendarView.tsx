@@ -187,7 +187,7 @@ export function RoutinesCalendarView({
           <button
             type="button"
             onClick={() => shiftWeek('prev')}
-            className="text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg"
+            className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-lg"
             aria-label="Semana anterior"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function RoutinesCalendarView({
           <button
             type="button"
             onClick={() => shiftWeek('next')}
-            className="text-text-muted hover:bg-surface-raised inline-flex h-9 w-9 items-center justify-center rounded-lg"
+            className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-lg"
             aria-label="Semana siguiente"
           >
             <ChevronRight className="h-4 w-4" />
@@ -203,7 +203,7 @@ export function RoutinesCalendarView({
           <Button
             size="sm"
             variant="secondary"
-            className="h-9 w-9 shrink-0 p-0"
+            className="min-h-11 min-w-11 shrink-0 p-0"
             onClick={onAssignDirect}
             aria-label="Asignar rutina"
             title="Asignar rutina"
@@ -215,7 +215,7 @@ export function RoutinesCalendarView({
 
       {showPalette ? (
         <div className={cn(LIGHT, 'hidden space-y-2 p-2.5 lg:block')}>
-          <p className="text-text-muted text-small px-0.5 font-semibold tracking-wide uppercase">
+          <p className="text-text-muted text-small px-0.5 font-medium tracking-[-0.01em]">
             Arrastra a un día para asignar
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -227,7 +227,7 @@ export function RoutinesCalendarView({
                 onDragStart={(e) => {
                   setAssignDrag(e.dataTransfer, { kind: 'routine', id: r.id });
                 }}
-                className="border-brand/20 bg-brand/5 text-text text-small inline-flex max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1 font-semibold active:cursor-grabbing"
+                className="border-border bg-surface text-text text-small inline-flex min-h-9 max-w-[10rem] cursor-grab items-center gap-1 rounded-[var(--radius-button)] border px-2.5 py-1.5 font-semibold active:cursor-grabbing"
                 title={`Arrastrar rutina «${r.name}»`}
               >
                 <Dumbbell className="text-brand h-3 w-3 shrink-0" aria-hidden />
@@ -260,7 +260,7 @@ export function RoutinesCalendarView({
             <button
               type="button"
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="text-text-muted hover:bg-surface-raised inline-flex h-8 w-8 items-center justify-center rounded-md"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-md"
               aria-label="Mes anterior"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -268,7 +268,7 @@ export function RoutinesCalendarView({
             <button
               type="button"
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="text-text-muted hover:bg-surface-raised inline-flex h-8 w-8 items-center justify-center rounded-md"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-md"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="h-4 w-4" />
@@ -312,8 +312,8 @@ export function RoutinesCalendarView({
                   className={cn(
                     'border-border-subtle bg-surface group relative min-h-[100px] cursor-pointer border-t border-l p-1.5 transition-[background-color,opacity] duration-150',
                     isOtherMonth && 'opacity-30',
-                    isSelected && 'bg-brand/5 dark:bg-brand/10',
-                    dragOverDay === dateStr && 'bg-brand/15 ring-brand/40 ring-2 ring-inset'
+                    isSelected && 'bg-surface-raised',
+                    dragOverDay === dateStr && 'ring-brand/40 bg-surface-raised ring-2 ring-inset'
                   )}
                 >
                   <div className="flex items-start justify-between">
@@ -354,7 +354,7 @@ export function RoutinesCalendarView({
                           e.stopPropagation();
                           onNavigateToMemberRoutines(a.member_id);
                         }}
-                        className="border-brand hover:bg-brand/10 bg-surface-raised text-text-secondary text-small w-full truncate rounded border-l-2 px-1 py-0.5 text-left font-bold transition-colors"
+                        className="border-border hover:bg-surface-overlay bg-surface text-text-secondary text-small w-full truncate rounded border px-1.5 py-1 text-left font-semibold transition-colors"
                         title={`${a.member_name}: ${a.routine_name}`}
                       >
                         {a.member_name}: {a.routine_name}
@@ -368,7 +368,7 @@ export function RoutinesCalendarView({
                   </div>
 
                   {isSelected && (
-                    <div className="border-brand pointer-events-none absolute inset-0 rounded-sm border-2" />
+                    <div className="border-border pointer-events-none absolute inset-0 rounded-sm border-2" />
                   )}
                 </div>
               );
@@ -402,17 +402,17 @@ export function RoutinesCalendarView({
                 }}
                 onDrop={(e) => handleDayDrop(e, dateStr)}
                 className={cn(
-                  'flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors',
+                  'flex min-h-[var(--touch-min)] flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 py-1.5 transition-colors',
                   isSelected
-                    ? 'bg-brand/10 text-brand ring-brand/30 ring-1'
+                    ? 'bg-surface-raised text-text ring-border ring-1'
                     : 'text-text-secondary hover:bg-surface-raised',
                   isOtherMonth && 'opacity-45',
-                  dragOverDay === dateStr && 'bg-brand/20 ring-brand/50 ring-2'
+                  dragOverDay === dateStr && 'ring-brand/50 bg-surface-raised ring-2'
                 )}
                 aria-pressed={isSelected || undefined}
                 aria-label={`${format(day, 'EEEE d', { locale: es })}${count ? `, ${count} asignaciones` : ''}`}
               >
-                <span className="text-small font-medium tracking-wide uppercase opacity-70">
+                <span className="text-small font-medium opacity-70">
                   {format(day, 'EEE', { locale: es }).slice(0, 3)}
                 </span>
                 <span

@@ -1,14 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Bell, CheckCircle2 } from 'lucide-react';
-import {
-  PageHeader,
-  FilterChips,
-  Button,
-  PaginationBar,
-  EmptyState,
-  Skeleton,
-} from '../components/ui';
+import { FilterChips, Button, PaginationBar, EmptyState, Skeleton } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { useNotificationItems } from '../hooks/useNotificationItems';
 import {
   useNotificationsQuery,
@@ -73,21 +67,25 @@ export default function Notifications() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
-      <PageHeader
-        compact
-        showTitleOnMobile
+    <OperatePage maxWidth="max-w-5xl">
+      <OperateHeader
+        icon={Bell}
         title="Notificaciones"
-        subtitle="Novedades y alertas que requieren atención"
+        subtitle={
+          unreadPersisted > 0
+            ? `${unreadPersisted} sin leer`
+            : 'Novedades y alertas que requieren atención'
+        }
         action={
           unreadPersisted > 0 ? (
             <Button
               variant="secondary"
               size="sm"
+              className="min-h-11"
               onClick={() => void markAllRead.mutateAsync()}
               disabled={markAllRead.isPending}
             >
-              {markAllRead.isPending ? 'Marcando…' : 'Marcar novedades leídas'}
+              {markAllRead.isPending ? 'Marcando…' : 'Marcar leídas'}
             </Button>
           ) : undefined
         }
@@ -109,7 +107,7 @@ export default function Notifications() {
       {isLoading && isEmpty ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            <Skeleton key={i} className="h-14 w-full rounded-[var(--radius-card)]" />
           ))}
         </div>
       ) : isEmpty ? (
@@ -123,17 +121,38 @@ export default function Notifications() {
               ? 'Ya leíste todas tus novedades guardadas.'
               : 'Cuando haya novedades o alertas aparecerán aquí.'
           }
+          action={
+            filter === 'unread' && !hasLive ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="min-h-11"
+                onClick={() => setFilter('all')}
+              >
+                Ver todas
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="min-h-11"
+                onClick={() => void navigate('/panel')}
+              >
+                Ir al panel
+              </Button>
+            )
+          }
         />
       ) : (
         <div className="space-y-4">
           {hasLive && (
             <section>
-              <h2 className="text-text-muted text-small mb-2 font-bold tracking-wide uppercase">
+              <h2 className="text-text-secondary mb-2 text-sm font-semibold tracking-[-0.01em]">
                 Requiere atención
               </h2>
-              <ul className="space-y-2">
+              <ul className="border-border/80 bg-surface overflow-hidden rounded-[var(--radius-card)] border">
                 {liveItems.map((item) => (
-                  <li key={item.id}>
+                  <li key={item.id} className="border-border/60 border-b last:border-b-0">
                     <NotificationItemRow item={item} onActivate={handleActivate} />
                   </li>
                 ))}
@@ -145,12 +164,12 @@ export default function Notifications() {
             <section className="space-y-4">
               {persistedGroups.map(([groupLabel, items]) => (
                 <div key={groupLabel}>
-                  <h2 className="text-text-muted text-small mb-2 font-bold tracking-wide uppercase">
+                  <h2 className="text-text-secondary mb-2 text-sm font-semibold tracking-[-0.01em]">
                     {groupLabel}
                   </h2>
-                  <ul className="space-y-2">
+                  <ul className="border-border/80 bg-surface overflow-hidden rounded-[var(--radius-card)] border">
                     {items.map((item) => (
-                      <li key={item.id}>
+                      <li key={item.id} className="border-border/60 border-b last:border-b-0">
                         <NotificationItemRow
                           item={item}
                           onActivate={handleActivate}
@@ -181,6 +200,6 @@ export default function Notifications() {
           )}
         </div>
       )}
-    </div>
+    </OperatePage>
   );
 }

@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
-import { type LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { queryClient } from '../../lib/queryClient';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { paymentsQueryKey } from '../../hooks/queries/usePaymentsQuery';
 import { prefetchRoute } from '../../lib/routePrefetch';
+import { OperateIcon, type OperateIconTone } from '../operate/OperateIcon';
 
 interface QuickActionProps {
   to: string;
@@ -23,12 +24,12 @@ interface QuickActionProps {
   prefetchPaymentsPending?: boolean;
 }
 
-const toneMap = {
-  brand: 'text-brand',
-  orange: 'text-orange-600 dark:text-orange-500',
-  red: 'text-danger dark:text-danger',
-  blue: 'text-blue-600 dark:text-blue-500',
-  emerald: 'text-emerald-600 dark:text-emerald-500',
+const toneToOperate: Record<NonNullable<QuickActionProps['tone']>, OperateIconTone> = {
+  brand: 'brand',
+  orange: 'warn',
+  red: 'danger',
+  blue: 'brand',
+  emerald: 'success',
 };
 
 function prefetchPendingPayments() {
@@ -61,6 +62,7 @@ export function QuickAction({
 }: QuickActionProps) {
   const useCompact = compact ?? true;
   const showCount = count != null && count > 0;
+  const iconTone = toneToOperate[tone];
   const descriptionFromClass =
     showDescriptionFrom === 'lg'
       ? 'hidden lg:block'
@@ -95,7 +97,13 @@ export function QuickAction({
       )}
     >
       <div className={cn('relative shrink-0', iconOnlyMobile && 'max-sm:mx-auto')}>
-        <Icon className={cn('h-4 w-4', toneMap[tone])} aria-hidden />
+        <OperateIcon
+          icon={Icon}
+          tone={iconTone}
+          well
+          size="sm"
+          className={iconOnlyMobile ? 'max-sm:mx-auto' : undefined}
+        />
         {showCount && iconOnlyMobile && (
           <span className="bg-danger text-small absolute -top-1.5 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 font-bold text-white sm:hidden">
             {count > 99 ? '99+' : count}
@@ -111,7 +119,7 @@ export function QuickAction({
         <div className="flex items-center gap-1.5">
           <p
             className={cn(
-              'text-text truncate font-medium',
+              'text-text truncate font-medium tracking-[-0.011em]',
               useCompact || iconOnlyMobile ? 'text-xs sm:text-sm' : 'text-sm'
             )}
           >
@@ -120,7 +128,7 @@ export function QuickAction({
           {showCount && (
             <span
               className={cn(
-                'bg-surface-overlay text-text-secondary rounded-chip text-small flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center px-1.5 font-semibold',
+                'bg-surface-overlay text-text-secondary rounded-chip text-small flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center px-1.5 font-semibold tabular-nums',
                 iconOnlyMobile && 'hidden sm:flex'
               )}
             >
@@ -139,6 +147,13 @@ export function QuickAction({
           {description}
         </p>
       </div>
+      <ChevronRight
+        className={cn(
+          'operate-icon text-text-muted h-4 w-4 shrink-0 opacity-50',
+          iconOnlyMobile && 'hidden sm:block'
+        )}
+        aria-hidden
+      />
     </Link>
   );
 }

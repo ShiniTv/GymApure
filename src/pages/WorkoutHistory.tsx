@@ -7,7 +7,6 @@ import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
   Card,
-  PageHeader,
   Spinner,
   PaginationBar,
   Badge,
@@ -21,6 +20,7 @@ import {
   ListRowSkeleton,
   StatCardSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { clientLogger } from '../lib/clientLogger';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
@@ -377,29 +377,27 @@ export default function WorkoutHistory() {
 
   if (loading && history.length === 0 && !displayName) {
     return (
-      <div
-        className="page-stack-tight mx-auto w-full max-w-5xl"
-        aria-busy="true"
-        aria-label="Cargando historial"
-      >
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-3 w-40" />
+      <OperatePage maxWidth="max-w-5xl">
+        <div aria-busy="true" aria-label="Cargando historial">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-56" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <Skeleton className="h-40 w-full rounded-[var(--radius-card)] sm:h-44" />
+          <ListRowSkeleton rows={5} />
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-          <StatCardSkeleton />
-        </div>
-        <Skeleton className="h-40 w-full rounded-[var(--radius-card)] sm:h-44" />
-        <ListRowSkeleton rows={5} />
-      </div>
+      </OperatePage>
     );
   }
 
   const historyPage = (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <OperatePage maxWidth="max-w-5xl">
       {id && (
         <Breadcrumbs
           items={[
@@ -416,8 +414,8 @@ export default function WorkoutHistory() {
         />
       )}
 
-      <PageHeader
-        compact
+      <OperateHeader
+        icon={Clock}
         title={
           id ? (
             <>
@@ -1109,7 +1107,7 @@ export default function WorkoutHistory() {
           </div>
         )}
       </Modal>
-    </div>
+    </OperatePage>
   );
 
   if (isMemberSelf) {

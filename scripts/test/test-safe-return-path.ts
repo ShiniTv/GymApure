@@ -24,6 +24,7 @@ assert('reject ://', safeReturnPath('/go://evil', role) === home);
 assert('reject backslash', safeReturnPath('/\\evil.com', role) === home);
 assert('reject login', safeReturnPath('/login', role) === home);
 assert('reject login query', safeReturnPath('/login?next=/panel', role) === home);
+assert('reject root', safeReturnPath('/', role) === home);
 assert('reject encoded //', safeReturnPath('/%2f%2fevil.com', role) === home);
 assert('reject ..', safeReturnPath('/foo/../bar', role) === home);
 assert('reject absolute url', safeReturnPath('https://evil.com', role) === home);

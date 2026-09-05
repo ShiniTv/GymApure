@@ -177,7 +177,7 @@ export const MemberTableRow = memo(function MemberTableRow({
     <tr
       className={cn(
         'group cursor-pointer transition-colors',
-        selected ? 'bg-brand/5 dark:bg-brand/10' : 'hover:bg-surface-raised'
+        selected ? 'bg-surface-raised' : 'hover:bg-surface-raised/70'
       )}
       onClick={() => onSelect?.(member)}
       aria-selected={selected}
@@ -260,7 +260,7 @@ export const MemberTableRow = memo(function MemberTableRow({
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'text-text-muted inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
+                'text-text-muted inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
                 action.className
               )}
               title={action.label}

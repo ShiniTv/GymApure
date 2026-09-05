@@ -3,8 +3,6 @@ import {
   Users,
   AlertTriangle,
   Dumbbell,
-  CalendarClock,
-  CalendarDays,
   ChevronRight,
   MessageSquare,
   UtensilsCrossed,
@@ -12,6 +10,7 @@ import {
   ClipboardCheck,
   HeartPulse,
   CreditCard,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -19,52 +18,16 @@ import {
   useTrainerAppointmentsQuery,
 } from '../../hooks/queries/useDashboardQuery';
 import { useTrainerNutritionOverviewQuery } from '../../hooks/queries/useNutritionQuery';
-import {
-  Card,
-  Badge,
-  EmptyState,
-  Button,
-  PageHeader,
-  Skeleton,
-  StatCard,
-} from '../../components/ui';
+import { Card, Badge, EmptyState, Button, Skeleton } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { DashboardSection } from '../../components/admin/DashboardSection';
-import { StaffPortalBanner } from '../../components/StaffPortalBanner';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
 
 const TODAY_LIST_CAP = 5;
-
 const SURFACE = 'border-border/80 bg-surface';
-
-function ShortcutChip({
-  to,
-  icon: Icon,
-  label,
-  count,
-}: {
-  to: string;
-  icon: typeof Users;
-  label: string;
-  count?: number;
-}) {
-  return (
-    <Link
-      to={to}
-      {...routePrefetchHandlers(to)}
-      className="border-border/70 bg-surface text-text-secondary hover:bg-surface-raised text-small inline-flex h-9 shrink-0 touch-manipulation items-center gap-1.5 rounded-[var(--radius-button)] border px-3 font-medium transition-colors sm:text-sm"
-    >
-      <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
-      {label}
-      {count != null && count > 0 ? (
-        <span className="bg-brand/15 text-brand text-small ml-0.5 rounded-[var(--radius-chip)] px-1.5 py-0.5 font-semibold tabular-nums">
-          {count > 99 ? '99+' : count}
-        </span>
-      ) : null}
-    </Link>
-  );
-}
 
 interface MemberMini {
   id: number;
@@ -83,48 +46,6 @@ function formatCheckIn(iso?: string): string | null {
   }
 }
 
-function AttentionSummaryLink({
-  to,
-  icon: Icon,
-  label,
-  count,
-  tone = 'brand',
-}: {
-  to: string;
-  icon: typeof Users;
-  label: string;
-  count: number;
-  tone?: 'brand' | 'amber' | 'violet' | 'sky' | 'rose' | 'red';
-}) {
-  const toneClass =
-    tone === 'amber'
-      ? 'border-warning/20 bg-warning/5 hover:bg-warning/10 text-warning'
-      : tone === 'violet'
-        ? 'border-secondary/20 bg-secondary/5 hover:bg-secondary/10 text-secondary'
-        : tone === 'sky'
-          ? 'border-brand/20 bg-brand/5 hover:bg-brand/10 text-brand'
-          : tone === 'rose' || tone === 'red'
-            ? 'border-danger/20 bg-danger/5 hover:bg-danger/10 text-danger'
-            : 'bg-brand/5 border-brand/20 hover:bg-brand/10 text-brand';
-
-  return (
-    <Link
-      to={to}
-      className={cn(
-        'flex min-h-10 items-center gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors',
-        toneClass
-      )}
-    >
-      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span className="text-text text-small min-w-0 flex-1 truncate font-semibold sm:text-sm">
-        {label}
-      </span>
-      <span className="text-small font-semibold tabular-nums">{count}</span>
-      <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-    </Link>
-  );
-}
-
 function isSameLocalDay(iso: string, now = new Date()) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return false;
@@ -132,6 +53,85 @@ function isSameLocalDay(iso: string, now = new Date()) {
     date.getFullYear() === now.getFullYear() &&
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
+  );
+}
+
+type AttentionTone = 'neutral' | 'urgent' | 'warn';
+
+function AttentionRow({
+  to,
+  icon: Icon,
+  label,
+  count,
+  tone = 'neutral',
+}: {
+  to: string;
+  icon: typeof Users;
+  label: string;
+  count: number;
+  tone?: AttentionTone;
+}) {
+  return (
+    <Link
+      to={to}
+      {...routePrefetchHandlers(to)}
+      className="tap-feedback group border-border/60 hover:bg-surface-raised/80 flex min-h-[var(--touch-min)] items-center gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0"
+    >
+      <Icon
+        className={cn(
+          'operate-icon h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105',
+          tone === 'urgent' && 'text-danger',
+          tone === 'warn' && 'text-warning',
+          tone === 'neutral' && 'text-text-muted'
+        )}
+        aria-hidden
+      />
+      <span className="text-text min-w-0 flex-1 truncate text-sm font-medium tracking-[-0.011em]">
+        {label}
+      </span>
+      <span
+        className={cn(
+          typography.statValueSm,
+          'text-base',
+          tone === 'urgent' && 'text-danger',
+          tone === 'warn' && 'text-warning'
+        )}
+      >
+        {count}
+      </span>
+      <ChevronRight
+        className="operate-icon text-text-muted h-4 w-4 shrink-0 opacity-60 transition-transform duration-200 group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+function MetricCell({
+  to,
+  label,
+  value,
+  loading,
+}: {
+  to: string;
+  label: string;
+  value: number;
+  loading?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      {...routePrefetchHandlers(to)}
+      className="tap-feedback hover:bg-surface-raised/60 flex min-h-[var(--touch-min)] flex-col items-center justify-center gap-0.5 px-1 py-2.5 transition-colors"
+      aria-label={`${label}: ${value}`}
+    >
+      {loading ? (
+        <Skeleton className="h-5 w-8" />
+      ) : (
+        <span className={typography.statValueSm}>{value}</span>
+      )}
+      <span className={typography.statLabel}>{label}</span>
+    </Link>
   );
 }
 
@@ -172,10 +172,11 @@ function TodayPanel({
             </Badge>
           ) : null}
           <Link
-            to="/members"
+            to="/routines?view=calendar"
+            {...routePrefetchHandlers('/routines?view=calendar')}
             className="text-brand text-small inline-flex min-h-11 items-center font-semibold hover:underline"
           >
-            Agendar
+            Agenda
           </Link>
         </div>
       }
@@ -192,7 +193,16 @@ function TodayPanel({
           {appointmentsLoading ? (
             <Skeleton className="h-8 w-full" />
           ) : todaysAppointments.length === 0 ? (
-            <p className="text-text-secondary text-small">No hay sesiones 1:1 hoy</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-text-secondary text-small">No hay sesiones 1:1 hoy</p>
+              <Link
+                to="/routines?view=calendar"
+                {...routePrefetchHandlers('/routines?view=calendar')}
+                className="text-brand text-small inline-flex min-h-11 items-center font-semibold hover:underline"
+              >
+                Agendar
+              </Link>
+            </div>
           ) : (
             <ul className="space-y-0.5">
               {todaysAppointments.slice(0, TODAY_LIST_CAP).map((appointment) => (
@@ -219,7 +229,7 @@ function TodayPanel({
             <Skeleton className="h-12 w-full" />
           </div>
         ) : quiet ? (
-          <div className="sm:divide-border/60 grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x lg:gap-0">
+          <div className="sm:divide-border/60 grid gap-3 sm:grid-cols-2 sm:gap-0 sm:divide-x">
             <div className="sm:pr-4 lg:pr-5">
               <p className="text-text-secondary text-small font-semibold">Entrenando · 0</p>
               <p className="text-text-secondary text-small mt-1 lg:text-sm">
@@ -257,10 +267,10 @@ function TodayPanel({
                     {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
                       const checkIn = formatCheckIn(m.check_in_time);
                       return (
-                        <li key={`gym-${m.id}`} className="flex items-center gap-1">
+                        <li key={`gym-${m.id}`}>
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {checkIn ? (
@@ -464,19 +474,89 @@ export default function TrainerDashboard() {
     todaysAppointments.length === 0;
 
   const memberChoicesCount = stats?.memberChoices?.length ?? 0;
-  const hasAttention =
-    withoutRoutines > 0 ||
-    withoutNutritionPlan > 0 ||
-    withoutAssessmentCount > 0 ||
-    staleCheckinsCount > 0 ||
-    recoveryAlertsCount > 0 ||
-    expiringCount > 0 ||
-    memberChoicesCount > 0;
+  const attentionItems = [
+    staleCheckinsCount > 0 && {
+      key: 'checkin',
+      to: '/members?needs=checkin',
+      icon: ClipboardCheck,
+      label: 'Seguimiento semanal',
+      count: staleCheckinsCount,
+      tone: 'neutral' as const,
+      group: 'hoy' as const,
+    },
+    recoveryAlertsCount > 0 && {
+      key: 'recovery',
+      to: '/members?needs=recovery',
+      icon: HeartPulse,
+      label: 'Recuperación',
+      count: recoveryAlertsCount,
+      tone: 'urgent' as const,
+      group: 'hoy' as const,
+    },
+    expiringCount > 0 && {
+      key: 'expiring',
+      to: '/members?expiring=true',
+      icon: CreditCard,
+      label: 'Membresía por vencer',
+      count: expiringCount,
+      tone: 'urgent' as const,
+      group: 'hoy' as const,
+    },
+    withoutRoutines > 0 && {
+      key: 'routines',
+      to: '/routines?view=calendar&assign=1',
+      icon: Dumbbell,
+      label: 'Sin rutina',
+      count: withoutRoutines,
+      tone: 'neutral' as const,
+      group: 'plan' as const,
+    },
+    withoutNutritionPlan > 0 && {
+      key: 'nutrition',
+      to: '/nutrition-overview?filter=without',
+      icon: UtensilsCrossed,
+      label: 'Sin nutrición',
+      count: withoutNutritionPlan,
+      tone: 'warn' as const,
+      group: 'plan' as const,
+    },
+    withoutAssessmentCount > 0 && {
+      key: 'assessment',
+      to: '/members?needs=assessment',
+      icon: ClipboardCheck,
+      label: 'Sin evaluación',
+      count: withoutAssessmentCount,
+      tone: 'neutral' as const,
+      group: 'plan' as const,
+    },
+    memberChoicesCount > 0 && {
+      key: 'choices',
+      to: '/members?needs=choices',
+      icon: ClipboardCheck,
+      label: 'Elecciones del cliente',
+      count: memberChoicesCount,
+      tone: 'neutral' as const,
+      group: 'plan' as const,
+    },
+  ].filter(Boolean) as {
+    key: string;
+    to: string;
+    icon: typeof Users;
+    label: string;
+    count: number;
+    tone: AttentionTone;
+    group: 'hoy' | 'plan';
+  }[];
+
+  const attentionTotal = attentionItems.reduce((sum, item) => sum + item.count, 0);
+  const hasAttention = attentionItems.length > 0;
+  const hoyItems = attentionItems.filter((i) => i.group === 'hoy');
+  const planItems = attentionItems.filter((i) => i.group === 'plan');
 
   if (isError) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-7xl">
-        <PageHeader compact title="Panel de entrenador" />
+      <OperatePage>
+        <OperateHeader icon={HeartPulse} title="Panel de entrenador" />
         <EmptyState
           icon={AlertTriangle}
           title="No se pudo cargar el panel"
@@ -487,153 +567,143 @@ export default function TrainerDashboard() {
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <StaffPortalBanner
-        eyebrow="Panel de entrenador"
+    <OperatePage>
+      <OperateHeader
+        icon={HeartPulse}
         title={
           <>
-            Hola, <span className="text-brand">{firstName}</span>
+            Hola, <span className={typography.pageTitleAccent}>{firstName}</span>
           </>
         }
-        subtitle="Actividad y seguimiento con tus miembros"
+        subtitle={
+          hasAttention
+            ? `${attentionTotal} pendiente${attentionTotal === 1 ? '' : 's'} por resolver`
+            : 'Tu día con miembros'
+        }
         action={
-          stats?.activeNow || remoteActive ? (
-            <div className="flex flex-wrap items-center gap-1.5">
+          (stats?.activeNow || remoteActive > 0) && !loading ? (
+            <>
               {stats?.activeNow ? (
                 <Badge variant="success">{stats.activeNow} en el gym</Badge>
               ) : null}
               {remoteActive > 0 ? <Badge variant="accent">{remoteActive} remoto</Badge> : null}
-            </div>
+            </>
           ) : undefined
         }
       />
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
+      <section aria-labelledby="trainer-attention-heading" className="space-y-2">
+        <div className="flex min-h-8 items-center justify-between gap-3">
+          <h2
+            id="trainer-attention-heading"
+            className="text-text text-sm font-semibold tracking-[-0.01em]"
+          >
+            Requiere atención
+          </h2>
+          {hasAttention ? (
+            <span className="text-text-muted text-small tabular-nums">{attentionTotal}</span>
+          ) : null}
+        </div>
+
         {loading ? (
-          Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-[70px] rounded-lg" />
-          ))
-        ) : (
-          <>
-            <StatCard minimal title="Miembros" value={stats?.assignedMembers ?? 0} icon={Users} />
-            <StatCard minimal title="En gym" value={stats?.activeNow ?? 0} icon={Dumbbell} />
-            <StatCard minimal title="Remoto" value={remoteActive} icon={Radio} />
-            <StatCard minimal title="Hoy" value={stats?.todayWorkouts ?? 0} icon={CalendarDays} />
-          </>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        <ShortcutChip to="/members" icon={Users} label="Miembros" count={stats?.assignedMembers} />
-        <ShortcutChip
-          to="/routines?view=calendar&assign=1"
-          icon={CalendarClock}
-          label="Asignar"
-          count={withoutRoutines > 0 ? withoutRoutines : undefined}
-        />
-        <ShortcutChip
-          to="/nutrition-overview"
-          icon={UtensilsCrossed}
-          label="Nutrición"
-          count={withoutNutritionPlan > 0 ? withoutNutritionPlan : undefined}
-        />
-        <ShortcutChip to="/routines?view=calendar" icon={CalendarDays} label="Calendario" />
-        <ShortcutChip to="/pt-billing" icon={CreditCard} label="Cobros PT" />
-        <ShortcutChip to="/messages" icon={MessageSquare} label="Mensajes" />
-      </div>
-
-      {hasAttention && (
-        <DashboardSection title="Requiere atención" compact>
-          <div className="space-y-3">
-            {(staleCheckinsCount > 0 || recoveryAlertsCount > 0 || expiringCount > 0) && (
-              <div className="space-y-1.5">
-                <p className="text-text-muted text-small font-medium tracking-[-0.008em]">Hoy</p>
-                <div className="grid gap-1.5 sm:grid-cols-2">
-                  {staleCheckinsCount > 0 && (
-                    <AttentionSummaryLink
-                      to="/members?needs=checkin"
-                      icon={ClipboardCheck}
-                      label="Seguimiento semanal"
-                      count={staleCheckinsCount}
-                      tone="sky"
-                    />
-                  )}
-                  {recoveryAlertsCount > 0 && (
-                    <AttentionSummaryLink
-                      to="/members?needs=recovery"
-                      icon={HeartPulse}
-                      label="Recuperación"
-                      count={recoveryAlertsCount}
-                      tone="rose"
-                    />
-                  )}
-                  {expiringCount > 0 && (
-                    <AttentionSummaryLink
-                      to="/members?expiring=true"
-                      icon={CreditCard}
-                      label="Membresía por vencer"
-                      count={expiringCount}
-                      tone="red"
-                    />
-                  )}
-                </div>
+          <div className={cn('overflow-hidden rounded-[var(--radius-card)] border', SURFACE)}>
+            <Skeleton className="h-11 w-full rounded-none" />
+            <Skeleton className="h-11 w-full rounded-none" />
+            <Skeleton className="h-11 w-full rounded-none" />
+          </div>
+        ) : hasAttention ? (
+          <div className={cn('group overflow-hidden rounded-[var(--radius-card)] border', SURFACE)}>
+            {hoyItems.length > 0 ? (
+              <div>
+                <p className="text-text-muted text-small border-border/60 border-b px-3 py-2 font-medium">
+                  Hoy
+                </p>
+                {hoyItems.map((item) => (
+                  <AttentionRow
+                    key={item.key}
+                    to={item.to}
+                    icon={item.icon}
+                    label={item.label}
+                    count={item.count}
+                    tone={item.tone}
+                  />
+                ))}
               </div>
-            )}
-            {(withoutRoutines > 0 ||
-              withoutNutritionPlan > 0 ||
-              withoutAssessmentCount > 0 ||
-              memberChoicesCount > 0) && (
-              <div className="space-y-1.5">
-                <p className="text-text-muted text-small font-medium tracking-[-0.008em]">
+            ) : null}
+            {planItems.length > 0 ? (
+              <div>
+                <p
+                  className={cn(
+                    'text-text-muted text-small border-border/60 px-3 py-2 font-medium',
+                    hoyItems.length > 0 ? 'border-t border-b' : 'border-b'
+                  )}
+                >
                   Pendiente de plan
                 </p>
-                <div className="grid gap-1.5 sm:grid-cols-2">
-                  {withoutRoutines > 0 && (
-                    <AttentionSummaryLink
-                      to="/routines?view=calendar&assign=1"
-                      icon={Dumbbell}
-                      label="Sin rutina"
-                      count={withoutRoutines}
-                    />
-                  )}
-                  {withoutNutritionPlan > 0 && (
-                    <AttentionSummaryLink
-                      to="/nutrition-overview?filter=without"
-                      icon={UtensilsCrossed}
-                      label="Sin nutrición"
-                      count={withoutNutritionPlan}
-                      tone="amber"
-                    />
-                  )}
-                  {withoutAssessmentCount > 0 && (
-                    <AttentionSummaryLink
-                      to="/members?needs=assessment"
-                      icon={ClipboardCheck}
-                      label="Sin evaluación"
-                      count={withoutAssessmentCount}
-                      tone="violet"
-                    />
-                  )}
-                  {memberChoicesCount > 0 && (
-                    <AttentionSummaryLink
-                      to="/members?needs=choices"
-                      icon={ClipboardCheck}
-                      label="Elecciones del cliente"
-                      count={memberChoicesCount}
-                      tone="brand"
-                    />
-                  )}
-                </div>
+                {planItems.map((item) => (
+                  <AttentionRow
+                    key={item.key}
+                    to={item.to}
+                    icon={item.icon}
+                    label={item.label}
+                    count={item.count}
+                    tone={item.tone}
+                  />
+                ))}
               </div>
-            )}
+            ) : null}
           </div>
-        </DashboardSection>
-      )}
+        ) : (
+          <div
+            className={cn(
+              'flex items-start gap-3 rounded-[var(--radius-card)] border px-3 py-3.5',
+              SURFACE
+            )}
+          >
+            <CheckCircle2 className="text-success mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-text text-sm font-medium tracking-[-0.011em]">Todo al día</p>
+              <p className="text-text-secondary text-small mt-0.5 leading-relaxed">
+                Sin seguimientos ni planes pendientes.{' '}
+                <Link
+                  to="/members"
+                  {...routePrefetchHandlers('/members')}
+                  className="text-brand font-semibold underline-offset-2 hover:underline"
+                >
+                  Ver miembros
+                </Link>
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <div
+        className={cn(
+          'grid grid-cols-4 divide-x divide-[color:var(--color-border)] overflow-hidden rounded-[var(--radius-card)] border',
+          SURFACE
+        )}
+      >
+        <MetricCell
+          to="/members"
+          label="Miembros"
+          value={stats?.assignedMembers ?? 0}
+          loading={loading}
+        />
+        <MetricCell to="/members" label="En gym" value={stats?.activeNow ?? 0} loading={loading} />
+        <MetricCell to="/members" label="Remoto" value={remoteActive} loading={loading} />
+        <MetricCell
+          to="/routines?view=calendar"
+          label="Hoy"
+          value={stats?.todayWorkouts ?? 0}
+          loading={loading}
+        />
+      </div>
 
       <div className="grid gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start md:gap-3">
         <TodayPanel
@@ -651,6 +721,6 @@ export default function TrainerDashboard() {
           onSeeMembers={() => navigate('/members')}
         />
       </div>
-    </div>
+    </OperatePage>
   );
 }

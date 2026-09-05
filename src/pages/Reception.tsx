@@ -17,7 +17,8 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, connectionOrApiError } from '../lib/api';
-import { Button, Card, Badge, CedulaInput, Label, PageHeader, Skeleton } from '../components/ui';
+import { Button, Card, Badge, CedulaInput, Label, Skeleton } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
@@ -736,39 +737,37 @@ export default function Reception() {
     const showMemberPanel = lookupLoading || lookup != null;
 
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-5xl">
-        <div className="flex items-center justify-between gap-2">
-          <PageHeader
-            variant="floor"
-            showTitleOnMobile
-            className="min-w-0 flex-1 gap-0.5 sm:gap-0.5"
-            title="Acceso"
-            subtitle={isMobileShell ? `${insideCount} dentro` : 'F1 entrada · F2 salida'}
-          />
-          <div className="flex shrink-0 items-center gap-0.5">
-            <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
+      <OperatePage maxWidth="max-w-5xl">
+        <OperateHeader
+          icon={LogIn}
+          title="Acceso"
+          subtitle={isMobileShell ? `${insideCount} dentro` : 'F1 entrada · F2 salida'}
+          action={
+            <>
+              <Link to="/check-in?kiosk=1" className="hidden sm:inline-flex">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="w-11 px-0"
+                  title="Modo tablet"
+                  aria-label="Modo tablet"
+                >
+                  <Tablet className="h-4 w-4" />
+                </Button>
+              </Link>
               <Button
                 variant="secondary"
                 size="md"
                 className="w-11 px-0"
-                title="Modo tablet"
-                aria-label="Modo tablet"
+                onClick={() => setCounterMode(false)}
+                title="Salir del mostrador"
+                aria-label="Salir del mostrador"
               >
-                <Tablet className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
-            </Link>
-            <Button
-              variant="secondary"
-              size="md"
-              className="w-11 px-0"
-              onClick={() => setCounterMode(false)}
-              title="Salir del mostrador"
-              aria-label="Salir del mostrador"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <div className="mx-auto w-full max-w-5xl space-y-3">
           <CounterTabNav tab={tab} insideCount={insideCount} onChange={changeTab} />
@@ -810,7 +809,7 @@ export default function Reception() {
           {tab === 'guests' && <ReceptionGuestPasses />}
         </div>
         {counterModals}
-      </div>
+      </OperatePage>
     );
   }
 

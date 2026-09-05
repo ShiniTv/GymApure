@@ -12,7 +12,6 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Badge,
   Select,
   SearchInput,
@@ -23,6 +22,7 @@ import {
   PasswordInput,
   FilterChips,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { TrainerMembersModal } from '../components/trainers/TrainerMembersModal';
 import { ResponsiveTable } from '../components/ResponsiveTable';
@@ -231,9 +231,9 @@ export default function Trainers() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={Users}
         title={
           <>
             Gestión de <span className="text-brand">entrenadores</span>
@@ -729,6 +729,6 @@ export default function Trainers() {
           else toast?.success(msg);
         }}
       />
-    </div>
+    </OperatePage>
   );
 }

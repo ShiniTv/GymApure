@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
-import { Button, Card, Input, Label, Alert } from '../components/ui';
+import { Button, Input, Label, Alert } from '../components/ui';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -34,13 +34,13 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full" padding="lg">
+      <div className="auth-linear-card">
         <AuthLinearHeader
-          title="Recupera tu acceso"
-          subtitle="Te enviaremos un enlace seguro a tu correo."
+          title="Recupera el acceso"
+          subtitle="Te enviamos un enlace al correo de la cuenta."
         />
 
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
           {success && (
             <Alert variant="success">
@@ -56,7 +56,7 @@ export default function ForgotPassword() {
 
           <div>
             <Label className="auth-linear-label" htmlFor="email">
-              Correo electrónico
+              Correo
             </Label>
             <Input
               id="email"
@@ -64,7 +64,6 @@ export default function ForgotPassword() {
               type="email"
               autoComplete="email"
               required
-              leadingIcon={<Mail />}
               placeholder="correo@ejemplo.com"
               className="auth-linear-field"
               value={email}
@@ -84,12 +83,12 @@ export default function ForgotPassword() {
 
         <Link
           to="/login"
-          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio de sesión
         </Link>
-      </Card>
+      </div>
     </AuthShell>
   );
 }

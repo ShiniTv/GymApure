@@ -195,7 +195,7 @@ export function MembersListSection({
           pageSize={pageSize}
           total={total}
           onPageChange={onPageChange}
-          label="usuarios"
+          label={isStaffMember || userRole === 'trainer' ? 'miembros' : 'usuarios'}
         />
       </div>
       {showDetailRail && detailMember ? (

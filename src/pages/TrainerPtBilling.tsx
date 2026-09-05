@@ -1,21 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import { Check, ChevronDown, Landmark, Plus, Save, Settings2, X } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Landmark,
+  Plus,
+  Save,
+  Settings2,
+  X,
+} from 'lucide-react';
 import {
   Badge,
   Button,
   BackToDashboardLink,
-  DataCard,
-  EmptyState,
   FilterChips,
   IconButton,
   Input,
   Label,
   Modal,
-  PageHeader,
   Select,
   Spinner,
 } from '../components/ui';
+import {
+  OperateCallout,
+  OperateEmpty,
+  OperateHeader,
+  OperateIcon,
+  OperateList,
+  OperateMetricStrip,
+  OperatePage,
+  OPERATE_SURFACE,
+} from '../components/operate/OperateChrome';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
@@ -42,7 +59,7 @@ import {
   type TrainerInvoice,
 } from '../hooks/queries/useTrainerBillingQuery';
 
-const SURFACE = 'border-border/80 bg-surface rounded-[var(--radius-card)] border';
+const SURFACE = OPERATE_SURFACE + ' rounded-[var(--radius-card)]';
 
 type InvoiceFilter = 'all' | 'awaiting' | 'confirm' | 'done';
 
@@ -195,38 +212,78 @@ export default function TrainerPtBilling() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-5xl">
+      <OperateHeader
+        icon={Landmark}
         title={
           <>
             Cobros <span className="text-brand">PT</span>
           </>
         }
-        subtitle="Cola de cobros PT · Nuevo y datos de cobro en acciones"
+        subtitle={
+          loadingInvoices
+            ? 'Cargando cola…'
+            : awaitingConfirm.length > 0
+              ? `${awaitingConfirm.length} por confirmar`
+              : 'Pendientes, confirmaciones y datos de cobro'
+        }
         action={
-          <div className="flex items-center gap-2">
-            <BackToDashboardLink iconOnly />
-            <Button size="sm" onClick={() => setChargeOpen(true)}>
-              <Plus className="h-4 w-4" />
+          <>
+            <BackToDashboardLink iconOnly className="sm:hidden" />
+            <span className="hidden sm:inline-flex">
+              <BackToDashboardLink />
+            </span>
+            <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+              <Plus className="operate-icon h-4 w-4" />
               Nuevo
             </Button>
-          </div>
+          </>
         }
       />
 
       {!destReady ? (
-        <button
-          type="button"
+        <OperateCallout
+          icon={Settings2}
+          tone="warn"
           onClick={() => {
             setConfigOpen(true);
             setDestOpen(true);
           }}
-          className="border-warning/25 bg-warning/5 text-warning text-small w-full rounded-[var(--radius-button)] border px-3 py-2 text-left leading-snug"
         >
-          Configura tus datos de cobro para que el cliente sepa a dónde transferir.
-        </button>
+          <span className="text-text font-medium">Configura tus datos de cobro</span>
+          <span className="text-text-muted"> · para que el cliente sepa a dónde transferir</span>
+        </OperateCallout>
       ) : null}
+
+      <OperateMetricStrip
+        loading={loadingInvoices}
+        items={[
+          {
+            label: 'Todos',
+            value: invoices.length,
+            icon: Landmark,
+            onClick: () => setInvoiceFilter('all'),
+          },
+          {
+            label: 'Esperando',
+            value: awaitingPay.length,
+            icon: Clock,
+            onClick: () => setInvoiceFilter('awaiting'),
+          },
+          {
+            label: 'Confirmar',
+            value: awaitingConfirm.length,
+            icon: Check,
+            onClick: () => setInvoiceFilter('confirm'),
+          },
+          {
+            label: 'Cerrados',
+            value: doneCount,
+            icon: CheckCircle2,
+            onClick: () => setInvoiceFilter('done'),
+          },
+        ]}
+      />
 
       <FilterChips
         options={[
@@ -240,12 +297,9 @@ export default function TrainerPtBilling() {
       />
 
       {loadingInvoices ? (
-        <div className="flex justify-center py-8">
-          <Spinner />
-        </div>
+        <OperateList loading rows={4} />
       ) : invoices.length === 0 ? (
-        <EmptyState
-          compact
+        <OperateEmpty
           icon={Landmark}
           title="Sin cobros aún"
           description={
@@ -261,109 +315,143 @@ export default function TrainerPtBilling() {
                 </Button>
               </Link>
             ) : (
-              <Button size="sm" onClick={() => setChargeOpen(true)}>
-                <Plus className="h-4 w-4" />
+              <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+                <Plus className="operate-icon h-4 w-4" />
                 Nuevo cobro
               </Button>
             )
           }
         />
       ) : filteredInvoices.length === 0 ? (
-        <p className="text-text-muted py-6 text-center text-sm">No hay cobros en este filtro.</p>
+        <OperateEmpty
+          icon={Landmark}
+          title="No hay cobros en este filtro"
+          description="Cambia el filtro o crea un cobro nuevo."
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setInvoiceFilter('all')}>
+                Ver todos
+              </Button>
+              <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+                <Plus className="operate-icon h-4 w-4" />
+                Nuevo cobro
+              </Button>
+            </div>
+          }
+        />
       ) : (
-        <div className="space-y-2">
+        <OperateList>
           {filteredInvoices.map((inv) => (
-            <DataCard key={inv.id} className="!space-y-0">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <p className="text-text min-w-0 flex-1 truncate text-sm leading-tight font-semibold">
-                      {inv.member_name}
-                    </p>
-                    <Badge
-                      variant={statusVariant(inv.status)}
-                      className="text-small shrink-0 px-1.5 py-0"
-                    >
-                      {statusLabel(inv.status, Boolean(inv.reference))}
-                    </Badge>
-                  </div>
-                  <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
-                    <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
-                    <span className="text-text-muted mx-1.5">·</span>
-                    <span>{inv.title}</span>
-                    {inv.reference ? (
-                      <>
-                        <span className="text-text-muted mx-1.5">·</span>
-                        <span className="text-small font-mono">Ref. {inv.reference}</span>
-                      </>
-                    ) : null}
+            <div
+              key={inv.id}
+              className="group border-border/60 flex min-h-[var(--touch-min)] items-center gap-3 border-b px-3 py-2.5 last:border-b-0"
+            >
+              <OperateIcon
+                icon={inv.status === 'confirmed' ? CheckCircle2 : inv.reference ? Check : Clock}
+                tone={
+                  inv.status === 'confirmed'
+                    ? 'success'
+                    : inv.status === 'rejected' || inv.status === 'cancelled'
+                      ? 'danger'
+                      : inv.reference
+                        ? 'brand'
+                        : 'warn'
+                }
+                well
+                size="md"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <p className="text-text min-w-0 flex-1 truncate text-sm font-medium tracking-[-0.011em]">
+                    {inv.member_name}
                   </p>
+                  <Badge
+                    variant={statusVariant(inv.status)}
+                    className="text-small shrink-0 px-1.5 py-0"
+                  >
+                    {statusLabel(inv.status, Boolean(inv.reference))}
+                  </Badge>
                 </div>
-                {inv.status === 'pending' && inv.reference ? (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <IconButton
-                      size="sm"
-                      variant="secondary"
-                      className="border-success/30 text-success hover:bg-success/10"
-                      aria-label="Confirmar cobro"
-                      title="Confirmar"
-                      onClick={() =>
-                        void confirmInv.mutateAsync(inv.id).then(
-                          () => toast?.success('Confirmaste el cobro'),
-                          (err) => toast?.error(toDisplayErrorMessage(err))
-                        )
-                      }
-                    >
-                      <Check className="h-3.5 w-3.5" strokeWidth={2.25} />
-                    </IconButton>
-                    <IconButton
-                      size="sm"
-                      variant="danger"
-                      aria-label="Rechazar cobro"
-                      title="Rechazar"
-                      onClick={() => {
-                        setRejectId(inv.id);
-                        setRejectReason('');
-                      }}
-                    >
-                      <X className="h-3.5 w-3.5" strokeWidth={2.25} />
-                    </IconButton>
-                  </div>
-                ) : null}
-                {inv.status === 'pending' && !inv.reference ? (
+                <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
+                  <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
+                  <span className="text-text-muted mx-1.5">·</span>
+                  <span>{inv.title}</span>
+                  {inv.reference ? (
+                    <>
+                      <span className="text-text-muted mx-1.5">·</span>
+                      <span className="text-small font-mono">Ref. {inv.reference}</span>
+                    </>
+                  ) : null}
+                </p>
+              </div>
+              {inv.status === 'pending' && inv.reference ? (
+                <div className="flex shrink-0 items-center gap-1">
                   <IconButton
-                    size="sm"
+                    size="md"
                     variant="secondary"
-                    aria-label="Cancelar cobro"
-                    title="Cancelar"
+                    className="border-success/30 text-success hover:bg-success/10 min-h-11 min-w-11"
+                    aria-label="Confirmar cobro"
+                    title="Confirmar"
                     onClick={() =>
-                      void cancelInv.mutateAsync(inv.id).then(
-                        () => toast?.success('Cancelaste el cobro'),
+                      void confirmInv.mutateAsync(inv.id).then(
+                        () => toast?.success('Confirmaste el cobro'),
                         (err) => toast?.error(toDisplayErrorMessage(err))
                       )
                     }
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <Check className="operate-icon h-4 w-4" strokeWidth={2.25} />
                   </IconButton>
-                ) : null}
-              </div>
-            </DataCard>
+                  <IconButton
+                    size="md"
+                    variant="danger"
+                    className="min-h-11 min-w-11"
+                    aria-label="Rechazar cobro"
+                    title="Rechazar"
+                    onClick={() => {
+                      setRejectId(inv.id);
+                      setRejectReason('');
+                    }}
+                  >
+                    <X className="operate-icon h-4 w-4" strokeWidth={2.25} />
+                  </IconButton>
+                </div>
+              ) : null}
+              {inv.status === 'pending' && !inv.reference ? (
+                <IconButton
+                  size="md"
+                  variant="secondary"
+                  className="min-h-11 min-w-11"
+                  aria-label="Cancelar cobro"
+                  title="Cancelar"
+                  onClick={() =>
+                    void cancelInv.mutateAsync(inv.id).then(
+                      () => toast?.success('Cancelaste el cobro'),
+                      (err) => toast?.error(toDisplayErrorMessage(err))
+                    )
+                  }
+                >
+                  <X className="operate-icon h-4 w-4" />
+                </IconButton>
+              ) : null}
+            </div>
           ))}
-        </div>
+        </OperateList>
       )}
 
       <div className={cn(SURFACE, 'overflow-hidden')}>
         <button
           type="button"
           onClick={() => setConfigOpen((o) => !o)}
-          className="text-text hover:bg-surface-overlay flex w-full items-center gap-2.5 px-3.5 py-3 text-left transition-colors sm:px-4"
+          className="tap-feedback text-text hover:bg-surface-overlay group flex min-h-12 w-full items-center gap-3 px-3.5 py-3 text-left transition-colors sm:px-4"
           aria-expanded={configOpen}
         >
-          <Settings2 className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
-          <span className="min-w-0 flex-1 text-sm font-semibold">Configuración</span>
+          <OperateIcon icon={Settings2} tone="neutral" well size="md" />
+          <span className="min-w-0 flex-1 text-sm font-semibold tracking-[-0.011em]">
+            Configuración
+          </span>
           <ChevronDown
             className={cn(
-              'text-text-muted h-3.5 w-3.5 shrink-0 transition-transform',
+              'operate-icon text-text-muted h-4 w-4 shrink-0 transition-transform duration-160',
               configOpen && 'rotate-180'
             )}
             aria-hidden
@@ -999,6 +1087,6 @@ export default function TrainerPtBilling() {
           cliente sepa a dónde transferir.
         </p>
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

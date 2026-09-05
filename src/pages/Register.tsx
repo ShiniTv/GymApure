@@ -3,12 +3,10 @@ import { apiFetch, parseJsonSafe, connectionOrApiError } from '../lib/api';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { APP_HOME } from '../lib/roles';
-import { User, Mail, CreditCard, Phone } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
 import {
   Button,
-  Card,
   Input,
   Label,
   PasswordInput,
@@ -104,8 +102,8 @@ export default function Register() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full" padding="lg">
-        <AuthLinearHeader title="Crea tu cuenta" subtitle="Completa tus datos para comenzar." />
+      <div className="auth-linear-card">
+        <AuthLinearHeader title="Crea tu cuenta" subtitle="Tus datos para el acceso al gym." />
 
         <ol
           className="mb-6 flex items-center gap-1 text-xs font-semibold"
@@ -152,216 +150,219 @@ export default function Register() {
           ))}
         </ol>
 
-        <form
-          className="form-stack"
-          onSubmit={
-            step === 1
-              ? handleSubmit
-              : (e) => {
-                  e.preventDefault();
-                  handleNext();
-                }
-          }
-        >
-          {error && <Alert variant="error">{error}</Alert>}
+        <div className="auth-form-wrap" key={step}>
+          <form
+            className="auth-form"
+            onSubmit={
+              step === 1
+                ? handleSubmit
+                : (e) => {
+                    e.preventDefault();
+                    handleNext();
+                  }
+            }
+          >
+            {error && <Alert variant="error">{error}</Alert>}
 
-          {step === 0 ? (
-            <div className="form-stack">
-              <div>
-                <Label className="auth-linear-label" htmlFor="full_name">
-                  Nombre completo
-                </Label>
-                <Input
-                  id="full_name"
-                  type="text"
-                  required
-                  autoComplete="name"
-                  leadingIcon={<User />}
-                  placeholder="Juan Pérez"
-                  className="auth-linear-field"
-                  value={formData.full_name}
-                  error={fieldErrors.full_name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, full_name: e.target.value });
-                    if (fieldErrors.full_name)
-                      setFieldErrors((prev) => ({ ...prev, full_name: '' }));
-                  }}
-                />
-              </div>
-
-              <div>
-                <Label className="auth-linear-label" htmlFor="email">
-                  Correo electrónico
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  leadingIcon={<Mail />}
-                  placeholder="correo@ejemplo.com"
-                  className="auth-linear-field"
-                  value={formData.email}
-                  error={fieldErrors.email}
-                  onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
-                  }}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {step === 0 ? (
+              <div className="auth-form">
                 <div>
-                  <Label className="auth-linear-label" htmlFor="cedula">
-                    Cédula
+                  <Label className="auth-linear-label" htmlFor="full_name">
+                    Nombre
                   </Label>
-                  <CedulaInput
-                    id="cedula"
+                  <Input
+                    id="full_name"
+                    type="text"
                     required
-                    leadingIcon={<CreditCard />}
-                    value={formData.cedula}
-                    error={fieldErrors.cedula}
+                    autoComplete="name"
+                    placeholder="Juan Pérez"
                     className="auth-linear-field"
-                    onChange={(value) => {
-                      setFormData({ ...formData, cedula: value });
-                      if (fieldErrors.cedula) setFieldErrors((prev) => ({ ...prev, cedula: '' }));
+                    value={formData.full_name}
+                    error={fieldErrors.full_name}
+                    onChange={(e) => {
+                      setFormData({ ...formData, full_name: e.target.value });
+                      if (fieldErrors.full_name)
+                        setFieldErrors((prev) => ({ ...prev, full_name: '' }));
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="auth-linear-label" htmlFor="email">
+                    Correo
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="correo@ejemplo.com"
+                    className="auth-linear-field"
+                    value={formData.email}
+                    error={fieldErrors.email}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                    }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label className="auth-linear-label" htmlFor="cedula">
+                      Cédula
+                    </Label>
+                    <CedulaInput
+                      id="cedula"
+                      required
+                      value={formData.cedula}
+                      error={fieldErrors.cedula}
+                      className="auth-linear-field"
+                      onChange={(value) => {
+                        setFormData({ ...formData, cedula: value });
+                        if (fieldErrors.cedula) setFieldErrors((prev) => ({ ...prev, cedula: '' }));
+                      }}
+                    />
+                    <p className="text-text-muted text-small mt-1">
+                      Formato: V-12345678 · Para identificarte en recepción
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="auth-linear-label" htmlFor="phone">
+                      Teléfono{' '}
+                      <span className="font-medium tracking-normal text-zinc-400 normal-case">
+                        (opcional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      placeholder="+58 412…"
+                      className="auth-linear-field"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="auth-linear-primary w-full" size="md">
+                  Continuar
+                </Button>
+              </div>
+            ) : (
+              <div className="auth-form">
+                <div>
+                  <Label className="auth-linear-label" htmlFor="password">
+                    Contraseña
+                  </Label>
+                  <PasswordInput
+                    id="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Ej: Gym2024!"
+                    showIcon={false}
+                    className="auth-linear-field"
+                    value={formData.password}
+                    error={fieldErrors.password}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      if (fieldErrors.password)
+                        setFieldErrors((prev) => ({ ...prev, password: '' }));
                     }}
                   />
                   <p className="text-text-muted text-small mt-1">
-                    Formato: V-12345678 · Para identificarte en recepción
+                    Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
                   </p>
+                  {formData.password && (
+                    <div className="mt-2 space-y-1">
+                      <div
+                        className="flex gap-1"
+                        role="progressbar"
+                        aria-valuenow={strength.score}
+                        aria-valuemin={0}
+                        aria-valuemax={3}
+                      >
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={cn(
+                              'h-1 flex-1 rounded-full transition-colors',
+                              strength.score >= level
+                                ? level === 1
+                                  ? 'bg-red-500'
+                                  : level === 2
+                                    ? 'bg-yellow-500'
+                                    : 'bg-emerald-500'
+                                : 'bg-zinc-200 dark:bg-zinc-700'
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs font-medium text-zinc-500">
+                        Fortaleza: {strength.label}
+                      </p>
+                    </div>
+                  )}
                 </div>
+
                 <div>
-                  <Label className="auth-linear-label" htmlFor="phone">
-                    Teléfono{' '}
-                    <span className="font-medium tracking-normal text-zinc-400 normal-case">
-                      (opcional)
-                    </span>
+                  <Label className="auth-linear-label" htmlFor="confirm_password">
+                    Confirmar contraseña
                   </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    leadingIcon={<Phone />}
-                    placeholder="+58 412…"
+                  <PasswordInput
+                    id="confirm_password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Repite tu contraseña"
+                    showIcon={false}
                     className="auth-linear-field"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.confirm_password}
+                    error={fieldErrors.confirm_password}
+                    onChange={(e) => {
+                      setFormData({ ...formData, confirm_password: e.target.value });
+                      if (fieldErrors.confirm_password)
+                        setFieldErrors((prev) => ({ ...prev, confirm_password: '' }));
+                    }}
                   />
                 </div>
-              </div>
 
-              <Button type="submit" className="auth-linear-primary w-full" size="md">
-                Continuar
-              </Button>
-            </div>
-          ) : (
-            <div className="form-stack">
-              <div>
-                <Label className="auth-linear-label" htmlFor="password">
-                  Contraseña
-                </Label>
-                <PasswordInput
-                  id="password"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  placeholder="Ej: Gym2024!"
-                  className="auth-linear-field"
-                  value={formData.password}
-                  error={fieldErrors.password}
-                  onChange={(e) => {
-                    setFormData({ ...formData, password: e.target.value });
-                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
-                  }}
-                />
-                <p className="text-text-muted text-small mt-1">
-                  Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
-                </p>
-                {formData.password && (
-                  <div className="mt-2 space-y-1">
-                    <div
-                      className="flex gap-1"
-                      role="progressbar"
-                      aria-valuenow={strength.score}
-                      aria-valuemin={0}
-                      aria-valuemax={3}
-                    >
-                      {[1, 2, 3].map((level) => (
-                        <div
-                          key={level}
-                          className={cn(
-                            'h-1 flex-1 rounded-full transition-colors',
-                            strength.score >= level
-                              ? level === 1
-                                ? 'bg-red-500'
-                                : level === 2
-                                  ? 'bg-yellow-500'
-                                  : 'bg-emerald-500'
-                              : 'bg-zinc-200 dark:bg-zinc-700'
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs font-medium text-zinc-500">Fortaleza: {strength.label}</p>
-                  </div>
-                )}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="auth-linear-secondary flex-1"
+                    onClick={() => {
+                      setStep(0);
+                      setError('');
+                    }}
+                  >
+                    Atrás
+                  </Button>
+                  <Button
+                    type="submit"
+                    loading={loading}
+                    className="auth-linear-primary flex-1"
+                    size="md"
+                  >
+                    Crear cuenta
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <div>
-                <Label className="auth-linear-label" htmlFor="confirm_password">
-                  Confirmar contraseña
-                </Label>
-                <PasswordInput
-                  id="confirm_password"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  placeholder="Repite tu contraseña"
-                  className="auth-linear-field"
-                  value={formData.confirm_password}
-                  error={fieldErrors.confirm_password}
-                  onChange={(e) => {
-                    setFormData({ ...formData, confirm_password: e.target.value });
-                    if (fieldErrors.confirm_password)
-                      setFieldErrors((prev) => ({ ...prev, confirm_password: '' }));
-                  }}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="auth-linear-secondary flex-1"
-                  onClick={() => {
-                    setStep(0);
-                    setError('');
-                  }}
-                >
-                  Atrás
-                </Button>
-                <Button
-                  type="submit"
-                  loading={loading}
-                  className="auth-linear-primary flex-1"
-                  size="md"
-                >
-                  Crear cuenta
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <p className="text-center text-xs text-zinc-500">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="auth-linear-link font-medium transition-colors">
-              Inicia sesión
-            </Link>
-          </p>
-        </form>
-      </Card>
+            <p className="text-center text-xs text-zinc-500">
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="auth-linear-link font-medium transition-colors">
+                Inicia sesión
+              </Link>
+            </p>
+          </form>
+        </div>
+      </div>
     </AuthShell>
   );
 }

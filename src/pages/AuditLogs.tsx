@@ -19,12 +19,12 @@ import {
   Badge,
   Button,
   Card,
-  PageHeader,
   EmptyState,
   FilterChips,
   BackToDashboardLink,
   AuditLogsSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
 
@@ -180,9 +180,9 @@ export default function AuditLogs() {
   }, [loadLogs]);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={Shield}
         title={
           <>
             Registro de <span className="text-brand">auditoría</span>
@@ -190,7 +190,7 @@ export default function AuditLogs() {
         }
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
-          <div className="flex items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <BackToDashboardLink className="hidden sm:inline-flex" />
             <Button
@@ -202,7 +202,7 @@ export default function AuditLogs() {
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -303,6 +303,6 @@ export default function AuditLogs() {
           </>
         )}
       </Card>
-    </div>
+    </OperatePage>
   );
 }

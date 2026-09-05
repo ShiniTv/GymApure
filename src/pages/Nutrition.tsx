@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   Modal,
-  PageHeader,
   Label,
   Input,
   Select,
@@ -17,6 +16,7 @@ import {
   ListRowSkeleton,
   StatCardSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { MacroRing } from '../components/nutrition/MacroRing';
 import { CalorieSemiGauge } from '../components/nutrition/CalorieSemiGauge';
 import { WeekDateStrip } from '../components/nutrition/WeekDateStrip';
@@ -218,32 +218,30 @@ export default function Nutrition() {
 
   if (loading && !plan) {
     return (
-      <div
-        className="page-stack-tight mx-auto w-full max-w-4xl"
-        aria-busy="true"
-        aria-label="Cargando nutrición"
-      >
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-3 w-36" />
-        </div>
-        <div className="flex gap-2 overflow-hidden px-1">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-11 shrink-0 rounded-[var(--radius-card)]" />
-          ))}
-        </div>
-        <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:gap-4">
-          <div className="space-y-3">
-            <Skeleton className="mx-auto h-36 w-full max-w-xs rounded-[var(--radius-card)]" />
-            <div className="grid grid-cols-3 gap-3 px-2">
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-            </div>
+      <OperatePage maxWidth="max-w-4xl">
+        <div aria-busy="true" aria-label="Cargando nutrición">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-3 w-36" />
           </div>
-          <ListRowSkeleton rows={4} />
+          <div className="flex gap-2 overflow-hidden px-1">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-11 shrink-0 rounded-[var(--radius-card)]" />
+            ))}
+          </div>
+          <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:gap-4">
+            <div className="space-y-3">
+              <Skeleton className="mx-auto h-36 w-full max-w-xs rounded-[var(--radius-card)]" />
+              <div className="grid grid-cols-3 gap-3 px-2">
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+              </div>
+            </div>
+            <ListRowSkeleton rows={4} />
+          </div>
         </div>
-      </div>
+      </OperatePage>
     );
   }
 
@@ -251,9 +249,9 @@ export default function Nutrition() {
 
   if (!plan) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-4xl">
-        <PageHeader
-          compact
+      <OperatePage maxWidth="max-w-4xl">
+        <OperateHeader
+          icon={UtensilsCrossed}
           title={
             <>
               Mi <span className="text-brand">nutrición</span>
@@ -272,7 +270,7 @@ export default function Nutrition() {
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
@@ -291,9 +289,9 @@ export default function Nutrition() {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-4xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-4xl">
+      <OperateHeader
+        icon={UtensilsCrossed}
         title={
           <>
             Mi <span className="text-brand">nutrición</span>
@@ -656,6 +654,6 @@ export default function Nutrition() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

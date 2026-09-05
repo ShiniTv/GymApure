@@ -9,11 +9,11 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Select,
   Spinner,
   BackToDashboardLink,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { PaymentDestinationHint } from '../components/payments/PaymentDestinationHint';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
@@ -88,9 +88,9 @@ export default function MemberPtBilling() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-3xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-3xl">
+      <OperateHeader
+        icon={Landmark}
         title={
           <>
             Cobros <span className="text-brand">PT</span>
@@ -264,6 +264,6 @@ export default function MemberPtBilling() {
           </div>
         ) : null}
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

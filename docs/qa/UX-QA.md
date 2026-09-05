@@ -28,7 +28,7 @@ npm run dev
 | 2   | Rutinas               | Tap tarjeta → expande → botón **Empezar entrenamiento**                                                     | Browser | ☑                           |
 | 3   | Workout activo        | Pager inferior sin solapamiento con nav; pasos de ejecución colapsados por defecto                          | Browser | ☑                           |
 | 4   | Mensajes              | Composer visible; acceso desde Más; no tapado por pill                                                      | Browser | ☑                           |
-| 5   | Más / logout          | Sheet "Más"; cerrar sesión; sin hamburger; header flotante tipo isla                                        | Browser | ☑                           |
+| 5   | Más / logout          | Sheet "Más"; notificaciones + tema + cerrar sesión; sin hamburger; sin isla superior                        | Browser | ☑                           |
 | 6   | PTR inicio            | Pull-to-refresh en dashboard member                                                                         | Manual  | ☑                           |
 | 6b  | PTR rutinas/historial | PTR en `/routines` y `/history` (member)                                                                    | Browser | ☑                           |
 | 7   | Errores               | Offline → Reintentar en rutinas                                                                             | Browser | ☑                           |
@@ -42,12 +42,12 @@ npm run dev
 
 ## Admin — mobile / desktop
 
-| #   | Flujo          | Criterio                                                                    | Auto    | Resultado |
-| --- | -------------- | --------------------------------------------------------------------------- | ------- | --------- |
-| 16  | Equipamiento   | Registrar desde catálogo; badge "Registrado"                                | API     | ☑         |
-| 17  | Tipo de cambio | Settings → override manual → refleja en pagos                               | API     | ☑         |
-| 18  | Equipamiento   | Sin duplicados al registrar misma máquina                                   | API     | ☑         |
-| 18b | Más (móvil)    | Sheet con secciones Operación/Finanzas/Supervisión/Cuenta; scroll; gap isla | Browser | ☑         |
+| #   | Flujo          | Criterio                                           | Auto    | Resultado |
+| --- | -------------- | -------------------------------------------------- | ------- | --------- |
+| 16  | Equipamiento   | Registrar desde catálogo; badge "Registrado"       | API     | ☑         |
+| 17  | Tipo de cambio | Settings → override manual → refleja en pagos      | API     | ☑         |
+| 18  | Equipamiento   | Sin duplicados al registrar misma máquina          | API     | ☑         |
+| 18b | Más (móvil)    | Sheet con secciones; notificaciones + tema; scroll | Browser | ☑         |
 
 ---
 
@@ -66,7 +66,7 @@ npm run dev
 | 9   | Check-in nav   | Sidebar Check-in → `/reception?mode=counter&tab=access`       | Browser (desktop) | ☑         |
 | 9b  | Check-in móvil | Tab Acceso / CTA "Abrir mostrador" → counter access           | Browser           | ☑         |
 | 10  | Modo tablet    | Atajo "Modo tablet" abre `/check-in?kiosk=1`                  | Browser           | ☑         |
-| —   | Clearance isla | Contenido y sheet Más con gap visible sobre la pill           | Manual            | ☑         |
+| —   | Clearance top  | Sin isla superior; contenido usa safe-area + padding          | Manual            | ☑         |
 
 ---
 
@@ -100,11 +100,11 @@ npm run dev
 
 ## Tablet iPad (834×1194) — fase 3
 
-| #   | Escenario            | Criterio                                      | Auto             | Resultado |
-| --- | -------------------- | --------------------------------------------- | ---------------- | --------- |
-| T1  | Admin `/members`     | Cards móviles; **sin** tabla desktop (`lg`)   | Browser (tablet) | ☑         |
-| T2  | Recepción `/members` | Bottom nav recepción + cards (no tabla ancha) | Manual           | ☑         |
-| T3  | Member `/`           | Bottom nav member; sin hamburger; header isla | Manual           | ☑         |
+| #   | Escenario            | Criterio                                            | Auto             | Resultado |
+| --- | -------------------- | --------------------------------------------------- | ---------------- | --------- |
+| T1  | Admin `/members`     | Cards móviles; **sin** tabla desktop (`lg`)         | Browser (tablet) | ☑         |
+| T2  | Recepción `/members` | Bottom nav recepción + cards (no tabla ancha)       | Manual           | ☑         |
+| T3  | Member `/`           | Bottom nav member; sin hamburger; sin isla superior | Manual           | ☑         |
 
 **Nota:** Tablas staff (`Members`, `Payments`) usan breakpoint `lg` (1024px), alineado con shell móvil hasta 1023px.
 

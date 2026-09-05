@@ -27,7 +27,7 @@ test.describe('Recepción bottom nav', () => {
     await expect(page).toHaveURL(/\/reception\?mode=counter&tab=access/);
   });
 
-  test('sin hamburger; Más abre sheet con scroll', async ({ page }) => {
+  test('sin hamburger; Más abre sheet compacto', async ({ page }) => {
     await page.goto('/reception');
     const nav = page.locator(receptionBottomNav);
     await expect(nav).toBeVisible();
@@ -40,6 +40,6 @@ test.describe('Recepción bottom nav', () => {
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: /vista del d[ií]a/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /modo tablet/i })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /salir/i })).toBeVisible();
   });
 });

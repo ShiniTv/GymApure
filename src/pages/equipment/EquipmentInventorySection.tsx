@@ -1,4 +1,5 @@
 import { Virtuoso } from 'react-virtuoso';
+import { Link } from 'react-router';
 import {
   Plus,
   Wrench,
@@ -18,13 +19,17 @@ import {
 import {
   Button,
   Card,
-  PageHeader,
   EmptyState,
   BackToDashboardLink,
   FilterChips,
   SegmentedControl,
   SearchInput,
 } from '../../components/ui';
+import {
+  OperateHeader,
+  OperateMetricStrip,
+  OperatePage,
+} from '../../components/operate/OperateChrome';
 import { cn } from '../../lib/utils';
 import { EquipmentListCard } from './EquipmentListCard';
 import type { EquipmentItem, LayoutView, Zone } from './types';
@@ -105,9 +110,9 @@ export function EquipmentInventorySection({
   onOpenAdd,
 }: EquipmentInventorySectionProps) {
   return (
-    <>
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-7xl">
+      <OperateHeader
+        icon={Wrench}
         title={
           isAdmin ? (
             <>
@@ -128,29 +133,51 @@ export function EquipmentInventorySection({
         }
         action={
           isAdmin ? (
-            <div className="flex shrink-0 items-center gap-1">
+            <>
               <BackToDashboardLink iconOnly className="lg:hidden" />
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-9 w-9 px-0"
+                className="min-h-11 min-w-11 px-0"
                 onClick={() => onOpenConfig()}
                 aria-label="Zonas y proveedores"
                 title="Zonas y proveedores"
               >
                 <Settings2 className="h-4 w-4" />
               </Button>
-              <Button onClick={() => onOpenAdd()} className="h-9 gap-1.5 px-2.5 sm:px-4">
+              <Button onClick={() => onOpenAdd()} className="min-h-11 gap-1.5 px-2.5 sm:px-4">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Añadir equipo</span>
                 <span className="sr-only sm:hidden">Añadir equipo</span>
               </Button>
-            </div>
+            </>
           ) : (
             <BackToDashboardLink iconOnly className="lg:hidden" />
           )
         }
       />
+
+      {isAdmin && !bootstrapError ? (
+        <OperateMetricStrip
+          items={[
+            {
+              label: 'Total',
+              value: allItems.length,
+              icon: Wrench,
+            },
+            {
+              label: 'Atención',
+              value: attentionCount,
+              icon: AlertTriangle,
+            },
+            {
+              label: 'Inspección',
+              value: inspectionDueCount,
+              icon: MapPin,
+            },
+          ]}
+        />
+      ) : null}
 
       <div className="flex flex-col gap-3">
         {isAdmin ? (
@@ -376,6 +403,12 @@ export function EquipmentInventorySection({
                 <Button size="sm" onClick={() => onOpenAdd()}>
                   Añadir equipo
                 </Button>
+              ) : allItems.length === 0 && !isAdmin ? (
+                <Link to="/panel">
+                  <Button size="sm" variant="secondary">
+                    Ir al panel
+                  </Button>
+                </Link>
               ) : activeFilterCount > 0 || staffQuickFilter !== 'all' ? (
                 <Button size="sm" variant="secondary" onClick={onClearFilters}>
                   Limpiar filtros
@@ -421,6 +454,6 @@ export function EquipmentInventorySection({
           </div>
         )}
       </div>
-    </>
+    </OperatePage>
   );
 }
