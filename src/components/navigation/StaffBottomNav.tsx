@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
-import { LogOut } from 'lucide-react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import clsx from 'clsx';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
+import { useNotificationUnreadQuery } from '../../hooks/queries/useNotificationsQuery';
+import { useTheme } from '../../context/ThemeContext';
 import { routePrefetchHandlers } from '../../lib/routePrefetch';
 import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
+import { InstallPrompt } from '../InstallPrompt';
 import { Sheet } from '../ui';
 import type {
   StaffBottomNavMoreItem,
@@ -37,7 +40,9 @@ export function StaffBottomNav({
   greetingSubtitle = 'Atajos y cuenta',
 }: StaffBottomNavProps) {
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
+  const { data: notificationUnread = 0 } = useNotificationUnreadQuery(true);
   const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
@@ -53,7 +58,7 @@ export function StaffBottomNav({
 
   useEffect(() => {
     setMoreOpen(false);
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   const moreTabHighlighted = isMoreTabActive(location.pathname, location.search) || moreOpen;
 
@@ -71,10 +76,11 @@ export function StaffBottomNav({
     return sections;
   }, [moreItems]);
 
-  const moreMenuBadgeCount = useMemo(
-    () => moreItems.reduce((total, item) => total + (item.badgeCount ?? 0), 0),
-    [moreItems]
-  );
+  const moreMenuBadgeCount = useMemo(() => {
+    const pending = moreItems.reduce((total, item) => total + (item.badgeCount ?? 0), 0);
+    const hasNotifItem = moreItems.some((item) => item.showNotificationBadge);
+    return pending + (hasNotifItem ? notificationUnread : 0);
+  }, [moreItems, notificationUnread]);
 
   const initials = greetingName
     ? greetingName
@@ -103,26 +109,26 @@ export function StaffBottomNav({
         compact
       >
         {greetingName && (
-          <div className="animate-in fade-in slide-in-from-bottom-1 mb-2.5 flex items-center gap-2.5 duration-200">
+          <div className="mb-2 flex items-center gap-2">
             <div
-              className="bg-brand/15 text-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+              className="bg-brand/15 text-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold"
               aria-hidden
             >
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-text truncate text-sm font-semibold">
+              <p className="text-text truncate text-[0.8125rem] font-semibold tracking-[-0.014em]">
                 Hola, {greetingName.split(/\s+/)[0]}
               </p>
-              <p className="text-text-muted text-[11px]">{greetingSubtitle}</p>
+              <p className="text-text-muted text-[0.6875rem] leading-tight">{greetingSubtitle}</p>
             </div>
           </div>
         )}
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {moreSections.map((section) => (
-            <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-wide uppercase">
+            <div key={section.label}>
+              <p className="text-text-muted mb-1 px-0.5 text-[0.6875rem] font-semibold tracking-[-0.01em]">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -137,7 +143,11 @@ export function StaffBottomNav({
                       ? chatUnread === 1
                         ? '1 sin leer'
                         : `${chatUnread > 99 ? '99+' : chatUnread} sin leer`
-                      : null;
+                      : item.showNotificationBadge && notificationUnread > 0
+                        ? notificationUnread === 1
+                          ? '1 sin leer'
+                          : `${notificationUnread > 99 ? '99+' : notificationUnread} sin leer`
+                        : null;
                   const itemBadge = item.badgeCount ?? 0;
                   const badgeLabel =
                     itemBadge > 0
@@ -152,10 +162,10 @@ export function StaffBottomNav({
                         {...routePrefetchHandlers(item.href)}
                         onClick={closeMore}
                         className={clsx(
-                          'tap-feedback relative flex min-h-[3.75rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center transition-[transform,opacity,background-color] duration-150',
+                          'tap-feedback relative flex h-[3.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-[var(--radius-card)] border px-1.5 py-1.5 text-center transition-colors',
                           itemActive
-                            ? 'border-border bg-surface-overlay text-text'
-                            : 'border-border/60 text-text-secondary hover:bg-surface-overlay/60 hover:text-text bg-transparent'
+                            ? 'border-border bg-surface-raised text-text'
+                            : 'border-border/60 text-text-secondary hover:bg-surface-raised/70 hover:text-text bg-transparent'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
                         aria-label={
@@ -168,24 +178,31 @@ export function StaffBottomNav({
                       >
                         {itemActive ? (
                           <span
-                            className="bg-text-muted absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+                            className="bg-brand absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
                             aria-hidden
                           />
                         ) : null}
                         <span className="relative inline-flex">
-                          <item.icon className="h-5 w-5" aria-hidden />
+                          <item.icon className="operate-icon h-4 w-4" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
-                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                            <span className="ring-surface bg-danger text-small absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[0.625rem] leading-none font-bold text-white tabular-nums ring-2">
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
-                          {!item.showUnreadBadge && itemBadge > 0 ? (
-                            <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                          {item.showNotificationBadge && notificationUnread > 0 && (
+                            <span className="ring-surface bg-danger text-small absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[0.625rem] leading-none font-bold text-white tabular-nums ring-2">
+                              {notificationUnread > 99 ? '99+' : notificationUnread}
+                            </span>
+                          )}
+                          {!item.showUnreadBadge && !item.showNotificationBadge && itemBadge > 0 ? (
+                            <span className="ring-surface text-small absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-[0.625rem] leading-none font-bold text-white tabular-nums ring-2">
                               {itemBadge > 99 ? '99+' : itemBadge}
                             </span>
                           ) : null}
                         </span>
-                        <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
+                        <span className="text-[0.6875rem] leading-tight font-semibold">
+                          {item.name}
+                        </span>
                       </Link>
                     </li>
                   );
@@ -195,18 +212,35 @@ export function StaffBottomNav({
           ))}
         </div>
 
-        <div className="border-border-subtle mt-2.5 border-t pt-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              closeMore();
-              requestLogout();
-            }}
-            className="tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-red-600 transition-[background-color,transform,opacity] duration-150 hover:bg-red-500/10 dark:text-red-400"
-          >
-            <LogOut className="h-4 w-4" aria-hidden />
-            Cerrar sesión
-          </button>
+        <div className="border-border-subtle mt-2 space-y-1 border-t pt-1.5">
+          <div className="px-0.5 empty:hidden">
+            <InstallPrompt />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="tap-feedback text-text-secondary hover:bg-surface-overlay hover:text-text flex min-h-10 touch-manipulation items-center justify-center gap-1.5 rounded-[var(--radius-button)] px-2 text-xs font-medium transition-colors"
+            >
+              {theme === 'light' ? (
+                <Moon className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              ) : (
+                <Sun className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              )}
+              {theme === 'light' ? 'Oscuro' : 'Claro'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeMore();
+                requestLogout();
+              }}
+              className="tap-feedback text-danger hover:bg-danger/10 flex min-h-10 touch-manipulation items-center justify-center gap-1.5 rounded-[var(--radius-button)] px-2 text-xs font-medium transition-colors"
+            >
+              <LogOut className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              Salir
+            </button>
+          </div>
         </div>
       </Sheet>
 
@@ -248,10 +282,10 @@ export function StaffBottomNav({
                             active && 'member-bottom-nav-tab-icon--active'
                           )}
                         >
-                          <item.icon className="h-5 w-5" aria-hidden />
+                          <item.icon className="operate-icon h-5 w-5" aria-hidden />
                         </span>
                         {moreMenuBadgeCount > 0 ? (
-                          <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                          <span className="ring-surface text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 leading-none font-bold text-white tabular-nums ring-2">
                             {moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount}
                           </span>
                         ) : null}
@@ -284,10 +318,10 @@ export function StaffBottomNav({
                           active && 'member-bottom-nav-tab-icon--active'
                         )}
                       >
-                        <item.icon className="h-5 w-5" aria-hidden />
+                        <item.icon className="operate-icon h-5 w-5" aria-hidden />
                       </span>
                       {item.showUnreadBadge && chatUnread > 0 && (
-                        <span className="ring-surface absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none font-bold text-white tabular-nums ring-2">
+                        <span className="ring-surface bg-danger text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold text-white tabular-nums ring-2">
                           {chatUnread > 99 ? '99+' : chatUnread}
                         </span>
                       )}

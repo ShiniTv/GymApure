@@ -24,7 +24,7 @@ export function AccordionItem({
   return (
     <div
       className={cn(
-        'bg-surface overflow-hidden rounded-xl border transition-colors duration-200',
+        'bg-surface overflow-hidden rounded-[var(--radius-card)] border transition-colors duration-200',
         open
           ? 'border-brand/30 border-l-brand/50 dark:border-brand/25 border-l-2'
           : 'border-border/80 dark:border-border/80',

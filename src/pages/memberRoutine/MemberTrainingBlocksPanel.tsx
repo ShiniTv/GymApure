@@ -168,11 +168,11 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
           <p className="text-text-muted mt-1 text-xs">
             {block.objective} · {block.start_date} → {block.end_date}
           </p>
-          <p className="text-text-muted mt-1 text-[11px]">
+          <p className="text-text-muted text-small mt-1">
             {block.intensity_method.replaceAll('_', ' ')} · {block.status}
           </p>
           {block.status === 'active' && (
-            <p className="text-text-muted mt-1 text-[11px]">
+            <p className="text-text-muted text-small mt-1">
               {isReviewDue(block)
                 ? 'Revisión pendiente'
                 : `Última revisión: ${new Date(
@@ -207,7 +207,7 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
             {block.status !== 'archived' && (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="secondary"
                 onClick={() => void updateStatus(block.id, 'archived')}
               >
                 Archivar

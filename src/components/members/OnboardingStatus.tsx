@@ -37,7 +37,7 @@ export function OnboardingStatus({ onboarding, compact = false, variant }: Onboa
   if (mode === 'chip') {
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400"
+        className="text-small inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 font-semibold text-amber-700 dark:text-amber-400"
         title={`Pendiente: ${detail}`}
       >
         <AlertTriangle className="h-2.5 w-2.5 shrink-0" aria-hidden />
@@ -49,7 +49,7 @@ export function OnboardingStatus({ onboarding, compact = false, variant }: Onboa
   if (mode === 'compact') {
     return (
       <div
-        className="flex items-center gap-1.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+        className="text-small flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-400"
         title={`Pendiente: ${detail}`}
       >
         <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />

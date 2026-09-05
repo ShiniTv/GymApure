@@ -6,16 +6,17 @@ import {
   Button,
   Card,
   Modal,
-  PageHeader,
   Label,
   Input,
   Select,
-  Spinner,
   EmptyState,
-  PageState,
   BackToDashboardLink,
   IconButton,
+  Skeleton,
+  ListRowSkeleton,
+  StatCardSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { MacroRing } from '../components/nutrition/MacroRing';
 import { CalorieSemiGauge } from '../components/nutrition/CalorieSemiGauge';
 import { WeekDateStrip } from '../components/nutrition/WeekDateStrip';
@@ -160,6 +161,8 @@ export default function Nutrition() {
     setSaving(true);
     setError('');
     try {
+      // Always pin to the selected local day. Omitting logged_at uses DB NOW() (UTC),
+      // which after evening in UTC−4 lands on the next UTC date and disappears from "hoy".
       const body: Record<string, unknown> = {
         meal_type: mealForm.meal_type,
         description: mealForm.description.trim(),
@@ -167,10 +170,8 @@ export default function Nutrition() {
         protein_g: parseFloat(mealForm.protein_g) || 0,
         carbs_g: parseFloat(mealForm.carbs_g) || 0,
         fat_g: parseFloat(mealForm.fat_g) || 0,
+        logged_at: `${selectedDate}T12:00:00.000Z`,
       };
-      if (selectedDate !== formatLocalDate(new Date())) {
-        body.logged_at = `${selectedDate}T12:00:00.000Z`;
-      }
       if (editingLog) {
         const res = await apiFetch(`/api/nutrition/logs/${editingLog.id}`, {
           method: 'PATCH',
@@ -217,10 +218,30 @@ export default function Nutrition() {
 
   if (loading && !plan) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted text-small mt-3">Cargando nutrición…</p>
-      </PageState>
+      <OperatePage maxWidth="max-w-4xl">
+        <div aria-busy="true" aria-label="Cargando nutrición">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-3 w-36" />
+          </div>
+          <div className="flex gap-2 overflow-hidden px-1">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-11 shrink-0 rounded-[var(--radius-card)]" />
+            ))}
+          </div>
+          <div className="md:grid md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] md:gap-4">
+            <div className="space-y-3">
+              <Skeleton className="mx-auto h-36 w-full max-w-xs rounded-[var(--radius-card)]" />
+              <div className="grid grid-cols-3 gap-3 px-2">
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+              </div>
+            </div>
+            <ListRowSkeleton rows={4} />
+          </div>
+        </div>
+      </OperatePage>
     );
   }
 
@@ -228,9 +249,9 @@ export default function Nutrition() {
 
   if (!plan) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-4xl">
-        <PageHeader
-          compact
+      <OperatePage maxWidth="max-w-4xl">
+        <OperateHeader
+          icon={UtensilsCrossed}
           title={
             <>
               Mi <span className="text-brand">nutrición</span>
@@ -249,7 +270,7 @@ export default function Nutrition() {
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
@@ -268,9 +289,9 @@ export default function Nutrition() {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-4xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-4xl">
+      <OperateHeader
+        icon={UtensilsCrossed}
         title={
           <>
             Mi <span className="text-brand">nutrición</span>
@@ -352,11 +373,11 @@ export default function Nutrition() {
           )}
         </div>
 
-        <Card padding="sm" rounded="xl" className="border-border md:p-4">
+        <Card padding="md" rounded="xl" className="border-border">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="section-title">Comidas del día</h2>
             {canEditLogs && (
-              <Button size="sm" variant="ghost" onClick={openAddMeal} className="text-brand">
+              <Button size="sm" variant="secondary" onClick={openAddMeal} className="text-brand">
                 <Plus className="h-4 w-4" />
                 Añadir
               </Button>
@@ -402,7 +423,7 @@ export default function Nutrition() {
                   key={preset.meal_type}
                   type="button"
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   className="h-8 px-2.5 text-xs"
                   onClick={() => openQuickMeal(preset)}
                 >
@@ -413,7 +434,7 @@ export default function Nutrition() {
           ) : null}
           {logs.length === 0 ? (
             <div className="flex flex-col items-center gap-2.5 py-5 text-center">
-              <div className="bg-surface-raised flex h-10 w-10 items-center justify-center rounded-2xl">
+              <div className="bg-surface-raised flex h-8 w-8 items-center justify-center rounded-[var(--radius-card)]">
                 <UtensilsCrossed className="text-text-muted h-4 w-4" />
               </div>
               <p className="text-text-muted text-sm">Aún no registraste comidas hoy.</p>
@@ -438,7 +459,7 @@ export default function Nutrition() {
                     {items.map((log) => (
                       <li
                         key={log.id}
-                        className="border-border bg-surface-raised/70 flex items-start justify-between gap-2 rounded-2xl border px-3 py-2.5"
+                        className="border-border bg-surface-raised/70 flex items-start justify-between gap-2 rounded-[var(--radius-card)] border px-3 py-2.5"
                       >
                         <div className="min-w-0">
                           <p className="text-text truncate text-sm font-semibold">
@@ -584,7 +605,7 @@ export default function Nutrition() {
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               onClick={() => setShowMealModal(false)}
               disabled={saving || analyzing}
             >
@@ -616,7 +637,7 @@ export default function Nutrition() {
         <p className="text-text-muted mb-6 text-xs">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => setDeleteTarget(null)}
             disabled={deleting}
@@ -633,6 +654,6 @@ export default function Nutrition() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

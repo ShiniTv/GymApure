@@ -1,4 +1,5 @@
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 
 interface ProgressRingProps {
   value: number;
@@ -47,20 +48,18 @@ export function ProgressRing({
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className="text-brand transition-[stroke-dashoffset] duration-700 ease-out"
+            className="text-brand transition-[stroke-dashoffset] duration-[280ms] [transition-timing-function:var(--ease-out)]"
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-sm font-bold text-text tabular-nums">
+          <p className={cn(typography.statValueSm, 'leading-none')}>
             {value}
-            <span className="font-semibold text-text-muted"> / {max}</span>
+            <span className="text-text-muted font-semibold"> / {max}</span>
           </p>
         </div>
       </div>
-      <p className="mt-1.5 text-[11px] font-semibold text-text-secondary">{label}</p>
-      {sublabel && (
-        <p className="text-[10px] leading-none text-text-secondary">{sublabel}</p>
-      )}
+      <p className="text-small text-text-secondary mt-1.5 font-semibold">{label}</p>
+      {sublabel && <p className="text-small text-text-secondary leading-none">{sublabel}</p>}
     </div>
   );
 }

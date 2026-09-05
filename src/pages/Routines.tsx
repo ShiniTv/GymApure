@@ -15,7 +15,6 @@ import { useAuth } from '../context/AuthContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useToastOptional } from '../context/ToastContext';
 import {
-  PageHeader,
   SegmentedControl,
   BackToDashboardLink,
   Card,
@@ -23,6 +22,7 @@ import {
   Button,
   CalendarViewSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { clientLogger } from '../lib/clientLogger';
 import {
   format,
@@ -683,7 +683,7 @@ export default function Routines() {
   }, [view, selectedDay]);
 
   const routinesPage = (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
+    <OperatePage maxWidth="max-w-7xl">
       {isMember && routinesLoadError && (
         <EmptyState
           icon={Dumbbell}
@@ -699,9 +699,8 @@ export default function Routines() {
 
       {!(isMember && routinesLoadError) && (
         <>
-          <PageHeader
-            compact
-            showTitleOnMobile
+          <OperateHeader
+            icon={Dumbbell}
             title={
               isMember ? (
                 <>
@@ -709,7 +708,7 @@ export default function Routines() {
                 </>
               ) : (
                 <>
-                  Gestión de <span className="text-brand">rutinas</span>
+                  <span className="text-brand">Rutinas</span>
                 </>
               )
             }
@@ -722,75 +721,82 @@ export default function Routines() {
                   ? (() => {
                       const active = assignments.filter((m) => m.routines && m.routines.length > 0);
                       const total = active.reduce((sum, m) => sum + (m.routines?.length ?? 0), 0);
-                      if (loadingAssignments) return 'Cargando asignaciones…';
+                      if (loadingAssignments) return 'Asignaciones activas';
                       return `${active.length} miembro${active.length !== 1 ? 's' : ''} · ${total} rutina${total !== 1 ? 's' : ''} activa${total !== 1 ? 's' : ''}`;
                     })()
                   : view === 'calendar'
                     ? 'Semana y asignaciones por día'
                     : `${routines.length} plantilla${routines.length !== 1 ? 's' : ''} · listas para asignar`
             }
-            action={<BackToDashboardLink />}
+            action={
+              <>
+                <BackToDashboardLink iconOnly className="sm:hidden" />
+                <span className="hidden sm:inline-flex">
+                  <BackToDashboardLink />
+                </span>
+              </>
+            }
           />
 
           {isMember &&
             (memberRoutineHighlights.upcoming.length > 0 ||
               memberRoutineHighlights.ending.length > 0) && (
               <Card padding="sm" rounded="xl" className="space-y-3">
-                <h3 className="text-text text-sm font-bold">Asignaciones</h3>
+                <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">Asignaciones</h3>
                 {memberRoutineHighlights.upcoming.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
-                      Próximas
-                    </p>
-                    {memberRoutineHighlights.upcoming.map((routine) => (
-                      <div
-                        key={routine.id}
-                        className="bg-brand/5 border-brand/15 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-text truncate text-sm font-semibold">{routine.name}</p>
-                          {routine.start_date && (
-                            <p className="text-small text-text-muted">
-                              Inicia{' '}
-                              {format(parseDateOnly(routine.start_date), 'dd MMM yyyy', {
-                                locale: es,
-                              })}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-small text-text-secondary shrink-0 font-medium">
-                          Próxima
-                        </span>
-                      </div>
-                    ))}
+                  <div className="space-y-0">
+                    <p className="text-small text-text-muted mb-1 font-medium">Próximas</p>
+                    <ul className="border-border/80 overflow-hidden rounded-[var(--radius-card)] border">
+                      {memberRoutineHighlights.upcoming.map((routine) => (
+                        <li
+                          key={routine.id}
+                          className="border-border/60 flex min-h-11 items-center justify-between gap-2 border-b px-3 py-2 last:border-b-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-text truncate text-sm font-medium">{routine.name}</p>
+                            {routine.start_date && (
+                              <p className="text-small text-text-muted">
+                                Inicia{' '}
+                                {format(parseDateOnly(routine.start_date), 'dd MMM yyyy', {
+                                  locale: es,
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-small text-text-secondary shrink-0 font-medium">
+                            Próxima
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 {memberRoutineHighlights.ending.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-small text-text-muted font-semibold tracking-wide uppercase">
-                      Por vencer
-                    </p>
-                    {memberRoutineHighlights.ending.map((routine) => (
-                      <div
-                        key={routine.id}
-                        className="border-warning/20 bg-warning/5 flex items-center justify-between gap-2 rounded-lg border px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-text truncate text-sm font-semibold">{routine.name}</p>
-                          {routine.end_date && (
-                            <p className="text-small text-text-muted">
-                              Hasta{' '}
-                              {format(parseDateOnly(routine.end_date), 'dd MMM yyyy', {
-                                locale: es,
-                              })}
-                            </p>
-                          )}
-                        </div>
-                        <span className="text-small text-text-secondary shrink-0 font-medium">
-                          Por vencer
-                        </span>
-                      </div>
-                    ))}
+                  <div className="space-y-0">
+                    <p className="text-small text-text-muted mb-1 font-medium">Por vencer</p>
+                    <ul className="border-border/80 overflow-hidden rounded-[var(--radius-card)] border">
+                      {memberRoutineHighlights.ending.map((routine) => (
+                        <li
+                          key={routine.id}
+                          className="border-border/60 flex min-h-11 items-center justify-between gap-2 border-b px-3 py-2 last:border-b-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-text truncate text-sm font-medium">{routine.name}</p>
+                            {routine.end_date && (
+                              <p className="text-small text-text-muted">
+                                Hasta{' '}
+                                {format(parseDateOnly(routine.end_date), 'dd MMM yyyy', {
+                                  locale: es,
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-small text-warning shrink-0 font-medium">
+                            Por vencer
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </Card>
@@ -798,9 +804,9 @@ export default function Routines() {
 
           {user?.role !== 'member' && (
             <SegmentedControl
-              variant="compact"
               layout="wrap"
-              className="w-fit max-w-full"
+              fullWidth
+              className="w-full"
               value={view}
               onChange={changeView}
               options={[
@@ -895,7 +901,8 @@ export default function Routines() {
             <SegmentedControl
               variant="compact"
               layout="wrap"
-              className="w-fit max-w-full"
+              fullWidth
+              className="w-full"
               value={showMemberTemplates ? 'templates' : 'assigned'}
               onChange={(next) => {
                 if (next === 'templates') setSearchParams({ view: 'templates' });
@@ -1058,7 +1065,7 @@ export default function Routines() {
           )}
         </>
       )}
-    </div>
+    </OperatePage>
   );
 
   if (isMember) {

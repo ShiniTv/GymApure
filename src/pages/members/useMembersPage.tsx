@@ -803,31 +803,43 @@ export function useMembersPage() {
     ]
   );
 
-  const membersEmptyAction = showTrainerAssignCta ? (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <Button size="sm" onClick={() => navigate('/routines?view=calendar&assign=1')}>
-        <Dumbbell className="h-4 w-4" /> Asignar rutina
+  const clearRosterFilters = () => {
+    handleTrainerRosterFilter('');
+    setExpiringFilter(false);
+    setSearchInput('');
+    setPage(1);
+  };
+
+  const membersEmptyAction =
+    needsFilter || expiringFilter ? (
+      <Button size="sm" variant="secondary" onClick={clearRosterFilters}>
+        Quitar filtro
       </Button>
+    ) : showTrainerAssignCta ? (
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Button size="sm" onClick={() => navigate('/routines?view=calendar&assign=1')}>
+          <Dumbbell className="h-4 w-4" /> Asignar rutina
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setIsAdding(true);
+          }}
+        >
+          <Plus className="h-4 w-4" /> Nuevo miembro
+        </Button>
+      </div>
+    ) : isTrainer ? (
       <Button
         size="sm"
-        variant="ghost"
         onClick={() => {
           setIsAdding(true);
         }}
       >
         <Plus className="h-4 w-4" /> Nuevo miembro
       </Button>
-    </div>
-  ) : isTrainer ? (
-    <Button
-      size="sm"
-      onClick={() => {
-        setIsAdding(true);
-      }}
-    >
-      <Plus className="h-4 w-4" /> Nuevo miembro
-    </Button>
-  ) : undefined;
+    ) : undefined;
 
   return {
     user,

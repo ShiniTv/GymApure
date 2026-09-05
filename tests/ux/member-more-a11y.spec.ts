@@ -26,7 +26,7 @@ test.describe('Member sheet Más accesibilidad', () => {
     await expect(sheet).toBeVisible();
 
     const closeBtn = sheet.getByRole('button', { name: /cerrar menú/i });
-    const logoutBtn = sheet.getByRole('button', { name: /cerrar sesión/i });
+    const logoutBtn = sheet.getByRole('button', { name: /salir/i });
 
     await closeBtn.focus();
     await page.keyboard.press('Shift+Tab');

@@ -22,7 +22,7 @@ export function Alert({ variant = 'error', children, className, title }: AlertPr
     <div
       role="alert"
       className={cn(
-        'rounded-lg border p-3 text-sm leading-relaxed',
+        'rounded-[var(--radius-card)] border p-3 text-sm leading-relaxed',
         variantMap[variant],
         className
       )}

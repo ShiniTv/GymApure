@@ -188,14 +188,14 @@ export default function CheckIn() {
       disabled={status === 'scanning'}
       preventMobileKeyboard={isKioskMode && !isMobileKiosk}
       kioskSize={isMobileKiosk ? 'compact' : 'default'}
-      className={!isKioskMode ? 'py-2.5 text-base sm:text-lg' : undefined}
+      className={!isKioskMode ? 'py-2.5 text-base' : undefined}
     />
   );
 
   const submitButton = (
     <Button
       type="submit"
-      size="lg"
+      size={isKioskMode ? 'lg' : 'md'}
       loading={status === 'scanning'}
       disabled={!cedula.trim()}
       className={cn(
@@ -234,7 +234,7 @@ export default function CheckIn() {
             ) : !isKioskMode ? (
               <div
                 className={cn(
-                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-3xl border-2 transition-all',
+                  'relative mx-auto flex items-center justify-center overflow-hidden rounded-[var(--radius-card)] border-2 transition-[border-color,box-shadow,background-color,opacity] duration-200 [transition-timing-function:var(--ease-out)]',
                   'h-32 w-32',
                   status === 'scanning'
                     ? isCheckIn
@@ -266,7 +266,7 @@ export default function CheckIn() {
               <h2
                 className={cn(
                   'text-text font-semibold',
-                  isKioskMode ? (isMobileKiosk ? 'text-xl' : 'text-2xl') : 'text-lg'
+                  isKioskMode ? (isMobileKiosk ? 'text-xl' : 'text-2xl') : 'text-sm'
                 )}
               >
                 {status === 'scanning'
@@ -298,7 +298,7 @@ export default function CheckIn() {
                 <button
                   type="button"
                   onClick={() => setShowManualCedula(true)}
-                  className="border-border bg-surface-raised text-text hover:bg-surface-overlay flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors"
+                  className="border-border bg-surface-raised text-text hover:bg-surface-overlay flex min-h-[var(--touch-min)] w-full touch-manipulation items-center justify-center gap-2 rounded-[var(--radius-card)] border px-4 py-3 text-sm font-semibold transition-colors"
                 >
                   Ingresar cédula manualmente
                   <ChevronDown className="h-4 w-4 opacity-70" aria-hidden />
@@ -333,7 +333,7 @@ export default function CheckIn() {
           <div
             className={cn(
               'mx-auto mb-6 flex items-center justify-center rounded-full',
-              isKioskMode ? (isMobileKiosk ? 'h-24 w-24' : 'h-32 w-32') : 'h-24 w-24',
+              isKioskMode ? (isMobileKiosk ? 'h-24 w-24' : 'h-32 w-32') : 'h-16 w-16',
               status === 'success'
                 ? isCheckIn
                   ? 'bg-success/10'
@@ -342,15 +342,19 @@ export default function CheckIn() {
             )}
           >
             {status === 'success' ? (
-              <CheckCircle className={isKioskMode && !isMobileKiosk ? 'h-16 w-16' : 'h-12 w-12'} />
+              <CheckCircle
+                className={isKioskMode ? (isMobileKiosk ? 'h-12 w-12' : 'h-16 w-16') : 'h-8 w-8'}
+              />
             ) : (
-              <XCircle className={isKioskMode && !isMobileKiosk ? 'h-16 w-16' : 'h-12 w-12'} />
+              <XCircle
+                className={isKioskMode ? (isMobileKiosk ? 'h-12 w-12' : 'h-16 w-16') : 'h-8 w-8'}
+              />
             )}
           </div>
           <h2
             className={cn(
               'text-text mb-2 font-semibold',
-              isKioskMode ? (isMobileKiosk ? 'text-2xl' : 'text-4xl') : 'text-3xl'
+              isKioskMode ? (isMobileKiosk ? 'text-2xl' : 'text-3xl') : 'text-h1'
             )}
           >
             {status === 'success'
@@ -363,7 +367,7 @@ export default function CheckIn() {
             <p
               className={cn(
                 'text-text font-semibold',
-                isKioskMode ? (isMobileKiosk ? 'text-lg' : 'text-2xl') : 'text-xl'
+                isKioskMode ? (isMobileKiosk ? 'text-lg' : 'text-xl') : 'text-base'
               )}
             >
               {status === 'success' ? userName : userName || 'Error de validación'}
@@ -401,7 +405,7 @@ export default function CheckIn() {
           ) : (
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               className={cn(isKioskMode ? 'mt-8' : 'mt-4')}
               onClick={() => setStatus('idle')}
             >
@@ -449,7 +453,7 @@ export default function CheckIn() {
               <p
                 className={cn(
                   'font-mono font-bold tabular-nums',
-                  isLargeKioskLayout ? 'text-3xl md:text-4xl' : 'text-2xl'
+                  isLargeKioskLayout ? 'text-2xl md:text-3xl' : 'text-xl'
                 )}
               >
                 {format(now, 'HH:mm:ss')}
@@ -494,7 +498,7 @@ export default function CheckIn() {
               <div className="w-full max-w-md space-y-6">
                 <Suspense
                   fallback={
-                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-2xl">
+                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-[var(--radius-card)]">
                       <Spinner size="lg" />
                     </div>
                   }
@@ -507,7 +511,7 @@ export default function CheckIn() {
                   />
                 </Suspense>
                 <div className="text-center">
-                  <h2 className="mb-2 text-2xl font-bold">
+                  <h2 className="mb-2 text-xl font-semibold tracking-tight">
                     {isCheckIn ? 'Escanee su carné' : 'Escanee para salir'}
                   </h2>
                   <p className="text-text-muted text-base leading-relaxed">
@@ -535,7 +539,7 @@ export default function CheckIn() {
 
   return (
     <AuthShell variant="kiosk" backLink={{ to: '/reception', label: 'Volver a recepción' }}>
-      <AuthBrandHeader subtitle="Control de acceso" size="lg" className="mb-4 sm:mb-6" />
+      <AuthBrandHeader subtitle="Control de acceso" size="md" className="mb-4 sm:mb-6" />
       <SegmentedControl
         variant="compact"
         className="mb-4 w-fit max-w-full sm:mb-6"
@@ -549,7 +553,7 @@ export default function CheckIn() {
           { value: 'check-out', label: 'Salida', icon: LogOut, accent: 'check-out' },
         ]}
       />
-      <Card padding="sm" rounded="xl" className="md:p-5">
+      <Card padding="md" rounded="xl">
         {formContent}
       </Card>
       <div className="mt-4 flex flex-col items-center gap-3 sm:mt-6">

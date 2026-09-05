@@ -20,7 +20,16 @@ import {
   toDisplayErrorMessage,
 } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
-import { Button, Card, Input, Label, Select, Spinner, CedulaInput } from '../../components/ui';
+import {
+  Button,
+  Card,
+  Input,
+  Label,
+  Select,
+  Spinner,
+  CedulaInput,
+  Alert,
+} from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
 import { useExchangeRateQuery } from '../../hooks/queries/useExchangeRateQuery';
@@ -249,16 +258,16 @@ export default function ReceptionWalkInWizard({
 
   if (success) {
     return (
-      <Card padding="sm" rounded="xl" className="mx-auto w-full max-w-3xl md:p-4">
+      <Card padding="md" rounded="xl" className="mx-auto w-full max-w-3xl">
         <div className="flex items-center gap-3 text-emerald-600">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
-            <h3 className="text-text text-lg font-bold">Registro completado</h3>
+            <h3 className="text-text text-h2 font-semibold">Registro completado</h3>
             <p className="text-text-muted text-sm">{success.user.full_name} ya puede usar el gym</p>
           </div>
         </div>
 
-        <div className="border-border space-y-2 rounded-2xl border p-4 text-sm">
+        <div className="border-border space-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
           <p>
             <span className="text-text-muted">Cédula:</span> <strong>{success.user.cedula}</strong>
           </p>
@@ -298,33 +307,35 @@ export default function ReceptionWalkInWizard({
         </div>
 
         {success.email_sent ? (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="label-caps mb-2 flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+          <Alert variant="success">
+            <p className="label-caps mb-2 flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Correo enviado
             </p>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed">
               Se envió un correo a <strong>{success.user.email}</strong> con un enlace para crear su
               contraseña. Válido 48 horas.
             </p>
-            <p className="text-text-muted mt-2 text-xs">
+            <p className="mt-2 text-xs opacity-80">
               Indique al cliente que revise bandeja de entrada y spam.
             </p>
-          </div>
+          </Alert>
         ) : (
           <>
-            <div className="flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                No se pudo enviar el correo. Copie el enlace de un solo uso y entréguelo al cliente
-                (WhatsApp, QR o escrito). Válido 48 horas.
-              </p>
-            </div>
+            <Alert variant="warning">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                  No se pudo enviar el correo. Copie el enlace de un solo uso y entréguelo al
+                  cliente (WhatsApp, QR o escrito). Válido 48 horas.
+                </p>
+              </div>
+            </Alert>
             {success.password_setup_url && (
-              <div className="bg-brand/10 border-brand/20 rounded-2xl border p-4">
-                <p className="label-caps text-brand mb-2">Enlace para crear contraseña</p>
+              <Alert variant="info">
+                <p className="label-caps mb-2">Enlace para crear contraseña</p>
                 <div className="flex items-center gap-2">
-                  <code className="text-text flex-1 font-mono text-xs font-semibold break-all">
+                  <code className="flex-1 font-mono text-xs font-semibold break-all">
                     {success.password_setup_url}
                   </code>
                   <Button variant="secondary" size="sm" onClick={() => void copySetupUrl()}>
@@ -332,10 +343,10 @@ export default function ReceptionWalkInWizard({
                     {copied ? 'Copiado' : 'Copiar'}
                   </Button>
                 </div>
-                <p className="text-text-muted mt-2 text-xs">
+                <p className="mt-2 text-xs opacity-80">
                   El cliente abre el enlace y elige su contraseña. No comparta contraseñas en claro.
                 </p>
-              </div>
+              </Alert>
             )}
           </>
         )}
@@ -351,9 +362,9 @@ export default function ReceptionWalkInWizard({
             Registrar salida ahora
           </Button>
         )}
-        {checkoutError && <p className="text-sm text-red-600 dark:text-red-400">{checkoutError}</p>}
+        {checkoutError && <p className="text-danger text-sm">{checkoutError}</p>}
 
-        <Button className="min-h-11 w-full" onClick={resetWizard}>
+        <Button size="lg" className="w-full" onClick={resetWizard}>
           Registrar otra persona
         </Button>
       </Card>
@@ -390,7 +401,7 @@ export default function ReceptionWalkInWizard({
               }
             }}
             className={cn(
-              'inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors',
+              'text-small inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-semibold transition-colors',
               i === step
                 ? 'border-brand/40 bg-brand/10 text-brand'
                 : i < step
@@ -405,7 +416,7 @@ export default function ReceptionWalkInWizard({
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-600">
+        <div className="border-danger/20 text-danger rounded-xl border bg-red-500/10 px-3 py-2 text-xs font-semibold">
           {error}
         </div>
       )}
@@ -506,15 +517,15 @@ export default function ReceptionWalkInWizard({
                     setForm({ ...form, membership_id: String(plan.id) });
                   }}
                   className={cn(
-                    'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-all',
+                    'min-h-[4.5rem] touch-manipulation rounded-xl border p-3 text-left transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                     form.membership_id === String(plan.id)
                       ? 'border-brand/40 bg-brand/10'
-                      : 'hover:border-brand/30 border-border'
+                      : 'can-hover:hover:border-brand/30 border-border'
                   )}
                 >
                   <p className="text-text text-sm font-semibold">{plan.name}</p>
                   <p className="text-text-muted mt-0.5 text-xs">{plan.duration_days} días</p>
-                  <p className="text-brand mt-1 text-base font-bold">${plan.price_usd}</p>
+                  <p className="text-brand mt-1 text-lg font-semibold">${plan.price_usd}</p>
                 </button>
               ))}
             </div>
@@ -554,7 +565,7 @@ export default function ReceptionWalkInWizard({
           <div>
             <Label>Comprobante (opcional)</Label>
             <div className="flex w-full items-center justify-center">
-              <label className="hover:bg-brand/5 hover:border-brand/50 border-border bg-surface-raised group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all">
+              <label className="can-hover:hover:bg-brand/5 can-hover:hover:border-brand/50 border-border bg-surface-raised group flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]">
                 <Upload className="group-hover:text-brand text-text-muted mb-2 h-7 w-7 transition-colors" />
                 <p className="group-hover:text-brand text-text-muted text-xs font-medium transition-colors">
                   Adjuntar captura de pago
@@ -573,7 +584,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <div className="bg-surface-raised rounded-2xl p-4">
+          <div className="bg-surface-raised rounded-[var(--radius-card)] p-4">
             <p className="stat-label">Monto a cobrar</p>
             <p className="stat-value mt-1">${selectedPlan?.price_usd ?? '—'} USD</p>
             {needsBsRate && amountBs && exchangeRate && (
@@ -585,7 +596,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-2xl border p-4">
+          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-[var(--radius-card)] border p-4">
             <input
               type="checkbox"
               checked={form.check_in}
@@ -594,7 +605,7 @@ export default function ReceptionWalkInWizard({
               }}
               className="accent-brand h-5 w-5 rounded"
             />
-            <span className="text-text-secondary text-sm font-bold">
+            <span className="text-text-secondary text-sm font-semibold">
               Autorizar entrada al gym al finalizar
             </span>
           </label>
@@ -602,7 +613,7 @@ export default function ReceptionWalkInWizard({
       )}
 
       {step === 3 && (
-        <div className="border-border space-y-3 rounded-2xl border p-4 text-sm">
+        <div className="border-border space-y-3 rounded-[var(--radius-card)] border p-4 text-sm">
           <p>
             <span className="text-text-muted">Nombre:</span> <strong>{form.full_name}</strong>
           </p>
@@ -638,19 +649,20 @@ export default function ReceptionWalkInWizard({
 
       <div className="flex gap-3 pt-2">
         {step > 0 && (
-          <Button variant="secondary" className="min-h-11" onClick={goBack} disabled={submitting}>
+          <Button variant="secondary" size="lg" onClick={goBack} disabled={submitting}>
             <ChevronLeft className="mr-1 h-5 w-5" />
             Atrás
           </Button>
         )}
         {step < STEPS.length - 1 ? (
-          <Button className="min-h-11 flex-1" onClick={goNext}>
+          <Button size="lg" className="flex-1" onClick={goNext}>
             Siguiente
             <ChevronRight className="ml-1 h-5 w-5" />
           </Button>
         ) : (
           <Button
-            className="min-h-11 flex-1"
+            size="lg"
+            className="flex-1"
             onClick={() => void handleSubmit()}
             loading={submitting}
           >

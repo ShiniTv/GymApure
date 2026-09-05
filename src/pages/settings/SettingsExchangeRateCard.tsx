@@ -29,14 +29,14 @@ export function SettingsExchangeRateCard({
       className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden md:p-4"
     >
       <div className="mb-2.5 flex min-w-0 items-center gap-2">
-        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-bold">
+        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
           <DollarSign className="text-brand h-4 w-4 shrink-0" />
           <span className="truncate">Tasa USD (BCV)</span>
         </h2>
         <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
             onClick={onRefresh}
@@ -60,14 +60,14 @@ export function SettingsExchangeRateCard({
         </div>
       </div>
 
-      <p className="text-text-muted mb-3 text-[11px] leading-snug sm:text-xs">
+      <p className="text-text-muted text-small mb-3 leading-snug sm:text-xs">
         Tasa oficial del Banco Central de Venezuela para pagos en bolívares (pago móvil y
         transferencia).
       </p>
 
       {exchangeRateView.active ? (
         <div className="border-border/70 bg-surface-raised/50 mb-4 min-w-0 rounded-[var(--radius-card)] border px-3 py-3">
-          <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+          <p className="text-text-muted text-small font-medium tracking-wide uppercase">
             Tasa activa
           </p>
           <p className="text-text mt-1 text-lg font-semibold break-words tabular-nums">
@@ -77,7 +77,7 @@ export function SettingsExchangeRateCard({
             })}{' '}
             Bs/USD
           </p>
-          <p className="text-text-muted mt-1 text-[11px] leading-snug">
+          <p className="text-text-muted text-small mt-1 leading-snug">
             Fuente: {exchangeRateView.active.source === 'manual' ? 'Manual' : 'BCV'} · Fecha valor:{' '}
             {exchangeRateView.active.effective_date}
           </p>
@@ -90,7 +90,7 @@ export function SettingsExchangeRateCard({
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="min-w-0">
-          <Label htmlFor="exchange_override_rate" className="text-[11px]">
+          <Label htmlFor="exchange_override_rate" className="text-small">
             Override manual (Bs/USD)
           </Label>
           <Input
@@ -106,7 +106,7 @@ export function SettingsExchangeRateCard({
           />
         </div>
         <div className="min-w-0">
-          <Label htmlFor="exchange_override_note" className="text-[11px]">
+          <Label htmlFor="exchange_override_note" className="text-small">
             Nota (opcional)
           </Label>
           <Input
@@ -123,7 +123,7 @@ export function SettingsExchangeRateCard({
       {exchangeRateView.override.rate != null && (
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
           className="mt-3"
           onClick={onClearOverride}
@@ -135,7 +135,7 @@ export function SettingsExchangeRateCard({
 
       {exchangeRateView.history.length > 0 && (
         <div className="mt-4 min-w-0">
-          <p className="text-text-muted mb-1.5 text-[10px] font-medium tracking-wide uppercase">
+          <p className="text-text-muted text-small mb-1.5 font-medium tracking-wide uppercase">
             Historial BCV reciente
           </p>
           <div className="space-y-1.5">

@@ -85,10 +85,10 @@ export function ChatComposer({
             <img
               src={previewUrl}
               alt="Vista previa"
-              className="h-14 w-14 rounded-lg object-cover"
+              className="h-10 w-10 rounded-lg object-cover"
             />
           ) : (
-            <div className="bg-brand/10 text-brand flex h-14 w-14 items-center justify-center rounded-lg">
+            <div className="bg-brand/10 text-brand flex h-10 w-10 items-center justify-center rounded-lg">
               <FileText className="h-6 w-6" />
             </div>
           )}

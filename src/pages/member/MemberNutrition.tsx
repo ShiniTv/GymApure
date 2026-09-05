@@ -7,16 +7,17 @@ import { UtensilsCrossed, Target, Save, History, MessageSquare, Dumbbell } from 
 import {
   Button,
   Card,
-  PageHeader,
   Label,
   Input,
   Textarea,
-  Spinner,
-  PageState,
   Breadcrumbs,
   Avatar,
   BackToDashboardLink,
+  Skeleton,
+  ListRowSkeleton,
+  StatCardSkeleton,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { AdherenceBar } from '../../components/nutrition/MacroProgressBar';
 import {
   useNutritionPlanQuery,
@@ -148,10 +149,28 @@ export default function MemberNutrition() {
 
   if (memberLoading || planLoading) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted text-small mt-3">Cargando…</p>
-      </PageState>
+      <div
+        className="page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl"
+        aria-busy="true"
+        aria-label="Cargando nutrición"
+      >
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-3 w-36" />
+        </div>
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="h-14 flex-1 rounded-[var(--radius-card)]" />
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Skeleton className="h-64 w-full rounded-[var(--radius-card)]" />
+          <div className="space-y-3">
+            <StatCardSkeleton />
+            <ListRowSkeleton rows={4} />
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -165,7 +184,7 @@ export default function MemberNutrition() {
       : null;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <OperatePage maxWidth="max-w-5xl">
       <Breadcrumbs
         items={[
           { label: 'Miembros', href: '/members' },
@@ -174,8 +193,8 @@ export default function MemberNutrition() {
         ]}
       />
 
-      <PageHeader
-        compact
+      <OperateHeader
+        icon={UtensilsCrossed}
         title={
           <>
             Nutrición de <span className="text-brand">{member.full_name}</span>
@@ -183,10 +202,10 @@ export default function MemberNutrition() {
         }
         subtitle="Metas diarias y adherencia"
         action={
-          <div className="flex shrink-0 items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/routines`)}
@@ -196,7 +215,7 @@ export default function MemberNutrition() {
               <Dumbbell className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/history`)}
@@ -206,7 +225,7 @@ export default function MemberNutrition() {
               <History className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-9 w-9 shrink-0 p-0"
               onClick={() => navigate(`/messages?member=${memberId}`)}
@@ -215,7 +234,7 @@ export default function MemberNutrition() {
             >
               <MessageSquare className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -238,7 +257,7 @@ export default function MemberNutrition() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2 lg:items-stretch lg:gap-4">
-        <Card padding="sm" rounded="xl" className="md:p-4">
+        <Card padding="md" rounded="xl">
           <h2 className="section-title mb-3 flex items-center gap-1.5">
             <UtensilsCrossed className="text-brand h-3.5 w-3.5" />
             Plan nutricional
@@ -367,7 +386,7 @@ export default function MemberNutrition() {
           </form>
         </Card>
 
-        <Card padding="sm" rounded="xl" className="md:p-4">
+        <Card padding="md" rounded="xl">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="section-title">Adherencia (7 días)</h2>
             {avgAdherence != null && (
@@ -386,9 +405,7 @@ export default function MemberNutrition() {
             )}
           </div>
           {summaryLoading && !summary ? (
-            <div className="flex justify-center py-6">
-              <Spinner />
-            </div>
+            <ListRowSkeleton rows={4} />
           ) : !plan ? (
             <p className="text-text-muted py-4 text-center text-sm">
               Guarda un plan nutricional arriba para ver la adherencia del cliente.
@@ -430,6 +447,6 @@ export default function MemberNutrition() {
           )}
         </Card>
       </div>
-    </div>
+    </OperatePage>
   );
 }

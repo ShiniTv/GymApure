@@ -1,18 +1,31 @@
 import { Link, useSearchParams } from 'react-router';
-import { UtensilsCrossed, ChevronRight, Plus } from 'lucide-react';
+import {
+  UtensilsCrossed,
+  ChevronRight,
+  Plus,
+  Users,
+  ClipboardList,
+  AlertTriangle,
+} from 'lucide-react';
 import { useTrainerNutritionOverviewQuery } from '../hooks/queries/useNutritionQuery';
 import {
   Button,
-  Card,
-  PageHeader,
-  Spinner,
   EmptyState,
   Badge,
   Avatar,
   BackToDashboardLink,
   SearchInput,
   FilterChips,
+  Spinner,
 } from '../components/ui';
+import {
+  OperateEmpty,
+  OperateMetricStrip,
+  OperatePage,
+  OperateHeader,
+  OPERATE_SURFACE,
+  OperateIcon,
+} from '../components/operate/OperateChrome';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { cn } from '../lib/utils';
 import { useState, useMemo, useEffect } from 'react';
@@ -20,7 +33,7 @@ import { useState, useMemo, useEffect } from 'react';
 function adherenceBadgeClass(percent: number): string {
   if (percent >= 75) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
   if (percent >= 50) return 'bg-amber-500/10 text-amber-700 dark:text-amber-400';
-  return 'bg-red-500/10 text-red-600 dark:text-red-400';
+  return 'bg-red-500/10 text-danger dark:text-danger';
 }
 
 export default function NutritionOverview() {
@@ -54,6 +67,11 @@ export default function NutritionOverview() {
     );
   };
 
+  const clearFilters = () => {
+    setSearch('');
+    updateFilter('all');
+  };
+
   const members = useMemo(() => {
     const list = data?.members ?? [];
     const q = search.trim().toLowerCase();
@@ -70,23 +88,36 @@ export default function NutritionOverview() {
 
   const withoutPlan = data?.without_plan ?? 0;
   const assignedTotal = data?.assigned_total ?? data?.members.length ?? 0;
+  const filtersActive = filter !== 'all' || search.trim().length > 0;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
-        showTitleOnMobile
+    <OperatePage>
+      <OperateHeader
+        icon={UtensilsCrossed}
         title={
           <>
             Nutrición de <span className="text-brand">mis clientes</span>
           </>
         }
-        subtitle="Quién tiene plan, quién no, y adherencia de los últimos 7 días."
-        action={<BackToDashboardLink />}
+        subtitle={
+          loading
+            ? 'Cargando adherencia…'
+            : withoutPlan > 0
+              ? `${withoutPlan} sin plan · prioriza asignar`
+              : 'Quién tiene plan y adherencia de los últimos 7 días'
+        }
+        action={
+          <>
+            <BackToDashboardLink iconOnly className="sm:hidden" />
+            <span className="hidden sm:inline-flex">
+              <BackToDashboardLink />
+            </span>
+          </>
+        }
       />
 
       {loading ? (
-        <div className="flex justify-center py-6">
+        <div className="flex justify-center py-8">
           <Spinner />
         </div>
       ) : !data || assignedTotal === 0 ? (
@@ -96,40 +127,42 @@ export default function NutritionOverview() {
           description="Cuando tengas clientes asignados, aquí verás su estado nutricional."
           action={
             <Link to="/members">
-              <Button size="sm">Ir a miembros</Button>
+              <Button size="sm" className="min-h-11">
+                Ir a miembros
+              </Button>
             </Link>
           }
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
-                Clientes
-              </p>
-              <p className="text-text text-2xl font-black">{assignedTotal}</p>
-            </Card>
-            <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
-                Con plan
-              </p>
-              <p className="text-text text-2xl font-black">{data.with_plan}</p>
-            </Card>
-            <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
-                Sin plan
-              </p>
-              <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
-                {withoutPlan}
-              </p>
-            </Card>
-            <Card padding="sm" rounded="xl">
-              <p className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
-                Registrando
-              </p>
-              <p className="text-text text-2xl font-black">{data.logging_active}</p>
-            </Card>
-          </div>
+          <OperateMetricStrip
+            items={[
+              {
+                to: '/members',
+                label: 'Clientes',
+                value: assignedTotal,
+                icon: Users,
+              },
+              {
+                to: '/nutrition-overview?filter=with',
+                label: 'Con plan',
+                value: data.with_plan,
+                icon: ClipboardList,
+              },
+              {
+                to: '/nutrition-overview?filter=without',
+                label: 'Sin plan',
+                value: withoutPlan,
+                icon: AlertTriangle,
+              },
+              {
+                to: '/nutrition-overview',
+                label: 'Registrando',
+                value: data.logging_active,
+                icon: UtensilsCrossed,
+              },
+            ]}
+          />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <SearchInput
@@ -150,42 +183,48 @@ export default function NutritionOverview() {
             />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:hidden">
-            {members.length === 0 ? (
-              <EmptyState
-                icon={UtensilsCrossed}
-                title="Sin resultados"
-                description="Prueba otro filtro o búsqueda."
-                className="py-8 sm:col-span-2"
-              />
-            ) : (
-              members.map((member) => {
-                const hasPlan = 'has_plan' in member ? member.has_plan : true;
-                return (
-                  <Card key={member.user_id} padding="sm" rounded="xl">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2.5">
+          {members.length === 0 ? (
+            <OperateEmpty
+              icon={UtensilsCrossed}
+              title="Sin resultados"
+              description="Prueba otro filtro o búsqueda."
+              action={
+                filtersActive ? (
+                  <Button size="sm" variant="secondary" className="min-h-11" onClick={clearFilters}>
+                    Quitar filtros
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <>
+              <ul
+                className={cn(
+                  'overflow-hidden rounded-[var(--radius-card)] border lg:hidden',
+                  OPERATE_SURFACE
+                )}
+              >
+                {members.map((member) => {
+                  const hasPlan = 'has_plan' in member ? member.has_plan : true;
+                  return (
+                    <li key={member.user_id}>
+                      <Link
+                        to={`/members/${member.user_id}/nutrition`}
+                        className="tap-feedback group border-border/60 hover:bg-surface-raised/80 flex min-h-[var(--touch-min)] items-center gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0"
+                      >
                         <Avatar name={member.full_name} size="sm" className="shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-text truncate font-bold">{member.full_name}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-text truncate text-sm font-medium tracking-[-0.011em]">
+                            {member.full_name}
+                          </p>
                           {hasPlan ? (
-                            <>
-                              <p className="text-text-muted truncate text-xs">
-                                {member.plan_title}
-                              </p>
-                              <p className="text-text-muted mt-1 text-[11px]">
-                                {member.logged_days} día{member.logged_days !== 1 ? 's' : ''} con
-                                registro
-                              </p>
-                            </>
-                          ) : (
-                            <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
-                              Sin plan nutricional
+                            <p className="text-text-muted text-small truncate">
+                              {member.plan_title} · {member.logged_days}d registro
                             </p>
+                          ) : (
+                            <p className="text-small text-warning">Sin plan nutricional</p>
                           )}
                         </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
                         {hasPlan ? (
                           <Badge
                             className={cn(
@@ -196,65 +235,53 @@ export default function NutritionOverview() {
                             {member.adherence_percent}%
                           </Badge>
                         ) : (
-                          <Link to={`/members/${member.user_id}/nutrition`}>
-                            <Button size="sm" variant="secondary" className="gap-1">
-                              <Plus className="h-3.5 w-3.5" />
-                              Crear
-                            </Button>
-                          </Link>
+                          <span className="text-brand text-small inline-flex items-center gap-1 font-semibold">
+                            <Plus className="operate-icon h-3.5 w-3.5" />
+                            Crear
+                          </span>
                         )}
-                        <Link
-                          to={`/members/${member.user_id}/nutrition`}
-                          className="hover:text-brand hover:bg-brand/10 text-text-muted rounded-lg p-2 transition-colors"
-                          title={hasPlan ? 'Ver plan' : 'Asignar plan'}
-                          aria-label={hasPlan ? 'Ver plan' : 'Asignar plan'}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })
-            )}
-          </div>
+                        <ChevronRight className="operate-icon text-text-muted h-4 w-4 shrink-0 opacity-60" />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
 
-          <Card padding="none" rounded="xl" className="hidden overflow-hidden lg:block">
-            {members.length === 0 ? (
-              <EmptyState
-                icon={UtensilsCrossed}
-                title="Sin resultados"
-                description="Prueba otro filtro o búsqueda."
-                className="py-5"
-              />
-            ) : (
-              <div className="overflow-x-auto">
+              <div
+                className={cn(
+                  'hidden overflow-hidden rounded-[var(--radius-card)] border lg:block',
+                  OPERATE_SURFACE
+                )}
+              >
                 <table className="w-full min-w-[40rem] text-left text-sm">
-                  <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
+                  <thead className="border-border bg-surface-raised text-text-muted text-small border-b font-semibold">
                     <tr>
-                      <th className="px-4 py-2.5">Miembro</th>
-                      <th className="px-4 py-2.5">Plan</th>
-                      <th className="px-4 py-2.5">Registros</th>
-                      <th className="px-4 py-2.5">Adherencia</th>
-                      <th className="px-4 py-2.5 text-right"> </th>
+                      <th className="px-4 py-3">Miembro</th>
+                      <th className="px-4 py-3">Plan</th>
+                      <th className="px-4 py-3">Registros</th>
+                      <th className="px-4 py-3">Adherencia</th>
+                      <th className="px-4 py-3 text-right"> </th>
                     </tr>
                   </thead>
                   <tbody className="divide-border-subtle divide-y">
                     {members.map((member) => {
                       const hasPlan = 'has_plan' in member ? member.has_plan : true;
                       return (
-                        <tr key={member.user_id} className="hover:bg-surface-raised/80">
+                        <tr key={member.user_id} className="group hover:bg-surface-raised/80">
                           <td className="px-4 py-3">
                             <div className="flex min-w-0 items-center gap-2.5">
                               <Avatar name={member.full_name} size="sm" className="shrink-0" />
-                              <p className="text-text truncate font-semibold">{member.full_name}</p>
+                              <p className="text-text truncate font-medium">{member.full_name}</p>
                             </div>
                           </td>
                           <td className="text-text-secondary max-w-[14rem] px-4 py-3 text-xs">
                             {hasPlan ? (
                               <span className="truncate">{member.plan_title}</span>
                             ) : (
-                              <span className="text-amber-600 dark:text-amber-400">Sin plan</span>
+                              <span className="text-warning inline-flex items-center gap-1.5">
+                                <OperateIcon icon={AlertTriangle} tone="warn" size="sm" />
+                                Sin plan
+                              </span>
                             )}
                           </td>
                           <td className="text-text-muted px-4 py-3 text-xs tabular-nums">
@@ -276,8 +303,19 @@ export default function NutritionOverview() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <Link to={`/members/${member.user_id}/nutrition`}>
-                              <Button size="sm" variant={hasPlan ? 'ghost' : 'secondary'}>
-                                {hasPlan ? 'Ver' : 'Crear'}
+                              <Button
+                                size="sm"
+                                variant={hasPlan ? 'ghost' : 'secondary'}
+                                className="min-h-11 gap-1"
+                              >
+                                {hasPlan ? (
+                                  'Ver'
+                                ) : (
+                                  <>
+                                    <Plus className="operate-icon h-3.5 w-3.5" />
+                                    Crear
+                                  </>
+                                )}
                               </Button>
                             </Link>
                           </td>
@@ -287,10 +325,10 @@ export default function NutritionOverview() {
                   </tbody>
                 </table>
               </div>
-            )}
-          </Card>
+            </>
+          )}
         </>
       )}
-    </div>
+    </OperatePage>
   );
 }

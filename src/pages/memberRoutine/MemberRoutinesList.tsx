@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   Calendar,
   ChevronDown,
+  ChevronRight,
   Copy,
   Dumbbell,
   Edit,
@@ -15,9 +16,10 @@ import { dateLocale as es } from '../../lib/dateLocale';
 import { formatDateOnly } from '../../lib/dates';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import { formatSetPrescriptionSummary } from '../../lib/setPrescription';
-import { formatDifficulty } from '../../lib/utils';
+import { cn, formatDifficulty } from '../../lib/utils';
 import { RoutineExerciseOrderControls } from '../../components/routines/RoutineExerciseOrderControls';
-import { AnchoredMenu, Badge, Button, Card, EmptyState, IconButton } from '../../components/ui';
+import { AnchoredMenu, Badge, Button, IconButton } from '../../components/ui';
+import { OperateEmpty, OperateIcon } from '../../components/operate/OperateChrome';
 import type { Exercise, MemberUser, Routine } from './types';
 
 interface MemberRoutinesListProps {
@@ -47,6 +49,15 @@ interface MemberRoutinesListProps {
   onNavigateHistory: (routineId: number) => void;
 }
 
+function formatRoutineDate(value: string | null | undefined): string {
+  if (!value) return '—';
+  try {
+    return formatDateOnly(value, 'dd/MM/yy', { locale: es });
+  } catch {
+    return '—';
+  }
+}
+
 export function MemberRoutinesList({
   member,
   routines,
@@ -71,26 +82,30 @@ export function MemberRoutinesList({
   const menuRoutine =
     routineMenuId != null ? routines.find((routine) => routine.id === routineMenuId) : null;
 
+  if (routines.length === 0) {
+    return (
+      <OperateEmpty
+        icon={Dumbbell}
+        title="Sin rutinas asignadas"
+        description={`${member.full_name} aún no tiene planes de entrenamiento.`}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={onCreateRoutine}>
+              Crear rutina
+            </Button>
+            <Button size="sm" variant="secondary" onClick={onAssignRoutine}>
+              Asignar existente
+            </Button>
+          </div>
+        }
+      />
+    );
+  }
+
   return (
-    <div className="space-y-2.5">
-      {routines.length === 0 ? (
-        <EmptyState
-          icon={Dumbbell}
-          title="Sin rutinas asignadas"
-          description={`${member.full_name} aún no tiene planes de entrenamiento.`}
-          action={
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button size="sm" onClick={onCreateRoutine}>
-                Crear rutina
-              </Button>
-              <Button size="sm" variant="secondary" onClick={onAssignRoutine}>
-                Asignar existente
-              </Button>
-            </div>
-          }
-        />
-      ) : (
-        routines.map((routine) => {
+    <div className="space-y-0">
+      <div className="border-border/80 bg-surface overflow-hidden rounded-[var(--radius-card)] border">
+        {routines.map((routine, routineIndex) => {
           const isExpanded = expandedRoutineId === routine.id;
           const exerciseCount = routine.exercise_count ?? routine.exercises?.length ?? 0;
           const exerciseSummary = buildExerciseSummary({
@@ -98,83 +113,67 @@ export function MemberRoutinesList({
             preview: routine.exercise_preview,
             loadedExercises: routine.exercises,
           });
-          const formatDate = (value: string | null | undefined) => {
-            if (!value) return '—';
-            try {
-              return formatDateOnly(value, 'dd/MM/yy', { locale: es });
-            } catch {
-              return '—';
-            }
-          };
 
           return (
-            <Card
+            <div
               key={routine.id}
-              padding="sm"
-              rounded="xl"
-              className={`touch-manipulation ${isExpanded ? 'ring-brand/20 ring-2' : ''}`}
+              className={cn(
+                routineIndex > 0 && 'border-border/70 border-t',
+                isExpanded && 'bg-surface-raised/40'
+              )}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  role="button"
-                  tabIndex={0}
+              <div className="flex min-h-12 touch-manipulation items-center gap-2.5 px-3 py-2.5 sm:min-h-[3.25rem]">
+                <button
+                  type="button"
                   onClick={() => onToggleExpand(routine.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onToggleExpand(routine.id);
-                    }
-                  }}
-                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                   aria-expanded={isExpanded}
                 >
-                  <div className="bg-brand/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                    <Dumbbell className="text-brand h-3.5 w-3.5" />
-                  </div>
-
+                  <OperateIcon icon={Dumbbell} tone="brand" well size="sm" />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-text truncate text-sm leading-tight font-semibold">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <h3 className="text-text truncate text-[0.8125rem] font-semibold tracking-[-0.014em] sm:text-sm">
                         {routine.name}
                       </h3>
-                      <Badge variant="default" className="text-small shrink-0 px-1.5 py-0">
+                      <Badge
+                        variant="default"
+                        className="text-small shrink-0 px-1.5 py-0 font-medium"
+                      >
                         {formatDifficulty(routine.difficulty)}
                       </Badge>
                     </div>
-                    <p className="text-text-muted text-small mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums">
+                    <p className="text-text-muted sm:text-small mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-[0.6875rem] leading-snug tabular-nums">
                       <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-3 w-3 shrink-0" />
-                        {formatDate(routine.start_date)} – {formatDate(routine.end_date)}
+                        <Calendar className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+                        {formatRoutineDate(routine.start_date)} –{' '}
+                        {formatRoutineDate(routine.end_date)}
                       </span>
-                      <span className="text-text-muted">·</span>
-                      <span className="text-text-secondary font-medium">
-                        {exerciseSummary.label}
-                      </span>
+                      <span className="text-text-muted/40">·</span>
+                      <span>{exerciseSummary.label}</span>
                     </p>
                   </div>
-                </div>
+                </button>
 
-                <div className="flex shrink-0 items-center gap-0.5">
+                <div className="flex shrink-0 items-center">
                   <IconButton
                     size="sm"
                     variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleExpand(routine.id);
-                    }}
+                    onClick={() => onToggleExpand(routine.id)}
                     aria-label={isExpanded ? 'Cerrar ejercicios' : 'Ver ejercicios'}
                     aria-expanded={isExpanded}
                     title={isExpanded ? 'Cerrar' : 'Ejercicios'}
                   >
                     <ChevronDown
-                      className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                      className={cn(
+                        'operate-icon h-3.5 w-3.5 transition-transform duration-150',
+                        isExpanded && 'rotate-180'
+                      )}
                     />
                   </IconButton>
                   <IconButton
                     size="sm"
                     variant="ghost"
                     onClick={(e) => {
-                      e.stopPropagation();
                       if (routineMenuId === routine.id) {
                         onRoutineMenuChange(null);
                         return;
@@ -190,21 +189,21 @@ export function MemberRoutinesList({
                 </div>
               </div>
 
-              {isExpanded && (
-                <div className="border-border mt-2.5 space-y-2 border-t pt-2.5">
-                  {exerciseSummary.preview && (
+              {isExpanded ? (
+                <div className="border-border/70 space-y-2 border-t px-3 pt-2.5 pb-3">
+                  {exerciseSummary.preview ? (
                     <p className="text-text-muted text-small leading-snug">
                       {exerciseSummary.preview}
                     </p>
-                  )}
+                  ) : null}
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="text-text-secondary text-xs font-semibold">
+                    <h4 className="text-text text-xs font-semibold tracking-[-0.01em]">
                       Orden de ejecución
                     </h4>
                     <Button
                       type="button"
                       size="sm"
-                      className="h-10 px-3 text-xs sm:h-8 sm:px-2.5"
+                      className="h-8 min-h-8 px-2.5 text-xs"
                       onClick={onAddExercise}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -212,186 +211,199 @@ export function MemberRoutinesList({
                     </Button>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    {routine.exercises?.map((exercise, index) => (
-                      <div
-                        key={exercise.routine_exercise_id}
-                        className="border-border/70 bg-surface-raised flex items-start gap-2 rounded-lg border px-2.5 py-2"
-                      >
-                        <RoutineExerciseOrderControls
-                          index={index}
-                          total={routine.exercises?.length ?? 0}
-                          name={exercise.name}
-                          onMove={(direction) => onReorderExercise(routine.id, index, direction)}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h5 className="text-text truncate text-xs font-semibold">
-                            {exercise.name}
-                          </h5>
-                          <p className="text-text-muted text-small capitalize">
-                            {exercise.muscle_group}
-                          </p>
-                          {formatSetPrescriptionSummary(exercise.set_prescription) && (
-                            <p className="text-text-secondary text-small mt-0.5 font-medium">
-                              {formatSetPrescriptionSummary(exercise.set_prescription)}
+                  {routine.exercises && routine.exercises.length > 0 ? (
+                    <ul className="border-border/70 bg-bg/40 overflow-hidden rounded-[var(--radius-button)] border">
+                      {routine.exercises.map((exercise, index) => (
+                        <li
+                          key={exercise.routine_exercise_id}
+                          className="border-border/60 flex items-start gap-2 border-b px-2 py-2 last:border-b-0"
+                        >
+                          <RoutineExerciseOrderControls
+                            index={index}
+                            total={routine.exercises?.length ?? 0}
+                            name={exercise.name}
+                            onMove={(direction) => onReorderExercise(routine.id, index, direction)}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h5 className="text-text truncate text-xs font-semibold tracking-[-0.011em]">
+                              {exercise.name}
+                            </h5>
+                            <p className="text-text-muted text-[0.6875rem] capitalize">
+                              {exercise.muscle_group}
                             </p>
-                          )}
-                          <div className="text-text-muted text-small mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-                            <label className="inline-flex items-center gap-1">
-                              Sets
-                              <input
-                                type="number"
-                                className="border-border bg-surface text-text focus:ring-brand w-9 rounded border px-1 py-0.5 text-center font-semibold focus:ring-1"
-                                defaultValue={exercise.sets}
-                                onBlur={(e) =>
-                                  onInlineUpdate(
-                                    routine.id,
-                                    exercise,
-                                    'sets',
-                                    parseInt(e.target.value)
-                                  )
-                                }
-                                onKeyDown={(e) =>
-                                  e.key === 'Enter' && (e.target as HTMLInputElement).blur()
-                                }
-                              />
-                            </label>
-                            <label className="inline-flex items-center gap-1">
-                              Reps
-                              <input
-                                type="number"
-                                className="border-border bg-surface text-text focus:ring-brand w-9 rounded border px-1 py-0.5 text-center font-semibold focus:ring-1"
-                                defaultValue={exercise.reps}
-                                onBlur={(e) =>
-                                  onInlineUpdate(
-                                    routine.id,
-                                    exercise,
-                                    'reps',
-                                    parseInt(e.target.value)
-                                  )
-                                }
-                                onKeyDown={(e) =>
-                                  e.key === 'Enter' && (e.target as HTMLInputElement).blur()
-                                }
-                              />
-                            </label>
-                            <span>
-                              Rst{' '}
-                              <span className="text-text font-semibold">
-                                {exercise.rest_seconds}s
+                            {formatSetPrescriptionSummary(exercise.set_prescription) ? (
+                              <p className="text-text-secondary text-small mt-0.5 font-medium">
+                                {formatSetPrescriptionSummary(exercise.set_prescription)}
+                              </p>
+                            ) : null}
+                            <div className="text-text-muted text-small mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                              <label className="inline-flex items-center gap-1">
+                                Sets
+                                <input
+                                  type="number"
+                                  className="border-border bg-surface text-text focus:ring-brand h-7 w-9 rounded border px-1 text-center text-xs font-semibold focus:ring-1"
+                                  defaultValue={exercise.sets}
+                                  onBlur={(e) =>
+                                    onInlineUpdate(
+                                      routine.id,
+                                      exercise,
+                                      'sets',
+                                      parseInt(e.target.value)
+                                    )
+                                  }
+                                  onKeyDown={(e) =>
+                                    e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                  }
+                                />
+                              </label>
+                              <label className="inline-flex items-center gap-1">
+                                Reps
+                                <input
+                                  type="number"
+                                  className="border-border bg-surface text-text focus:ring-brand h-7 w-9 rounded border px-1 text-center text-xs font-semibold focus:ring-1"
+                                  defaultValue={exercise.reps}
+                                  onBlur={(e) =>
+                                    onInlineUpdate(
+                                      routine.id,
+                                      exercise,
+                                      'reps',
+                                      parseInt(e.target.value)
+                                    )
+                                  }
+                                  onKeyDown={(e) =>
+                                    e.key === 'Enter' && (e.target as HTMLInputElement).blur()
+                                  }
+                                />
+                              </label>
+                              <span>
+                                Rst{' '}
+                                <span className="text-text font-semibold">
+                                  {exercise.rest_seconds}s
+                                </span>
                               </span>
-                            </span>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex shrink-0 gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => onEditExercise(routine.id, exercise)}
-                            className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
-                            aria-label={`Editar ${exercise.name}`}
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onSubstituteExercise(routine.id, exercise)}
-                            className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-                            aria-label={`Sustituir ${exercise.name}`}
-                            title="Sustituir"
-                          >
-                            <ArrowLeftRight className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDeleteExercise(routine.id, exercise)}
-                            className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-                            aria-label={`Eliminar ${exercise.name}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {(!routine.exercises || routine.exercises.length === 0) && (
-                      <p className="text-text-muted text-small col-span-full py-3 text-center">
-                        Sin ejercicios en esta rutina.
-                      </p>
-                    )}
-                  </div>
+                          <div className="flex shrink-0 gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onEditExercise(routine.id, exercise)}
+                              className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                              aria-label={`Editar ${exercise.name}`}
+                            >
+                              <Edit className="operate-icon h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSubstituteExercise(routine.id, exercise)}
+                              className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                              aria-label={`Sustituir ${exercise.name}`}
+                              title="Sustituir"
+                            >
+                              <ArrowLeftRight className="operate-icon h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDeleteExercise(routine.id, exercise)}
+                              className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                              aria-label={`Eliminar ${exercise.name}`}
+                            >
+                              <Trash2 className="operate-icon h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-text-muted text-small py-2 text-center">
+                      Sin ejercicios en esta rutina.
+                    </p>
+                  )}
                 </div>
-              )}
-            </Card>
+              ) : null}
+            </div>
           );
-        })
-      )}
-      {routines.length > 0 && routines.length <= 2 && (
-        <button
-          type="button"
-          onClick={onAssignRoutine}
-          className="text-brand hover:bg-brand/5 border-border flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed py-2.5 text-xs font-semibold transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Asignar otra rutina
-        </button>
-      )}
+        })}
+
+        {/* Assign folded into the same list — no orphan empty block */}
+        {routines.length <= 2 ? (
+          <button
+            type="button"
+            onClick={onAssignRoutine}
+            className="tap-feedback border-border/70 hover:bg-surface-raised/70 text-text flex min-h-11 w-full items-center gap-2.5 border-t px-3 py-2.5 text-left transition-colors"
+          >
+            <OperateIcon icon={Plus} tone="brand" well size="sm" />
+            <span className="min-w-0 flex-1">
+              <span className="text-text block text-[0.8125rem] font-medium tracking-[-0.011em]">
+                Asignar otra rutina
+              </span>
+              <span className="text-text-muted text-small">Plantilla o plan adicional</span>
+            </span>
+            <ChevronRight
+              className="operate-icon text-text-muted h-4 w-4 shrink-0 opacity-50"
+              aria-hidden
+            />
+          </button>
+        ) : null}
+      </div>
+
       <AnchoredMenu
         open={menuRoutine != null}
         onClose={() => onRoutineMenuChange(null)}
         anchorRef={routineMenuAnchorRef}
         className="min-w-[10rem]"
       >
-        {menuRoutine && (
+        {menuRoutine ? (
           <>
             <button
               type="button"
               role="menuitem"
-              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
+              className="text-text hover:bg-surface-raised flex min-h-10 w-full items-center gap-2 px-3 py-2 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onEditRoutine(menuRoutine);
               }}
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="operate-icon h-4 w-4" />
               Editar
             </button>
             <button
               type="button"
               role="menuitem"
-              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
+              className="text-text hover:bg-surface-raised flex min-h-10 w-full items-center gap-2 px-3 py-2 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onCloneRoutine(menuRoutine);
               }}
             >
-              <Copy className="h-4 w-4" />
+              <Copy className="operate-icon h-4 w-4" />
               Duplicar
             </button>
             <button
               type="button"
               role="menuitem"
-              className="text-danger hover:bg-danger/10 flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
+              className="text-danger hover:bg-danger/10 flex min-h-10 w-full items-center gap-2 px-3 py-2 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onUnassignRoutine(menuRoutine);
               }}
             >
-              <UserMinus className="h-4 w-4" />
+              <UserMinus className="operate-icon h-4 w-4" />
               Quitar
             </button>
             <button
               type="button"
               role="menuitem"
-              className="text-text hover:bg-surface-raised flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
+              className="text-text hover:bg-surface-raised flex min-h-10 w-full items-center gap-2 px-3 py-2 text-left text-sm"
               onClick={() => {
                 onRoutineMenuChange(null);
                 onNavigateHistory(menuRoutine.id);
               }}
             >
-              <History className="h-4 w-4" />
+              <History className="operate-icon h-4 w-4" />
               Historial
             </button>
           </>
-        )}
+        ) : null}
       </AnchoredMenu>
     </div>
   );

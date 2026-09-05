@@ -7,12 +7,14 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Spinner,
   Badge,
   EmptyState,
   BackToDashboardLink,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 
 interface Membership {
   id: number;
@@ -120,9 +122,9 @@ export default function Memberships() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={DollarSign}
         title={
           <>
             Planes de <span className="text-brand">membresía</span>
@@ -130,7 +132,7 @@ export default function Memberships() {
         }
         subtitle="Crea y administra los planes que se asignan al aprobar pagos o manualmente."
         action={
-          <div className="flex shrink-0 items-center gap-2">
+          <>
             <BackToDashboardLink />
             <Button
               size="sm"
@@ -141,7 +143,7 @@ export default function Memberships() {
               <Plus className="h-5 w-5" />
               <span className="hidden sm:inline">Nuevo plan</span>
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -173,19 +175,19 @@ export default function Memberships() {
           {plans.map((plan) => {
             const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
             return (
-              <Card key={plan.id} padding="sm" rounded="xl" className="flex flex-col md:p-4">
+              <Card key={plan.id} padding="md" rounded="xl" className="flex flex-col">
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-text truncate text-base leading-tight font-bold">
+                      <h3 className="text-text text-h2 truncate leading-tight font-semibold">
                         {plan.name}
                       </h3>
                       <Badge variant="default">{plan.duration_days} días</Badge>
                     </div>
-                    <p className="text-brand mt-2 text-xl font-bold tracking-tight tabular-nums">
+                    <p className={cn(typography.statValueSm, 'text-brand mt-2')}>
                       ${plan.price_usd}
                       <span className="text-text-muted ml-1 text-xs font-semibold">USD</span>
-                      <span className="text-text-muted ml-2 text-[11px] font-medium">
+                      <span className="text-text-muted text-small ml-2 font-medium">
                         · ${dailyCost}/día
                       </span>
                     </p>
@@ -193,7 +195,7 @@ export default function Memberships() {
                   <div className="flex shrink-0 items-center gap-1">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       className="h-9 w-9 rounded-xl px-0"
                       onClick={() => {
@@ -273,11 +275,11 @@ export default function Memberships() {
             />
           </div>
           {error && (
-            <p className="text-center text-xs font-bold text-red-500" role="alert">
+            <p className="text-danger text-center text-xs font-bold" role="alert">
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" size="lg" loading={saving}>
+          <Button type="submit" className="w-full" size="md" loading={saving}>
             Guardar
           </Button>
         </form>
@@ -292,7 +294,7 @@ export default function Memberships() {
         }}
         title={
           <>
-            Eliminar <span className="text-red-500">plan</span>
+            Eliminar <span className="text-danger">plan</span>
           </>
         }
       >
@@ -303,14 +305,14 @@ export default function Memberships() {
               suscripciones activas.
             </p>
             {deleteError && (
-              <p className="mb-4 text-sm font-bold text-red-500" role="alert">
+              <p className="text-danger mb-4 text-sm font-bold" role="alert">
                 {deleteError}
               </p>
             )}
             <div className="flex gap-4">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="flex-1"
                 disabled={deleting}
                 onClick={() => {
@@ -332,6 +334,6 @@ export default function Memberships() {
           </>
         )}
       </Modal>
-    </div>
+    </OperatePage>
   );
 }

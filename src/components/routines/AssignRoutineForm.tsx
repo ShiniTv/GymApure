@@ -103,7 +103,7 @@ export function AssignRoutineForm({
             <div className="border-border space-y-2 rounded-xl border border-dashed px-3 py-4 text-center">
               <p className="text-text-muted text-xs">No hay miembros registrados.</p>
               {onCreateMember && (
-                <Button variant="ghost" size="sm" onClick={onCreateMember}>
+                <Button variant="secondary" size="sm" onClick={onCreateMember}>
                   Crear miembro
                 </Button>
               )}

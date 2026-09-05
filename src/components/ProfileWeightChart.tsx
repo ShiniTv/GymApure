@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { chartAxisTick, chartHeights } from '../lib/chartTheme';
 
 interface WeightPoint {
   date: string;
@@ -19,7 +20,7 @@ interface ProfileWeightChartProps {
 
 export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
   return (
-    <div className="h-64">
+    <div className={chartHeights.dashboard}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid
@@ -32,16 +33,14 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
             dataKey="date"
             stroke="currentColor"
             className="text-text-muted"
-            fontSize={10}
-            fontWeight="900"
+            {...chartAxisTick}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             stroke="currentColor"
             className="text-text-muted"
-            fontSize={10}
-            fontWeight="900"
+            {...chartAxisTick}
             tickLine={false}
             axisLine={false}
             domain={['dataMin - 2', 'dataMax + 2']}
@@ -49,9 +48,10 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           />
           <Tooltip
             contentStyle={{
-              borderRadius: '12px',
-              border: 'none',
-              fontWeight: '900',
+              borderRadius: '8px',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-surface)',
+              fontWeight: 500,
               fontSize: '12px',
             }}
             formatter={(value) => [`${value ?? 0} kg`, 'Peso']}
@@ -60,9 +60,9 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
             type="monotone"
             dataKey="weight"
             stroke="var(--chart-accent)"
-            strokeWidth={3}
-            dot={{ fill: 'var(--chart-accent)', r: 4 }}
-            activeDot={{ r: 6 }}
+            strokeWidth={2}
+            dot={{ fill: 'var(--chart-accent)', r: 3 }}
+            activeDot={{ r: 5 }}
           />
         </LineChart>
       </ResponsiveContainer>

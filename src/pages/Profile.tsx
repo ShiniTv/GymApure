@@ -1,4 +1,13 @@
-import { PageHeader, SegmentedControl, PageState, BackToDashboardLink } from '../components/ui';
+import { UserCircle } from 'lucide-react';
+import {
+  SegmentedControl,
+  PageState,
+  BackToDashboardLink,
+  Button,
+  EmptyState,
+  Skeleton,
+} from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { ProfileMembershipAlerts } from './profile/ProfileMembershipAlerts';
 import { ProfileDatosTab } from './profile/ProfileDatosTab';
@@ -15,74 +24,83 @@ export default function Profile() {
   if (page.loading) {
     return (
       <PageState>
-        <div className="mx-auto w-full max-w-4xl space-y-3 px-1">
-          <div className="bg-surface-raised h-8 w-40 animate-pulse rounded-lg" />
-          <div className="bg-surface-raised h-10 w-full animate-pulse rounded-xl" />
-          <div className="bg-surface-raised h-48 w-full animate-pulse rounded-xl" />
-        </div>
+        <OperatePage maxWidth="max-w-4xl">
+          <Skeleton className="h-14 w-full rounded-[var(--radius-card)]" />
+          <Skeleton className="h-11 w-full rounded-[var(--radius-card)]" />
+          <Skeleton className="h-48 w-full rounded-[var(--radius-card)]" />
+        </OperatePage>
       </PageState>
     );
   }
 
   if (!page.profile || !page.user) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-4xl py-10 text-center">
-        <p className="text-text text-sm font-semibold">No se pudo cargar el perfil</p>
-        <p className="text-text-muted mt-1 text-xs">
-          Revisa tu conexión e inténtalo de nuevo. Si el problema sigue, cierra sesión y vuelve a
-          entrar.
-        </p>
-        <div className="mt-4 flex justify-center">
-          <BackToDashboardLink />
-        </div>
-      </div>
+      <OperatePage maxWidth="max-w-4xl">
+        <EmptyState
+          icon={UserCircle}
+          title="No se pudo cargar el perfil"
+          description="Revisa tu conexión e inténtalo de nuevo. Si el problema sigue, cierra sesión y vuelve a entrar."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="min-h-11"
+                onClick={() => window.location.reload()}
+              >
+                Reintentar
+              </Button>
+              <BackToDashboardLink />
+            </div>
+          }
+        />
+      </OperatePage>
     );
   }
 
   const { profile, user } = page;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-4xl">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-4xl">
+      <OperateHeader
+        icon={UserCircle}
         title={
           <>
             Mi <span className="text-brand">perfil</span>
           </>
         }
-        subtitle={user.role === 'member' ? 'Tu cuenta' : 'Tu cuenta y apariencia'}
+        subtitle={
+          page.isProfileDirty && page.profileTab === 'datos'
+            ? 'Hay cambios sin guardar'
+            : user.role === 'member'
+              ? 'Tu cuenta'
+              : 'Tu cuenta y apariencia'
+        }
         action={
-          (page.isProfileDirty && page.profileTab === 'datos') || user.role !== 'member' ? (
-            <div className="flex shrink-0 items-center gap-2">
-              {page.isProfileDirty && page.profileTab === 'datos' && (
-                <span className="text-[10px] font-semibold text-amber-600 sm:text-xs dark:text-amber-400">
-                  Sin guardar
-                </span>
-              )}
-              {user.role !== 'member' && <BackToDashboardLink iconOnly className="sm:hidden" />}
-              {user.role !== 'member' && (
-                <span className="hidden sm:inline-flex">
-                  <BackToDashboardLink />
-                </span>
-              )}
-            </div>
-          ) : undefined
+          <>
+            {page.isProfileDirty && page.profileTab === 'datos' && (
+              <span className="text-small text-warning font-semibold">Sin guardar</span>
+            )}
+            {user.role !== 'member' && <BackToDashboardLink iconOnly className="sm:hidden" />}
+            {user.role !== 'member' && (
+              <span className="hidden sm:inline-flex">
+                <BackToDashboardLink />
+              </span>
+            )}
+          </>
         }
       />
 
       <ProfileMembershipAlerts role={user.role} subscription={page.subscription} />
 
-      <div className="pb-0.5 md:pb-1">
-        <SegmentedControl
-          variant="compact"
-          layout="wrap"
-          fullWidth
-          className="w-full"
-          value={page.profileTab}
-          onChange={page.changeProfileTab}
-          options={page.profileTabOptions}
-        />
-      </div>
+      <SegmentedControl
+        layout="wrap"
+        fullWidth
+        className="w-full"
+        value={page.profileTab}
+        onChange={page.changeProfileTab}
+        options={page.profileTabOptions}
+      />
 
       {page.profileTab === 'datos' && (
         <ProfileDatosTab
@@ -167,6 +185,6 @@ export default function Profile() {
         setMeasurementForm={page.setMeasurementForm}
         onAddMeasurement={(e) => void page.handleAddMeasurement(e)}
       />
-    </div>
+    </OperatePage>
   );
 }

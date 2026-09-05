@@ -34,15 +34,15 @@ import { dateLocale as es } from '../../lib/dateLocale';
 import {
   StatCard,
   Card,
-  PageHeader,
   Badge,
   Button,
   Skeleton,
   SegmentedControl,
   EmptyState,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { cn, formatMoney } from '../../lib/utils';
-import { StaggerContainer, StaggerItem } from '../../components/animations';
+import { typography } from '../../lib/typography';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
@@ -93,19 +93,19 @@ export default function AdminDashboard() {
 
   if (adminStats.error && !stats) {
     return (
-      <div className="page-stack-tight mx-auto w-full max-w-7xl">
-        <PageHeader compact title={<>Administración general</>} />
+      <OperatePage>
+        <OperateHeader icon={Monitor} title={<>Administración general</>} />
         <EmptyState
           icon={AlertTriangle}
           title="No se pudo cargar el panel"
           description="Revisa tu conexión e inténtalo de nuevo."
           action={
-            <Button variant="secondary" size="sm" onClick={() => void adminStats.refresh()}>
+            <Button variant="secondary" size="md" onClick={() => void adminStats.refresh()}>
               Reintentar
             </Button>
           }
         />
-      </div>
+      </OperatePage>
     );
   }
 
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   const expiringExpanded = showExpiringList || isDesktop;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
+    <OperatePage>
       <StaffPortalBanner
         eyebrow="GymApure · Panel administrativo"
         title={<>Administración general</>}
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
         >
           <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               Correo SMTP no configurado
             </p>
             <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
@@ -173,22 +173,22 @@ export default function AdminDashboard() {
         {pendingPayments > 0 && (
           <Link
             to="/payments?status=pending"
-            className="flex items-center justify-between gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
+            className="border-danger/30 flex items-center justify-between gap-2 rounded-[var(--radius-card)] border bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-red-500" />
-              <span className="truncate text-xs font-semibold text-red-700 dark:text-red-400">
+              <AlertTriangle className="text-danger h-4 w-4 shrink-0" />
+              <span className="dark:text-danger truncate text-xs font-semibold text-red-700">
                 {pendingPayments} pago{pendingPayments !== 1 ? 's' : ''} pendiente
                 {pendingPayments !== 1 ? 's' : ''}
               </span>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-red-500" />
+            <ChevronRight className="text-danger h-4 w-4 shrink-0" />
           </Link>
         )}
         {equipmentOutOfService > 0 && (
           <Link
             to="/equipment"
-            className="flex items-center justify-between gap-2 rounded-xl border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
               <Wrench className="h-4 w-4 shrink-0 text-orange-500" />
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
         {demoLeadsPending > 0 && (
           <Link
             to="/demo-leads"
-            className="flex items-center justify-between gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-2 transition-colors hover:bg-sky-500/10"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-sky-500/30 bg-sky-500/5 px-3 py-2 transition-colors hover:bg-sky-500/10"
           >
             <div className="flex min-w-0 items-center gap-2">
               <UsersRound className="h-4 w-4 shrink-0 text-sky-500" />
@@ -217,58 +217,46 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      <StaggerContainer className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2 [&>*]:h-full">
-        <StaggerItem>
-          <StatCard
-            title="Ingresos (mes)"
-            value={formatMoney(revenueThisMonth)}
-            icon={DollarSign}
-            trend={monthTrend.label}
-            trendTone={monthTrend.tone}
-            to="/payments"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title="Activas"
-            value={stats?.activeSubscriptions || 0}
-            icon={Activity}
-            to="/memberships"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title="Accesos hoy"
-            value={stats?.todayCheckIns || 0}
-            icon={Clock}
-            trend={checkInTrend.label}
-            trendTone={checkInTrend.tone}
-            to="/attendance"
-          />
-        </StaggerItem>
-        <StaggerItem>
-          <StatCard
-            title={`Por vencer (${alertDays}d)`}
-            value={expiringSoon}
-            icon={CalendarClock}
-            withIcon={expiringSoon > 0}
-            color="orange"
-            to="/members?expiring=true"
-            className={expiringSoon > 0 ? 'border-warning/40' : undefined}
-          />
-        </StaggerItem>
-      </StaggerContainer>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5 [&>*]:h-full">
+        <StatCard
+          title="Ingresos (mes)"
+          value={formatMoney(revenueThisMonth)}
+          icon={DollarSign}
+          trend={monthTrend.label}
+          trendTone={monthTrend.tone}
+          to="/payments"
+        />
+        <StatCard
+          title="Activas"
+          value={stats?.activeSubscriptions || 0}
+          icon={Activity}
+          to="/memberships"
+        />
+        <StatCard
+          title="Accesos hoy"
+          value={stats?.todayCheckIns || 0}
+          icon={Clock}
+          trend={checkInTrend.label}
+          trendTone={checkInTrend.tone}
+          to="/attendance"
+        />
+        <StatCard
+          title={`Por vencer (${alertDays}d)`}
+          value={expiringSoon}
+          icon={CalendarClock}
+          withIcon={expiringSoon > 0}
+          color="orange"
+          to="/members?expiring=true"
+          className={expiringSoon > 0 ? 'border-warning/40' : undefined}
+        />
+      </div>
 
       {totalRevenue > 0 && (
         <Card padding="sm" rounded="xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-text-muted text-small font-semibold tracking-wide uppercase">
-                Cierre de caja · hoy
-              </p>
-              <p className="text-text mt-1 text-xl font-bold tabular-nums sm:text-2xl">
-                {formatMoney(revenueToday)}
-              </p>
+              <p className={cn(typography.statLabel, 'leading-tight')}>Cierre de caja · hoy</p>
+              <p className={cn(typography.statValue, 'mt-1')}>{formatMoney(revenueToday)}</p>
               <p className="text-text-secondary text-small mt-1">
                 Mes {formatMoney(revenueThisMonth)} · acumulado {formatMoney(totalRevenue)}
                 {pendingPayments > 0
@@ -293,8 +281,8 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
-        <div className="space-y-4">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-4">
+        <div className="space-y-3">
           <DashboardSection title="Requiere acción" compact>
             {(() => {
               const actionItems: {
@@ -317,7 +305,7 @@ export default function AdminDashboard() {
                       ? `${pendingOld} con más de 2 días sin revisar`
                       : 'Revisa comprobantes y aprueba renovaciones',
                   count: pendingPayments,
-                  tone: 'border-red-500/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-red-400',
+                  tone: 'border-danger/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-danger',
                   icon: AlertTriangle,
                 });
               }
@@ -375,7 +363,7 @@ export default function AdminDashboard() {
                 return (
                   <Card padding="sm" rounded="xl" className="border-border/60">
                     <p className="text-text text-sm font-medium">Nada urgente por ahora</p>
-                    <p className="text-text-muted mt-0.5 text-[11px]">
+                    <p className="text-text-muted text-small mt-0.5">
                       Sin pagos pendientes, vencimientos ni alertas de equipos.
                     </p>
                     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -428,20 +416,20 @@ export default function AdminDashboard() {
                       key={item.key}
                       to={item.to}
                       className={cn(
-                        'flex items-center justify-between gap-3 rounded-xl border px-3.5 py-3 transition-colors',
+                        'flex items-center justify-between gap-3 rounded-[var(--radius-card)] border px-3 py-2.5 transition-colors',
                         item.tone
                       )}
                     >
                       <div className="flex min-w-0 items-center gap-2.5">
                         <item.icon className="h-4 w-4 shrink-0" aria-hidden />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold">
+                          <p className="truncate text-sm font-semibold">
                             {item.title}
                             {typeof item.count === 'number' ? (
                               <span className="ml-1.5 tabular-nums">({item.count})</span>
                             ) : null}
                           </p>
-                          <p className="truncate text-[11px] opacity-80">{item.description}</p>
+                          <p className="text-small truncate opacity-80">{item.description}</p>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
@@ -538,19 +526,19 @@ export default function AdminDashboard() {
           <DashboardSection title="Finanzas y supervisión" compact>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pagos &gt;2 días
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pendingOld}</p>
               </Card>
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pausadas
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pausedSubs}</p>
               </Card>
               <Card padding="sm" rounded="xl" className="space-y-0.5">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
                 <p className="text-text text-lg font-semibold tabular-nums">{pendingPayments}</p>
@@ -594,8 +582,8 @@ export default function AdminDashboard() {
               >
                 <CalendarClock className="text-brand h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-text text-sm font-bold">Próximos vencimientos</p>
-                  <p className="text-text-muted truncate text-[11px]">
+                  <p className="text-text text-sm font-semibold">Próximos vencimientos</p>
+                  <p className="text-text-muted text-small truncate">
                     {expiringList.length} en {alertDays} días
                     {criticalExpiring > 0
                       ? ` · ${criticalExpiring} crítico${criticalExpiring !== 1 ? 's' : ''}`
@@ -616,12 +604,12 @@ export default function AdminDashboard() {
                     <Link
                       key={item.user_id}
                       to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-red-500/15 bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
+                      className="border-danger/15 flex items-center justify-between gap-2 rounded-lg border bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
                     >
                       <span className="text-text truncate text-xs font-semibold">
                         {item.full_name}
                       </span>
-                      <Badge variant="danger" className="shrink-0 text-[10px]">
+                      <Badge variant="danger" className="text-small shrink-0">
                         {formatExpiryLabel(item.days_remaining)}
                       </Badge>
                     </Link>
@@ -629,7 +617,7 @@ export default function AdminDashboard() {
                   {criticalItems.length > 1 && (
                     <button
                       type="button"
-                      className="text-brand hover:text-brand w-full py-0.5 text-[11px] font-semibold"
+                      className="text-brand hover:text-brand text-small w-full py-0.5 font-semibold"
                       onClick={() => {
                         setShowExpiringList(true);
                       }}
@@ -655,13 +643,13 @@ export default function AdminDashboard() {
                           <p className="text-text truncate text-xs font-semibold">
                             {item.full_name}
                           </p>
-                          <p className="text-text-muted truncate text-[10px]">
+                          <p className="text-text-muted text-small truncate">
                             {format(new Date(item.end_date), 'dd MMM', { locale: es })}
                           </p>
                         </div>
                         <Badge
                           variant={severity === 'critical' ? 'danger' : 'warning'}
-                          className="shrink-0 text-[10px]"
+                          className="text-small shrink-0"
                         >
                           {formatExpiryLabel(item.days_remaining)}
                         </Badge>
@@ -671,7 +659,7 @@ export default function AdminDashboard() {
                   {expiringList.length > previewExpiring.length && (
                     <Link
                       to="/members?expiring=true"
-                      className="text-brand hover:text-brand block py-0.5 text-center text-[11px] font-semibold"
+                      className="text-brand hover:text-brand text-small block py-0.5 text-center font-semibold"
                     >
                       +{expiringList.length - previewExpiring.length} más en Miembros
                     </Link>
@@ -683,11 +671,11 @@ export default function AdminDashboard() {
 
           <Card padding="sm" rounded="xl">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <h3 className="text-text text-sm font-bold">Flujo de ingresos</h3>
+              <h3 className="text-text text-sm font-semibold">Flujo de ingresos</h3>
               {!isDesktop && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="h-9 px-2.5"
                   onClick={() => {
@@ -726,11 +714,15 @@ export default function AdminDashboard() {
                     { value: '6m', label: '6m' },
                   ]}
                 />
-                <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl sm:h-56" />}>
+                <Suspense
+                  fallback={
+                    <Skeleton className="h-40 w-full rounded-[var(--radius-card)] sm:h-56" />
+                  }
+                >
                   <RevenueChart
                     data={revenueChartData}
                     mode={revenueChartMode}
-                    className="h-40 sm:h-56 lg:h-52"
+                    className="h-60 sm:h-64"
                   />
                 </Suspense>
               </div>
@@ -738,6 +730,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

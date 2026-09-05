@@ -48,7 +48,7 @@ export function MemberAddModal({
           Nuevo <span className="text-brand">usuario</span>
         </>
       }
-      maxWidth="2xl"
+      maxWidth="3xl"
       scrollable
       initialFocus="dialog"
     >
@@ -121,7 +121,7 @@ export function MemberAddModal({
               }}
               placeholder="Ej: Gym2024!"
             />
-            <p className="text-text-muted mt-1 text-[11px]">
+            <p className="text-text-muted text-small mt-1">
               Mín. 8 caracteres, con mayúscula, minúscula, número y carácter especial.
             </p>
           </div>
@@ -143,7 +143,7 @@ export function MemberAddModal({
             <div>
               <Label>Rol de Usuario</Label>
               <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-2xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
                 value={newMember.role}
                 onChange={(e) => {
                   onNewMemberChange({ ...newMember, role: e.target.value, training_shift: '' });
@@ -162,7 +162,7 @@ export function MemberAddModal({
                 {newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}
               </Label>
               <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-2xl border px-4 py-3 font-bold transition-all outline-none focus:ring-2"
+                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
                 value={newMember.training_shift}
                 onChange={(e) => {
                   onNewMemberChange({
@@ -180,9 +180,9 @@ export function MemberAddModal({
           )}
         </div>
         {errors.submit && (
-          <p className="text-center text-xs font-medium text-red-500">{errors.submit}</p>
+          <p className="text-danger text-center text-xs font-medium">{errors.submit}</p>
         )}
-        <Button onClick={onSubmit} className="mt-4 w-full" size="lg">
+        <Button onClick={onSubmit} className="mt-4 w-full" size="md">
           Crear Usuario
         </Button>
       </div>

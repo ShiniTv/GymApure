@@ -12,7 +12,6 @@ import Login from './pages/Login';
 
 const PUBLIC_AUTH_PATHS = new Set([
   '/',
-  '/solicitar-demo',
   '/login',
   '/register',
   '/forgot-password',
@@ -60,8 +59,6 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const MfaSecurity = lazy(() => import('./pages/MfaSecurity'));
-const SolicitarDemo = lazy(() => import('./pages/SolicitarDemo'));
-const Landing = lazy(() => import('./pages/Landing'));
 const DemoLeads = lazy(() => import('./pages/DemoLeads'));
 
 /** Check-in needs sockets without pulling SocketProvider into the login entry graph. */
@@ -83,7 +80,7 @@ const CheckInRoute = lazy(() =>
 function PageLoader() {
   return (
     <div
-      className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8"
+      className="px-ds-4 py-ds-3 sm:p-ds-4 lg:p-ds-5 mx-auto w-full max-w-7xl"
       role="status"
       aria-busy="true"
       aria-label="Cargando página"
@@ -139,16 +136,6 @@ function ProtectedRoute({
   return children;
 }
 
-function LandingRoute() {
-  const { user, isLoading } = useAuth();
-  if (isLoading) return <PageLoader />;
-  if (user) {
-    const home = user.role === 'receptionist' ? '/reception' : '/panel';
-    return <Navigate to={home} replace />;
-  }
-  return <Landing />;
-}
-
 function RegisterRoute() {
   const [allowed, setAllowed] = React.useState<boolean | null>(null);
 
@@ -187,9 +174,9 @@ function AppRoutes() {
       <ProgressBar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<LandingRoute />} />
-          <Route path="/solicitar-demo" element={<SolicitarDemo />} />
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/solicitar-demo" element={<Navigate to="/login" replace />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<RegisterRoute />} />
@@ -596,7 +583,7 @@ function AppRoutes() {
             <Route
               path="members/:id/history"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);
@@ -610,7 +597,7 @@ function AppRoutes() {
             <Route
               path="members/:id/records"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+                <ProtectedRoute allowedRoles={['trainer']}>
                   <ErrorBoundary
                     onError={(error) => {
                       reportBoundaryError(error);

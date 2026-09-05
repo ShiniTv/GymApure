@@ -34,7 +34,7 @@ export function AddExerciseModal({
         onClose();
       }}
       title="Añadir ejercicio"
-      maxWidth="xl"
+      maxWidth="2xl"
       scrollable
     >
       <div className="space-y-4">
@@ -82,7 +82,7 @@ export function AddExerciseModal({
             </div>
           </>
         ) : null}
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-danger text-sm">{error}</p>}
         <Button className="w-full" onClick={onSubmit} disabled={!value.exercise_id}>
           Añadir a la rutina
         </Button>

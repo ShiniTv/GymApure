@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { useParams } from 'react-router';
-import { PageState, Spinner } from '../components/ui';
+import { Skeleton, AssignmentsListSkeleton, EmptyState, Button } from '../components/ui';
+import { OperatePage } from '../components/operate/OperateChrome';
+import { Users } from 'lucide-react';
 import { PanelFallback } from './memberRoutine/PanelFallback';
 import { MemberRoutineHeader } from './memberRoutine/MemberRoutineHeader';
 import { MemberProfilePanel } from './memberRoutine/MemberProfilePanel';
@@ -45,20 +47,43 @@ export default function MemberRoutine() {
 
   if (page.loading) {
     return (
-      <PageState>
-        <Spinner />
-        <p className="text-text-muted mt-3 text-xs">Cargando miembro…</p>
-      </PageState>
+      <OperatePage maxWidth="max-w-3xl">
+        <div className="space-y-2" aria-busy="true" aria-label="Cargando miembro">
+          <Skeleton className="h-3 w-36" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-3 w-52" />
+            </div>
+          </div>
+        </div>
+        <Skeleton className="h-8 w-full max-w-xs" />
+        <AssignmentsListSkeleton rows={3} />
+      </OperatePage>
     );
   }
   if (!page.member) {
-    return <div className="text-text-muted p-6">Miembro no encontrado</div>;
+    return (
+      <OperatePage maxWidth="max-w-3xl">
+        <EmptyState
+          icon={Users}
+          title="Miembro no encontrado"
+          description="Puede que ya no esté asignado o el enlace sea incorrecto."
+          action={
+            <Button size="sm" onClick={() => void page.navigate('/members')}>
+              Volver a miembros
+            </Button>
+          }
+        />
+      </OperatePage>
+    );
   }
 
   const { member, modals } = page;
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-5xl">
+    <OperatePage maxWidth="max-w-3xl">
       <MemberRoutineHeader
         member={member}
         memberId={id}
@@ -210,6 +235,6 @@ export default function MemberRoutine() {
           }
         />
       )}
-    </div>
+    </OperatePage>
   );
 }

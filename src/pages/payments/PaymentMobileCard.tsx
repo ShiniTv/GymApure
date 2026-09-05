@@ -39,28 +39,28 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
 
   if (!isStaff) {
     return (
-      <DataCard className="!space-y-0 !p-2.5 sm:!p-3">
+      <DataCard className="!space-y-0">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
-              <p className="text-brand text-[15px] leading-none font-bold tabular-nums">
+              <p className="text-brand text-sm leading-none font-bold tabular-nums">
                 ${payment.amount_usd}
               </p>
               <Badge
                 variant={paymentStatusVariant(payment.status)}
-                className="shrink-0 px-1.5 py-0 text-[9px]"
+                className="text-small shrink-0 px-1.5 py-0"
               >
                 {paymentStatusLabel(payment.status)}
               </Badge>
             </div>
-            <p className="text-text-secondary mt-1 truncate text-[11px] leading-snug">
+            <p className="text-text-secondary text-small mt-1 truncate leading-snug">
               {formatPaymentMethod(payment.method)}
               <span className="text-text-muted mx-1.5">·</span>
               <time dateTime={payment.created_at}>{formatPaymentDate(payment.created_at)}</time>
             </p>
             {payment.reference ? (
               <p
-                className="text-text-muted mt-0.5 truncate font-mono text-[10px]"
+                className="text-text-muted text-small mt-0.5 truncate font-mono"
                 title={payment.reference}
               >
                 {payment.reference}
@@ -83,23 +83,23 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
 
   return (
     <DataCard
-      className="!space-y-0 !p-2.5 sm:!p-3"
+      className="!space-y-0"
       onClick={onOpenDetail ? () => onOpenDetail(payment) : undefined}
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="min-w-0 flex-1 text-left">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="text-text min-w-0 flex-1 truncate text-[13px] leading-tight font-semibold">
+            <p className="text-text min-w-0 flex-1 truncate text-sm leading-tight font-semibold">
               {payment.user_name}
             </p>
             <Badge
               variant={paymentStatusVariant(payment.status)}
-              className="shrink-0 px-1.5 py-0 text-[9px]"
+              className="text-small shrink-0 px-1.5 py-0"
             >
               {paymentStatusLabel(payment.status)}
             </Badge>
           </div>
-          <p className="text-text-secondary mt-0.5 truncate text-[11px] leading-snug">
+          <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
             <span className="text-brand font-semibold tabular-nums">${payment.amount_usd}</span>
             <span className="text-text-muted mx-1.5">·</span>
             <span>{formatPaymentMethod(payment.method)}</span>
@@ -108,7 +108,7 @@ export const PaymentMobileCard = memo(function PaymentMobileCard({
           </p>
           {payment.reference ? (
             <p
-              className="text-text-muted mt-0.5 truncate font-mono text-[10px]"
+              className="text-text-muted text-small mt-0.5 truncate font-mono"
               title={payment.reference}
             >
               {payment.reference}

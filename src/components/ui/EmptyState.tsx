@@ -3,6 +3,7 @@ import { type ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { Card } from './Card';
+import { OperateIcon } from '../operate/OperateIcon';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -24,7 +25,7 @@ function MotivationalIllustration() {
   return (
     <svg
       viewBox="0 0 120 80"
-      className="text-brand/40 mx-auto mb-3 h-16 w-24"
+      className="text-brand/40 mx-auto mb-3 h-12 w-20"
       aria-hidden
       fill="none"
     >
@@ -59,18 +60,24 @@ export function EmptyState({
       {isMotivational ? (
         <MotivationalIllustration />
       ) : (
-        <Icon
-          className={cn('text-text-muted mx-auto', compact ? 'mb-2.5 h-7 w-7' : 'mb-3.5 h-9 w-9')}
-        />
+        <div className={cn('mx-auto flex justify-center', compact ? 'mb-2' : 'mb-3')}>
+          <OperateIcon icon={Icon} tone="neutral" well size={compact ? 'md' : 'lg'} />
+        </div>
       )}
-      <h3 className={cn(typography.sectionTitle, 'text-text', compact ? 'text-small' : 'text-sm')}>
+      <h3
+        className={cn(
+          typography.sectionTitle,
+          'text-text tracking-[-0.011em]',
+          compact ? 'text-small' : 'text-sm'
+        )}
+      >
         {title}
       </h3>
       {description && (
         <p
           className={cn(
             typography.small,
-            'text-text-secondary mx-auto',
+            'text-text-secondary mx-auto leading-relaxed',
             compact ? 'mt-1 max-w-xs' : 'mt-1.5 max-w-sm'
           )}
         >

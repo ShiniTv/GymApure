@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Badge, Avatar, DataCard } from '../../components/ui';
+import { Badge, Avatar } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { ROLE_LABELS, type UserRole } from '../../lib/roles';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
@@ -15,7 +15,7 @@ interface MemberCardMobileProps {
   onOpenDetail: (member: Member) => void;
 }
 
-/** Compact tappable row — detail + actions live in MemberQuickSheet. */
+/** Hairline tappable row — detail + actions live in MemberQuickSheet. */
 export const MemberCardMobile = memo(function MemberCardMobile({
   member,
   isStaffMember,
@@ -35,57 +35,59 @@ export const MemberCardMobile = memo(function MemberCardMobile({
   }
 
   return (
-    <DataCard
-      className="active:bg-surface-raised !space-y-0 !p-2.5 sm:!p-3"
+    <button
+      type="button"
       onClick={() => onOpenDetail(member)}
+      className="tap-feedback border-border/80 bg-surface hover:bg-surface-raised/80 flex min-h-[var(--touch-min)] w-full items-center gap-3 rounded-[var(--radius-card)] border px-3 py-2.5 text-left transition-colors"
     >
-      <div className="flex min-w-0 items-center gap-2.5">
-        <Avatar name={member.full_name} size="sm" className="shrink-0" />
-        <div className="min-w-0 flex-1 text-left">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <p className="text-text min-w-0 truncate text-[13px] leading-tight font-semibold">
-              {member.full_name}
-            </p>
+      <Avatar name={member.full_name} size="sm" className="shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="text-text min-w-0 truncate text-sm leading-tight font-medium tracking-[-0.011em]">
+            {member.full_name}
+          </p>
+          <span
+            className={cn(
+              'h-1.5 w-1.5 shrink-0 rounded-full',
+              member.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'
+            )}
+            title={member.status === 'active' ? 'Activo' : 'Inactivo'}
+            aria-label={member.status === 'active' ? 'Activo' : 'Inactivo'}
+          />
+          {isStaffMember && <OnboardingStatus onboarding={member.onboarding} variant="chip" />}
+        </div>
+        <div className="text-text-muted text-small mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 leading-snug">
+          {metaParts.length > 0 ? (
+            <span className="truncate">{metaParts.join(' · ')}</span>
+          ) : (
+            <span>Sin cédula</span>
+          )}
+          {!isStaffMember && (
             <span
               className={cn(
-                'h-1.5 w-1.5 shrink-0 rounded-full',
-                member.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'
+                'text-small inline-flex shrink-0 rounded px-1 py-0 font-semibold',
+                roleBadgeClass(member.role)
               )}
-              title={member.status === 'active' ? 'Activo' : 'Inactivo'}
-              aria-label={member.status === 'active' ? 'Activo' : 'Inactivo'}
-            />
-            {isStaffMember && <OnboardingStatus onboarding={member.onboarding} variant="chip" />}
-          </div>
-          <div className="text-text-muted mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-snug">
-            {metaParts.length > 0 ? (
-              <span className="truncate">{metaParts.join(' · ')}</span>
-            ) : (
-              <span>Sin cédula</span>
-            )}
-            {!isStaffMember && (
-              <span
-                className={cn(
-                  'inline-flex shrink-0 rounded px-1 py-0 text-[10px] font-semibold',
-                  roleBadgeClass(member.role)
-                )}
-              >
-                {ROLE_LABELS[member.role as UserRole] ?? member.role}
-              </span>
-            )}
-            {member.subscription_status === 'paused' && (
-              <Badge variant="warning" className="px-1.5 py-0 text-[10px]">
-                Pausada
-              </Badge>
-            )}
-            {expiryBadge && (
-              <Badge className={cn('shrink-0 px-1.5 py-0 text-[10px]', expiryBadge.className)}>
-                {expiryBadge.label}
-              </Badge>
-            )}
-          </div>
+            >
+              {ROLE_LABELS[member.role as UserRole] ?? member.role}
+            </span>
+          )}
+          {member.subscription_status === 'paused' && (
+            <Badge variant="warning" className="text-small px-1.5 py-0">
+              Pausada
+            </Badge>
+          )}
+          {expiryBadge && (
+            <Badge className={cn('text-small shrink-0 px-1.5 py-0', expiryBadge.className)}>
+              {expiryBadge.label}
+            </Badge>
+          )}
         </div>
-        <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
       </div>
-    </DataCard>
+      <ChevronRight
+        className="operate-icon text-text-muted h-4 w-4 shrink-0 opacity-60"
+        aria-hidden
+      />
+    </button>
   );
 });

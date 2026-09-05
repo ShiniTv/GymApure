@@ -47,15 +47,13 @@ export function MemberProfilePanel({
       <div className="border-border rounded-xl border px-3 py-2.5">
         <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
           <div>
-            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
-              Altura
-            </p>
+            <p className="text-text-muted text-small font-medium tracking-wide uppercase">Altura</p>
             <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
               {heightCm != null ? `${heightCm} cm` : '—'}
             </p>
           </div>
           <div>
-            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
               {latestMeasurement?.weight != null ? 'Peso actual' : 'Peso inicial'}
             </p>
             <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
@@ -68,7 +66,7 @@ export function MemberProfilePanel({
             {latestMeasurement?.weight != null && (
               <button
                 type="button"
-                className="text-brand mt-0.5 text-[10px] font-medium hover:underline"
+                className="text-brand text-small mt-0.5 font-medium hover:underline"
                 onClick={onViewMeasurements}
               >
                 Ver mediciones
@@ -76,7 +74,7 @@ export function MemberProfilePanel({
             )}
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
               Objetivo
             </p>
             <p className="text-text mt-0.5 text-sm font-semibold">
@@ -84,7 +82,7 @@ export function MemberProfilePanel({
             </p>
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
               Meta semanal
             </p>
             {canEditWeeklyGoal ? (
@@ -101,7 +99,7 @@ export function MemberProfilePanel({
                   </button>
                   <span className="text-text min-w-[2.5rem] text-center text-sm font-semibold tabular-nums">
                     {weeklyGoal}
-                    <span className="text-text-muted ml-0.5 text-[11px] font-medium">d</span>
+                    <span className="text-text-muted text-small ml-0.5 font-medium">d</span>
                   </span>
                   <button
                     type="button"
@@ -116,7 +114,7 @@ export function MemberProfilePanel({
                 {weeklyGoal !== (member.weekly_training_goal ?? 5) ? (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     className="h-8 px-2.5 text-xs"
                     disabled={savingWeeklyGoal}
@@ -125,7 +123,7 @@ export function MemberProfilePanel({
                     {savingWeeklyGoal ? '…' : 'Guardar'}
                   </Button>
                 ) : weeklyGoalSaved ? (
-                  <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="text-small font-medium text-emerald-600 dark:text-emerald-400">
                     Guardado
                   </span>
                 ) : null}
@@ -138,7 +136,7 @@ export function MemberProfilePanel({
           </div>
         </div>
 
-        <div className="border-border-subtle mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2 text-[11px]">
+        <div className="border-border-subtle text-small mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2">
           {subscription ? (
             <>
               <span className="font-semibold text-emerald-600 dark:text-emerald-500">
@@ -162,12 +160,12 @@ export function MemberProfilePanel({
           <span className="flex min-w-0 items-center gap-2">
             <span className="text-text text-xs font-semibold">Salud y limitaciones</span>
             {showHealthAlert && (
-              <Badge variant="danger" className="px-1.5 py-0 text-[9px]">
+              <Badge variant="danger" className="text-small px-1.5 py-0">
                 Revisar
               </Badge>
             )}
             {!showHealthAlert && !hasHealthNotes && (
-              <span className="text-text-muted text-[10px] font-medium">Sin datos</span>
+              <span className="text-text-muted text-small font-medium">Sin datos</span>
             )}
           </span>
           <ChevronDown className="text-text-muted h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
@@ -183,7 +181,7 @@ export function MemberProfilePanel({
               {healthProfile.condition_labels.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {healthProfile.condition_labels.map((flag) => (
-                    <Badge key={flag.id} variant="warning" className="text-[10px]">
+                    <Badge key={flag.id} variant="warning" className="text-small">
                       {flag.label}
                     </Badge>
                   ))}
@@ -221,7 +219,7 @@ export function MemberProfilePanel({
               </p>
               <button
                 type="button"
-                className="text-brand text-[11px] font-semibold hover:underline"
+                className="text-brand text-small font-semibold hover:underline"
                 onClick={onRequestHealthMessage}
               >
                 Pedir por mensaje
@@ -258,7 +256,7 @@ export function MemberProfilePanel({
                 </p>
               )}
               {healthProfile.metabolic_computed_at && (
-                <p className="text-text-muted text-[10px]">
+                <p className="text-text-muted text-small">
                   Calculado{' '}
                   {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy', {
                     locale: es,
@@ -266,7 +264,7 @@ export function MemberProfilePanel({
                   {healthProfile.weight_used_kg != null && ` · ${healthProfile.weight_used_kg} kg`}
                 </p>
               )}
-              <p className="text-text-muted text-[10px]">
+              <p className="text-text-muted text-small">
                 Estimación basada en datos declarados por el miembro.
               </p>
             </div>

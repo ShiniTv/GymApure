@@ -30,7 +30,7 @@ export function PaymentDestinationHint({
   const lines = formatDestinationLines(key, destinations);
   if (lines.length === 0) {
     return (
-      <p className={cn('text-text-muted text-[11px] leading-snug', className)}>
+      <p className={cn('text-text-muted text-small leading-snug', className)}>
         {emptyMessage ??
           `El gimnasio aún no publicó datos de cobro para ${PAYMENT_METHOD_LABELS[key]}.`}
       </p>
@@ -47,14 +47,14 @@ export function PaymentDestinationHint({
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <p className="text-brand text-[11px] font-bold tracking-wide uppercase">
+        <p className="text-brand text-small font-bold tracking-wide uppercase">
           Datos para {PAYMENT_METHOD_LABELS[key]}
         </p>
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          className="h-8 min-h-8 px-2 text-[11px]"
+          className="text-small h-8 min-h-8 px-2"
           onClick={() => {
             void navigator.clipboard.writeText(text).then(() => {
               setCopied(true);
@@ -66,7 +66,7 @@ export function PaymentDestinationHint({
           {copied ? 'Copiado' : 'Copiar'}
         </Button>
       </div>
-      <ul className="text-text space-y-0.5 text-[12px] leading-snug">
+      <ul className="text-text text-small space-y-0.5 leading-snug">
         {lines.map((line) => (
           <li key={line} className="font-medium">
             {line}

@@ -43,7 +43,6 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Reportes', href: '/reports', icon: FileSpreadsheet },
       { name: 'Auditoría', href: '/audit-logs', icon: ScrollText },
       { name: 'Mensajes', href: '/messages', icon: MessageSquare },
-      { name: 'Solicitudes demo', href: '/demo-leads', icon: UsersRound },
     ],
   },
   {
@@ -52,6 +51,7 @@ export const ADMIN_NAV: NavSection[] = [
       { name: 'Mi Perfil', href: '/profile', icon: UserCircle },
       { name: 'Seguridad MFA', href: '/security', icon: ShieldCheck },
       { name: 'Configuración', href: '/settings', icon: Settings2 },
+      { name: 'Solicitudes demo', href: '/demo-leads', icon: UsersRound },
     ],
   },
 ];

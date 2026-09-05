@@ -2,7 +2,8 @@ import { Link, useLocation } from 'react-router';
 import { ShieldAlert, Home, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getDefaultRouteForRole, PORTAL_TITLES, type UserRole } from '../lib/roles';
-import { Button, PageHeader } from '../components/ui';
+import { Button } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
 const ROLE_HINTS: Partial<Record<UserRole, string>> = {
   admin:
@@ -37,10 +38,9 @@ export default function AccessDenied() {
       /\/members\/\d+\/(routines|nutrition)/.test(path));
 
   return (
-    <div className="page-stack mx-auto max-w-lg">
-      <PageHeader
-        compact
-        showTitleOnMobile
+    <OperatePage maxWidth="max-w-lg">
+      <OperateHeader
+        icon={ShieldAlert}
         title={
           <>
             Acceso <span className="text-brand">restringido</span>
@@ -49,8 +49,8 @@ export default function AccessDenied() {
         subtitle={`${portalTitle} — esta sección no corresponde a tu rol.`}
       />
 
-      <div className="border-border bg-surface space-y-4 rounded-2xl border p-6 text-center">
-        <ShieldAlert className="text-brand mx-auto h-12 w-12 opacity-80" aria-hidden />
+      <div className="border-border bg-surface space-y-3 rounded-[var(--radius-card)] border p-4 text-center">
+        <ShieldAlert className="text-brand mx-auto h-8 w-8 opacity-80" aria-hidden />
         <p className="text-text-secondary text-sm leading-relaxed">
           {routinesBlocked
             ? 'Las rutinas y la nutrición las asigna el entrenador desde su portal. Desde aquí puedes gestionar miembros, membresías y el mostrador.'
@@ -84,6 +84,6 @@ export default function AccessDenied() {
           </Link>
         </div>
       </div>
-    </div>
+    </OperatePage>
   );
 }

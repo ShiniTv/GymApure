@@ -1,10 +1,11 @@
 import { Avatar, Badge, Button, Card } from '../../components/ui';
 import { OnboardingStatus } from '../../components/members/OnboardingStatus';
+import { OperateIcon } from '../../components/operate/OperateIcon';
 import { cn } from '../../lib/utils';
 import { getExpiryBadgeInfo } from '../../lib/expiryUtils';
 import { SHIFT_SHORT_LABELS } from '../../lib/trainingShift';
 import type { Member } from '../../hooks/queries/useMembersQuery';
-import { X, type LucideIcon } from 'lucide-react';
+import { ChevronRight, X, type LucideIcon } from 'lucide-react';
 
 export interface MemberQuickAction {
   key: string;
@@ -84,8 +85,10 @@ export function MemberDetailPanel({
           <div className="flex min-w-0 items-center gap-2.5">
             <Avatar name={member.full_name} size="sm" className="shrink-0" />
             <div className="min-w-0">
-              <p className="text-text truncate text-sm font-bold">{member.full_name}</p>
-              <p className="text-text-muted text-[11px]">
+              <p className="text-text truncate text-sm font-semibold tracking-[-0.011em]">
+                {member.full_name}
+              </p>
+              <p className="text-text-muted text-small">
                 {ROLE_LABELS[member.role] ?? member.role}
               </p>
             </div>
@@ -94,7 +97,7 @@ export function MemberDetailPanel({
             <button
               type="button"
               onClick={onClose}
-              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
+              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
               aria-label="Cerrar ficha"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -104,57 +107,66 @@ export function MemberDetailPanel({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant={member.status === 'active' ? 'success' : 'danger'} className="text-[10px]">
+        <Badge variant={member.status === 'active' ? 'success' : 'danger'} className="text-small">
           {member.status === 'active' ? 'Activo' : 'Inactivo'}
         </Badge>
         {member.subscription_status === 'paused' && (
-          <Badge variant="warning" className="text-[10px]">
+          <Badge variant="warning" className="text-small">
             Pausada
           </Badge>
         )}
         {expiryBadge && (
-          <Badge className={cn('text-[10px]', expiryBadge.className)}>{expiryBadge.label}</Badge>
+          <Badge className={cn('text-small', expiryBadge.className)}>{expiryBadge.label}</Badge>
         )}
         <OnboardingStatus onboarding={member.onboarding} variant="chip" />
       </div>
 
-      <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {metaRows.map((row) => (
+      <dl className="border-border/80 bg-surface mt-3 overflow-hidden rounded-[var(--radius-card)] border">
+        {metaRows.map((row, index) => (
           <div
             key={row.label}
-            className="border-border/70 bg-surface-raised/60 rounded-lg border px-2.5 py-2"
+            className={cn(
+              'flex min-h-11 items-center justify-between gap-3 px-3 py-2',
+              index > 0 && 'border-border/60 border-t'
+            )}
           >
-            <dt className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
-              {row.label}
-            </dt>
-            <dd className="text-text mt-0.5 truncate text-xs font-medium">{row.value}</dd>
+            <dt className="text-text-muted text-small shrink-0 font-medium">{row.label}</dt>
+            <dd className="text-text min-w-0 truncate text-right text-sm font-medium tracking-[-0.011em]">
+              {row.value}
+            </dd>
           </div>
         ))}
       </dl>
 
       {primary && (
-        <Button type="button" className="mt-3.5 h-11 min-h-11 w-full" onClick={() => run(primary)}>
-          <primary.icon className="h-4 w-4" aria-hidden />
+        <Button
+          type="button"
+          size="md"
+          className="mt-3.5 w-full gap-2"
+          onClick={() => run(primary)}
+        >
+          <primary.icon className="operate-icon h-4 w-4" aria-hidden />
           {primary.label}
         </Button>
       )}
 
       {secondary.length > 0 && (
-        <ul
-          className={cn(
-            'mt-2 grid gap-1.5',
-            secondary.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-          )}
-        >
+        <ul className="border-border/80 bg-surface mt-2 overflow-hidden rounded-[var(--radius-card)] border">
           {secondary.map((action) => (
             <li key={action.key}>
               <button
                 type="button"
                 onClick={() => run(action)}
-                className="border-border/60 bg-surface-raised/50 text-text-secondary hover:border-brand/30 hover:bg-surface-overlay flex min-h-[3.25rem] w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center transition-[background-color,border-color,transform] active:scale-[0.98]"
+                className="tap-feedback border-border/60 hover:bg-surface-raised/80 flex min-h-[var(--touch-min)] w-full items-center gap-3 border-b px-3 py-2.5 text-left transition-colors last:border-b-0"
               >
-                <action.icon className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
-                <span className="text-[11px] leading-tight font-semibold">{action.label}</span>
+                <OperateIcon icon={action.icon} tone="neutral" well size="sm" />
+                <span className="text-text min-w-0 flex-1 text-sm font-medium tracking-[-0.011em]">
+                  {action.label}
+                </span>
+                <ChevronRight
+                  className="operate-icon text-text-muted h-4 w-4 shrink-0 opacity-50"
+                  aria-hidden
+                />
               </button>
             </li>
           ))}
@@ -168,9 +180,9 @@ export function MemberDetailPanel({
               key={action.key}
               type="button"
               onClick={() => run(action)}
-              className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl py-2 text-[13px] font-medium text-red-600 dark:text-red-400"
+              className="text-danger dark:text-danger tap-feedback hover:bg-danger/10 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium transition-colors"
             >
-              <action.icon className="h-4 w-4 shrink-0" aria-hidden />
+              <OperateIcon icon={action.icon} tone="danger" size="sm" />
               {action.label}
             </button>
           ))}

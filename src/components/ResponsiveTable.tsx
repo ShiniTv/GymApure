@@ -54,7 +54,7 @@ export function ResponsiveTable<T>({
   const table = (
     <table className="text-text-muted w-full text-left text-xs sm:text-sm">
       {header && (
-        <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
+        <thead className="bg-surface-raised text-text-muted text-small font-semibold sm:text-xs">
           {header}
         </thead>
       )}

@@ -28,7 +28,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             aria-describedby={error ? errorId : undefined}
             className={cn(
               fieldClassName,
-              error && 'border-red-500',
+              error && 'border-danger',
               showIcon && 'pl-10',
               'pr-10',
               className
@@ -46,7 +46,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
         {error && (
-          <p id={errorId} className="mt-1 ml-1 text-xs font-medium text-red-500" role="alert">
+          <p id={errorId} className="text-danger text-small mt-1 ml-1 font-medium" role="alert">
             {error}
           </p>
         )}

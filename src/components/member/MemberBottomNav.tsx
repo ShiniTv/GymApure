@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react';
 import { Link, useLocation } from 'react-router';
-import { Dumbbell, LogOut } from 'lucide-react';
+import { Dumbbell, LogOut, Moon, Sun } from 'lucide-react';
 import { LogoutConfirmModal, useLogoutConfirm } from '../LogoutConfirmModal';
+import { InstallPrompt } from '../InstallPrompt';
 import { Sheet } from '../ui';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useChatUnreadQuery } from '../../hooks/queries/useChatQuery';
+import { useNotificationUnreadQuery } from '../../hooks/queries/useNotificationsQuery';
 import {
   MEMBER_PRIMARY_TABS,
   MEMBER_MORE_ITEMS,
@@ -19,9 +22,6 @@ const FAB_ROOT_CLASS = 'member-has-workout-fab';
 
 const tabClass =
   'inline-flex min-h-[var(--touch-min)] w-full max-w-[4.5rem] touch-manipulation flex-col items-center justify-center rounded-xl px-0.5 transition-[color,transform,opacity] duration-150 tap-feedback';
-
-const moreItemClass =
-  'relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-card px-2 py-2.5 text-center transition-[transform,opacity,background-color] duration-150 tap-feedback';
 
 function memberDisplayName(name: string | undefined): { first: string; initials: string } {
   const trimmed = name?.trim() || 'Miembro';
@@ -50,9 +50,11 @@ function groupMoreItems(items: MemberMoreItem[]) {
 export function MemberBottomNav() {
   const location = useLocation();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { requestLogout, logoutConfirmProps } = useLogoutConfirm();
   const memberStats = useMemberStatsOptional();
   const { data: chatUnread = 0 } = useChatUnreadQuery(true);
+  const { data: notificationUnread = 0 } = useNotificationUnreadQuery(true);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const { first, initials } = useMemo(() => memberDisplayName(user?.name), [user?.name]);
@@ -114,28 +116,29 @@ export function MemberBottomNav() {
         panelStyle={sheetBottomStyle}
         zIndex={46}
         cardClassName="mx-auto max-w-md"
+        scrollable
         showHandle
         compact
       >
-        <div className="animate-in fade-in slide-in-from-bottom-1 mb-2.5 flex items-center gap-2.5 duration-200">
+        <div className="mb-2 flex items-center gap-2">
           <div
-            className="bg-brand/15 text-brand flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+            className="bg-brand/15 text-brand flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold"
             aria-hidden
           >
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-text truncate text-sm font-semibold tracking-[-0.02em]">
+            <p className="text-text truncate text-[0.8125rem] font-semibold tracking-[-0.014em]">
               Hola, {first}
             </p>
-            <p className="text-text-secondary text-small">Tu cuenta y atajos</p>
+            <p className="text-text-muted text-[0.6875rem] leading-tight">Tu cuenta y atajos</p>
           </div>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {moreSections.map((section) => (
-            <div key={section.label} className="animate-in fade-in duration-200">
-              <p className="text-text-muted mb-1 px-0.5 text-[10px] font-semibold tracking-[0.06em] uppercase">
+            <div key={section.label}>
+              <p className="text-text-muted mb-1 px-0.5 text-[0.6875rem] font-semibold tracking-[-0.01em]">
                 {section.label}
               </p>
               <ul className="grid grid-cols-2 gap-1.5">
@@ -148,45 +151,48 @@ export function MemberBottomNav() {
                       ? chatUnread === 1
                         ? '1 sin leer'
                         : `${chatUnread > 99 ? '99+' : chatUnread} sin leer`
-                      : null;
+                      : item.showNotificationBadge && notificationUnread > 0
+                        ? notificationUnread === 1
+                          ? '1 sin leer'
+                          : `${notificationUnread > 99 ? '99+' : notificationUnread} sin leer`
+                        : null;
                   return (
-                    <li
-                      key={item.href}
-                      className={section.items.length === 1 ? 'col-span-1' : undefined}
-                    >
+                    <li key={item.href}>
                       <Link
                         to={item.href}
                         {...routePrefetchHandlers(item.href)}
                         onClick={closeMore}
                         className={cn(
-                          moreItemClass,
+                          'tap-feedback relative flex h-[3.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 rounded-[var(--radius-card)] border px-1.5 py-1.5 text-center transition-colors',
                           itemActive
-                            ? 'bg-surface-overlay text-text ring-border ring-1'
-                            : 'bg-surface-overlay/60 text-text hover:bg-surface-overlay'
+                            ? 'border-border bg-surface-raised text-text'
+                            : 'border-border/60 text-text-secondary hover:bg-surface-raised/70 hover:text-text bg-transparent'
                         )}
                         aria-current={itemActive ? 'page' : undefined}
                         aria-label={unreadLabel ? `${item.name}, ${unreadLabel}` : item.name}
                       >
                         {itemActive ? (
                           <span
-                            className="bg-text-muted absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+                            className="bg-brand absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
                             aria-hidden
                           />
                         ) : null}
                         <span className="relative inline-flex">
-                          <item.icon className="h-5 w-5" aria-hidden />
+                          <item.icon className="operate-icon h-4 w-4" aria-hidden />
                           {item.showUnreadBadge && chatUnread > 0 && (
                             <span className="member-bottom-nav-unread">
                               {chatUnread > 99 ? '99+' : chatUnread}
                             </span>
                           )}
+                          {item.showNotificationBadge && notificationUnread > 0 && (
+                            <span className="member-bottom-nav-unread">
+                              {notificationUnread > 99 ? '99+' : notificationUnread}
+                            </span>
+                          )}
                         </span>
-                        <span className="text-[11px] leading-tight font-semibold">{item.name}</span>
-                        {unreadLabel ? (
-                          <span className="text-text-muted text-[9px] leading-none font-medium">
-                            {unreadLabel}
-                          </span>
-                        ) : null}
+                        <span className="text-[0.6875rem] leading-tight font-semibold">
+                          {item.name}
+                        </span>
                       </Link>
                     </li>
                   );
@@ -196,18 +202,35 @@ export function MemberBottomNav() {
           ))}
         </div>
 
-        <div className="border-border mt-2.5 border-t pt-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              closeMore();
-              requestLogout();
-            }}
-            className="text-danger hover:bg-danger/10 rounded-card tap-feedback flex min-h-10 w-full touch-manipulation items-center justify-center gap-2 px-2.5 py-2 text-[13px] font-medium transition-[background-color,transform,opacity] duration-150"
-          >
-            <LogOut className="h-4 w-4" aria-hidden />
-            Cerrar sesión
-          </button>
+        <div className="border-border-subtle mt-2 space-y-1 border-t pt-1.5">
+          <div className="px-0.5 empty:hidden">
+            <InstallPrompt />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="tap-feedback text-text-secondary hover:bg-surface-overlay hover:text-text flex min-h-10 touch-manipulation items-center justify-center gap-1.5 rounded-[var(--radius-button)] px-2 text-xs font-medium transition-colors"
+            >
+              {theme === 'light' ? (
+                <Moon className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              ) : (
+                <Sun className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              )}
+              {theme === 'light' ? 'Oscuro' : 'Claro'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                closeMore();
+                requestLogout();
+              }}
+              className="tap-feedback text-danger hover:bg-danger/10 flex min-h-10 touch-manipulation items-center justify-center gap-1.5 rounded-[var(--radius-button)] px-2 text-xs font-medium transition-colors"
+            >
+              <LogOut className="operate-icon h-3.5 w-3.5 shrink-0" aria-hidden />
+              Salir
+            </button>
+          </div>
         </div>
       </Sheet>
 
@@ -243,7 +266,9 @@ export function MemberBottomNav() {
                       onClick={() => setMoreOpen((v) => !v)}
                       className={cn(tabClass, active ? 'text-text' : 'text-text-muted')}
                       aria-label={
-                        chatUnread > 0 ? `${item.name}, ${chatUnread} sin leer` : item.name
+                        chatUnread + notificationUnread > 0
+                          ? `${item.name}, ${chatUnread + notificationUnread} sin leer`
+                          : item.name
                       }
                       aria-expanded={moreOpen}
                     >
@@ -254,11 +279,13 @@ export function MemberBottomNav() {
                             (active || moreOpen) && 'member-bottom-nav-tab-icon--active'
                           )}
                         >
-                          <item.icon className="h-5 w-5" aria-hidden />
+                          <item.icon className="operate-icon h-5 w-5" aria-hidden />
                         </span>
-                        {chatUnread > 0 && (
+                        {chatUnread + notificationUnread > 0 && (
                           <span className="member-bottom-nav-unread">
-                            {chatUnread > 99 ? '99+' : chatUnread}
+                            {chatUnread + notificationUnread > 99
+                              ? '99+'
+                              : chatUnread + notificationUnread}
                           </span>
                         )}
                       </span>
@@ -280,7 +307,7 @@ export function MemberBottomNav() {
                             active && 'member-bottom-nav-tab-icon--active'
                           )}
                         >
-                          <item.icon className="h-5 w-5" aria-hidden />
+                          <item.icon className="operate-icon h-5 w-5" aria-hidden />
                         </span>
                         {item.showUnreadBadge && chatUnread > 0 && (
                           <span className="member-bottom-nav-unread">

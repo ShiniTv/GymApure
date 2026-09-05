@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { useNavigate, Link, Navigate, useLocation } from 'react-router';
+import { useNavigate, Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../lib/roles';
 import { safeReturnPath } from '../lib/safeReturnPath';
 import { prefetchPostLogin } from '../lib/routePrefetch';
-import { Mail, ShieldCheck } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
-import { Button, Card, Input, Label, PasswordInput, Alert } from '../components/ui';
+import { Button, Input, Label, PasswordInput, Alert } from '../components/ui';
 
 interface LoginUser {
   id: number;
@@ -60,21 +59,31 @@ export default function Login() {
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const from = (location.state as LoginLocationState | null)?.from;
 
   useEffect(() => {
-    const sessionMessage = sessionStorage.getItem('auth:session-message');
-    if (sessionMessage) {
-      setError(sessionMessage);
-      sessionStorage.removeItem('auth:session-message');
+    const challenge = searchParams.get('mfa_challenge');
+    if (challenge) {
+      sessionStorage.setItem('auth:mfa-challenge', challenge);
+      setSearchParams({}, { replace: true });
     }
-  }, []);
+
+    const storedChallenge = sessionStorage.getItem('auth:mfa-challenge');
+    if (storedChallenge) {
+      setMfaChallenge(storedChallenge);
+      setMfaCode('');
+      sessionStorage.removeItem('auth:mfa-challenge');
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const run = () => {
       apiFetch('/api/auth/config')
         .then((res) => parseJsonSafe<{ allowPublicRegister?: boolean }>(res))
-        .then((data) => setRegisterAllowed(data.allowPublicRegister !== false))
+        .then((data) => {
+          setRegisterAllowed(data.allowPublicRegister !== false);
+        })
         .catch(() => setRegisterAllowed(true));
     };
 
@@ -199,148 +208,142 @@ export default function Login() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card
-        className="auth-linear-panel page-stack w-full p-6 sm:p-7"
-        data-testid="login-panel"
-        padding="none"
-      >
+      <div className="auth-linear-card" data-testid="login-panel">
         <AuthLinearHeader
-          title={mfaChallenge ? 'Verifica tu identidad' : 'GymApure'}
+          title={mfaChallenge ? 'Confirma que eres tú' : 'Entra'}
           subtitle={
             mfaChallenge
-              ? 'Introduce el código de tu aplicación autenticadora.'
-              : 'Inicia sesión en tu cuenta'
+              ? 'El código de tu app autenticadora abre esta sesión.'
+              : 'Tu cuenta del gym.'
           }
         />
 
-        {mfaChallenge ? (
-          <form className="form-stack mt-7" onSubmit={handleMfaSubmit} noValidate>
-            {error && <Alert variant="error">{error}</Alert>}
+        <div className="auth-form-wrap" key={mfaChallenge ? 'mfa' : 'login'}>
+          {mfaChallenge ? (
+            <form className="auth-form" onSubmit={handleMfaSubmit} noValidate>
+              {error && <Alert variant="error">{error}</Alert>}
 
-            <div>
-              <Label className="auth-linear-label mb-1.5" htmlFor="mfa_code">
-                Código MFA
-              </Label>
-              <Input
-                id="mfa_code"
-                name="mfa_code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                autoFocus
-                required
-                leadingIcon={<ShieldCheck />}
-                placeholder="000000"
-                className="auth-linear-field"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              />
-            </div>
+              <div>
+                <Label className="auth-linear-label mb-1.5" htmlFor="mfa_code">
+                  Código
+                </Label>
+                <Input
+                  id="mfa_code"
+                  name="mfa_code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  required
+                  placeholder="000000"
+                  className="auth-linear-field"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                />
+              </div>
 
-            <Button type="submit" className="auth-linear-primary mt-1 w-full" loading={loading}>
-              Verificar
-            </Button>
+              <Button type="submit" className="auth-linear-primary mt-1 w-full" loading={loading}>
+                Verificar
+              </Button>
 
-            <button
-              type="button"
-              className="text-center text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-200"
-              onClick={() => {
-                setMfaChallenge(null);
-                setMfaCode('');
-                setError('');
-              }}
-            >
-              Volver al inicio de sesión
-            </button>
-          </form>
-        ) : (
-          <form className="form-stack mt-7" onSubmit={handleSubmit} noValidate>
-            {isLocked ? (
-              <Alert variant="error">
-                <p>Demasiados intentos fallidos.</p>
-                <p className="mt-1 font-semibold tabular-nums" aria-live="polite">
-                  Podrás intentar de nuevo en {formatCountdown(remainingSeconds)}
-                </p>
-              </Alert>
-            ) : (
-              error && <Alert variant="error">{error}</Alert>
-            )}
-
-            <div>
-              <Label className="auth-linear-label mb-1.5" htmlFor="email">
-                Correo electrónico
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                disabled={isLocked}
-                leadingIcon={<Mail />}
-                placeholder="correo@ejemplo.com"
-                className="auth-linear-field"
-                value={email}
-                error={fieldErrors.email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+              <button
+                type="button"
+                className="text-left text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-200"
+                onClick={() => {
+                  setMfaChallenge(null);
+                  setMfaCode('');
+                  setError('');
                 }}
-              />
-            </div>
-            <div>
-              <Label className="auth-linear-label mb-1.5" htmlFor="password">
-                Contraseña
-              </Label>
-              <PasswordInput
-                id="password"
-                name="password"
-                autoComplete="current-password"
-                required
-                disabled={isLocked}
-                placeholder="Tu contraseña"
-                className="auth-linear-field"
-                value={password}
-                error={fieldErrors.password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
-                }}
-              />
-            </div>
-
-            <p className="-mt-1 text-right">
-              <Link
-                to="/forgot-password"
-                className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-200"
               >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </p>
+                Volver al inicio de sesión
+              </button>
+            </form>
+          ) : (
+            <form className="auth-form" onSubmit={handleSubmit} noValidate>
+              {isLocked ? (
+                <Alert variant="error">
+                  <p>Demasiados intentos fallidos.</p>
+                  <p className="mt-1 font-semibold tabular-nums" aria-live="polite">
+                    Podrás intentar de nuevo en {formatCountdown(remainingSeconds)}
+                  </p>
+                </Alert>
+              ) : (
+                error && <Alert variant="error">{error}</Alert>
+              )}
 
-            <Button
-              type="submit"
-              className="auth-linear-primary mt-1 w-full"
-              loading={loading}
-              disabled={isLocked}
-            >
-              {isLocked ? `Espera ${formatCountdown(remainingSeconds)}` : 'Entrar'}
-            </Button>
+              <div>
+                <Label className="auth-linear-label mb-1.5" htmlFor="email">
+                  Correo
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  disabled={isLocked}
+                  placeholder="correo@ejemplo.com"
+                  className="auth-linear-field"
+                  value={email}
+                  error={fieldErrors.email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                  }}
+                />
+              </div>
+              <div>
+                <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                  <Label className="auth-linear-label" htmlFor="password">
+                    Contraseña
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="auth-linear-link text-xs font-medium"
+                    aria-label="¿Olvidaste tu contraseña?"
+                  >
+                    ¿Olvidaste?
+                  </Link>
+                </div>
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  disabled={isLocked}
+                  placeholder="Tu contraseña"
+                  showIcon={false}
+                  className="auth-linear-field"
+                  value={password}
+                  error={fieldErrors.password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                  }}
+                />
+              </div>
 
-            {registerAllowed && (
-              <p className="pt-1 text-center text-[11px] text-zinc-500">
-                ¿No tienes una cuenta?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-zinc-300 transition-colors hover:text-white"
-                >
-                  Regístrate aquí
-                </Link>
-              </p>
-            )}
-          </form>
-        )}
-      </Card>
+              <Button
+                type="submit"
+                className="auth-linear-primary w-full"
+                loading={loading}
+                disabled={isLocked}
+              >
+                {isLocked ? `Espera ${formatCountdown(remainingSeconds)}` : 'Entrar'}
+              </Button>
+
+              {registerAllowed && (
+                <p className="text-small pt-1 text-zinc-500">
+                  ¿No tienes una cuenta?{' '}
+                  <Link to="/register" className="auth-linear-link font-medium">
+                    Regístrate
+                  </Link>
+                </p>
+              )}
+            </form>
+          )}
+        </div>
+      </div>
     </AuthShell>
   );
 }

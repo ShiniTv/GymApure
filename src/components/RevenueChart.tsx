@@ -1,4 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { chartAxisTick, chartHeights, chartTooltipClass } from '../lib/chartTheme';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 
 export type RevenueChartMode = 'day' | 'month';
 
@@ -35,7 +38,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
   }));
 
   return (
-    <div className={className ?? 'h-72'}>
+    <div className={className ?? chartHeights.dashboard}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={numericData}>
           <CartesianGrid
@@ -48,8 +51,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
             dataKey="period"
             stroke="currentColor"
             className="text-text-muted"
-            fontSize={10}
-            fontWeight="600"
+            {...chartAxisTick}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
@@ -58,8 +60,7 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
           <YAxis
             stroke="currentColor"
             className="text-text-muted"
-            fontSize={10}
-            fontWeight="600"
+            {...chartAxisTick}
             tickLine={false}
             axisLine={false}
             width={42}
@@ -71,8 +72,8 @@ export default function RevenueChart({ data, mode = 'month', className }: Revenu
               if (active && payload && payload.length) {
                 const point = payload[0].payload as RevenueChartPoint & { income: number };
                 return (
-                  <div className="border-border bg-surface rounded-xl border p-3 shadow-xl">
-                    <p className="text-text-muted mb-0.5 text-[10px]">
+                  <div className={chartTooltipClass}>
+                    <p className={cn(typography.small, 'text-text-muted mb-0.5')}>
                       {formatPeriodTitle(point.period, mode)}
                     </p>
                     <p className="text-brand text-base font-semibold tabular-nums">

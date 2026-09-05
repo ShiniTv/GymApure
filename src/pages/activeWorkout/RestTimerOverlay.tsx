@@ -28,7 +28,7 @@ export function RestTimerOverlay({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className="border-border bg-surface animate-in slide-in-from-bottom-8 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 rounded-2xl border p-6 shadow-2xl md:right-8 md:bottom-4 md:left-auto md:w-80">
+    <div className="border-border bg-surface animate-in slide-in-from-bottom-4 fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-50 rounded-[var(--radius-card)] border p-4 shadow-2xl md:right-8 md:bottom-4 md:left-auto md:w-80">
       <div className="mx-auto flex max-w-md flex-col items-center">
         <span className="text-text-muted mb-3 text-xs font-medium">Descanso</span>
 
@@ -57,19 +57,19 @@ export function RestTimerOverlay({
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-text font-mono text-3xl font-bold tabular-nums">
+            <span className="text-text font-mono text-2xl font-semibold tabular-nums">
               {formatWorkoutTime(restTimer)}
             </span>
           </div>
         </div>
 
         {notificationsEnabled ? (
-          <p className="text-text-muted mb-3 text-center text-[11px]">También en notificaciones</p>
+          <p className="text-text-muted text-small mb-3 text-center">También en notificaciones</p>
         ) : canRequestNotifications && onRequestNotifications ? (
           <button
             type="button"
             onClick={onRequestNotifications}
-            className="text-brand mb-3 text-center text-[11px] font-medium underline-offset-2 hover:underline"
+            className="text-brand text-small mb-3 text-center font-medium underline-offset-2 hover:underline"
           >
             Avisarme al terminar
           </button>
@@ -79,11 +79,11 @@ export function RestTimerOverlay({
           <button
             type="button"
             onClick={() => onAddTime(30)}
-            className="bg-surface-raised text-text hover:bg-surface-overlay min-h-[var(--touch-min)] flex-1 touch-manipulation rounded-2xl py-3 text-xs font-semibold transition-all"
+            className="bg-surface-raised text-text can-hover:hover:bg-surface-overlay min-h-[var(--touch-min)] flex-1 touch-manipulation rounded-[var(--radius-button)] py-3 text-xs font-semibold transition-[background-color,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
           >
             +30s
           </button>
-          <Button onClick={onSkip} className="flex-[2]" size="sm">
+          <Button onClick={onSkip} className="flex-[2]" size="md">
             Saltar
           </Button>
         </div>

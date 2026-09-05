@@ -1,6 +1,5 @@
 import {
   Fingerprint,
-  LogIn,
   Users,
   CreditCard,
   MessageSquare,
@@ -10,13 +9,11 @@ import {
 } from 'lucide-react';
 import type { NavSection } from './types';
 
+/** Single Acceso entry — counter is the daily home (no Inicio/Mostrador split). */
 export const RECEPTION_NAV: NavSection[] = [
   {
-    name: 'Mostrador',
-    items: [
-      { name: 'Inicio', href: '/reception', icon: Fingerprint },
-      { name: 'Mostrador', href: '/reception?mode=counter&tab=access', icon: LogIn },
-    ],
+    name: 'Acceso',
+    items: [{ name: 'Acceso', href: '/reception?mode=counter&tab=access', icon: Fingerprint }],
   },
   {
     name: 'Operaciones',

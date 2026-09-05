@@ -129,7 +129,7 @@ export function MemberSelfCheckInCard() {
         {inside ? (
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
             className="h-10 shrink-0 px-3"
             loading={busy}
             onClick={() => void act('out')}
@@ -140,7 +140,7 @@ export function MemberSelfCheckInCard() {
         ) : (
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
             className="h-10 shrink-0 px-3"
             loading={busy}
             disabled={pinRequired && !pin.trim()}

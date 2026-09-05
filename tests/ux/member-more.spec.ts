@@ -16,6 +16,6 @@ test.describe('Member sheet Más', () => {
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: /historial/i })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /salir/i })).toBeVisible();
   });
 });

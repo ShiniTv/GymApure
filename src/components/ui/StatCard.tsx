@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { cn } from '../../lib/utils';
 import { Card } from './Card';
 import type { TrendTone } from '../../lib/dashboardTrends';
+import { typography } from '../../lib/typography';
 
 type StatColor = 'emerald' | 'blue' | 'brand' | 'orange' | 'red';
 
@@ -27,11 +28,11 @@ interface StatCardProps {
 }
 
 const colorMap: Record<StatColor, string> = {
-  emerald: 'text-emerald-600 dark:text-emerald-500 bg-emerald-500/10',
-  blue: 'text-blue-600 dark:text-blue-500 bg-blue-500/10',
+  emerald: 'text-success bg-success/10',
+  blue: 'text-brand bg-brand/10',
   brand: 'text-brand bg-brand/10',
-  orange: 'text-orange-600 dark:text-orange-500 bg-orange-500/10',
-  red: 'text-red-600 dark:text-red-500 bg-red-500/10',
+  orange: 'text-warning bg-warning/10',
+  red: 'text-danger bg-danger/10',
 };
 
 function StatCardContent({
@@ -47,14 +48,13 @@ function StatCardContent({
   if (minimal) {
     return (
       <>
-        <p className="text-text-muted text-[10px] leading-tight font-medium tracking-wide uppercase">
-          {title}
-        </p>
-        <p className="text-text mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{value}</p>
+        <p className={cn(typography.statLabel, 'leading-tight')}>{title}</p>
+        <p className={cn(typography.statValueSm, 'mt-0.5')}>{value}</p>
         {trend ? (
           <span
             className={cn(
-              'mt-1 flex items-center gap-0.5 text-[10px] font-medium',
+              'mt-1 flex items-center gap-0.5 font-medium',
+              typography.small,
               trendTone === 'up' && 'text-success',
               trendTone === 'down' && 'text-danger',
               trendTone === 'neutral' && 'text-text-muted'
@@ -77,12 +77,14 @@ function StatCardContent({
           <p
             className={cn(
               'stat-label mb-1 leading-snug break-words',
-              compact && 'text-[10px] leading-tight tracking-normal sm:tracking-wide'
+              compact && 'text-small leading-tight'
             )}
           >
             {title}
           </p>
-          <p className={cn('stat-value tabular-nums', compact && 'text-lg sm:text-2xl')}>{value}</p>
+          <p className={cn('stat-value tabular-nums', compact && typography.statValueSm)}>
+            {value}
+          </p>
         </div>
         <div
           className={cn(
@@ -102,7 +104,7 @@ function StatCardContent({
           <span
             className={cn(
               'flex items-center gap-0.5 font-medium',
-              compact ? 'text-[10px] leading-tight' : 'text-xs sm:text-sm',
+              compact ? 'text-small leading-tight' : 'text-xs sm:text-sm',
               trendTone === 'up' && 'text-success',
               trendTone === 'down' && 'text-danger',
               trendTone === 'neutral' && 'text-text-muted'

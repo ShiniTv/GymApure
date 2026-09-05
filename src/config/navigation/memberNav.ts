@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard,
+  Home,
   Dumbbell,
   BookOpen,
   UtensilsCrossed,
@@ -15,7 +15,7 @@ export const MEMBER_NAV: NavSection[] = [
   {
     name: 'Mi entrenamiento',
     items: [
-      { name: 'Inicio', href: '/panel', icon: LayoutDashboard },
+      { name: 'Inicio', href: '/panel', icon: Home },
       { name: 'Rutinas', href: '/routines', icon: Dumbbell },
       { name: 'Nutrición', href: '/nutrition', icon: UtensilsCrossed },
       { name: 'Mensajes', href: '/messages', icon: MessageSquare },

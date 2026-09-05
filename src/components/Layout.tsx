@@ -11,7 +11,6 @@ import BrandName from './BrandName';
 import { ScrollToTop } from './ScrollToTop';
 import { InstallPrompt } from './InstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
-import { BRAND } from '../config/brand';
 import { MobileShellProvider } from '../context/MobileShellContext';
 import { LogOut, Sun, Moon, PanelLeftClose } from 'lucide-react';
 import { useChatUnreadQuery } from '../hooks/queries/useChatQuery';
@@ -19,7 +18,7 @@ import { useTrainerInvoicesQuery } from '../hooks/queries/useTrainerBillingQuery
 import clsx from 'clsx';
 import { ROLE_LABELS, PORTAL_TITLES, getDefaultRouteForRole } from '../lib/roles';
 import { getNavigationForRole } from '../config/navigation';
-import { Avatar } from './ui';
+import { Avatar, IconButton } from './ui';
 import { MemberBottomNav } from './member/MemberBottomNav';
 import { ReceptionBottomNav } from './reception/ReceptionBottomNav';
 import { TrainerBottomNav } from './trainer/TrainerBottomNav';
@@ -36,9 +35,6 @@ import { routePrefetchHandlers } from '../lib/routePrefetch';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
-
-const iconBtnClass =
-  'inline-flex items-center justify-center h-10 w-10 rounded-full text-text-secondary hover:bg-surface-overlay transition-[background-color,transform,opacity] duration-150 touch-manipulation tap-feedback';
 
 const SIDEBAR_MOTION_MS = 300;
 
@@ -177,14 +173,13 @@ export default function Layout() {
   }, [isSidebarOpen]);
 
   const brandMark = <BrandName variant="split" />;
-  const mobileHeaderTitle = currentPage ?? BRAND.name;
   const homeHref = getDefaultRouteForRole(user?.role ?? 'member');
 
   const goHome = useCallback(() => {
     setIsSidebarOpen(false);
   }, []);
 
-  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16.5rem)] lg:w-56';
+  const SIDEBAR_WIDTH = sidebarCollapsed ? 'w-16' : 'w-[min(88vw,16rem)] lg:w-56';
   const hideBackToDashboard =
     showMemberBottomNav || showReceptionBottomNav || showTrainerBottomNav || showAdminBottomNav;
 
@@ -201,67 +196,18 @@ export default function Layout() {
         >
           Saltar al contenido
         </a>
-        {/* Mobile Header — fixed glass island (content scrolls underneath) */}
-        <div className="pointer-events-none fixed top-0 right-0 left-0 z-50 px-4 pt-3 pb-2 lg:hidden">
-          <div className="mobile-chrome-glass pointer-events-auto flex h-11 items-center justify-between gap-2 rounded-xl px-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Link
-                to={homeHref}
-                onClick={goHome}
-                className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
-                aria-label="Ir al inicio"
-                title="Ir al inicio"
-              >
-                <Logo className="h-7 w-7 shrink-0" />
-              </Link>
-              <div className="min-w-0">
-                {currentPage ? (
-                  <>
-                    <p className="text-text truncate text-[13px] leading-tight font-semibold tracking-[-0.02em]">
-                      {mobileHeaderTitle}
-                    </p>
-                    <p className="text-text-muted truncate text-[10px] leading-tight font-medium">
-                      {BRAND.name}
-                    </p>
-                  </>
-                ) : (
-                  <Link
-                    to={homeHref}
-                    onClick={goHome}
-                    className="block min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
-                    aria-label="Ir al inicio"
-                    title="Ir al inicio"
-                  >
-                    <BrandName variant="inline" size="sm" className="truncate leading-tight" />
-                  </Link>
-                )}
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <InstallPrompt />
-              <NotificationBell />
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className={iconBtnClass}
-                aria-label="Cambiar tema"
-              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-        </div>
 
         <div className="flex min-h-0">
-          {/* Sidebar — Linear-like elevated panel */}
+          {/* Sidebar — Apple Operate elevated panel */}
           <aside
             className={clsx(
-              'app-sidebar border-border/70 fixed top-[var(--mobile-top-chrome)] bottom-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:inset-y-0 lg:top-0 lg:h-dvh lg:translate-x-0',
+              'app-sidebar border-border/60 fixed inset-y-0 left-0 z-40 flex min-h-0 transform flex-col overflow-hidden border-r transition-[transform,width] duration-300 ease-in-out lg:static lg:h-dvh lg:translate-x-0',
               SIDEBAR_WIDTH,
-              isMobileShell && isSidebarOpen && 'z-[60]',
+              isMobileShell && isSidebarOpen && 'z-[60] shadow-[var(--shadow-sheet)]',
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             )}
             style={{ transitionDuration: `${SIDEBAR_MOTION_MS}ms` }}
+            aria-label="Navegación principal"
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
@@ -271,7 +217,7 @@ export default function Layout() {
                   onClick={() => {
                     setSidebarCollapsed(false);
                   }}
-                  className="text-text-secondary hover:bg-surface-overlay flex h-9 w-9 cursor-pointer items-center justify-center rounded-md transition-colors"
+                  className="hover:bg-surface-overlay/70 flex h-9 w-9 cursor-pointer items-center justify-center rounded-[var(--radius-button)] transition-colors"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
@@ -279,34 +225,35 @@ export default function Layout() {
                 </Link>
               </div>
             ) : (
-              <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:flex">
+              <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2 border-b px-2.5 lg:flex">
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-[var(--radius-button)] px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
                   <Logo className="h-7 w-7 shrink-0" />
-                  <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-opacity duration-200">
+                  <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
                     {brandMark}
-                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
                 </Link>
                 <NotificationBell compact className="shrink-0" />
-                <button
+                <IconButton
                   type="button"
+                  size="sm"
+                  variant="tertiary"
                   onClick={() => {
                     setSidebarCollapsed(true);
                   }}
-                  className="text-text-muted hover:bg-surface-overlay flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
                   aria-label="Colapsar menú"
                   title="Colapsar menú"
                 >
-                  <PanelLeftClose className="h-3.5 w-3.5" />
-                </button>
+                  <PanelLeftClose className="operate-icon h-3.5 w-3.5" />
+                </IconButton>
               </div>
             )}
 
@@ -315,14 +262,14 @@ export default function Layout() {
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[var(--radius-button)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
                   <Logo className="h-7 w-7 shrink-0" />
                   <div className="min-w-0 flex-1">
                     {brandMark}
-                    <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.04em]">
+                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
@@ -333,7 +280,7 @@ export default function Layout() {
             <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
-                  'nav-stack scroll-area min-h-0 flex-1 py-2.5 lg:py-3',
+                  'nav-stack scroll-area min-h-0 flex-1 py-3',
                   sidebarCollapsed ? 'px-1.5' : 'px-2'
                 )}
               >
@@ -362,9 +309,10 @@ export default function Layout() {
                         >
                           <item.icon
                             className={clsx(
-                              'h-4 w-4 shrink-0',
+                              'operate-icon h-4 w-4 shrink-0',
                               isActive ? 'text-text' : 'text-text-muted'
                             )}
+                            strokeWidth={1.75}
                           />
                           {!sidebarCollapsed && (
                             <>
@@ -410,7 +358,7 @@ export default function Layout() {
 
               <div
                 className={clsx(
-                  'border-border/50 shrink-0 space-y-0.5 border-t',
+                  'border-border/50 shrink-0 space-y-1 border-t',
                   sidebarCollapsed ? 'px-1.5 py-2.5' : 'px-2 py-2.5',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
@@ -419,12 +367,12 @@ export default function Layout() {
                 )}
               >
                 {!sidebarCollapsed && (
-                  <div className="hidden pb-1.5 lg:block">
+                  <div className="hidden pb-1 lg:block">
                     <InstallPrompt />
                   </div>
                 )}
                 {sidebarCollapsed && (
-                  <div className="hidden justify-center pb-1.5 lg:flex">
+                  <div className="hidden justify-center pb-1 lg:flex">
                     <NotificationBell compact />
                   </div>
                 )}
@@ -444,9 +392,15 @@ export default function Layout() {
                   }
                 >
                   {theme === 'light' ? (
-                    <Moon className="text-text-muted h-4 w-4 shrink-0" />
+                    <Moon
+                      className="operate-icon text-text-muted h-4 w-4 shrink-0"
+                      strokeWidth={1.75}
+                    />
                   ) : (
-                    <Sun className="text-text-muted h-4 w-4 shrink-0" />
+                    <Sun
+                      className="operate-icon text-text-muted h-4 w-4 shrink-0"
+                      strokeWidth={1.75}
+                    />
                   )}
                   {!sidebarCollapsed && (
                     <span className="flex-1 text-left">
@@ -461,10 +415,13 @@ export default function Layout() {
                     setIsSidebarOpen(false);
                   }}
                   className={clsx(
-                    'hover:bg-surface-overlay/70 flex items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors',
-                    sidebarCollapsed && 'justify-center px-0'
+                    sidebarCollapsed
+                      ? 'nav-link nav-link-inactive justify-center px-0'
+                      : 'nav-user-card',
+                    isNavActive('/profile') && !sidebarCollapsed && 'ring-border/70 ring-1'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}
+                  aria-current={isNavActive('/profile') ? 'page' : undefined}
                 >
                   <Avatar
                     src={profile?.profile_image}
@@ -474,10 +431,10 @@ export default function Layout() {
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
-                      <p className="text-text truncate text-[13px] leading-snug font-medium">
+                      <p className="text-text text-chrome truncate leading-snug font-semibold tracking-[-0.01em]">
                         {user?.name}
                       </p>
-                      <p className="text-text-muted mt-0.5 truncate text-[10px] font-medium tracking-[0.02em]">
+                      <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.008em]">
                         {ROLE_LABELS_LOCAL[user?.role ?? 'member'] ?? user?.role}
                       </p>
                     </div>
@@ -488,12 +445,12 @@ export default function Layout() {
                   type="button"
                   onClick={requestLogout}
                   className={clsx(
-                    'nav-link text-text-secondary hover:bg-danger/10 hover:text-danger w-full',
+                    'nav-link nav-link-danger w-full',
                     sidebarCollapsed && 'justify-center px-0'
                   )}
                   title={sidebarCollapsed ? 'Cerrar sesión' : undefined}
                 >
-                  <LogOut className="h-4 w-4 shrink-0" />
+                  <LogOut className="operate-icon h-4 w-4 shrink-0" strokeWidth={1.75} />
                   {!sidebarCollapsed && <span className="flex-1 text-left">Cerrar sesión</span>}
                 </button>
               </div>
@@ -504,7 +461,7 @@ export default function Layout() {
           <main
             id="main-content"
             className={clsx(
-              'app-canvas h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto px-3.5 py-3 transition-colors duration-300 sm:p-5 lg:p-6',
+              'app-canvas px-ds-4 py-ds-3 sm:p-ds-4 lg:p-ds-5 h-dvh min-w-0 flex-1 overflow-x-clip overflow-y-auto transition-colors duration-300',
               isMobileShell && 'mobile-top-pad',
               isMemberMobileShell && !hideMemberBottomNav && 'member-main-pad',
               isReceptionMobileShell && 'reception-main-pad',
@@ -550,11 +507,14 @@ export default function Layout() {
           <button
             type="button"
             className={clsx(
-              'fixed inset-0 bg-black/50 transition-opacity ease-in-out lg:hidden',
+              'fixed inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity ease-in-out lg:hidden dark:bg-black/70',
               isMobileShell ? 'z-[55]' : 'z-30',
               sidebarBackdropVisible ? 'opacity-100' : 'opacity-0'
             )}
-            style={{ transitionDuration: `${SIDEBAR_MOTION_MS}ms` }}
+            style={{
+              transitionDuration: `${SIDEBAR_MOTION_MS}ms`,
+              transitionTimingFunction: 'var(--ease-drawer)',
+            }}
             onClick={() => {
               setIsSidebarOpen(false);
             }}

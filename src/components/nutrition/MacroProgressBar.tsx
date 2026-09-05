@@ -49,7 +49,7 @@ export function MacroProgressBar({
         />
         <div
           className={cn(
-            'absolute inset-y-0 left-0 rounded-full transition-all',
+            'absolute inset-y-0 left-0 rounded-full transition-[width] duration-[250ms] [transition-timing-function:var(--ease-out)]',
             macroStatusColorClass(status)
           )}
           style={{ width: `${fillPct}%` }}

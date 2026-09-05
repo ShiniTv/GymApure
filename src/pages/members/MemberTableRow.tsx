@@ -168,7 +168,7 @@ export const MemberTableRow = memo(function MemberTableRow({
       label: member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar',
       icon: Trash2,
       onClick: () => onDelete(member),
-      className: 'hover:bg-red-500/10 hover:text-red-500',
+      className: 'hover:bg-red-500/10 hover:text-danger',
       danger: true,
     });
   }
@@ -177,7 +177,7 @@ export const MemberTableRow = memo(function MemberTableRow({
     <tr
       className={cn(
         'group cursor-pointer transition-colors',
-        selected ? 'bg-brand/5 dark:bg-brand/10' : 'hover:bg-surface-raised'
+        selected ? 'bg-surface-raised' : 'hover:bg-surface-raised/70'
       )}
       onClick={() => onSelect?.(member)}
       aria-selected={selected}
@@ -205,7 +205,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   )}
                   {badgeInfo && <Badge className={badgeInfo.className}>{badgeInfo.label}</Badge>}
                 </div>
-                <p className="text-text-muted text-[10px]">
+                <p className="text-text-muted text-small">
                   {member.days_remaining ?? 0} días restantes
                 </p>
               </div>
@@ -220,7 +220,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   if (isAdmin || userRole === 'receptionist') onEditShift(member);
                 }}
                 className={cn(
-                  'inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold transition-opacity',
+                  'text-small inline-flex rounded-md border px-2 py-0.5 font-bold transition-opacity',
                   SHIFT_BADGE_CLASSES[member.training_shift],
                   (isAdmin || userRole === 'receptionist') && 'cursor-pointer hover:opacity-80'
                 )}
@@ -235,7 +235,7 @@ export const MemberTableRow = memo(function MemberTableRow({
                   e.stopPropagation();
                   onEditShift(member);
                 }}
-                className="text-brand text-[10px] font-semibold hover:underline"
+                className="text-brand text-small font-semibold hover:underline"
               >
                 Asignar turno
               </button>
@@ -260,7 +260,7 @@ export const MemberTableRow = memo(function MemberTableRow({
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'text-text-muted inline-flex min-h-9 min-w-9 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
+                'text-text-muted inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
                 action.className
               )}
               title={action.label}

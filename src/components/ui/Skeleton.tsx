@@ -7,9 +7,10 @@ interface SkeletonProps {
 export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
+      aria-hidden
       className={cn(
-        'bg-surface-overlay/70 relative animate-pulse overflow-hidden rounded-xl',
-        'after:animate-shimmer after:absolute after:inset-0 after:rounded-xl',
+        'bg-surface-overlay/70 relative animate-pulse overflow-hidden rounded-[var(--radius-card)]',
+        'after:animate-shimmer after:absolute after:inset-0 after:rounded-[var(--radius-card)]',
         className
       )}
     />
@@ -18,13 +19,17 @@ export function Skeleton({ className }: SkeletonProps) {
 
 export function StatCardSkeleton() {
   return (
-    <div className="border-border/80 bg-surface rounded-xl border p-4 shadow-xs sm:p-5">
+    <div
+      className="border-border/80 bg-surface p-ds-4 sm:p-ds-5 rounded-[var(--radius-card)] border shadow-xs"
+      aria-busy="true"
+      aria-label="Cargando indicador"
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="h-7 w-14" />
         </div>
-        <Skeleton className="h-10 w-10 rounded-lg" />
+        <Skeleton className="h-10 w-10 rounded-[var(--radius-card)]" />
       </div>
     </div>
   );
@@ -44,7 +49,7 @@ export function TableRowSkeleton({ cols = 5 }: { cols?: number }) {
 
 export function DashboardSkeleton({ statCount = 4 }: { statCount?: number }) {
   return (
-    <div className="page-stack">
+    <div className="page-stack" aria-busy="true" aria-label="Cargando panel">
       <div className="space-y-2">
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-3 w-40" />
@@ -62,8 +67,8 @@ export function DashboardSkeleton({ statCount = 4 }: { statCount?: number }) {
         ))}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-        <Skeleton className="h-56 rounded-2xl sm:h-64" />
-        <Skeleton className="h-56 rounded-2xl sm:h-64" />
+        <Skeleton className="h-56 rounded-[var(--radius-card)] sm:h-64" />
+        <Skeleton className="h-56 rounded-[var(--radius-card)] sm:h-64" />
       </div>
     </div>
   );
@@ -87,7 +92,7 @@ export function AuditLogsSkeleton() {
       <div className="space-y-4 lg:hidden">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="flex gap-4">
-            <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
+            <Skeleton className="h-10 w-10 shrink-0 rounded-[var(--radius-card)]" />
             <div className="min-w-0 flex-1 space-y-2">
               <Skeleton className="h-5 w-28 rounded-[var(--radius-chip)]" />
               <Skeleton className="h-4 w-36" />
@@ -98,7 +103,7 @@ export function AuditLogsSkeleton() {
       </div>
       <div className="table-shell hidden overflow-hidden lg:block">
         <table className="w-full min-w-[52rem] text-left text-sm">
-          <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
+          <thead className="border-border bg-surface-raised text-text-muted text-small border-b font-semibold tracking-wide uppercase">
             <tr>
               {['Cuándo', 'Acción', 'Actor', 'Detalle'].map((col) => (
                 <th key={col} className="px-3 py-2.5">
@@ -135,7 +140,7 @@ export function CalendarViewSkeleton() {
           <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
         </div>
       </div>
-      <div className="border-border hidden space-y-2 rounded-xl border p-2.5 lg:block">
+      <div className="border-border hidden space-y-2 rounded-[var(--radius-card)] border p-2.5 lg:block">
         <Skeleton className="h-3 w-40" />
         <div className="flex flex-wrap gap-1.5">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -143,7 +148,7 @@ export function CalendarViewSkeleton() {
           ))}
         </div>
       </div>
-      <div className="border-border hidden overflow-hidden rounded-xl border xl:block">
+      <div className="border-border hidden overflow-hidden rounded-[var(--radius-card)] border xl:block">
         <div className="border-border-subtle bg-surface-raised grid grid-cols-7 gap-px border-b p-2">
           {Array.from({ length: 7 }).map((_, i) => (
             <Skeleton key={i} className="mx-auto h-3 w-8" />
@@ -164,7 +169,7 @@ export function AssignmentsListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div className="space-y-2.5" aria-busy="true" aria-label="Cargando asignaciones">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="border-border rounded-xl border p-3">
+        <div key={i} className="border-border rounded-[var(--radius-card)] border p-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -187,7 +192,7 @@ export function ListRowSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="space-y-2 p-2" aria-hidden>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-xl px-2.5 py-2.5">
+        <div key={i} className="flex items-center gap-3 rounded-[var(--radius-card)] px-2.5 py-2.5">
           <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1 space-y-1.5">
             <Skeleton className="h-3.5 w-2/3" />
@@ -207,7 +212,7 @@ export function ChatBubbleSkeleton({ rows = 6 }: { rows?: number }) {
         <div key={i} className={cn('flex', i % 2 === 0 ? 'justify-start' : 'justify-end')}>
           <Skeleton
             className={cn(
-              'h-10 rounded-2xl',
+              'h-10 rounded-[var(--radius-sheet)]',
               i % 3 === 0 ? 'w-3/5' : i % 2 === 0 ? 'w-2/5' : 'w-1/2'
             )}
           />
@@ -228,10 +233,10 @@ export function WorkoutShellSkeleton() {
           <Skeleton className="h-3 w-24" />
         </div>
       </div>
-      <Skeleton className="h-28 w-full rounded-2xl" />
+      <Skeleton className="h-28 w-full rounded-[var(--radius-card)]" />
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+          <Skeleton key={i} className="h-14 w-full rounded-[var(--radius-card)]" />
         ))}
       </div>
     </div>

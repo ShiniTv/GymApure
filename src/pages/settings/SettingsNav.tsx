@@ -17,14 +17,14 @@ export function SettingsNav() {
       className="sticky top-3 mb-3 hidden self-start xl:mb-0 xl:block"
     >
       <Card padding="sm" rounded="xl" className="space-y-0.5">
-        <p className="text-text-muted mb-2 px-2 text-[10px] font-medium tracking-wide uppercase">
+        <p className="text-text-muted text-small mb-2 px-2 font-medium tracking-wide uppercase">
           Secciones
         </p>
         {SETTINGS_NAV.map((item) => (
           <a
             key={item.id}
             href={`#${item.id}`}
-            className="text-text-secondary hover:bg-surface-overlay block rounded-[var(--radius-button)] px-2.5 py-2 text-[13px] font-medium transition-colors"
+            className="text-text-secondary hover:bg-surface-overlay block rounded-[var(--radius-button)] px-2.5 py-2 text-sm font-medium transition-colors"
           >
             {item.label}
           </a>

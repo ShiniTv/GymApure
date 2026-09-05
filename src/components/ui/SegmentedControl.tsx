@@ -107,12 +107,12 @@ export function SegmentedControl<T extends string>({
       ref={scrollerRef}
       className={cn(
         isKiosk
-          ? 'border-border bg-surface-raised flex gap-2 rounded-2xl border p-1'
+          ? 'border-border bg-surface-raised flex gap-2 rounded-[var(--radius-card)] border p-1'
           : scroll
             ? 'flex w-full gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth pr-5 pb-0.5 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
             : cn(
-                'border-border/70 bg-surface-raised inline-flex flex-wrap gap-0.5 rounded-lg border p-0.5',
-                fullWidth ? 'w-full' : 'w-fit max-w-full'
+                'border-border/70 bg-surface-raised gap-0.5 rounded-[var(--radius-chip)] border p-0.5',
+                fullWidth ? 'flex w-full flex-nowrap' : 'inline-flex w-fit max-w-full flex-wrap'
               ),
         !scroll && className
       )}
@@ -133,24 +133,27 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-2 transition-all focus-visible:ring-2 focus-visible:outline-none',
-              fullWidth && !scroll && 'flex-1',
+              'focus-visible:ring-brand/40 flex touch-manipulation items-center justify-center gap-1.5 transition-[background-color,color,box-shadow,transform,opacity] duration-150 [transition-timing-function:var(--ease-out)] focus-visible:ring-2 focus-visible:outline-none',
+              /* Equal segment widths: basis-0 so label length does not dominate */
+              fullWidth && !scroll && 'min-w-0 flex-1 basis-0 px-1.5',
               isKiosk
                 ? cn(
-                    'rounded-xl py-3 text-xs font-semibold',
+                    'rounded-[var(--radius-button)] py-3 text-xs font-semibold',
                     active ? accentActive[accent] : 'text-text-secondary hover:text-text'
                   )
                 : scroll
                   ? cn(
-                      'h-7 shrink-0 rounded-full px-2.5 text-[11px] font-semibold',
+                      /* Toolbar chips — min 36px; Comfortable floor uses default/kiosk variants */
+                      'text-small min-h-8 shrink-0 rounded-full px-2.5 py-1 font-semibold',
                       active
                         ? 'bg-surface-overlay text-text'
                         : 'text-text-secondary hover:text-text bg-transparent'
                     )
                   : cn(
                       isCompact
-                        ? 'min-h-8 rounded-md px-2.5 py-1.5 text-[11px] font-semibold'
-                        : 'min-h-[var(--touch-min)] rounded-md px-3 py-1.5 text-xs font-semibold',
+                        ? 'text-small min-h-8 rounded-md py-1.5 font-semibold'
+                        : 'min-h-[var(--touch-min)] rounded-md py-1.5 text-xs font-semibold',
+                      !fullWidth && (isCompact ? 'px-2.5' : 'px-3'),
                       active
                         ? 'bg-surface text-text dark:bg-bg shadow-xs'
                         : 'text-text-secondary hover:text-text'
@@ -160,11 +163,11 @@ export function SegmentedControl<T extends string>({
             {Icon && (
               <Icon className={cn('shrink-0', isCompact || scroll ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
             )}
-            <span>{option.label}</span>
+            <span className={cn(fullWidth && !scroll && 'truncate')}>{option.label}</span>
             {option.count != null && option.count > 0 && (
               <span
                 className={cn(
-                  'min-w-[1.25rem] rounded-md px-1.5 py-0.5 text-[10px] leading-none font-bold tabular-nums',
+                  'text-small min-w-[1.25rem] rounded-md px-1.5 py-0.5 leading-none font-semibold tabular-nums',
                   active
                     ? 'bg-surface-overlay text-text-secondary'
                     : 'bg-surface-overlay/80 text-text-muted'

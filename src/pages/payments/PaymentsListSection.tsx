@@ -204,7 +204,7 @@ export function PaymentsListSection({
 
             <div className="hidden overflow-x-auto lg:block">
               <table className="text-text-muted w-full text-left text-xs sm:text-sm">
-                <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
+                <thead className="bg-surface-raised text-text-muted text-small font-semibold sm:text-xs">
                   <tr>
                     <th className="px-3 py-2.5 lg:px-5">Monto (USD)</th>
                     <th className="px-3 py-2.5 lg:px-5">Fecha</th>
@@ -241,7 +241,7 @@ export function PaymentsListSection({
                           {formatPaymentMethod(payment.method)}
                         </td>
                         <td
-                          className="text-text-muted max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] lg:max-w-[16rem] lg:px-5"
+                          className="text-text-muted text-small max-w-[10rem] truncate px-3 py-2.5 font-mono lg:max-w-[16rem] lg:px-5"
                           title={payment.reference}
                         >
                           {payment.reference}
@@ -256,12 +256,12 @@ export function PaymentsListSection({
                         <td className="px-3 py-2.5 lg:px-5">
                           <Badge
                             variant={paymentStatusVariant(payment.status)}
-                            className="px-1.5 py-0 text-[9px]"
+                            className="text-small px-1.5 py-0"
                           >
                             {paymentStatusLabel(payment.status)}
                           </Badge>
                           {payment.status === 'rejected' && (
-                            <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-red-500/90">
+                            <p className="text-small text-danger/90 mt-1 max-w-[12rem] leading-snug">
                               {payment.rejection_reason?.trim()
                                 ? `Motivo: ${payment.rejection_reason.trim()}`
                                 : 'No verificado'}{' '}
@@ -344,7 +344,7 @@ export function PaymentsListSection({
             </div>
             <div className="hidden overflow-x-auto lg:block">
               <table className="text-text-muted w-full text-left text-xs sm:text-sm">
-                <thead className="bg-surface-raised text-text-muted text-[10px] font-semibold sm:text-xs">
+                <thead className="bg-surface-raised text-text-muted text-small font-semibold sm:text-xs">
                   <tr>
                     <th className="px-3 py-2.5 lg:px-5">Usuario</th>
                     <th className="px-3 py-2.5 lg:px-5">Fecha</th>
@@ -400,7 +400,7 @@ export function PaymentsListSection({
                           {formatPaymentMethod(payment.method)}
                         </td>
                         <td
-                          className="text-text-muted max-w-[10rem] truncate px-3 py-2.5 font-mono text-[10px] lg:max-w-[16rem] lg:px-5"
+                          className="text-text-muted text-small max-w-[10rem] truncate px-3 py-2.5 font-mono lg:max-w-[16rem] lg:px-5"
                           title={payment.reference}
                         >
                           {payment.reference}
@@ -416,7 +416,7 @@ export function PaymentsListSection({
                           <div className="flex flex-wrap items-center gap-1.5">
                             <Badge
                               variant={paymentStatusVariant(payment.status)}
-                              className="px-1.5 py-0 text-[9px]"
+                              className="text-small px-1.5 py-0"
                             >
                               {paymentStatusLabel(payment.status)}
                             </Badge>
