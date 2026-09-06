@@ -304,21 +304,22 @@ body,
     color: #71717a;
   }
 
+  /* Dark-theme brand (#3aadff) fails WCAG AA with white; use sky-700 for CTA. */
   .auth-linear .auth-linear-primary {
     border: 0 !important;
     border-radius: 8px;
-    background: var(--color-brand) !important;
+    background: #0369a1 !important;
     color: #fff !important;
     box-shadow: none !important;
     font-weight: 600;
   }
 
   .auth-linear .auth-linear-primary:hover {
-    background: var(--color-brand-hover) !important;
+    background: #075985 !important;
   }
 
   .auth-linear .auth-linear-primary:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, #0369a1 35%, transparent);
   }
 
   .auth-linear .auth-linear-secondary {
@@ -334,7 +335,10 @@ body,
   }
 
   .auth-linear .auth-linear-link {
-    color: #a1a1aa;
+    color: #d4d4d8;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
   }
 
   .auth-linear .auth-linear-link:hover {

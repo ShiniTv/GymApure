@@ -248,7 +248,7 @@ export default function Login() {
 
               <button
                 type="button"
-                className="text-left text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-200"
+                className="text-left text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
                 onClick={() => {
                   setMfaChallenge(null);
                   setMfaCode('');
@@ -333,7 +333,7 @@ export default function Login() {
               </Button>
 
               {registerAllowed && (
-                <p className="text-small pt-1 text-zinc-500">
+                <p className="text-small pt-1 text-zinc-400">
                   ¿No tienes una cuenta?{' '}
                   <Link to="/register" className="auth-linear-link font-medium">
                     Regístrate

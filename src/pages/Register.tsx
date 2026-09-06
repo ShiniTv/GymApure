@@ -354,7 +354,7 @@ export default function Register() {
               </div>
             )}
 
-            <p className="text-center text-xs text-zinc-500">
+            <p className="text-center text-xs text-zinc-400">
               ¿Ya tienes cuenta?{' '}
               <Link to="/login" className="auth-linear-link font-medium transition-colors">
                 Inicia sesión

@@ -13,7 +13,7 @@ export default function AuthLinearHeader({ title, subtitle }: AuthLinearHeaderPr
         {title}
       </h1>
       {subtitle ? (
-        <p className="mt-1.5 text-[0.8125rem] leading-5 text-zinc-500">{subtitle}</p>
+        <p className="mt-1.5 text-[0.8125rem] leading-5 text-zinc-400">{subtitle}</p>
       ) : null}
     </div>
   );
