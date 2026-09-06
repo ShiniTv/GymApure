@@ -15,15 +15,16 @@ import { CHAT_CHANNEL_LABELS, isChatStaffChannel } from '../../lib/chat/types';
 import {
   Button,
   EmptyState,
-  PageHeader,
   BackToDashboardLink,
   ListRowSkeleton,
   ChatBubbleSkeleton,
   Skeleton,
 } from '../../components/ui';
+import { OperateHeader, OperatePage } from '../../components/operate/OperateChrome';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { toDisplayErrorMessage } from '../../lib/api';
 import { useToastOptional } from '../../context/ToastContext';
+import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { ChatComposer } from './ChatComposer';
 import { ChatBubble, DaySeparator } from './ChatBubble';
@@ -106,6 +107,8 @@ export function MemberChatView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const channelParam = searchParams.get('channel');
   const selectedChannel = channelParam && isChatStaffChannel(channelParam) ? channelParam : null;
+  const memberStats = useMemberStatsOptional()?.stats ?? null;
+  const hasTrainer = memberStats?.hasTrainerAssignment === true;
 
   const {
     data: conversations = [],
@@ -242,14 +245,26 @@ export function MemberChatView() {
       );
     }
     if (messages.length === 0) {
+      const noTrainerAssigned = channel === 'trainer' && memberStats != null && !hasTrainer;
       return (
         <div className="flex h-full min-h-[12rem] flex-col items-center justify-center px-4 py-8">
           <EmptyState
             variant="motivational"
             icon={MessageSquare}
-            title={meta.emptyTitle}
-            description={meta.emptyDescription}
+            title={noTrainerAssigned ? 'Aún no tienes entrenador' : meta.emptyTitle}
+            description={
+              noTrainerAssigned
+                ? 'Cuando te asignen uno, verás aquí sus avisos de rutinas y coaching. Mientras, escribe a recepción.'
+                : meta.emptyDescription
+            }
             framed={false}
+            action={
+              noTrainerAssigned ? (
+                <Button size="sm" onClick={() => openChannelView('receptionist')}>
+                  Ir a recepción
+                </Button>
+              ) : undefined
+            }
           />
         </div>
       );
@@ -290,8 +305,8 @@ export function MemberChatView() {
     const detail = toDisplayErrorMessage(error, '');
     return (
       <div className="page-stack-tight">
-        <PageHeader
-          compact
+        <OperateHeader
+          icon={MessageSquare}
           title={
             <>
               Mensajes <span className="text-brand">con el gym</span>
@@ -332,9 +347,9 @@ export function MemberChatView() {
     (openingChannel || (activeConversation == null && openChannel.isPending));
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:gap-3">
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-6xl" className="flex flex-col gap-2 sm:gap-3">
+      <OperateHeader
+        icon={MessageSquare}
         title={
           selectedChannel ? (
             <>
@@ -356,7 +371,7 @@ export function MemberChatView() {
             : 'Elige el chat: recepción, administración o entrenador'
         }
         action={
-          <div className="flex items-center gap-2">
+          <>
             {selectedChannel ? (
               <Button
                 size="sm"
@@ -368,7 +383,7 @@ export function MemberChatView() {
               </Button>
             ) : null}
             <BackToDashboardLink />
-          </div>
+          </>
         }
       />
 
@@ -425,6 +440,6 @@ export function MemberChatView() {
           </div>
         </div>
       )}
-    </div>
+    </OperatePage>
   );
 }

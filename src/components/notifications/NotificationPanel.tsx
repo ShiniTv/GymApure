@@ -49,7 +49,7 @@ function PanelBody({
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
-        <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden />
+        <CheckCircle2 className="h-8 w-8 text-emerald-500" aria-hidden />
         <p className="text-text text-sm font-semibold">Todo al día</p>
         <p className="text-text-muted text-xs">No tienes alertas pendientes</p>
       </div>
@@ -61,14 +61,14 @@ function PanelBody({
       {hasPersisted && (
         <section>
           <div className="mb-2 flex items-center justify-between px-1">
-            <h3 className="text-text-muted text-[11px] font-bold tracking-wide uppercase">
+            <h3 className="text-text-muted text-small font-bold tracking-wide uppercase">
               Novedades
             </h3>
             <button
               type="button"
               onClick={onMarkAll}
               disabled={isMarkingAll}
-              className="text-brand text-[11px] font-semibold disabled:opacity-50"
+              className="text-brand text-small font-semibold disabled:opacity-50"
             >
               {isMarkingAll ? 'Marcando…' : 'Marcar todas'}
             </button>
@@ -85,7 +85,7 @@ function PanelBody({
 
       {hasLive && (
         <section>
-          <h3 className="text-text-muted mb-2 px-1 text-[11px] font-bold tracking-wide uppercase">
+          <h3 className="text-text-muted text-small mb-2 px-1 font-bold tracking-wide uppercase">
             Requiere atención
           </h3>
           <ul className="space-y-2">

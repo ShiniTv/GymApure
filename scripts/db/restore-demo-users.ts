@@ -112,12 +112,24 @@ async function main() {
 
     await query(
       `INSERT INTO subscriptions (user_id, membership_id, start_date, end_date, status)
-       SELECT $1, $2, $3, $4, 'active'
+       SELECT $1, $2, $3::date - 1, $4, 'active'
        WHERE NOT EXISTS (
          SELECT 1 FROM subscriptions
          WHERE user_id = $1 AND status = 'active' AND end_date >= CURRENT_DATE
        )`,
       [memberId, membershipId, startDate, endDate]
+    );
+    // Keep window active across UTC vs local calendar-day skew (evening UTC−4).
+    await query(
+      `UPDATE subscriptions
+       SET start_date = LEAST(start_date, CURRENT_DATE - 1),
+           end_date = GREATEST(end_date, CURRENT_DATE + ($2::int)),
+           status = 'active'
+       WHERE user_id = $1 AND status IN ('active', 'expired')
+         AND id = (
+           SELECT id FROM subscriptions WHERE user_id = $1 ORDER BY end_date DESC LIMIT 1
+         )`,
+      [memberId, duration_days]
     );
     console.log(`✓ Suscripción activa para member@gym.com (check-in: cédula V-11223344)`);
   }
@@ -184,11 +196,18 @@ async function main() {
 
     await query(
       `INSERT INTO user_routines (user_id, routine_id, assigned_by, start_date, end_date)
-       SELECT $1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days'
+       SELECT $1, $2, $3, CURRENT_DATE - 1, CURRENT_DATE + INTERVAL '30 days'
        WHERE NOT EXISTS (
          SELECT 1 FROM user_routines WHERE user_id = $1 AND routine_id = $2
        )`,
       [memberId, routineId, trainerId]
+    );
+    await query(
+      `UPDATE user_routines
+       SET start_date = LEAST(start_date, CURRENT_DATE - 1),
+           end_date = GREATEST(end_date, CURRENT_DATE + INTERVAL '30 days')
+       WHERE user_id = $1 AND routine_id = $2`,
+      [memberId, routineId]
     );
     await query(
       `INSERT INTO trainer_member_assignments (trainer_id, member_id, assigned_by)

@@ -9,13 +9,13 @@ import {
   Card,
   Input,
   Label,
-  PageHeader,
   Skeleton,
   BackToDashboardLink,
   Badge,
   EmptyState,
   FilterChips,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
   FileSpreadsheet,
@@ -227,32 +227,32 @@ export default function Reports() {
           : '';
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={FileSpreadsheet}
         title={<>Reportes</>}
         subtitle="PDF / CSV por rango · vista previa"
         action={<BackToDashboardLink iconOnly />}
       />
 
       {error && (
-        <Card padding="sm" className="border-red-500/30 bg-red-500/10">
-          <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
+        <Card padding="sm" className="border-danger/30 bg-red-500/10">
+          <p className="text-danger dark:text-danger text-sm font-bold">{error}</p>
         </Card>
       )}
 
       <Card padding="sm" rounded="xl">
         <div className="mb-2.5 flex items-center gap-2">
           <Calendar className="text-brand h-3.5 w-3.5 shrink-0" />
-          <h2 className="text-text text-[13px] font-semibold">Rango de fechas</h2>
+          <h2 className="text-text text-sm font-semibold">Rango de fechas</h2>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="min-w-0">
-            <Label className="text-[11px]">Desde</Label>
+            <Label className="text-small">Desde</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="min-w-0">
-            <Label className="text-[11px]">Hasta</Label>
+            <Label className="text-small">Hasta</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
         </div>
@@ -309,25 +309,25 @@ export default function Reports() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-2">
-                      <h3 className="text-text min-w-0 flex-1 truncate text-[13px] font-semibold">
+                      <h3 className="text-text min-w-0 flex-1 truncate text-sm font-semibold">
                         {report.title}
                       </h3>
                       {previewLoading ? (
                         <Skeleton className="h-4 w-8" />
                       ) : (
-                        <span className="text-brand shrink-0 text-[12px] font-semibold tabular-nums">
+                        <span className="text-brand text-small shrink-0 font-semibold tabular-nums">
                           {count ?? '—'}
-                          <span className="text-text-muted ml-1 text-[10px] font-medium">reg.</span>
+                          <span className="text-text-muted text-small ml-1 font-medium">reg.</span>
                         </span>
                       )}
                     </div>
-                    <p className="text-text-muted mt-0.5 truncate text-[11px] leading-snug">
+                    <p className="text-text-muted text-small mt-0.5 truncate leading-snug">
                       {report.description}
                     </p>
                     <div className="mt-2 flex gap-1.5">
                       <Button
                         size="sm"
-                        className="h-8 min-h-8 gap-1 px-2.5 text-[11px]"
+                        className="text-small h-8 min-h-8 gap-1 px-2.5"
                         loading={pdfLoading}
                         disabled={busy && !pdfLoading}
                         aria-label={`Descargar PDF de ${report.title}`}
@@ -342,7 +342,7 @@ export default function Reports() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="h-8 min-h-8 gap-1 px-2.5 text-[11px]"
+                        className="text-small h-8 min-h-8 gap-1 px-2.5"
                         loading={csvLoading}
                         disabled={busy && !csvLoading}
                         aria-label={`Descargar CSV de ${report.title}`}
@@ -365,10 +365,10 @@ export default function Reports() {
         <Card padding="sm" rounded="xl" className="min-w-0">
           <div className="mb-2.5 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-text text-[13px] font-semibold">
+              <h2 className="text-text text-sm font-semibold">
                 Vista previa · {selectedReport.title}
               </h2>
-              <p className="text-text-muted text-[11px]">
+              <p className="text-text-muted text-small">
                 {selectedReport.hasDateRange
                   ? `${formatSampleDate(from)} – ${formatSampleDate(to)}`
                   : 'Estado actual de miembros'}
@@ -380,34 +380,34 @@ export default function Reports() {
           {selectedType === 'payments' && (
             <div className="mb-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               <div className="border-border/70 rounded-lg border px-2.5 py-2">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Total USD
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : formatMoney(preview?.paymentsTotalUsd ?? 0)}
                 </p>
               </div>
               <div className="border-border/70 rounded-lg border px-2.5 py-2">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Aprobados
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsApproved ?? 0)}
                 </p>
               </div>
               <div className="border-border/70 rounded-lg border px-2.5 py-2">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Pendientes
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsPending ?? 0)}
                 </p>
               </div>
               <div className="border-border/70 rounded-lg border px-2.5 py-2">
-                <p className="text-text-muted text-[10px] font-medium tracking-wide uppercase">
+                <p className="text-text-muted text-small font-medium tracking-wide uppercase">
                   Rechazados
                 </p>
-                <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+                <p className="text-text mt-0.5 text-lg font-semibold tabular-nums">
                   {previewLoading ? '—' : (preview?.paymentsRejected ?? 0)}
                 </p>
               </div>
@@ -439,7 +439,7 @@ export default function Reports() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="text-text-muted w-full text-left text-xs">
-                  <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+                  <thead className="text-text-muted text-small font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="pr-2 pb-2">Fecha</th>
                       <th className="pr-2 pb-2">Miembro</th>
@@ -460,7 +460,7 @@ export default function Reports() {
                           ${row.amountUsd}
                         </td>
                         <td className="py-2">
-                          <Badge variant={statusVariant(row.status)} className="text-[9px]">
+                          <Badge variant={statusVariant(row.status)} className="text-small">
                             {statusLabel(row.status)}
                           </Badge>
                         </td>
@@ -481,7 +481,7 @@ export default function Reports() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="text-text-muted w-full text-left text-xs">
-                  <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+                  <thead className="text-text-muted text-small font-semibold tracking-wide uppercase">
                     <tr>
                       <th className="pr-2 pb-2">Fecha</th>
                       <th className="pr-2 pb-2">Miembro</th>
@@ -516,7 +516,7 @@ export default function Reports() {
           ) : (
             <div className="overflow-x-auto">
               <table className="text-text-muted w-full text-left text-xs">
-                <thead className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
+                <thead className="text-text-muted text-small font-semibold tracking-wide uppercase">
                   <tr>
                     <th className="pr-2 pb-2">Miembro</th>
                     <th className="pr-2 pb-2">Plan</th>
@@ -540,17 +540,17 @@ export default function Reports() {
             </div>
           )}
 
-          <p className="text-text-muted mt-3 text-[10px]">
+          <p className="text-text-muted text-small mt-3">
             Muestra de hasta 8 filas. El export incluye el conjunto completo del rango.
           </p>
         </Card>
       </div>
 
-      <p className="text-text-muted flex items-start gap-2 px-0.5 text-[11px] sm:text-xs">
+      <p className="text-text-muted text-small flex items-start gap-2 px-0.5 sm:text-xs">
         <FileSpreadsheet className="text-brand mt-0.5 h-3.5 w-3.5 shrink-0" />
         PDF con marca GymApure para compartir; CSV UTF-8 para Excel y contabilidad. Se generan en el
         servidor al descargar.
       </p>
-    </div>
+    </OperatePage>
   );
 }

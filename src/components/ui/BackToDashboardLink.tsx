@@ -50,7 +50,7 @@ export function BackToDashboardLink({ iconOnly, className, to, label }: BackToDa
     <Link
       to={home}
       className={cn(
-        'hover:text-brand hover:border-brand/30 text-text-secondary border-border inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors sm:text-xs',
+        'hover:text-brand hover:border-brand/30 text-text-secondary border-border text-small inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 font-semibold transition-colors',
         className
       )}
       title={`Volver a ${homeLabel}`}

@@ -14,12 +14,14 @@ import {
   Button,
   Card,
   EmptyState,
+  IconButton,
   ListRowSkeleton,
   Skeleton,
   SearchInput,
   Select,
   Label,
 } from '../../components/ui';
+import { OperateIcon } from '../../components/operate/OperateIcon';
 import { formatDifficulty, cn } from '../../lib/utils';
 import { buildExerciseSummary } from '../../lib/routineDisplay';
 import { RoutineExerciseOrderControls } from '../../components/routines/RoutineExerciseOrderControls';
@@ -81,7 +83,6 @@ function StaffRoutineExercises({
         <Button
           type="button"
           size="sm"
-          className="h-8 px-2.5 text-xs"
           onClick={() => onAddExercise(routine.id)}
           aria-label="Añadir ejercicio"
         >
@@ -151,22 +152,23 @@ function StaffRoutineExercises({
               </div>
             </div>
             <div className="flex shrink-0 gap-0.5">
-              <button
-                type="button"
+              <IconButton
+                size="sm"
+                variant="tertiary"
                 onClick={() => onEditExercise(exercise)}
-                className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                 aria-label={`Editar ${exercise.name}`}
               >
                 <Edit className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
+              </IconButton>
+              <IconButton
+                size="sm"
+                variant="tertiary"
                 onClick={() => onDeleteExercise(routine.id, exercise)}
-                className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                 aria-label={`Eliminar ${exercise.name}`}
+                className="hover:bg-danger/10 hover:text-danger"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconButton>
             </div>
           </li>
         ))}
@@ -251,7 +253,7 @@ export function RoutinesLibraryView({
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col justify-center py-4">
         {isStaff ? (
-          <div className="border-border space-y-3 rounded-xl border border-dashed px-4 py-5 text-center">
+          <div className="border-border space-y-3 rounded-[var(--radius-card)] border border-dashed px-4 py-5 text-center">
             <p className="text-text text-sm font-semibold">Sin plantillas</p>
             <p className="text-text-muted text-xs">
               Crea la primera para asignarla a tus miembros.
@@ -313,7 +315,7 @@ export function RoutinesLibraryView({
 
   return (
     <div className="w-full space-y-2.5 sm:space-y-3">
-      <div className="flex flex-wrap items-end justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-small text-text-muted min-w-0 px-0.5">
           {filteredRoutines.length}
           {hasFilters ? ` de ${routines.length}` : ''} rutina
@@ -321,34 +323,55 @@ export function RoutinesLibraryView({
           {totalExercises !== 1 ? 's' : ''}
         </p>
         {(isStaff || isMember) && (
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {isStaff && onCreateFromTemplate && routines.length > 0 ? (
+              <IconButton
+                size="lg"
+                variant="secondary"
+                onClick={onCreateFromTemplate}
+                aria-label="Crear desde plantilla"
+                title="Desde plantilla"
+                className="sm:hidden"
+              >
+                <Copy className="h-4 w-4" />
+              </IconButton>
+            ) : null}
             {isStaff && onCreateFromTemplate && routines.length > 0 ? (
               <Button
                 size="sm"
-                variant="ghost"
-                className="h-9 gap-1.5 px-2.5"
+                variant="secondary"
+                className="hidden sm:inline-flex"
                 onClick={onCreateFromTemplate}
               >
                 <Copy className="h-3.5 w-3.5" />
-                <span className="hidden text-xs sm:inline">Desde plantilla</span>
+                Desde plantilla
               </Button>
             ) : null}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-9 w-9 shrink-0 rounded-xl p-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-2.5"
+            <IconButton
+              size="lg"
+              variant="secondary"
               onClick={onCreateRoutine}
               aria-label={isMember ? 'Crear mi rutina' : 'Nueva rutina'}
+              title={isMember ? 'Crear' : 'Nueva'}
+              className="sm:hidden"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden text-xs sm:inline">{isMember ? 'Crear' : 'Nueva'}</span>
+            </IconButton>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="hidden sm:inline-flex"
+              onClick={onCreateRoutine}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {isMember ? 'Crear' : 'Nueva'}
             </Button>
           </div>
         )}
       </div>
 
       {isStaff ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
           <div className="min-w-0 flex-1">
             <SearchInput
               placeholder="Buscar plantilla…"
@@ -357,7 +380,7 @@ export function RoutinesLibraryView({
               aria-label="Buscar plantilla"
             />
           </div>
-          <div className="w-full sm:w-44">
+          <div className="w-full sm:w-48 sm:shrink-0">
             <Label className="sr-only">Dificultad</Label>
             <Select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
               <option value="">Todas las dificultades</option>
@@ -370,12 +393,12 @@ export function RoutinesLibraryView({
       ) : null}
 
       {isStaff && filteredRoutines.length === 0 ? (
-        <div className="border-border rounded-xl border border-dashed px-4 py-8 text-center">
+        <div className="border-border rounded-[var(--radius-card)] border border-dashed px-4 py-8 text-center">
           <p className="text-text text-sm font-semibold">Ninguna plantilla coincide</p>
           <p className="text-text-muted text-small mt-1">Prueba otro nombre o quita el filtro.</p>
           <Button
             size="sm"
-            variant="ghost"
+            variant="secondary"
             className="mt-3"
             onClick={() => {
               setSearch('');
@@ -389,14 +412,14 @@ export function RoutinesLibraryView({
         <div
           className={cn(
             isStaff &&
-              'md:grid md:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] md:items-start md:gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]'
+              'md:grid md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:items-start md:gap-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]'
           )}
         >
           <div
             className={cn(
               isStaff
-                ? 'grid grid-cols-1 gap-2.5'
-                : 'grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4'
+                ? 'border-border/80 bg-surface divide-border/60 divide-y overflow-hidden rounded-[var(--radius-card)] border'
+                : 'grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4'
             )}
           >
             {filteredRoutines.map((routine) => {
@@ -417,21 +440,163 @@ export function RoutinesLibraryView({
                   : 'Empezar entrenamiento';
               const cloning = cloningRoutineId === routine.id;
 
-              return (
+              return isStaff ? (
+                <div
+                  key={routine.id}
+                  className={cn(
+                    'content-visibility-auto touch-manipulation px-3 py-2.5',
+                    isExpanded && 'bg-surface-raised/50'
+                  )}
+                >
+                  <div className="flex min-h-[var(--touch-min)] items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => onRoutineCardClick(routine.id)}
+                      className="group flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-text truncate text-sm leading-snug font-medium tracking-[-0.011em]">
+                          {routine.name}
+                        </h3>
+                        <p className="text-small text-text-muted mt-0.5 font-medium">
+                          {formatDifficulty(routine.difficulty)}
+                          <span className="text-text-muted/50 mx-1">·</span>
+                          {exerciseSummary.label}
+                        </p>
+                        {!isExpanded && (
+                          <span className="text-brand text-small mt-1 inline-flex items-center font-semibold md:hidden">
+                            Ver ejercicios
+                            <ChevronRight className="operate-icon ml-0.5 h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      {onCloneRoutine ? (
+                        <IconButton
+                          size="sm"
+                          variant="tertiary"
+                          disabled={cloning}
+                          className="hidden sm:inline-flex"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCloneRoutine(routine);
+                          }}
+                          aria-label={`Duplicar ${routine.name}`}
+                          title="Duplicar"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </IconButton>
+                      ) : null}
+                      <IconButton
+                        size="sm"
+                        variant="tertiary"
+                        className="hidden sm:inline-flex"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditRoutine(routine);
+                        }}
+                        aria-label={`Configurar ${routine.name}`}
+                        title="Configurar"
+                      >
+                        <Settings2 className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        size="sm"
+                        variant="tertiary"
+                        className="hover:bg-danger/10 hover:text-danger hidden sm:inline-flex"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteRoutine(routine);
+                        }}
+                        aria-label={`Eliminar ${routine.name}`}
+                        title="Eliminar"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
+                      <IconButton
+                        size="md"
+                        variant={isExpanded ? 'secondary' : 'tertiary'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void onToggleExpandRoutine(routine.id);
+                        }}
+                        aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
+                        aria-expanded={isExpanded}
+                        title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
+                      >
+                        <ChevronDown
+                          className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')}
+                        />
+                      </IconButton>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="border-border/70 animate-in slide-in-from-top-2 mt-2.5 space-y-2.5 border-t pt-2.5 duration-200 md:hidden">
+                      {exerciseSummary.preview ? (
+                        <p className="text-small text-text-muted leading-snug">
+                          {exerciseSummary.preview}
+                        </p>
+                      ) : null}
+                      <div className="flex gap-1.5">
+                        {onCloneRoutine ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="min-w-0 flex-1"
+                            disabled={cloning}
+                            onClick={() => onCloneRoutine(routine)}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Duplicar
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="min-w-0 flex-1"
+                          onClick={() => onEditRoutine(routine)}
+                        >
+                          <Settings2 className="h-3.5 w-3.5" />
+                          Configurar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="text-danger min-w-0 flex-1"
+                          onClick={() => onDeleteRoutine(routine)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Eliminar
+                        </Button>
+                      </div>
+                      <StaffRoutineExercises
+                        routine={routine}
+                        onAddExercise={onAddExercise}
+                        onInlineUpdate={onInlineUpdate}
+                        onEditExercise={onEditExercise}
+                        onDeleteExercise={onDeleteExercise}
+                        onReorderExercise={onReorderExercise}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <Card
                   key={routine.id}
-                  padding={lightCards ? 'sm' : 'md'}
-                  rounded="xl"
+                  padding="sm"
                   className={cn(
                     'content-visibility-auto touch-manipulation overflow-hidden',
                     lightCards && 'border-border/70 bg-surface/80',
-                    isExpanded &&
-                      (isStaff
-                        ? 'ring-brand/25 border-brand/30 ring-2'
-                        : 'ring-brand/20 ring-2 sm:col-span-2 xl:col-span-4')
+                    isExpanded && 'bg-surface-raised/40 sm:col-span-2 xl:col-span-4'
                   )}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex min-h-[var(--touch-min)] items-center gap-2.5">
                     <button
                       type="button"
                       onClick={canOpen ? () => onRoutineCardClick(routine.id) : undefined}
@@ -440,24 +605,13 @@ export function RoutinesLibraryView({
                         canOpen ? 'cursor-pointer' : 'cursor-default'
                       )}
                     >
-                      {!(lightCards && isStaff) && (
-                        <div
-                          className={cn(
-                            'bg-brand/10 flex shrink-0 items-center justify-center',
-                            lightCards ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'
-                          )}
-                        >
-                          <Dumbbell
-                            className={cn('text-brand', lightCards ? 'h-3.5 w-3.5' : 'h-4 w-4')}
-                          />
-                        </div>
-                      )}
+                      <OperateIcon icon={Dumbbell} tone="brand" well size="sm" />
 
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-text truncate text-sm leading-snug font-semibold">
+                        <h3 className="text-text truncate text-sm leading-snug font-medium tracking-[-0.011em]">
                           {routine.name}
                           {isMember ? (
-                            <span className="text-text-muted ml-1.5 text-[10px] font-semibold tracking-wide uppercase">
+                            <span className="text-text-muted text-small ml-1.5 font-medium">
                               {isOwnedByMember(routine) ? 'Mía' : 'Entrenador'}
                             </span>
                           ) : null}
@@ -478,128 +632,48 @@ export function RoutinesLibraryView({
                             {exerciseSummary.preview}
                           </p>
                         ) : null}
-                        {!isMember && canOpen && !isExpanded && (
-                          <>
-                            <span className="text-text-secondary text-small mt-1.5 inline-flex items-center font-semibold md:hidden">
-                              Ver ejercicios
-                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                            </span>
-                            <span className="text-text-secondary text-small mt-1.5 hidden font-semibold md:inline-flex md:items-center">
-                              Seleccionar
-                              <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                            </span>
-                          </>
-                        )}
                       </div>
                     </button>
 
-                    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-                      {isStaff && (
-                        <>
-                          {onCloneRoutine ? (
-                            <button
-                              type="button"
-                              disabled={cloning}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCloneRoutine(routine);
-                              }}
-                              className="text-text-muted hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-50 sm:inline-flex"
-                              aria-label={`Duplicar ${routine.name}`}
-                              title="Duplicar"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditRoutine(routine);
-                            }}
-                            className="text-text-muted hover:text-brand hover:bg-brand/10 hidden h-8 w-8 items-center justify-center rounded-lg transition-colors sm:inline-flex"
-                            aria-label={`Configurar ${routine.name}`}
-                            title="Configurar"
-                          >
-                            <Settings2 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteRoutine(routine);
-                            }}
-                            className="text-text-muted hover:bg-danger/10 hover:text-danger hidden h-8 w-8 items-center justify-center rounded-lg transition-colors sm:inline-flex"
-                            aria-label={`Eliminar ${routine.name}`}
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void onToggleExpandRoutine(routine.id);
-                            }}
-                            className={cn(
-                              'inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8',
-                              isExpanded
-                                ? 'bg-text text-bg'
-                                : 'text-text-muted hover:bg-surface-overlay hover:text-text'
-                            )}
-                            aria-label={isExpanded ? 'Cerrar ejercicios' : 'Gestionar ejercicios'}
-                            aria-expanded={isExpanded}
-                            title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
-                          >
-                            <ChevronDown
-                              className={cn(
-                                'h-4 w-4 transition-transform',
-                                isExpanded && 'rotate-180'
-                              )}
-                            />
-                          </button>
-                        </>
-                      )}
+                    <div className="flex shrink-0 items-center gap-0.5">
                       {isMember && (
                         <>
                           {isOwnedByMember(routine) ? (
                             <>
-                              <button
-                                type="button"
+                              <IconButton
+                                size="md"
+                                variant="tertiary"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onEditRoutine(routine);
                                 }}
-                                className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
                                 aria-label={`Configurar ${routine.name}`}
                                 title="Configurar"
                               >
                                 <Settings2 className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                type="button"
+                              </IconButton>
+                              <IconButton
+                                size="md"
+                                variant="tertiary"
+                                className="hover:bg-danger/10 hover:text-danger"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onDeleteRoutine(routine);
                                 }}
-                                className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
                                 aria-label={`Eliminar ${routine.name}`}
                                 title="Eliminar"
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </IconButton>
                             </>
                           ) : null}
-                          <button
-                            type="button"
+                          <IconButton
+                            size="md"
+                            variant={isExpanded ? 'secondary' : 'tertiary'}
                             onClick={(e) => {
                               e.stopPropagation();
                               void onToggleExpandRoutine(routine.id);
                             }}
-                            className={cn(
-                              'text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
-                              isExpanded && 'bg-surface-overlay text-text'
-                            )}
                             aria-label={isExpanded ? 'Cerrar detalles' : 'Ver ejercicios'}
                             aria-expanded={isExpanded}
                             title={isExpanded ? 'Cerrar ejercicios' : 'Ejercicios'}
@@ -610,18 +684,18 @@ export function RoutinesLibraryView({
                                 isExpanded && 'rotate-180'
                               )}
                             />
-                          </button>
+                          </IconButton>
                         </>
                       )}
                     </div>
                   </div>
 
                   {isMember && (
-                    <div className="mt-2.5">
+                    <div className="mt-2">
                       <Button
                         type="button"
-                        size="sm"
-                        className="min-h-10 w-full text-[13px] font-semibold shadow-none sm:min-h-9 sm:w-auto sm:text-sm"
+                        size="md"
+                        className="w-full sm:w-auto"
                         disabled={completedToday}
                         aria-label={workoutLabel}
                         onClick={(e) => {
@@ -636,54 +710,7 @@ export function RoutinesLibraryView({
                   )}
 
                   {isExpanded && (
-                    <div
-                      className={cn(
-                        'border-border/80 animate-in slide-in-from-top-2 mt-3 space-y-2.5 border-t pt-3 duration-200',
-                        isStaff && 'md:hidden'
-                      )}
-                    >
-                      {isStaff && exerciseSummary.preview ? (
-                        <p className="text-small text-text-muted leading-snug">
-                          {exerciseSummary.preview}
-                        </p>
-                      ) : null}
-                      {isStaff && (
-                        <div className="flex gap-1.5">
-                          {onCloneRoutine ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="h-9 flex-1 text-xs"
-                              disabled={cloning}
-                              onClick={() => onCloneRoutine(routine)}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                              Duplicar
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-9 flex-1 text-xs"
-                            onClick={() => onEditRoutine(routine)}
-                          >
-                            <Settings2 className="h-3.5 w-3.5" />
-                            Configurar
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="text-danger h-9 flex-1 text-xs"
-                            onClick={() => onDeleteRoutine(routine)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </Button>
-                        </div>
-                      )}
+                    <div className="border-border/80 animate-in slide-in-from-top-2 mt-2.5 space-y-2.5 border-t pt-2.5 duration-200">
                       {isMember && !isOwnedByMember(routine) ? (
                         <div className="space-y-0">
                           {routine.exercises?.map((exercise, index) => (
@@ -712,8 +739,8 @@ export function RoutinesLibraryView({
                                 <Button
                                   type="button"
                                   size="sm"
-                                  variant="ghost"
-                                  className="h-8 shrink-0 px-2 text-xs"
+                                  variant="secondary"
+                                  className="shrink-0"
                                   onClick={() => onSubstituteExercise(routine.id, exercise)}
                                 >
                                   Sustituir
@@ -722,7 +749,7 @@ export function RoutinesLibraryView({
                             </div>
                           ))}
                           {(!routine.exercises || routine.exercises.length === 0) && (
-                            <div className="border-border text-text-muted rounded-lg border border-dashed py-5 text-center text-xs italic">
+                            <div className="border-border text-text-muted rounded-[var(--radius-card)] border border-dashed py-5 text-center text-xs italic">
                               Sin ejercicios en esta rutina
                             </div>
                           )}
@@ -747,8 +774,7 @@ export function RoutinesLibraryView({
           {isStaff ? (
             <Card
               padding="sm"
-              rounded="xl"
-              className="border-border/70 bg-surface/80 sticky top-3 hidden max-h-[calc(100vh-7rem)] overflow-y-auto md:block"
+              className="border-border/70 bg-surface sticky top-3 hidden max-h-[calc(100vh-7rem)] overflow-y-auto md:block"
             >
               {selectedStaffRoutine && selectedStaffSummary ? (
                 <div className="space-y-3">
@@ -766,35 +792,36 @@ export function RoutinesLibraryView({
                     </div>
                     <div className="flex shrink-0 gap-0.5">
                       {onCloneRoutine ? (
-                        <button
-                          type="button"
+                        <IconButton
+                          size="sm"
+                          variant="tertiary"
                           disabled={cloningRoutineId === selectedStaffRoutine.id}
                           onClick={() => onCloneRoutine(selectedStaffRoutine)}
-                          className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg disabled:opacity-50"
                           aria-label={`Duplicar ${selectedStaffRoutine.name}`}
                           title="Duplicar"
                         >
                           <Copy className="h-3.5 w-3.5" />
-                        </button>
+                        </IconButton>
                       ) : null}
-                      <button
-                        type="button"
+                      <IconButton
+                        size="sm"
+                        variant="tertiary"
                         onClick={() => onEditRoutine(selectedStaffRoutine)}
-                        className="text-text-muted hover:text-brand hover:bg-brand/10 inline-flex h-8 w-8 items-center justify-center rounded-lg"
                         aria-label={`Configurar ${selectedStaffRoutine.name}`}
                         title="Configurar"
                       >
                         <Settings2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
+                      </IconButton>
+                      <IconButton
+                        size="sm"
+                        variant="tertiary"
+                        className="hover:bg-danger/10 hover:text-danger"
                         onClick={() => onDeleteRoutine(selectedStaffRoutine)}
-                        className="text-text-muted hover:bg-danger/10 hover:text-danger inline-flex h-8 w-8 items-center justify-center rounded-lg"
                         aria-label={`Eliminar ${selectedStaffRoutine.name}`}
                         title="Eliminar"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
                     </div>
                   </div>
                   <StaffRoutineExercises

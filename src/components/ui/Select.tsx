@@ -20,13 +20,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         aria-describedby={error ? errorId : undefined}
         className={cn(
           fieldClassName,
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500/25',
+          error && 'border-danger focus:border-danger focus:ring-danger/25',
           className
         )}
         {...props}
       />
       {error && (
-        <p id={errorId} role="alert" className="mt-1 text-xs font-medium text-red-500">
+        <p id={errorId} role="alert" className="text-danger text-small mt-1 font-medium">
           {error}
         </p>
       )}

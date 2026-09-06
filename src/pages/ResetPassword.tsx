@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
-import { Button, Card, Label, PasswordInput, Alert } from '../components/ui';
+import { Button, Label, PasswordInput, Alert } from '../components/ui';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -50,13 +50,13 @@ export default function ResetPassword() {
 
   return (
     <AuthShell aesthetic="linear">
-      <Card className="auth-linear-panel page-stack w-full p-6 sm:p-8" padding="none">
+      <div className="auth-linear-card">
         <AuthLinearHeader
           title="Nueva contraseña"
           subtitle="Elige una contraseña segura para tu cuenta."
         />
 
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
           {success && <Alert variant="success">{success}</Alert>}
 
@@ -69,6 +69,7 @@ export default function ResetPassword() {
               name="password"
               autoComplete="new-password"
               required
+              showIcon={false}
               className="auth-linear-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -84,6 +85,7 @@ export default function ResetPassword() {
               name="confirm_password"
               autoComplete="new-password"
               required
+              showIcon={false}
               className="auth-linear-field"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -102,12 +104,12 @@ export default function ResetPassword() {
 
         <Link
           to="/login"
-          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+          className="auth-linear-link mt-4 inline-flex items-center gap-1.5 text-sm font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al inicio de sesión
         </Link>
-      </Card>
+      </div>
     </AuthShell>
   );
 }

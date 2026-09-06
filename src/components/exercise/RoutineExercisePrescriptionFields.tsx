@@ -116,7 +116,7 @@ export function RoutineExercisePrescriptionFields({
             { value: 'time', label: 'Tiempo' },
           ]}
         />
-        <p className="text-text-muted mt-1 text-[10px]">
+        <p className="text-text-muted text-small mt-1">
           {effort === 'time'
             ? 'La serie dura un tiempo fijo. El valor se guarda en segundos.'
             : 'Cuentas repeticiones en cada serie.'}
@@ -134,7 +134,7 @@ export function RoutineExercisePrescriptionFields({
             { value: 'plates', label: 'Placas' },
           ]}
         />
-        <p className="text-text-muted mt-1 text-[10px]">
+        <p className="text-text-muted text-small mt-1">
           {load === 'plates'
             ? 'Stack de polea o máquina: cuántas placas pinchas.'
             : load === 'kg'
@@ -187,7 +187,7 @@ export function RoutineExercisePrescriptionFields({
                   });
                 }}
               />
-              <p className="text-text-muted mt-1 text-[10px]">
+              <p className="text-text-muted text-small mt-1">
                 {effort === 'time'
                   ? 'Tiempo de trabajo de cada serie (plancha, isometría, holds).'
                   : 'Mismo número en todas las series.'}
@@ -214,7 +214,7 @@ export function RoutineExercisePrescriptionFields({
                     onChange({ ...value, set_prescription: rows });
                   }}
                 />
-                <p className="text-text-muted mt-1 text-[10px]">
+                <p className="text-text-muted text-small mt-1">
                   {load === 'plates'
                     ? 'Número de placas en el stack de la polea o máquina.'
                     : 'Carga en kilos; déjalo vacío si aún no la defines.'}
@@ -238,7 +238,7 @@ export function RoutineExercisePrescriptionFields({
         />
         <label htmlFor="routine-exercise-detailed-prescription" className="min-w-0 cursor-pointer">
           <span className="text-text block text-xs font-medium">Variar por serie</span>
-          <span className="text-text-muted mt-0.5 block text-[10px]">
+          <span className="text-text-muted text-small mt-0.5 block">
             Cambia reps, segundos o placas entre la 1 y la 3. Si todas van igual, déjalo apagado.
           </span>
         </label>

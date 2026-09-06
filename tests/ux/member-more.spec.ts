@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, demoPassword, MEMBER_EMAIL } from './helpers';
+import { login, demoPassword, MEMBER_EMAIL, memberBottomNav } from './helpers';
 
 test.describe('Member sheet Más', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,11 +11,11 @@ test.describe('Member sheet Más', () => {
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /cerrar menú/i })).toHaveCount(0);
 
-    await page.getByRole('button', { name: /^más$/i }).click();
+    await page.locator(memberBottomNav).getByRole('button', { name: /^más/i }).click();
 
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: /historial/i })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /salir/i })).toBeVisible();
   });
 });

@@ -19,12 +19,12 @@ import {
   Badge,
   Button,
   Card,
-  PageHeader,
   EmptyState,
   FilterChips,
   BackToDashboardLink,
   AuditLogsSkeleton,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { clientLogger } from '../lib/clientLogger';
 import { cn } from '../lib/utils';
 
@@ -120,9 +120,9 @@ function AuditTimelineItem({ log, isLast }: { log: AuditLogRow; isLast: boolean 
       )}
       <div
         className={cn(
-          'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-4 ring-[var(--color-surface)]',
+          'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] ring-4 ring-[var(--color-surface)]',
           variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
-          variant === 'danger' && 'bg-red-500/10 text-red-600',
+          variant === 'danger' && 'text-danger bg-red-500/10',
           variant === 'accent' && 'bg-brand/10 text-brand',
           variant === 'default' && 'bg-surface-raised text-text-secondary'
         )}
@@ -180,9 +180,9 @@ export default function AuditLogs() {
   }, [loadLogs]);
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={Shield}
         title={
           <>
             Registro de <span className="text-brand">auditoría</span>
@@ -190,11 +190,11 @@ export default function AuditLogs() {
         }
         subtitle="Acciones sensibles realizadas por el personal del gym"
         action={
-          <div className="flex items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <BackToDashboardLink className="hidden sm:inline-flex" />
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-8 w-8 px-0"
               onClick={loadLogs}
@@ -202,7 +202,7 @@ export default function AuditLogs() {
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -219,7 +219,7 @@ export default function AuditLogs() {
             <AuditLogsSkeleton />
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-6">
+          <div className="p-4">
             <EmptyState
               icon={Shield}
               title="No hay registros"
@@ -252,7 +252,7 @@ export default function AuditLogs() {
             {/* Desktop: dense table */}
             <div className="table-shell hidden min-w-0 overflow-x-auto lg:block">
               <table className="w-full min-w-[52rem] text-left text-sm">
-                <thead className="border-border bg-surface-raised text-text-muted border-b text-[11px] font-semibold tracking-wide uppercase">
+                <thead className="border-border bg-surface-raised text-text-muted text-small border-b font-semibold tracking-wide uppercase">
                   <tr>
                     <th className="px-3 py-2.5">Cuándo</th>
                     <th className="px-3 py-2.5">Acción</th>
@@ -282,7 +282,7 @@ export default function AuditLogs() {
                           </p>
                           {log.user_email ? (
                             <p
-                              className="text-text-secondary truncate text-[11px]"
+                              className="text-text-secondary text-small truncate"
                               title={log.user_email}
                             >
                               {log.user_email}
@@ -303,6 +303,6 @@ export default function AuditLogs() {
           </>
         )}
       </Card>
-    </div>
+    </OperatePage>
   );
 }

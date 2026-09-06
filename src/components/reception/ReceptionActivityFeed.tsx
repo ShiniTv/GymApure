@@ -99,12 +99,10 @@ export default function ReceptionActivityFeed({
           )}
         </div>
         <div className="min-w-0">
-          <p
-            className={cn('text-text truncate font-semibold', compact ? 'text-[13px]' : 'text-sm')}
-          >
+          <p className={cn('text-text truncate font-semibold', compact ? 'text-sm' : 'text-sm')}>
             {row.full_name}
           </p>
-          <p className="text-text-muted truncate text-[11px]">
+          <p className="text-text-muted text-small truncate">
             {row.cedula ? (
               <>
                 {row.cedula}
@@ -123,7 +121,7 @@ export default function ReceptionActivityFeed({
       </div>
       <div className="shrink-0">
         {row.is_inside ? (
-          <Badge variant="success" className="px-1.5 py-0 text-[9px]">
+          <Badge variant="success" className="text-small px-1.5 py-0">
             Dentro
           </Badge>
         ) : null}

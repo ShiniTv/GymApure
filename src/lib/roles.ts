@@ -36,16 +36,24 @@ export function isStaffRole(role: string): boolean {
   return STAFF_ROLES.includes(role as UserRole);
 }
 
-export function canOperateRoutines(role: UserRole | string): boolean {
-  return role === 'trainer' || role === 'admin';
-}
-
-export function canOperateExercises(role: UserRole | string): boolean {
-  return role === 'trainer' || role === 'admin';
-}
-
 export function canOperateReception(role: UserRole | string): boolean {
   return role === 'receptionist' || role === 'admin';
+}
+
+/**
+ * Coaching: assign/edit member routines — trainer only.
+ * Admin operates memberships/mostrador; deep links to /members/:id/routines stay trainer-gated in App.
+ */
+export function canOperateRoutines(role: UserRole | string): boolean {
+  return role === 'trainer';
+}
+
+/**
+ * Exercise library CRUD — trainer (members view via canViewExerciseLibrary).
+ * Admin has no /exercises route; keep API/UI aligned to avoid Access Denied as navigation.
+ */
+export function canOperateExercises(role: UserRole | string): boolean {
+  return role === 'trainer';
 }
 
 export function canViewExerciseLibrary(role: UserRole | string): boolean {

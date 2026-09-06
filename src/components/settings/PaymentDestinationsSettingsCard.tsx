@@ -40,7 +40,7 @@ export function PaymentDestinationsSettingsCard({
 
   if (isPending) {
     return (
-      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+      <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
         <Skeleton className="mb-3 h-4 w-48" />
         <Skeleton className="h-24 w-full" />
       </Card>
@@ -49,8 +49,8 @@ export function PaymentDestinationsSettingsCard({
 
   if (isError && !data) {
     return (
-      <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
-        <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+      <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
+        <p className="text-danger dark:text-danger text-sm font-semibold">
           No se pudieron cargar los datos de cobro.
         </p>
       </Card>
@@ -65,7 +65,7 @@ export function PaymentDestinationsSettingsCard({
       className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
     >
       <div className="mb-2.5 flex min-w-0 items-center gap-2">
-        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-bold">
+        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
           <Landmark className="text-brand h-4 w-4 shrink-0" />
           <span className="truncate">Datos de cobro</span>
         </h2>
@@ -82,7 +82,7 @@ export function PaymentDestinationsSettingsCard({
         </Button>
       </div>
 
-      <p className="text-text-muted mb-4 text-[11px] leading-snug sm:text-xs">
+      <p className="text-text-muted text-small mb-4 leading-snug sm:text-xs">
         Datos que verá el miembro al reportar el pago de su membresía, según el método elegido.
       </p>
 
@@ -104,7 +104,7 @@ export function PaymentDestinationsSettingsCard({
           </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <div>
-              <Label className="text-[11px]">Teléfono</Label>
+              <Label className="text-small">Teléfono</Label>
               <Input
                 value={form.pago_movil.phone}
                 onChange={(e) =>
@@ -117,7 +117,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Cédula</Label>
+              <Label className="text-small">Cédula</Label>
               <Input
                 value={form.pago_movil.holder_cedula}
                 onChange={(e) =>
@@ -130,7 +130,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Banco</Label>
+              <Label className="text-small">Banco</Label>
               <Input
                 value={form.pago_movil.bank_name}
                 onChange={(e) =>
@@ -162,7 +162,7 @@ export function PaymentDestinationsSettingsCard({
           </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <Label className="text-[11px]">Nombre y apellido</Label>
+              <Label className="text-small">Nombre y apellido</Label>
               <Input
                 value={form.transferencia.holder_name}
                 onChange={(e) =>
@@ -174,7 +174,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Cédula</Label>
+              <Label className="text-small">Cédula</Label>
               <Input
                 value={form.transferencia.holder_cedula}
                 onChange={(e) =>
@@ -186,7 +186,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Banco</Label>
+              <Label className="text-small">Banco</Label>
               <Input
                 value={form.transferencia.bank_name}
                 onChange={(e) =>
@@ -198,7 +198,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Tipo de cuenta</Label>
+              <Label className="text-small">Tipo de cuenta</Label>
               <Select
                 value={form.transferencia.account_type}
                 onChange={(e) =>
@@ -217,7 +217,7 @@ export function PaymentDestinationsSettingsCard({
               </Select>
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-[11px]">Número de cuenta</Label>
+              <Label className="text-small">Número de cuenta</Label>
               <Input
                 value={form.transferencia.account_number}
                 onChange={(e) =>
@@ -248,7 +248,7 @@ export function PaymentDestinationsSettingsCard({
           </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <Label className="text-[11px]">Correo Zelle</Label>
+              <Label className="text-small">Correo Zelle</Label>
               <Input
                 type="email"
                 value={form.zelle.email}
@@ -262,7 +262,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Nombre (opcional)</Label>
+              <Label className="text-small">Nombre (opcional)</Label>
               <Input
                 value={form.zelle.holder_name}
                 onChange={(e) =>
@@ -293,7 +293,7 @@ export function PaymentDestinationsSettingsCard({
           </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <Label className="text-[11px]">Correo Binance</Label>
+              <Label className="text-small">Correo Binance</Label>
               <Input
                 type="email"
                 value={form.usdt.binance_email}
@@ -307,7 +307,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div>
-              <Label className="text-[11px]">Binance ID</Label>
+              <Label className="text-small">Binance ID</Label>
               <Input
                 value={form.usdt.binance_id}
                 onChange={(e) =>
@@ -320,7 +320,7 @@ export function PaymentDestinationsSettingsCard({
               />
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-[11px]">Red / activo</Label>
+              <Label className="text-small">Red / activo</Label>
               <Input
                 value={form.usdt.network}
                 onChange={(e) =>
@@ -350,7 +350,7 @@ export function PaymentDestinationsSettingsCard({
             />
             {PAYMENT_METHOD_LABELS.efectivo_usd}
           </label>
-          <p className="text-text-muted text-[11px]">
+          <p className="text-text-muted text-small">
             Denominaciones que el miembro podrá contabilizar al reportar efectivo USD.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -386,7 +386,7 @@ export function PaymentDestinationsSettingsCard({
             })}
           </div>
           <div>
-            <Label className="text-[11px]">Notas (opcional)</Label>
+            <Label className="text-small">Notas (opcional)</Label>
             <Input
               value={form.efectivo_usd.notes}
               onChange={(e) =>

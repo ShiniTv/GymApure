@@ -48,8 +48,8 @@ function ExerciseOptionRow({
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className="text-text block truncate text-[13px] font-semibold">{exercise.name}</span>
-        <span className="text-text-muted text-[11px]">
+        <span className="text-text block truncate text-sm font-semibold">{exercise.name}</span>
+        <span className="text-text-muted text-small">
           {formatMuscleGroupLabel(exercise.muscle_group)}
           {badges.length > 0 ? ` · ${badges.join(' · ')}` : ''}
         </span>
@@ -155,11 +155,11 @@ export function ExercisePicker({
       />
       {listbox}
       {!value ? (
-        <p className="text-text-muted text-[11px]">
+        <p className="text-text-muted text-small">
           Elige un ejercicio. Después defines series, tiempo o placas.
         </p>
       ) : muscleGroup || search ? (
-        <p className="text-text-muted text-[11px]">
+        <p className="text-text-muted text-small">
           {filtered.length} ejercicio{filtered.length !== 1 ? 's' : ''} encontrado
           {filtered.length !== 1 ? 's' : ''}
           {muscleGroup ? ` en ${muscleGroup}` : ''}

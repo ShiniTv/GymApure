@@ -60,7 +60,7 @@ function formatMemberSince(createdAt?: string | null): string {
 
 function BadgeDetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-w-0 items-baseline gap-1 text-[10px] leading-tight text-zinc-800">
+    <div className="text-small flex min-w-0 items-baseline gap-1 leading-tight text-zinc-800">
       <span className="shrink-0 font-semibold text-zinc-600">{label}:</span>
       <span className="min-w-0 truncate font-medium">{value}</span>
     </div>
@@ -92,7 +92,7 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
         <div className="bg-zinc-950 px-3 pt-3 pb-10 print:bg-zinc-950">
           <div className="flex items-center gap-2">
             <Logo className="h-8 w-8" mode="dark" />
-            <span className="text-[11px] font-semibold tracking-wide text-white uppercase">
+            <span className="text-small font-semibold tracking-wide text-white uppercase">
               {BRAND.name}
             </span>
           </div>
@@ -110,10 +110,10 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
         </div>
 
         <div className="px-3 pt-2 pb-3 text-center">
-          <h2 className="line-clamp-2 text-sm font-bold tracking-tight text-zinc-900">
+          <h2 className="line-clamp-2 text-sm font-semibold tracking-tight text-zinc-900">
             {member.full_name}
           </h2>
-          <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-zinc-500">{subtitle}</p>
+          <p className="text-small mt-0.5 line-clamp-2 font-medium text-zinc-500">{subtitle}</p>
         </div>
 
         <div className="space-y-1.5 border-t border-zinc-200 px-3 py-2.5">
@@ -134,16 +134,16 @@ export function MemberBadgeCard({ member, side, className }: MemberBadgeCardProp
 
       <div className="flex flex-col items-center px-4 pt-4 pb-2 text-center">
         <Logo className="h-10 w-10" mode="auto" />
-        <span className="mt-1 text-[10px] font-semibold tracking-wide text-zinc-900 uppercase">
+        <span className="text-small mt-1 font-semibold tracking-wide text-zinc-900 uppercase">
           {BRAND.name}
         </span>
-        <p className="mt-2 text-[8px] leading-snug text-zinc-500">
+        <p className="text-small mt-2 leading-snug text-zinc-500">
           Carné personal e intransferible. Presentar en recepción para acceso. El titular es
           responsable del uso de este documento conforme a las normas del gimnasio.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 px-4 py-2 text-[9px]">
+      <div className="text-small grid grid-cols-2 gap-2 px-4 py-2">
         <div>
           <span className="block font-semibold tracking-wide text-zinc-500 uppercase">
             Miembro desde

@@ -1,16 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { login, demoPassword, ADMIN_EMAIL } from './helpers';
 
+const adminBottomNav = 'nav[aria-label="Navegación administrador"]';
+
 test.describe('Admin sheet Más', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, ADMIN_EMAIL, demoPassword());
     await page.goto('/panel');
   });
 
-  test('sin hamburger; sheet con secciones y scroll', async ({ page }) => {
+  test('sin hamburger; sheet con secciones compactas', async ({ page }) => {
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
 
-    await page.getByRole('button', { name: /^más$/i }).click();
+    await page.locator(adminBottomNav).getByRole('button', { name: /^más/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
 
@@ -23,7 +25,7 @@ test.describe('Admin sheet Más', () => {
     await expect(sheet.getByRole('link', { name: /auditoría/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /solicitudes demo/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /mi perfil/i })).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /salir/i })).toBeVisible();
     await expect(sheet.getByRole('link', { name: /^nutrición$/i })).toHaveCount(0);
     await expect(sheet.getByRole('link', { name: /^rutinas$/i })).toHaveCount(0);
 

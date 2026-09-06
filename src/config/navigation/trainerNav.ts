@@ -9,6 +9,7 @@ import {
   UtensilsCrossed,
   ShieldCheck,
   Landmark,
+  CalendarDays,
 } from 'lucide-react';
 import type { NavSection } from './types';
 
@@ -22,12 +23,18 @@ export const TRAINER_NAV: NavSection[] = [
     items: [
       { name: 'Miembros', href: '/members', icon: Users },
       { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed },
-      { name: 'Cobros PT', href: '/pt-billing', icon: Landmark },
     ],
   },
   {
     name: 'Programación',
-    items: [{ name: 'Rutinas', href: '/routines', icon: Dumbbell }],
+    items: [
+      { name: 'Rutinas', href: '/routines', icon: Dumbbell },
+      { name: 'Calendario', href: '/routines?view=calendar', icon: CalendarDays },
+    ],
+  },
+  {
+    name: 'Cobros',
+    items: [{ name: 'Cobros PT', href: '/pt-billing', icon: Landmark }],
   },
   {
     name: 'Contenido',

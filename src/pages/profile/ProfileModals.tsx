@@ -62,7 +62,7 @@ export function ProfileModals({
         <div className="flex justify-end gap-2">
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             onClick={onCloseRemoveAvatar}
             disabled={avatarRemoving}
           >
@@ -95,7 +95,7 @@ export function ProfileModals({
         maxWidth="sm"
       >
         {measurementError && (
-          <p className="mb-3 text-sm font-medium text-red-500">{measurementError}</p>
+          <p className="text-danger mb-3 text-sm font-medium">{measurementError}</p>
         )}
         <form onSubmit={onAddMeasurement} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -125,7 +125,7 @@ export function ProfileModals({
             </div>
           </div>
           <details className="border-border group rounded-lg border">
-            <summary className="text-text-muted cursor-pointer list-none px-3 py-2 text-[11px] font-medium marker:content-none [&::-webkit-details-marker]:hidden">
+            <summary className="text-text-muted text-small cursor-pointer list-none px-3 py-2 font-medium marker:content-none [&::-webkit-details-marker]:hidden">
               Más medidas (opcional)
             </summary>
             <div className="border-border-subtle grid grid-cols-2 gap-3 border-t px-3 pt-2 pb-3">

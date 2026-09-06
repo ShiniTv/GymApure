@@ -12,9 +12,9 @@ import {
   Card,
   EmptyState,
   FilterChips,
-  PageHeader,
   Spinner,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
 type LeadStatus = 'pending' | 'contacted' | 'closed';
 
@@ -90,9 +90,9 @@ export default function DemoLeads() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={UsersRound}
         title={
           <>
             Solicitudes de <span className="text-brand">demo</span>
@@ -100,12 +100,12 @@ export default function DemoLeads() {
         }
         subtitle="Leads recibidos desde la página pública de GymApure"
         action={
-          <div className="flex items-center gap-1.5">
+          <>
             <BackToDashboardLink iconOnly className="sm:hidden" />
             <BackToDashboardLink className="hidden sm:inline-flex" />
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-8 w-8 px-0"
               onClick={() => void loadLeads()}
@@ -115,7 +115,7 @@ export default function DemoLeads() {
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         }
       />
 
@@ -131,7 +131,7 @@ export default function DemoLeads() {
         ]}
       />
 
-      <Card padding="sm" rounded="xl" className="md:p-4">
+      <Card padding="md" rounded="xl">
         {loading ? (
           <div className="flex justify-center py-8">
             <Spinner />
@@ -155,7 +155,9 @@ export default function DemoLeads() {
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-text truncate text-base font-bold">{lead.gym_name}</h2>
+                        <h2 className="text-text truncate text-sm font-semibold">
+                          {lead.gym_name}
+                        </h2>
                         <Badge variant={STATUS_BADGES[lead.status]}>
                           {STATUS_LABELS[lead.status]}
                         </Badge>
@@ -235,7 +237,7 @@ export default function DemoLeads() {
             {/* Desktop: dense table */}
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[56rem] text-left text-sm">
-                <thead className="border-border bg-surface-raised/95 text-text-muted sticky top-0 z-[1] border-b text-[11px] font-semibold tracking-wide uppercase backdrop-blur-sm">
+                <thead className="border-border bg-surface-raised/95 text-text-muted text-small sticky top-0 z-[1] border-b font-semibold tracking-wide uppercase backdrop-blur-sm">
                   <tr>
                     <th className="px-3 py-2.5">Gym</th>
                     <th className="px-3 py-2.5">Contacto</th>
@@ -250,10 +252,10 @@ export default function DemoLeads() {
                       <td className="max-w-[14rem] px-3 py-3">
                         <p className="text-text truncate font-semibold">{lead.gym_name}</p>
                         {lead.city ? (
-                          <p className="text-text-muted truncate text-[11px]">{lead.city}</p>
+                          <p className="text-text-muted text-small truncate">{lead.city}</p>
                         ) : null}
                         {lead.message ? (
-                          <p className="text-text-muted mt-1 line-clamp-1 text-[11px]">
+                          <p className="text-text-muted text-small mt-1 line-clamp-1">
                             {lead.message}
                           </p>
                         ) : null}
@@ -262,14 +264,14 @@ export default function DemoLeads() {
                         <p className="text-text truncate font-medium">{lead.contact_name}</p>
                         <a
                           href={`mailto:${lead.email}`}
-                          className="hover:text-brand text-text-muted mt-0.5 block truncate text-[11px]"
+                          className="hover:text-brand text-text-muted text-small mt-0.5 block truncate"
                         >
                           {lead.email}
                         </a>
                         {lead.phone ? (
                           <a
                             href={`tel:${lead.phone}`}
-                            className="hover:text-brand text-text-muted block truncate text-[11px]"
+                            className="hover:text-brand text-text-muted text-small block truncate"
                           >
                             {lead.phone}
                           </a>
@@ -320,6 +322,6 @@ export default function DemoLeads() {
           </>
         )}
       </Card>
-    </div>
+    </OperatePage>
   );
 }

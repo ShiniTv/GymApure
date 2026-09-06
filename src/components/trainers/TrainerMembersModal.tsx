@@ -133,7 +133,7 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
         estos clientes.
       </p>
 
-      {error && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-danger dark:text-danger mb-3 text-sm">{error}</p>}
 
       <div className="border-border mb-4 space-y-2 rounded-lg border p-3">
         <Label htmlFor="assign-member-search">Vincular miembro</Label>
@@ -196,13 +196,13 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
                 )}
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   aria-label={`Desvincular ${m.full_name}`}
                   onClick={() => void unassign(m.id)}
                   disabled={saving}
                 >
-                  <Trash2 className="h-4 w-4 text-red-500" />
+                  <Trash2 className="text-danger h-4 w-4" />
                 </Button>
               </div>
             </li>

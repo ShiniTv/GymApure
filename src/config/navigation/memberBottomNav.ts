@@ -10,6 +10,7 @@ import {
   CreditCard,
   UserCircle,
   Landmark,
+  Bell,
 } from 'lucide-react';
 
 export interface MemberBottomTab {
@@ -26,6 +27,7 @@ export interface MemberMoreItem {
   href: string;
   icon: LucideIcon;
   showUnreadBadge?: boolean;
+  showNotificationBadge?: boolean;
   /** Group label in the Más sheet */
   section: 'Actividad' | 'Entreno' | 'Cuenta';
 }
@@ -51,6 +53,13 @@ export const MEMBER_MORE_ITEMS: MemberMoreItem[] = [
   { name: 'Biblioteca', href: '/exercises', icon: BookOpen, section: 'Entreno' },
   { name: 'Pagos', href: '/payments', icon: CreditCard, section: 'Cuenta' },
   { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Cuenta' },
+  {
+    name: 'Notificaciones',
+    href: '/notifications',
+    icon: Bell,
+    showNotificationBadge: true,
+    section: 'Cuenta',
+  },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 

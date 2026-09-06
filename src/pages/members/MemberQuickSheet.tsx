@@ -12,7 +12,7 @@ interface MemberQuickSheetProps {
   actions: MemberQuickAction[];
 }
 
-/** Ficha rápida del miembro — modal centrado (móvil / tablet). */
+/** Ficha rápida del miembro. El archivo se llama Sheet por el flujo móvil; el chrome es `Modal` (no `Sheet`). */
 export function MemberQuickSheet({
   member,
   open,
@@ -32,7 +32,7 @@ export function MemberQuickSheet({
           <span className="truncate">{member.full_name}</span>
         </span>
       }
-      maxWidth="2xl"
+      maxWidth="3xl"
       initialFocus="dialog"
       className="mx-4"
     >

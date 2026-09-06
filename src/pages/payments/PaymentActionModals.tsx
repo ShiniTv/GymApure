@@ -97,7 +97,7 @@ export function PaymentActionModals({
             <div className="border-border/70 mt-2 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="sm:min-w-28"
                 disabled={approving}
                 onClick={onCloseApprove}
@@ -123,7 +123,7 @@ export function PaymentActionModals({
         onClose={onCloseReject}
         title={
           <>
-            Rechazar <span className="text-red-500">pago</span>
+            Rechazar <span className="text-danger">pago</span>
           </>
         }
       >
@@ -144,11 +144,11 @@ export function PaymentActionModals({
               placeholder="Ej. Comprobante ilegible o referencia no coincide"
               required
             />
-            {actionError && <p className="mb-4 text-sm font-bold text-red-500">{actionError}</p>}
+            {actionError && <p className="text-danger mb-4 text-sm font-bold">{actionError}</p>}
             <div className="flex gap-4">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 className="flex-1"
                 disabled={rejecting}
                 onClick={onCloseReject}
@@ -174,7 +174,7 @@ export function PaymentActionModals({
         open={!!proofPreview}
         onClose={onCloseProof}
         title="Comprobante de pago"
-        maxWidth="2xl"
+        maxWidth="3xl"
         scrollable
       >
         {proofPreview && (

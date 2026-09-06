@@ -313,7 +313,7 @@ export const ChatBubble = memo(function ChatBubble({
                 });
               }}
               disabled={sendMessage.isPending}
-              className="inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[10px] font-semibold text-red-500 hover:bg-red-500/10"
+              className="text-small text-danger inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 font-semibold hover:bg-red-500/10"
             >
               <RotateCcw className="h-3 w-3" aria-hidden />
               Reintentar
@@ -366,7 +366,7 @@ export const ChatBubble = memo(function ChatBubble({
         <p className="text-text-muted mb-6 text-xs">Esta acción no se puede deshacer.</p>
         <div className="flex gap-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             className="flex-1"
             onClick={() => {
               setShowDeleteConfirm(false);

@@ -5,6 +5,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   key?: Key;
   children?: ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  /**
+   * Legacy size names — all resolve to `--radius-card` (8px). Prefer omitting;
+   * kept so call sites do not imply soft 16–24px corners.
+   */
   rounded?: 'xl' | '2xl' | '3xl';
   variant?: 'default' | 'elevated' | 'interactive' | 'dashed' | 'alert';
   className?: string;
@@ -17,11 +21,11 @@ const paddingMap = {
   lg: 'p-ds-4 sm:p-ds-5',
 };
 
-/** Linear-like window panels — hairline edge, no heavy shadow. */
+/** Window panels — hairline edge. Radius from `--radius-card`. */
 const roundedMap = {
   xl: 'rounded-[var(--radius-card)]',
-  '2xl': 'rounded-xl',
-  '3xl': 'rounded-xl',
+  '2xl': 'rounded-[var(--radius-card)]',
+  '3xl': 'rounded-[var(--radius-card)]',
 };
 
 const surface = 'border border-border/60 bg-surface';

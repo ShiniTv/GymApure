@@ -13,6 +13,7 @@
     "start": "node dist/server.cjs",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit",
+    "lint:ui-contract": "node scripts/lint-ui-contract.mjs",
     "test:unit": "vitest run",
     "test:smoke": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-api.ts",
     "test:smoke:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/smoke-api.ts",

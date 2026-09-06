@@ -64,7 +64,13 @@ export function MemberAssignModal({
       footer={
         target ? (
           <>
-            <Button type="button" variant="ghost" size="sm" className="flex-1" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="flex-1"
+              onClick={onClose}
+            >
               Cancelar
             </Button>
             <Button
@@ -83,7 +89,7 @@ export function MemberAssignModal({
       {target ? (
         <div className="space-y-2.5">
           {target.membership_name ? (
-            <p className="text-text-muted text-[12px] leading-snug">
+            <p className="text-text-muted text-small leading-snug">
               Plan actual: <span className="text-text font-medium">{target.membership_name}</span> (
               {target.days_remaining} días). La nueva suscripción se encadena al vencimiento.
             </p>
@@ -107,7 +113,7 @@ export function MemberAssignModal({
                 ))}
               </Select>
               {approvedPayments.length === 0 ? (
-                <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                <p className="text-small mt-1.5 text-amber-600 dark:text-amber-400">
                   No hay pagos aprobados. Registra y aprueba un pago primero.
                 </p>
               ) : null}
@@ -124,7 +130,7 @@ export function MemberAssignModal({
               ))}
             </Select>
           </div>
-          {assignError ? <p className="text-xs text-red-500">{assignError}</p> : null}
+          {assignError ? <p className="text-danger text-xs">{assignError}</p> : null}
         </div>
       ) : null}
     </Modal>

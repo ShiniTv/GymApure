@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Button, DashboardSkeleton, EmptyState, StatCard } from '../ui';
+import { Button, DashboardSkeleton, EmptyState, IconButton, Spinner, StatCard } from '../ui';
 import ReceptionActivityFeed from './ReceptionActivityFeed';
 import { StaffPortalBanner } from '../StaffPortalBanner';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
@@ -63,12 +63,12 @@ function ShortcutChip({
     <Link
       to={to}
       {...routePrefetchHandlers(to)}
-      className="border-border/80 text-text-secondary hover:bg-surface-raised inline-flex h-11 shrink-0 touch-manipulation items-center gap-1.5 rounded-full border bg-transparent px-3 text-[12px] font-semibold transition-colors"
+      className="border-border/80 text-text-secondary hover:bg-surface-raised text-small inline-flex h-11 shrink-0 touch-manipulation items-center gap-1.5 rounded-full border bg-transparent px-3 font-semibold transition-colors"
     >
       <Icon className="text-brand h-3.5 w-3.5" aria-hidden />
       {label}
       {count != null && count > 0 ? (
-        <span className="bg-brand/15 text-brand ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+        <span className="bg-brand/15 text-brand text-small ml-0.5 rounded-full px-1.5 py-0.5 font-bold tabular-nums">
           {count > 99 ? '99+' : count}
         </span>
       ) : null}
@@ -90,7 +90,7 @@ function PendingPaymentsBanner({ count }: { count: number }) {
           {count} pago{count !== 1 ? 's' : ''} pendiente{count !== 1 ? 's' : ''}
         </span>
       </div>
-      <span className="text-brand shrink-0 text-[10px] font-bold">Revisar</span>
+      <span className="text-brand text-small shrink-0 font-bold">Revisar</span>
     </Link>
   );
 }
@@ -159,20 +159,22 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
             }
             action={
               <div className="flex shrink-0 items-center gap-0.5">
-                <button
+                <IconButton
                   type="button"
+                  size="md"
+                  variant="tertiary"
                   onClick={() => void refresh()}
                   disabled={refreshing}
-                  className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors disabled:opacity-50"
                   aria-label="Actualizar resumen"
                   title="Actualizar"
                 >
-                  <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
-                </button>
-                <button
+                  {refreshing ? <Spinner size="sm" /> : <RefreshCw className="h-4 w-4" />}
+                </IconButton>
+                <Button
                   type="button"
+                  size="sm"
+                  className="hidden lg:inline-flex"
                   onClick={onOpenCounter}
-                  className="brand-solid brand-solid-hover hidden h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold lg:inline-flex"
                   aria-label={
                     pendingPayments > 0
                       ? `Modo mostrador (${pendingPayments} pagos pendientes)`
@@ -182,14 +184,14 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
                   <Monitor className="h-3.5 w-3.5" />
                   Mostrador
                   {pendingPayments > 0 && (
-                    <span className="rounded-full bg-white/20 px-1.5 text-[10px] tabular-nums">
+                    <span className="text-small rounded-full bg-white/20 px-1.5 tabular-nums">
                       {pendingPayments > 99 ? '99+' : pendingPayments}
                     </span>
                   )}
-                </button>
+                </Button>
                 <Link
                   to="/check-in?kiosk=1"
-                  className="text-text-muted hover:bg-surface-raised hidden h-11 w-11 items-center justify-center rounded-lg transition-colors sm:inline-flex"
+                  className="text-text-muted hover:bg-surface-overlay hidden h-9 w-9 items-center justify-center rounded-[var(--radius-button)] transition-colors sm:inline-flex"
                   title="Pantalla de acceso (tablet)"
                   aria-label="Modo tablet"
                 >
@@ -212,7 +214,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-text text-sm font-semibold">Abrir mostrador</p>
-            <p className="text-text-muted text-[11px]">Acceso y registro</p>
+            <p className="text-text-muted text-small">Acceso y registro</p>
           </div>
         </Link>
 
@@ -262,7 +264,7 @@ export function ReceptionHomeSummary({ onOpenCounter, compact }: ReceptionHomeSu
               </h3>
               <Link
                 to="/reception?mode=counter&tab=inside"
-                className="text-brand inline-flex min-h-11 shrink-0 items-center text-[10px] font-semibold hover:underline sm:text-xs"
+                className="text-brand text-small inline-flex min-h-11 shrink-0 items-center font-semibold hover:underline sm:text-xs"
               >
                 {isMobile ? 'Ver todo' : 'Dentro ahora'}
               </Link>

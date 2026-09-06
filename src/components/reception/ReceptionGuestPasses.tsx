@@ -181,7 +181,7 @@ export function ReceptionGuestPasses() {
                 <span className="text-text truncate text-sm font-medium">{form.host_name}</span>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   className="h-8 shrink-0 px-2"
                   aria-label="Quitar anfitrión"
@@ -206,7 +206,7 @@ export function ReceptionGuestPasses() {
                   />
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     onClick={() => void findHost()}
                     loading={searchingHost}
                     disabled={!hostSearch.trim()}
@@ -235,7 +235,7 @@ export function ReceptionGuestPasses() {
                         >
                           <span className="text-text font-medium">{m.full_name}</span>
                           {m.cedula ? (
-                            <span className="text-text-muted text-[11px]">{m.cedula}</span>
+                            <span className="text-text-muted text-small">{m.cedula}</span>
                           ) : null}
                         </button>
                       </li>
@@ -246,7 +246,7 @@ export function ReceptionGuestPasses() {
             )}
           </div>
         </div>
-        <Button className="min-h-11 w-full" loading={saving} onClick={() => void create()}>
+        <Button size="lg" className="w-full" loading={saving} onClick={() => void create()}>
           Crear pase
         </Button>
       </div>
@@ -263,7 +263,7 @@ export function ReceptionGuestPasses() {
             <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2.5">
               <div className="min-w-0">
                 <p className="text-text truncate text-sm font-semibold">{p.full_name}</p>
-                <p className="text-text-muted text-[11px]">
+                <p className="text-text-muted text-small">
                   {p.cedula || 'Sin cédula'}
                   {p.host_name ? ` · anfitrión ${p.host_name}` : ''}
                   {p.notes ? ` · ${p.notes}` : ''}
@@ -277,7 +277,7 @@ export function ReceptionGuestPasses() {
               {!p.used_at && (
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   className="h-9 shrink-0 gap-1 px-2.5 text-xs"
                   onClick={() => void markUsed(p.id)}
                 >

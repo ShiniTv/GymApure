@@ -39,11 +39,11 @@ export function ProfileSeguridadTab({
           rounded="xl"
           className="border-border bg-surface min-w-0 shadow-sm md:p-4 dark:shadow-none"
         >
-          <h2 className="text-text mb-1 flex items-center gap-1.5 text-[13px] font-semibold">
+          <h2 className="text-text mb-1 flex items-center gap-1.5 text-sm font-semibold">
             <Bell className="text-brand h-3.5 w-3.5" />
             Notificaciones
           </h2>
-          <p className="text-text-muted mb-3 text-[11px] leading-snug">
+          <p className="text-text-muted text-small mb-3 leading-snug">
             Pagos, mensajes y novedades en este dispositivo.
           </p>
           <PushNotificationsToggle />
@@ -55,8 +55,8 @@ export function ProfileSeguridadTab({
             rounded="xl"
             className="border-border bg-surface min-w-0 shadow-sm md:p-4 dark:shadow-none"
           >
-            <h2 className="text-text mb-1 text-[13px] font-semibold">Verificación en dos pasos</h2>
-            <p className="text-text-muted mb-2 text-[11px]">
+            <h2 className="text-text mb-1 text-sm font-semibold">Verificación en dos pasos</h2>
+            <p className="text-text-muted text-small mb-2">
               Protege tu cuenta de staff con MFA (TOTP).
             </p>
             <Link
@@ -75,12 +75,10 @@ export function ProfileSeguridadTab({
           icon={<Lock className="text-brand h-4 w-4" />}
           className="border-border bg-surface rounded-xl border shadow-sm dark:shadow-none"
         >
-          <p className="text-text-muted mb-3 text-[11px] leading-snug">
+          <p className="text-text-muted text-small mb-3 leading-snug">
             Al actualizarla, cerraremos esta sesión para proteger tu cuenta.
           </p>
-          {passwordError && (
-            <p className="mb-3 text-xs font-medium text-red-500">{passwordError}</p>
-          )}
+          {passwordError && <p className="text-danger mb-3 text-xs font-medium">{passwordError}</p>}
           <form onSubmit={onChangePassword} className="space-y-3">
             <div>
               <Label htmlFor="current_password">Contraseña actual</Label>

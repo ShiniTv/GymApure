@@ -10,8 +10,8 @@ interface AvatarProps {
 
 const sizeMap = {
   sm: 'h-8 w-8 text-xs',
-  md: 'h-12 w-12 text-sm',
-  lg: 'h-16 w-16 text-lg',
+  md: 'h-9 w-9 text-xs',
+  lg: 'h-11 w-11 text-sm',
 };
 
 function initials(name: string) {

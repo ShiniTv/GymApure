@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { dateLocale as es } from '../../lib/dateLocale';
+import { chartAxisTick, chartHeights } from '../../lib/chartTheme';
 
 export interface ExerciseTimelinePoint {
   date: string;
@@ -23,18 +24,18 @@ interface ExerciseRecordsChartProps {
 
 export default function ExerciseRecordsChart({ timeline }: ExerciseRecordsChartProps) {
   return (
-    <div className="h-48">
+    <div className={chartHeights.panel}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={timeline}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
           <XAxis
             dataKey="date"
             tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
-            tick={{ fontSize: 10 }}
+            tick={chartAxisTick}
             axisLine={false}
             tickLine={false}
           />
-          <YAxis tick={{ fontSize: 10 }} width={36} axisLine={false} tickLine={false} />
+          <YAxis tick={chartAxisTick} width={36} axisLine={false} tickLine={false} />
           <Tooltip
             formatter={(value, name) => [
               `${Number(value).toLocaleString('es-VE')} kg`,
@@ -44,7 +45,7 @@ export default function ExerciseRecordsChart({ timeline }: ExerciseRecordsChartP
               format(parseISO(String(value)), 'dd MMM yyyy', { locale: es })
             }
           />
-          <Legend wrapperStyle={{ fontSize: 10 }} />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
           <Line
             type="monotone"
             dataKey="max_weight_kg"

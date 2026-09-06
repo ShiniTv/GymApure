@@ -122,7 +122,7 @@ export function ExerciseLibraryView({
             <section key={group.muscle}>
               <div className="mb-2 flex items-center gap-2 px-0.5">
                 <h3 className="text-text text-sm font-semibold">{group.muscle}</h3>
-                <span className="bg-surface-overlay text-text-muted rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+                <span className="bg-surface-overlay text-text-muted text-small rounded-md px-1.5 py-0.5 font-bold tabular-nums">
                   {group.items.length}
                 </span>
               </div>

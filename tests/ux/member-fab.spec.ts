@@ -5,6 +5,7 @@ import {
   MEMBER_EMAIL,
   memberWorkoutFab,
   assertFabCentered,
+  assertDemoSeed,
 } from './helpers';
 
 test.describe('Member workout FAB', () => {
@@ -14,7 +15,7 @@ test.describe('Member workout FAB', () => {
 
   test('oculto en Inicio (el hero ya tiene el CTA)', async ({ page }) => {
     await page.goto('/panel');
-    await expect(page.getByRole('button', { name: /entrenar ahora|continuar entrenamiento|completada hoy|ver rutinas/i }).first()).toBeVisible({
+    await expect(page.getByRole('button', { name: /entrenar ahora|continuar entrenamiento|completada hoy|elegir plantilla|ver rutinas/i }).first()).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.locator(memberWorkoutFab)).toHaveCount(0);
@@ -22,6 +23,17 @@ test.describe('Member workout FAB', () => {
 
   for (const path of ['/routines', '/exercises', '/nutrition'] as const) {
     test(`visible y centrado en ${path}`, async ({ page }) => {
+      await page.goto('/panel');
+      await expect(
+        page.getByRole('button', {
+          name: /entrenar ahora|continuar entrenamiento|completada hoy|elegir plantilla|ver rutinas/i,
+        }).first()
+      ).toBeVisible({ timeout: 15_000 });
+      const train = page.getByRole('button', { name: /entrenar ahora|continuar entrenamiento/i });
+      assertDemoSeed(
+        await train.isVisible().catch(() => false),
+        'Demo member sin rutina asignada activa para FAB.'
+      );
       await page.goto(path);
       await expect(page.locator(memberWorkoutFab)).toBeVisible({ timeout: 15_000 });
       await assertFabCentered(page);
@@ -29,6 +41,9 @@ test.describe('Member workout FAB', () => {
   }
 
   test('posición estable al navegar entre rutinas y nutrición', async ({ page }) => {
+    await page.goto('/panel');
+    const train = page.getByRole('button', { name: /entrenar ahora|continuar entrenamiento/i });
+    await expect(train.first()).toBeVisible({ timeout: 15_000 });
     await page.goto('/routines');
     const fab = page.locator(memberWorkoutFab);
     await expect(fab).toBeVisible({ timeout: 15_000 });

@@ -8,6 +8,9 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { chartAxisTick, chartEmptyClass, chartTooltipClass } from '../lib/chartTheme';
+import { typography } from '../lib/typography';
+import { cn } from '../lib/utils';
 
 interface DailyVolumePoint {
   date: string;
@@ -16,11 +19,7 @@ interface DailyVolumePoint {
 
 export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
   if (data.length === 0) {
-    return (
-      <div className="text-text-muted flex h-full items-center justify-center text-sm">
-        Sin datos
-      </div>
-    );
+    return <div className={cn(chartEmptyClass, 'text-sm')}>Sin datos</div>;
   }
 
   return (
@@ -36,8 +35,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
           dataKey="date"
           stroke="currentColor"
           className="text-text-muted"
-          fontSize={10}
-          fontWeight="900"
+          {...chartAxisTick}
           tickLine={false}
           axisLine={false}
           tickFormatter={(str: string) => {
@@ -48,8 +46,7 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
         <YAxis
           stroke="currentColor"
           className="text-text-muted"
-          fontSize={10}
-          fontWeight="900"
+          {...chartAxisTick}
           tickLine={false}
           axisLine={false}
         />
@@ -58,8 +55,8 @@ export function DailyVolumeChart({ data }: { data: DailyVolumePoint[] }) {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="border-border bg-surface rounded-2xl border p-4 shadow-2xl">
-                  <p className="text-text-muted mb-1 text-xs font-medium">
+                <div className={chartTooltipClass}>
+                  <p className={cn(typography.small, 'text-text-muted mb-1')}>
                     {payload[0].payload.date}
                   </p>
                   <p className="text-brand text-lg font-semibold">{payload[0].value} ingresos</p>
@@ -89,11 +86,7 @@ interface HourlyVolumePoint {
 
 export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
   if (data.length === 0) {
-    return (
-      <div className="text-text-muted flex h-full items-center justify-center text-sm">
-        Sin datos
-      </div>
-    );
+    return <div className={cn(chartEmptyClass, 'text-sm')}>Sin datos</div>;
   }
 
   return (
@@ -109,8 +102,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
           dataKey="hour"
           stroke="currentColor"
           className="text-text-muted"
-          fontSize={10}
-          fontWeight="900"
+          {...chartAxisTick}
           tickLine={false}
           axisLine={false}
           tickFormatter={(val) => `${val}h`}
@@ -118,8 +110,7 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
         <YAxis
           stroke="currentColor"
           className="text-text-muted"
-          fontSize={10}
-          fontWeight="900"
+          {...chartAxisTick}
           tickLine={false}
           axisLine={false}
         />
@@ -128,8 +119,8 @@ export function HourlyVolumeChart({ data }: { data: HourlyVolumePoint[] }) {
           content={({ active, payload }) => {
             if (active && payload && payload.length) {
               return (
-                <div className="border-border bg-surface rounded-2xl border p-4 shadow-2xl">
-                  <p className="text-text-muted mb-1 text-xs font-medium">
+                <div className={chartTooltipClass}>
+                  <p className={cn(typography.small, 'text-text-muted mb-1')}>
                     {payload[0].payload.hour}:00
                   </p>
                   <p className="text-brand text-lg font-semibold">{payload[0].value} ingresos</p>

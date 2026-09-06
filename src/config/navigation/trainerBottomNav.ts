@@ -11,6 +11,7 @@ import {
   UtensilsCrossed,
   ShieldCheck,
   Landmark,
+  Bell,
 } from 'lucide-react';
 import type { StaffBottomNavMoreItem, StaffBottomNavTab } from './bottomNavTypes';
 
@@ -22,19 +23,26 @@ export const TRAINER_PRIMARY_TABS: StaffBottomNavTab[] = [
   { name: 'Más', href: '__more__', icon: LayoutGrid, action: 'more' },
 ];
 
-/** Sheet items — synced with secondary items in trainerNav.ts */
+/** Sheet — Coaching / Cuenta (even 2-col tiles). Synced with trainerNav.ts */
 export const TRAINER_MORE_ITEMS: StaffBottomNavMoreItem[] = [
-  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Miembros' },
-  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Miembros' },
+  { name: 'Nutrición', href: '/nutrition-overview', icon: UtensilsCrossed, section: 'Coaching' },
   {
     name: 'Calendario',
     href: '/routines?view=calendar',
     icon: CalendarDays,
-    section: 'Programación',
+    section: 'Coaching',
   },
-  { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Contenido' },
-  { name: 'Reportar equipo', href: '/equipment', icon: Wrench, section: 'Contenido' },
+  { name: 'Ejercicios', href: '/exercises', icon: BookOpen, section: 'Coaching' },
+  { name: 'Reportar equipo', href: '/equipment', icon: Wrench, section: 'Coaching' },
+  {
+    name: 'Notificaciones',
+    href: '/notifications',
+    icon: Bell,
+    showNotificationBadge: true,
+    section: 'Cuenta',
+  },
   { name: 'Seguridad', href: '/security', icon: ShieldCheck, section: 'Cuenta' },
+  { name: 'Cobros PT', href: '/pt-billing', icon: Landmark, section: 'Cuenta' },
   { name: 'Mi Perfil', href: '/profile', icon: UserCircle, section: 'Cuenta' },
 ];
 

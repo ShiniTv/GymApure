@@ -31,16 +31,16 @@ export function SettingsExpiryCard({
         <Card
           padding="sm"
           rounded="xl"
-          className="min-w-0 overflow-hidden border-red-500/30 bg-red-500/5 md:p-4"
+          className="border-danger/30 min-w-0 overflow-hidden bg-red-500/5 md:p-4"
         >
-          <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+          <p className="text-danger dark:text-danger text-sm font-semibold">
             No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
           </p>
         </Card>
       )}
 
       {settingsLoading && !expirySettings && !settingsLoadError && (
-        <Card padding="sm" rounded="xl" className="min-w-0 overflow-hidden md:p-4">
+        <Card padding="md" rounded="xl" className="min-w-0 overflow-hidden">
           <div className="space-y-3">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-10 w-full" />
@@ -56,14 +56,14 @@ export function SettingsExpiryCard({
           className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
         >
           <div className="mb-2.5 flex min-w-0 items-center gap-2">
-            <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-bold">
+            <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
               <Settings2 className="text-brand h-4 w-4 shrink-0" />
               <span className="truncate">Avisos de membresía</span>
             </h2>
             <div className="flex shrink-0 items-center gap-1">
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
                 onClick={onRunJob}
@@ -87,12 +87,12 @@ export function SettingsExpiryCard({
             </div>
           </div>
 
-          <p className="text-text-muted mb-3 text-[11px] leading-snug sm:text-xs">
+          <p className="text-text-muted text-small mb-3 leading-snug sm:text-xs">
             Vencimiento, pagos y rutinas se envían al chat de cada miembro.
           </p>
 
           <div className="max-w-[6rem]">
-            <Label htmlFor="expiry_alert_days" className="text-[11px]">
+            <Label htmlFor="expiry_alert_days" className="text-small">
               Días de anticipación
             </Label>
             <Input
@@ -112,12 +112,12 @@ export function SettingsExpiryCard({
 
           {settingsMessage && (
             <p
-              className={`mt-3 text-[11px] leading-snug font-bold ${
+              className={`text-small mt-3 leading-snug font-bold ${
                 settingsMessageTone === 'success'
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : settingsMessageTone === 'info'
                     ? 'text-sky-600 dark:text-sky-400'
-                    : 'text-red-600 dark:text-red-400'
+                    : 'text-danger dark:text-danger'
               }`}
             >
               {settingsMessage}

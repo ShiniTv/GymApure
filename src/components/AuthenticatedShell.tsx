@@ -10,7 +10,7 @@ const Layout = lazy(() => import('./Layout'));
 function ShellLoader() {
   return (
     <div
-      className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8"
+      className="px-ds-4 py-ds-3 sm:p-ds-4 lg:p-ds-5 mx-auto w-full max-w-7xl"
       aria-busy="true"
       aria-label="Cargando panel"
     >

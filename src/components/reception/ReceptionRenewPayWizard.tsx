@@ -139,7 +139,7 @@ export function ReceptionRenewPayWizard({
             className="min-h-11"
           />
           <Button
-            variant="ghost"
+            variant="secondary"
             onClick={() => void findMembers()}
             loading={loadingSearch}
             disabled={!search.trim()}
@@ -243,14 +243,14 @@ export function ReceptionRenewPayWizard({
         </label>
       </div>
 
-      {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+      {error && <p className="text-danger text-xs font-medium">{error}</p>}
       {success && (
         <p className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
           <CheckCircle className="h-3.5 w-3.5" />
           {success}
         </p>
       )}
-      <Button className="min-h-11 w-full" loading={submitting} onClick={() => void submit()}>
+      <Button size="lg" className="w-full" loading={submitting} onClick={() => void submit()}>
         Aprobar y renovar
       </Button>
     </div>

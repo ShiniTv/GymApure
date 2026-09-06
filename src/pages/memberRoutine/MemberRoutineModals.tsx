@@ -168,7 +168,7 @@ export function MemberRoutineModals({
             ? `Sustituir ${substitutionTarget.exercise.name}`
             : 'Sustituir ejercicio'
         }
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         {substitutionTarget && (
@@ -222,7 +222,7 @@ export function MemberRoutineModals({
         onClose={onCloseAddExercise}
         initialFocus="dialog"
         title="Añadir Ejercicio"
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         <div className="space-y-4">
@@ -276,7 +276,7 @@ export function MemberRoutineModals({
               </div>
             </>
           ) : null}
-          {addExerciseError && <p className="text-sm text-red-500">{addExerciseError}</p>}
+          {addExerciseError && <p className="text-danger text-sm">{addExerciseError}</p>}
           <Button className="w-full" onClick={onAddExercise} disabled={!newExercise.exercise_id}>
             Añadir Ejercicio
           </Button>
@@ -288,7 +288,7 @@ export function MemberRoutineModals({
         onClose={onCloseEditExercise}
         initialFocus="dialog"
         title={editingExercise ? `Editar ${editingExercise.name}` : 'Editar Ejercicio'}
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         {editingExercise && (
@@ -296,10 +296,10 @@ export function MemberRoutineModals({
             <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2.5">
               <p className="text-text text-xs font-semibold">Referencia de carga</p>
               {loadingLoadSuggestion ? (
-                <p className="text-text-muted mt-1 text-[11px]">Consultando historial…</p>
+                <p className="text-text-muted text-small mt-1">Consultando historial…</p>
               ) : loadSuggestion?.last_session ? (
                 <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-text-secondary text-[11px]">
+                  <p className="text-text-secondary text-small">
                     Última sesión:{' '}
                     <strong>
                       {loadSuggestion.last_session.weight} kg × {loadSuggestion.last_session.reps}
@@ -319,12 +319,12 @@ export function MemberRoutineModals({
                   </Button>
                 </div>
               ) : loadSuggestion?.estimated_1rm_kg != null ? (
-                <p className="text-text-secondary mt-1 text-[11px]">
+                <p className="text-text-secondary text-small mt-1">
                   1RM estimado: <strong>{loadSuggestion.estimated_1rm_kg} kg</strong>. Define la
                   intensidad según el objetivo del bloque.
                 </p>
               ) : (
-                <p className="text-text-muted mt-1 text-[11px]">
+                <p className="text-text-muted text-small mt-1">
                   Sin sesiones previas ni pruebas RM registradas para este ejercicio.
                 </p>
               )}
@@ -367,7 +367,7 @@ export function MemberRoutineModals({
                 />
               </div>
             </div>
-            {editExerciseError && <p className="text-sm text-red-500">{editExerciseError}</p>}
+            {editExerciseError && <p className="text-danger text-sm">{editExerciseError}</p>}
             <Button className="w-full" onClick={onUpdateExercise}>
               Guardar Cambios
             </Button>
@@ -399,7 +399,7 @@ export function MemberRoutineModals({
           ¿Quitar <strong>{unassignTarget?.name}</strong> de {memberName}?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={onCloseUnassign}>
+          <Button variant="secondary" className="flex-1" onClick={onCloseUnassign}>
             Cancelar
           </Button>
           <Button
@@ -417,7 +417,7 @@ export function MemberRoutineModals({
           ¿Quitar <strong>{deleteExerciseTarget?.exercise.name}</strong> de esta rutina?
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={onCloseDeleteExercise}>
+          <Button variant="secondary" className="flex-1" onClick={onCloseDeleteExercise}>
             Cancelar
           </Button>
           <Button variant="danger" className="flex-1" onClick={onConfirmDeleteExercise}>

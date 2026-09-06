@@ -191,7 +191,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
             {editingId ? 'Guardar cambio' : 'Agendar sesión'}
           </Button>
           {editingId && (
-            <Button size="sm" variant="ghost" onClick={resetForm}>
+            <Button size="sm" variant="secondary" onClick={resetForm}>
               Cancelar edición
             </Button>
           )}
@@ -233,14 +233,14 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   onClick={() => void updateStatus(appointment, 'no_show')}
                 >
                   No asistió
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="secondary"
                   onClick={() => void updateStatus(appointment, 'cancelled')}
                 >
                   Cancelar

@@ -52,8 +52,8 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
               className={clsx(
                 'absolute flex items-center justify-center rounded-full font-bold tabular-nums ring-2',
                 compact
-                  ? 'bg-brand dark:text-bg dark:ring-bg -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-[9px] text-white ring-white'
-                  : 'bg-brand dark:text-bg dark:ring-bg -top-2 -right-2.5 h-[1.125rem] min-w-[1.125rem] px-1 text-[10px] leading-none text-white shadow-sm ring-white'
+                  ? 'bg-brand dark:text-bg dark:ring-bg text-small -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-white ring-white'
+                  : 'bg-brand dark:text-bg dark:ring-bg text-small -top-2 -right-2.5 h-[1.125rem] min-w-[1.125rem] px-1 leading-none text-white shadow-sm ring-white'
               )}
             >
               {badgeLabel}

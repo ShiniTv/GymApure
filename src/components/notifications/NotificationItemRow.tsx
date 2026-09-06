@@ -39,11 +39,11 @@ export function NotificationItemRow({
           <p className="text-text-muted mt-0.5 text-xs sm:text-sm">{item.description}</p>
         )}
         {showTimestamp && item.createdAt && formatTime && (
-          <p className="text-text-muted mt-2 text-[11px]">{formatTime(item.createdAt)}</p>
+          <p className="text-text-muted text-small mt-2">{formatTime(item.createdAt)}</p>
         )}
       </div>
       {item.count != null && item.count > 1 && (
-        <span className="bg-brand flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold text-white">
+        <span className="bg-brand text-small flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-bold text-white">
           {item.count > 99 ? '99+' : item.count}
         </span>
       )}

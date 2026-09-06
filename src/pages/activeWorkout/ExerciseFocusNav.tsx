@@ -23,8 +23,8 @@ export function ExerciseFocusNav({
       <div className="mx-auto flex max-w-lg items-center gap-3">
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
+          variant="secondary"
+          size="md"
           className="shrink-0"
           disabled={focusedIndex === 0}
           onClick={() => onFocus(Math.max(0, focusedIndex - 1))}
@@ -48,7 +48,7 @@ export function ExerciseFocusNav({
               >
                 <span
                   className={cn(
-                    'rounded-full transition-all',
+                    'rounded-full transition-[background-color,width,height] duration-150 [transition-timing-function:var(--ease-out)]',
                     i === focusedIndex ? 'bg-brand h-2.5 w-5' : 'bg-surface-overlay h-2.5 w-2.5',
                     completedExercises[ex.id] && i !== focusedIndex && 'bg-emerald-500/60'
                   )}
@@ -59,8 +59,8 @@ export function ExerciseFocusNav({
         </div>
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
+          variant="secondary"
+          size="md"
           className="shrink-0"
           disabled={focusedIndex >= exercises.length - 1}
           onClick={() => onFocus(Math.min(exercises.length - 1, focusedIndex + 1))}

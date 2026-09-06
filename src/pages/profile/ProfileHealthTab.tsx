@@ -20,6 +20,7 @@ import type { UserProfile, Measurement } from '../../hooks/queries/useProfileQue
 import { HEALTH_CONDITION_FLAGS } from '../../lib/healthConditions';
 import { ACTIVITY_LEVELS, getAgeFromDob, type ActivityLevel } from '../../lib/metabolicRate';
 import { cn } from '../../lib/utils';
+import { typography } from '../../lib/typography';
 import { heightCmNumber } from './utils';
 
 interface ProfileHealthTabProps {
@@ -131,17 +132,17 @@ export function ProfileHealthTab({
       {(conditionLabels.length > 0 || healthProfile?.tdee_kcal != null) && (
         <div className="flex flex-wrap gap-1.5 px-0.5">
           {conditionLabels.length > 0 && (
-            <span className="bg-surface-raised text-text-secondary rounded-full px-2.5 py-1 text-[10px] font-medium">
+            <span className="bg-surface-raised text-text-secondary text-small rounded-full px-2.5 py-1 font-medium">
               {conditionLabels.length} condición{conditionLabels.length === 1 ? '' : 'es'}
             </span>
           )}
           {healthProfile?.tdee_kcal != null && (
-            <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <span className="text-small rounded-full bg-emerald-500/10 px-2.5 py-1 font-semibold text-emerald-700 dark:text-emerald-400">
               GET {healthProfile.tdee_kcal} kcal
             </span>
           )}
           {healthProfile?.bmr_kcal != null && (
-            <span className="bg-surface-raised text-text-secondary rounded-full px-2.5 py-1 text-[10px] font-medium">
+            <span className="bg-surface-raised text-text-secondary text-small rounded-full px-2.5 py-1 font-medium">
               TMB {healthProfile.bmr_kcal} kcal
             </span>
           )}
@@ -149,13 +150,13 @@ export function ProfileHealthTab({
       )}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
-        <Card padding="sm" rounded="xl" className="border-border bg-surface md:p-4">
-          <h2 className="text-text text-[13px] font-semibold">Antecedentes</h2>
-          <p className="text-text-muted mt-0.5 text-[11px] leading-snug">
+        <Card padding="md" rounded="xl" className="border-border bg-surface">
+          <h2 className="text-text text-sm font-semibold">Antecedentes</h2>
+          <p className="text-text-muted text-small mt-0.5 leading-snug">
             Lo ve tu entrenador · no sustituye criterio médico
           </p>
 
-          <p className="text-text-muted mt-3.5 mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
+          <p className="text-text-muted text-small mt-3.5 mb-1.5 font-semibold tracking-wide uppercase">
             Condiciones
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -169,7 +170,7 @@ export function ProfileHealthTab({
                   onClick={() => toggleFlag(flag.id)}
                   aria-pressed={active}
                   className={cn(
-                    'inline-flex h-7 items-center rounded-full border px-2.5 text-[11px] font-medium transition-colors',
+                    'text-small inline-flex h-7 items-center rounded-full border px-2.5 font-medium transition-colors',
                     active
                       ? 'border-brand/30 bg-brand/10 text-brand'
                       : 'border-border text-text-secondary hover:border-border'
@@ -211,7 +212,7 @@ export function ProfileHealthTab({
               className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
               aria-expanded={moreOpen}
             >
-              <span className="text-text-secondary text-[12px] font-semibold">
+              <span className="text-text-secondary text-small font-semibold">
                 Alergias y medicación
               </span>
               <ChevronDown
@@ -248,7 +249,7 @@ export function ProfileHealthTab({
           </div>
 
           {!hasConsent && (
-            <label className="text-text-secondary mt-3 flex items-start gap-2 text-[11px] leading-snug">
+            <label className="text-text-secondary text-small mt-3 flex items-start gap-2 leading-snug">
               <input
                 type="checkbox"
                 className="mt-0.5"
@@ -268,12 +269,12 @@ export function ProfileHealthTab({
             icon={<Activity className="text-brand h-4 w-4" />}
             className="rounded-xl"
           >
-            <p className="text-text-muted mb-3 text-[11px] leading-snug">
+            <p className="text-text-muted text-small mb-3 leading-snug">
               TMB = reposo · GET = con tu actividad (Mifflin-St Jeor).
             </p>
 
             {missingAnthropometrics && (
-              <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+              <div className="text-small mb-3 flex items-start gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-2.5 py-2 text-amber-800 dark:text-amber-300">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <p>
                   Completa nacimiento, altura y peso en{' '}
@@ -290,7 +291,7 @@ export function ProfileHealthTab({
             )}
 
             {!missingAnthropometrics && (
-              <p className="text-text-muted mb-3 text-[11px]">
+              <p className="text-text-muted text-small mb-3">
                 {latestWeight} kg · {heightCm} cm · {age} años
               </p>
             )}
@@ -327,28 +328,26 @@ export function ProfileHealthTab({
 
             {healthProfile?.bmr_kcal != null && healthProfile.tdee_kcal != null && (
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="bg-surface-raised rounded-xl px-3 py-2.5">
-                  <p className="text-text-muted text-[10px] font-semibold tracking-wide uppercase">
-                    TMB
-                  </p>
-                  <p className="text-text text-lg font-bold">
+                <div className="bg-surface-raised rounded-[var(--radius-card)] px-3 py-2.5">
+                  <p className={cn(typography.statLabel)}>TMB</p>
+                  <p className={cn(typography.statValueSm, 'mt-0.5')}>
                     {healthProfile.bmr_kcal}{' '}
-                    <span className="text-text-muted text-xs font-medium">kcal</span>
+                    <span className="text-text-muted text-small font-medium">kcal</span>
                   </p>
                 </div>
-                <div className="rounded-xl bg-emerald-500/5 px-3 py-2.5">
-                  <p className="text-[10px] font-semibold tracking-wide text-emerald-700 uppercase dark:text-emerald-400">
+                <div className="rounded-[var(--radius-card)] bg-emerald-500/5 px-3 py-2.5">
+                  <p className="text-small font-medium tracking-[-0.006em] text-emerald-700 dark:text-emerald-400">
                     GET
                   </p>
-                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                    {healthProfile.tdee_kcal} <span className="text-xs font-medium">kcal</span>
+                  <p className="mt-0.5 text-lg font-semibold text-emerald-700 tabular-nums dark:text-emerald-400">
+                    {healthProfile.tdee_kcal} <span className="text-small font-medium">kcal</span>
                   </p>
                 </div>
               </div>
             )}
 
             {healthProfile?.metabolic_computed_at && (
-              <p className="text-text-muted mt-2 text-[10px]">
+              <p className="text-text-muted text-small mt-2">
                 Último cálculo:{' '}
                 {format(new Date(healthProfile.metabolic_computed_at), 'dd MMM yyyy · HH:mm', {
                   locale: es,
@@ -359,7 +358,7 @@ export function ProfileHealthTab({
 
             <button
               type="button"
-              className="text-brand mt-3 text-[11px] font-semibold underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-brand text-small mt-3 font-semibold underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
               disabled={
                 updateMutation.isPending || missingAnthropometrics || !sex || !activityLevel
               }

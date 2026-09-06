@@ -1,4 +1,5 @@
-import { Button, Input, Label, Modal, Textarea } from '../../components/ui';
+import { Pause, Trash2, UserCog } from 'lucide-react';
+import { Button, Input, Label, Modal, ModalActions, Textarea } from '../../components/ui';
 import { ShiftFilter } from '../../components/trainers/ShiftFilter';
 import type { Member } from '../../hooks/queries/useMembersQuery';
 import type { TrainingShift } from '../../lib/trainingShift';
@@ -61,57 +62,80 @@ export function MemberActionModals({
   onCloseEditShift,
   onSaveShift,
 }: MemberActionModalsProps) {
+  const isDeactivating = toggleTarget?.status === 'active';
+
   return (
     <>
       <Modal
         open={!!toggleTarget}
         onClose={() => !toggling && onCloseToggle()}
         title="Cambiar estado"
-      >
-        {toggleTarget && (
-          <>
-            <p className="text-text-secondary mb-6 text-sm">
-              {toggleTarget.status === 'active'
-                ? `¿Desactivar a ${toggleTarget.full_name}? No podrá registrar acceso ni usar el sistema.`
-                : `¿Activar a ${toggleTarget.full_name}? Podrá usar el gimnasio nuevamente.`}
-            </p>
-            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-              <Button
-                variant="ghost"
-                className="sm:min-w-28"
-                onClick={onCloseToggle}
-                disabled={toggling}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant={toggleTarget.status === 'active' ? 'danger' : 'primary'}
-                className="sm:min-w-28"
-                onClick={onConfirmToggle}
-                disabled={toggling}
-              >
-                {toggling
-                  ? 'Cambiando...'
-                  : toggleTarget.status === 'active'
-                    ? 'Desactivar'
-                    : 'Activar'}
-              </Button>
-            </div>
-          </>
-        )}
-      </Modal>
+        description={
+          toggleTarget
+            ? isDeactivating
+              ? `${toggleTarget.full_name} no podrá registrar acceso ni usar el sistema.`
+              : `${toggleTarget.full_name} podrá usar el gimnasio nuevamente.`
+            : undefined
+        }
+        icon={UserCog}
+        tone={isDeactivating ? 'danger' : 'brand'}
+        maxWidth="sm"
+        initialFocus="dialog"
+        footer={
+          <ModalActions>
+            <Button variant="secondary" onClick={onCloseToggle} disabled={toggling}>
+              Cancelar
+            </Button>
+            <Button
+              variant={isDeactivating ? 'danger' : 'primary'}
+              onClick={onConfirmToggle}
+              disabled={toggling}
+            >
+              {toggling ? 'Cambiando…' : isDeactivating ? 'Desactivar' : 'Activar'}
+            </Button>
+          </ModalActions>
+        }
+      />
 
       <Modal
         open={!!deleteTarget}
         onClose={onCloseDelete}
         title={deleteTarget?.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar usuario'}
+        description={
+          deleteTarget?.role === 'trainer'
+            ? 'Acción irreversible. Rutinas sin asignar se eliminan; planes nutricionales pasan a tu cuenta.'
+            : deleteTarget
+              ? `¿Eliminar a ${deleteTarget.full_name}? Esta acción no se puede deshacer.`
+              : undefined
+        }
+        icon={Trash2}
+        tone="danger"
+        maxWidth="sm"
+        initialFocus={deleteTarget?.role === 'trainer' ? 'input' : 'dialog'}
+        footer={
+          <ModalActions>
+            <Button variant="secondary" onClick={onCloseDelete} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={onConfirmDelete}
+              disabled={
+                deleting ||
+                (deleteTarget?.role === 'trainer' &&
+                  deleteConfirmName.trim().toLowerCase() !==
+                    deleteTarget.full_name.trim().toLowerCase())
+              }
+            >
+              {deleting ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </ModalActions>
+        }
       >
         {deleteTarget?.role === 'trainer' ? (
-          <div className="mb-6 space-y-3">
-            <p className="text-text-secondary text-sm">
-              Esta acción es irreversible. Se eliminarán las rutinas sin asignar del entrenador y
-              los planes nutricionales pasarán a tu cuenta. Si tiene rutinas asignadas a miembros,
-              deberás desactivarlo o reasignarlas antes.
+          <div className="space-y-3">
+            <p className="text-text-secondary text-sm leading-snug">
+              Si tiene rutinas asignadas a miembros, desactívalo o reasígnalas antes.
             </p>
             <div>
               <Label htmlFor="delete-trainer-confirm">
@@ -129,40 +153,11 @@ export function MemberActionModals({
                 disabled={deleting}
               />
             </div>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            {deleteError ? <p className="text-danger text-sm">{deleteError}</p> : null}
           </div>
-        ) : (
-          <div className="mb-6 space-y-2">
-            <p className="text-text-secondary text-sm">
-              ¿Eliminar a <strong>{deleteTarget?.full_name}</strong>? Esta acción no se puede
-              deshacer.
-            </p>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
-          </div>
-        )}
-        <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-          <Button
-            variant="ghost"
-            className="sm:min-w-28"
-            onClick={onCloseDelete}
-            disabled={deleting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            className="sm:min-w-28"
-            onClick={onConfirmDelete}
-            disabled={
-              deleting ||
-              (deleteTarget?.role === 'trainer' &&
-                deleteConfirmName.trim().toLowerCase() !==
-                  deleteTarget.full_name.trim().toLowerCase())
-            }
-          >
-            {deleting ? 'Eliminando...' : 'Eliminar'}
-          </Button>
-        </div>
+        ) : deleteError ? (
+          <p className="text-danger text-sm">{deleteError}</p>
+        ) : null}
       </Modal>
 
       <Modal
@@ -171,18 +166,33 @@ export function MemberActionModals({
           if (pausing) return;
           onClosePause();
         }}
-        title={
-          <>
-            Pausar <span className="text-brand">membresía</span>
-          </>
+        title="Pausar membresía"
+        description={
+          pauseTarget
+            ? `Los días restantes de ${pauseTarget.full_name} se congelan hasta reanudar.`
+            : undefined
+        }
+        icon={Pause}
+        tone="brand"
+        maxWidth="sm"
+        footer={
+          <ModalActions>
+            <Button type="button" variant="secondary" disabled={pausing} onClick={onClosePause}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              loading={pausing}
+              disabled={pauseReason.trim().length < 3 || pausing}
+              onClick={onConfirmPause}
+            >
+              Pausar
+            </Button>
+          </ModalActions>
         }
       >
-        {pauseTarget && (
-          <div className="space-y-4">
-            <p className="text-text-muted text-sm">
-              ¿Pausar la membresía de <strong>{pauseTarget.full_name}</strong>? Los días restantes
-              se congelan hasta reanudar.
-            </p>
+        {pauseTarget ? (
+          <div className="space-y-3">
             <div>
               <Label htmlFor="pause-reason">Motivo</Label>
               <Textarea
@@ -195,71 +205,35 @@ export function MemberActionModals({
                 required
               />
             </div>
-            {pauseError && <p className="text-sm font-bold text-red-500">{pauseError}</p>}
-            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                className="sm:min-w-28"
-                disabled={pausing}
-                onClick={onClosePause}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                className="sm:min-w-28"
-                loading={pausing}
-                disabled={pauseReason.trim().length < 3 || pausing}
-                onClick={onConfirmPause}
-              >
-                Pausar
-              </Button>
-            </div>
+            {pauseError ? <p className="text-danger text-sm font-semibold">{pauseError}</p> : null}
           </div>
-        )}
+        ) : null}
       </Modal>
 
       <Modal
         open={!!editShiftTarget}
         onClose={() => !savingShift && onCloseEditShift()}
-        title={
-          editShiftTarget ? (
-            <>
-              Turno — <span className="text-brand">{editShiftTarget.full_name}</span>
-            </>
-          ) : (
-            ''
-          )
+        title={editShiftTarget ? `Turno — ${editShiftTarget.full_name}` : 'Turno'}
+        maxWidth="sm"
+        footer={
+          <ModalActions>
+            <Button variant="secondary" onClick={onCloseEditShift} disabled={savingShift}>
+              Cancelar
+            </Button>
+            <Button onClick={onSaveShift} disabled={savingShift || !editShiftValue}>
+              {savingShift ? 'Guardando…' : 'Guardar turno'}
+            </Button>
+          </ModalActions>
         }
       >
-        {editShiftTarget && (
-          <div className="space-y-4">
-            <ShiftFilter
-              includeAll={false}
-              label=""
-              value={editShiftValue}
-              onChange={onEditShiftValueChange}
-            />
-            <div className="border-border/70 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-              <Button
-                variant="ghost"
-                className="sm:min-w-28"
-                onClick={onCloseEditShift}
-                disabled={savingShift}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="sm:min-w-28"
-                onClick={onSaveShift}
-                disabled={savingShift || !editShiftValue}
-              >
-                {savingShift ? 'Guardando...' : 'Guardar turno'}
-              </Button>
-            </div>
-          </div>
-        )}
+        {editShiftTarget ? (
+          <ShiftFilter
+            includeAll={false}
+            label=""
+            value={editShiftValue}
+            onChange={onEditShiftValueChange}
+          />
+        ) : null}
       </Modal>
     </>
   );

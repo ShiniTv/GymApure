@@ -17,7 +17,7 @@ interface ExerciseVideoPlayerProps {
 }
 
 const playerShell =
-  'aspect-video w-full rounded-2xl overflow-hidden border border-border shadow-inner bg-black';
+  'aspect-video w-full rounded-[var(--radius-card)] overflow-hidden border border-border shadow-inner bg-black';
 
 function HostedExerciseVideo({
   src,
@@ -142,14 +142,14 @@ export function ExerciseVideoPlayer({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="border-border-subtle bg-surface-raised flex h-full min-h-[160px] items-center justify-between rounded-2xl border p-6"
+      className="border-border-subtle bg-surface-raised flex h-full min-h-[120px] items-center justify-between rounded-[var(--radius-card)] border p-4"
     >
-      <div className="flex items-center gap-4">
-        <div className="brand-solid rounded-2xl p-4 shadow-lg shadow-zinc-900/20">
-          <Video className="h-8 w-8" />
+      <div className="flex items-center gap-3">
+        <div className="brand-solid rounded-[var(--radius-button)] p-2.5 shadow-sm shadow-zinc-900/10">
+          <Video className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-text text-lg font-semibold">Ver video tutorial</p>
+          <p className="text-text text-sm font-semibold">Ver video tutorial</p>
           <p className="text-brand dark:text-brand flex items-center gap-1 text-xs font-medium">
             <ExternalLink className="h-3 w-3" />
             Enlace externo

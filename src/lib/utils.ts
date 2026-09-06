@@ -14,6 +14,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Strip height utilities so Button size tokens win over call-site h-* / min-h-*. */
+export function stripHeightUtilities(className?: string): string | undefined {
+  if (!className) return className;
+  return className
+    .replace(
+      /(?:^|\s)(?:sm:|md:|lg:|xl:|max-sm:|max-md:|max-lg:)?(?:min-h|h)-(?:\[[^\]]+\]|\S+)/g,
+      ' '
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const DIFFICULTY_LABELS: Record<string, string> = {
   Beginner: 'Principiante',
   Intermediate: 'Intermedio',

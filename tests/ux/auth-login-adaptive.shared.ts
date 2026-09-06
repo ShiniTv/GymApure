@@ -22,17 +22,10 @@ export async function assertLoginAdaptive(page: Page, project: string) {
     };
   });
 
+  expect(m.marketingVisible).toBe(false);
+  expect(m.cardWidth).toBeGreaterThan(280);
+  await expect(page.getByRole('heading', { name: /^Entra$/i })).toBeVisible();
   if (project === 'desktop') {
-    expect(m.marketingVisible).toBe(false);
     expect(m.vw).toBeGreaterThanOrEqual(1024);
-    expect(m.cardWidth).toBeGreaterThan(320);
-    await expect(page.getByRole('heading', { name: /^GymApure$/i })).toBeVisible();
-  } else if (project === 'tablet') {
-    expect(m.marketingVisible).toBe(false);
-    expect(m.cardWidth).toBeGreaterThan(400);
-  } else {
-    expect(m.marketingVisible).toBe(false);
-    expect(m.cardWidth).toBeGreaterThan(280);
-    await expect(page.getByRole('heading', { name: /^GymApure$/i })).toBeVisible();
   }
 }

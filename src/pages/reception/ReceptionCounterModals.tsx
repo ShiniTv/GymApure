@@ -43,7 +43,7 @@ export function ReceptionCounterModals({
           del gym.
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost" className="flex-1" onClick={onCloseCheckout}>
+          <Button variant="secondary" className="flex-1" onClick={onCloseCheckout}>
             Cancelar
           </Button>
           <Button className="flex-1" onClick={onConfirmCheckout} loading={actionLoading}>
@@ -72,11 +72,11 @@ export function ReceptionCounterModals({
               }}
             />
             {cedulaEditError && (
-              <p className="mt-2 text-sm font-medium text-red-500">{cedulaEditError}</p>
+              <p className="text-danger mt-2 text-sm font-medium">{cedulaEditError}</p>
             )}
           </div>
           <div className="flex gap-3">
-            <Button variant="ghost" className="flex-1" onClick={onCloseCedulaEdit}>
+            <Button variant="secondary" className="flex-1" onClick={onCloseCedulaEdit}>
               Cancelar
             </Button>
             <Button className="flex-1" loading={cedulaEditSaving} onClick={onSaveCedulaEdit}>

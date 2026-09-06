@@ -128,7 +128,7 @@ export function EquipmentAddModal({
                     <span className="min-w-0 truncate font-medium">{item.name}</span>
                     <div className="flex shrink-0 items-center gap-2">
                       {existing && (
-                        <Badge variant="default" className="px-1.5 py-0.5 text-[10px]">
+                        <Badge variant="default" className="text-small px-1.5 py-0.5">
                           Registrado
                         </Badge>
                       )}
@@ -158,7 +158,7 @@ export function EquipmentAddModal({
         <form onSubmit={onSubmit} className="space-y-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             className="-ml-2 gap-1"
             onClick={() => onAddStepChange('pick')}
@@ -272,7 +272,7 @@ export function EquipmentAddModal({
                 {addPhotoFile && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     onClick={() => onAddPhotoFileChange(null)}
                   >
@@ -292,7 +292,7 @@ export function EquipmentAddModal({
           </div>
           {formError && (
             <div className="space-y-2">
-              <p className="text-sm text-red-500">{formError}</p>
+              <p className="text-danger text-sm">{formError}</p>
               {duplicateExistingId && (
                 <Button
                   type="button"

@@ -41,7 +41,7 @@ export function MemberMeasurementsPanel({
             <Button
               type="button"
               size="sm"
-              variant="ghost"
+              variant="secondary"
               className="h-8 gap-1 px-2.5 text-xs"
               onClick={() => onAddingChange(true)}
             >
@@ -75,7 +75,7 @@ export function MemberMeasurementsPanel({
                       {format(new Date(measurement.date), 'dd MMM yyyy', { locale: es })}
                     </p>
                     {extras.length > 0 && (
-                      <p className="text-text-muted mt-0.5 text-[10px]">{extras.join(' · ')} cm</p>
+                      <p className="text-text-muted text-small mt-0.5">{extras.join(' · ')} cm</p>
                     )}
                   </div>
                   <div className="shrink-0 text-right tabular-nums">
@@ -86,8 +86,8 @@ export function MemberMeasurementsPanel({
                           <span
                             className={
                               weightDelta < 0
-                                ? 'ml-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400'
-                                : 'ml-1 text-[10px] font-medium text-amber-600 dark:text-amber-400'
+                                ? 'text-small ml-1 font-medium text-emerald-600 dark:text-emerald-400'
+                                : 'text-small ml-1 font-medium text-amber-600 dark:text-amber-400'
                             }
                           >
                             {weightDelta > 0 ? '+' : ''}
@@ -99,7 +99,7 @@ export function MemberMeasurementsPanel({
                       <p className="text-text-muted">—</p>
                     )}
                     {measurement.body_fat_percentage != null && (
-                      <p className="text-text-muted text-[10px]">
+                      <p className="text-text-muted text-small">
                         {measurement.body_fat_percentage}% grasa
                       </p>
                     )}
@@ -133,7 +133,7 @@ export function MemberMeasurementsPanel({
         open={isAdding}
         onClose={() => onAddingChange(false)}
         title="Nueva medición"
-        maxWidth="xl"
+        maxWidth="2xl"
         scrollable
       >
         <form onSubmit={onSubmit} className="space-y-4">

@@ -96,7 +96,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
             onChange={(e) => onReportTextChange(e.target.value)}
             required
           />
-          {reportError && <p className="text-sm text-red-500">{reportError}</p>}
+          {reportError && <p className="text-danger text-sm">{reportError}</p>}
           <Button type="submit" className="w-full">
             Enviar reporte
           </Button>
@@ -211,7 +211,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
               rows={3}
             />
           </div>
-          {editError && <p className="text-sm text-red-500">{editError}</p>}
+          {editError && <p className="text-danger text-sm">{editError}</p>}
           <div className="flex gap-2">
             <Button
               type="button"
@@ -233,7 +233,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
         onClose={() => onDeleteOpenChange(false)}
         title={
           <>
-            Eliminar <span className="text-red-500">equipo</span>
+            Eliminar <span className="text-danger">equipo</span>
           </>
         }
         maxWidth="sm"
@@ -249,7 +249,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
               Si el equipo ya no está en el gym pero quieres conservar el historial, usa{' '}
               <strong>Retirar</strong> en lugar de eliminar.
             </p>
-            {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+            {deleteError && <p className="text-danger text-sm">{deleteError}</p>}
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -349,7 +349,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
               </Select>
             </div>
           </div>
-          {repairError && <p className="text-sm text-red-500">{repairError}</p>}
+          {repairError && <p className="text-danger text-sm">{repairError}</p>}
           <div className="flex gap-2">
             <Button
               type="button"
@@ -387,7 +387,7 @@ export function EquipmentActionModals(props: EquipmentActionModalsProps) {
               onChange={(e) => onRetireReasonChange(e.target.value)}
             />
           </div>
-          {retireError && <p className="text-sm text-red-500">{retireError}</p>}
+          {retireError && <p className="text-danger text-sm">{retireError}</p>}
           <div className="flex gap-2">
             <Button
               type="button"

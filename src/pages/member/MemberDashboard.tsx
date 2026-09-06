@@ -28,18 +28,18 @@ import { MemberTemplatesSection } from '../../components/member/MemberTemplatesS
 import { MemberSelfCheckInCard } from '../../components/member/MemberSelfCheckInCard';
 import { MemberRemoteTrainingCard } from '../../components/member/MemberRemoteTrainingCard';
 import { MemberPriorityBanners } from '../../components/member/MemberPriorityBanners';
-import { Button, Card, Collapse, EmptyState, PageHeader } from '../../components/ui';
+import { Button, Card, Collapse, EmptyState } from '../../components/ui';
+import { OperateHeader, OperateIcon, OperatePage } from '../../components/operate/OperateChrome';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 
-const PAGE = 'page-stack-tight stagger-fade-in mx-auto w-full max-w-5xl';
 const ASSIGNMENT_UPCOMING =
   'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const ASSIGNMENT_ENDING =
   'flex items-center justify-between gap-2 border-b border-border/60 last:border-b-0';
 const LINK_BRAND = 'text-brand inline-block text-xs font-bold hover:underline';
 const MOBILE_LIST_ROW =
-  'tap-feedback flex min-h-12 items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-raised';
+  'tap-feedback flex min-h-[var(--touch-min)] items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-raised';
 
 const MEMBER_LINKS = [
   { to: '/routines', icon: Dumbbell, label: 'Rutinas', detail: 'Asignaciones activas' },
@@ -102,6 +102,7 @@ export default function MemberDashboard() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accesoExtrasOpen, setAccesoExtrasOpen] = useState(false);
   const memberStatsCtx = useMemberStatsOptional();
   const memberStats = memberStatsCtx?.stats ?? null;
   const statsError = memberStatsCtx?.error;
@@ -137,9 +138,9 @@ export default function MemberDashboard() {
 
   if (statsError && !memberStats) {
     return (
-      <div className={PAGE}>
-        <PageHeader
-          showTitleOnMobile
+      <OperatePage maxWidth="max-w-5xl">
+        <OperateHeader
+          icon={Dumbbell}
           title={
             <>
               Hola, <span className="text-brand">{user?.name}</span>
@@ -153,12 +154,12 @@ export default function MemberDashboard() {
           description={statsError}
           action={<Button onClick={() => void memberStatsCtx?.refresh()}>Reintentar</Button>}
         />
-      </div>
+      </OperatePage>
     );
   }
 
   return (
-    <div className={PAGE}>
+    <OperatePage maxWidth="max-w-5xl">
       <MemberHero
         className="shadow-none"
         name={user?.name ?? 'Atleta'}
@@ -177,44 +178,57 @@ export default function MemberDashboard() {
 
       <MemberPriorityBanners pending={pending} subscription={sub ?? null} alertDays={alertDays} />
 
-      <MemberSelfCheckInCard />
-      <MemberRemoteTrainingCard />
+      <Card padding="sm" rounded="xl">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          onClick={() => setAccesoExtrasOpen((v) => !v)}
+          aria-expanded={accesoExtrasOpen}
+        >
+          <span className="text-text text-sm font-semibold">Acceso y extras</span>
+          {accesoExtrasOpen ? (
+            <ChevronUp className="text-text-muted h-4 w-4" />
+          ) : (
+            <ChevronDown className="text-text-muted h-4 w-4" />
+          )}
+        </button>
+        <Collapse open={accesoExtrasOpen}>
+          <div className="mt-3 space-y-3">
+            <MemberSelfCheckInCard />
+            <MemberRemoteTrainingCard />
+          </div>
+        </Collapse>
+      </Card>
 
       {/* Desktop: full routine + membership cards. Mobile: one quiet list; hero owns the train CTA. */}
       {isMobile ? (
-        <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
+        <div className="stagger-fade-in divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
           {routine ? (
             <Link to="/routines" className={MOBILE_LIST_ROW}>
-              <div className="bg-brand/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-                <Dumbbell className="text-brand h-4 w-4" />
-              </div>
+              <OperateIcon icon={Dumbbell} tone="brand" well size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Tu rutina</p>
                 <p className="text-text-secondary text-small mt-0.5 truncate">
                   {routineScheduledToday ? 'Hoy toca' : 'Próximo día de rutina'} · {routine.name}
                 </p>
               </div>
-              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+              <ChevronRight className="text-text-muted operate-icon h-4 w-4 shrink-0" aria-hidden />
             </Link>
           ) : (
             <Link to="/routines?view=templates" className={MOBILE_LIST_ROW}>
-              <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-                <Dumbbell className="text-text-muted h-4 w-4" />
-              </div>
+              <OperateIcon icon={Dumbbell} tone="neutral" well size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="text-text text-sm leading-snug font-medium">Sin rutina aún</p>
                 <p className="text-text-secondary text-small mt-0.5">
                   Elige una plantilla para empezar
                 </p>
               </div>
-              <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+              <ChevronRight className="text-text-muted operate-icon h-4 w-4 shrink-0" aria-hidden />
             </Link>
           )}
 
           <Link to="/payments" className={MOBILE_LIST_ROW}>
-            <div className="bg-surface-overlay flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-              <CreditCard className="text-text-secondary h-4 w-4" />
-            </div>
+            <OperateIcon icon={CreditCard} tone="neutral" well size="sm" />
             <div className="min-w-0 flex-1">
               <p className="text-text text-sm leading-snug font-medium">Membresía</p>
               {sub ? (
@@ -229,7 +243,7 @@ export default function MemberDashboard() {
                   </p>
                   <div className="bg-surface-overlay mt-1.5 h-1 w-full max-w-48 rounded-full">
                     <div
-                      className="h-1 rounded-full transition-[width,background-color] duration-500"
+                      className="h-1 rounded-full transition-[width,background-color] duration-250 [transition-timing-function:var(--ease-out)]"
                       style={{
                         width: `${subscriptionBarStyle.widthPercent}%`,
                         backgroundColor: subscriptionBarStyle.backgroundColor,
@@ -251,17 +265,17 @@ export default function MemberDashboard() {
         </div>
       ) : (
         <div className="stagger-fade-in grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card padding="sm" rounded="2xl" className="md:p-5">
+          <Card padding="md" rounded="xl">
             <h3 className="section-title mb-3">Tu rutina</h3>
             {routine ? (
               <>
-                <div className="flex items-center gap-4">
-                  <div className="bg-brand/10 rounded-2xl p-4">
-                    <Dumbbell className="text-brand h-6 w-6" />
+                <div className="flex items-center gap-3">
+                  <div className="bg-brand/10 p-ds-3 rounded-[var(--radius-card)]">
+                    <Dumbbell className="text-brand h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-text truncate text-xl font-bold">{routine.name}</p>
-                    <p className="text-text-secondary mt-1 text-xs">
+                    <p className="text-text text-h2 truncate font-semibold">{routine.name}</p>
+                    <p className="text-text-secondary text-small mt-0.5">
                       {routineScheduledToday ? 'Hoy toca' : 'No está programada para hoy'} ·{' '}
                       {routine.exercise_count} ejercicios · {formatDifficulty(routine.difficulty)}
                     </p>
@@ -275,14 +289,9 @@ export default function MemberDashboard() {
                     )}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="mt-3 w-full"
-                  onClick={() => navigate('/routines')}
-                >
+                <Link to="/routines" className={cn(LINK_BRAND, 'mt-3 block')}>
                   Ver rutinas
-                </Button>
+                </Link>
                 {primaryRoutineInProgress && !primaryRoutineCompletedToday && (
                   <p className="text-text-secondary mt-2 text-center text-xs">
                     Tienes un entrenamiento en curso. Continúa desde el hero o Rutinas.
@@ -315,26 +324,26 @@ export default function MemberDashboard() {
             )}
           </Card>
 
-          <Card padding="sm" rounded="2xl" className="md:p-5">
+          <Card padding="md" rounded="xl">
             <h3 className="section-title mb-3">Membresía</h3>
             {sub ? (
               <>
                 <p
                   className={cn(
-                    'text-2xl font-bold',
+                    'text-lg font-semibold tabular-nums',
                     subscriptionPlanNameClass(sub.days_remaining, alertDays)
                   )}
                 >
                   {sub.membership_name}
                 </p>
-                <p className="text-text-secondary mt-2 text-sm">
+                <p className="text-text-secondary text-small mt-1">
                   {formatRemainingDaysShort(sub.days_remaining)}
                   {' · '}
                   Vence {format(new Date(sub.end_date), 'dd MMM yyyy', { locale: es })}
                 </p>
-                <div className="bg-surface-overlay mt-4 h-3 w-full rounded-full">
+                <div className="bg-surface-overlay mt-3 h-1.5 w-full rounded-full">
                   <div
-                    className="h-3 rounded-full transition-[width,background-color] duration-500"
+                    className="h-1.5 rounded-full transition-[width,background-color] duration-250 [transition-timing-function:var(--ease-out)]"
                     style={{
                       width: `${subscriptionBarStyle.widthPercent}%`,
                       backgroundColor: subscriptionBarStyle.backgroundColor,
@@ -356,11 +365,21 @@ export default function MemberDashboard() {
                 variant="motivational"
                 icon={CreditCard}
                 title="Sin membresía activa"
-                description="Usa el aviso de arriba para reportar tu pago y activar el acceso."
+                description={
+                  pending > 0
+                    ? 'Usa el aviso de arriba para seguir el pago en revisión.'
+                    : 'Reporta tu pago para activar el acceso.'
+                }
                 action={
-                  <Button size="sm" variant="secondary" onClick={() => navigate('/payments')}>
-                    Ver pagos
-                  </Button>
+                  pending > 0 ? (
+                    <Link to="/payments" className={LINK_BRAND}>
+                      Ir a pagos
+                    </Link>
+                  ) : (
+                    <Button size="sm" variant="secondary" onClick={() => navigate('/payments')}>
+                      Ver pagos
+                    </Button>
+                  )
                 }
               />
             )}
@@ -376,15 +395,18 @@ export default function MemberDashboard() {
           >
             Explorar
           </h2>
-          <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-xl border">
+          <div className="divide-border border-border/80 bg-surface divide-y overflow-hidden rounded-[var(--radius-card)] border">
             {MEMBER_LINKS.map(({ to, icon: Icon, label, detail }) => (
               <Link key={to} to={to} className={MOBILE_LIST_ROW}>
-                <Icon className="text-text-secondary h-4 w-4 shrink-0" aria-hidden />
+                <OperateIcon icon={Icon} tone="brand" well size="sm" />
                 <span className="text-text min-w-0 flex-1 text-sm font-medium">{label}</span>
                 <span className="text-text-muted text-small hidden truncate min-[360px]:block">
                   {detail}
                 </span>
-                <ChevronRight className="text-text-muted h-4 w-4 shrink-0" aria-hidden />
+                <ChevronRight
+                  className="text-text-muted operate-icon h-4 w-4 shrink-0"
+                  aria-hidden
+                />
               </Link>
             ))}
           </div>
@@ -435,7 +457,7 @@ export default function MemberDashboard() {
             onClick={() => setMoreOpen((v) => !v)}
             aria-expanded={moreOpen}
           >
-            <span className="text-text text-sm font-bold">Más de tu plan</span>
+            <span className="text-text text-sm font-semibold">Más de tu plan</span>
             {moreOpen ? (
               <ChevronUp className="text-text-muted h-4 w-4" />
             ) : (
@@ -485,7 +507,7 @@ export default function MemberDashboard() {
                   <p className="text-text-secondary mb-1 text-xs font-semibold">
                     Último entrenamiento
                   </p>
-                  <p className="text-text text-sm font-bold">
+                  <p className="text-text text-sm font-semibold">
                     {memberStats.lastWorkout.routine_name}
                   </p>
                   <p className="text-text-secondary text-small mt-0.5">
@@ -504,7 +526,7 @@ export default function MemberDashboard() {
       ) : (
         <>
           {(upcomingRoutines.length > 0 || endingRoutines.length > 0) && (
-            <Card padding="sm" rounded="2xl" className="md:p-5">
+            <Card padding="md" rounded="xl">
               <h3 className="section-title mb-3">Próximas asignaciones</h3>
               <div className="space-y-2">
                 {upcomingRoutines.map((r) => {
@@ -541,9 +563,9 @@ export default function MemberDashboard() {
           )}
 
           {memberStats?.lastWorkout && (
-            <Card padding="sm" rounded="2xl" className="md:p-5">
+            <Card padding="md" rounded="xl">
               <h3 className="section-title mb-3">Último entrenamiento</h3>
-              <p className="text-text font-bold">{memberStats.lastWorkout.routine_name}</p>
+              <p className="text-text font-semibold">{memberStats.lastWorkout.routine_name}</p>
               <p className="text-text-secondary mt-1 text-xs">
                 {format(new Date(memberStats.lastWorkout.start_time), 'dd MMM yyyy · HH:mm', {
                   locale: es,
@@ -556,6 +578,6 @@ export default function MemberDashboard() {
           )}
         </>
       )}
-    </div>
+    </OperatePage>
   );
 }

@@ -115,14 +115,14 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
           autoCapitalize="characters"
           aria-label="Cédula de identidad"
           className={cn(
-            'w-full text-center font-mono tracking-widest transition-all outline-none',
+            'w-full text-center font-mono tracking-widest transition-[border-color,box-shadow,background-color,color] duration-150 outline-none',
             isCompact
-              ? 'min-h-[52px] rounded-xl py-3 text-xl'
-              : 'min-h-[80px] rounded-xl py-6 text-3xl md:text-4xl',
+              ? 'min-h-[48px] rounded-[var(--radius-input)] py-2.5 text-lg'
+              : 'min-h-[64px] rounded-[var(--radius-input)] py-4 text-2xl md:text-3xl',
             'border border-zinc-700 bg-zinc-900/50 text-white',
             'focus:ring-brand/30 focus-visible:ring-brand focus:ring-2 focus-visible:ring-2',
             tapToType && 'cursor-pointer',
-            error && 'border-red-500',
+            error && 'border-danger',
             className
           )}
           placeholder="V-00000000"
@@ -132,7 +132,7 @@ export const CedulaInput = forwardRef<HTMLInputElement, CedulaInputProps>(functi
           {...props}
         />
         {error && (
-          <p className="mt-2 text-center text-xs font-medium text-red-500" role="alert">
+          <p className="text-danger text-small mt-2 text-center font-medium" role="alert">
             {error}
           </p>
         )}

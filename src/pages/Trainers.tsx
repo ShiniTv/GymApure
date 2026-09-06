@@ -12,7 +12,6 @@ import {
   Input,
   Label,
   Modal,
-  PageHeader,
   Badge,
   Select,
   SearchInput,
@@ -23,6 +22,7 @@ import {
   PasswordInput,
   FilterChips,
 } from '../components/ui';
+import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { ShiftFilter } from '../components/trainers/ShiftFilter';
 import { TrainerMembersModal } from '../components/trainers/TrainerMembersModal';
 import { ResponsiveTable } from '../components/ResponsiveTable';
@@ -231,9 +231,9 @@ export default function Trainers() {
   };
 
   return (
-    <div className="page-stack-tight mx-auto w-full max-w-7xl">
-      <PageHeader
-        compact
+    <OperatePage>
+      <OperateHeader
+        icon={Users}
         title={
           <>
             Gestión de <span className="text-brand">entrenadores</span>
@@ -338,7 +338,7 @@ export default function Trainers() {
           <Card padding="sm" rounded="xl" className="relative">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-text truncate font-bold">{trainer.full_name}</p>
+                <p className="text-text truncate text-sm font-semibold">{trainer.full_name}</p>
                 <p className="text-text-muted truncate text-xs">{trainer.email}</p>
                 {trainer.specialty && (
                   <p className="text-text-muted mt-1 truncate text-xs">{trainer.specialty}</p>
@@ -473,7 +473,7 @@ export default function Trainers() {
             Nuevo <span className="text-brand">entrenador</span>
           </>
         }
-        maxWidth="2xl"
+        maxWidth="3xl"
         scrollable
       >
         <div className="form-stack">
@@ -586,11 +586,11 @@ export default function Trainers() {
             />
           </div>
           {errors.submit && (
-            <p className="text-center text-xs text-red-500" role="alert">
+            <p className="text-danger text-center text-xs" role="alert">
               {errors.submit}
             </p>
           )}
-          <Button className="w-full" size="lg" onClick={handleCreate} loading={saving}>
+          <Button className="w-full" size="md" onClick={handleCreate} loading={saving}>
             Crear entrenador
           </Button>
         </div>
@@ -606,7 +606,7 @@ export default function Trainers() {
             Editar <span className="text-brand">perfil</span>
           </>
         }
-        maxWidth="2xl"
+        maxWidth="3xl"
         scrollable
       >
         {editTarget && (
@@ -661,7 +661,7 @@ export default function Trainers() {
                 rows={3}
               />
             </div>
-            {errors.submit && <p className="text-center text-xs text-red-500">{errors.submit}</p>}
+            {errors.submit && <p className="text-danger text-center text-xs">{errors.submit}</p>}
             <Button className="w-full" onClick={handleUpdate} disabled={saving}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </Button>
@@ -693,9 +693,14 @@ export default function Trainers() {
                 disabled={deleting}
               />
             </div>
-            {deleteError ? <p className="text-sm text-red-500">{deleteError}</p> : null}
+            {deleteError ? <p className="text-danger text-sm">{deleteError}</p> : null}
             <div className="flex gap-3">
-              <Button variant="ghost" className="flex-1" onClick={closeDelete} disabled={deleting}>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={closeDelete}
+                disabled={deleting}
+              >
                 Cancelar
               </Button>
               <Button
@@ -724,6 +729,6 @@ export default function Trainers() {
           else toast?.success(msg);
         }}
       />
-    </div>
+    </OperatePage>
   );
 }

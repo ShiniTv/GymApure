@@ -78,11 +78,10 @@ export function MemberHero({
 
   return (
     <Card padding="md" rounded="xl" className={cn('relative overflow-hidden', className)}>
-      <div className="relative flex items-start gap-4">
+      <div className="relative flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className={typography.labelCaps}>{getGreeting()}</p>
-          <h2 className={cn(typography.pageTitle, 'mt-1 truncate text-xl sm:text-2xl')}>
-            {firstName}
+          <h2 className={cn(typography.heroName, 'truncate')}>
+            {getGreeting()}, {firstName}
           </h2>
           <p className={cn(typography.pageSubtitle, 'truncate')}>
             {routineName
@@ -127,8 +126,8 @@ export function MemberHero({
         <ProgressRing
           value={workoutsThisWeek}
           max={weeklyTrainingGoal}
-          size={64}
-          strokeWidth={4.5}
+          size={48}
+          strokeWidth={3.5}
           label="Esta semana"
           sublabel="meta"
           className="shrink-0"
@@ -136,8 +135,8 @@ export function MemberHero({
       </div>
 
       <Button
-        size="sm"
-        className="relative mt-3.5 w-full sm:mt-4 sm:w-auto"
+        size="md"
+        className="relative mt-3 w-full sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
         onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines?view=templates')}
         onMouseEnter={() => {

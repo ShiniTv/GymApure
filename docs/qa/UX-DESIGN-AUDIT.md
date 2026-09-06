@@ -83,9 +83,37 @@ El sistema de tokens (Linear-like) es sólido; la deuda está en **call sites**:
 
 Siguiente: residual FilterChips walls (Equipment/Members); `PageHeader` quiet.
 
+## Sexta oleada — contrato UI (2026-09-04)
+
+Cierre de primitivos y call sites de consistencia (no rediseño de marca):
+
+- Contrato: [`UI-CONTRACT.md`](./UI-CONTRACT.md); `npm run lint:ui-contract`
+- `Button` ignora `h-*`/`min-h-*`; `Modal` maxWidth honesto (sm→3xl); `ghost` → `secondary`
+- Tipografía `text-[9–13px]` → `text-small` / `text-sm` en ~120 archivos
+- `chartTheme` + alturas 180/240; EmptyState en asignaciones; nav miembro `Home` unificado
+- Chrome: `IconButton` en Layout; sin stagger en AdminDashboard / lista miembros
+
+## Séptima oleada — cierre verificación (2026-09-04)
+
+- Errores de form: `Textarea` / `SearchInput` / `CedulaInput` + ~43 call sites `red-*` → `danger`
+- `PageHeader` badge quiet (meta tipográfica, sin chip)
+- `StaffBottomNav`: cerrar sheet «Más» solo en cambio de `pathname` (el redirect mobile `mode=counter` ya no lo cierra a medias)
+- Playwright: reception-nav (mobile) verde; copy ES desktop; tablet staff; member/trainer nav
+
+### Residual documentado
+
+- `expiryUtils` / `ErrorBoundary` pueden seguir con paletas severity/`red-*` a propósito
+- FilterChips densos en Equipment/Members: pendiente de producto (no regresiona contrato)
+- Suite Playwright completa (`npm run test:ux:browser`): **87/87 verde** (2026-09-05) tras restore-demo + fixes timezone nutrición / seed fechas / a11y banner
+
+### Impeccable detect (`npx impeccable detect src/ --no-advisory`)
+
+4 anti-patterns: `BrandName` gradient-text; email Roboto; `EquipmentListCard`/`RoutinesCalendarView` side-tab borders. ~46 advisory (ramp/radius/color literals, email HTML).
+
 ## Comandos
 
 ```powershell
 npx impeccable detect src/
+npm run lint:ui-contract
 npm run test:ux:browser   # con npm run dev
 ```

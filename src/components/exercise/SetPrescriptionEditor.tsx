@@ -34,7 +34,7 @@ export function SetPrescriptionEditor({
       <Label>Por serie</Label>
       <div className="border-border overflow-hidden rounded-lg border">
         <div
-          className={`text-text-muted bg-surface-overlay grid gap-2 border-b px-2 py-1.5 text-[10px] font-semibold ${
+          className={`text-text-muted bg-surface-overlay text-small grid gap-2 border-b px-2 py-1.5 font-semibold ${
             showLoad ? 'grid-cols-[2.5rem_1fr_1fr]' : 'grid-cols-[2.5rem_1fr]'
           }`}
         >

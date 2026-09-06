@@ -11,6 +11,14 @@ import {
   YAxis,
 } from 'recharts';
 import { dateLocale as es } from '../../lib/dateLocale';
+import {
+  chartAxisTick,
+  chartEmptyClass,
+  chartHeights,
+  chartLabelClass,
+} from '../../lib/chartTheme';
+import { typography } from '../../lib/typography';
+import { cn } from '../../lib/utils';
 
 export interface ProgressWeekPoint {
   week_start: string;
@@ -45,7 +53,7 @@ function progressSummary(weeks: ProgressWeekPoint[]) {
 export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProps) {
   if (!hasProgressData(weeks)) {
     return (
-      <div className="border-border bg-surface-raised/60 text-text-muted flex min-h-[9rem] items-center justify-center rounded-lg border border-dashed px-4 py-6 text-center text-[11px] leading-snug">
+      <div className={cn(chartEmptyClass, 'text-small')}>
         Completa entrenamientos con series registradas para ver volumen y pesos máximos.
       </div>
     );
@@ -56,7 +64,12 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
 
   return (
     <div className="space-y-3">
-      <div className="text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+      <div
+        className={cn(
+          typography.small,
+          'text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1'
+        )}
+      >
         <span>
           <span className="text-text font-semibold">{totalVolume.toLocaleString('es-VE')} kg</span>{' '}
           volumen total
@@ -71,21 +84,19 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
       </div>
 
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
-        <div className="h-36 sm:h-40">
-          <p className="text-text-muted mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
-            Volumen (kg)
-          </p>
+        <div className={chartHeights.panel}>
+          <p className={cn(chartLabelClass, 'mb-1.5')}>Volumen (kg)</p>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeks}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis
                 dataKey="week_start"
                 tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
-                tick={{ fontSize: 10 }}
+                tick={chartAxisTick}
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis tick={{ fontSize: 10 }} width={42} axisLine={false} tickLine={false} />
+              <YAxis tick={chartAxisTick} width={42} axisLine={false} tickLine={false} />
               <Tooltip
                 formatter={(value) => [`${Number(value).toLocaleString('es-VE')} kg`, 'Volumen']}
                 labelFormatter={(value) =>
@@ -96,21 +107,19 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="h-36 sm:h-40">
-          <p className="text-text-muted mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
-            Peso máximo (kg)
-          </p>
+        <div className={chartHeights.panel}>
+          <p className={cn(chartLabelClass, 'mb-1.5')}>Peso máximo (kg)</p>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weeks}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis
                 dataKey="week_start"
                 tickFormatter={(value) => format(parseISO(value), 'dd MMM', { locale: es })}
-                tick={{ fontSize: 10 }}
+                tick={chartAxisTick}
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis tick={{ fontSize: 10 }} width={32} axisLine={false} tickLine={false} />
+              <YAxis tick={chartAxisTick} width={32} axisLine={false} tickLine={false} />
               <Tooltip
                 formatter={(value) => [`${Number(value).toLocaleString('es-VE')} kg`, 'Mayor peso']}
                 labelFormatter={(value) =>

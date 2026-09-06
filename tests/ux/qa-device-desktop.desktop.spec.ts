@@ -13,7 +13,14 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
 
   test('D1 Panel usa skeleton (sin “Cargando…” como estado principal)', async ({ page }) => {
     await page.goto('/panel');
-    await expect(page.getByRole('heading', { name: /panel|inicio|resumen|requiere acción/i }).first()).toBeVisible({
+    await expect(
+      page
+        .getByRole('heading', {
+          name: /panel|inicio|resumen|requiere acción|administración general/i,
+        })
+        .or(page.getByText(/administración general/i))
+        .first()
+    ).toBeVisible({
       timeout: 20_000,
     });
     // Shell/route loaders use DashboardSkeleton (pulse), not a bare “Cargando…” title.
@@ -60,9 +67,10 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
       timeout: 20_000,
     });
 
-    const row = page.locator('tbody tr').filter({ hasText: 'Cliente' }).first();
+    const row = page.locator('table tbody tr').filter({ hasText: /cliente/i }).first();
     await expect(row).toBeVisible({ timeout: 15_000 });
-    await row.click();
+    // Acciones column stops propagation — click the name cell.
+    await row.locator('td').first().click();
 
     await expect(page.getByRole('button', { name: /cerrar ficha|cerrar detalle/i })).toBeVisible({
       timeout: 8_000,

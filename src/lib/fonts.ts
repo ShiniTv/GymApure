@@ -1,11 +1,8 @@
 let appFontsLoaded = false;
 
-/** Critical fonts for auth shell — only weights used on first paint. */
+/** Apple Operate uses the system UI stack — no webfont for chrome. */
 export function loadBaseFonts(): void {
-  void import('@fontsource/inter/latin-400.css');
-  void import('@fontsource/inter/latin-500.css');
-  void import('@fontsource/inter/latin-600.css');
-  void import('@fontsource/inter/latin-700.css');
+  // Intentionally empty: -apple-system / Segoe UI / system-ui from CSS.
 }
 
 /** Mono — deferred until authenticated app shell mounts (code / tabular screens). */

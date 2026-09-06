@@ -44,7 +44,9 @@ const router = asyncRouter();
 router.get(
   '/config',
   asyncHandler(async (_req, res) => {
-    res.json({ allowPublicRegister });
+    res.json({
+      allowPublicRegister,
+    });
   })
 );
 
@@ -80,7 +82,8 @@ router.post(
       status: string;
       token_version: number | string;
     }>(
-      'SELECT id, email, password, role, full_name, status, token_version FROM users WHERE email = $1',
+      `SELECT id, email, password, role, full_name, status, token_version
+       FROM users WHERE email = $1`,
       [normalizedEmail]
     );
     const user = rows[0];
@@ -460,10 +463,12 @@ router.post(
     }
 
     const hashedPassword = await hashPassword(new_password);
-    await query('UPDATE users SET password = $1, token_version = token_version + 1 WHERE id = $2', [
-      hashedPassword,
-      record.user_id,
-    ]);
+    await query(
+      `UPDATE users
+       SET password = $1, token_version = token_version + 1
+       WHERE id = $2`,
+      [hashedPassword, record.user_id]
+    );
     invalidateSessionUserCache(record.user_id);
     await query('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1', [
       record.user_id,

@@ -1,4 +1,5 @@
 import { Virtuoso } from 'react-virtuoso';
+import { Link } from 'react-router';
 import {
   Plus,
   Wrench,
@@ -18,13 +19,17 @@ import {
 import {
   Button,
   Card,
-  PageHeader,
   EmptyState,
   BackToDashboardLink,
   FilterChips,
   SegmentedControl,
   SearchInput,
 } from '../../components/ui';
+import {
+  OperateHeader,
+  OperateMetricStrip,
+  OperatePage,
+} from '../../components/operate/OperateChrome';
 import { cn } from '../../lib/utils';
 import { EquipmentListCard } from './EquipmentListCard';
 import type { EquipmentItem, LayoutView, Zone } from './types';
@@ -105,46 +110,74 @@ export function EquipmentInventorySection({
   onOpenAdd,
 }: EquipmentInventorySectionProps) {
   return (
-    <>
-      <PageHeader
-        compact
+    <OperatePage maxWidth="max-w-7xl">
+      <OperateHeader
+        icon={Wrench}
         title={
-          <>
-            Equipamiento <span className="text-brand">del gym</span>
-          </>
+          isAdmin ? (
+            <>
+              Equipamiento <span className="text-brand">del gym</span>
+            </>
+          ) : (
+            <>
+              Reportar <span className="text-brand">equipo</span>
+            </>
+          )
         }
         subtitle={
           isAdmin
             ? 'Inventario y mantenimiento'
             : allItems.length === 0
-              ? undefined
+              ? 'Avisa si algo falla en el piso'
               : 'Estado e incidencias'
         }
         action={
           isAdmin ? (
-            <div className="flex shrink-0 items-center gap-1">
+            <>
               <BackToDashboardLink iconOnly className="lg:hidden" />
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                className="h-9 w-9 px-0"
+                className="min-h-11 min-w-11 px-0"
                 onClick={() => onOpenConfig()}
                 aria-label="Zonas y proveedores"
                 title="Zonas y proveedores"
               >
                 <Settings2 className="h-4 w-4" />
               </Button>
-              <Button onClick={() => onOpenAdd()} className="h-9 gap-1.5 px-2.5 sm:px-4">
+              <Button onClick={() => onOpenAdd()} className="min-h-11 gap-1.5 px-2.5 sm:px-4">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Añadir equipo</span>
                 <span className="sr-only sm:hidden">Añadir equipo</span>
               </Button>
-            </div>
+            </>
           ) : (
             <BackToDashboardLink iconOnly className="lg:hidden" />
           )
         }
       />
+
+      {isAdmin && !bootstrapError ? (
+        <OperateMetricStrip
+          items={[
+            {
+              label: 'Total',
+              value: allItems.length,
+              icon: Wrench,
+            },
+            {
+              label: 'Atención',
+              value: attentionCount,
+              icon: AlertTriangle,
+            },
+            {
+              label: 'Inspección',
+              value: inspectionDueCount,
+              icon: MapPin,
+            },
+          ]}
+        />
+      ) : null}
 
       <div className="flex flex-col gap-3">
         {isAdmin ? (
@@ -199,7 +232,7 @@ export function EquipmentInventorySection({
             </p>
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className="h-7 shrink-0 px-2 text-orange-700 dark:text-orange-300"
               onClick={() => {
@@ -243,7 +276,7 @@ export function EquipmentInventorySection({
             ) : null}
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
               className={cn(
                 'h-9 gap-1.5 px-2.5',
@@ -258,7 +291,7 @@ export function EquipmentInventorySection({
               <SlidersHorizontal className="h-4 w-4" />
               <span className="hidden md:inline">Filtros</span>
               {activeFilterCount > 0 && (
-                <span className="bg-brand/15 text-brand rounded-md px-1.5 text-[10px] font-bold tabular-nums">
+                <span className="bg-brand/15 text-brand text-small rounded-md px-1.5 font-bold tabular-nums">
                   {activeFilterCount}
                 </span>
               )}
@@ -266,7 +299,7 @@ export function EquipmentInventorySection({
             {isAdmin && items.length > 0 && (
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 className="h-9 w-9 shrink-0 px-0"
                 onClick={() => downloadEquipmentCsv(items)}
@@ -332,7 +365,7 @@ export function EquipmentInventorySection({
               />
             </div>
             {activeFilterCount > 0 && (
-              <Button type="button" variant="ghost" size="sm" onClick={onClearFilters}>
+              <Button type="button" variant="secondary" size="sm" onClick={onClearFilters}>
                 Limpiar filtros
               </Button>
             )}
@@ -370,6 +403,12 @@ export function EquipmentInventorySection({
                 <Button size="sm" onClick={() => onOpenAdd()}>
                   Añadir equipo
                 </Button>
+              ) : allItems.length === 0 && !isAdmin ? (
+                <Link to="/panel">
+                  <Button size="sm" variant="secondary">
+                    Ir al panel
+                  </Button>
+                </Link>
               ) : activeFilterCount > 0 || staffQuickFilter !== 'all' ? (
                 <Button size="sm" variant="secondary" onClick={onClearFilters}>
                   Limpiar filtros
@@ -384,7 +423,7 @@ export function EquipmentInventorySection({
                 <div className="mb-2 flex items-center gap-2 px-0.5">
                   <MapPin className="text-brand h-4 w-4 shrink-0" />
                   <h3 className="text-text text-sm font-semibold">{group.zoneName}</h3>
-                  <span className="bg-surface-raised text-text-muted rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+                  <span className="bg-surface-raised text-text-muted text-small rounded-md px-1.5 py-0.5 font-bold tabular-nums">
                     {group.items.length}
                   </span>
                 </div>
@@ -415,6 +454,6 @@ export function EquipmentInventorySection({
           </div>
         )}
       </div>
-    </>
+    </OperatePage>
   );
 }

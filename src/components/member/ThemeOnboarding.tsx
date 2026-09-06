@@ -48,7 +48,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
             <button
               type="button"
               onClick={() => theme !== 'light' && toggleTheme()}
-              className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
+              className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)] ${
                 theme === 'light'
                   ? 'border-brand bg-brand/5 text-brand'
                   : 'border-border hover:border-border'
@@ -60,7 +60,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
             <button
               type="button"
               onClick={() => theme !== 'dark' && toggleTheme()}
-              className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-all ${
+              className={`flex min-h-[var(--touch-min)] touch-manipulation items-center justify-center gap-2 rounded-xl border p-3 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)] ${
                 theme === 'dark'
                   ? 'border-brand bg-brand/5 text-brand'
                   : 'border-border hover:border-border'
@@ -77,7 +77,7 @@ export function ThemeOnboarding({ open, onComplete }: ThemeOnboardingProps) {
           <ThemePalettePicker />
         </div>
 
-        <Button className="min-h-[var(--touch-comfort)] w-full" onClick={() => finish(true)}>
+        <Button size="md" className="w-full" onClick={() => finish(true)}>
           Empezar a entrenar
         </Button>
       </div>

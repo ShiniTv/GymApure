@@ -23,8 +23,8 @@ test.describe('Member autonomía guiada', () => {
 
   test('Rutinas: pestañas Mis rutinas y Plantillas', async ({ page }) => {
     await page.goto('/routines');
-    await expect(page.getByText(/mis rutinas|rutinas/i).first()).toBeVisible();
-    await expect(page.getByText(/plantillas/i).first()).toBeVisible();
+    await expect(page.getByRole('tab', { name: /mis rutinas/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /plantillas/i })).toBeVisible();
   });
 
   test('puede crear una rutina propia y ver badge Mía', async ({ page }) => {
@@ -51,8 +51,11 @@ test.describe('Member autonomía guiada', () => {
   test('Nutrición: plan sugerido permite registrar', async ({ page }) => {
     await page.goto('/nutrition');
     const suggested = page.getByText(/plan sugerido del gym/i);
-    const registerBtn = page.getByRole('button', { name: /registrar comida/i });
-    await expect(registerBtn).toBeVisible();
+    // Empty day shows "Registrar comida"; with logs the primary CTAs are Registrar / Añadir.
+    const registerBtn = page
+      .getByRole('button', { name: /registrar( comida)?|añadir/i })
+      .first();
+    await expect(registerBtn).toBeVisible({ timeout: 15_000 });
     if (await suggested.isVisible().catch(() => false)) {
       await expect(suggested).toBeVisible();
     }

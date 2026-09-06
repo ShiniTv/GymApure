@@ -27,7 +27,7 @@ export function SettingsChatRetentionCard({
       className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
     >
       <div className="mb-2.5 flex min-w-0 items-center gap-2">
-        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-bold">
+        <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
           <MessageSquare className="text-brand h-4 w-4 shrink-0" />
           <span className="truncate">Retención del chat</span>
         </h2>
@@ -44,13 +44,13 @@ export function SettingsChatRetentionCard({
         </Button>
       </div>
 
-      <p className="text-text-muted mb-3 text-[11px] leading-snug sm:text-xs">
+      <p className="text-text-muted text-small mb-3 leading-snug sm:text-xs">
         Borra mensajes antiguos (y adjuntos) en el mantenimiento diario. Las conversaciones se
         conservan vacías.
       </p>
 
       <div className="max-w-xs">
-        <Label htmlFor="chat_message_retention_days" className="text-[11px]">
+        <Label htmlFor="chat_message_retention_days" className="text-small">
           Conservar mensajes durante
         </Label>
         <Select
@@ -72,12 +72,12 @@ export function SettingsChatRetentionCard({
 
       {settingsMessage && (
         <p
-          className={`mt-3 text-[11px] leading-snug font-bold ${
+          className={`text-small mt-3 leading-snug font-bold ${
             settingsMessageTone === 'success'
               ? 'text-emerald-600 dark:text-emerald-400'
               : settingsMessageTone === 'info'
                 ? 'text-sky-600 dark:text-sky-400'
-                : 'text-red-600 dark:text-red-400'
+                : 'text-danger dark:text-danger'
           }`}
         >
           {settingsMessage}

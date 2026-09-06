@@ -111,7 +111,7 @@ export function QrScannerPanel({ active, paused = false, onScan, className }: Qr
   return (
     <div
       className={cn(
-        'border-brand relative overflow-hidden rounded-2xl border-2 bg-zinc-950',
+        'border-brand relative overflow-hidden rounded-[var(--radius-card)] border-2 bg-zinc-950',
         className
       )}
     >

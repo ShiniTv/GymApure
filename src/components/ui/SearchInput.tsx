@@ -25,16 +25,11 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(functi
         type="search"
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={cn(
-          fieldClassName,
-          'pr-3 pl-10',
-          error ? 'border-red-500' : undefined,
-          className
-        )}
+        className={cn(fieldClassName, 'pr-3 pl-10', error ? 'border-danger' : undefined, className)}
         {...props}
       />
       {error && (
-        <p id={errorId} className="mt-1 ml-1 text-xs font-medium text-red-500" role="alert">
+        <p id={errorId} className="text-danger text-small mt-1 ml-1 font-medium" role="alert">
           {error}
         </p>
       )}

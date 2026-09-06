@@ -29,6 +29,7 @@ export function safeReturnPath(from: ReturnPathFrom | undefined | null, role: Us
 
   const pathOnly = decoded.split(/[?#]/, 1)[0] ?? '';
   if (!pathOnly.startsWith('/') || pathOnly.startsWith('//')) return fallback;
+  if (pathOnly === '/') return fallback;
   if (pathOnly.split('/').includes('..')) return fallback;
 
   return decoded;
