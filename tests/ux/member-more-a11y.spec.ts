@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, demoPassword, MEMBER_EMAIL } from './helpers';
+import { login, demoPassword, MEMBER_EMAIL, memberBottomNav } from './helpers';
 
 test.describe('Member sheet Más accesibilidad', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe('Member sheet Más accesibilidad', () => {
   });
 
   test('Escape cierra sheet y devuelve foco al botón Más', async ({ page }) => {
-    const moreBtn = page.getByRole('button', { name: /^más/i });
+    const moreBtn = page.locator(memberBottomNav).getByRole('button', { name: /^más/i });
     await moreBtn.click();
 
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
@@ -21,7 +21,7 @@ test.describe('Member sheet Más accesibilidad', () => {
   });
 
   test('Tab cicla dentro del sheet', async ({ page }) => {
-    await page.getByRole('button', { name: /^más/i }).click();
+    await page.locator(memberBottomNav).getByRole('button', { name: /^más/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
 

@@ -35,7 +35,7 @@ test.describe('Recepción bottom nav', () => {
     await expect(page).toHaveURL(/\/reception/);
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
 
-    await nav.getByRole('button', { name: /^más/i }).click();
+    await page.locator(receptionBottomNav).getByRole('button', { name: /^más/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('link', { name: /vista del d[ií]a/i })).toBeVisible();

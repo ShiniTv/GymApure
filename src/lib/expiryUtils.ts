@@ -107,7 +107,8 @@ export function subscriptionPlanNameClass(
   alertDays = MEMBER_UI_ALERT_DAYS
 ): string {
   const severity = getExpirySeverity(daysRemaining, alertDays);
-  if (severity === 'critical') return 'text-red-600 dark:text-red-500';
-  if (severity === 'warning') return 'text-orange-600 dark:text-orange-500';
-  return 'text-emerald-600 dark:text-emerald-500';
+  if (severity === 'critical') return 'text-red-700 dark:text-red-400';
+  if (severity === 'warning') return 'text-orange-700 dark:text-orange-400';
+  /* emerald-600 fails WCAG AA on white (~3.65:1); 700 is ≥4.5:1 */
+  return 'text-emerald-700 dark:text-emerald-400';
 }

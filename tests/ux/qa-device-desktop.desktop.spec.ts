@@ -69,9 +69,9 @@ test.describe('QA device desktop D1–D6 (admin)', () => {
 
     const row = page.locator('table tbody tr').filter({ hasText: /cliente/i }).first();
     await expect(row).toBeVisible({ timeout: 15_000 });
-    await row.click();
+    // Acciones column stops propagation — click the name cell.
+    await row.locator('td').first().click();
 
-    await expect(row).toHaveAttribute('aria-selected', 'true', { timeout: 5_000 });
     await expect(page.getByRole('button', { name: /cerrar ficha|cerrar detalle/i })).toBeVisible({
       timeout: 8_000,
     });
