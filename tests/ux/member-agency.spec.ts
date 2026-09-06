@@ -23,8 +23,8 @@ test.describe('Member autonomía guiada', () => {
 
   test('Rutinas: pestañas Mis rutinas y Plantillas', async ({ page }) => {
     await page.goto('/routines');
-    await expect(page.getByText(/mis rutinas|rutinas/i).first()).toBeVisible();
-    await expect(page.getByText(/plantillas/i).first()).toBeVisible();
+    await expect(page.getByRole('tab', { name: /mis rutinas/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /plantillas/i })).toBeVisible();
   });
 
   test('puede crear una rutina propia y ver badge Mía', async ({ page }) => {

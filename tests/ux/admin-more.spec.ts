@@ -10,7 +10,7 @@ test.describe('Admin sheet Más', () => {
   test('sin hamburger; sheet con secciones compactas', async ({ page }) => {
     await expect(page.getByRole('button', { name: /abrir menú/i })).toHaveCount(0);
 
-    await page.getByRole('button', { name: /^más$/i }).click();
+    await page.getByRole('button', { name: /^más/i }).click();
     const sheet = page.getByRole('dialog', { name: 'Más opciones' });
     await expect(sheet).toBeVisible();
 

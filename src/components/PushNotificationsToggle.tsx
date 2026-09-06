@@ -21,14 +21,16 @@ export function PushNotificationsToggle() {
 
   if (!supported) {
     return (
-      <p className="text-text-muted text-small">Este navegador no soporta notificaciones push.</p>
+      <p className="text-text-muted text-small">
+        Este navegador no soporta avisos push en este dispositivo.
+      </p>
     );
   }
 
   if (permission === 'denied') {
     return (
       <p className="text-small text-danger leading-snug">
-        Notificaciones bloqueadas. Actívalas desde la configuración del navegador.
+        Avisos bloqueados. Actívalos desde la configuración del navegador.
       </p>
     );
   }

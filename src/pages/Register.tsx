@@ -168,7 +168,7 @@ export default function Register() {
               <div className="auth-form">
                 <div>
                   <Label className="auth-linear-label" htmlFor="full_name">
-                    Nombre
+                    Nombre completo
                   </Label>
                   <Input
                     id="full_name"
@@ -189,7 +189,7 @@ export default function Register() {
 
                 <div>
                   <Label className="auth-linear-label" htmlFor="email">
-                    Correo
+                    Correo electrónico
                   </Label>
                   <Input
                     id="email"

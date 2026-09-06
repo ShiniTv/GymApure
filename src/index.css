@@ -798,12 +798,11 @@ body,
 }
 
 @keyframes slide-up {
+  /* Transform only — opacity mid-animation fails WCAG contrast audits (axe/Lighthouse). */
   from {
-    opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }

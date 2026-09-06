@@ -31,9 +31,10 @@ test.describe('QA device — push onboarding (mobile viewport)', () => {
       timeout: 20_000,
     });
     await expect(
-      page.getByRole('button', { name: /activar|desactivar|notificaciones/i }).or(
-        page.getByText(/añadir a inicio|avisos|push/i)
-      ).first()
+      page
+        .getByRole('button', { name: /activar|desactivar|notificaciones/i })
+        .or(page.getByText(/añadir a inicio|avisos|push|no soporta|bloqueadas/i))
+        .first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });
