@@ -107,7 +107,7 @@ export default function DemoLeads() {
               type="button"
               variant="secondary"
               size="sm"
-              className="h-8 w-8 px-0"
+              className="w-8 px-0"
               onClick={() => void loadLeads()}
               disabled={loading}
               aria-label="Actualizar solicitudes"

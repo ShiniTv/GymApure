@@ -38,8 +38,10 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 | `npm run test:integration`         | Smoke + dominios core/chat/notificaciones (ex sprint 4/5/6)                  | Sí         |
 | `npm run test:security-checklist`  | Fases 1–3: sesiones, IDOR trainers, rutinas filtradas                        | Sí         |
 | `npm run test:auth-checklist`      | Registro, cambio de contraseña, invalidación JWT                             | Sí         |
+| `npm run test:privacy-checklist`   | DSR: export de datos + delete-account (anonimizar)                           | Sí         |
 | `npm run test:reception-checklist` | Panel recepción, walk-in, lookup                                             | Sí         |
-| `npm run test:e2e`                 | **Suite completa CI** (integration + security + auth + reception)            | Sí         |
+| `npm run test:e2e`                 | **Suite completa CI** (integration + security + auth + privacy + reception)  | Sí         |
+| `npm run test:load:smoke`          | Instrucciones k6 (`scripts/load/smoke.js`; nightly `load-smoke.yml`)         | Sí (k6)    |
 | `npm run test:ux`                  | UX API: forgot/reset, `workoutsThisWeek`, RBAC admin/member/trainer          | Sí         |
 | `npm run test:ux:browser`          | Playwright: 43 specs (mobile iPhone 14 + desktop 1280px + tablet iPad 834px) | Sí         |
 | `npm run test:ux:browser:ui`       | Playwright con UI de depuración                                              | Sí         |

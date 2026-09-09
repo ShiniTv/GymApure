@@ -135,8 +135,8 @@ export default function Memberships() {
           <>
             <BackToDashboardLink />
             <Button
-              size="sm"
-              className="h-11 min-h-11 w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+              size="md"
+              className="w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
               onClick={openCreate}
               aria-label="Nuevo plan"
             >
@@ -197,7 +197,7 @@ export default function Memberships() {
                       type="button"
                       variant="secondary"
                       size="sm"
-                      className="h-9 w-9 rounded-xl px-0"
+                      className="w-9 rounded-xl px-0"
                       onClick={() => {
                         openEdit(plan);
                       }}
@@ -209,7 +209,7 @@ export default function Memberships() {
                       type="button"
                       variant="danger"
                       size="sm"
-                      className="h-9 w-9 rounded-xl px-0"
+                      className="w-9 rounded-xl px-0"
                       onClick={() => {
                         setDeleteTarget(plan);
                       }}

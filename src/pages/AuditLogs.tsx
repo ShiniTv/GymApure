@@ -196,7 +196,7 @@ export default function AuditLogs() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-8 w-8 px-0"
+              className="w-8 px-0"
               onClick={loadLogs}
               aria-label="Actualizar"
             >

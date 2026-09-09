@@ -677,7 +677,7 @@ export default function AdminDashboard() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  className="h-9 px-2.5"
+                  className="px-2.5"
                   onClick={() => {
                     setShowRevenueChart((v) => !v);
                   }}

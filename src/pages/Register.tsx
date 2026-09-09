@@ -103,7 +103,7 @@ export default function Register() {
   return (
     <AuthShell aesthetic="linear">
       <div className="auth-linear-card">
-        <AuthLinearHeader title="Crea tu cuenta" subtitle="Tus datos para el acceso al gym." />
+        <AuthLinearHeader subtitle="Crea tu cuenta" />
 
         <ol
           className="mb-6 flex items-center gap-1 text-xs font-semibold"

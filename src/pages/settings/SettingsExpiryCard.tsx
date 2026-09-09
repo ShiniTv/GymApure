@@ -29,9 +29,9 @@ export function SettingsExpiryCard({
     <>
       {settingsLoadError && (
         <Card
-          padding="sm"
+          padding="md"
           rounded="xl"
-          className="border-danger/30 min-w-0 overflow-hidden bg-red-500/5 md:p-4"
+          className="border-danger/30 min-w-0 overflow-hidden bg-red-500/5"
         >
           <p className="text-danger dark:text-danger text-sm font-semibold">
             No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
@@ -51,9 +51,9 @@ export function SettingsExpiryCard({
       {expirySettings && (
         <Card
           id="avisos-membresia"
-          padding="sm"
+          padding="md"
           rounded="xl"
-          className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
+          className="min-w-0 scroll-mt-20 overflow-hidden"
         >
           <div className="mb-2.5 flex min-w-0 items-center gap-2">
             <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
@@ -65,7 +65,7 @@ export function SettingsExpiryCard({
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+                className="w-9 min-w-9 shrink-0 p-0"
                 onClick={onRunJob}
                 disabled={settingsSaving}
                 aria-label="Ejecutar avisos ahora"
@@ -76,7 +76,7 @@ export function SettingsExpiryCard({
               <Button
                 type="button"
                 size="sm"
-                className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+                className="w-9 min-w-9 shrink-0 p-0"
                 onClick={onSave}
                 disabled={settingsSaving}
                 aria-label="Guardar"

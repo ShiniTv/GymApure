@@ -139,8 +139,8 @@ export function PaymentsToolbar({
               aria-label="Buscar pagos"
             />
             <Button
-              size="sm"
-              className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-11 sm:min-h-11 sm:w-auto sm:gap-1.5 sm:px-3"
+              size="md"
+              className="w-10 shrink-0 rounded-xl p-0 sm:w-auto sm:gap-1.5 sm:px-3"
               onClick={onOpenRegister}
               aria-label="Registrar pago"
             >

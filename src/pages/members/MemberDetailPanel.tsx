@@ -202,7 +202,7 @@ interface MemberDetailRailProps {
 export function MemberDetailRail({ member, alertDays, actions, onClose }: MemberDetailRailProps) {
   return (
     <Card
-      padding="sm"
+      padding="md"
       rounded="xl"
       className="sticky top-3 hidden max-h-[calc(100vh-6rem)] overflow-y-auto md:block"
     >

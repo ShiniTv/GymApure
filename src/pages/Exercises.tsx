@@ -366,7 +366,7 @@ export default function Exercises() {
             variant="secondary"
             size="sm"
             className={cn(
-              'h-9 gap-1.5 px-2.5',
+              'gap-1.5 px-2.5',
               filtersOpen && 'bg-surface-overlay',
               filterChipCount > 0 && 'text-brand'
             )}

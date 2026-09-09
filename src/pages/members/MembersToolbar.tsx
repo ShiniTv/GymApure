@@ -151,9 +151,9 @@ export function MembersToolbar({
           {(userRole === 'admin' || userRole === 'receptionist') && (
             <Button
               type="button"
-              size="sm"
+              size="md"
               variant={filtersOpen ? 'secondary' : 'ghost'}
-              className="min-h-11 w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
+              className="w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
               aria-expanded={filtersOpen}
               aria-label="Más filtros"
               onClick={() => setFiltersOpen((open) => !open)}
@@ -164,8 +164,8 @@ export function MembersToolbar({
           )}
           {canAddUser && (
             <Button
-              size="sm"
-              className="min-h-11 w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
+              size="md"
+              className="w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
               onClick={() => {
                 onAdd();
               }}

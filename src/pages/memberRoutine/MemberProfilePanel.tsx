@@ -116,7 +116,7 @@ export function MemberProfilePanel({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="h-8 px-2.5 text-xs"
+                    className="px-2.5"
                     disabled={savingWeeklyGoal}
                     onClick={onSaveWeeklyGoal}
                   >

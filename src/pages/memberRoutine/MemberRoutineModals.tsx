@@ -312,7 +312,7 @@ export function MemberRoutineModals({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    className="h-8 px-2.5 text-xs"
+                    className="px-2.5"
                     onClick={onApplyLastSessionLoad}
                   >
                     Aplicar última sesión

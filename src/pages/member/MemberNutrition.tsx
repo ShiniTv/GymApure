@@ -207,7 +207,7 @@ export default function MemberNutrition() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/routines`)}
               title="Rutinas"
               aria-label="Rutinas"
@@ -217,7 +217,7 @@ export default function MemberNutrition() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="w-9 shrink-0 p-0"
               onClick={() => navigate(`/members/${memberId}/history`)}
               title="Historial"
               aria-label="Historial"
@@ -227,7 +227,7 @@ export default function MemberNutrition() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0"
+              className="w-9 shrink-0 p-0"
               onClick={() => navigate(`/messages?member=${memberId}`)}
               title="Mensaje"
               aria-label="Mensaje"

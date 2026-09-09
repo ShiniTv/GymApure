@@ -41,8 +41,8 @@ export function MemberTodayRoutinePicker({
       <div className="relative">
         <select
           className={cn(
-            'border-border bg-surface text-text w-full appearance-none rounded-[var(--radius-input)] border py-2 pr-9 pl-3 text-sm font-medium',
-            compact ? 'h-9 py-1.5 text-xs' : 'min-h-[var(--touch-min)]'
+            'border-border bg-surface text-text text-input w-full appearance-none rounded-[var(--radius-input)] border py-2 pr-9 pl-3 font-medium',
+            'min-h-[var(--touch-min)]'
           )}
           value={value}
           disabled={setToday.isPending}

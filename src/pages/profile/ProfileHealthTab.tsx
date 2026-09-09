@@ -59,7 +59,7 @@ export function ProfileHealthTab({
     setMedicationsNotes(healthProfile.medications_notes ?? '');
     setSex(healthProfile.sex ?? '');
     setActivityLevel(healthProfile.activity_level ?? '');
-    setHealthConsent(Boolean(healthProfile.health_consent_at));
+    setHealthConsent(Boolean(healthProfile.consent_current));
     if (healthProfile.allergies_notes || healthProfile.medications_notes) {
       setMoreOpen(true);
     }
@@ -82,7 +82,7 @@ export function ProfileHealthTab({
 
   const heightCm = heightCmNumber(profile.height);
   const missingAnthropometrics = !profile.dob || heightCm == null || !latestWeight;
-  const hasConsent = Boolean(healthProfile?.health_consent_at);
+  const hasConsent = Boolean(healthProfile?.consent_current);
   const conditionLabels = HEALTH_CONDITION_FLAGS.filter((f) => conditionFlags.includes(f.id)).map(
     (f) => f.shortLabel
   );
@@ -93,8 +93,8 @@ export function ProfileHealthTab({
 
   const handleSave = async (e: FormEvent, computeMetabolic: boolean) => {
     e.preventDefault();
-    if (!healthConsent && !healthProfile?.health_consent_at) {
-      toast?.error('Debes aceptar el aviso de información de salud');
+    if (!healthConsent && !healthProfile?.consent_current) {
+      toast?.error('Debes aceptar el aviso de información de salud vigente');
       return;
     }
     try {
@@ -106,7 +106,7 @@ export function ProfileHealthTab({
         medications_notes: medicationsNotes.trim() || null,
         sex: sex || null,
         activity_level: activityLevel ? (activityLevel as ActivityLevel) : null,
-        health_consent: healthConsent || Boolean(healthProfile?.health_consent_at),
+        health_consent: healthConsent || Boolean(healthProfile?.consent_current),
         compute_metabolic: computeMetabolic,
       });
       toast?.success(
@@ -257,7 +257,9 @@ export function ProfileHealthTab({
                 onChange={(e) => setHealthConsent(e.target.checked)}
               />
               <span>
-                Declaro que la información es veraz y autodeclarada; no reemplaza criterio médico.
+                Declaro que la información es veraz y autodeclarada; no reemplaza criterio médico
+                (aviso de salud v.
+                {healthProfile?.required_consent_version ?? 'vigente'}).
               </span>
             </label>
           )}
@@ -372,8 +374,8 @@ export function ProfileHealthTab({
 
       <Button
         type="submit"
-        size="sm"
-        className="h-10 min-h-10 w-full sm:w-auto"
+        size="md"
+        className="w-full sm:w-auto"
         disabled={updateMutation.isPending}
       >
         Guardar salud

@@ -440,7 +440,7 @@ export default function WorkoutHistory() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
+                className="w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
                 onClick={() => navigate(`/members/${id}/records`)}
                 aria-label="Marcas personales"
               >
@@ -466,7 +466,7 @@ export default function WorkoutHistory() {
             <Button
               variant="secondary"
               size="sm"
-              className="h-9 w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
+              className="w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-2.5"
               onClick={() => navigate('/history/records')}
               aria-label="Marcas personales"
             >

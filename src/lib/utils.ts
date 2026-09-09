@@ -5,7 +5,7 @@ const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
       // Custom @theme font sizes must not collide with text-* colors.
-      'font-size': ['text-small', 'text-h1', 'text-h2'],
+      'font-size': ['text-small', 'text-h1', 'text-h2', 'text-input'],
     },
   },
 });
@@ -22,6 +22,18 @@ export function stripHeightUtilities(className?: string): string | undefined {
       /(?:^|\s)(?:sm:|md:|lg:|xl:|max-sm:|max-md:|max-lg:)?(?:min-h|h)-(?:\[[^\]]+\]|\S+)/g,
       ' '
     )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Strip Button size/type escapes so `size` tokens own height and type scale.
+ * Keeps layout utilities (gap, w-*, mt-*, etc.).
+ */
+export function stripButtonSizeEscapes(className?: string): string | undefined {
+  if (!className) return className;
+  return stripHeightUtilities(className)
+    ?.replace(/(?:^|\s)(?:sm:|md:|lg:|xl:)?(?:text-xs|text-small)\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

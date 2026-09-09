@@ -36,9 +36,20 @@ export let authRateLimiter = createLimiter({
   message: { error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' },
 });
 
-/** General API traffic per IP (authenticated routes). */
+/** General API traffic per IP (pre-auth and public). */
 export let apiRateLimiter = createLimiter({
   max: isCI ? 100_000 : strictLimits ? 300 : 5000,
+  message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
+});
+
+/** Authenticated API traffic keyed by user id (defense in depth vs shared NAT). */
+export let userApiRateLimiter = createLimiter({
+  max: isCI ? 100_000 : strictLimits ? 400 : 8000,
+  keyGenerator: (req) => {
+    const userId = (req as { user?: { id?: number } }).user?.id;
+    const ip = req.ip ?? 'unknown';
+    return userId != null ? `api:user:${userId}` : `api:ip:${ip}`;
+  },
   message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
 });
 
@@ -88,6 +99,18 @@ export async function initRateLimiters(): Promise<void> {
   apiRateLimiter = createLimiter(
     {
       max: isCI ? 100_000 : strictLimits ? 300 : 5000,
+      message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
+    },
+    store
+  );
+  userApiRateLimiter = createLimiter(
+    {
+      max: isCI ? 100_000 : strictLimits ? 400 : 8000,
+      keyGenerator: (req) => {
+        const userId = (req as { user?: { id?: number } }).user?.id;
+        const ip = req.ip ?? 'unknown';
+        return userId != null ? `api:user:${userId}` : `api:ip:${ip}`;
+      },
       message: { error: 'Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.' },
     },
     store

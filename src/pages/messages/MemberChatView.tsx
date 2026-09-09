@@ -327,7 +327,7 @@ export function MemberChatView() {
             <Button
               size="sm"
               variant="primary"
-              className="min-h-[var(--touch-min)]"
+
               disabled={isFetching}
               onClick={() => void refetch()}
             >

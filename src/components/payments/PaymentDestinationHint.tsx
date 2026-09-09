@@ -54,7 +54,7 @@ export function PaymentDestinationHint({
           type="button"
           variant="secondary"
           size="sm"
-          className="text-small h-8 min-h-8 px-2"
+          className="px-2"
           onClick={() => {
             void navigator.clipboard.writeText(text).then(() => {
               setCopied(true);

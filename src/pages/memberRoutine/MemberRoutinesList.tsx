@@ -200,12 +200,7 @@ export function MemberRoutinesList({
                     <h4 className="text-text text-xs font-semibold tracking-[-0.01em]">
                       Orden de ejecución
                     </h4>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-8 min-h-8 px-2.5 text-xs"
-                      onClick={onAddExercise}
-                    >
+                    <Button type="button" size="sm" className="px-2.5" onClick={onAddExercise}>
                       <Plus className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Añadir</span>
                     </Button>

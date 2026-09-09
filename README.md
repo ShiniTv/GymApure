@@ -31,7 +31,7 @@ Sistema de gestión para gimnasio: miembros, pagos, asistencia, rutinas, equipam
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 22+ (`engines` en package.json: `>=22.22.0`)
 - Base de datos PostgreSQL (recomendado: [Supabase](https://supabase.com))
 
 ## Configuración local

@@ -50,11 +50,19 @@ El endpoint público `GET /api/health` **no** expone configuración interna. `GE
 | Logs de auditoría       | `AUDIT_LOG_RETENTION_DAYS` (90)                   | Cron diario del servidor                                   |
 | Logs avisos vencimiento | `EXPIRY_NOTIF_LOG_RETENTION_DAYS` (180)           | Idem                                                       |
 | Mensajes de chat        | 90 días (ajustable en Configuración)              | Purga diaria; opción “no borrar”                           |
-| Cuenta de usuario       | Hasta baja manual                                 | `DELETE` admin en Miembros o script controlado             |
+| Cuenta de usuario       | Hasta baja (admin o autoservicio)                 | `POST /api/me/delete-account` o `DELETE` admin en Miembros |
 | Comprobantes de pago    | Mientras exista el pago                           | Borrado en cascada al eliminar pago (según implementación) |
 | Sesiones JWT            | Cookie httpOnly; invalidación por `token_version` | Logout, cambio de contraseña, suspensión                   |
 
-Para solicitudes de **derecho al olvido** en producción: exportar lo necesario, anonimizar o eliminar filas en `users` y archivos en Storage; documentar en `audit_logs` la acción (sin datos sensibles en el detalle).
+### Autoservicio (DSR)
+
+Ver runbook completo: **[privacy.md](./privacy.md)**.
+
+- `GET /api/me/data-export` — copia portable JSON del titular.
+- `POST /api/me/delete-account` `{ "confirm": true }` — desactiva + anonimiza PII.
+- Consentimiento de salud versionado (`HEALTH_CONSENT_VERSION`).
+
+Para solicitudes de **derecho al olvido** en producción: preferir el endpoint de autoservicio o anonimizar/eliminar vía admin; documentar en `audit_logs` la acción (sin datos sensibles en el detalle).
 
 ---
 

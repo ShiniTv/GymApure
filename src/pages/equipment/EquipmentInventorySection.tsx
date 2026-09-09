@@ -137,15 +137,15 @@ export function EquipmentInventorySection({
               <BackToDashboardLink iconOnly className="lg:hidden" />
               <Button
                 variant="secondary"
-                size="sm"
-                className="min-h-11 min-w-11 px-0"
+                size="md"
+                className="min-w-11 px-0"
                 onClick={() => onOpenConfig()}
                 aria-label="Zonas y proveedores"
                 title="Zonas y proveedores"
               >
                 <Settings2 className="h-4 w-4" />
               </Button>
-              <Button onClick={() => onOpenAdd()} className="min-h-11 gap-1.5 px-2.5 sm:px-4">
+              <Button onClick={() => onOpenAdd()} size="md" className="gap-1.5 px-2.5 sm:px-4">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Añadir equipo</span>
                 <span className="sr-only sm:hidden">Añadir equipo</span>
@@ -234,7 +234,7 @@ export function EquipmentInventorySection({
               type="button"
               variant="secondary"
               size="sm"
-              className="h-7 shrink-0 px-2 text-orange-700 dark:text-orange-300"
+              className="shrink-0 px-2 text-orange-700 dark:text-orange-300"
               onClick={() => {
                 onFiltersOpenChange(true);
                 if ((statusCounts.maintenance ?? 0) > 0) {
@@ -279,7 +279,7 @@ export function EquipmentInventorySection({
               variant="secondary"
               size="sm"
               className={cn(
-                'h-9 gap-1.5 px-2.5',
+                'gap-1.5 px-2.5',
                 filtersOpen && 'bg-surface-raised',
                 activeFilterCount > 0 && 'text-brand'
               )}
@@ -301,7 +301,7 @@ export function EquipmentInventorySection({
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="h-9 w-9 shrink-0 px-0"
+                className="w-9 shrink-0 px-0"
                 onClick={() => downloadEquipmentCsv(items)}
                 aria-label="Exportar CSV"
                 title="Exportar CSV"

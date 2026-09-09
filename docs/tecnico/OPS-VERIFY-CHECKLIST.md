@@ -11,12 +11,17 @@ este archivo.
       guards). Cloud Supabase staging bloqueado por Free 2-project limit; ver [STAGING.md](./STAGING.md).
 - [x] **Preparación de backup:** 2026-07-28 — `npm run db:backup-check` → controles locales OK.
       Confirmar PITR/retención en Supabase Dashboard (ítem manual del Dashboard sigue pendiente de captura).
+      Drill documentado: `npm run db:backup-restore-drill` (RPO ≤24h / RTO ≤4h — ver script).
 - [x] **Alerta Sentry (DSN configurado):** 2026-08-21 — `SENTRY_DSN` + `VITE_SENTRY_DSN` en `.env.prod`
       local y en Render. **2026-08-22:** `GET /api/health` prod `ok`; el JS de
-      `caribean-gym.onrender.com` incluye ingest Sentry. **Restante humano:** alerta “new issues”
-      en Sentry UI (no hay `SENTRY_AUTH_TOKEN` en CLI). Guía: [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md).
+      `caribean-gym.onrender.com` incluye ingest Sentry.
+      **Alerta “new issues” (plantilla obligatoria):** Sentry → Alerts → Issues → “A new issue is created”
+      → environment Production → email/Slack ops → nombre `GymApure — new issues`.
+      Verificación: forzar error solo en staging; evento &lt; 2 min. Guía: [SENTRY-Y-ALERTAS.md](./SENTRY-Y-ALERTAS.md).
 - [x] **Clave MFA dedicada (local + Render):** 2026-08-21 — `MFA_ENCRYPTION_KEY` en `.env.prod` y
       copiada a Render. **2026-08-22:** `npm run security:reencrypt-mfa:prod` → 0 secretos legacy.
+- [x] **MFA staff (postura):** `REQUIRE_MFA_FOR_STAFF=false` documentado en [privacy.md](./privacy.md)
+      y ADR-003; path a `true` tras enrolamiento 100 %.
 
 ## Ritual metrics autenticado (mensual)
 

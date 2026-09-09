@@ -54,9 +54,9 @@ export function SettingsOpsHealthCard({
   return (
     <Card
       id="salud-operativa"
-      padding="sm"
+      padding="md"
       rounded="xl"
-      className="min-w-0 scroll-mt-20 overflow-hidden md:p-4"
+      className="min-w-0 scroll-mt-20 overflow-hidden"
     >
       <div className="mb-3 flex min-w-0 flex-wrap items-center justify-between gap-2">
         <h2 className="text-text flex min-w-0 items-center gap-2 text-sm font-semibold">
@@ -69,7 +69,7 @@ export function SettingsOpsHealthCard({
               type="button"
               variant="secondary"
               size="sm"
-              className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+              className="w-9 min-w-9 shrink-0 p-0"
               onClick={onExportJson}
               aria-label="Export JSON"
               title="Export JSON"
@@ -80,7 +80,7 @@ export function SettingsOpsHealthCard({
               type="button"
               variant="secondary"
               size="sm"
-              className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+              className="w-9 min-w-9 shrink-0 p-0"
               onClick={onExportCsv}
               aria-label="Export CSV"
               title="Export CSV"

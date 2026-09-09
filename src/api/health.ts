@@ -96,6 +96,24 @@ function toMetricsCsv(
   return lines.join('\n');
 }
 
+router.get('/health/live', (_req, res) => {
+  res.status(200).json({ status: 'live', uptime_seconds: Math.floor(process.uptime()) });
+});
+
+router.get('/health/ready', async (_req, res) => {
+  try {
+    const dbStart = process.hrtime.bigint();
+    await query('SELECT 1');
+    const dbLatencyMs = Number(process.hrtime.bigint() - dbStart) / 1_000_000;
+    res.status(200).json({
+      status: 'ready',
+      db: { status: 'up', latency_ms: Number(dbLatencyMs.toFixed(2)) },
+    });
+  } catch {
+    res.status(503).json({ status: 'not_ready', db: { status: 'down' } });
+  }
+});
+
 router.get('/health', async (_req, res) => {
   const dbStart = process.hrtime.bigint();
 

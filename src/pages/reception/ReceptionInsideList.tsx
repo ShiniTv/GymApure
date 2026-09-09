@@ -35,8 +35,8 @@ export function ReceptionInsideList({
         </h3>
         <Button
           variant="secondary"
-          size="sm"
-          className="h-11 w-11 px-0"
+          size="md"
+          className="w-11 px-0"
           onClick={onRefresh}
           aria-label="Actualizar"
         >
@@ -56,8 +56,8 @@ export function ReceptionInsideList({
             </p>
             <Button
               variant="secondary"
-              size="sm"
-              className="h-11 w-11 shrink-0 px-0"
+              size="md"
+              className="w-11 shrink-0 px-0"
               disabled={!m.cedula || actionLoading}
               loading={checkingOutCedula === m.cedula?.trim()}
               onClick={() => onRequestCheckout(m)}

@@ -128,9 +128,9 @@ export function MemberSelfCheckInCard() {
         </div>
         {inside ? (
           <Button
-            size="sm"
+            size="md"
             variant="secondary"
-            className="h-10 shrink-0 px-3"
+            className="shrink-0 px-3"
             loading={busy}
             onClick={() => void act('out')}
           >
@@ -139,9 +139,9 @@ export function MemberSelfCheckInCard() {
           </Button>
         ) : (
           <Button
-            size="sm"
+            size="md"
             variant="secondary"
-            className="h-10 shrink-0 px-3"
+            className="shrink-0 px-3"
             loading={busy}
             disabled={pinRequired && !pin.trim()}
             onClick={() => void act('in')}

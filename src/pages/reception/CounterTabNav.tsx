@@ -44,7 +44,7 @@ export function CounterTabNav({
               type="button"
               size="sm"
               variant={active ? 'secondary' : 'ghost'}
-              className="h-9 gap-1.5 px-2.5 text-xs"
+              className="gap-1.5 px-2.5"
               aria-pressed={active}
               onClick={() => onChange(opt.value)}
             >

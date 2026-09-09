@@ -6,9 +6,9 @@ export function SettingsPushCard() {
   return (
     <Card
       id="notificaciones-push"
-      padding="sm"
+      padding="md"
       rounded="xl"
-      className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden md:p-4"
+      className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden"
     >
       <div className="mb-2.5 flex min-w-0 items-center gap-2">
         <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">

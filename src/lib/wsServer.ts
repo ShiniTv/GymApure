@@ -46,6 +46,37 @@ async function canAccessConversationSocket(
   return true;
 }
 
+async function attachRedisAdapter(server: Server): Promise<void> {
+  const url = process.env.REDIS_URL?.trim();
+  if (!url) {
+    logger.info('Socket.IO sin adapter Redis (single-instance)');
+    return;
+  }
+  try {
+    const { createAdapter } = await import('@socket.io/redis-adapter');
+    const { createClient } = await import('redis');
+    const pubClient = createClient({ url });
+    const subClient = pubClient.duplicate();
+    pubClient.on('error', (err) => {
+      logger.warn('Socket.IO Redis pub error', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+    subClient.on('error', (err) => {
+      logger.warn('Socket.IO Redis sub error', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    server.adapter(createAdapter(pubClient, subClient));
+    logger.info('Socket.IO Redis adapter attached');
+  } catch (err) {
+    logger.warn('Socket.IO Redis adapter no disponible; modo single-instance', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 export function initWebSocket(httpServer: HttpServer) {
   io = new Server(httpServer, {
     cors: {
@@ -61,6 +92,8 @@ export function initWebSocket(httpServer: HttpServer) {
     pingInterval: 25_000,
     pingTimeout: 20_000,
   });
+
+  void attachRedisAdapter(io);
 
   io.use((socket, next) => {
     void (async () => {

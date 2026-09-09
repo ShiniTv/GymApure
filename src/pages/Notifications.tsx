@@ -80,8 +80,8 @@ export default function Notifications() {
           unreadPersisted > 0 ? (
             <Button
               variant="secondary"
-              size="sm"
-              className="min-h-11"
+              size="md"
+
               onClick={() => void markAllRead.mutateAsync()}
               disabled={markAllRead.isPending}
             >
@@ -124,18 +124,18 @@ export default function Notifications() {
           action={
             filter === 'unread' && !hasLive ? (
               <Button
-                size="sm"
+                size="md"
                 variant="secondary"
-                className="min-h-11"
+
                 onClick={() => setFilter('all')}
               >
                 Ver todas
               </Button>
             ) : (
               <Button
-                size="sm"
+                size="md"
                 variant="secondary"
-                className="min-h-11"
+
                 onClick={() => void navigate('/panel')}
               >
                 Ir al panel

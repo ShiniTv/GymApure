@@ -127,9 +127,7 @@ export default function NutritionOverview() {
           description="Cuando tengas clientes asignados, aquí verás su estado nutricional."
           action={
             <Link to="/members">
-              <Button size="sm" className="min-h-11">
-                Ir a miembros
-              </Button>
+              <Button size="md">Ir a miembros</Button>
             </Link>
           }
         />
@@ -190,7 +188,7 @@ export default function NutritionOverview() {
               description="Prueba otro filtro o búsqueda."
               action={
                 filtersActive ? (
-                  <Button size="sm" variant="secondary" className="min-h-11" onClick={clearFilters}>
+                  <Button size="md" variant="secondary" onClick={clearFilters}>
                     Quitar filtros
                   </Button>
                 ) : undefined
@@ -304,9 +302,9 @@ export default function NutritionOverview() {
                           <td className="px-4 py-3 text-right">
                             <Link to={`/members/${member.user_id}/nutrition`}>
                               <Button
-                                size="sm"
+                                size="md"
                                 variant={hasPlan ? 'ghost' : 'secondary'}
-                                className="min-h-11 gap-1"
+                                className="gap-1"
                               >
                                 {hasPlan ? (
                                   'Ver'

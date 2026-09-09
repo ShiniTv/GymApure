@@ -233,7 +233,7 @@ export function AssignRoutineForm({
       )}
 
       <Button
-        className="min-h-11 w-full"
+        className="w-full"
         onClick={onSubmit}
         disabled={
           submitDisabled ||
@@ -241,6 +241,7 @@ export function AssignRoutineForm({
           !value.routine_id ||
           (!memberIdFixed && !value.user_id)
         }
+        size="md"
       >
         <UserPlus className="h-4 w-4" />
         {submitLabel}

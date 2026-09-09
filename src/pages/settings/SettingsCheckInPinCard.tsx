@@ -22,9 +22,9 @@ export function SettingsCheckInPinCard({
   return (
     <Card
       id="pin-presencia"
-      padding="sm"
+      padding="md"
       rounded="xl"
-      className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden md:p-4"
+      className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden"
     >
       <div className="mb-2.5 flex min-w-0 items-center gap-2">
         <h2 className="text-text flex min-w-0 flex-1 items-center gap-2 text-sm font-semibold">
@@ -34,7 +34,7 @@ export function SettingsCheckInPinCard({
         <Button
           type="button"
           size="sm"
-          className="h-9 min-h-9 w-9 min-w-9 shrink-0 p-0"
+          className="w-9 min-w-9 shrink-0 p-0"
           onClick={onSave}
           disabled={settingsSaving}
           aria-label="Guardar PIN"

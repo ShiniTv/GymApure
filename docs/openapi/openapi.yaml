@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: GymApure API
+  version: 1.0.0
+  description: >
+    Contrato HTTP de GymApure. Las rutas viven bajo `/api` y `/api/v1` (alias).
+    Autenticación: cookie JWT `token` httpOnly + CSRF header `x-csrf-token` en mutaciones.
+servers:
+  - url: /api/v1
+    description: Versioned alias (preferred for new clients)
+  - url: /api
+    description: Legacy mount (same handlers)
+paths:
+  /health/live:
+    get:
+      summary: Liveness probe
+      tags: [Health]
+      responses:
+        '200':
+          description: Process is up
+  /health/ready:
+    get:
+      summary: Readiness probe (DB)
+      tags: [Health]
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Database unreachable
+  /health:
+    get:
+      summary: Combined health
+      tags: [Health]
+      responses:
+        '200':
+          description: OK
+        '503':
+          description: Degraded
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Session cookie set
+        '401':
+          description: Invalid credentials
+  /auth/me:
+    get:
+      summary: Current session
+      tags: [Auth]
+      responses:
+        '200':
+          description: User or null
+  /me/data-export:
+    get:
+      summary: Export personal data (DSR)
+      tags: [Privacy]
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: JSON export
+        '401':
+          description: Unauthorized
+  /me/delete-account:
+    post:
+      summary: Anonymize and deactivate account
+      tags: [Privacy]
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                confirm: { type: boolean, enum: [true] }
+      responses:
+        '200':
+          description: Account closed
+        '400':
+          description: Missing confirm or last admin
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+tags:
+  - name: Health
+  - name: Auth
+  - name: Privacy

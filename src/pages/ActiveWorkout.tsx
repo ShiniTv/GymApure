@@ -58,7 +58,7 @@ export default function ActiveWorkout() {
 
   return (
     <div
-      className={`page-stack-tight mx-auto w-full max-w-5xl ${page.isMobileFocus ? 'pb-36' : 'pb-20'}`}
+      className={`page-stack-tight mx-auto w-full max-w-5xl ${page.isMobileFocus ? 'workout-mobile-pager-pad' : ''}`}
     >
       <WorkoutCelebration active={page.showCelebration} />
       <Breadcrumbs

@@ -354,8 +354,9 @@ export default function ReceptionWalkInWizard({
         {success.checked_in && !checkedOut && (
           <Button
             variant="secondary"
-            className="min-h-11 w-full"
+            className="w-full"
             onClick={() => void handleWalkInCheckout()}
+            size="md"
             loading={checkoutLoading}
           >
             <LogOut className="mr-2 h-5 w-5" />

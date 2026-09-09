@@ -51,17 +51,14 @@ export default function ResetPassword() {
   return (
     <AuthShell aesthetic="linear">
       <div className="auth-linear-card">
-        <AuthLinearHeader
-          title="Nueva contraseña"
-          subtitle="Elige una contraseña segura para tu cuenta."
-        />
+        <AuthLinearHeader subtitle="Nueva contraseña" />
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
           {success && <Alert variant="success">{success}</Alert>}
 
           <div>
-            <Label className="auth-linear-label" htmlFor="password">
+            <Label className="auth-linear-label mb-1.5" htmlFor="password">
               Nueva contraseña
             </Label>
             <PasswordInput
@@ -69,7 +66,6 @@ export default function ResetPassword() {
               name="password"
               autoComplete="new-password"
               required
-              showIcon={false}
               className="auth-linear-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -77,7 +73,7 @@ export default function ResetPassword() {
           </div>
 
           <div>
-            <Label className="auth-linear-label" htmlFor="confirm_password">
+            <Label className="auth-linear-label mb-1.5" htmlFor="confirm_password">
               Confirmar contraseña
             </Label>
             <PasswordInput
@@ -85,7 +81,6 @@ export default function ResetPassword() {
               name="confirm_password"
               autoComplete="new-password"
               required
-              showIcon={false}
               className="auth-linear-field"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

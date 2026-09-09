@@ -24,7 +24,9 @@ export async function assertLoginAdaptive(page: Page, project: string) {
 
   expect(m.marketingVisible).toBe(false);
   expect(m.cardWidth).toBeGreaterThan(280);
-  await expect(page.getByRole('heading', { name: /^Entra$/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /inicia sesión en tu cuenta/i })).toBeVisible();
+  await expect(page.getByText('GymApure')).toBeVisible();
+  await expect(page.locator('.brand-logo')).toHaveCount(1);
   if (project === 'desktop') {
     expect(m.vw).toBeGreaterThanOrEqual(1024);
   }
