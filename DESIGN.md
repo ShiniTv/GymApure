@@ -2,8 +2,11 @@
 name: GymApure
 description: Sistema operativo de gimnasio — Apple Operate, brand sky azul, ES
 colors:
-  brand: '#0c98ff'
-  brand-hover-light: '#0284c7'
+  # Light AA text/fill on canvas (matches themes.ts sky + index.css @theme default)
+  brand: '#0369a1'
+  brand-hover-light: '#075985'
+  # Dark / electric accent (charts, dark CTAs) — not the light @theme default
+  brand-accent: '#0c98ff'
   brand-hover-dark: '#3aadff'
   secondary: '#704ca8'
   success: '#14b05c'
@@ -72,6 +75,8 @@ spacing:
   ds-5: '20px'
   ds-6: '24px'
   ds-8: '32px'
+  ds-10: '40px'
+  ds-12: '48px'
   touch-min: '44px'
   touch-comfort: '48px'
 components:
@@ -101,7 +106,9 @@ components:
 
 ## Overview
 
-GymApure usa **Apple Operate**: tipografía de sistema (SF Pro / Segoe), aire generoso, sidebar legible, canvas calmado con bordes hairline, bottom-nav / headers en isla, y acento de marca (default **sky** `#0c98ff`) solo en CTAs y estado — no para selección de sidebar. Light y dark son ciudadanos de primera; las paletas de `src/config/themes.ts` reescriben `--color-brand` en runtime. Fuente canónica de tokens: `src/index.css` (`@theme` + `:root` / `.dark`). Tipografía compartida: `src/lib/typography.ts`.
+GymApure usa **Apple Operate**: tipografía de sistema (SF Pro / Segoe), aire generoso, sidebar legible, canvas calmado con bordes hairline, bottom-nav / headers en isla, y acento de marca (default **sky**: light AA `#0369a1`, accent/dark `#0c98ff`) solo en CTAs y estado — no para selección de sidebar. Light y dark son ciudadanos de primera; las paletas de `src/config/themes.ts` reescriben `--color-brand` en runtime. Fuente canónica de tokens: `src/index.css` (`@theme` + `:root` / `.dark`). Tipografía compartida: `src/lib/typography.ts`.
+
+**Auth Linear** (`/login`, `/register`, `/forgot-password`, `/reset-password`) es superficie **Persuade** aparte del Operate: no mezclar medidas de auth-linear con paneles de trabajo. Ver `docs/qa/UI-CONTRACT.md` § Auth.
 
 ## Colors
 

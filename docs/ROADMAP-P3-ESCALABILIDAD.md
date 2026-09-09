@@ -24,6 +24,8 @@ Estas capacidades **no se implementan** hasta validar demanda real. La landing d
 - Migración de datos del gym único → primer tenant.
 - Tests IDOR cross-tenant antes de abrir un segundo cliente.
 
+**Base ya en repo (2026-09):** tabla `gyms` + `users.gym_id DEFAULT 1` (`20260909130000_gyms_tenant_foundation.sql`). Helpers: `src/lib/tenant.ts`. Runbook HA: [tecnico/HA-Y-SLOS.md](./tecnico/HA-Y-SLOS.md). Aún **no** filtrar toda la API por tenant hasta la señal de demanda.
+
 ---
 
 ## Ya entregado en esta fase

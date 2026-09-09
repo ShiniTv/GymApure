@@ -268,7 +268,7 @@ export function Modal({
             </div>
             <IconButton
               type="button"
-              size="md"
+              size="lg"
               variant="tertiary"
               onClick={onClose}
               aria-label="Cerrar"

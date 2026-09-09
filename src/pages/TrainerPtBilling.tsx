@@ -233,7 +233,7 @@ export default function TrainerPtBilling() {
             <span className="hidden sm:inline-flex">
               <BackToDashboardLink />
             </span>
-            <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+            <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
               <Plus className="operate-icon h-4 w-4" />
               Nuevo
             </Button>
@@ -315,7 +315,7 @@ export default function TrainerPtBilling() {
                 </Button>
               </Link>
             ) : (
-              <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+              <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
                 <Plus className="operate-icon h-4 w-4" />
                 Nuevo cobro
               </Button>
@@ -332,7 +332,7 @@ export default function TrainerPtBilling() {
               <Button size="sm" variant="secondary" onClick={() => setInvoiceFilter('all')}>
                 Ver todos
               </Button>
-              <Button size="sm" className="min-h-11 gap-1.5" onClick={() => setChargeOpen(true)}>
+              <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
                 <Plus className="operate-icon h-4 w-4" />
                 Nuevo cobro
               </Button>

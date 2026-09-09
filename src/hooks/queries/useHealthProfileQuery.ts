@@ -16,6 +16,10 @@ export interface HealthProfile {
   tdee_kcal: number | null;
   weight_used_kg: number | null;
   health_consent_at: string | null;
+  health_consent_version?: string | null;
+  health_consent_policy_at?: string | null;
+  consent_current?: boolean;
+  required_consent_version?: string;
   metabolic_computed_at: string | null;
   updated_at: string | null;
 }

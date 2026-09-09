@@ -149,7 +149,7 @@ export function MemberRoutineHeader({
           {headerPrimary.solid ? (
             <Button
               size="sm"
-              className="h-9 min-h-9 gap-1 px-2.5 text-xs"
+              className="gap-1 px-2.5"
               onClick={headerPrimary.run}
               aria-label={headerPrimary.label}
             >

@@ -424,7 +424,7 @@ export default function Nutrition() {
                   type="button"
                   size="sm"
                   variant="secondary"
-                  className="h-8 px-2.5 text-xs"
+                  className="px-2.5"
                   onClick={() => openQuickMeal(preset)}
                 >
                   {MEAL_TYPE_LABELS[preset.meal_type]}
@@ -520,10 +520,11 @@ export default function Nutrition() {
             <Button
               type="button"
               variant="secondary"
-              className="min-h-11 w-full gap-2"
+              className="w-full gap-2"
               loading={analyzing}
               disabled={saving}
               onClick={() => photoInputRef.current?.click()}
+              size="md"
             >
               <Camera className="h-4 w-4" />
               Analizar foto

@@ -7,6 +7,11 @@ import { requireMemberAccess } from './middleware/access.ts';
 import { asyncHandler } from './middleware/asyncHandler.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import { estimateOneRmEpley } from '../lib/exerciseRecords.ts';
+import {
+  proposeLoadSuggestion,
+  type CoachingSignals as RuleSignals,
+  type ExerciseSnapshot,
+} from '../lib/coachingSuggestionRules.ts';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable().optional();
 
@@ -37,7 +42,7 @@ const reviewSuggestionSchema = z.object({
   acknowledge_shared_routine: z.boolean().optional(),
 });
 
-type SuggestionType = 'load_increase' | 'load_decrease' | 'maintain' | 'deload';
+type SuggestionType = import('../lib/coachingSuggestionRules.ts').SuggestionType;
 
 interface RoutineExerciseForSuggestion {
   routine_id: number;
@@ -69,78 +74,33 @@ function buildSuggestion(
   signals: CoachingSignals
 ): {
   suggestionType: SuggestionType;
-  currentSnapshot: Record<string, unknown>;
+  currentSnapshot: ExerciseSnapshot;
   proposedSnapshot: Record<string, unknown>;
   rationale: Record<string, unknown>;
 } {
-  const currentSnapshot = {
-    sets: exercise.sets,
-    reps: exercise.reps,
-    rest_seconds: exercise.rest_seconds,
-    weight_suggestion: exercise.weight_suggestion,
-  };
-  const needsDeload =
-    (signals.soreness_level !== null && signals.soreness_level >= 4) ||
-    (signals.energy !== null && signals.energy <= 2) ||
-    (signals.sleep_quality !== null && signals.sleep_quality <= 2) ||
-    (signals.stress_level !== null && signals.stress_level >= 4) ||
-    (signals.average_discomfort !== null && signals.average_discomfort >= 4) ||
-    (signals.average_energy !== null && signals.average_energy <= 2);
-  const readyToProgress =
-    signals.adherence_score !== null &&
-    signals.adherence_score >= 4 &&
-    signals.energy !== null &&
-    signals.energy >= 4 &&
-    signals.sleep_quality !== null &&
-    signals.sleep_quality >= 4 &&
-    (signals.stress_level === null || signals.stress_level <= 2) &&
-    (signals.soreness_level === null || signals.soreness_level <= 2) &&
-    (signals.average_discomfort === null || signals.average_discomfort <= 2) &&
-    (signals.average_exertion === null || signals.average_exertion <= 7);
-
-  if (needsDeload) {
-    return {
-      suggestionType: 'deload',
-      currentSnapshot,
-      proposedSnapshot: {
-        ...currentSnapshot,
-        sets: Math.max(1, exercise.sets - 1),
-        weight_suggestion: 'Reducir la carga aproximada un 10%',
-      },
-      rationale: {
-        rule: 'recovery_guard',
-        message: 'Señales de recuperación baja o molestias elevadas; reducir volumen y carga.',
-        signals,
-      },
-    };
-  }
-
-  if (readyToProgress) {
-    return {
-      suggestionType: 'load_increase',
-      currentSnapshot,
-      proposedSnapshot: {
-        ...currentSnapshot,
-        reps: exercise.reps + 1,
-        weight_suggestion: 'Probar un aumento gradual de carga si se mantiene la técnica',
-      },
-      rationale: {
-        rule: 'progression_ready',
-        message: 'Buena adherencia y recuperación; se puede progresar de forma gradual.',
-        signals,
-      },
-    };
-  }
-
-  return {
-    suggestionType: 'maintain',
-    currentSnapshot,
-    proposedSnapshot: currentSnapshot,
-    rationale: {
-      rule: 'maintain',
-      message: 'No hay señales suficientes para cambiar la prescripción esta semana.',
-      signals,
+  const result = proposeLoadSuggestion(
+    {
+      sets: exercise.sets,
+      reps: exercise.reps,
+      rest_seconds: exercise.rest_seconds ?? 0,
+      weight_suggestion: exercise.weight_suggestion,
     },
+    {
+      energy: signals.energy,
+      sleep_quality: signals.sleep_quality,
+      stress_level: signals.stress_level,
+      soreness_level: signals.soreness_level,
+      adherence_score: signals.adherence_score,
+      average_discomfort: signals.average_discomfort,
+      average_energy: signals.average_energy,
+      average_exertion: signals.average_exertion,
+    } satisfies RuleSignals
+  );
+  return {
+    suggestionType: result.suggestionType,
+    currentSnapshot: result.currentSnapshot,
+    proposedSnapshot: result.proposedSnapshot,
+    rationale: result.rationale,
   };
 }
 

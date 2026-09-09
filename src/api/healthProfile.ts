@@ -16,6 +16,7 @@ import {
   type ActivityLevel,
   type BiologicalSex,
 } from '../lib/metabolicRate.ts';
+import { HEALTH_CONSENT_VERSION } from '../lib/privacy/constants.ts';
 import type { Router } from 'express';
 
 const healthProfilePatchSchema = z.object({
@@ -46,6 +47,8 @@ interface HealthProfileRow {
   tdee_kcal: number | null;
   weight_used_kg: number | null;
   health_consent_at: string | null;
+  health_consent_version: string | null;
+  health_consent_policy_at: string | null;
   metabolic_computed_at: string | null;
   updated_at: string;
 }
@@ -65,6 +68,10 @@ function emptyHealthProfile(userId: number) {
     tdee_kcal: null,
     weight_used_kg: null,
     health_consent_at: null,
+    health_consent_version: null,
+    health_consent_policy_at: null,
+    consent_current: false,
+    required_consent_version: HEALTH_CONSENT_VERSION,
     metabolic_computed_at: null,
     updated_at: null,
   };
@@ -72,6 +79,8 @@ function emptyHealthProfile(userId: number) {
 
 function serializeHealthProfile(row: HealthProfileRow) {
   const flags = Array.isArray(row.condition_flags) ? row.condition_flags : [];
+  const consentCurrent =
+    Boolean(row.health_consent_at) && row.health_consent_version === HEALTH_CONSENT_VERSION;
   return {
     user_id: row.user_id,
     condition_flags: flags,
@@ -86,6 +95,10 @@ function serializeHealthProfile(row: HealthProfileRow) {
     tdee_kcal: row.tdee_kcal,
     weight_used_kg: row.weight_used_kg,
     health_consent_at: row.health_consent_at,
+    health_consent_version: row.health_consent_version,
+    health_consent_policy_at: row.health_consent_policy_at,
+    consent_current: consentCurrent,
+    required_consent_version: HEALTH_CONSENT_VERSION,
     metabolic_computed_at: row.metabolic_computed_at,
     updated_at: row.updated_at,
   };
@@ -96,6 +109,7 @@ async function getHealthProfileRow(userId: number): Promise<HealthProfileRow | n
     `SELECT user_id, condition_flags, conditions_notes, limitations_notes,
             allergies_notes, medications_notes, sex, activity_level,
             bmr_kcal, tdee_kcal, weight_used_kg, health_consent_at,
+            health_consent_version, health_consent_policy_at,
             metabolic_computed_at, updated_at
      FROM member_health_profiles
      WHERE user_id = $1`,
@@ -183,10 +197,14 @@ export function mountHealthProfileRoutes(router: Router): void {
 
       const data = parsed.data;
       const existing = await getHealthProfileRow(userId);
+      const consentCurrent =
+        Boolean(existing?.health_consent_at) &&
+        existing?.health_consent_version === HEALTH_CONSENT_VERSION;
 
-      if (!existing?.health_consent_at && !data.health_consent) {
+      if (!consentCurrent && !data.health_consent) {
         res.status(400).json({
-          error: 'Debes aceptar el aviso de información de salud antes de guardar',
+          error: 'Debes aceptar el aviso de información de salud vigente antes de guardar',
+          required_consent_version: HEALTH_CONSENT_VERSION,
         });
         return;
       }
@@ -239,17 +257,30 @@ export function mountHealthProfileRoutes(router: Router): void {
         }
       }
 
+      const nowIso = new Date().toISOString();
       const consentAt =
-        existing?.health_consent_at ?? (data.health_consent ? new Date().toISOString() : null);
+        data.health_consent || consentCurrent
+          ? existing?.health_consent_at && consentCurrent
+            ? existing.health_consent_at
+            : nowIso
+          : null;
+      const consentVersion = data.health_consent || consentCurrent ? HEALTH_CONSENT_VERSION : null;
+      const consentPolicyAt =
+        data.health_consent || consentCurrent
+          ? data.health_consent
+            ? nowIso
+            : (existing?.health_consent_policy_at ?? existing?.health_consent_at ?? nowIso)
+          : null;
 
       const { rows } = await query<HealthProfileRow>(
         `INSERT INTO member_health_profiles (
            user_id, condition_flags, conditions_notes, limitations_notes,
            allergies_notes, medications_notes, sex, activity_level,
            bmr_kcal, tdee_kcal, weight_used_kg, health_consent_at,
+           health_consent_version, health_consent_policy_at,
            metabolic_computed_at, updated_at
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
          ON CONFLICT (user_id) DO UPDATE SET
            condition_flags = EXCLUDED.condition_flags,
            conditions_notes = EXCLUDED.conditions_notes,
@@ -261,12 +292,15 @@ export function mountHealthProfileRoutes(router: Router): void {
            bmr_kcal = EXCLUDED.bmr_kcal,
            tdee_kcal = EXCLUDED.tdee_kcal,
            weight_used_kg = EXCLUDED.weight_used_kg,
-           health_consent_at = COALESCE(member_health_profiles.health_consent_at, EXCLUDED.health_consent_at),
+           health_consent_at = EXCLUDED.health_consent_at,
+           health_consent_version = EXCLUDED.health_consent_version,
+           health_consent_policy_at = EXCLUDED.health_consent_policy_at,
            metabolic_computed_at = EXCLUDED.metabolic_computed_at,
            updated_at = NOW()
          RETURNING user_id, condition_flags, conditions_notes, limitations_notes,
                    allergies_notes, medications_notes, sex, activity_level,
                    bmr_kcal, tdee_kcal, weight_used_kg, health_consent_at,
+                   health_consent_version, health_consent_policy_at,
                    metabolic_computed_at, updated_at`,
         [
           userId,
@@ -289,6 +323,8 @@ export function mountHealthProfileRoutes(router: Router): void {
           tdeeKcal,
           weightUsed,
           consentAt,
+          consentVersion,
+          consentPolicyAt,
           metabolicComputedAt,
         ]
       );

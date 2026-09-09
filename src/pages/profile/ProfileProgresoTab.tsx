@@ -173,12 +173,7 @@ export function ProfileProgresoTab({
               </span>
             )}
             {chartData.length > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 min-h-8 px-2.5"
-                onClick={onAddMeasurement}
-              >
+              <Button type="button" size="sm" className="px-2.5" onClick={onAddMeasurement}>
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Medición</span>
               </Button>

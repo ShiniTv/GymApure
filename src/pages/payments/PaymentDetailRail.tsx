@@ -30,7 +30,7 @@ export function PaymentDetailRail({
 }: PaymentDetailRailProps) {
   return (
     <Card
-      padding="sm"
+      padding="md"
       rounded="xl"
       className="sticky top-3 hidden max-h-[calc(100vh-6rem)] overflow-y-auto lg:block"
     >
@@ -87,8 +87,9 @@ export function PaymentDetailRail({
         <Button
           type="button"
           variant="secondary"
-          className="mt-3 h-10 min-h-10 w-full"
+          className="mt-3 w-full"
           onClick={() => onProofPreview(payment)}
+          size="md"
         >
           Ver comprobante
         </Button>
@@ -98,18 +99,20 @@ export function PaymentDetailRail({
         <div className="mt-4 flex flex-col gap-2">
           <Button
             type="button"
-            className="h-11 min-h-11 w-full border-emerald-500/35 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
+            className="w-full border-emerald-500/35 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
             variant="secondary"
             onClick={() => onApprove(payment)}
+            size="md"
           >
             <Check className="h-4 w-4" aria-hidden />
             Aprobar pago
           </Button>
           <Button
             type="button"
-            className="border-danger/35 text-danger dark:text-danger h-11 min-h-11 w-full bg-red-500/10 hover:bg-red-500/20"
+            className="border-danger/35 text-danger dark:text-danger w-full bg-red-500/10 hover:bg-red-500/20"
             variant="secondary"
             onClick={() => onReject(payment)}
+            size="md"
           >
             <X className="h-4 w-4" aria-hidden />
             Rechazar pago

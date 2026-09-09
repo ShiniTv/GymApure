@@ -28,15 +28,18 @@ import demoLeadsRoutes from './demoLeads.ts';
 import webVitalsRoutes from './webVitals.ts';
 import appointmentRoutes from './appointments.ts';
 import trainerBillingRoutes from './trainerBilling.ts';
+import meRoutes from './me.ts';
+import openApiRoutes from './openapi.ts';
 import { authenticate } from './middleware/auth.ts';
 import { csrfProtection } from './middleware/csrf.ts';
-import { apiRateLimiter } from './middleware/rateLimit.ts';
+import { apiRateLimiter, userApiRateLimiter } from './middleware/rateLimit.ts';
 import { enforceMfaForStaff } from './middleware/enforceMfa.ts';
 
 const router = asyncRouter();
 
 // Health (public, no auth)
 router.use(healthRoutes);
+router.use(openApiRoutes);
 
 // Auth: brute-force limiter only on login/register (see auth.ts), not /me /logout /csrf
 router.use('/auth', authRoutes);
@@ -49,10 +52,12 @@ router.use(apiRateLimiter, cronRoutes);
 // Protected routes (require login)
 router.use(apiRateLimiter);
 router.use(authenticate);
+router.use(userApiRateLimiter);
 router.use(csrfProtection);
 // When REQUIRE_MFA_FOR_STAFF=true, staff must enroll at /security before other APIs.
 router.use(enforceMfaForStaff);
 
+router.use('/me', meRoutes);
 router.use('/users', userRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/trainer-billing', trainerBillingRoutes);

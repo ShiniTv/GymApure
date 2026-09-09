@@ -270,7 +270,7 @@ export default function ExerciseRecords() {
             <Button
               variant="secondary"
               size="sm"
-              className="hidden h-9 gap-1.5 sm:inline-flex"
+              className="hidden gap-1.5 sm:inline-flex"
               onClick={() => navigate(historyHref)}
             >
               <Dumbbell className="h-3.5 w-3.5" />

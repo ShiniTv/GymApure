@@ -35,10 +35,7 @@ export default function ForgotPassword() {
   return (
     <AuthShell aesthetic="linear">
       <div className="auth-linear-card">
-        <AuthLinearHeader
-          title="Recupera el acceso"
-          subtitle="Te enviamos un enlace al correo de la cuenta."
-        />
+        <AuthLinearHeader subtitle="Recupera el acceso" />
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {error && <Alert variant="error">{error}</Alert>}
@@ -55,8 +52,8 @@ export default function ForgotPassword() {
           )}
 
           <div>
-            <Label className="auth-linear-label" htmlFor="email">
-              Correo
+            <Label className="auth-linear-label mb-1.5" htmlFor="email">
+              Correo electrónico
             </Label>
             <Input
               id="email"

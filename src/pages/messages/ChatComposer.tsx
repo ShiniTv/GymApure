@@ -167,10 +167,10 @@ export function ChatComposer({
         />
         <Button
           type="button"
-          size="sm"
+          size="md"
           disabled={disabled || (!body.trim() && !file)}
           onClick={handleSend}
-          className="h-10 w-10 shrink-0 rounded-full p-0"
+          className="w-10 shrink-0 rounded-full p-0"
           aria-label="Enviar mensaje"
         >
           <Send className="h-4 w-4" />

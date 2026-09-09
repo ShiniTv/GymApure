@@ -6,6 +6,7 @@ import { assignSubscription } from '../lib/subscriptions.ts';
 import { logAudit } from '../lib/audit.ts';
 import { formatZodError } from '../lib/passwordPolicy.ts';
 import { AppError } from './middleware/errorHandler.ts';
+import { canTransitionPayment } from '../lib/paymentStateMachine.ts';
 import { proofUpload } from '../lib/uploadStorage.ts';
 import { assertProofUpload } from '../lib/uploadValidation.ts';
 import {
@@ -282,8 +283,9 @@ router.post('/:id/approve', authorize(RECEPTION_STAFF), async (req: AuthRequest,
       const paymentResult = await client.query('SELECT * FROM payments WHERE id = $1', [id]);
       const payment = paymentResult.rows[0];
       if (!payment) throw new AppError('Pago no encontrado', 404, 'Pago no encontrado');
-      if (payment.status !== 'pending') {
-        throw new AppError('El pago ya ha sido procesado', 400);
+      const transition = canTransitionPayment(payment.status, { type: 'approve' });
+      if (!transition.ok) {
+        throw new AppError(transition.error, 400);
       }
 
       approvedUserId = Number(payment.user_id);
@@ -358,8 +360,12 @@ router.post('/:id/reject', authorize(RECEPTION_STAFF), async (req: AuthRequest, 
       [id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Pago no encontrado' });
-    if (rows[0].status !== 'pending') {
-      return res.status(400).json({ error: 'El pago ya ha sido procesado' });
+    const transition = canTransitionPayment(rows[0].status as 'pending' | 'approved' | 'rejected', {
+      type: 'reject',
+      reason,
+    });
+    if (!transition.ok) {
+      return res.status(400).json({ error: transition.error });
     }
 
     await query("UPDATE payments SET status = 'rejected', rejection_reason = $2 WHERE id = $1", [

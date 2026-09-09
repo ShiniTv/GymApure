@@ -183,7 +183,7 @@ export function ReceptionGuestPasses() {
                   type="button"
                   variant="secondary"
                   size="sm"
-                  className="h-8 shrink-0 px-2"
+                  className="shrink-0 px-2"
                   aria-label="Quitar anfitrión"
                   onClick={() => {
                     setForm((f) => ({ ...f, host_user_id: null, host_name: '' }));
@@ -278,7 +278,7 @@ export function ReceptionGuestPasses() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="h-9 shrink-0 gap-1 px-2.5 text-xs"
+                  className="shrink-0 gap-1 px-2.5"
                   onClick={() => void markUsed(p.id)}
                 >
                   <Check className="h-3.5 w-3.5" />

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../lib/roles';
 import { safeReturnPath } from '../lib/safeReturnPath';
 import { prefetchPostLogin } from '../lib/routePrefetch';
+import { Mail, ShieldCheck } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
 import { Button, Input, Label, PasswordInput, Alert } from '../components/ui';
@@ -210,12 +211,7 @@ export default function Login() {
     <AuthShell aesthetic="linear">
       <div className="auth-linear-card" data-testid="login-panel">
         <AuthLinearHeader
-          title={mfaChallenge ? 'Confirma que eres tú' : 'Entra'}
-          subtitle={
-            mfaChallenge
-              ? 'El código de tu app autenticadora abre esta sesión.'
-              : 'Tu cuenta del gym.'
-          }
+          subtitle={mfaChallenge ? 'Verificación en dos pasos' : 'Inicia sesión en tu cuenta'}
         />
 
         <div className="auth-form-wrap" key={mfaChallenge ? 'mfa' : 'login'}>
@@ -225,7 +221,7 @@ export default function Login() {
 
               <div>
                 <Label className="auth-linear-label mb-1.5" htmlFor="mfa_code">
-                  Código
+                  Código MFA
                 </Label>
                 <Input
                   id="mfa_code"
@@ -235,6 +231,7 @@ export default function Login() {
                   autoComplete="one-time-code"
                   autoFocus
                   required
+                  leadingIcon={<ShieldCheck />}
                   placeholder="000000"
                   className="auth-linear-field"
                   value={mfaCode}
@@ -242,13 +239,18 @@ export default function Login() {
                 />
               </div>
 
-              <Button type="submit" className="auth-linear-primary mt-1 w-full" loading={loading}>
+              <Button
+                type="submit"
+                className="auth-linear-primary mt-1 w-full"
+                size="lg"
+                loading={loading}
+              >
                 Verificar
               </Button>
 
               <button
                 type="button"
-                className="text-left text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
+                className="text-center text-xs font-semibold text-zinc-400 transition-colors hover:text-zinc-200"
                 onClick={() => {
                   setMfaChallenge(null);
                   setMfaCode('');
@@ -273,7 +275,7 @@ export default function Login() {
 
               <div>
                 <Label className="auth-linear-label mb-1.5" htmlFor="email">
-                  Correo
+                  Correo electrónico
                 </Label>
                 <Input
                   id="email"
@@ -282,6 +284,7 @@ export default function Login() {
                   autoComplete="email"
                   required
                   disabled={isLocked}
+                  leadingIcon={<Mail />}
                   placeholder="correo@ejemplo.com"
                   className="auth-linear-field"
                   value={email}
@@ -293,18 +296,9 @@ export default function Login() {
                 />
               </div>
               <div>
-                <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                  <Label className="auth-linear-label" htmlFor="password">
-                    Contraseña
-                  </Label>
-                  <Link
-                    to="/forgot-password"
-                    className="auth-linear-link text-xs font-medium"
-                    aria-label="¿Olvidaste tu contraseña?"
-                  >
-                    ¿Olvidaste?
-                  </Link>
-                </div>
+                <Label className="auth-linear-label mb-1.5" htmlFor="password">
+                  Contraseña
+                </Label>
                 <PasswordInput
                   id="password"
                   name="password"
@@ -312,7 +306,6 @@ export default function Login() {
                   required
                   disabled={isLocked}
                   placeholder="Tu contraseña"
-                  showIcon={false}
                   className="auth-linear-field"
                   value={password}
                   error={fieldErrors.password}
@@ -323,9 +316,20 @@ export default function Login() {
                 />
               </div>
 
+              <p className="text-right">
+                <Link
+                  to="/forgot-password"
+                  className="auth-linear-link text-xs font-semibold"
+                  aria-label="¿Olvidaste tu contraseña?"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </p>
+
               <Button
                 type="submit"
                 className="auth-linear-primary w-full"
+                size="lg"
                 loading={loading}
                 disabled={isLocked}
               >
@@ -333,10 +337,10 @@ export default function Login() {
               </Button>
 
               {registerAllowed && (
-                <p className="text-small pt-1 text-zinc-400">
+                <p className="text-center text-xs text-zinc-400">
                   ¿No tienes una cuenta?{' '}
-                  <Link to="/register" className="auth-linear-link font-medium">
-                    Regístrate
+                  <Link to="/register" className="auth-linear-link font-semibold">
+                    Regístrate aquí
                   </Link>
                 </p>
               )}

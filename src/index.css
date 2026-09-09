@@ -39,6 +39,12 @@
   --text-small--letter-spacing: -0.006em;
   --text-small--font-weight: 500;
 
+  /* Form fields — same optical size as body (15px) */
+  --text-input: 0.9375rem;
+  --text-input--line-height: 1.5;
+  --text-input--letter-spacing: -0.011em;
+  --text-input--font-weight: 500;
+
   /* Sidebar / chrome */
   --text-chrome: 0.8125rem; /* 13px */
   --text-chrome--line-height: 1.35;
@@ -83,6 +89,8 @@
   --spacing-ds-5: 1.25rem; /* 20 — comfortable card pad */
   --spacing-ds-6: 1.5rem; /* 24 — section gap */
   --spacing-ds-8: 2rem; /* 32 — block gap */
+  --spacing-ds-10: 2.5rem; /* 40 — FAB / overlap */
+  --spacing-ds-12: 3rem; /* 48 — comfort block / touch-comfort */
 
   /* —— Radii (balanced Operate; sheets stay softer for mobile) —— */
   --radius-chip: 0.375rem; /* 6 */
@@ -242,6 +250,20 @@ body,
     background: #000;
   }
 
+  /* Logo mark: readable disc without floating island glow. */
+  .auth-linear .brand-logo {
+    border-color: rgb(255 255 255 / 0.14);
+    background: #fafafa;
+    box-shadow: none;
+  }
+
+  .auth-linear .brand-logo > img {
+    object-fit: contain;
+    /* Mark assets are light-on-dark; invert for the white disc. */
+    filter: invert(1);
+    transform: none;
+  }
+
   .auth-linear ::selection {
     background: color-mix(in srgb, var(--color-brand) 35%, #000);
     color: #fff;
@@ -304,22 +326,22 @@ body,
     color: #71717a;
   }
 
-  /* Dark-theme brand (#3aadff) fails WCAG AA with white; use sky-700 for CTA. */
+  /* High-contrast CTA on the night card (white fill / near-black text). */
   .auth-linear .auth-linear-primary {
     border: 0 !important;
-    border-radius: 8px;
-    background: #0369a1 !important;
-    color: #fff !important;
+    border-radius: 9999px;
+    background: #fafafa !important;
+    color: #09090b !important;
     box-shadow: none !important;
     font-weight: 600;
   }
 
   .auth-linear .auth-linear-primary:hover {
-    background: #075985 !important;
+    background: #e4e4e7 !important;
   }
 
   .auth-linear .auth-linear-primary:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, #0369a1 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, #fafafa 35%, transparent);
   }
 
   .auth-linear .auth-linear-secondary {
@@ -1035,12 +1057,18 @@ body,
   --member-fab-size: 3.25rem;
   --member-fab-overlap: 0.875rem;
   --member-fab-protrude: calc(var(--member-fab-size) - var(--member-fab-overlap));
+  /* Fixed ExerciseFocusNav (p-4 + touch row + safe-area) */
+  --workout-mobile-pager-stack: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   /*
    * Chat / shell viewport chrome (subtracted from 100dvh).
    * Defaults match prior hard-coded rem stacks on member chat panel.
    */
   --shell-top-chrome: 10.5rem;
   --shell-bottom-stack: 4.75rem;
+}
+
+.workout-mobile-pager-pad {
+  padding-bottom: calc(var(--workout-mobile-pager-stack) + 0.75rem);
 }
 
 .member-bottom-nav {

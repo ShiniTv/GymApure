@@ -23,6 +23,7 @@ import { apiVersionHeader } from './src/api/middleware/apiVersion.ts';
 import { initWebSocket } from './src/lib/wsServer.ts';
 import { configurePush } from './src/lib/pushNotifications.ts';
 import { serverBeforeSend } from './src/lib/sentryFilters.ts';
+import { resolveProcessRole, shouldRunBackgroundJobs } from './src/config/processRole.ts';
 
 // Preferir IPv4 para SMTP y otras conexiones salientes (Gmail en Windows)
 dns.setDefaultResultOrder('ipv4first');
@@ -208,11 +209,15 @@ async function startServer() {
     }
     initWebSocket(server);
     // En CI los crons compiten por el pool de BD y hacen flaky el login de Playwright.
-    if (process.env.CI !== 'true') {
+    // PROCESS_ROLE=web deja los crons al worker; `all` (default) mantiene monolito.
+    const role = resolveProcessRole();
+    if (process.env.CI !== 'true' && shouldRunBackgroundJobs(role)) {
       ensureExchangeRateOnStartup();
       startExpiryCron();
       startExchangeRateCron();
       startTrainerRemindersCron();
+    } else if (role === 'web') {
+      logger.info('PROCESS_ROLE=web — crons delegados al worker');
     }
   });
 

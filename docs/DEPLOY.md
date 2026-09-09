@@ -3,8 +3,11 @@
 Guía para GymApure en producción. El proyecto Supabase de producción actual es **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`), enlazado a Render. Mapa de entornos: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
 
 > **Hosting principal:** Render (Blueprint / [`render.yaml`](../render.yaml)).  
+> **Servicios:** web (`PROCESS_ROLE=web`, probe `/api/health/live`) + worker (`npm run start:worker`, crons/BullMQ) + Redis KV.  
 > **Alternativa:** [Railway](./DEPLOY-RAILWAY.md) si en el futuro cambias de host.  
 > **No uses Vercel** para el monolit Express (WebSockets + crons).
+
+Detalle HA / SLOs: [tecnico/HA-Y-SLOS.md](./tecnico/HA-Y-SLOS.md).
 
 > **Build en Render:** Node **22** (`render.yaml`). `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` evita descargar browsers en el build (`npm ci --include=dev`).
 

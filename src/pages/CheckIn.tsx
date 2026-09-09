@@ -200,7 +200,7 @@ export default function CheckIn() {
       disabled={!cedula.trim()}
       className={cn(
         'w-full',
-        isKioskMode && 'min-h-[64px] text-lg',
+        isKioskMode && 'text-lg',
         !isCheckIn && 'bg-[var(--color-check-out)] hover:bg-[var(--color-check-out-hover)]'
       )}
     >
@@ -396,7 +396,7 @@ export default function CheckIn() {
               <Button
                 type="button"
                 size="lg"
-                className="min-h-[56px] w-full text-lg"
+                className="w-full text-lg"
                 onClick={handleNextVisitor}
               >
                 Siguiente visitante

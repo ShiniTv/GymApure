@@ -42,7 +42,7 @@ export function MemberMeasurementsPanel({
               type="button"
               size="sm"
               variant="secondary"
-              className="h-8 gap-1 px-2.5 text-xs"
+              className="gap-1 px-2.5"
               onClick={() => onAddingChange(true)}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -118,7 +118,7 @@ export function MemberMeasurementsPanel({
               <Button
                 type="button"
                 size="sm"
-                className="mt-3 h-9 px-3 text-xs"
+                className="mt-3 px-3"
                 onClick={() => onAddingChange(true)}
               >
                 <Plus className="h-3.5 w-3.5" />

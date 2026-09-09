@@ -68,9 +68,9 @@ export function RoutinesAssignmentsView({
         </p>
         {onAssign && (
           <Button
-            size="sm"
+            size="md"
             variant="secondary"
-            className="h-9 min-h-11 shrink-0 gap-1.5 px-2.5"
+            className="shrink-0 gap-1.5 px-2.5"
             onClick={onAssign}
             aria-label="Asignar rutina"
           >

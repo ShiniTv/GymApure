@@ -773,7 +773,7 @@ export function RoutinesLibraryView({
 
           {isStaff ? (
             <Card
-              padding="sm"
+              padding="md"
               className="border-border/70 bg-surface sticky top-3 hidden max-h-[calc(100vh-7rem)] overflow-y-auto md:block"
             >
               {selectedStaffRoutine && selectedStaffSummary ? (

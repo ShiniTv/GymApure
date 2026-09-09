@@ -28,7 +28,7 @@ import ReceptionRenewPayWizard from '../components/reception/ReceptionRenewPayWi
 import { ReceptionGuestPasses } from '../components/reception/ReceptionGuestPasses';
 import { ReceptionHomeSummary } from '../components/reception/ReceptionHomeSummary';
 import { CounterTabNav } from './reception/CounterTabNav';
-import { COUNTER_ACTION, COUNTER_FIELD, COUNTER_SEARCH_BTN } from './reception/counterConstants';
+import { COUNTER_FIELD } from './reception/counterConstants';
 import { ReceptionCounterModals } from './reception/ReceptionCounterModals';
 import { ReceptionInsideList } from './reception/ReceptionInsideList';
 import type {
@@ -472,13 +472,9 @@ export default function Reception() {
             onClick={() => void doLookup()}
             loading={lookupLoading}
             disabled={!cedula.trim()}
-            size="md"
+            size={isCounterMode ? 'lg' : 'md'}
             aria-label="Buscar"
-            className={cn(
-              isCounterMode
-                ? cn(COUNTER_SEARCH_BTN, 'min-h-0')
-                : 'aspect-square shrink-0 self-stretch px-0'
-            )}
+            className="aspect-square shrink-0 self-stretch px-0"
           >
             <Search className="h-4 w-4" />
           </Button>
@@ -502,8 +498,7 @@ export default function Reception() {
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button
-          size="sm"
-          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
+          size={isCounterMode ? 'lg' : 'md'}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
         >
@@ -511,9 +506,8 @@ export default function Reception() {
           <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
         </Button>
         <Button
-          size="sm"
+          size={isCounterMode ? 'lg' : 'md'}
           variant={isCounterMode ? 'ghost' : 'secondary'}
-          className={cn(isCounterMode && COUNTER_ACTION, isCounterMode && 'sm:min-h-[52px]')}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
         >
@@ -559,8 +553,8 @@ export default function Reception() {
               {!isCounterMode && (
                 <Button
                   variant="secondary"
-                  size="sm"
-                  className="mt-2 min-h-11 px-2 text-xs"
+                  size="md"
+                  className="mt-2 px-2"
                   onClick={openCedulaEdit}
                 >
                   <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -607,12 +601,7 @@ export default function Reception() {
                 </p>
               </div>
               {lookup.subscription.days_remaining <= 7 && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="min-h-11 px-2 text-xs"
-                  onClick={openRenewForLookup}
-                >
+                <Button size="md" variant="secondary" className="px-2" onClick={openRenewForLookup}>
                   <CreditCard className="mr-1 h-3.5 w-3.5" />
                   Renovar
                 </Button>
@@ -629,9 +618,9 @@ export default function Reception() {
               {lookup.user && (
                 <div className="flex flex-wrap gap-1.5">
                   <Button
-                    size="sm"
+                    size="md"
                     variant="secondary"
-                    className="min-h-11 px-2 text-xs"
+                    className="px-2"
                     onClick={openRenewForLookup}
                   >
                     <CreditCard className="mr-1 h-3.5 w-3.5" />
@@ -641,12 +630,12 @@ export default function Reception() {
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="md" variant="secondary" className="text-small px-2">
+                    <Button size="md" variant="secondary" className="px-2">
                       Pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
-                    <Button size="md" variant="secondary" className="text-small px-2">
+                    <Button size="md" variant="secondary" className="px-2">
                       Asignar plan
                     </Button>
                   </Link>
@@ -683,13 +672,13 @@ export default function Reception() {
           <p className="text-text-secondary text-sm font-medium">{lookup.error}</p>
           <div className="flex flex-wrap justify-center gap-1.5">
             <Link to={walkInHref(cedula)}>
-              <Button size="md" className="text-small px-3">
+              <Button size="md" className="px-3">
                 <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                 Registrar
               </Button>
             </Link>
             <Link to="/members">
-              <Button variant="secondary" size="md" className="text-small px-3">
+              <Button variant="secondary" size="md" className="px-3">
                 Solo cuenta
               </Button>
             </Link>

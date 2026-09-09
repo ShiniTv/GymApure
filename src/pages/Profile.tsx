@@ -43,9 +43,9 @@ export default function Profile() {
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <Button
-                size="sm"
+                size="md"
                 variant="secondary"
-                className="min-h-11"
+
                 onClick={() => window.location.reload()}
               >
                 Reintentar

@@ -99,7 +99,7 @@ export function EquipmentDetailModal({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="h-9 w-9 px-0"
+                    className="w-9 px-0"
                     onClick={() => onDetailMoreOpenChange(!detailMoreOpen)}
                     aria-label="Más acciones"
                     aria-expanded={detailMoreOpen}

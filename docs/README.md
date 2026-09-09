@@ -73,6 +73,9 @@
 | [tecnico/INVENTARIO-REPO.md](./tecnico/INVENTARIO-REPO.md)                   | Inventario de higiene del repositorio              |
 | [tecnico/SCORECARD-CALIDAD.md](./tecnico/SCORECARD-CALIDAD.md)               | Scorecard 1–10 y ruta hacia 10/10                  |
 | [tecnico/INVENTARIO-DEUDA.md](./tecnico/INVENTARIO-DEUDA.md)                 | God-files, React Query gaps, checklist deuda       |
+| [tecnico/DATOS-PERSONALES.md](./tecnico/DATOS-PERSONALES.md)                 | PII, retención, roles de acceso                    |
+| [tecnico/privacy.md](./tecnico/privacy.md)                                   | DSR: export/borrar cuenta, consentimiento, MFA     |
+| [tecnico/HA-Y-SLOS.md](./tecnico/HA-Y-SLOS.md)                               | HA, worker/web, SLOs, RPO/RTO, gym_id              |
 | [tecnico/RUNBOOK-INCIDENTES.md](./tecnico/RUNBOOK-INCIDENTES.md)             | Incidentes: sesión, Redis, BCV, Storage, MFA       |
 | [tecnico/SENTRY-Y-ALERTAS.md](./tecnico/SENTRY-Y-ALERTAS.md)                 | DSN, alertas &lt;15 min, release health            |
 

@@ -165,7 +165,7 @@ export default function MfaSecurity() {
       <div className="grid gap-3 lg:grid-cols-1 lg:gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-stretch">
         <div className="space-y-3 sm:space-y-4">
           {/* Status row */}
-          <Card padding="sm" rounded="xl" className={cn(OPERATE_SURFACE, 'lg:p-4')}>
+          <Card padding="md" rounded="xl" className={cn(OPERATE_SURFACE)}>
             {statusLoading ? (
               <div className="flex items-center gap-3">
                 <Skeleton className="h-10 w-10 rounded-xl" />
@@ -202,7 +202,7 @@ export default function MfaSecurity() {
 
                 {!enabled && !setup ? (
                   <Button
-                    size="sm"
+                    size="md"
                     className="w-full shrink-0 sm:w-auto"
                     onClick={() => void startSetup()}
                     loading={loading}
@@ -221,7 +221,7 @@ export default function MfaSecurity() {
 
           {/* Setup flow */}
           {!enabled && setup ? (
-            <Card padding="sm" rounded="xl" className={cn(OPERATE_SURFACE, 'space-y-4 lg:p-4')}>
+            <Card padding="md" rounded="xl" className={cn(OPERATE_SURFACE, 'space-y-4')}>
               <div>
                 <p className="text-text-muted text-small font-semibold tracking-[-0.01em]">
                   Paso 1 · Escanea

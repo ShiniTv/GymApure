@@ -327,7 +327,7 @@ export default function Reports() {
                     <div className="mt-2 flex gap-1.5">
                       <Button
                         size="sm"
-                        className="text-small h-8 min-h-8 gap-1 px-2.5"
+                        className="gap-1 px-2.5"
                         loading={pdfLoading}
                         disabled={busy && !pdfLoading}
                         aria-label={`Descargar PDF de ${report.title}`}
@@ -342,7 +342,7 @@ export default function Reports() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="text-small h-8 min-h-8 gap-1 px-2.5"
+                        className="gap-1 px-2.5"
                         loading={csvLoading}
                         disabled={busy && !csvLoading}
                         aria-label={`Descargar CSV de ${report.title}`}
