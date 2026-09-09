@@ -25,6 +25,7 @@ supabase/.temp/
 archive/ux-audit-evidence/
 # Agent design skills (local only — no desplegar en Render)
 .agents/
+.impeccable/
 .cursor/agents/
 .cursor/skills/impeccable/
 skills-lock.json
