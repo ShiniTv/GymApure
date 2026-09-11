@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
 import { useNavigate, Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { type UserRole } from '../lib/roles';
 import { safeReturnPath } from '../lib/safeReturnPath';
 import { prefetchPostLogin } from '../lib/routePrefetch';
-import { Mail, ShieldCheck } from 'lucide-react';
+import { hapticSuccess, hapticError, hapticLight } from '../lib/haptics';
+import { Mail, ShieldCheck, KeyRound, Clock } from 'lucide-react';
 import AuthShell from '../components/AuthShell';
 import AuthLinearHeader from '../components/AuthLinearHeader';
 import { Button, Input, Label, PasswordInput, Alert } from '../components/ui';
@@ -47,7 +48,23 @@ function resolveLockedUntil(data: LoginApiResponse): number | null {
 }
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [rememberEmail, setRememberEmail] = useState(() => {
+    try {
+      return localStorage.getItem('auth:remember-email') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [email, setEmail] = useState(() => {
+    try {
+      const shouldRemember = localStorage.getItem('auth:remember-email') === 'true';
+      return shouldRemember ? (localStorage.getItem('auth:saved-email') ?? '') : '';
+    } catch {
+      return '';
+    }
+  });
+
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -61,6 +78,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const mfaInputRef = useRef<HTMLInputElement>(null);
   const from = (location.state as LoginLocationState | null)?.from;
 
   useEffect(() => {
@@ -88,9 +106,9 @@ export default function Login() {
         .catch(() => setRegisterAllowed(true));
     };
 
-    const idle = window.requestIdleCallback?.(run);
-    if (idle !== undefined) {
-      return () => window.cancelIdleCallback?.(idle);
+    if ('requestIdleCallback' in window) {
+      const idle = window.requestIdleCallback(run);
+      return () => window.cancelIdleCallback(idle);
     }
 
     const timer = globalThis.setTimeout(run, 0);
@@ -118,10 +136,26 @@ export default function Login() {
     lockedUntil && lockedUntil > now ? Math.max(0, Math.ceil((lockedUntil - now) / 1000)) : 0;
   const isLocked = remainingSeconds > 0;
 
+  const persistEmailPreference = (currentEmail: string) => {
+    try {
+      if (rememberEmail) {
+        localStorage.setItem('auth:remember-email', 'true');
+        localStorage.setItem('auth:saved-email', currentEmail.trim());
+      } else {
+        localStorage.removeItem('auth:remember-email');
+        localStorage.removeItem('auth:saved-email');
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const completeLogin = (loginUser: LoginUser) => {
+    persistEmailPreference(email);
+    hapticSuccess();
     const destination = safeReturnPath(from, loginUser.role);
     login(loginUser);
-    prefetchPostLogin({ destination, role: loginUser.role, userId: loginUser.id });
+    void prefetchPostLogin({ destination, role: loginUser.role, userId: loginUser.id });
     navigate(destination);
   };
 
@@ -134,7 +168,10 @@ export default function Login() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'Email inválido';
     if (!password) next.password = 'La contraseña es obligatoria';
     setFieldErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) {
+      hapticError();
+      return;
+    }
 
     setLoading(true);
 
@@ -142,7 +179,7 @@ export default function Login() {
       const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await parseJsonSafe<LoginApiResponse>(res);
@@ -153,10 +190,12 @@ export default function Login() {
           setLockedUntil(until);
           setNow(Date.now());
         }
-        throw new Error(data.error || 'Error de inicio de sesión');
+        hapticError();
+        throw new Error(data.error ?? 'Error de inicio de sesión');
       }
 
       if (data.mfa_required && data.mfa_challenge_token) {
+        hapticLight();
         setMfaChallenge(data.mfa_challenge_token);
         setMfaCode('');
         setError('');
@@ -164,6 +203,7 @@ export default function Login() {
       }
 
       if (!data.user) {
+        hapticError();
         throw new Error('Respuesta de inicio de sesión inválida');
       }
 
@@ -175,12 +215,12 @@ export default function Login() {
     }
   };
 
-  const handleMfaSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mfaChallenge) return;
+  const verifyMfaCode = async (codeToVerify: string) => {
+    if (!mfaChallenge || loading) return;
     setError('');
-    const code = mfaCode.trim();
+    const code = codeToVerify.trim();
     if (!/^\d{6,8}$/.test(code)) {
+      hapticError();
       setError('Introduce el código de 6 dígitos de tu app');
       return;
     }
@@ -194,9 +234,11 @@ export default function Login() {
       });
       const data = await parseJsonSafe<{ user?: LoginUser; error?: string }>(res);
       if (!res.ok) {
-        throw new Error(data.error || 'Código MFA incorrecto');
+        hapticError();
+        throw new Error(data.error ?? 'Código MFA incorrecto');
       }
       if (!data.user) {
+        hapticError();
         throw new Error('Respuesta MFA inválida');
       }
       completeLogin(data.user);
@@ -204,6 +246,20 @@ export default function Login() {
       setError(err instanceof Error ? err.message : 'Código MFA incorrecto');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyMfaCode(mfaCode);
+  };
+
+  const handleMfaChange = (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 8);
+    setMfaCode(clean);
+    if (error) setError('');
+    if (clean.length === 6) {
+      void verifyMfaCode(clean);
     }
   };
 
@@ -219,11 +275,22 @@ export default function Login() {
             <form className="auth-form" onSubmit={handleMfaSubmit} noValidate>
               {error && <Alert variant="error">{error}</Alert>}
 
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-3.5 text-center">
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400">
+                  <KeyRound className="h-5 w-5" />
+                </div>
+                <p className="text-xs text-zinc-300">
+                  Ingresa el código de seguridad de 6 dígitos generado por tu aplicación de
+                  autenticación.
+                </p>
+              </div>
+
               <div>
                 <Label className="auth-linear-label mb-1.5" htmlFor="mfa_code">
                   Código MFA
                 </Label>
                 <Input
+                  ref={mfaInputRef}
                   id="mfa_code"
                   name="mfa_code"
                   type="text"
@@ -233,9 +300,9 @@ export default function Login() {
                   required
                   leadingIcon={<ShieldCheck />}
                   placeholder="000000"
-                  className="auth-linear-field"
+                  className="auth-linear-field text-center font-mono text-lg tracking-[0.35em]"
                   value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  onChange={(e) => handleMfaChange(e.target.value)}
                 />
               </div>
 
@@ -245,13 +312,14 @@ export default function Login() {
                 size="lg"
                 loading={loading}
               >
-                Verificar
+                {loading ? 'Verificando...' : 'Verificar'}
               </Button>
 
               <button
                 type="button"
                 className="text-center text-xs font-semibold text-zinc-400 transition-colors hover:text-zinc-200"
                 onClick={() => {
+                  hapticLight();
                   setMfaChallenge(null);
                   setMfaCode('');
                   setError('');
@@ -264,8 +332,11 @@ export default function Login() {
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
               {isLocked ? (
                 <Alert variant="error">
-                  <p>Demasiados intentos fallidos.</p>
-                  <p className="mt-1 font-semibold tabular-nums" aria-live="polite">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Clock className="h-4 w-4 shrink-0 text-red-400" />
+                    <span>Demasiados intentos fallidos.</span>
+                  </div>
+                  <p className="mt-1 text-xs text-red-200 tabular-nums" aria-live="polite">
                     Podrás intentar de nuevo en {formatCountdown(remainingSeconds)}
                   </p>
                 </Alert>
@@ -292,13 +363,24 @@ export default function Login() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                    if (error) setError('');
                   }}
                 />
               </div>
+
               <div>
-                <Label className="auth-linear-label mb-1.5" htmlFor="password">
-                  Contraseña
-                </Label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <Label className="auth-linear-label" htmlFor="password">
+                    Contraseña
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="auth-linear-link text-xs font-medium"
+                    aria-label="¿Olvidaste tu contraseña?"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
                 <PasswordInput
                   id="password"
                   name="password"
@@ -312,32 +394,44 @@ export default function Login() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                    if (error) setError('');
                   }}
                 />
               </div>
 
-              <p className="text-right">
-                <Link
-                  to="/forgot-password"
-                  className="auth-linear-link text-xs font-semibold"
-                  aria-label="¿Olvidaste tu contraseña?"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </p>
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="group flex cursor-pointer items-center gap-2 text-xs select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-800 text-amber-500 transition focus:ring-1 focus:ring-amber-500 focus:ring-offset-0"
+                    checked={rememberEmail}
+                    onChange={(e) => {
+                      hapticLight();
+                      setRememberEmail(e.target.checked);
+                    }}
+                  />
+                  <span className="text-zinc-400 transition-colors group-hover:text-zinc-300">
+                    Recordar mi correo
+                  </span>
+                </label>
+              </div>
 
               <Button
                 type="submit"
-                className="auth-linear-primary w-full"
+                className="auth-linear-primary mt-1 w-full"
                 size="lg"
                 loading={loading}
                 disabled={isLocked}
               >
-                {isLocked ? `Espera ${formatCountdown(remainingSeconds)}` : 'Entrar'}
+                {isLocked
+                  ? `Espera ${formatCountdown(remainingSeconds)}`
+                  : loading
+                    ? 'Iniciando sesión...'
+                    : 'Entrar'}
               </Button>
 
               {registerAllowed && (
-                <p className="text-center text-xs text-zinc-400">
+                <p className="pt-1 text-center text-xs text-zinc-400">
                   ¿No tienes una cuenta?{' '}
                   <Link to="/register" className="auth-linear-link font-semibold">
                     Regístrate aquí
