@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
-import { Search, CornerDownLeft, type LucideIcon } from 'lucide-react';
+import { Search, CornerDownLeft, User, type LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getNavigationForRole } from '../config/navigation';
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { prefetchRoute } from '../lib/routePrefetch';
 import { typography } from '../lib/typography';
+import { apiFetch, parseJsonSafe } from '../lib/api';
 
 export interface CommandAction {
   id: string;
@@ -186,6 +187,63 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
 
   useScrollLock(open);
 
+  // --- Live member search (admin / receptionist / trainer) ---
+  const canSearchMembers =
+    user?.role === 'admin' || user?.role === 'receptionist' || user?.role === 'trainer';
+  const [memberResults, setMemberResults] = useState<CommandAction[]>([]);
+  const [memberSearching, setMemberSearching] = useState(false);
+  const memberAbortRef = useRef<AbortController | null>(null);
+  const memberTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!canSearchMembers || !open) {
+      setMemberResults([]);
+      return;
+    }
+    const q = query.trim();
+    if (q.length < 2) {
+      setMemberResults([]);
+      setMemberSearching(false);
+      return;
+    }
+    // Debounce 300ms
+    if (memberTimerRef.current) clearTimeout(memberTimerRef.current);
+    memberTimerRef.current = setTimeout(() => {
+      memberAbortRef.current?.abort();
+      const controller = new AbortController();
+      memberAbortRef.current = controller;
+      setMemberSearching(true);
+      void (async () => {
+        try {
+          const res = await apiFetch(`/api/users?q=${encodeURIComponent(q)}&role=member&limit=5`, {
+            signal: controller.signal,
+          });
+          const data = await parseJsonSafe<{
+            items?: { id: number; full_name: string; cedula?: string }[];
+          }>(res);
+          if (controller.signal.aborted) return;
+          const items = (data.items ?? []).map((m) => ({
+            id: `member:${m.id}`,
+            label: m.full_name,
+            href: `/members?q=${encodeURIComponent(m.cedula ?? m.full_name)}`,
+            section: 'Socios',
+            icon: User as LucideIcon,
+            keywords: `${m.full_name} ${m.cedula ?? ''}`,
+          }));
+          setMemberResults(items);
+        } catch {
+          if (!controller.signal.aborted) setMemberResults([]);
+        } finally {
+          if (!controller.signal.aborted) setMemberSearching(false);
+        }
+      })();
+    }, 300);
+    return () => {
+      if (memberTimerRef.current) clearTimeout(memberTimerRef.current);
+      memberAbortRef.current?.abort();
+    };
+  }, [query, open, canSearchMembers]);
+
   const allActions = useMemo(() => {
     const nav = buildNavActions(user?.role);
     const roleQuick = ROLE_QUICK[user?.role ?? ''] ?? [];
@@ -201,12 +259,15 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
-    if (!q) return allActions;
-    return allActions.filter((a) => {
-      const hay = normalize(`${a.label} ${a.section} ${a.keywords ?? ''} ${a.href ?? ''}`);
-      return hay.includes(q);
-    });
-  }, [allActions, query]);
+    const base = !q
+      ? allActions
+      : allActions.filter((a) => {
+          const hay = normalize(`${a.label} ${a.section} ${a.keywords ?? ''} ${a.href ?? ''}`);
+          return hay.includes(q);
+        });
+    // Append live member results at the end
+    return [...base, ...memberResults];
+  }, [allActions, query, memberResults]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { action: CommandAction; index: number }[]>();
@@ -351,7 +412,9 @@ export function CommandPalette({ open, onClose, extraActions = [] }: CommandPale
           className="scroll-area max-h-[min(52vh,24rem)] overflow-y-auto py-2"
         >
           {filtered.length === 0 ? (
-            <p className="text-text-muted px-4 py-8 text-center text-sm">Sin resultados</p>
+            <p className="text-text-muted px-4 py-8 text-center text-sm">
+              {memberSearching ? 'Buscando socios…' : 'Sin resultados'}
+            </p>
           ) : (
             grouped.map(([section, items]) => (
               <div key={section} className="mb-1.5 last:mb-0">

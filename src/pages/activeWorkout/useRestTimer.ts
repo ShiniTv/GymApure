@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { hapticSuccess } from '../../lib/haptics';
+import { hapticSuccess, hapticLight } from '../../lib/haptics';
+import { playRestTimerWarningBeep, playRestTimerCompleteChime } from '../../lib/soundEffects';
 import {
   clearRestNotification,
   listenRestNotificationActions,
@@ -20,18 +21,32 @@ export function useRestTimer(sessionId: number | null, routineParamId: string | 
   const restEndedNotifiedRef = useRef(false);
   const addRestTimeRef = useRef<(seconds: number) => void>(() => undefined);
   const skipRestRef = useRef<() => void>(() => undefined);
+  const lastBeepSecondRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isResting || restEndsAt == null) return;
+    if (!isResting || restEndsAt == null) {
+      lastBeepSecondRef.current = null;
+      return;
+    }
 
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((restEndsAt - Date.now()) / 1000));
       setRestTimer(remaining);
+
+      // Warning beep & light haptic for final 3 seconds
+      if (remaining <= 3 && remaining >= 1 && lastBeepSecondRef.current !== remaining) {
+        lastBeepSecondRef.current = remaining;
+        playRestTimerWarningBeep();
+        hapticLight();
+      }
+
       if (remaining <= 0) {
         setIsResting(false);
         setRestEndsAt(null);
+        lastBeepSecondRef.current = null;
         if (!restEndedNotifiedRef.current) {
           restEndedNotifiedRef.current = true;
+          playRestTimerCompleteChime();
           hapticSuccess();
           notifyRestEnded(workoutRestUrl(routineParamId));
         }

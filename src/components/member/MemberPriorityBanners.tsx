@@ -110,7 +110,7 @@ export function MemberPriorityBanners({
           </p>
         </div>
         <Button size="sm" onClick={() => navigate('/payments?register=1')}>
-          Reportar pago
+          Renovar ahora
         </Button>
       </div>
     );

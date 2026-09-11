@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, ClipboardPaste, Sparkles } from 'lucide-react';
 import { Button, Input, Label, Modal, Select, Spinner } from '../../components/ui';
 import { formatBsRateLabel, type ExchangeRate } from '../../hooks/queries/useExchangeRateQuery';
 import { usePaymentDestinationsQuery } from '../../hooks/queries/usePaymentDestinationsQuery';
 import { PaymentDestinationHint } from '../../components/payments/PaymentDestinationHint';
+import { parsePaymentSms, type ParsedPaymentInfo } from '../../lib/paymentParser';
 import {
   formatDenominationBreakdown,
   PAYMENT_METHOD_KEYS,
@@ -92,6 +93,7 @@ export function PaymentRegisterModal({
 }: PaymentRegisterModalProps) {
   const { data: destinations } = usePaymentDestinationsQuery(open);
   const [billCounts, setBillCounts] = useState<Record<number, number>>({});
+  const [parsedSmsInfo, setParsedSmsInfo] = useState<ParsedPaymentInfo | null>(null);
   const [step, setStep] = useState<WizardStep>(1);
   const isCashUsd = method === 'efectivo_usd';
   const cashDenoms = destinations?.efectivo_usd.denominations ?? [1, 5, 10, 20, 50, 100];
@@ -100,9 +102,37 @@ export function PaymentRegisterModal({
   useEffect(() => {
     if (!open) {
       setBillCounts({});
+      setParsedSmsInfo(null);
       setStep(1);
     }
   }, [open]);
+
+  const handlePasteSms = async () => {
+    let clipText = '';
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        clipText = await navigator.clipboard.readText();
+      }
+    } catch {
+      /* clipboard restricted */
+    }
+    if (!clipText) {
+      clipText = window.prompt('Pega aquí el texto del SMS o notificación bancaria:') ?? '';
+    }
+    if (!clipText.trim()) return;
+    const parsed = parsePaymentSms(clipText);
+    if (parsed.reference) {
+      onReferenceChange(parsed.reference);
+      if (fieldErrors.reference) onClearFieldError('reference');
+    }
+    if (parsed.amountBs && exchangeRate && exchangeRate.rate > 0) {
+      if (!amountUsd || parseFloat(amountUsd) <= 0) {
+        const calculatedUsd = (parseFloat(parsed.amountBs) / exchangeRate.rate).toFixed(2);
+        onAmountUsdChange(calculatedUsd);
+      }
+    }
+    setParsedSmsInfo(parsed);
+  };
 
   useEffect(() => {
     if (!isCashUsd) return;
@@ -374,7 +404,22 @@ export function PaymentRegisterModal({
           {showProof ? (
             <>
               <div className="sm:col-span-2">
-                <Label>{isCashUsd ? 'Detalle / referencia' : 'Número de Referencia'}</Label>
+                <div className="mb-1 flex items-center justify-between">
+                  <Label className="mb-0">
+                    {isCashUsd ? 'Detalle / referencia' : 'Número de Referencia'}
+                  </Label>
+                  {!isCashUsd && (
+                    <button
+                      type="button"
+                      onClick={handlePasteSms}
+                      className="text-brand hover:text-brand-hover inline-flex items-center gap-1.5 text-xs font-semibold transition-colors"
+                      title="Pega el mensaje SMS o notificación del banco para autocompletar"
+                    >
+                      <ClipboardPaste className="h-3.5 w-3.5" />
+                      <span>Pegar SMS / Notificación</span>
+                    </button>
+                  )}
+                </div>
                 <Input
                   type="text"
                   required={step === 3 || !useWizard}
@@ -386,6 +431,22 @@ export function PaymentRegisterModal({
                   }}
                   placeholder={isCashUsd ? 'Efectivo USD o nota de entrega' : 'Referencia bancaria'}
                 />
+                {parsedSmsInfo && (parsedSmsInfo.bank || parsedSmsInfo.amountBs) && (
+                  <div className="bg-surface-raised border-border/80 text-text-secondary mt-2 flex flex-wrap items-center gap-2 rounded-lg border p-2 text-xs">
+                    <Sparkles className="text-brand h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {parsedSmsInfo.bank && (
+                        <strong className="text-text">{parsedSmsInfo.bank}: </strong>
+                      )}
+                      {parsedSmsInfo.amountBs && <span>Bs. {parsedSmsInfo.amountBs} </span>}
+                      {parsedSmsInfo.reference && (
+                        <span className="text-brand font-medium">
+                          (Ref: {parsedSmsInfo.reference})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <Label>Comprobante (Captura)</Label>

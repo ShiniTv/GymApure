@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { apiFetch, parseJsonSafe } from '../lib/api';
-import { CheckCircle, XCircle, LogIn, LogOut, Clock, ChevronDown, ArrowLeft } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  LogIn,
+  LogOut,
+  Clock,
+  ChevronDown,
+  ArrowLeft,
+  Maximize,
+  Minimize,
+  WifiOff,
+} from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
@@ -21,6 +32,32 @@ const QrScannerPanel = lazy(() =>
 );
 type KioskMode = 'check-in' | 'check-out';
 
+interface QueuedScan {
+  id: string;
+  cedula: string;
+  mode: KioskMode;
+  timestamp: number;
+}
+
+const OFFLINE_QUEUE_KEY = 'kiosk_offline_checkins';
+
+function getOfflineQueue(): QueuedScan[] {
+  try {
+    const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+    return raw ? (JSON.parse(raw) as QueuedScan[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOfflineQueue(queue: QueuedScan[]): void {
+  try {
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export default function CheckIn() {
   usePageTitle('Acceso');
   const [searchParams] = useSearchParams();
@@ -38,8 +75,80 @@ export default function CheckIn() {
   const [now, setNow] = useState(new Date());
   const [showManualCedula, setShowManualCedula] = useState(false);
   const [autoResetCountdown, setAutoResetCountdown] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [offlineCount, setOfflineCount] = useState(() => getOfflineQueue().length);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const processingRef = useRef(false);
+  const syncingRef = useRef(false);
+
+  // Fullscreen support
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        void err;
+      });
+    } else {
+      document.exitFullscreen().catch((err) => {
+        void err;
+      });
+    }
+  }, []);
+
+  // Offline queue synchronization
+  const syncOfflineQueue = useCallback(async () => {
+    if (!navigator.onLine || syncingRef.current) return;
+    const queue = getOfflineQueue();
+    if (queue.length === 0) {
+      setOfflineCount(0);
+      return;
+    }
+
+    syncingRef.current = true;
+    const remaining: QueuedScan[] = [];
+
+    for (const item of queue) {
+      try {
+        const endpoint =
+          item.mode === 'check-in' ? '/api/reception/check-in' : '/api/reception/check-out';
+        const res = await apiFetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cedula: item.cedula }),
+        });
+        if (!res.ok && res.status >= 500) {
+          remaining.push(item);
+        }
+      } catch {
+        remaining.push(item);
+      }
+    }
+
+    saveOfflineQueue(remaining);
+    setOfflineCount(remaining.length);
+    syncingRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      void syncOfflineQueue();
+    };
+    window.addEventListener('online', handleOnline);
+    const interval = window.setInterval(() => {
+      void syncOfflineQueue();
+    }, 30000);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.clearInterval(interval);
+    };
+  }, [syncOfflineQueue]);
 
   const isCheckIn = mode === 'check-in';
   const scannerActive = status === 'idle';
@@ -160,11 +269,26 @@ export default function CheckIn() {
             resetToIdle(autoDelay);
           }
         } catch {
-          setStatus('error');
-          setMessage('Error de red');
-          hapticLight();
+          // Network failure - save to offline queue
+          const queue = getOfflineQueue();
+          queue.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            cedula: parsedCedula,
+            mode: isCheckIn ? 'check-in' : 'check-out',
+            timestamp: Date.now(),
+          });
+          saveOfflineQueue(queue);
+          setOfflineCount(queue.length);
+
+          setStatus('success');
+          setUserName(`Cédula: ${parsedCedula}`);
+          setMessage('Guardado en cola offline. Se sincronizará automáticamente al conectar.');
+          setExpiryWarning('');
+          hapticSuccess();
+
+          setCedula('');
           processingRef.current = false;
-          const autoDelay = isKioskMode ? 4000 : 4000;
+          const autoDelay = isKioskMode ? 3500 : 4500;
           startAutoResetCountdown(autoDelay);
           resetToIdle(autoDelay);
         }
@@ -177,7 +301,7 @@ export default function CheckIn() {
         void finishScan();
       }, wait);
     },
-    [isCheckIn, isKioskMode, resetToIdle]
+    [isCheckIn, isKioskMode, resetToIdle, startAutoResetCountdown]
   );
 
   const handleQrScan = useCallback(
@@ -487,18 +611,46 @@ export default function CheckIn() {
                 <p className="text-text-muted truncate text-xs sm:text-sm">Control de acceso</p>
               </div>
             </div>
-            <div className="shrink-0 text-right">
-              <p
-                className={cn(
-                  'font-mono font-bold tabular-nums',
-                  isLargeKioskLayout ? 'text-2xl md:text-3xl' : 'text-xl'
+            <div className="flex shrink-0 items-center gap-3">
+              {offlineCount > 0 && (
+                <div
+                  className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-500"
+                  title={`${offlineCount} registros guardados sin conexión. Se sincronizarán automáticamente al conectar.`}
+                >
+                  <WifiOff className="h-3.5 w-3.5" />
+                  <span>{offlineCount} offline</span>
+                </div>
+              )}
+              {typeof document !== 'undefined' &&
+                'fullscreenEnabled' in document &&
+                document.fullscreenEnabled && (
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="text-text-muted hover:text-text focus-visible:ring-brand rounded-lg p-2 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                    title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                    aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                  >
+                    {isFullscreen ? (
+                      <Minimize className="h-5 w-5" />
+                    ) : (
+                      <Maximize className="h-5 w-5" />
+                    )}
+                  </button>
                 )}
-              >
-                {format(now, 'HH:mm:ss')}
-              </p>
-              <p className="text-text-muted hidden text-sm capitalize sm:block">
-                {format(now, 'EEEE d MMM', { locale: es })}
-              </p>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    'font-mono font-bold tabular-nums',
+                    isLargeKioskLayout ? 'text-2xl md:text-3xl' : 'text-xl'
+                  )}
+                >
+                  {format(now, 'HH:mm:ss')}
+                </p>
+                <p className="text-text-muted hidden text-sm capitalize sm:block">
+                  {format(now, 'EEEE d MMM', { locale: es })}
+                </p>
+              </div>
             </div>
           </header>
 
