@@ -46,6 +46,7 @@ import { typography } from '../../lib/typography';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
+import { hapticLight } from '../../lib/haptics';
 
 const RevenueChart = lazy(() => import('../../components/RevenueChart'));
 
@@ -415,6 +416,7 @@ export default function AdminDashboard() {
                     <Link
                       key={item.key}
                       to={item.to}
+                      onClick={hapticLight}
                       className={cn(
                         'flex items-center justify-between gap-3 rounded-[var(--radius-card)] border px-3 py-2.5 transition-colors',
                         item.tone
@@ -576,6 +578,7 @@ export default function AdminDashboard() {
                 className="flex w-full min-w-0 items-center gap-2 text-left lg:cursor-default"
                 onClick={() => {
                   if (isDesktop) return;
+                  hapticLight();
                   setShowExpiringList((v) => !v);
                 }}
                 aria-expanded={expiringExpanded}
@@ -679,6 +682,7 @@ export default function AdminDashboard() {
                   size="sm"
                   className="px-2.5"
                   onClick={() => {
+                    hapticLight();
                     setShowRevenueChart((v) => !v);
                   }}
                   aria-expanded={chartExpanded}
@@ -706,7 +710,10 @@ export default function AdminDashboard() {
                 <SegmentedControl
                   variant="compact"
                   value={revenueRange}
-                  onChange={setRevenueRange}
+                  onChange={(val) => {
+                    hapticLight();
+                    setRevenueRange(val);
+                  }}
                   className="mb-2.5 w-fit max-w-full"
                   options={[
                     { value: '7d', label: '7d' },

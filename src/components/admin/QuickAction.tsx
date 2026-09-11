@@ -6,6 +6,7 @@ import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { paymentsQueryKey } from '../../hooks/queries/usePaymentsQuery';
 import { prefetchRoute } from '../../lib/routePrefetch';
 import { OperateIcon, type OperateIconTone } from '../operate/OperateIcon';
+import { hapticLight } from '../../lib/haptics';
 
 interface QuickActionProps {
   to: string;
@@ -82,6 +83,7 @@ export function QuickAction({
       to={to}
       aria-label={`${title}: ${description}`}
       title={title}
+      onClick={hapticLight}
       onMouseEnter={maybePrefetch}
       onFocus={maybePrefetch}
       className={cn(
