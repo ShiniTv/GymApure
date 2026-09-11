@@ -1,8 +1,18 @@
 import { lazy, Suspense, useState } from 'react';
-import { BookOpen, CheckCircle, Edit2, Plus, SkipForward, Trash2, Video } from 'lucide-react';
+import {
+  BookOpen,
+  CheckCircle,
+  Edit2,
+  Minus,
+  Plus,
+  SkipForward,
+  Trash2,
+  Video,
+} from 'lucide-react';
 import { Collapse, Input } from '../../components/ui';
 import { formatMuscleGroupLabel } from '../../lib/exerciseMuscleGroups';
 import { cn } from '../../lib/utils';
+import { hapticLight, hapticSuccess } from '../../lib/haptics';
 import {
   ExerciseExecutionSteps,
   executionStepCount,
@@ -56,10 +66,25 @@ export function WorkoutExerciseCard({
   const loadHeader = load === 'plates' ? 'Placas' : 'kg';
   const effortHeader = effort === 'time' ? 'Seg' : 'Reps';
   const setGridClass = showLoad
-    ? 'grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1fr)_2.5rem]'
-    : 'grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]';
+    ? 'grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_2.75rem] sm:grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)_3rem]'
+    : 'grid-cols-[2rem_minmax(0,1fr)_2.75rem] sm:grid-cols-[2.25rem_minmax(0,1fr)_3rem]';
   const [showVideo, setShowVideo] = useState(false);
   const [showExecution, setShowExecution] = useState(false);
+
+  const handleQuickAdjust = (setNum: number, field: 'weight' | 'reps', delta: number) => {
+    hapticLight();
+    const key = `${exercise.id}-${setNum}`;
+    const priorSet = getLastSetHint(exercise.id, setNum, lastSessionLogs);
+    const rawVal = logs[key]?.[field];
+    let current: number;
+    if (rawVal !== undefined && rawVal !== '') {
+      current = parseFloat(rawVal) || 0;
+    } else {
+      current = field === 'weight' ? (priorSet?.weight ?? 0) : exercise.reps;
+    }
+    const nextVal = Math.max(0, Math.round((current + delta) * 10) / 10);
+    onLogChange(setNum, field, String(nextVal));
+  };
 
   return (
     <article
@@ -81,25 +106,32 @@ export function WorkoutExerciseCard({
             </h3>
             <button
               type="button"
-              onClick={onToggleComplete}
+              onClick={() => {
+                if (!completed) hapticSuccess();
+                else hapticLight();
+                onToggleComplete();
+              }}
               className={cn(
-                'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
+                'tap-feedback inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-lg transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95',
                 completed
                   ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-900/20'
                   : 'bg-surface-overlay text-text-secondary can-hover:hover:bg-surface-raised can-hover:hover:text-text'
               )}
               aria-label={completed ? 'Marcar ejercicio como pendiente' : 'Completar ejercicio'}
-              title={completed ? 'Hecho' : 'Completar'}
+              title={completed ? 'Hecho' : 'Completar ejercicio completo'}
             >
               <CheckCircle className="h-4 w-4" />
             </button>
             {onSkip && !completed ? (
               <button
                 type="button"
-                onClick={onSkip}
-                className="text-text-muted can-hover:hover:bg-surface-overlay can-hover:hover:text-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors"
-                aria-label={`Saltar ${exercise.name}`}
-                title="Saltar hoy"
+                onClick={() => {
+                  hapticLight();
+                  onSkip();
+                }}
+                className="text-text-muted can-hover:hover:bg-surface-overlay can-hover:hover:text-text tap-feedback inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-lg transition-colors active:scale-95"
+                aria-label={`Saltar o sustituir ${exercise.name}`}
+                title="Saltar o equipo ocupado"
               >
                 <SkipForward className="h-4 w-4" />
               </button>
@@ -208,36 +240,69 @@ export function WorkoutExerciseCard({
               className={cn(
                 'grid items-center gap-2 rounded-lg px-0.5 py-1 transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 setGridClass,
-                isCompleted ? 'bg-emerald-500/5 opacity-80' : 'bg-transparent'
+                isCompleted ? 'bg-emerald-500/5 opacity-85' : 'bg-transparent'
               )}
             >
               <div className="flex justify-center">
-                <span className="border-border bg-surface-raised text-text flex h-9 w-9 items-center justify-center rounded-md border text-sm font-semibold tabular-nums">
+                <span className="border-border bg-surface-raised text-text flex h-10 w-8 items-center justify-center rounded-md border text-sm font-semibold tabular-nums sm:h-11 sm:w-9">
                   {setNum}
                 </span>
               </div>
               {showLoad ? (
                 <div className="min-w-0">
-                  <Input
-                    id={weightInputId}
-                    type="number"
-                    inputMode="decimal"
-                    enterKeyHint="next"
-                    placeholder={priorSet ? String(priorSet.weight) : '0'}
-                    className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
-                    value={logs[key]?.weight || ''}
-                    onChange={(e) => onLogChange(setNum, 'weight', e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        document.getElementById(repsInputId)?.focus();
+                  <div className="relative flex items-center">
+                    {!isCompleted && (
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() =>
+                          handleQuickAdjust(setNum, 'weight', load === 'plates' ? -1 : -2.5)
+                        }
+                        className="text-text-muted hover:text-text hover:bg-surface-overlay tap-feedback absolute left-1 z-10 flex h-7 w-5 items-center justify-center rounded transition-transform active:scale-90"
+                        aria-label={load === 'plates' ? 'Restar 1 placa' : 'Restar 2.5 kilos'}
+                        title={load === 'plates' ? '-1 placa' : '-2.5 kg'}
+                      >
+                        <Minus className="h-3 w-3 stroke-[2.5]" />
+                      </button>
+                    )}
+                    <Input
+                      id={weightInputId}
+                      type="number"
+                      inputMode="decimal"
+                      enterKeyHint="next"
+                      placeholder={priorSet ? String(priorSet.weight) : '0'}
+                      className={cn(
+                        'min-h-10 text-center text-sm font-semibold tabular-nums sm:min-h-11 sm:text-base',
+                        !isCompleted ? 'px-6' : 'px-2'
+                      )}
+                      value={logs[key]?.weight || ''}
+                      onChange={(e) => onLogChange(setNum, 'weight', e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          document.getElementById(repsInputId)?.focus();
+                        }
+                      }}
+                      disabled={isCompleted}
+                      aria-label={
+                        load === 'plates' ? `Placas serie ${setNum}` : `Peso serie ${setNum}`
                       }
-                    }}
-                    disabled={isCompleted}
-                    aria-label={
-                      load === 'plates' ? `Placas serie ${setNum}` : `Peso serie ${setNum}`
-                    }
-                  />
+                    />
+                    {!isCompleted && (
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() =>
+                          handleQuickAdjust(setNum, 'weight', load === 'plates' ? 1 : 2.5)
+                        }
+                        className="text-text-muted hover:text-text hover:bg-surface-overlay tap-feedback absolute right-1 z-10 flex h-7 w-5 items-center justify-center rounded transition-transform active:scale-90"
+                        aria-label={load === 'plates' ? 'Sumar 1 placa' : 'Sumar 2.5 kilos'}
+                        title={load === 'plates' ? '+1 placa' : '+2.5 kg'}
+                      >
+                        <Plus className="h-3 w-3 stroke-[2.5]" />
+                      </button>
+                    )}
+                  </div>
                   {lastHintLabel ? (
                     <p className="text-text-muted text-small mt-0.5 truncate text-center">
                       {lastHintLabel}
@@ -246,26 +311,58 @@ export function WorkoutExerciseCard({
                 </div>
               ) : null}
               <div className="min-w-0">
-                <Input
-                  id={repsInputId}
-                  type="number"
-                  inputMode="numeric"
-                  enterKeyHint="done"
-                  placeholder={priorSet ? String(priorSet.reps) : exercise.reps.toString()}
-                  className="min-h-9 py-2 text-center text-sm font-semibold tabular-nums sm:min-h-10 sm:text-base"
-                  value={logs[key]?.reps || ''}
-                  onChange={(e) => onLogChange(setNum, 'reps', e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      onToggleSetComplete(setNum);
+                <div className="relative flex items-center">
+                  {!isCompleted && (
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => handleQuickAdjust(setNum, 'reps', effort === 'time' ? -5 : -1)}
+                      className="text-text-muted hover:text-text hover:bg-surface-overlay tap-feedback absolute left-1 z-10 flex h-7 w-5 items-center justify-center rounded transition-transform active:scale-90"
+                      aria-label={effort === 'time' ? 'Restar 5 segundos' : 'Restar 1 repetición'}
+                      title={effort === 'time' ? '-5s' : '-1 rep'}
+                    >
+                      <Minus className="h-3 w-3 stroke-[2.5]" />
+                    </button>
+                  )}
+                  <Input
+                    id={repsInputId}
+                    type="number"
+                    inputMode="numeric"
+                    enterKeyHint="done"
+                    placeholder={priorSet ? String(priorSet.reps) : exercise.reps.toString()}
+                    className={cn(
+                      'min-h-10 text-center text-sm font-semibold tabular-nums sm:min-h-11 sm:text-base',
+                      !isCompleted ? 'px-6' : 'px-2'
+                    )}
+                    value={logs[key]?.reps || ''}
+                    onChange={(e) => onLogChange(setNum, 'reps', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        hapticSuccess();
+                        onToggleSetComplete(setNum);
+                      }
+                    }}
+                    disabled={isCompleted}
+                    aria-label={
+                      effort === 'time'
+                        ? `Segundos serie ${setNum}`
+                        : `Repeticiones serie ${setNum}`
                     }
-                  }}
-                  disabled={isCompleted}
-                  aria-label={
-                    effort === 'time' ? `Segundos serie ${setNum}` : `Repeticiones serie ${setNum}`
-                  }
-                />
+                  />
+                  {!isCompleted && (
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => handleQuickAdjust(setNum, 'reps', effort === 'time' ? 5 : 1)}
+                      className="text-text-muted hover:text-text hover:bg-surface-overlay tap-feedback absolute right-1 z-10 flex h-7 w-5 items-center justify-center rounded transition-transform active:scale-90"
+                      aria-label={effort === 'time' ? 'Sumar 5 segundos' : 'Sumar 1 repetición'}
+                      title={effort === 'time' ? '+5s' : '+1 rep'}
+                    >
+                      <Plus className="h-3 w-3 stroke-[2.5]" />
+                    </button>
+                  )}
+                </div>
                 {!showLoad && lastHintLabel ? (
                   <p className="text-text-muted text-small mt-0.5 truncate text-center">
                     {lastHintLabel}
@@ -276,8 +373,11 @@ export function WorkoutExerciseCard({
                 {isCompleted ? (
                   <button
                     type="button"
-                    onClick={() => onEditSet(setNum)}
-                    className="bg-brand/10 text-brand can-hover:hover:bg-brand/20 flex h-9 w-9 items-center justify-center rounded-md transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
+                    onClick={() => {
+                      hapticLight();
+                      onEditSet(setNum);
+                    }}
+                    className="bg-brand/10 text-brand can-hover:hover:bg-brand/20 tap-feedback flex h-10 w-10 items-center justify-center rounded-xl transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 sm:h-11 sm:w-11"
                     title="Editar serie"
                     aria-label={`Editar serie ${setNum}`}
                   >
@@ -286,11 +386,14 @@ export function WorkoutExerciseCard({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => onToggleSetComplete(setNum)}
-                    className="border-border bg-surface-raised text-text-muted can-hover:hover:border-brand can-hover:hover:text-brand flex h-9 w-9 items-center justify-center rounded-md border transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
+                    onClick={() => {
+                      hapticSuccess();
+                      onToggleSetComplete(setNum);
+                    }}
+                    className="border-border/80 bg-surface-raised text-text-muted can-hover:hover:border-brand can-hover:hover:text-brand tap-feedback flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 sm:h-11 sm:w-11"
                     aria-label={`Marcar serie ${setNum} como hecha`}
                   >
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle className="h-5 w-5" />
                   </button>
                 )}
               </div>

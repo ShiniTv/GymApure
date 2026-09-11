@@ -173,18 +173,19 @@ export default function MemberRoutine() {
 
       <Suspense fallback={<PanelFallback />}>
         {page.coachingTab === 'progreso' && id ? (
-          <div className="space-y-3">
-            <MemberProgressPanel memberId={parseInt(id, 10)} />
-            <MemberMeasurementsPanel
-              measurements={page.measurements}
-              canEdit={page.user?.role === 'admin' || page.user?.role === 'trainer'}
-              isAdding={page.isAddingMeasurement}
-              form={page.measurementForm}
-              onAddingChange={page.setIsAddingMeasurement}
-              onFormChange={page.setMeasurementForm}
-              onSubmit={page.handleAddMeasurement}
-            />
-          </div>
+          <MemberProgressPanel memberId={parseInt(id, 10)} />
+        ) : null}
+
+        {page.coachingTab === 'mediciones' && id ? (
+          <MemberMeasurementsPanel
+            measurements={page.measurements}
+            canEdit={page.user?.role === 'admin' || page.user?.role === 'trainer'}
+            isAdding={page.isAddingMeasurement}
+            form={page.measurementForm}
+            onAddingChange={page.setIsAddingMeasurement}
+            onFormChange={page.setMeasurementForm}
+            onSubmit={page.handleAddMeasurement}
+          />
         ) : null}
 
         {page.coachingTab === 'notas' && id ? (

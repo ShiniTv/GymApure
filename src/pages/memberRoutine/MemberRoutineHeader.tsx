@@ -49,6 +49,7 @@ const PRIMARY_TABS = [
   { value: 'plan', label: 'Plan' },
   { value: 'coaching', label: 'Seguimiento' },
   { value: 'progreso', label: 'Progreso' },
+  { value: 'perfil', label: 'Perfil' },
 ] as const;
 
 const PLAN_SUB_TABS: { value: CoachingTab; label: string }[] = [
@@ -56,17 +57,30 @@ const PLAN_SUB_TABS: { value: CoachingTab; label: string }[] = [
   { value: 'bloques', label: 'Bloques' },
 ];
 
+const COACHING_SUB_TABS: { value: CoachingTab; label: string }[] = [
+  { value: 'coaching', label: 'Registro semanal' },
+  { value: 'notas', label: 'Notas' },
+  { value: 'agenda', label: 'Agenda' },
+];
+
+const PROGRESO_SUB_TABS: { value: CoachingTab; label: string }[] = [
+  { value: 'progreso', label: 'Cargas' },
+  { value: 'mediciones', label: 'Mediciones' },
+];
+
 function hubPrimaryTab(tab: CoachingTab): (typeof PRIMARY_TABS)[number]['value'] {
   if (tab === 'rutinas' || tab === 'bloques') return 'plan';
   if (tab === 'coaching' || tab === 'notas' || tab === 'agenda') return 'coaching';
   if (tab === 'progreso' || tab === 'mediciones') return 'progreso';
+  if (tab === 'perfil') return 'perfil';
   return 'plan';
 }
 
 function primaryTabToDefault(tab: (typeof PRIMARY_TABS)[number]['value']): CoachingTab {
   if (tab === 'plan') return 'rutinas';
   if (tab === 'coaching') return 'coaching';
-  return 'progreso';
+  if (tab === 'progreso') return 'progreso';
+  return 'perfil';
 }
 
 const TAB_LABELS: Record<CoachingTab, string> = {
@@ -77,7 +91,7 @@ const TAB_LABELS: Record<CoachingTab, string> = {
   coaching: 'Registro semanal',
   notas: 'Notas',
   perfil: 'Perfil',
-  mediciones: 'Progreso',
+  mediciones: 'Mediciones',
 };
 
 const MENU_ITEM =
@@ -361,9 +375,53 @@ export function MemberRoutineHeader({
         ) : null}
 
         {primary === 'coaching' ? (
-          <p className={cn(typography.small, 'text-text-muted mt-2')}>
-            Registro semanal. Notas y agenda en «Más en esta ficha».
-          </p>
+          <div className="mt-2 flex items-center gap-1" role="tablist" aria-label="Seguimiento">
+            {COACHING_SUB_TABS.map((tab) => {
+              const active = coachingTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => onChangeTab(tab.value)}
+                  className={cn(
+                    'tap-feedback h-8 rounded-[var(--radius-chip)] px-2.5 text-xs transition-colors',
+                    active
+                      ? 'bg-surface-raised text-text font-semibold'
+                      : 'text-text-muted hover:text-text hover:bg-surface-raised/60 font-medium'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {primary === 'progreso' ? (
+          <div className="mt-2 flex items-center gap-1" role="tablist" aria-label="Progreso">
+            {PROGRESO_SUB_TABS.map((tab) => {
+              const active = coachingTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => onChangeTab(tab.value)}
+                  className={cn(
+                    'tap-feedback h-8 rounded-[var(--radius-chip)] px-2.5 text-xs transition-colors',
+                    active
+                      ? 'bg-surface-raised text-text font-semibold'
+                      : 'text-text-muted hover:text-text hover:bg-surface-raised/60 font-medium'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         ) : null}
       </nav>
 
