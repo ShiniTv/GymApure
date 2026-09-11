@@ -110,7 +110,7 @@ export function PaymentRegisterModal({
   const handlePasteSms = async () => {
     let clipText = '';
     try {
-      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+      if (typeof navigator.clipboard?.readText === 'function') {
         clipText = await navigator.clipboard.readText();
       }
     } catch {

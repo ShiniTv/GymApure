@@ -37,7 +37,7 @@ export function MemberPriorityBanners({
   const navigate = useNavigate();
   const sub = subscription;
   const showExpiry =
-    pending === 0 && Boolean(sub) && shouldShowExpiryAlert(sub!.days_remaining, alertDays);
+    pending === 0 && sub != null && shouldShowExpiryAlert(sub.days_remaining, alertDays);
   const showActivate = !sub && pending === 0;
   const hasMembershipPriority = pending > 0 || showActivate || showExpiry;
 
