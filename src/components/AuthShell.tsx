@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ArrowLeft, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
+import AntigravityBackground from './AntigravityBackground';
 
 interface AuthShellProps {
   variant?: 'auth' | 'kiosk' | 'kiosk-fullscreen';
@@ -85,14 +86,7 @@ export default function AuthShell({
         </div>
       )}
 
-      {isLinear && (
-        <div
-          className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden opacity-50"
-          aria-hidden="true"
-        >
-          <div className="h-[380px] w-[380px] rounded-full bg-gradient-to-tr from-amber-500/10 via-zinc-800/15 to-transparent blur-[100px]" />
-        </div>
-      )}
+      {isLinear && <AntigravityBackground />}
 
       <div className={cn(contentMax, !isFullscreen && 'mx-auto')}>
         {children}
