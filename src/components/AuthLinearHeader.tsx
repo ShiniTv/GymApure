@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import Logo from './Logo';
 import BrandName from './BrandName';
 
@@ -9,12 +10,9 @@ interface AuthLinearHeaderProps {
 export default function AuthLinearHeader({ subtitle }: AuthLinearHeaderProps) {
   return (
     <div className="auth-linear-header flex flex-col items-center">
-      <div className="mb-3.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium tracking-wide text-emerald-400">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        </span>
-        <span>Acceso Seguro</span>
+      <div className="mb-3.5 inline-flex items-center gap-1.5 rounded-full border border-zinc-700/60 bg-zinc-800/50 px-2.5 py-0.5 text-[0.6875rem] font-medium tracking-wide text-zinc-400">
+        <Lock className="h-3 w-3 text-zinc-500" />
+        <span>Conexión cifrada</span>
       </div>
 
       <div className="relative mb-3 flex items-center justify-center">
