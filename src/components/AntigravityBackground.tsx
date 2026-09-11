@@ -7,41 +7,43 @@ export default function AntigravityBackground() {
     const el = containerRef.current;
     if (!el) return;
 
-    // Detect if the user prefers reduced motion
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 
-    let targetX = window.innerWidth / 2;
-    let targetY = window.innerHeight / 2;
-    let currentX = targetX;
-    let currentY = targetY;
+    const initialX = window.innerWidth / 2;
+    const initialY = window.innerHeight / 2;
+    let targetX = initialX;
+    let targetY = initialY;
+    let currentX = initialX;
+    let currentY = initialY;
     let animId = 0;
-    let isRunning = true;
+    let isMoving = false;
 
-    // Set initial position
-    el.style.setProperty('--antigravity-x', `${targetX}px`);
-    el.style.setProperty('--antigravity-y', `${targetY}px`);
+    // Set initial position statically
+    el.style.setProperty('--antigravity-x', `${initialX}px`);
+    el.style.setProperty('--antigravity-y', `${initialY}px`);
 
     if (prefersReducedMotion) {
       return;
     }
 
-    const handlePointerMove = (e: PointerEvent) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
-    };
-
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
-
-    // Physics lerp loop for weightless fluid motion (Antigravity feel)
+    // Physics lerp loop that runs ON-DEMAND only when the mouse is moving
     const updateMotion = () => {
-      if (!isRunning) return;
-
       const dx = targetX - currentX;
       const dy = targetY - currentY;
 
-      // Smooth inertia factor
-      currentX += dx * 0.075;
-      currentY += dy * 0.075;
+      if (Math.abs(dx) < 0.2 && Math.abs(dy) < 0.2) {
+        currentX = targetX;
+        currentY = targetY;
+        el.style.setProperty('--antigravity-x', `${currentX.toFixed(1)}px`);
+        el.style.setProperty('--antigravity-y', `${currentY.toFixed(1)}px`);
+        isMoving = false;
+        return;
+      }
+
+      currentX += dx * 0.08;
+      currentY += dy * 0.08;
 
       el.style.setProperty('--antigravity-x', `${currentX.toFixed(1)}px`);
       el.style.setProperty('--antigravity-y', `${currentY.toFixed(1)}px`);
@@ -49,10 +51,19 @@ export default function AntigravityBackground() {
       animId = requestAnimationFrame(updateMotion);
     };
 
-    animId = requestAnimationFrame(updateMotion);
+    const handlePointerMove = (e: PointerEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+
+      if (!isMoving) {
+        isMoving = true;
+        animId = requestAnimationFrame(updateMotion);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
 
     return () => {
-      isRunning = false;
       cancelAnimationFrame(animId);
       window.removeEventListener('pointermove', handlePointerMove);
     };
