@@ -85,6 +85,15 @@ export default function AuthShell({
         </div>
       )}
 
+      {isLinear && (
+        <div
+          className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden opacity-50"
+          aria-hidden="true"
+        >
+          <div className="h-[380px] w-[380px] rounded-full bg-gradient-to-tr from-amber-500/10 via-zinc-800/15 to-transparent blur-[100px]" />
+        </div>
+      )}
+
       <div className={cn(contentMax, !isFullscreen && 'mx-auto')}>
         {children}
         {footer && !isFullscreen && <div className="mt-6">{footer}</div>}

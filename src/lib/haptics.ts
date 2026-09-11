@@ -9,3 +9,9 @@ export function hapticSuccess(): void {
     navigator.vibrate([20, 40, 20]);
   }
 }
+
+export function hapticError(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate([40, 60, 40]);
+  }
+}

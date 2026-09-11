@@ -275,6 +275,18 @@ body,
     border: 1px solid rgb(255 255 255 / 0.1);
     border-radius: 10px;
     background: #1c1c1e;
+    animation: authCardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes authCardIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .auth-form {
@@ -365,6 +377,27 @@ body,
 
   .auth-linear .auth-linear-link:hover {
     color: #fff;
+  }
+
+  .auth-linear .auth-otp-digit {
+    width: 2.75rem;
+    height: 3.25rem;
+    text-align: center;
+    font-family: var(--font-mono, monospace);
+    font-size: 1.25rem;
+    font-weight: 600;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 8px;
+    background: #2c2c2e;
+    color: #fafafa;
+    transition: all 0.15s ease;
+  }
+
+  .auth-linear .auth-otp-digit:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--color-brand) 70%, #fff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 25%, transparent);
+    background: #343438;
   }
 
   @media (prefers-reduced-motion: reduce) {
