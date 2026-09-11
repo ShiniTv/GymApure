@@ -21,6 +21,7 @@ import { Button, Card, Badge, CedulaInput, Label, Skeleton } from '../components
 import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
+import { hapticSuccess, hapticLight } from '../lib/haptics';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
@@ -277,6 +278,7 @@ export default function Reception() {
           action,
           cedula: q,
         });
+        hapticSuccess();
         setMessageType('success');
         setMessage(formatAttendanceMessage(action, data));
         if (options?.clearInput) {
@@ -289,6 +291,7 @@ export default function Reception() {
         void loadStats();
         return true;
       } catch {
+        hapticLight();
         setMessageType('error');
         setMessage('Error de red');
         return false;
@@ -348,7 +351,18 @@ export default function Reception() {
       return <Badge variant="warning">Sin membresía activa</Badge>;
     }
     if (lookup.attendance?.is_inside) {
-      return <Badge variant="success">Dentro del gym</Badge>;
+      const checkIn = lookup.attendance.today_session?.check_in_time;
+      let label = 'Dentro del gym';
+      if (checkIn) {
+        const diffMins = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(checkIn).getTime()) / 60000)
+        );
+        const formatted =
+          diffMins < 60 ? `${diffMins}m` : `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+        label = `Dentro · ${formatted}`;
+      }
+      return <Badge variant="success">{label}</Badge>;
     }
     return <Badge variant="accent">Puede ingresar</Badge>;
   };
@@ -501,6 +515,7 @@ export default function Reception() {
           size={isCounterMode ? 'lg' : 'md'}
           disabled={actionLoading || !lookup?.can_check_in}
           onClick={() => void handleAction('check-in')}
+          className="tap-feedback active:scale-98"
         >
           <LogIn className="h-4 w-4 shrink-0" />
           <span className="truncate">{isCounterMode ? 'Entrada' : 'Autorizar entrada'}</span>
@@ -510,6 +525,7 @@ export default function Reception() {
           variant={isCounterMode ? 'ghost' : 'secondary'}
           disabled={actionLoading || !lookup?.can_check_out}
           onClick={() => void handleAction('check-out')}
+          className="tap-feedback active:scale-98"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span className="truncate">{isCounterMode ? 'Salida' : 'Registrar salida'}</span>
@@ -582,6 +598,7 @@ export default function Reception() {
               <Button
                 size="sm"
                 loading={actionLoading}
+                className="tap-feedback active:scale-98"
                 onClick={() => void handleResumeMembership()}
               >
                 Reanudar membresía
@@ -590,20 +607,33 @@ export default function Reception() {
           ) : lookup.subscription ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-2.5 py-2">
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                  {lookup.subscription.membership_name}
-                </p>
-                <p className="text-text-muted text-small">
-                  {lookup.subscription.days_remaining} días · vence{' '}
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    {lookup.subscription.membership_name}
+                  </p>
+                  {lookup.subscription.days_remaining <= 3 && (
+                    <Badge variant="danger" className="text-small px-1.5 py-0">
+                      Vence pronto
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-text-muted text-small mt-0.5">
+                  {lookup.subscription.days_remaining} día
+                  {lookup.subscription.days_remaining !== 1 ? 's' : ''} · vence{' '}
                   {lookup.subscription.end_date
                     ? format(new Date(lookup.subscription.end_date), 'dd MMM yyyy', { locale: es })
                     : '—'}
                 </p>
               </div>
               {lookup.subscription.days_remaining <= 7 && (
-                <Button size="md" variant="secondary" className="px-2" onClick={openRenewForLookup}>
+                <Button
+                  size="md"
+                  variant="secondary"
+                  className="tap-feedback px-2.5 active:scale-98"
+                  onClick={openRenewForLookup}
+                >
                   <CreditCard className="mr-1 h-3.5 w-3.5" />
-                  Renovar
+                  Renovar y Cobrar
                 </Button>
               )}
             </div>
@@ -611,31 +641,43 @@ export default function Reception() {
             <div className="space-y-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2.5">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
-                <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
-                  Sin membresía activa
-                </p>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400">
+                    Sin membresía activa
+                  </p>
+                  <p className="text-text-muted text-small mt-0.5">
+                    Renueva o asigna un plan para autorizar ingreso.
+                  </p>
+                </div>
               </div>
               {lookup.user && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   <Button
                     size="md"
-                    variant="secondary"
-                    className="px-2"
+                    className="tap-feedback px-2.5 active:scale-98"
                     onClick={openRenewForLookup}
                   >
                     <CreditCard className="mr-1 h-3.5 w-3.5" />
-                    Renovar
+                    Renovar y Cobrar
                   </Button>
                   <Link
                     to={`/payments?register=1&memberId=${lookup.user.id}`}
                     className="inline-flex"
                   >
-                    <Button size="md" variant="secondary" className="px-2">
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      className="tap-feedback px-2 active:scale-98"
+                    >
                       Pago
                     </Button>
                   </Link>
                   <Link to={`/members?assignUserId=${lookup.user.id}`} className="inline-flex">
-                    <Button size="md" variant="secondary" className="px-2">
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      className="tap-feedback px-2 active:scale-98"
+                    >
                       Asignar plan
                     </Button>
                   </Link>

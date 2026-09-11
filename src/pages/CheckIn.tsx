@@ -14,6 +14,7 @@ import { parseBadgeScan } from '../lib/badgeQr';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { hapticSuccess, hapticLight } from '../lib/haptics';
 
 const QrScannerPanel = lazy(() =>
   import('../components/checkin/QrScannerPanel').then((m) => ({ default: m.QrScannerPanel }))
@@ -36,6 +37,7 @@ export default function CheckIn() {
   const [userName, setUserName] = useState('');
   const [now, setNow] = useState(new Date());
   const [showManualCedula, setShowManualCedula] = useState(false);
+  const [autoResetCountdown, setAutoResetCountdown] = useState<number | null>(null);
   const cedulaRef = useRef<HTMLInputElement>(null);
   const processingRef = useRef(false);
 
@@ -51,6 +53,22 @@ export default function CheckIn() {
     setDurationLabel('');
     setUserName('');
     setShowManualCedula(false);
+    setAutoResetCountdown(null);
+  }, []);
+
+  const startAutoResetCountdown = useCallback((totalMs: number) => {
+    const steps = Math.ceil(totalMs / 1000);
+    setAutoResetCountdown(steps);
+    let remaining = steps;
+    const interval = window.setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        window.clearInterval(interval);
+        setAutoResetCountdown(null);
+      } else {
+        setAutoResetCountdown(remaining);
+      }
+    }, 1000);
   }, []);
 
   const resetToIdle = useCallback((delayMs: number) => {
@@ -109,6 +127,7 @@ export default function CheckIn() {
             setUserName(data.user_name ?? '');
             setExpiryWarning(data.expiry_warning || '');
             setDurationLabel(data.duration_label || '');
+            hapticSuccess();
 
             if (isCheckIn) {
               setMessage(
@@ -126,20 +145,28 @@ export default function CheckIn() {
 
             setCedula('');
             processingRef.current = false;
-            resetToIdle(isKioskMode ? 3500 : 4500);
+            const autoDelay = isKioskMode ? 3500 : 4500;
+            startAutoResetCountdown(autoDelay);
+            resetToIdle(autoDelay);
           } else {
             setStatus('error');
             setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
             setExpiryWarning('');
+            hapticLight();
             if (data.user_name) setUserName(data.user_name);
             processingRef.current = false;
-            resetToIdle(isKioskMode ? 4000 : 4000);
+            const autoDelay = isKioskMode ? 4000 : 4000;
+            startAutoResetCountdown(autoDelay);
+            resetToIdle(autoDelay);
           }
         } catch {
           setStatus('error');
           setMessage('Error de red');
+          hapticLight();
           processingRef.current = false;
-          resetToIdle(isKioskMode ? 4000 : 4000);
+          const autoDelay = isKioskMode ? 4000 : 4000;
+          startAutoResetCountdown(autoDelay);
+          resetToIdle(autoDelay);
         }
       };
 
@@ -332,13 +359,13 @@ export default function CheckIn() {
         >
           <div
             className={cn(
-              'mx-auto mb-6 flex items-center justify-center rounded-full',
+              'mx-auto mb-6 flex items-center justify-center rounded-full transition-all duration-300',
               isKioskMode ? (isMobileKiosk ? 'h-24 w-24' : 'h-32 w-32') : 'h-16 w-16',
               status === 'success'
                 ? isCheckIn
-                  ? 'bg-success/10'
-                  : 'bg-[var(--color-check-out)]/10'
-                : 'bg-danger/10'
+                  ? 'bg-success/10 text-success ring-success/20 ring-8'
+                  : 'bg-[var(--color-check-out)]/10 text-[var(--color-check-out)] ring-8 ring-[var(--color-check-out)]/20'
+                : 'bg-danger/10 text-danger ring-danger/20 ring-8'
             )}
           >
             {status === 'success' ? (
@@ -388,7 +415,7 @@ export default function CheckIn() {
           {isKioskMode ? (
             <div
               className={cn(
-                'mt-8',
+                'mt-8 flex flex-col items-center gap-2',
                 isMobileKiosk &&
                   'border-border bg-bg sticky bottom-0 -mx-4 border-t px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]'
               )}
@@ -397,17 +424,28 @@ export default function CheckIn() {
                 type="button"
                 size="lg"
                 className="w-full text-lg"
-                onClick={handleNextVisitor}
+                onClick={() => {
+                  hapticLight();
+                  handleNextVisitor();
+                }}
               >
-                Siguiente visitante
+                Siguiente visitante {autoResetCountdown !== null ? `(${autoResetCountdown}s)` : ''}
               </Button>
+              {autoResetCountdown !== null && (
+                <p className="text-text-muted text-xs">
+                  Reinicio automático en {autoResetCountdown}s
+                </p>
+              )}
             </div>
           ) : (
             <Button
               type="button"
               variant="secondary"
               className={cn(isKioskMode ? 'mt-8' : 'mt-4')}
-              onClick={() => setStatus('idle')}
+              onClick={() => {
+                hapticLight();
+                setStatus('idle');
+              }}
             >
               Volver a escanear
             </Button>

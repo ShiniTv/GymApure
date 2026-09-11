@@ -685,7 +685,7 @@ export default function TrainerDashboard() {
 
       <div
         className={cn(
-          'grid grid-cols-4 divide-x divide-[color:var(--color-border)] overflow-hidden rounded-[var(--radius-card)] border',
+          'grid grid-cols-2 divide-x divide-y divide-[color:var(--color-border)] overflow-hidden rounded-[var(--radius-card)] border sm:grid-cols-4 sm:divide-y-0',
           SURFACE
         )}
       >

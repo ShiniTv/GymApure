@@ -7,6 +7,7 @@ import { MemberTodayRoutinePicker } from './MemberTodayRoutinePicker';
 import { cn } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { apiFetch } from '../../lib/api';
+import { hapticSuccess } from '../../lib/haptics';
 import type { TodayRoutineOption } from './MemberTodayRoutinePicker';
 
 function getGreeting(): string {
@@ -136,9 +137,12 @@ export function MemberHero({
 
       <Button
         size="md"
-        className="relative mt-3 w-full sm:w-auto"
+        className="tap-feedback relative mt-3 w-full active:scale-98 sm:w-auto"
         disabled={!!routineId && routineCompletedToday}
-        onClick={() => navigate(canTrain ? `/workout/${routineId}` : '/routines?view=templates')}
+        onClick={() => {
+          if (canTrain) hapticSuccess();
+          navigate(canTrain ? `/workout/${routineId}` : '/routines?view=templates');
+        }}
         onMouseEnter={() => {
           if (canTrain && routineId) {
             void apiFetch(`/api/routines/${routineId}`).catch(() => undefined);
