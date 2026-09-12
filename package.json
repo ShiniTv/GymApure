@@ -109,6 +109,7 @@
     "db:purge-reset-tokens:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/purge-expired-reset-tokens.ts -- --allow-prod",
     "db:seed-system-exercises": "tsx scripts/dev/run-with-env.ts .env.dev scripts/db/seed-system-exercises.ts",
     "db:seed-system-exercises:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/db/seed-system-exercises.ts -- --allow-prod",
+    "deploy:preflight:dev": "tsx scripts/dev/run-with-env.ts .env.dev scripts/deploy/deploy-preflight.ts",
     "deploy:preflight:prod": "tsx scripts/dev/run-with-env.ts .env.prod scripts/deploy/deploy-preflight.ts",
     "db:generate-system-exercises-csv": "tsx scripts/db/generate-system-exercises-csv.ts",
     "test:equipment-bcv": "tsx scripts/dev/run-with-env.ts .env.dev scripts/test/test-equipment-bcv-checklist.ts",
