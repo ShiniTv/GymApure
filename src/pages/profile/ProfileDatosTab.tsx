@@ -1,8 +1,6 @@
-import { ChangeEvent, FormEvent } from 'react';
-import { Camera, Save, User } from 'lucide-react';
-import { resolveAvatarUrl } from '../../lib/api';
-import { Button, Card, Input, Label, Textarea } from '../../components/ui';
-import { cn } from '../../lib/utils';
+import React, { ChangeEvent, FormEvent } from 'react';
+import { Save, Phone, Scale, Target, Shield } from 'lucide-react';
+import { Button, Input, Label, Textarea } from '../../components/ui';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../../lib/trainingShift';
 import type { UserProfile } from '../../hooks/queries/useProfileQuery';
 import type { ProfileFormState } from './types';
@@ -29,186 +27,159 @@ interface ProfileDatosTabProps {
 }
 
 export function ProfileDatosTab({
-  profile,
   form,
   setForm,
   isProfileDirty,
   saving,
   isTrainer,
   trainerProfile,
-  avatarUploading,
-  avatarRemoving,
-  onAvatarChange,
-  onRequestRemoveAvatar,
   onSave,
 }: ProfileDatosTabProps) {
-  const avatarUrl = resolveAvatarUrl(profile.profile_image);
-
   return (
-    <div className="w-full">
-      <Card padding="sm" className="border-border/80">
-        <div className="md:grid md:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] md:items-start md:gap-4">
-          <div className="mb-3 md:mb-0">
-            <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-2.5">
-              <div className="relative shrink-0">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt={profile.full_name}
-                    className="ring-border h-11 w-11 rounded-[var(--radius-card)] object-cover ring-1 sm:h-12 sm:w-12"
-                  />
-                ) : (
-                  <div className="bg-surface-raised flex h-11 w-11 items-center justify-center rounded-[var(--radius-card)] sm:h-12 sm:w-12">
-                    <User className="text-text-muted h-5 w-5" />
-                  </div>
-                )}
-                <label
-                  htmlFor="avatar-upload"
-                  className="brand-solid brand-solid-hover absolute -right-1 -bottom-1 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-[var(--radius-button)] transition-colors"
-                  title="Cambiar foto"
-                  aria-label="Cambiar foto de perfil"
-                >
-                  <Camera className="h-3 w-3" />
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={onAvatarChange}
-                  disabled={avatarUploading || avatarRemoving}
-                />
-              </div>
-              <div className="min-w-0 md:w-full">
-                <p className="text-text truncate text-sm font-semibold tracking-[-0.011em]">
-                  {profile.full_name}
-                </p>
-                <p className="text-text-muted text-small mt-0.5 truncate">{profile.email}</p>
-                {profile.cedula ? (
-                  <p className="text-text-muted text-small mt-0.5">{profile.cedula}</p>
-                ) : null}
-                {avatarUploading ? (
-                  <p className="text-brand text-small mt-1 font-medium">Subiendo foto…</p>
-                ) : null}
-                {avatarUrl && !avatarUploading ? (
-                  <button
-                    type="button"
-                    onClick={onRequestRemoveAvatar}
-                    disabled={avatarRemoving}
-                    className="text-text-muted text-small hover:text-danger mt-1.5 font-semibold transition-colors disabled:opacity-50"
-                  >
-                    Quitar foto
-                  </button>
-                ) : null}
-              </div>
+    <form onSubmit={onSave} className="w-full space-y-4">
+      {/* Resumen de Perfil de Entrenador si aplica */}
+      {isTrainer && trainerProfile && (
+        <div className="border-brand/30 from-brand/5 via-surface to-surface rounded-2xl border bg-gradient-to-r p-4 shadow-2xs">
+          <div className="text-brand flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            <h2 className="text-sm font-bold">Perfil Profesional de Entrenador</h2>
+          </div>
+          <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+            <div className="bg-surface-raised/80 border-border/50 rounded-xl border p-2.5">
+              <span className="text-text-muted">Nivel:</span>
+              <p className="text-text mt-0.5 font-bold">{LEVEL_LABELS[trainerProfile.level]}</p>
             </div>
-
-            {isTrainer && trainerProfile ? (
-              <div className="border-border/70 bg-surface-raised mt-3 space-y-1 rounded-[var(--radius-card)] border px-3 py-2.5">
-                <p className="text-text text-small font-semibold tracking-[-0.01em]">
-                  Perfil profesional
-                </p>
-                <p className="text-text-secondary text-small">
-                  Nivel: <strong>{LEVEL_LABELS[trainerProfile.level]}</strong>
-                </p>
-                <p className="text-text-secondary text-small">
-                  Turno: <strong>{SHIFT_LABELS[trainerProfile.shift]}</strong>
-                </p>
-                {trainerProfile.specialty ? (
-                  <p className="text-text-secondary text-small">
-                    Especialidad: <strong>{trainerProfile.specialty}</strong>
-                  </p>
-                ) : null}
-                <p className="text-text-muted text-small pt-1 leading-snug">
-                  Para cambiar nivel, turno o especialidad, contacta al administrador (sección
-                  Entrenadores).
-                </p>
+            <div className="bg-surface-raised/80 border-border/50 rounded-xl border p-2.5">
+              <span className="text-text-muted">Turno:</span>
+              <p className="text-text mt-0.5 font-bold">{SHIFT_LABELS[trainerProfile.shift]}</p>
+            </div>
+            {trainerProfile.specialty && (
+              <div className="bg-surface-raised/80 border-border/50 col-span-2 rounded-xl border p-2.5 sm:col-span-1">
+                <span className="text-text-muted">Especialidad:</span>
+                <p className="text-text mt-0.5 truncate font-bold">{trainerProfile.specialty}</p>
               </div>
-            ) : null}
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sección 1: Información de Contacto y Personal */}
+      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
+          <Phone className="text-brand h-4 w-4" />
+          <span>Contacto e Identidad</span>
+        </h2>
+        <p className="text-text-muted mt-0.5 text-xs">
+          Datos para notificaciones, recuperación de cuenta y emergencias
+        </p>
+
+        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2">
+          <div>
+            <Label className="text-text text-xs font-semibold">Teléfono de contacto</Label>
+            <Input
+              type="tel"
+              inputMode="tel"
+              placeholder="ej: 0414-1234567"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="mt-1"
+            />
           </div>
 
-          <form onSubmit={onSave} className="form-stack min-w-0">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Teléfono</Label>
-                <Input
-                  type="tel"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => {
-                    setForm({ ...form, phone: e.target.value });
-                  }}
-                  placeholder="+58 412 0000000"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Fecha de nacimiento</Label>
-                <Input
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => {
-                    setForm({ ...form, dob: e.target.value });
-                  }}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Peso inicial (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  inputMode="decimal"
-                  value={form.initial_weight}
-                  onChange={(e) => {
-                    setForm({ ...form, initial_weight: e.target.value });
-                  }}
-                  placeholder="70"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Altura (cm)</Label>
-                <Input
-                  type="number"
-                  step="1"
-                  inputMode="decimal"
-                  value={form.height}
-                  onChange={(e) => {
-                    setForm({ ...form, height: e.target.value });
-                  }}
-                  placeholder="170"
-                />
-              </div>
-            </div>
-            <div className="max-w-xl space-y-1.5">
-              <Label>Objetivo</Label>
-              <Textarea
-                value={form.goal}
-                onChange={(e) => {
-                  setForm({ ...form, goal: e.target.value });
-                }}
-                rows={2}
-                className="min-h-[4rem] resize-none"
-                placeholder="Ej: bajar grasa, ganar músculo…"
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving || !isProfileDirty}
-              size="md"
-              className={cn(
-                'w-full sm:w-auto',
-                isProfileDirty ? 'ring-2 ring-amber-500/25' : 'opacity-45'
-              )}
-              aria-label="Guardar perfil"
-            >
-              <Save className="h-4 w-4" />
-              {saving ? 'Guardando…' : 'Guardar'}
-            </Button>
-          </form>
+          <div>
+            <Label className="text-text text-xs font-semibold">Fecha de nacimiento</Label>
+            <Input
+              type="date"
+              value={form.dob}
+              onChange={(e) => setForm({ ...form, dob: e.target.value })}
+              className="mt-1 font-medium"
+            />
+          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+
+      {/* Sección 2: Parámetros Antropométricos Base */}
+      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
+          <Scale className="text-brand h-4 w-4" />
+          <span>Parámetros Físicos Iniciales</span>
+        </h2>
+        <p className="text-text-muted mt-0.5 text-xs">
+          Utilizados para cálculos de IMC, tasa metabólica y estimación de calorías
+        </p>
+
+        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2">
+          <div>
+            <Label className="text-text text-xs font-semibold">Estatura / Altura (cm)</Label>
+            <Input
+              type="number"
+              step="1"
+              min="100"
+              max="250"
+              placeholder="ej: 175"
+              value={form.height}
+              onChange={(e) => setForm({ ...form, height: e.target.value })}
+              className="mt-1 font-semibold tabular-nums"
+            />
+          </div>
+
+          <div>
+            <Label className="text-text text-xs font-semibold">
+              Peso inicial de referencia (kg)
+            </Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="20"
+              max="350"
+              placeholder="ej: 75.0"
+              value={form.initial_weight}
+              onChange={(e) => setForm({ ...form, initial_weight: e.target.value })}
+              className="mt-1 font-semibold tabular-nums"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Sección 3: Objetivo y Enfoque Fitness */}
+      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
+          <Target className="text-brand h-4 w-4" />
+          <span>Objetivo Principal</span>
+        </h2>
+        <p className="text-text-muted mt-0.5 text-xs">
+          Describe tu meta actual (pérdida de grasa, hipertrofia, acondicionamiento, etc.)
+        </p>
+
+        <div className="mt-3">
+          <Textarea
+            rows={2}
+            placeholder="ej: Ganar masa muscular y mejorar mi resistencia cardiovascular…"
+            value={form.goal}
+            onChange={(e) => setForm({ ...form, goal: e.target.value })}
+            className="w-full resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Barra Flotante / Inferior de Guardado */}
+      <div className="border-border/70 bg-surface flex items-center justify-between rounded-2xl border p-3.5 shadow-xs">
+        <div>
+          {isProfileDirty ? (
+            <span className="text-warning inline-flex items-center gap-1.5 text-xs font-semibold">
+              <span className="bg-warning h-2 w-2 animate-pulse rounded-full" />
+              Hay cambios pendientes de guardar
+            </span>
+          ) : (
+            <span className="text-text-muted text-xs font-medium">Todos los cambios guardados</span>
+          )}
+        </div>
+
+        <Button type="submit" disabled={saving || !isProfileDirty} className="gap-1.5 shadow-sm">
+          <Save className="h-4 w-4" />
+          <span>{saving ? 'Guardando…' : 'Guardar perfil'}</span>
+        </Button>
+      </div>
+    </form>
   );
 }

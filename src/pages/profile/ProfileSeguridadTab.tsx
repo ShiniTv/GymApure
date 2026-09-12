@@ -1,20 +1,11 @@
-import { FormEvent, useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { Link } from 'react-router';
-import { Bell, Download, Lock, Trash2 } from 'lucide-react';
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Card,
-  Label,
-  PasswordInput,
-  passwordStrength,
-} from '../../components/ui';
+import { Bell, Download, Lock, ShieldCheck, Trash2, Key } from 'lucide-react';
+import { Button, Label, PasswordInput, passwordStrength } from '../../components/ui';
 import { PushNotificationsToggle } from '../../components/PushNotificationsToggle';
 import { useAuth } from '../../context/AuthContext';
 import { useToastOptional } from '../../context/ToastContext';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
-import { cn } from '../../lib/utils';
 import type { PasswordFormState } from './types';
 
 interface ProfileSeguridadTabProps {
@@ -40,6 +31,8 @@ export function ProfileSeguridadTab({
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const strength = passwordStrength(passwordForm.new_password);
+
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -52,9 +45,9 @@ export function ProfileSeguridadTab({
       a.download = `gymapure-datos-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      toast?.success('Exportación descargada');
+      toast?.success('Exportación descargada correctamente');
     } catch (err) {
-      toast?.error(err instanceof Error ? err.message : 'No se pudo exportar');
+      toast?.error(err instanceof Error ? err.message : 'No se pudo exportar los datos');
     } finally {
       setExporting(false);
     }
@@ -73,7 +66,7 @@ export function ProfileSeguridadTab({
         body: JSON.stringify({ confirm: true }),
       });
       await parseJsonResponse<{ ok: boolean }>(res);
-      toast?.success('Cuenta cerrada');
+      toast?.success('Cuenta cerrada y anonimizada');
       logoutLocal();
       window.location.assign('/login');
     } catch (err) {
@@ -84,171 +77,176 @@ export function ProfileSeguridadTab({
   };
 
   return (
-    <div className="grid w-full gap-3 md:grid-cols-2 md:items-stretch md:gap-4">
-      <div className="flex min-w-0 flex-col space-y-3">
-        <Card
-          padding="md"
-          rounded="xl"
-          className="border-border bg-surface min-w-0 shadow-sm dark:shadow-none"
+    <div className="grid w-full gap-4 md:grid-cols-2 md:items-start">
+      {/* Columna Izquierda: Contraseña */}
+      <div className="space-y-4">
+        <form
+          onSubmit={onChangePassword}
+          className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs"
         >
-          <h2 className="text-text mb-1 flex items-center gap-1.5 text-sm font-semibold">
-            <Bell className="text-brand h-3.5 w-3.5" />
-            Notificaciones
-          </h2>
-          <p className="text-text-muted text-small mb-3 leading-snug">
-            Pagos, mensajes y novedades en este dispositivo.
+          <div className="flex items-center gap-2">
+            <Lock className="text-brand h-4 w-4" />
+            <h2 className="text-text text-sm font-bold tracking-tight">Cambiar Contraseña</h2>
+          </div>
+          <p className="text-text-muted mt-0.5 text-xs">
+            Usa al menos 8 caracteres combinando letras, números y símbolos
           </p>
-          <PushNotificationsToggle />
-        </Card>
 
-        {role !== 'member' && (
-          <Card
-            padding="md"
-            rounded="xl"
-            className="border-border bg-surface min-w-0 shadow-sm dark:shadow-none"
-          >
-            <h2 className="text-text mb-1 text-sm font-semibold">Verificación en dos pasos</h2>
-            <p className="text-text-muted text-small mb-2">
-              Protege tu cuenta de staff con MFA (TOTP).
-            </p>
-            <Link
-              to="/security"
-              className="text-brand inline-flex items-center gap-1 text-sm font-semibold hover:underline"
+          {passwordError && (
+            <div className="bg-danger/10 border-danger/30 text-danger mt-3 rounded-xl border p-2.5 text-xs font-semibold">
+              {passwordError}
+            </div>
+          )}
+
+          <div className="mt-3.5 space-y-3">
+            <div>
+              <Label className="text-text text-xs font-semibold">Contraseña actual</Label>
+              <PasswordInput
+                value={passwordForm.current_password}
+                onChange={(e) =>
+                  setPasswordForm({ ...passwordForm, current_password: e.target.value })
+                }
+                required
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-text text-xs font-semibold">Nueva contraseña</Label>
+              <PasswordInput
+                value={passwordForm.new_password}
+                onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                required
+                className="mt-1"
+              />
+              {passwordForm.new_password && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-text-muted">Fuerza:</span>
+                    <span className="text-text font-semibold">{strength.label}</span>
+                  </div>
+                  <div className="bg-surface-raised mt-1 h-1.5 w-full overflow-hidden rounded-full">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        strength.score <= 1
+                          ? 'w-1/4 bg-rose-500'
+                          : strength.score === 2
+                            ? 'w-2/4 bg-amber-500'
+                            : strength.score === 3
+                              ? 'w-3/4 bg-emerald-500'
+                              : 'w-full bg-emerald-600'
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-text text-xs font-semibold">Confirmar nueva contraseña</Label>
+              <PasswordInput
+                value={passwordForm.confirm_password}
+                onChange={(e) =>
+                  setPasswordForm({ ...passwordForm, confirm_password: e.target.value })
+                }
+                required
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="border-border/60 mt-4 flex justify-end border-t pt-3">
+            <Button
+              type="submit"
+              disabled={
+                passwordSaving ||
+                !passwordForm.current_password ||
+                !passwordForm.new_password ||
+                passwordForm.new_password !== passwordForm.confirm_password
+              }
+              className="text-xs font-semibold shadow-xs"
             >
-              Configurar MFA →
-            </Link>
-          </Card>
+              {passwordSaving ? 'Actualizando…' : 'Actualizar contraseña'}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* Columna Derecha: 2FA, Notificaciones y Privacidad */}
+      <div className="space-y-4">
+        {/* Notificaciones Push */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Bell className="text-brand h-4 w-4" />
+            <h2 className="text-text text-sm font-bold tracking-tight">Notificaciones Push</h2>
+          </div>
+          <p className="text-text-muted mt-0.5 text-xs">
+            Recibe avisos sobre pagos, confirmaciones y mensajes en este dispositivo
+          </p>
+          <div className="mt-3">
+            <PushNotificationsToggle />
+          </div>
+        </div>
+
+        {/* Autenticación en dos pasos (Staff / Admin / Trainer) */}
+        {role !== 'member' && (
+          <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="text-brand h-4 w-4" />
+              <h2 className="text-text text-sm font-bold tracking-tight">
+                Verificación en Dos Pasos (MFA)
+              </h2>
+            </div>
+            <p className="text-text-muted mt-0.5 text-xs">
+              Protege el acceso a tu cuenta mediante códigos de autenticador (Google Authenticator,
+              Authy, etc.)
+            </p>
+            <div className="mt-3">
+              <Link
+                to="/security"
+                className="bg-surface-raised border-border/80 text-text hover:bg-surface-raised/80 hover:border-brand/40 inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all"
+              >
+                <Key className="text-brand h-3.5 w-3.5" />
+                <span>Gestionar seguridad y llaves 2FA →</span>
+              </Link>
+            </div>
+          </div>
         )}
 
-        <Card
-          padding="md"
-          rounded="xl"
-          className="border-border bg-surface min-w-0 shadow-sm dark:shadow-none"
-        >
-          <h2 className="text-text mb-1 text-sm font-semibold">Privacidad y datos</h2>
-          <p className="text-text-muted text-small mb-3 leading-snug">
-            Descarga una copia de tus datos o cierra la cuenta (anonimización). Los registros
-            operativos del gym pueden conservarse sin tus datos identificables.
+        {/* Privacidad y Datos RGPD */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+          <h2 className="text-text text-sm font-bold tracking-tight">Tus Datos y Privacidad</h2>
+          <p className="text-text-muted mt-0.5 text-xs">
+            Descarga una copia completa de tu información o solicita la anonimización de tu cuenta
           </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+
+          <div className="mt-3.5 flex flex-wrap gap-2">
             <Button
               type="button"
               variant="secondary"
-              size="md"
-
+              size="sm"
               disabled={exporting}
               onClick={() => void handleExport()}
+              className="gap-1.5 text-xs"
             >
-              <Download className="h-4 w-4" />
-              {exporting ? 'Exportando…' : 'Exportar mis datos'}
+              <Download className="h-3.5 w-3.5" />
+              <span>{exporting ? 'Descargando…' : 'Exportar mis datos (JSON)'}</span>
             </Button>
+
             <Button
               type="button"
-              variant="danger"
-              size="md"
-
+              variant="secondary"
+              size="sm"
               disabled={deleting}
               onClick={() => void handleDeleteAccount()}
+              className={`gap-1.5 text-xs ${confirmDelete ? 'border-danger text-danger bg-danger/10' : ''}`}
             >
-              <Trash2 className="h-4 w-4" />
-              {deleting
-                ? 'Cerrando…'
-                : confirmDelete
-                  ? 'Confirmar cierre de cuenta'
-                  : 'Cerrar mi cuenta'}
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>{confirmDelete ? 'Confirmar cierre de cuenta' : 'Cerrar cuenta'}</span>
             </Button>
           </div>
-          {confirmDelete && !deleting && (
-            <p className="text-danger text-small mt-2">
-              Pulsa de nuevo para confirmar. Esta acción desactiva el acceso y anonimiza tu perfil.
-            </p>
-          )}
-        </Card>
+        </div>
       </div>
-
-      <Accordion>
-        <AccordionItem
-          title="Cambiar contraseña"
-          icon={<Lock className="text-brand h-4 w-4" />}
-          className="border-border bg-surface rounded-xl border shadow-sm dark:shadow-none"
-        >
-          <p className="text-text-muted text-small mb-3 leading-snug">
-            Al actualizarla, cerraremos esta sesión para proteger tu cuenta.
-          </p>
-          {passwordError && <p className="text-danger mb-3 text-xs font-medium">{passwordError}</p>}
-          <form onSubmit={onChangePassword} className="space-y-3">
-            <div>
-              <Label htmlFor="current_password">Contraseña actual</Label>
-              <PasswordInput
-                id="current_password"
-                autoComplete="current-password"
-                value={passwordForm.current_password}
-                onChange={(e) => {
-                  setPasswordForm({ ...passwordForm, current_password: e.target.value });
-                }}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="new_password">Nueva contraseña</Label>
-              <PasswordInput
-                id="new_password"
-                autoComplete="new-password"
-                value={passwordForm.new_password}
-                onChange={(e) => {
-                  setPasswordForm({ ...passwordForm, new_password: e.target.value });
-                }}
-                minLength={8}
-                required
-              />
-              {passwordForm.new_password &&
-                (() => {
-                  const strength = passwordStrength(passwordForm.new_password);
-                  return (
-                    <div className="mt-2 space-y-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3].map((level) => (
-                          <div
-                            key={level}
-                            className={cn(
-                              'h-1 flex-1 rounded-full transition-colors',
-                              strength.score >= level
-                                ? level === 1
-                                  ? 'bg-red-500'
-                                  : level === 2
-                                    ? 'bg-yellow-500'
-                                    : 'bg-emerald-500'
-                                : 'bg-surface-overlay'
-                            )}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-text-muted text-xs font-medium">
-                        Fortaleza: {strength.label}
-                      </p>
-                    </div>
-                  );
-                })()}
-            </div>
-            <div>
-              <Label htmlFor="confirm_password">Confirmar nueva contraseña</Label>
-              <PasswordInput
-                id="confirm_password"
-                autoComplete="new-password"
-                value={passwordForm.confirm_password}
-                onChange={(e) => {
-                  setPasswordForm({ ...passwordForm, confirm_password: e.target.value });
-                }}
-                required
-              />
-            </div>
-            <Button type="submit" disabled={passwordSaving} size="md" className="w-full sm:w-auto">
-              <Lock className="h-4 w-4" />
-              {passwordSaving ? 'Actualizando…' : 'Actualizar contraseña'}
-            </Button>
-          </form>
-        </AccordionItem>
-      </Accordion>
     </div>
   );
 }

@@ -94,6 +94,8 @@ export function useInvalidateProfile() {
   const qc = useQueryClient();
   return (userId: number) => {
     void qc.invalidateQueries({ queryKey: ['profile', userId] });
+    void qc.invalidateQueries({ queryKey: ['profile', userId, 'measurements'] });
+    void qc.invalidateQueries({ queryKey: ['member-measurements', userId] });
   };
 }
 
@@ -166,12 +168,12 @@ export function useAddMeasurementMutation(userId: number | undefined) {
   const invalidateProfile = useInvalidateProfile();
   return useMutation({
     mutationFn: async (body: {
-      date: string;
-      weight: number | null;
-      body_fat_percentage: number | null;
-      waist: number | null;
-      arm: number | null;
-      leg: number | null;
+      date?: string;
+      weight?: number | null;
+      body_fat_percentage?: number | null;
+      waist?: number | null;
+      arm?: number | null;
+      leg?: number | null;
     }) => {
       const res = await apiFetch(`/api/users/${userId}/measurements`, {
         method: 'POST',
@@ -179,6 +181,51 @@ export function useAddMeasurementMutation(userId: number | undefined) {
         body: JSON.stringify(body),
       });
       return parseJsonResponse<Measurement>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
+}
+
+export function useUpdateMeasurementMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async ({
+      measurementId,
+      body,
+    }: {
+      measurementId: number;
+      body: {
+        date?: string;
+        weight?: number | null;
+        body_fat_percentage?: number | null;
+        waist?: number | null;
+        arm?: number | null;
+        leg?: number | null;
+      };
+    }) => {
+      const res = await apiFetch(`/api/users/${userId}/measurements/${measurementId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return parseJsonResponse<Measurement>(res);
+    },
+    onSuccess: () => {
+      if (userId) invalidateProfile(userId);
+    },
+  });
+}
+
+export function useDeleteMeasurementMutation(userId: number | undefined) {
+  const invalidateProfile = useInvalidateProfile();
+  return useMutation({
+    mutationFn: async (measurementId: number) => {
+      const res = await apiFetch(`/api/users/${userId}/measurements/${measurementId}`, {
+        method: 'DELETE',
+      });
+      return parseJsonResponse<{ message?: string }>(res);
     },
     onSuccess: () => {
       if (userId) invalidateProfile(userId);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { UserCircle } from 'lucide-react';
 import {
   SegmentedControl,
@@ -7,7 +8,8 @@ import {
   EmptyState,
   Skeleton,
 } from '../components/ui';
-import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
+import { OperatePage } from '../components/operate/OperateChrome';
+import { ProfileAthleteHero } from './profile/ProfileAthleteHero';
 import { ProfileHealthTab } from './profile/ProfileHealthTab';
 import { ProfileMembershipAlerts } from './profile/ProfileMembershipAlerts';
 import { ProfileDatosTab } from './profile/ProfileDatosTab';
@@ -16,6 +18,7 @@ import { ProfileCarneTab } from './profile/ProfileCarneTab';
 import { ProfileAparienciaTab } from './profile/ProfileAparienciaTab';
 import { ProfileSeguridadTab } from './profile/ProfileSeguridadTab';
 import { ProfileModals } from './profile/ProfileModals';
+import { MeasurementModal } from './profile/MeasurementModal';
 import { useProfilePage } from './profile/useProfilePage';
 
 export default function Profile() {
@@ -25,9 +28,9 @@ export default function Profile() {
     return (
       <PageState>
         <OperatePage maxWidth="max-w-4xl">
-          <Skeleton className="h-14 w-full rounded-[var(--radius-card)]" />
+          <Skeleton className="h-28 w-full rounded-[var(--radius-card)]" />
           <Skeleton className="h-11 w-full rounded-[var(--radius-card)]" />
-          <Skeleton className="h-48 w-full rounded-[var(--radius-card)]" />
+          <Skeleton className="h-56 w-full rounded-[var(--radius-card)]" />
         </OperatePage>
       </PageState>
     );
@@ -42,12 +45,7 @@ export default function Profile() {
           description="Revisa tu conexión e inténtalo de nuevo. Si el problema sigue, cierra sesión y vuelve a entrar."
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button
-                size="md"
-                variant="secondary"
-
-                onClick={() => window.location.reload()}
-              >
+              <Button size="md" variant="secondary" onClick={() => window.location.reload()}>
                 Reintentar
               </Button>
               <BackToDashboardLink />
@@ -61,47 +59,33 @@ export default function Profile() {
   const { profile, user } = page;
 
   return (
-    <OperatePage maxWidth="max-w-4xl">
-      <OperateHeader
-        icon={UserCircle}
-        title={
-          <>
-            Mi <span className="text-brand">perfil</span>
-          </>
-        }
-        subtitle={
-          page.isProfileDirty && page.profileTab === 'datos'
-            ? 'Hay cambios sin guardar'
-            : user.role === 'member'
-              ? 'Tu cuenta'
-              : 'Tu cuenta y apariencia'
-        }
-        action={
-          <>
-            {page.isProfileDirty && page.profileTab === 'datos' && (
-              <span className="text-small text-warning font-semibold">Sin guardar</span>
-            )}
-            {user.role !== 'member' && <BackToDashboardLink iconOnly className="sm:hidden" />}
-            {user.role !== 'member' && (
-              <span className="hidden sm:inline-flex">
-                <BackToDashboardLink />
-              </span>
-            )}
-          </>
-        }
+    <OperatePage maxWidth="max-w-4xl" className="space-y-4">
+      {/* Hero de Atleta / Cuenta */}
+      <ProfileAthleteHero
+        profile={profile}
+        role={user.role}
+        subscription={page.subscription}
+        workoutsThisMonth={page.workoutsThisMonth}
+        avatarUploading={page.avatarUploading}
+        avatarRemoving={page.avatarRemoving}
+        onAvatarChange={(e) => void page.handleAvatarChange(e)}
+        onRequestRemoveAvatar={() => page.setShowRemoveAvatarModal(true)}
+        onOpenCarneTab={() => page.changeProfileTab('carne')}
       />
 
       <ProfileMembershipAlerts role={user.role} subscription={page.subscription} />
 
+      {/* Selector de Pestañas */}
       <SegmentedControl
         layout="wrap"
         fullWidth
-        className="w-full"
+        className="w-full shadow-2xs"
         value={page.profileTab}
         onChange={page.changeProfileTab}
         options={page.profileTabOptions}
       />
 
+      {/* Pestaña: Datos */}
       {page.profileTab === 'datos' && (
         <ProfileDatosTab
           profile={profile}
@@ -119,15 +103,7 @@ export default function Profile() {
         />
       )}
 
-      {page.profileTab === 'salud' && page.isMember && (
-        <ProfileHealthTab
-          userId={user.id}
-          profile={profile}
-          measurements={page.measurements}
-          onSwitchToDatos={() => page.setProfileTab('datos')}
-        />
-      )}
-
+      {/* Pestaña: Progreso & Medidas */}
       {page.profileTab === 'progreso' && page.isMember && (
         <ProfileProgresoTab
           progressLoading={page.progressLoading}
@@ -141,10 +117,26 @@ export default function Profile() {
           workoutsThisMonth={page.workoutsThisMonth}
           historyOpen={page.historyOpen}
           onHistoryOpenChange={page.setHistoryOpen}
-          onAddMeasurement={() => page.setIsAddingMeasurement(true)}
+          onAddMeasurement={() => {
+            page.setEditingMeasurement(null);
+            page.setIsAddingMeasurement(true);
+          }}
+          onEditMeasurement={page.handleOpenEditMeasurement}
+          onDeleteMeasurement={page.handleDeleteMeasurement}
         />
       )}
 
+      {/* Pestaña: Salud */}
+      {page.profileTab === 'salud' && page.isMember && (
+        <ProfileHealthTab
+          userId={user.id}
+          profile={profile}
+          measurements={page.measurements}
+          onSwitchToDatos={() => page.setProfileTab('datos')}
+        />
+      )}
+
+      {/* Pestaña: Carnet QR */}
       {page.profileTab === 'carne' && page.isMember && (
         <ProfileCarneTab
           badgeMember={page.badgeMember}
@@ -153,10 +145,7 @@ export default function Profile() {
         />
       )}
 
-      {page.profileTab === 'apariencia' && (
-        <ProfileAparienciaTab theme={page.theme} onThemeChange={page.setTheme} />
-      )}
-
+      {/* Pestaña: Seguridad */}
       {page.profileTab === 'seguridad' && (
         <ProfileSeguridadTab
           role={user.role}
@@ -168,6 +157,26 @@ export default function Profile() {
         />
       )}
 
+      {/* Pestaña: Apariencia */}
+      {page.profileTab === 'apariencia' && (
+        <ProfileAparienciaTab theme={page.theme} onThemeChange={page.setTheme} />
+      )}
+
+      {/* Modal Inteligente de Mediciones Corporales */}
+      <MeasurementModal
+        open={page.isAddingMeasurement}
+        onClose={() => {
+          page.setIsAddingMeasurement(false);
+          page.setEditingMeasurement(null);
+        }}
+        onSubmit={page.handleSaveMeasurementPayload}
+        latestMeasurement={page.latestMeasurement}
+        initialWeight={profile.initial_weight}
+        heightCm={page.heightCm}
+        editingMeasurement={page.editingMeasurement}
+      />
+
+      {/* Modales Auxiliares (Avatar, Carnet, etc.) */}
       <ProfileModals
         showRemoveAvatarModal={page.showRemoveAvatarModal}
         avatarRemoving={page.avatarRemoving}
@@ -178,12 +187,18 @@ export default function Profile() {
         showScanView={page.showScanView}
         onCloseScanView={() => page.setShowScanView(false)}
         badgeMember={page.badgeMember}
-        isAddingMeasurement={page.isAddingMeasurement}
-        onCloseMeasurement={() => page.setIsAddingMeasurement(false)}
-        measurementError={page.measurementError}
+        isAddingMeasurement={false}
+        onCloseMeasurement={() => {
+          /* noop */
+        }}
+        measurementError=""
         measurementForm={page.measurementForm}
-        setMeasurementForm={page.setMeasurementForm}
-        onAddMeasurement={(e) => void page.handleAddMeasurement(e)}
+        setMeasurementForm={() => {
+          /* noop */
+        }}
+        onAddMeasurement={() => {
+          /* noop */
+        }}
       />
     </OperatePage>
   );

@@ -16,6 +16,9 @@ import {
   useRemoveAvatarMutation,
   useChangePasswordMutation,
   useAddMeasurementMutation,
+  useUpdateMeasurementMutation,
+  useDeleteMeasurementMutation,
+  type Measurement,
 } from '../../hooks/queries/useProfileQuery';
 import { useTrainerMeQuery } from '../../hooks/queries/useTrainersQuery';
 import type { MemberBadgeData } from '../../components/member/MemberBadgeCard';
@@ -25,6 +28,7 @@ import type {
   ProfileFormState,
   ProfileTab,
 } from './types';
+import type { MeasurementFormPayload } from './MeasurementModal';
 import { heightCmForForm, heightCmNumber } from './utils';
 
 const emptyMeasurementForm = (): MeasurementFormState => ({
@@ -55,6 +59,8 @@ export function useProfilePage() {
   const removeAvatarMutation = useRemoveAvatarMutation(user?.id);
   const changePasswordMutation = useChangePasswordMutation();
   const addMeasurementMutation = useAddMeasurementMutation(user?.id);
+  const updateMeasurementMutation = useUpdateMeasurementMutation(user?.id);
+  const deleteMeasurementMutation = useDeleteMeasurementMutation(user?.id);
 
   const loading = profileLoading;
   const progressLoading = measLoading || (isMember && histLoading);
@@ -65,7 +71,7 @@ export function useProfilePage() {
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [showScanView, setShowScanView] = useState(false);
   const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
-  const [measurementError, setMeasurementError] = useState('');
+  const [editingMeasurement, setEditingMeasurement] = useState<Measurement | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState<PasswordFormState>({
@@ -108,6 +114,7 @@ export function useProfilePage() {
       }));
   }, [measurements]);
 
+  const latestMeasurement = measurements[0] ?? null;
   const latestWeight = measurements.find((m) => m.weight != null)?.weight ?? null;
   const initialWeight = profile?.initial_weight ?? null;
 
@@ -164,18 +171,17 @@ export function useProfilePage() {
   const profileTabOptions = useMemo(() => {
     const primary: { value: ProfileTab; label: string }[] = [{ value: 'datos', label: 'Datos' }];
     if (isMember && profile?.cedula) {
-      primary.push({ value: 'carne', label: 'Carné' });
+      primary.push({ value: 'carne', label: 'Carnet QR' });
     }
     const secondary: { value: ProfileTab; label: string }[] = [];
     if (isMember) {
+      secondary.push({ value: 'progreso', label: 'Progreso & Medidas' });
       secondary.push({ value: 'salud', label: 'Salud' });
-      secondary.push({ value: 'progreso', label: 'Progreso' });
     }
     secondary.push(
-      { value: 'apariencia', label: 'Apariencia' },
-      { value: 'seguridad', label: 'Seguridad' }
+      { value: 'seguridad', label: 'Seguridad' },
+      { value: 'apariencia', label: 'Apariencia' }
     );
-    // Primary first so Datos/Carné lead; secondary remain reachable.
     return [...primary, ...secondary];
   }, [isMember, profile?.cedula]);
 
@@ -225,7 +231,7 @@ export function useProfilePage() {
       }
 
       await updateProfileMutation.mutateAsync(body);
-      toast?.success('Perfil actualizado');
+      toast?.success('Perfil actualizado correctamente');
     } catch (err) {
       toast?.error(err instanceof Error ? err.message : 'Error al guardar');
     }
@@ -236,7 +242,7 @@ export function useProfilePage() {
     if (!file || !user) return;
     try {
       await uploadAvatarMutation.mutateAsync(file);
-      toast?.success('Foto actualizada');
+      toast?.success('Foto de perfil actualizada');
     } catch (err) {
       toast?.error(err instanceof Error ? err.message : 'Error al subir foto');
     } finally {
@@ -267,26 +273,35 @@ export function useProfilePage() {
     }
   };
 
-  const handleAddMeasurement = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSaveMeasurementPayload = async (payload: MeasurementFormPayload) => {
     if (!user) return;
-    setMeasurementError('');
     try {
-      await addMeasurementMutation.mutateAsync({
-        date: measurementForm.date,
-        weight: measurementForm.weight ? parseFloat(measurementForm.weight) : null,
-        body_fat_percentage: measurementForm.body_fat_percentage
-          ? parseFloat(measurementForm.body_fat_percentage)
-          : null,
-        waist: measurementForm.waist ? parseFloat(measurementForm.waist) : null,
-        arm: measurementForm.arm ? parseFloat(measurementForm.arm) : null,
-        leg: measurementForm.leg ? parseFloat(measurementForm.leg) : null,
-      });
+      if (editingMeasurement) {
+        await updateMeasurementMutation.mutateAsync({
+          measurementId: editingMeasurement.id,
+          body: payload,
+        });
+        toast?.success('Medición actualizada correctamente');
+      } else {
+        await addMeasurementMutation.mutateAsync(payload);
+        toast?.success('Medición guardada');
+      }
       setIsAddingMeasurement(false);
-      setMeasurementForm(emptyMeasurementForm());
+      setEditingMeasurement(null);
     } catch (err) {
-      setMeasurementError(err instanceof Error ? err.message : 'Error al registrar');
+      toast?.error(err instanceof Error ? err.message : 'Error al registrar medición');
+      throw err;
     }
+  };
+
+  const handleOpenEditMeasurement = (m: Measurement) => {
+    setEditingMeasurement(m);
+    setIsAddingMeasurement(true);
+  };
+
+  const handleDeleteMeasurement = async (id: number) => {
+    if (!user) return;
+    await deleteMeasurementMutation.mutateAsync(id);
   };
 
   return {
@@ -297,6 +312,7 @@ export function useProfilePage() {
     isTrainer,
     trainerProfile,
     measurements,
+    latestMeasurement,
     workouts,
     progressLoading,
     profileTab,
@@ -319,7 +335,8 @@ export function useProfilePage() {
     setShowScanView,
     isAddingMeasurement,
     setIsAddingMeasurement,
-    measurementError,
+    editingMeasurement,
+    setEditingMeasurement,
     historyOpen,
     setHistoryOpen,
     passwordForm,
@@ -332,6 +349,7 @@ export function useProfilePage() {
     latestWeight,
     weightDelta,
     bmi,
+    heightCm: heightCmNumber(profile?.height),
     subscription,
     workoutsThisMonth,
     badgeMember,
@@ -339,6 +357,8 @@ export function useProfilePage() {
     handleAvatarChange,
     handleAvatarRemove,
     handleChangePassword,
-    handleAddMeasurement,
+    handleSaveMeasurementPayload,
+    handleOpenEditMeasurement,
+    handleDeleteMeasurement,
   };
 }

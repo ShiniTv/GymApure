@@ -1,23 +1,34 @@
-import { lazy, Suspense, useState } from 'react';
-import { ChevronDown, Minus, Plus, Scale, TrendingDown, TrendingUp } from 'lucide-react';
+import React, { lazy, Suspense, useState } from 'react';
+import {
+  Minus,
+  Plus,
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  Activity,
+  Ruler,
+  Calendar,
+  Sparkles,
+  Trash2,
+  Edit2,
+  Flame,
+  Target,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { Button, Card, Spinner } from '../../components/ui';
-import { cn } from '../../lib/utils';
-import { typography } from '../../lib/typography';
+import { Button, Spinner } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
+import { useToastOptional } from '../../context/ToastContext';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import type { Measurement, UserProfile, WorkoutSession } from '../../hooks/queries/useProfileQuery';
-import { StatMini } from './StatMini';
-import { heightCmNumber } from './utils';
 
 const ProfileWeightChart = lazy(() => import('../../components/ProfileWeightChart'));
 
 interface ChartPoint {
   date: string;
   weight: number;
-  bodyFat: number | null;
+  bodyFat?: number | null;
 }
 
 interface ProfileProgresoTabProps {
@@ -33,26 +44,30 @@ interface ProfileProgresoTabProps {
   historyOpen: boolean;
   onHistoryOpenChange: (open: boolean) => void;
   onAddMeasurement: () => void;
+  onEditMeasurement?: (m: Measurement) => void;
+  onDeleteMeasurement?: (id: number) => Promise<void>;
 }
 
 export function ProfileProgresoTab({
   progressLoading,
-  profile,
   measurements,
-  workouts,
   chartData,
   latestWeight,
   weightDelta,
   bmi,
   workoutsThisMonth,
-  historyOpen,
-  onHistoryOpenChange,
   onAddMeasurement,
+  onEditMeasurement,
+  onDeleteMeasurement,
 }: ProfileProgresoTabProps) {
   const { user } = useAuth();
+  const toast = useToastOptional();
   const memberStats = useMemberStatsOptional();
   const [weeklyGoal, setWeeklyGoal] = useState(memberStats?.stats?.weeklyTrainingGoal ?? 5);
   const [savingGoal, setSavingGoal] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const workoutsThisWeek = memberStats?.stats?.workoutsThisWeek ?? 0;
 
   const saveWeeklyGoal = async () => {
     if (!user?.id) return;
@@ -67,263 +82,383 @@ export function ProfileProgresoTab({
       const data = await parseJsonResponse<{ weekly_training_goal: number }>(res);
       setWeeklyGoal(data.weekly_training_goal);
       await memberStats?.refresh();
+      toast?.success('Meta semanal actualizada');
+    } catch (err) {
+      toast?.error(err instanceof Error ? err.message : 'Error al guardar meta');
     } finally {
       setSavingGoal(false);
     }
   };
 
+  const handleDelete = async (id: number) => {
+    if (!onDeleteMeasurement) return;
+    setDeletingId(id);
+    try {
+      await onDeleteMeasurement(id);
+      toast?.success('Medición eliminada');
+    } catch (err) {
+      toast?.error(err instanceof Error ? err.message : 'Error al eliminar');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Última medición y valores clave
+  const latest = measurements[0] ?? null;
+  const oldest = measurements[measurements.length - 1] ?? null;
+
+  const waistDelta =
+    latest?.waist != null && oldest?.waist != null && measurements.length > 1
+      ? Math.round((latest.waist - oldest.waist) * 10) / 10
+      : null;
+
+  const armDelta =
+    latest?.arm != null && oldest?.arm != null && measurements.length > 1
+      ? Math.round((latest.arm - oldest.arm) * 10) / 10
+      : null;
+
+  const legDelta =
+    latest?.leg != null && oldest?.leg != null && measurements.length > 1
+      ? Math.round((latest.leg - oldest.leg) * 10) / 10
+      : null;
+
   if (progressLoading) {
     return (
-      <div className="w-full space-y-3">
-        <div className="flex justify-center py-12">
-          <Spinner />
-        </div>
+      <div className="flex justify-center py-16">
+        <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-3">
-      <Card padding="sm" rounded="xl" className="border-border bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="w-full space-y-4">
+      {/* Barra de Meta Semanal y Consistencia */}
+      <div className="border-border/70 bg-surface overflow-hidden rounded-2xl border p-4 shadow-2xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-text-secondary text-xs font-semibold tracking-wide uppercase">
-              Meta semanal
+            <div className="flex items-center gap-2">
+              <Target className="text-brand h-4 w-4" />
+              <h2 className="text-text text-sm font-bold tracking-tight">Meta de entrenamiento</h2>
+            </div>
+            <p className="text-text-muted mt-0.5 text-xs">
+              Has completado{' '}
+              <strong className="text-text font-bold">
+                {workoutsThisWeek} de {weeklyGoal}
+              </strong>{' '}
+              días esta semana
             </p>
-            <p className="text-text mt-0.5 text-sm">Días que quieres entrenar por semana</p>
           </div>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="border-border inline-flex h-9 w-9 items-center justify-center rounded-lg border"
+              className="border-border bg-surface-raised text-text hover:bg-surface-raised/80 inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors"
               onClick={() => setWeeklyGoal((g) => Math.max(1, g - 1))}
               aria-label="Reducir meta"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3.5 w-3.5" />
             </button>
-            <span className={cn(typography.statValueSm, 'min-w-[2rem] text-center')}>
-              {weeklyGoal}
+            <span className="text-text min-w-[2.2rem] text-center text-base font-bold tabular-nums">
+              {weeklyGoal}d
             </span>
             <button
               type="button"
-              className="border-border inline-flex h-9 w-9 items-center justify-center rounded-lg border"
+              className="border-border bg-surface-raised text-text hover:bg-surface-raised/80 inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors"
               onClick={() => setWeeklyGoal((g) => Math.min(7, g + 1))}
               aria-label="Aumentar meta"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
             </button>
             <Button
               size="sm"
               variant="secondary"
               disabled={savingGoal || weeklyGoal === (memberStats?.stats?.weeklyTrainingGoal ?? 5)}
               onClick={() => void saveWeeklyGoal()}
+              className="ml-1 text-xs"
             >
               {savingGoal ? 'Guardando…' : 'Guardar'}
             </Button>
           </div>
         </div>
-      </Card>
 
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <StatMini
-          label="Peso actual"
-          value={latestWeight != null ? `${latestWeight} kg` : '—'}
-          sub={
-            weightDelta != null
-              ? `${weightDelta > 0 ? '+' : ''}${weightDelta} kg vs inicial`
-              : undefined
-          }
-        />
-        <StatMini
-          label="IMC"
-          value={bmi != null ? bmi.toString() : '—'}
-          sub={
-            heightCmNumber(profile.height) != null
-              ? `${heightCmNumber(profile.height)} cm`
-              : undefined
-          }
-        />
-        <StatMini label="Mediciones" value={String(measurements.length)} />
-        <StatMini label="Entrenos este mes" value={String(workoutsThisMonth)} />
-      </div>
-
-      <Card padding="sm" rounded="xl" className="border-border bg-surface">
-        <div className="mb-2.5 flex items-center justify-between gap-2">
-          <h2 className="text-text text-sm font-semibold">Evolución de peso</h2>
-          <div className="flex shrink-0 items-center gap-2">
-            {weightDelta != null && (
-              <span
-                className={`text-small flex items-center gap-1 rounded-md px-2 py-0.5 font-semibold ${
-                  weightDelta < 0
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : weightDelta > 0
-                      ? 'text-brand bg-brand/10'
-                      : 'bg-surface-raised text-text-muted'
-                }`}
-              >
-                {weightDelta < 0 ? (
-                  <TrendingDown className="h-3.5 w-3.5" />
-                ) : weightDelta > 0 ? (
-                  <TrendingUp className="h-3.5 w-3.5" />
-                ) : (
-                  <Minus className="h-3.5 w-3.5" />
-                )}
-                {weightDelta > 0 ? '+' : ''}
-                {weightDelta} kg
-              </span>
-            )}
-            {chartData.length > 0 && (
-              <Button type="button" size="sm" className="px-2.5" onClick={onAddMeasurement}>
-                <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Medición</span>
-              </Button>
-            )}
+        {/* Barra visual de cumplimiento semanal */}
+        <div className="mt-3">
+          <div className="bg-surface-raised h-2.5 w-full overflow-hidden rounded-full">
+            <div
+              className="from-brand to-brand/80 h-full rounded-full bg-gradient-to-r transition-all duration-500"
+              style={{
+                width: `${Math.min(100, Math.round((workoutsThisWeek / weeklyGoal) * 100))}%`,
+              }}
+            />
           </div>
         </div>
+      </div>
 
-        {chartData.length >= 2 ? (
-          <Suspense
-            fallback={
-              <div className="flex h-56 items-center justify-center">
-                <Spinner />
-              </div>
-            }
-          >
-            <ProfileWeightChart data={chartData} />
-          </Suspense>
-        ) : chartData.length === 1 ? (
-          <div className="flex h-40 flex-col items-center justify-center text-center sm:h-48">
-            <p className={cn(typography.statValue, 'text-brand')}>{chartData[0].weight} kg</p>
-            <p className="text-text-muted text-small mt-1.5">
-              {chartData[0].date} · Añade otra medición para la gráfica
+      {/* Grid de Métricas Principales de Composición */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {/* Peso Actual */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted text-xs font-semibold">Peso actual</span>
+            <Scale className="text-brand h-3.5 w-3.5" />
+          </div>
+          <p className="text-text mt-1 text-xl font-bold tabular-nums">
+            {latestWeight != null ? `${latestWeight} kg` : '—'}
+          </p>
+          {weightDelta != null && (
+            <p
+              className={`mt-1 inline-flex items-center gap-0.5 text-xs font-semibold ${
+                weightDelta < 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : weightDelta > 0
+                    ? 'text-brand'
+                    : 'text-text-muted'
+              }`}
+            >
+              {weightDelta < 0 ? (
+                <TrendingDown className="h-3 w-3" />
+              ) : weightDelta > 0 ? (
+                <TrendingUp className="h-3 w-3" />
+              ) : null}
+              {weightDelta > 0 ? `+${weightDelta}` : weightDelta} kg vs inicial
             </p>
+          )}
+        </div>
+
+        {/* IMC */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted text-xs font-semibold">IMC</span>
+            <Activity className="text-brand h-3.5 w-3.5" />
+          </div>
+          <p className="text-text mt-1 text-xl font-bold tabular-nums">{bmi ?? '—'}</p>
+          <p className="text-text-muted mt-1 text-xs font-medium">
+            {bmi != null
+              ? bmi < 18.5
+                ? 'Bajo peso'
+                : bmi < 25
+                  ? 'Normal'
+                  : bmi < 30
+                    ? 'Sobrepeso'
+                    : 'Obesidad'
+              : 'Pendiente altura'}
+          </p>
+        </div>
+
+        {/* Grasa Corporal */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted text-xs font-semibold">Grasa corporal</span>
+            <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+          </div>
+          <p className="text-text mt-1 text-xl font-bold tabular-nums">
+            {latest?.body_fat_percentage != null ? `${latest.body_fat_percentage}%` : '—'}
+          </p>
+          <p className="text-text-muted mt-1 text-xs font-medium">
+            {measurements.length} registro{measurements.length === 1 ? '' : 's'}
+          </p>
+        </div>
+
+        {/* Entrenamientos del Mes */}
+        <div className="border-border/70 bg-surface rounded-2xl border p-3.5 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted text-xs font-semibold">Entrenos mes</span>
+            <Flame className="text-brand h-3.5 w-3.5" />
+          </div>
+          <p className="text-text mt-1 text-xl font-bold tabular-nums">{workoutsThisMonth}</p>
+          <p className="text-text-muted mt-1 text-xs font-medium">Sesiones activas</p>
+        </div>
+      </div>
+
+      {/* Gráfica de Evolución */}
+      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-text text-sm font-bold">Evolución de peso corporal</h2>
+            <p className="text-text-muted text-xs">Tendencia en el tiempo y composición</p>
+          </div>
+
+          <Button size="sm" onClick={onAddMeasurement} className="gap-1.5 shadow-xs">
+            <Plus className="h-3.5 w-3.5" />
+            <span>Registrar medición</span>
+          </Button>
+        </div>
+
+        <Suspense
+          fallback={
+            <div className="flex h-48 items-center justify-center">
+              <Spinner />
+            </div>
+          }
+        >
+          <ProfileWeightChart data={chartData} />
+        </Suspense>
+      </div>
+
+      {/* Resumen de Perímetros Corporales (si existen datos) */}
+      {(latest?.waist != null || latest?.arm != null || latest?.leg != null) && (
+        <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Ruler className="text-brand h-4 w-4" />
+              <h2 className="text-text text-sm font-bold">Perímetros Corporales</h2>
+            </div>
+            <span className="text-text-muted text-xs font-medium">Última medición</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-surface-raised border-border/50 rounded-xl border p-3 text-center">
+              <p className="text-text-muted text-xs font-medium">Cintura</p>
+              <p className="text-text mt-1 text-base font-bold tabular-nums">
+                {latest?.waist != null ? `${latest.waist} cm` : '—'}
+              </p>
+              {waistDelta != null && (
+                <p className="text-text-muted mt-0.5 text-[11px] font-semibold">
+                  {waistDelta > 0 ? `+${waistDelta}` : waistDelta} cm
+                </p>
+              )}
+            </div>
+
+            <div className="bg-surface-raised border-border/50 rounded-xl border p-3 text-center">
+              <p className="text-text-muted text-xs font-medium">Brazo</p>
+              <p className="text-text mt-1 text-base font-bold tabular-nums">
+                {latest?.arm != null ? `${latest.arm} cm` : '—'}
+              </p>
+              {armDelta != null && (
+                <p className="text-text-muted mt-0.5 text-[11px] font-semibold">
+                  {armDelta > 0 ? `+${armDelta}` : armDelta} cm
+                </p>
+              )}
+            </div>
+
+            <div className="bg-surface-raised border-border/50 rounded-xl border p-3 text-center">
+              <p className="text-text-muted text-xs font-medium">Pierna / Muslo</p>
+              <p className="text-text mt-1 text-base font-bold tabular-nums">
+                {latest?.leg != null ? `${latest.leg} cm` : '—'}
+              </p>
+              {legDelta != null && (
+                <p className="text-text-muted mt-0.5 text-[11px] font-semibold">
+                  {legDelta > 0 ? `+${legDelta}` : legDelta} cm
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Historial / Timeline de Mediciones */}
+      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="text-brand h-4 w-4" />
+            <h2 className="text-text text-sm font-bold">Historial de mediciones</h2>
+          </div>
+          <span className="text-text-muted text-xs">
+            {measurements.length} registro{measurements.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        {measurements.length > 0 ? (
+          <div className="space-y-2">
+            {measurements.map((m, idx) => {
+              const prev = measurements[idx + 1];
+              const delta =
+                m.weight != null && prev?.weight != null
+                  ? Math.round((m.weight - prev.weight) * 10) / 10
+                  : null;
+
+              const perimeters = [
+                m.waist != null ? `Cintura: ${m.waist}cm` : null,
+                m.arm != null ? `Brazo: ${m.arm}cm` : null,
+                m.leg != null ? `Pierna: ${m.leg}cm` : null,
+              ].filter(Boolean);
+
+              return (
+                <div
+                  key={m.id}
+                  className="border-border/60 bg-surface-raised/40 hover:bg-surface-raised/70 flex flex-col gap-2 rounded-xl border p-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-text text-xs font-semibold">
+                        {format(new Date(m.date), 'dd MMMM yyyy', { locale: es })}
+                      </span>
+                      {idx === 0 && (
+                        <span className="bg-brand/10 text-brand rounded-md px-1.5 py-0.5 text-[10px] font-bold">
+                          Última
+                        </span>
+                      )}
+                    </div>
+
+                    {perimeters.length > 0 && (
+                      <p className="text-text-muted mt-1 text-xs">{perimeters.join(' · ')}</p>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <div className="text-right">
+                      <p className="text-text text-sm font-bold tabular-nums">
+                        {m.weight != null ? `${m.weight} kg` : '—'}
+                        {delta != null && (
+                          <span
+                            className={`ml-1.5 text-xs font-semibold ${
+                              delta < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand'
+                            }`}
+                          >
+                            {delta > 0 ? `+${delta}` : delta}
+                          </span>
+                        )}
+                      </p>
+                      {m.body_fat_percentage != null && (
+                        <p className="text-text-muted text-[11px]">
+                          {m.body_fat_percentage}% grasa
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-border/50 flex items-center gap-1 border-l pl-2">
+                      {onEditMeasurement && (
+                        <button
+                          type="button"
+                          onClick={() => onEditMeasurement(m)}
+                          className="text-text-muted hover:bg-surface hover:text-text flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                          title="Editar medición"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+
+                      {onDeleteMeasurement && (
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(m.id)}
+                          disabled={deletingId === m.id}
+                          className="text-text-muted hover:bg-danger/10 hover:text-danger flex h-7 w-7 items-center justify-center rounded-lg transition-colors disabled:opacity-50"
+                          title="Eliminar medición"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <div className="flex flex-col items-center px-2 pt-4 pb-5 text-center">
-            <Scale className="text-brand/50 mb-2.5 h-7 w-7" aria-hidden />
-            <p className="text-text text-sm font-semibold">Sin mediciones de peso</p>
-            <p className="text-text-muted text-small mt-1 max-w-[14rem] leading-snug">
-              Registra tu peso para ver la evolución.
+          <div className="border-border/70 rounded-xl border border-dashed p-6 text-center">
+            <Scale className="text-text-muted mx-auto h-8 w-8" />
+            <p className="text-text mt-2 text-sm font-bold">Sin mediciones registradas</p>
+            <p className="text-text-muted mt-0.5 text-xs">
+              Registra tu primera medición de peso y medidas corporales.
             </p>
-            <Button type="button" size="sm" className="mt-4" onClick={onAddMeasurement}>
+            <Button size="sm" onClick={onAddMeasurement} className="mt-3.5">
               <Plus className="h-3.5 w-3.5" />
-              Registrar peso
+              Registrar ahora
             </Button>
           </div>
         )}
-      </Card>
-
-      {measurements.length > 0 && (
-        <Card padding="sm" rounded="xl" className="border-border bg-surface">
-          <button
-            type="button"
-            onClick={() => onHistoryOpenChange(!historyOpen)}
-            className="flex w-full items-center justify-between gap-2 text-left"
-            aria-expanded={historyOpen}
-          >
-            <h2 className="text-text text-sm font-semibold">
-              Historial
-              <span className="text-text-muted ml-1.5 font-normal">· {measurements.length}</span>
-            </h2>
-            <ChevronDown
-              className={cn(
-                'text-text-muted h-4 w-4 shrink-0 transition-transform',
-                historyOpen && 'rotate-180'
-              )}
-            />
-          </button>
-
-          {historyOpen && (
-            <>
-              <div className="mt-2.5 space-y-1.5 lg:hidden">
-                {measurements.map((m) => (
-                  <div key={m.id} className="bg-surface-raised rounded-xl px-2.5 py-2">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-text text-small font-semibold">
-                        {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                      </p>
-                      <p className="text-text text-small font-semibold tabular-nums">
-                        {m.weight != null ? `${m.weight} kg` : '—'}
-                      </p>
-                    </div>
-                    <p className="text-text-muted text-small mt-0.5">
-                      Grasa {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                      {' · '}
-                      Cintura {m.waist != null ? `${m.waist}` : '—'}
-                      {' · '}
-                      Brazo {m.arm != null ? `${m.arm}` : '—'}
-                      {' · '}
-                      Pierna {m.leg != null ? `${m.leg}` : '—'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="-mx-1 mt-2.5 hidden overflow-x-auto px-1 lg:block">
-                <table className="w-full min-w-[28rem] text-left">
-                  <thead>
-                    <tr className="border-border-subtle text-text-muted text-small border-b font-semibold">
-                      <th className="pr-3 pb-2">Fecha</th>
-                      <th className="pr-3 pb-2">Peso</th>
-                      <th className="pr-3 pb-2">Grasa</th>
-                      <th className="pr-3 pb-2">Cintura</th>
-                      <th className="pr-3 pb-2">Brazo</th>
-                      <th className="pb-2">Pierna</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {measurements.map((m) => (
-                      <tr
-                        key={m.id}
-                        className="border-border-subtle text-xs last:border-0 sm:text-sm"
-                      >
-                        <td className="text-text-secondary py-2 pr-3 font-medium whitespace-nowrap">
-                          {format(new Date(m.date), 'dd MMM yyyy', { locale: es })}
-                        </td>
-                        <td className="text-text py-2 pr-3 font-semibold">
-                          {m.weight != null ? `${m.weight} kg` : '—'}
-                        </td>
-                        <td className="text-text-muted py-2 pr-3">
-                          {m.body_fat_percentage != null ? `${m.body_fat_percentage}%` : '—'}
-                        </td>
-                        <td className="text-text-muted py-2 pr-3">
-                          {m.waist != null ? `${m.waist} cm` : '—'}
-                        </td>
-                        <td className="text-text-muted py-2 pr-3">
-                          {m.arm != null ? `${m.arm} cm` : '—'}
-                        </td>
-                        <td className="text-text-muted py-2">
-                          {m.leg != null ? `${m.leg} cm` : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </Card>
-      )}
-
-      {workouts.length > 0 && (
-        <Card padding="sm" rounded="xl" className="border-border bg-surface">
-          <h2 className="text-text mb-2 text-sm font-semibold">Actividad reciente</h2>
-          <div className="space-y-0.5">
-            {workouts.slice(0, 5).map((w) => (
-              <div
-                key={w.id}
-                className="border-border-subtle flex items-center justify-between gap-2 border-b py-2 last:border-0"
-              >
-                <p className="text-text truncate text-xs font-medium sm:text-sm">
-                  {w.routine_name}
-                </p>
-                <p className="text-text-muted text-small shrink-0 tabular-nums sm:text-xs">
-                  {format(new Date(w.start_time), 'dd MMM · HH:mm', { locale: es })}
-                </p>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      </div>
     </div>
   );
 }
