@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { Button, CedulaInput, Input, Label, Modal } from '../../components/ui';
+import { Button, CedulaInput, Input, Label, Modal, Select } from '../../components/ui';
 import { type TrainingShift } from '../../lib/trainingShift';
 
 export interface NewMemberForm {
@@ -142,8 +142,7 @@ export function MemberAddModal({
           {!isStaffMember && (
             <div>
               <Label>Rol de Usuario</Label>
-              <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
+              <Select
                 value={newMember.role}
                 onChange={(e) => {
                   onNewMemberChange({ ...newMember, role: e.target.value, training_shift: '' });
@@ -153,7 +152,7 @@ export function MemberAddModal({
                 <option value="trainer">Entrenador / Staff</option>
                 <option value="receptionist">Recepcionista</option>
                 {canCreateAdmin && <option value="admin">Administrador</option>}
-              </select>
+              </Select>
             </div>
           )}
           {(newMember.role === 'member' || newMember.role === 'trainer') && (
@@ -161,8 +160,7 @@ export function MemberAddModal({
               <Label>
                 {newMember.role === 'trainer' ? 'Turno exclusivo' : 'Turno de entrenamiento'}
               </Label>
-              <select
-                className="focus:ring-brand border-border bg-surface text-text w-full appearance-none rounded-xl border px-4 py-3 font-bold transition-[border-color,box-shadow,background-color] duration-150 outline-none focus:ring-2"
+              <Select
                 value={newMember.training_shift}
                 onChange={(e) => {
                   onNewMemberChange({
@@ -175,7 +173,7 @@ export function MemberAddModal({
                 <option value="diurno">Diurno / Mañana</option>
                 <option value="vespertino">Vespertino / Tarde</option>
                 <option value="nocturno">Nocturno / Noche</option>
-              </select>
+              </Select>
             </div>
           )}
         </div>

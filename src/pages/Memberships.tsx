@@ -7,7 +7,6 @@ import {
   Input,
   Label,
   Modal,
-  Spinner,
   Badge,
   EmptyState,
   BackToDashboardLink,
@@ -148,8 +147,16 @@ export default function Memberships() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} padding="md" rounded="xl" className="flex flex-col space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="bg-surface-overlay h-5 w-32 animate-pulse rounded-md" />
+                <div className="bg-surface-overlay h-5 w-16 animate-pulse rounded-md" />
+              </div>
+              <div className="bg-surface-overlay h-7 w-24 animate-pulse rounded-md" />
+            </Card>
+          ))}
         </div>
       ) : loadError ? (
         <EmptyState
@@ -171,7 +178,7 @@ export default function Memberships() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+        <div className="stagger-fade-in grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {plans.map((plan) => {
             const dailyCost = (plan.price_usd / plan.duration_days).toFixed(2);
             return (

@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSetTodayRoutineMutation } from '../../hooks/queries/useMemberAgencyQuery';
 import { useToastOptional } from '../../context/ToastContext';
+import { Select } from '../ui';
 
 export interface TodayRoutineOption {
   id: number;
@@ -38,36 +38,26 @@ export function MemberTodayRoutinePicker({
       {!compact ? (
         <p className="text-text-secondary text-small mb-1.5 font-medium">Hoy hago</p>
       ) : null}
-      <div className="relative">
-        <select
-          className={cn(
-            'border-border bg-surface text-text text-input w-full appearance-none rounded-[var(--radius-input)] border py-2 pr-9 pl-3 font-medium',
-            'min-h-[var(--touch-min)]'
-          )}
-          value={value}
-          disabled={setToday.isPending}
-          aria-label="Elegir rutina de hoy"
-          onChange={(e) => {
-            const routineId = Number(e.target.value);
-            if (!routineId) return;
-            setToday.mutate(routineId, {
-              onError: (err) => {
-                toast?.error(err instanceof Error ? err.message : 'No se pudo guardar la elección');
-              },
-            });
-          }}
-        >
-          {routines.map((routine) => (
-            <option key={routine.id} value={routine.id}>
-              {routine.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          className="text-text-muted pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2"
-          aria-hidden
-        />
-      </div>
+      <Select
+        value={value}
+        disabled={setToday.isPending}
+        aria-label="Elegir rutina de hoy"
+        onChange={(e) => {
+          const routineId = Number(e.target.value);
+          if (!routineId) return;
+          setToday.mutate(routineId, {
+            onError: (err) => {
+              toast?.error(err instanceof Error ? err.message : 'No se pudo guardar la elección');
+            },
+          });
+        }}
+      >
+        {routines.map((routine) => (
+          <option key={routine.id} value={routine.id}>
+            {routine.name}
+          </option>
+        ))}
+      </Select>
     </div>
   );
 }

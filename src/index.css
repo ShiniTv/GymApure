@@ -118,21 +118,107 @@
 }
 
 @layer utilities {
+  /* ─── Page transition — slide+fade (snappy, spatial, not laggy) ─── */
   @keyframes page-enter {
     from {
       opacity: 0;
+      transform: translateY(4px);
     }
-
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 
   .animate-page-enter {
-    /* Frequent route changes — opacity only, snappy; no translate (would feel like lag) */
-    animation: page-enter 0.12s var(--ease-out);
+    /* Route changes: fade + 4px lift — spatial without feeling sluggish */
+    animation: page-enter 0.18s var(--ease-out) both;
   }
 
+  /* ─── Pop-in — modals, chips, badges appearing ─── */
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-pop-in {
+    animation: pop-in 0.18s var(--ease-out) both;
+  }
+
+  /* ─── Float-up — cards, sections entering on mount ─── */
+  @keyframes float-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-float-up {
+    animation: float-up 0.22s var(--ease-out) both;
+  }
+
+  /* ─── Fade-up-sm — list rows, table rows (subtle) ─── */
+  @keyframes fade-up-sm {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up-sm {
+    animation: fade-up-sm 0.15s var(--ease-out) both;
+  }
+
+  /* ─── Count-up-pop — KPI numbers highlight ─── */
+  @keyframes count-up-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.88) translateY(4px);
+    }
+    60% {
+      transform: scale(1.04) translateY(-1px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-count-up-pop {
+    animation: count-up-pop 0.32s var(--ease-out) both;
+  }
+
+  /* ─── Slide-in-right — panels, drawers entering from right ─── */
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.2s var(--ease-out) both;
+  }
+
+  /* ─── Auth fade-in (unchanged — auth-linear specific) ─── */
   @keyframes auth-fade-in {
     from {
       opacity: 0;
@@ -244,10 +330,10 @@ body,
       0 8px 24px rgb(0 0 0 / 0.32);
   }
 
-  /* Authentication — centered card on a night canvas. */
+  /* Authentication — centered card on an obsidian night canvas. */
   .auth-linear {
     color-scheme: dark;
-    background: #000;
+    background: #09090b;
   }
 
   /* Logo mark: readable disc without floating island glow. */
@@ -276,87 +362,103 @@ body,
   }
 
   .antigravity-dot-grid {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.28) 1px, transparent 1px);
-    background-size: 26px 26px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.35) 1.25px, transparent 1.25px);
+    background-size: 24px 24px;
     opacity: 0.65;
     -webkit-mask-image: radial-gradient(
-      380px circle at var(--antigravity-x) var(--antigravity-y),
+      460px circle at var(--antigravity-x) var(--antigravity-y),
       black 0%,
-      rgba(0, 0, 0, 0.35) 60%,
+      rgba(0, 0, 0, 0.45) 55%,
       transparent 100%
     );
     mask-image: radial-gradient(
-      380px circle at var(--antigravity-x) var(--antigravity-y),
+      460px circle at var(--antigravity-x) var(--antigravity-y),
       black 0%,
-      rgba(0, 0, 0, 0.35) 60%,
+      rgba(0, 0, 0, 0.45) 55%,
       transparent 100%
     );
   }
 
+  /* Default / Antigravity Mode (Google Antigravity style vibrant dynamic aura) */
+  .antigravity-canvas[data-mode='antigravity'] .antigravity-primary-spotlight,
   .antigravity-primary-spotlight {
     background: radial-gradient(
-      520px circle at var(--antigravity-x) var(--antigravity-y),
-      rgba(245, 158, 11, 0.16) 0%,
-      rgba(245, 158, 11, 0.05) 45%,
+      580px circle at var(--antigravity-x) var(--antigravity-y),
+      rgba(245, 158, 11, 0.22) 0%,
+      rgba(245, 158, 11, 0.08) 45%,
       transparent 75%
     );
   }
 
+  .antigravity-canvas[data-mode='antigravity'] .antigravity-secondary-glow,
   .antigravity-secondary-glow {
     background: radial-gradient(
-      680px circle at calc(var(--antigravity-x) + 40px) calc(var(--antigravity-y) - 30px),
-      rgba(139, 92, 246, 0.08) 0%,
-      rgba(59, 130, 246, 0.04) 40%,
+      700px circle at calc(var(--antigravity-x) + 40px) calc(var(--antigravity-y) - 30px),
+      rgba(139, 92, 246, 0.14) 0%,
+      rgba(6, 182, 212, 0.1) 35%,
+      rgba(59, 130, 246, 0.05) 55%,
+      transparent 75%
+    );
+  }
+
+  /* Theme Mode (User's active custom theme brand accent color) */
+  .antigravity-canvas[data-mode='theme'] .antigravity-primary-spotlight {
+    background: radial-gradient(
+      580px circle at var(--antigravity-x) var(--antigravity-y),
+      color-mix(in srgb, var(--color-brand) 26%, transparent) 0%,
+      color-mix(in srgb, var(--color-brand) 10%, transparent) 45%,
+      transparent 75%
+    );
+  }
+
+  .antigravity-canvas[data-mode='theme'] .antigravity-secondary-glow {
+    background: radial-gradient(
+      720px circle at calc(var(--antigravity-x) + 30px) calc(var(--antigravity-y) - 20px),
+      color-mix(in srgb, var(--color-brand-hover, var(--color-brand)) 16%, transparent) 0%,
       transparent 70%
     );
   }
 
-  .auth-doppelrand-shell {
-    padding: 0.375rem;
-    border-radius: 14px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.02) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow:
-      0 20px 40px -15px rgba(0, 0, 0, 0.8),
-      0 0 0 1px rgba(255, 255, 255, 0.04);
-  }
-
   .auth-linear-card {
     width: 100%;
-    padding: 1.75rem 1.5rem 1.5rem;
-    border: 1px solid rgb(255 255 255 / 0.08);
-    border-radius: 10px;
-    background: #18181b;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    padding: 2.25rem 1.875rem 1.875rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 20px;
+    background: rgba(18, 18, 22, 0.82);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 24px 56px -12px rgba(0, 0, 0, 0.9),
+      0 0 44px -14px color-mix(in srgb, var(--color-brand) 16%, transparent);
     animation: authCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes authCardIn {
     from {
-      transform: translateY(4px);
+      opacity: 0;
+      transform: translateY(8px) scale(0.99);
     }
     to {
-      transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   }
 
   .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 15px;
   }
 
   .auth-linear-header + .auth-form,
-  .auth-linear-header + .auth-form-wrap .auth-form {
+  .auth-linear-header + .auth-form-wrap .auth-form,
+  .auth-linear-header + ol + .auth-form-wrap .auth-form {
     margin-top: 1.5rem;
   }
 
   .auth-form .auth-linear-primary {
-    margin-top: 6px;
+    margin-top: 8px;
   }
 
   .auth-linear-header {
@@ -364,20 +466,21 @@ body,
   }
 
   .auth-linear .auth-linear-label {
-    color: #d4d4d8;
-    font-size: 0.75rem;
+    color: #e4e4e7;
+    font-size: 0.775rem;
     font-weight: 500;
-    letter-spacing: -0.006em;
+    letter-spacing: -0.008em;
   }
 
   .auth-linear .auth-linear-field {
     min-height: 2.875rem;
-    border-color: rgb(255 255 255 / 0.12) !important;
-    border-radius: 8px;
-    background: #242427 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px;
+    background: rgba(28, 28, 34, 0.75) !important;
     color: #fafafa !important;
-    box-shadow: none !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35) !important;
     caret-color: var(--color-brand);
+    font-size: 0.875rem;
     transition:
       border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
       box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
@@ -385,14 +488,16 @@ body,
   }
 
   .auth-linear .auth-linear-field:hover {
-    border-color: rgb(255 255 255 / 0.22);
-    background: #28282c !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(34, 34, 42, 0.8) !important;
   }
 
   .auth-linear .auth-linear-field:focus {
-    border-color: color-mix(in srgb, var(--color-brand) 75%, #fff);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent);
-    background: #27272a !important;
+    border-color: color-mix(in srgb, var(--color-brand) 85%, #fff) !important;
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-brand) 22%, transparent),
+      inset 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+    background: rgba(32, 32, 38, 0.95) !important;
   }
 
   .auth-linear .auth-linear-field::placeholder {
@@ -402,49 +507,60 @@ body,
   /* High-contrast CTA on the night card (white fill / near-black text) with physical feedback. */
   .auth-linear .auth-linear-primary {
     border: 0 !important;
-    border-radius: 9999px;
-    background: #fafafa !important;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f4f5 100%) !important;
     color: #09090b !important;
     box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+      0 4px 16px rgba(255, 255, 255, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
     font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
+    min-height: 2.75rem;
     transition:
       transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-      background-color 0.15s ease,
-      box-shadow 0.15s ease !important;
+      box-shadow 0.2s ease,
+      background-color 0.15s ease !important;
   }
 
   .auth-linear .auth-linear-primary:hover {
     background: #ffffff !important;
     box-shadow:
-      0 4px 12px rgba(255, 255, 255, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+      0 6px 20px rgba(255, 255, 255, 0.22),
+      inset 0 1px 0 #ffffff !important;
+    transform: translateY(-1px);
   }
 
   .auth-linear .auth-linear-primary:active {
-    transform: scale(0.985);
+    transform: translateY(0) scale(0.985);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1) !important;
   }
 
   .auth-linear .auth-linear-primary:focus-visible {
-    box-shadow: 0 0 0 3px color-mix(in srgb, #fafafa 45%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, #fafafa 45%, transparent) !important;
   }
 
   .auth-linear .auth-linear-secondary {
-    border-color: rgb(255 255 255 / 0.14) !important;
-    border-radius: 8px;
-    background: transparent !important;
-    color: #d4d4d8 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #e4e4e7 !important;
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   .auth-linear .auth-linear-secondary:hover {
-    background: rgb(255 255 255 / 0.06) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
     color: #fff !important;
+    transform: translateY(-1px);
   }
 
   .auth-linear .auth-linear-secondary:active {
-    transform: scale(0.985);
+    transform: translateY(0) scale(0.985);
   }
 
   .auth-linear .auth-linear-link {
@@ -452,6 +568,7 @@ body,
     text-decoration-line: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 0.18em;
+    transition: color 0.15s ease;
   }
 
   .auth-linear .auth-linear-link:hover {
@@ -466,8 +583,8 @@ body,
     font-size: 1.25rem;
     font-weight: 600;
     border: 1px solid rgb(255 255 255 / 0.14);
-    border-radius: 8px;
-    background: #2c2c2e;
+    border-radius: 10px;
+    background: rgba(28, 28, 34, 0.8);
     color: #fafafa;
     transition: all 0.15s ease;
   }
@@ -476,7 +593,7 @@ body,
     outline: none;
     border-color: color-mix(in srgb, var(--color-brand) 70%, #fff);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 25%, transparent);
-    background: #343438;
+    background: rgba(34, 34, 42, 0.95);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -689,15 +806,15 @@ body,
   }
 
   .nav-section {
-    @apply mb-3 flex flex-col gap-0.5 last:mb-0;
+    @apply mb-2 flex flex-col gap-0.5 last:mb-0;
   }
 
   .nav-section-label {
-    @apply text-text-muted text-small mb-1.5 px-2.5 leading-snug font-semibold tracking-[-0.01em];
+    @apply text-text-muted/70 mb-1 px-2.5 pt-1.5 text-[10px] leading-none font-semibold tracking-wider uppercase;
   }
 
   .nav-link {
-    @apply text-chrome relative flex min-h-8 touch-manipulation items-center gap-2.5 rounded-[var(--radius-button)] px-2.5 py-1.5 leading-snug font-medium transition-[background-color,color,box-shadow,transform,opacity] duration-150;
+    @apply text-chrome relative flex min-h-[36px] touch-manipulation items-center gap-2.5 rounded-[var(--radius-button)] px-2.5 py-1.5 text-[13px] leading-snug font-medium transition-[background-color,color,box-shadow,transform,opacity] duration-150;
     transition-timing-function: var(--ease-out);
   }
 
@@ -712,32 +829,33 @@ body,
     }
   }
 
-  /* Active = quiet raised pill + hairline (never brand tint) */
+  /* Active = quiet raised pill + hairline */
   .nav-link-active {
-    @apply bg-surface text-text shadow-xs;
+    @apply bg-surface text-text font-semibold shadow-xs;
     box-shadow:
       inset 0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent),
       var(--shadow-xs);
   }
 
   .dark .nav-link-active {
-    @apply bg-surface-raised;
+    @apply bg-surface-raised text-text;
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border) 55%, transparent);
   }
 
   .nav-link-active::before {
     content: '';
     position: absolute;
-    top: 22%;
-    bottom: 22%;
+    top: 20%;
+    bottom: 20%;
     left: 0;
-    width: 2px;
-    border-radius: 1px;
-    background: var(--color-text-muted);
-    opacity: 0.85;
+    width: 2.5px;
+    border-radius: 2px;
+    background: var(--color-brand);
+    opacity: 0.9;
   }
 
-  .nav-link-active.justify-center::before {
+  .nav-link-active.justify-center::before,
+  .nav-link-active.items-center.justify-center::before {
     display: none;
   }
 
@@ -782,6 +900,17 @@ body,
     padding-inline-end: 0.75rem;
     scrollbar-width: thin;
     scrollbar-color: #d1d5db transparent;
+  }
+
+  .scroll-area-collapsed {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scroll-area-collapsed::-webkit-scrollbar {
+    display: none;
   }
 
   .dark .scroll-area {
@@ -1002,44 +1131,110 @@ body,
 
 @media (prefers-reduced-motion: no-preference) {
   .stagger-fade-in > * {
-    animation: slide-up 0.2s var(--ease-out) both;
+    animation: slide-up 0.18s var(--ease-out) both;
   }
 
   .stagger-fade-in > *:nth-child(1) {
     animation-delay: 0ms;
   }
   .stagger-fade-in > *:nth-child(2) {
-    animation-delay: 35ms;
+    animation-delay: 30ms;
   }
   .stagger-fade-in > *:nth-child(3) {
-    animation-delay: 70ms;
+    animation-delay: 60ms;
   }
   .stagger-fade-in > *:nth-child(4) {
-    animation-delay: 105ms;
+    animation-delay: 90ms;
   }
   .stagger-fade-in > *:nth-child(5) {
-    animation-delay: 140ms;
+    animation-delay: 120ms;
   }
   .stagger-fade-in > *:nth-child(6) {
-    animation-delay: 175ms;
+    animation-delay: 150ms;
   }
   .stagger-fade-in > *:nth-child(7) {
-    animation-delay: 210ms;
+    animation-delay: 180ms;
   }
   .stagger-fade-in > *:nth-child(8) {
-    animation-delay: 245ms;
+    animation-delay: 210ms;
   }
   .stagger-fade-in > *:nth-child(9) {
-    animation-delay: 280ms;
+    animation-delay: 240ms;
   }
   .stagger-fade-in > *:nth-child(10) {
-    animation-delay: 315ms;
+    animation-delay: 270ms;
   }
   .stagger-fade-in > *:nth-child(11) {
-    animation-delay: 350ms;
+    animation-delay: 300ms;
   }
   .stagger-fade-in > *:nth-child(12) {
-    animation-delay: 385ms;
+    animation-delay: 325ms;
+  }
+  .stagger-fade-in > *:nth-child(13) {
+    animation-delay: 350ms;
+  }
+  .stagger-fade-in > *:nth-child(14) {
+    animation-delay: 375ms;
+  }
+  .stagger-fade-in > *:nth-child(15) {
+    animation-delay: 400ms;
+  }
+  .stagger-fade-in > *:nth-child(16) {
+    animation-delay: 420ms;
+  }
+  .stagger-fade-in > *:nth-child(17) {
+    animation-delay: 440ms;
+  }
+  .stagger-fade-in > *:nth-child(18) {
+    animation-delay: 460ms;
+  }
+  .stagger-fade-in > *:nth-child(19) {
+    animation-delay: 478ms;
+  }
+  .stagger-fade-in > *:nth-child(20) {
+    animation-delay: 496ms;
+  }
+
+  /* stagger-float — cards/tiles entering on a grid, more lift */
+  .stagger-float > * {
+    animation: float-up 0.22s var(--ease-out) both;
+  }
+
+  .stagger-float > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-float > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .stagger-float > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .stagger-float > *:nth-child(4) {
+    animation-delay: 120ms;
+  }
+  .stagger-float > *:nth-child(5) {
+    animation-delay: 160ms;
+  }
+  .stagger-float > *:nth-child(6) {
+    animation-delay: 200ms;
+  }
+  .stagger-float > *:nth-child(7) {
+    animation-delay: 240ms;
+  }
+  .stagger-float > *:nth-child(8) {
+    animation-delay: 280ms;
+  }
+  .stagger-float > *:nth-child(9) {
+    animation-delay: 315ms;
+  }
+  .stagger-float > *:nth-child(10) {
+    animation-delay: 350ms;
+  }
+  .stagger-float > *:nth-child(11) {
+    animation-delay: 380ms;
+  }
+  .stagger-float > *:nth-child(12) {
+    animation-delay: 408ms;
   }
 }
 

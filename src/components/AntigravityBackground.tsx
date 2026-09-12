@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function AntigravityBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { authBgEffect } = useTheme();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -73,15 +75,22 @@ export default function AntigravityBackground() {
     <div
       ref={containerRef}
       aria-hidden="true"
+      data-mode={authBgEffect}
       className="antigravity-canvas pointer-events-none absolute inset-0 z-0 overflow-hidden"
     >
-      {/* 1. Subtle static ambient depth core */}
-      <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-amber-500/10 via-zinc-800/15 to-transparent blur-[120px]" />
+      {/* 1. Ambient depth core */}
+      <div
+        className={
+          authBgEffect === 'theme'
+            ? 'absolute top-1/2 left-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-brand)_15%,transparent)_0%,transparent_70%)] blur-[100px]'
+            : 'absolute top-1/2 left-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-amber-500/10 via-cyan-500/10 to-transparent blur-[120px]'
+        }
+      />
 
-      {/* 2. Secondary celestial violet halo following cursor */}
+      {/* 2. Secondary halo following cursor */}
       <div className="antigravity-secondary-glow absolute inset-0" />
 
-      {/* 3. Primary warm amber spotlight following cursor */}
+      {/* 3. Primary spotlight following cursor */}
       <div className="antigravity-primary-spotlight absolute inset-0" />
 
       {/* 4. Mathematical dot matrix revealed by the cursor light flashlight */}

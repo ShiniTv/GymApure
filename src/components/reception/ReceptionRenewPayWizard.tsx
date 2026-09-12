@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Search, Upload } from 'lucide-react';
 import { apiFetch, parseJsonResponse, parseJsonSafe } from '../../lib/api';
-import { Button, Input, Label } from '../ui';
+import { Button, Input, Label, Select } from '../ui';
 
 interface MemberOption {
   id: number;
@@ -180,18 +180,14 @@ export function ReceptionRenewPayWizard({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label>Plan</Label>
-          <select
-            className="border-border mt-1 min-h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium"
-            value={membershipId}
-            onChange={(event) => choosePlan(event.target.value)}
-          >
+          <Select value={membershipId} onChange={(event) => choosePlan(event.target.value)}>
             <option value="">Seleccionar…</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
                 {plan.name} — {plan.duration_days}d — ${plan.price_usd}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <Label>Monto USD</Label>
@@ -207,8 +203,7 @@ export function ReceptionRenewPayWizard({
         </div>
         <div>
           <Label>Método</Label>
-          <select
-            className="border-border mt-1 min-h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium"
+          <Select
             value={method}
             onChange={(event) => setMethod(event.target.value as typeof method)}
           >
@@ -217,7 +212,7 @@ export function ReceptionRenewPayWizard({
                 {item.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <Label>Referencia (opcional)</Label>

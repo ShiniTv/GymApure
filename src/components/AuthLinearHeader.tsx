@@ -1,6 +1,4 @@
-import { Lock } from 'lucide-react';
 import Logo from './Logo';
-import BrandName from './BrandName';
 
 interface AuthLinearHeaderProps {
   /** Task line under the GymApure wordmark. */
@@ -10,25 +8,23 @@ interface AuthLinearHeaderProps {
 export default function AuthLinearHeader({ subtitle }: AuthLinearHeaderProps) {
   return (
     <div className="auth-linear-header flex flex-col items-center">
-      <div className="mb-3.5 inline-flex items-center gap-1.5 rounded-full border border-zinc-700/60 bg-zinc-800/50 px-2.5 py-0.5 text-[0.6875rem] font-medium tracking-wide text-zinc-400">
-        <Lock className="h-3 w-3 text-zinc-500" />
-        <span>Conexión cifrada</span>
-      </div>
-
       <div className="relative mb-3 flex items-center justify-center">
-        <Logo
-          mode="dark"
-          className="h-10 w-10 transition-transform duration-300 hover:scale-105"
-          fetchPriority="high"
-        />
+        <div className="flex h-13 w-13 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] p-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_10px_25px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-white/20">
+          <Logo
+            mode="dark"
+            className="h-8 w-8 transition-transform duration-300"
+            fetchPriority="high"
+          />
+        </div>
       </div>
 
-      <p className="text-[1.35rem] leading-tight font-semibold tracking-tight text-zinc-100">
-        <BrandName variant="inline" size="md" onDark />
-      </p>
+      <div className="flex items-center justify-center gap-1.5 leading-tight">
+        <span className="text-xl font-bold tracking-tight text-white">Gym</span>
+        <span className="text-brand text-xl font-bold tracking-tight">Apure</span>
+      </div>
 
       {subtitle ? (
-        <h1 className="mt-1.5 text-[0.8125rem] leading-5 font-medium text-zinc-400">{subtitle}</h1>
+        <h1 className="mt-1 text-xs font-normal tracking-normal text-zinc-400">{subtitle}</h1>
       ) : (
         <h1 className="sr-only">GymApure</h1>
       )}

@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation } from 'react-router';
 import { Bell } from 'lucide-react';
-import clsx from 'clsx';
+import { cn } from '../../lib/utils';
 import { useNotificationItems } from '../../hooks/useNotificationItems';
 import { formatNotificationBadgeCount } from '../../lib/notifications/types';
 
@@ -34,7 +34,7 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={clsx(
+        className={cn(
           compact
             ? 'text-text-muted hover:bg-surface-raised relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors'
             : defaultBtnClass,
@@ -49,7 +49,7 @@ export function NotificationBell({ className, compact }: NotificationBellProps) 
           <Bell className={compact ? 'h-4 w-4' : 'h-[1.125rem] w-[1.125rem]'} aria-hidden />
           {badgeLabel && (
             <span
-              className={clsx(
+              className={cn(
                 'absolute flex items-center justify-center rounded-full font-bold tabular-nums ring-2',
                 compact
                   ? 'bg-brand dark:text-bg dark:ring-bg text-small -top-1.5 -right-2 h-4 min-w-4 px-0.5 text-white ring-white'

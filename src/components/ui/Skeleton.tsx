@@ -242,3 +242,80 @@ export function WorkoutShellSkeleton() {
     </div>
   );
 }
+
+/** Auth page skeleton (login, register, forgot-password, reset-password) */
+export function AuthShellSkeleton() {
+  return (
+    <div
+      className="flex min-h-dvh flex-col items-center justify-center p-4 sm:p-6"
+      aria-busy="true"
+      aria-label="Cargando autenticación"
+    >
+      <div className="w-full max-w-md space-y-6">
+        <div className="flex flex-col items-center space-y-3">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-4 w-60" />
+        </div>
+        <div className="border-border/70 bg-surface/50 space-y-4 rounded-xl border p-6 shadow-sm">
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-24" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-28" />
+            <Skeleton className="h-10 w-full rounded-xl" />
+          </div>
+          <Skeleton className="mt-2 h-11 w-full rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Generic internal page loading skeleton */
+export function PageShellSkeleton() {
+  return (
+    <div className="page-stack" aria-busy="true" aria-label="Cargando página">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-3.5 w-72" />
+      </div>
+      <div className="border-border/70 bg-surface/40 space-y-4 rounded-[var(--radius-card)] border p-5">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
+        <div className="space-y-3 pt-2">
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Member Dashboard specific skeleton */
+export function MemberDashboardSkeleton() {
+  return (
+    <div className="page-stack" aria-busy="true" aria-label="Cargando panel de socio">
+      {/* Hero card placeholder */}
+      <Skeleton className="h-36 w-full rounded-[var(--radius-card)] sm:h-44" />
+
+      {/* Quick stats / actions placeholder */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <Skeleton className="h-20 rounded-[var(--radius-card)]" />
+        <Skeleton className="h-20 rounded-[var(--radius-card)]" />
+        <Skeleton className="h-20 rounded-[var(--radius-card)]" />
+        <Skeleton className="h-20 rounded-[var(--radius-card)]" />
+      </div>
+
+      {/* Routine & Content preview card */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Skeleton className="h-48 rounded-[var(--radius-card)]" />
+        <Skeleton className="h-48 rounded-[var(--radius-card)]" />
+      </div>
+    </div>
+  );
+}

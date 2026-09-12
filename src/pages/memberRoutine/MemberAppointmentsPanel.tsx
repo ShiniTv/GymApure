@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Badge, Button, Card, Input, Label } from '../../components/ui';
+import { Badge, Button, Card, Input, Label, Select } from '../../components/ui';
 import { useToastOptional } from '../../context/ToastContext';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 
@@ -159,11 +159,10 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
           </div>
           <div>
             <Label htmlFor="appointment-block">Bloque</Label>
-            <select
+            <Select
               id="appointment-block"
               value={form.training_block_id}
               onChange={(event) => setForm({ ...form, training_block_id: event.target.value })}
-              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="">Sin bloque específico</option>
               {blocks
@@ -173,7 +172,7 @@ export function MemberAppointmentsPanel({ memberId }: { memberId: number }) {
                     {block.name} · {block.status}
                   </option>
                 ))}
-            </select>
+            </Select>
           </div>
           <div>
             <Label htmlFor="appointment-notes">Notas</Label>

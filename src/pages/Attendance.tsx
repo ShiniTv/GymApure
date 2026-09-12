@@ -263,11 +263,13 @@ export default function Attendance() {
                   itemContent={renderInactiveMember}
                 />
               ) : (
-                inactiveMembers.map((member, index) => (
-                  <React.Fragment key={member.id}>
-                    {renderInactiveMember(index, member)}
-                  </React.Fragment>
-                ))
+                <div className="stagger-fade-in space-y-1">
+                  {inactiveMembers.map((member, index) => (
+                    <React.Fragment key={member.id}>
+                      {renderInactiveMember(index, member)}
+                    </React.Fragment>
+                  ))}
+                </div>
               )}
             </div>
           </Card>

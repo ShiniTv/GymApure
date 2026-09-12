@@ -9,6 +9,7 @@ import {
   Card,
   Label,
   Input,
+  Select,
   Textarea,
   Breadcrumbs,
   Avatar,
@@ -275,10 +276,9 @@ export default function MemberNutrition() {
             </div>
             <div>
               <Label>Bloque de entrenamiento</Label>
-              <select
+              <Select
                 value={planForm.training_block_id}
                 onChange={(e) => setPlanForm({ ...planForm, training_block_id: e.target.value })}
-                className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
               >
                 <option value="">Sin bloque específico</option>
                 {trainingBlocks
@@ -288,7 +288,7 @@ export default function MemberNutrition() {
                       {block.name} · {block.objective}
                     </option>
                   ))}
-              </select>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div>

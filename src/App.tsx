@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
-import { DashboardSkeleton } from './components/ui';
+import { PageShellSkeleton, AuthShellSkeleton } from './components/ui';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
 import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
@@ -85,9 +85,13 @@ function PageLoader() {
       aria-busy="true"
       aria-label="Cargando página"
     >
-      <DashboardSkeleton />
+      <PageShellSkeleton />
     </div>
   );
+}
+
+function AuthLoader() {
+  return <AuthShellSkeleton />;
 }
 
 function ProtectedRoute({
@@ -150,9 +154,13 @@ function RegisterRoute() {
       });
   }, []);
 
-  if (allowed === null) return <PageLoader />;
+  if (allowed === null) return <AuthLoader />;
   if (!allowed) return <Navigate to="/login" replace />;
-  return <Register />;
+  return (
+    <Suspense fallback={<AuthLoader />}>
+      <Register />
+    </Suspense>
+  );
 }
 
 function AppRoutes() {
@@ -176,9 +184,22 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/solicitar-demo" element={<Navigate to="/login" replace />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/forgot-password"
+            element={
+              <Suspense fallback={<AuthLoader />}>
+                <ForgotPassword />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <Suspense fallback={<AuthLoader />}>
+                <ResetPassword />
+              </Suspense>
+            }
+          />
           <Route path="/register" element={<RegisterRoute />} />
           <Route
             path="/check-in"

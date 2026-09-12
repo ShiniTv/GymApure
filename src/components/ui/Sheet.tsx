@@ -11,6 +11,7 @@ import {
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useScrollLock } from '../../hooks/useScrollLock';
+import { IconButton } from './IconButton';
 
 const EXIT_MS = 280;
 const DISMISS_PX = 96;
@@ -269,14 +270,16 @@ export function Sheet({
               >
                 {title}
               </h2>
-              <button
+              <IconButton
                 type="button"
+                size="sm"
+                variant="tertiary"
                 onClick={onClose}
-                className="tap-feedback text-text-muted hover:bg-surface-overlay hover:text-text rounded-md p-1.5"
                 aria-label={closeLabel}
+                className="shrink-0"
               >
-                <X className="h-4 w-4" />
-              </button>
+                <X className="h-4 w-4" strokeWidth={1.75} />
+              </IconButton>
             </div>
           )}
           {scrollable ? (

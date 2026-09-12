@@ -12,6 +12,7 @@ import {
   PasswordInput,
   Skeleton,
   BackToDashboardLink,
+  PageShellSkeleton,
 } from '../components/ui';
 import {
   OperateHeader,
@@ -143,7 +144,7 @@ export default function MfaSecurity() {
     }
   };
 
-  if (!user) return null;
+  if (!user || statusLoading) return <PageShellSkeleton />;
 
   const enabled = Boolean(status?.mfa_enabled);
   const showGuide = !enabled && !setup;

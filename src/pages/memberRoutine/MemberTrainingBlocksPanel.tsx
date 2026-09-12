@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Label } from '../../components/ui';
+import { Button, Card, Input, Label, Select } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { useToastOptional } from '../../context/ToastContext';
 
@@ -141,16 +141,15 @@ export function MemberTrainingBlocksPanel({ memberId }: { memberId: number }) {
           </div>
           <div>
             <Label>Método de intensidad</Label>
-            <select
+            <Select
               value={form.intensity_method}
               onChange={(e) => setForm({ ...form, intensity_method: e.target.value })}
-              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="manual">Manual</option>
               <option value="rpe_rir">RPE / RIR</option>
               <option value="percent_1rm">% 1RM</option>
               <option value="double_progression">Doble progresión</option>
-            </select>
+            </Select>
           </div>
         </div>
         <Button

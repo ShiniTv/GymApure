@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { UserPlus, Trash2 } from 'lucide-react';
 import { apiFetch, parseJsonResponse, toDisplayErrorMessage } from '../../lib/api';
-import { Button, Input, Label, Modal, Badge, EmptyState, Spinner } from '../ui';
+import { Button, Input, Label, Modal, Badge, EmptyState, Spinner, Select } from '../ui';
 import type { Trainer } from '../../hooks/queries/useTrainersQuery';
 
 interface AssignedMember {
@@ -144,11 +144,7 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
           placeholder="Buscar por nombre o cédula…"
         />
         {options.length > 0 && (
-          <select
-            className="border-border bg-surface w-full rounded-md border px-3 py-2 text-sm"
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-          >
+          <Select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
             <option value="">Seleccionar…</option>
             {options.map((m) => (
               <option key={m.id} value={m.id}>
@@ -156,7 +152,7 @@ export function TrainerMembersModal({ trainer, open, onClose, onToast }: Trainer
                 {m.cedula ? ` (${m.cedula})` : ''}
               </option>
             ))}
-          </select>
+          </Select>
         )}
         <Button
           type="button"

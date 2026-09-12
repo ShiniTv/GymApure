@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Label, Modal, Spinner } from '../../components/ui';
+import { Button, Card, Input, Label, Modal, Spinner, Select } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { useToastOptional } from '../../context/ToastContext';
@@ -75,18 +75,13 @@ function ScoreField({
   return (
     <div>
       <Label htmlFor={inputId}>{label}</Label>
-      <select
-        id={inputId}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
-      >
+      <Select id={inputId} value={value} onChange={(event) => onChange(Number(event.target.value))}>
         {[1, 2, 3, 4, 5].map((score) => (
           <option key={score} value={score}>
             {score}/5
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }
@@ -301,22 +296,21 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
           </div>
           <div>
             <Label htmlFor="assessment-experience">Experiencia</Label>
-            <select
+            <Select
               id="assessment-experience"
-              value={assessment.experience_level}
+              value={assessment.experience_level || ''}
               onChange={(event) =>
                 setAssessment({
                   ...assessment,
-                  experience_level: event.target.value as ExperienceLevel,
+                  experience_level: (event.target.value || '') as ExperienceLevel,
                 })
               }
-              className="border-border bg-surface text-text h-10 w-full rounded-lg border px-2 text-sm"
             >
               <option value="">Sin definir</option>
               <option value="beginner">Principiante</option>
               <option value="intermediate">Intermedio</option>
               <option value="advanced">Avanzado</option>
-            </select>
+            </Select>
           </div>
           <div>
             <Label htmlFor="assessment-preferences">Preferencias</Label>

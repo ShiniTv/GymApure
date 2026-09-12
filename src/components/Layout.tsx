@@ -7,7 +7,6 @@ import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { useTheme } from '../context/ThemeContext';
 import { expiryNavDotClass, MEMBER_UI_ALERT_DAYS, shouldShowExpiryAlert } from '../lib/expiryUtils';
 import Logo from './Logo';
-import BrandName from './BrandName';
 import { ScrollToTop } from './ScrollToTop';
 import { InstallPrompt } from './InstallPrompt';
 import { OfflineBanner } from './OfflineBanner';
@@ -172,7 +171,6 @@ export default function Layout() {
     return () => window.clearTimeout(timer);
   }, [isSidebarOpen]);
 
-  const brandMark = <BrandName variant="split" />;
   const homeHref = getDefaultRouteForRole(user?.role ?? 'member');
 
   const goHome = useCallback(() => {
@@ -211,65 +209,72 @@ export default function Layout() {
           >
             {/* Sidebar Header */}
             {sidebarCollapsed ? (
-              <div className="border-border/50 hidden h-14 shrink-0 items-center justify-center border-b lg:flex">
-                <Link
-                  to={homeHref}
-                  onClick={() => {
-                    setSidebarCollapsed(false);
-                  }}
-                  className="hover:bg-surface-overlay/70 flex h-9 w-9 cursor-pointer items-center justify-center rounded-[var(--radius-button)] transition-colors"
-                  aria-label="Ir al inicio"
-                  title="Ir al inicio"
+              <div className="border-border/50 hidden h-16 shrink-0 flex-col items-center justify-center gap-1 border-b lg:flex">
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="hover:bg-surface-overlay/80 text-text-muted hover:text-text flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl transition-all"
+                  aria-label="Expandir menú lateral"
+                  title="Expandir menú lateral"
                 >
                   <Logo className="pointer-events-none h-7 w-7 shrink-0" />
-                </Link>
+                </button>
               </div>
             ) : (
-              <div className="border-border/50 hidden h-14 shrink-0 items-center gap-2 border-b px-2.5 lg:flex">
+              <div className="border-border/50 hidden h-16 shrink-0 items-center justify-between gap-2 border-b px-3 lg:flex">
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-[var(--radius-button)] px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="group hover:bg-surface-overlay/40 -m-1 flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden rounded-xl p-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
-                  <Logo className="h-7 w-7 shrink-0" />
+                  <Logo className="h-8 w-8 shrink-0 transition-transform duration-200 group-hover:scale-105" />
                   <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
-                    {brandMark}
-                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
+                    <div className="flex items-center gap-1 leading-tight">
+                      <span className="text-text text-sm font-bold tracking-tight">Gym</span>
+                      <span className="text-brand text-sm font-bold tracking-tight">Apure</span>
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate text-xs leading-none font-medium tracking-tight">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
                 </Link>
-                <NotificationBell compact className="shrink-0" />
-                <IconButton
-                  type="button"
-                  size="sm"
-                  variant="tertiary"
-                  onClick={() => {
-                    setSidebarCollapsed(true);
-                  }}
-                  aria-label="Colapsar menú"
-                  title="Colapsar menú"
-                >
-                  <PanelLeftClose className="operate-icon h-3.5 w-3.5" />
-                </IconButton>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <NotificationBell compact className="shrink-0" />
+                  <IconButton
+                    type="button"
+                    size="sm"
+                    variant="tertiary"
+                    onClick={() => {
+                      setSidebarCollapsed(true);
+                    }}
+                    aria-label="Colapsar menú"
+                    title="Colapsar menú"
+                    className="text-text-muted hover:text-text"
+                  >
+                    <PanelLeftClose className="operate-icon h-4 w-4" />
+                  </IconButton>
+                </div>
               </div>
             )}
 
             {!sidebarCollapsed && (
-              <div className="border-border/50 flex h-14 shrink-0 items-center gap-2.5 border-b px-3 lg:hidden">
+              <div className="border-border/50 flex h-16 shrink-0 items-center gap-2.5 border-b px-3.5 lg:hidden">
                 <Link
                   to={homeHref}
                   onClick={goHome}
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[var(--radius-button)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--color-brand)_45%,transparent)]"
                   aria-label="Ir al inicio"
                   title="Ir al inicio"
                 >
-                  <Logo className="h-7 w-7 shrink-0" />
+                  <Logo className="h-8 w-8 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    {brandMark}
-                    <p className="text-text-muted text-small mt-0.5 truncate font-medium tracking-[-0.01em]">
+                    <div className="flex items-center gap-1 leading-tight">
+                      <span className="text-text text-sm font-bold tracking-tight">Gym</span>
+                      <span className="text-brand text-sm font-bold tracking-tight">Apure</span>
+                    </div>
+                    <p className="text-text-muted mt-0.5 truncate text-xs leading-none font-medium tracking-tight">
                       {currentPage ?? portalTitle}
                     </p>
                   </div>
@@ -280,90 +285,129 @@ export default function Layout() {
             <div className="flex min-h-0 flex-1 flex-col">
               <nav
                 className={clsx(
-                  'nav-stack scroll-area min-h-0 flex-1 py-3',
-                  sidebarCollapsed ? 'px-1.5' : 'px-2'
+                  'min-h-0 flex-1 py-2',
+                  sidebarCollapsed
+                    ? 'scroll-area-collapsed flex flex-col items-center px-1.5'
+                    : 'scroll-area px-2'
                 )}
               >
-                {allFiltered.map((section) => (
-                  <div key={section.name} className="nav-section">
-                    {!sidebarCollapsed && <p className="nav-section-label">{section.name}</p>}
-                    {section.items.map((item) => {
-                      const isActive = isNavActive(item.href);
-                      return (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          {...routePrefetchHandlers(item.href)}
-                          onClick={() => {
-                            setIsSidebarOpen(false);
-                          }}
-                          className={clsx(
-                            'nav-link',
-                            useMobileNavLinks && 'nav-link-mobile',
-                            isActive ? 'nav-link-active' : 'nav-link-inactive',
-                            sidebarCollapsed && 'justify-center px-0'
-                          )}
-                          title={sidebarCollapsed ? item.name : undefined}
-                          aria-label={sidebarCollapsed ? item.name : undefined}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          <item.icon
+                {allFiltered.map((section, sectionIdx) => (
+                  <div
+                    key={section.name}
+                    className={clsx(
+                      sidebarCollapsed ? 'mb-1 flex w-full flex-col items-center' : 'nav-section'
+                    )}
+                  >
+                    {sidebarCollapsed ? (
+                      sectionIdx > 0 && (
+                        <div className="bg-border/50 my-1.5 h-px w-6 shrink-0" aria-hidden />
+                      )
+                    ) : (
+                      <p className="nav-section-label">{section.name}</p>
+                    )}
+                    <div
+                      className={clsx(
+                        'flex w-full flex-col',
+                        sidebarCollapsed ? 'items-center gap-1' : 'gap-0.5'
+                      )}
+                    >
+                      {section.items.map((item) => {
+                        const isActive = isNavActive(item.href);
+                        const hasBadge =
+                          (showChatNav && item.href === '/messages' && chatUnread > 0) ||
+                          (isTrainer && item.href === '/pt-billing' && ptConfirmCount > 0) ||
+                          (user?.role === 'admin' && item.href === '/panel' && expiringCount > 0) ||
+                          (user?.role === 'member' &&
+                            item.href === '/panel' &&
+                            memberExpiryDays != null &&
+                            shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS));
+
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            {...routePrefetchHandlers(item.href)}
+                            onClick={() => {
+                              setIsSidebarOpen(false);
+                            }}
                             className={clsx(
-                              'operate-icon h-4 w-4 shrink-0',
-                              isActive ? 'text-text' : 'text-text-muted'
+                              'nav-link group',
+                              !sidebarCollapsed && useMobileNavLinks && 'nav-link-mobile',
+                              isActive ? 'nav-link-active' : 'nav-link-inactive',
+                              sidebarCollapsed &&
+                                'relative mx-auto flex !h-9 !min-h-0 !w-9 items-center justify-center !gap-0 !rounded-xl !p-0'
                             )}
-                            strokeWidth={1.75}
-                          />
-                          {!sidebarCollapsed && (
-                            <>
-                              <span className="flex-1 truncate">{item.name}</span>
-                              {showChatNav && item.href === '/messages' && chatUnread > 0 && (
-                                <span className="nav-badge nav-badge-soft">
-                                  {chatUnread > 99 ? '99+' : chatUnread}
-                                </span>
+                            title={sidebarCollapsed ? item.name : undefined}
+                            aria-label={sidebarCollapsed ? item.name : undefined}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            <item.icon
+                              className={clsx(
+                                'operate-icon h-[18px] w-[18px] shrink-0 transition-transform duration-150 group-hover:scale-105',
+                                isActive ? 'text-brand' : 'text-text-muted group-hover:text-text'
                               )}
-                              {isTrainer && item.href === '/pt-billing' && ptConfirmCount > 0 && (
-                                <span className="nav-badge nav-badge-soft">
-                                  {ptConfirmCount > 99 ? '99+' : ptConfirmCount}
+                              strokeWidth={isActive ? 2 : 1.75}
+                            />
+                            {sidebarCollapsed ? (
+                              hasBadge && (
+                                <span className="absolute top-1 right-1 flex h-2 w-2">
+                                  <span className="bg-brand absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+                                  <span className="bg-brand relative inline-flex h-2 w-2 rounded-full"></span>
                                 </span>
-                              )}
-                              {user?.role === 'admin' &&
-                                item.href === '/panel' &&
-                                expiringCount > 0 && (
+                              )
+                            ) : (
+                              <>
+                                <span className="flex-1 truncate">{item.name}</span>
+                                {showChatNav && item.href === '/messages' && chatUnread > 0 && (
                                   <span className="nav-badge nav-badge-soft">
-                                    {expiringCount > 99 ? '99+' : expiringCount}
+                                    {chatUnread > 99 ? '99+' : chatUnread}
                                   </span>
                                 )}
-                              {user?.role === 'member' &&
-                                item.href === '/panel' &&
-                                memberExpiryDays != null &&
-                                shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
-                                  <span
-                                    className={clsx(
-                                      'nav-badge text-white',
-                                      expiryNavDotClass(memberExpiryDays)
-                                    )}
-                                  >
-                                    !
+                                {isTrainer && item.href === '/pt-billing' && ptConfirmCount > 0 && (
+                                  <span className="nav-badge nav-badge-soft">
+                                    {ptConfirmCount > 99 ? '99+' : ptConfirmCount}
                                   </span>
                                 )}
-                            </>
-                          )}
-                        </Link>
-                      );
-                    })}
+                                {user?.role === 'admin' &&
+                                  item.href === '/panel' &&
+                                  expiringCount > 0 && (
+                                    <span className="nav-badge nav-badge-soft">
+                                      {expiringCount > 99 ? '99+' : expiringCount}
+                                    </span>
+                                  )}
+                                {user?.role === 'member' &&
+                                  item.href === '/panel' &&
+                                  memberExpiryDays != null &&
+                                  shouldShowExpiryAlert(memberExpiryDays, MEMBER_UI_ALERT_DAYS) && (
+                                    <span
+                                      className={clsx(
+                                        'nav-badge text-white',
+                                        expiryNavDotClass(memberExpiryDays)
+                                      )}
+                                    >
+                                      !
+                                    </span>
+                                  )}
+                              </>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 ))}
               </nav>
 
               <div
                 className={clsx(
-                  'border-border/50 shrink-0 space-y-1 border-t',
-                  sidebarCollapsed ? 'px-1.5 py-2.5' : 'px-2 py-2.5',
+                  'border-border/50 shrink-0 border-t',
+                  sidebarCollapsed
+                    ? 'flex flex-col items-center gap-1.5 px-1.5 py-2.5'
+                    : 'space-y-1 px-2 py-2',
                   isReceptionMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isTrainerMobileShell && 'pb-[env(safe-area-inset-bottom)]',
                   isAdminMobileShell && 'pb-[env(safe-area-inset-bottom)]',
-                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-2.5'
+                  isMemberMobileShell && 'pb-[env(safe-area-inset-bottom)] lg:pb-2'
                 )}
               >
                 {!sidebarCollapsed && (
@@ -372,16 +416,18 @@ export default function Layout() {
                   </div>
                 )}
                 {sidebarCollapsed && (
-                  <div className="hidden justify-center pb-1 lg:flex">
-                    <NotificationBell compact />
+                  <div className="hidden justify-center lg:flex">
+                    <NotificationBell compact className="!h-9 !w-9 !rounded-xl" />
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={toggleTheme}
                   className={clsx(
-                    'nav-link nav-link-inactive w-full',
-                    sidebarCollapsed && 'justify-center px-0'
+                    'nav-link nav-link-inactive group',
+                    sidebarCollapsed
+                      ? 'mx-auto flex !h-9 !min-h-0 !w-9 items-center justify-center !gap-0 !rounded-xl !p-0'
+                      : 'w-full'
                   )}
                   title={
                     sidebarCollapsed
@@ -393,12 +439,12 @@ export default function Layout() {
                 >
                   {theme === 'light' ? (
                     <Moon
-                      className="operate-icon text-text-muted h-4 w-4 shrink-0"
+                      className="operate-icon text-text-muted group-hover:text-text h-[18px] w-[18px] shrink-0 transition-transform duration-150 group-hover:scale-105"
                       strokeWidth={1.75}
                     />
                   ) : (
                     <Sun
-                      className="operate-icon text-text-muted h-4 w-4 shrink-0"
+                      className="operate-icon text-text-muted group-hover:text-text h-[18px] w-[18px] shrink-0 transition-transform duration-150 group-hover:scale-105"
                       strokeWidth={1.75}
                     />
                   )}
@@ -416,9 +462,11 @@ export default function Layout() {
                   }}
                   className={clsx(
                     sidebarCollapsed
-                      ? 'nav-link nav-link-inactive justify-center px-0'
+                      ? 'nav-link group mx-auto flex !h-9 !min-h-0 !w-9 items-center justify-center !gap-0 !rounded-xl !p-0'
                       : 'nav-user-card',
-                    isNavActive('/profile') && !sidebarCollapsed && 'ring-border/70 ring-1'
+                    isNavActive('/profile') && !sidebarCollapsed && 'ring-border/70 ring-1',
+                    isNavActive('/profile') && sidebarCollapsed && 'nav-link-active !text-brand',
+                    !isNavActive('/profile') && sidebarCollapsed && 'nav-link-inactive'
                   )}
                   title={sidebarCollapsed ? user?.name : undefined}
                   aria-current={isNavActive('/profile') ? 'page' : undefined}
@@ -427,7 +475,10 @@ export default function Layout() {
                     src={profile?.profile_image}
                     name={user?.name}
                     size="sm"
-                    className="shrink-0"
+                    className={clsx(
+                      'shrink-0 transition-transform duration-150 group-hover:scale-105',
+                      sidebarCollapsed && '!h-7 !w-7 text-xs'
+                    )}
                   />
                   {!sidebarCollapsed && (
                     <div className="min-w-0 flex-1">
@@ -445,12 +496,17 @@ export default function Layout() {
                   type="button"
                   onClick={requestLogout}
                   className={clsx(
-                    'nav-link nav-link-danger w-full',
-                    sidebarCollapsed && 'justify-center px-0'
+                    'nav-link nav-link-danger group',
+                    sidebarCollapsed
+                      ? 'mx-auto flex !h-9 !min-h-0 !w-9 items-center justify-center !gap-0 !rounded-xl !p-0'
+                      : 'w-full'
                   )}
                   title={sidebarCollapsed ? 'Cerrar sesión' : undefined}
                 >
-                  <LogOut className="operate-icon h-4 w-4 shrink-0" strokeWidth={1.75} />
+                  <LogOut
+                    className="operate-icon h-[18px] w-[18px] shrink-0 transition-transform duration-150 group-hover:scale-105"
+                    strokeWidth={1.75}
+                  />
                   {!sidebarCollapsed && <span className="flex-1 text-left">Cerrar sesión</span>}
                 </button>
               </div>

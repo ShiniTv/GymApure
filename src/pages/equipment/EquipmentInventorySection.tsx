@@ -427,7 +427,7 @@ export function EquipmentInventorySection({
                     {group.items.length}
                   </span>
                 </div>
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+                <div className="stagger-fade-in grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
                   {group.items.map((item) => (
                     <EquipmentListCard key={item.id} item={item} onOpen={onOpenDetail} hideZone />
                   ))}
@@ -447,7 +447,7 @@ export function EquipmentInventorySection({
             )}
           />
         ) : (
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          <div className="stagger-fade-in grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
             {items.map((item) => (
               <EquipmentListCard key={item.id} item={item} onOpen={onOpenDetail} />
             ))}

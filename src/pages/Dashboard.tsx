@@ -3,7 +3,7 @@ import { Navigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { useAdminStatsOptional } from '../context/AdminStatsContext';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
-import { DashboardSkeleton } from '../components/ui';
+import { DashboardSkeleton, MemberDashboardSkeleton } from '../components/ui';
 import { useTrainerStatsQuery } from '../hooks/queries/useDashboardQuery';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
@@ -51,14 +51,15 @@ export default function Dashboard() {
   }
 
   if (pageLoading) {
-    return <DashboardSkeleton statCount={isAdmin ? 6 : isMember ? 3 : 4} />;
+    if (isMember) return <MemberDashboardSkeleton />;
+    return <DashboardSkeleton statCount={isAdmin ? 6 : 4} />;
   }
 
   if (user?.role === 'member') {
     return (
       <PullToRefreshContainer pullDistance={pullDistance} isRefreshing={isRefreshing}>
         <div {...handlers}>
-          <Suspense fallback={<DashboardSkeleton statCount={3} />}>
+          <Suspense fallback={<MemberDashboardSkeleton />}>
             <MemberDashboardView />
           </Suspense>
         </div>

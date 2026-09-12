@@ -1,6 +1,7 @@
 export const THEME_STORAGE_KEY = 'theme';
 export const PALETTE_STORAGE_KEY = 'gymapure-palette';
 export const THEME_ONBOARDING_KEY = 'gymapure-theme-onboarding-done';
+export const AUTH_BG_EFFECT_STORAGE_KEY = 'gymapure-auth-bg-effect';
 
 export const PALETTES = {
   sky: {
@@ -80,6 +81,7 @@ export const PALETTES = {
 
 export type PaletteId = keyof typeof PALETTES;
 export type Appearance = 'light' | 'dark';
+export type AuthBgEffect = 'antigravity' | 'theme';
 
 /** Primary presets shown in the picker (reduces brand sprawl). Others remain valid if already stored. */
 export const FEATURED_PALETTE_IDS: PaletteId[] = ['sky', 'monochrome', 'ember', 'ocean'];
@@ -89,6 +91,7 @@ export const PALETTE_LIST = Object.values(PALETTES);
 export const FEATURED_PALETTE_LIST = FEATURED_PALETTE_IDS.map((id) => PALETTES[id]);
 export const DEFAULT_PALETTE: PaletteId = 'sky';
 export const DEFAULT_APPEARANCE: Appearance = 'dark';
+export const DEFAULT_AUTH_BG_EFFECT: AuthBgEffect = 'antigravity';
 
 function getStorage() {
   if (typeof window === 'undefined') return null;
@@ -112,6 +115,10 @@ export function isAppearance(value: string | null): value is Appearance {
   return value === 'light' || value === 'dark';
 }
 
+export function isAuthBgEffect(value: string | null): value is AuthBgEffect {
+  return value === 'antigravity' || value === 'theme';
+}
+
 export function getStoredTheme(): Appearance {
   const stored = getStorage()?.getItem(THEME_STORAGE_KEY) ?? null;
   return isAppearance(stored) ? stored : getSystemAppearance();
@@ -122,14 +129,32 @@ export function getStoredPalette(): PaletteId {
   return isPaletteId(stored) ? stored : DEFAULT_PALETTE;
 }
 
-export function persistTheme(theme: Appearance, palette: PaletteId) {
+export function getStoredAuthBgEffect(): AuthBgEffect {
+  const stored = getStorage()?.getItem(AUTH_BG_EFFECT_STORAGE_KEY) ?? null;
+  return isAuthBgEffect(stored) ? stored : DEFAULT_AUTH_BG_EFFECT;
+}
+
+export function persistTheme(theme: Appearance, palette: PaletteId, authBgEffect?: AuthBgEffect) {
   const storage = getStorage();
   if (!storage) return;
   try {
     storage.setItem(THEME_STORAGE_KEY, theme);
     storage.setItem(PALETTE_STORAGE_KEY, palette);
+    if (authBgEffect) {
+      storage.setItem(AUTH_BG_EFFECT_STORAGE_KEY, authBgEffect);
+    }
   } catch {
     // Ignore storage write failures so theme init cannot block app boot.
+  }
+}
+
+export function persistAuthBgEffect(effect: AuthBgEffect) {
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(AUTH_BG_EFFECT_STORAGE_KEY, effect);
+  } catch {
+    // Ignore storage write failures
   }
 }
 

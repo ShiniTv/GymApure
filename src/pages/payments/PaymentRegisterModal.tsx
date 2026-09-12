@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Upload, ClipboardPaste, Sparkles } from 'lucide-react';
-import { Button, Input, Label, Modal, Select, Spinner } from '../../components/ui';
+import { Button, Input, Label, Modal, Select, Spinner, Textarea } from '../../components/ui';
 import { formatBsRateLabel, type ExchangeRate } from '../../hooks/queries/useExchangeRateQuery';
 import { usePaymentDestinationsQuery } from '../../hooks/queries/usePaymentDestinationsQuery';
 import { PaymentDestinationHint } from '../../components/payments/PaymentDestinationHint';
@@ -95,6 +95,8 @@ export function PaymentRegisterModal({
   const [billCounts, setBillCounts] = useState<Record<number, number>>({});
   const [parsedSmsInfo, setParsedSmsInfo] = useState<ParsedPaymentInfo | null>(null);
   const [step, setStep] = useState<WizardStep>(1);
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
+  const [manualSmsText, setManualSmsText] = useState('');
   const isCashUsd = method === 'efectivo_usd';
   const cashDenoms = destinations?.efectivo_usd.denominations ?? [1, 5, 10, 20, 50, 100];
   const useWizard = isMember || !isStaffPayment;
@@ -104,23 +106,14 @@ export function PaymentRegisterModal({
       setBillCounts({});
       setParsedSmsInfo(null);
       setStep(1);
+      setSmsModalOpen(false);
+      setManualSmsText('');
     }
   }, [open]);
 
-  const handlePasteSms = async () => {
-    let clipText = '';
-    try {
-      if (typeof navigator.clipboard?.readText === 'function') {
-        clipText = await navigator.clipboard.readText();
-      }
-    } catch {
-      /* clipboard restricted */
-    }
-    if (!clipText) {
-      clipText = window.prompt('Pega aquí el texto del SMS o notificación bancaria:') ?? '';
-    }
-    if (!clipText.trim()) return;
-    const parsed = parsePaymentSms(clipText);
+  const applySmsText = (text: string) => {
+    if (!text.trim()) return;
+    const parsed = parsePaymentSms(text);
     if (parsed.reference) {
       onReferenceChange(parsed.reference);
       if (fieldErrors.reference) onClearFieldError('reference');
@@ -132,6 +125,23 @@ export function PaymentRegisterModal({
       }
     }
     setParsedSmsInfo(parsed);
+  };
+
+  const handlePasteSms = async () => {
+    let clipText = '';
+    try {
+      if (typeof navigator.clipboard?.readText === 'function') {
+        clipText = await navigator.clipboard.readText();
+      }
+    } catch {
+      /* clipboard restricted */
+    }
+    if (clipText && clipText.trim()) {
+      applySmsText(clipText);
+    } else {
+      setManualSmsText('');
+      setSmsModalOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -475,6 +485,52 @@ export function PaymentRegisterModal({
           ) : null}
         </div>
       </form>
+
+      {smsModalOpen && (
+        <Modal
+          open={smsModalOpen}
+          onClose={() => setSmsModalOpen(false)}
+          title="Pegar notificación bancaria"
+          description="Pega el mensaje SMS o notificación de pago móvil para autocompletar la referencia y monto."
+          maxWidth="md"
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setSmsModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={!manualSmsText.trim()}
+                onClick={() => {
+                  applySmsText(manualSmsText);
+                  setSmsModalOpen(false);
+                }}
+              >
+                Procesar SMS
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-3 py-1">
+            <Label htmlFor="manual-sms-input">Texto del mensaje o comprobante</Label>
+            <Textarea
+              id="manual-sms-input"
+              rows={4}
+              value={manualSmsText}
+              onChange={(e) => setManualSmsText(e.target.value)}
+              placeholder="Ej: Pago Movil por Bs. 1.500,00 recibido de Juan Perez, Ref: 12345678"
+              className="font-mono text-xs"
+              autoFocus
+            />
+          </div>
+        </Modal>
+      )}
     </Modal>
   );
 }
