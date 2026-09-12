@@ -89,8 +89,6 @@
 | `scripts/db/`          | Migraciones, reset, admin, entorno dev/prod |
 | `scripts/test/`        | Checklists e integración API                |
 | `scripts/deploy/`      | Preflight, Lighthouse, bundle baseline      |
-| `scripts/_archive/`    | Legacy (sprint 1–3, SQLite)                 |
-| `archive/`             | Histórico versionado + evidencia local      |
 | `supabase/migrations/` | Esquema SQL (fuente de verdad)              |
 | `tests/ux/`            | Playwright E2E                              |
 | `docs/`                | Esta documentación (`qa/`, `manual/`, …)    |
@@ -101,10 +99,10 @@
 
 Mapa detallado: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
 
-| Entorno             | Nombre Supabase       | Ref                    | Archivo env                    |
-| ------------------- | --------------------- | ---------------------- | ------------------------------ |
-| Desarrollo local    | GymApure – Desarrollo | `sqjyxmbtgmiorckigrrg` | `.env.dev`                     |
-| Producción (Render) | GymApure – Producción | `ffjwvlcwhyskddqqojnp` | `.env.prod` / variables Render |
+| Entorno             | Nombre Supabase       | Ref                  | Archivo env                    |
+| ------------------- | --------------------- | -------------------- | ------------------------------ |
+| Desarrollo local    | GymApure – Desarrollo | `[DEV_PROJECT_REF]`  | `.env.dev`                     |
+| Producción (Render) | GymApure – Producción | `[PROD_PROJECT_REF]` | `.env.prod` / variables Render |
 
 ```powershell
 npm run env:configure-dev -- <password>   # tras reset password en GymApure – Desarrollo

@@ -22,9 +22,9 @@ if (has('VAPID_PUBLIC_KEY') && has('VAPID_PRIVATE_KEY') && has('VAPID_SUBJECT'))
 
 const keys = webpush.generateVAPIDKeys();
 const subjectMatch = raw.match(/^SMTP_FROM=(.+)$/m) || raw.match(/^ADMIN_NOTIFY_EMAILS=([^,\s]+)/m);
-const rawFrom = subjectMatch?.[1]?.replace(/^"|"$/g, '').trim() || 'soporte.gymapure@gmail.com';
+const rawFrom = subjectMatch?.[1]?.replace(/^"|"$/g, '').trim() || 'soporte@tudominio.com';
 const emailMatch = rawFrom.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-const email = emailMatch?.[0] || 'soporte.gymapure@gmail.com';
+const email = emailMatch?.[0] || 'soporte@tudominio.com';
 const subject = `mailto:${email}`;
 
 const lines: string[] = [];

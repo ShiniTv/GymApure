@@ -1,6 +1,6 @@
 # Despliegue a producción (Render + Supabase)
 
-Guía para GymApure en producción. El proyecto Supabase de producción actual es **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`), enlazado a Render. Mapa de entornos: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
+Guía para GymApure en producción. El proyecto Supabase de producción es **GymApure – Producción**, enlazado a Render / hosting. Mapa de entornos: [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md).
 
 > **Hosting principal:** Render (Blueprint / [`render.yaml`](../render.yaml)).  
 > **Servicios:** web (`PROCESS_ROLE=web`, probe `/api/health/live`) + worker (`npm run start:worker`, crons/BullMQ) + Redis KV.  
@@ -160,13 +160,13 @@ Configura en Render Dashboard → Environment:
 | `SMTP_HOST`                      | **Sí (ops)** | `smtp.gmail.com` — sin esto no se envían correos                                        |
 | `SMTP_PORT`                      | Recomendada  | `587`                                                                                   |
 | `SMTP_SECURE`                    | Recomendada  | `false`                                                                                 |
-| `SMTP_USER`                      | Recomendada  | `soporte.gymapure@gmail.com`                                                            |
+| `SMTP_USER`                      | Recomendada  | `soporte@tudominio.com`                                                                 |
 | `SMTP_PASS`                      | Recomendada  | Contraseña de aplicación Google (sin espacios)                                          |
-| `SMTP_FROM`                      | Recomendada  | `GymApure <soporte.gymapure@gmail.com>`                                                 |
+| `SMTP_FROM`                      | Recomendada  | `GymApure <soporte@tudominio.com>`                                                      |
 | `ADMIN_NOTIFY_EMAILS`            | Recomendada  | CSV de correos admin para alertas (pago pendiente de revisión)                          |
 | `VAPID_PUBLIC_KEY`               | Opcional*    | Clave pública Web Push (`npx web-push generate-vapid-keys`)                             |
 | `VAPID_PRIVATE_KEY`              | Opcional*    | Clave privada Web Push (solo servidor; no en `VITE_*`)                                  |
-| `VAPID_SUBJECT`                  | Opcional*    | `mailto:soporte.gymapure@gmail.com`                                                     |
+| `VAPID_SUBJECT`                  | Opcional*    | `mailto:soporte@tudominio.com`                                                          |
 
 \*Sin las tres `VAPID_*`, el push con la app cerrada no envía nada (preflight avisa). Genera un par, pégalo en Render y redeploy. Tras rotar claves, los usuarios deben reactivar notificaciones en Perfil.
 

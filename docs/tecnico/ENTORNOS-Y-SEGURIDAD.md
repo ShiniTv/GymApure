@@ -11,7 +11,7 @@ Ver mapa completo: [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
 | Aspecto          | Desarrollo                              | Producción                     |
 | ---------------- | --------------------------------------- | ------------------------------ |
 | Nombre Supabase  | **GymApure – Desarrollo**               | **GymApure – Producción**      |
-| Supabase ref     | `sqjyxmbtgmiorckigrrg`                  | `ffjwvlcwhyskddqqojnp`         |
+| Supabase ref     | `[DEV_PROJECT_REF]`                     | `[PROD_PROJECT_REF]`           |
 | Archivo env      | `.env.dev`                              | `.env.prod` / Render Dashboard |
 | `NODE_ENV`       | `development`                           | `production`                   |
 | Registro público | `ALLOW_PUBLIC_REGISTER=true` (opcional) | Desactivado por defecto        |

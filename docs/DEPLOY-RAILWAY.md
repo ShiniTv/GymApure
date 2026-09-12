@@ -4,7 +4,7 @@ Opción de hosting si no usas Render. GymApure es un proceso Node largo (Express
 
 **Hosting principal del proyecto:** [DEPLOY.md](./DEPLOY.md) (Render).
 
-La base de producción sigue en Supabase **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`). Migrar de hosting **no** migra la BD: reutilizas el mismo `DATABASE_URL` de prod.
+La base de producción sigue en Supabase **GymApure – Producción**. Migrar de hosting **no** migra la BD: reutilizas el mismo `DATABASE_URL` de prod.
 
 Config en repo: [`railway.toml`](../railway.toml) · plantilla env: [`scripts/deploy/railway-prod.env.example`](../scripts/deploy/railway-prod.env.example).
 
@@ -115,7 +115,7 @@ No subas `.env.prod` al repo. Usa el Dashboard o `railway variables set KEY=valu
 
 ## Qué no hacer
 
-- Apuntar Railway a `.env.dev` / ref `sqjyxmbtgmiorckigrrg`
+- Apuntar Railway a la base de datos de desarrollo (`.env.dev`)
 - Ejecutar `db:restore-demo` contra prod
 - Migrar a Vercel el monolit Express (WS + crons se rompen)
 - Rotar `JWT_SECRET` “por curiosidad” en el cutover (echa a todos)

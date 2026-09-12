@@ -6,17 +6,10 @@
  *   npm run db:purge-reset-tokens:prod -- --allow-prod
  */
 import { query, pool } from '../../src/db/index.ts';
+import { assertProductionExplicit } from '../lib/db-env-guard.ts';
 
 async function main() {
-  const allowProd = process.argv.includes('--allow-prod');
-  const dbUrl = process.env.DATABASE_URL ?? '';
-  const looksProd =
-    dbUrl.includes('ffjwvlcwhyskddqqojnp') || process.env.NODE_ENV === 'production';
-
-  if (looksProd && !allowProd) {
-    console.error('✗ Refusing prod purge without --allow-prod');
-    process.exit(1);
-  }
+  assertProductionExplicit({ scriptName: 'db:purge-reset-tokens:prod' });
 
   const r = await query(
     `DELETE FROM password_reset_tokens

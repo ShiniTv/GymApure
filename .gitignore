@@ -7,11 +7,28 @@ coverage/
 *-prod-log.txt
 seed-*-log.txt
 *.tsbuildinfo
-.env*
+# Entornos y secretos locales (NUNCA commitear)
+.env
+.env.*
+.env*.local
+.env*.backup
+*.env
+*.env.*
 !.env.example
 !.env.dev.example
 !.env.prod.example
 !.env.staging.example
+!scripts/deploy/*.env.example
+
+# Certificados, claves privadas y tokens
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+
+# Bases de datos locales
 gym.db
 sqlite.db
 uploads/

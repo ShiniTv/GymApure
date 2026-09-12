@@ -54,21 +54,20 @@ La app queda en `http://localhost:3000`. Detalle y variables: **[docs/DESARROLLO
 
 ## Scripts
 
-| Comando                          | Descripción                                                     |
-| -------------------------------- | --------------------------------------------------------------- |
-| `npm run dev`                    | Servidor Express + Vite en modo desarrollo                      |
-| `npm run build`                  | Build frontend + bundle del servidor                            |
-| `npm start`                      | Servidor en producción (tras `build`)                           |
-| `npm run lint`                   | Comprobación TypeScript strict (`tsc --noEmit`)                 |
-| `npm run test:smoke`             | Pruebas smoke de la API (servidor en marcha)                    |
-| `npm run test:e2e`               | Suite completa: integración + seguridad + auth + recepción      |
-| `npm run verify:local-e2e`       | Levanta dev, espera healthcheck y ejecuta `test:e2e`            |
-| `npm run dev:clean`              | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
-| `npm run db:migrate`             | Aplica migraciones SQL pendientes en Supabase/Postgres          |
-| `npm run db:migrate-from-sqlite` | Importación única desde SQLite legacy                           |
-| `npm run db:create-admin`        | Crea o actualiza la cuenta administrador inicial                |
-| `npm run db:restore-demo`        | Solo CI/tests automáticos — cuentas demo ficticias              |
-| `npm run deploy:preflight:prod`  | Valida `.env.prod` antes de migrar/desplegar a producción       |
+| Comando                         | Descripción                                                     |
+| ------------------------------- | --------------------------------------------------------------- |
+| `npm run dev`                   | Servidor Express + Vite en modo desarrollo                      |
+| `npm run build`                 | Build frontend + bundle del servidor                            |
+| `npm start`                     | Servidor en producción (tras `build`)                           |
+| `npm run lint`                  | Comprobación TypeScript strict (`tsc --noEmit`)                 |
+| `npm run test:smoke`            | Pruebas smoke de la API (servidor en marcha)                    |
+| `npm run test:e2e`              | Suite completa: integración + seguridad + auth + recepción      |
+| `npm run verify:local-e2e`      | Levanta dev, espera healthcheck y ejecuta `test:e2e`            |
+| `npm run dev:clean`             | Libera puerto 3000 y arranca dev sin `DATABASE_URL` del sistema |
+| `npm run db:migrate`            | Aplica migraciones SQL pendientes en Supabase/Postgres          |
+| `npm run db:create-admin`       | Crea o actualiza la cuenta administrador inicial                |
+| `npm run db:restore-demo`       | Solo CI/tests automáticos — cuentas demo ficticias              |
+| `npm run deploy:preflight:prod` | Valida `.env.prod` antes de migrar/desplegar a producción       |
 
 > Guía detallada de pruebas: **[docs/TESTING.md](docs/TESTING.md)**  
 > **Despliegue a producción (Render + Supabase):** **[docs/DEPLOY.md](docs/DEPLOY.md)**
@@ -79,7 +78,7 @@ La app queda en `http://localhost:3000`. Detalle y variables: **[docs/DESARROLLO
 - **Miembros:** registro público en `/register` (activo en desarrollo; desactivado en producción por defecto).
 - **Staff (entrenador/admin):** el administrador los crea en **Miembros → Nuevo Usuario** con contraseña inicial.
 
-> `npm run db:restore-demo` queda reservado para **CI y scripts de prueba** (`test:sprint*`). No lo uses para el flujo normal de la app.
+> `npm run db:restore-demo` queda reservado para **CI y tests de integración**. No lo uses para el flujo normal de la app.
 
 ## Alertas de vencimiento
 

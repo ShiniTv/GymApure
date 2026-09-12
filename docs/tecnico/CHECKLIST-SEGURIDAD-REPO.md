@@ -19,8 +19,8 @@ Lista corta para auditorías (ISO 27001, SOC 2, OWASP) y revisiones internas.
 
 ## Separación de entornos
 
-- [ ] `npm run env:check` confirma `.env.dev` → **GymApure – Desarrollo** (`sqjyxmbtgmiorckigrrg`)
-- [ ] `npm run env:check` confirma `.env.prod` → **GymApure – Producción** (`ffjwvlcwhyskddqqojnp`)
+- [ ] `npm run env:check` confirma `.env.dev` → **GymApure – Desarrollo** (`[DEV_PROJECT_REF]`)
+- [ ] `npm run env:check` confirma `.env.prod` → **GymApure – Producción** (`[PROD_PROJECT_REF]`)
 - [ ] `npm run db:verify-isolation` pasa antes de operaciones destructivas
 - [ ] `db:restore-demo` bloqueado en producción (`db-env-guard.ts`)
 

@@ -146,10 +146,10 @@ Auditoría ejecutada vía Supabase MCP en ambos proyectos.
 
 > **Corrección (2026-07-13):** la tabla original usaba nombres viejos del dashboard invertidos. Mapa actual: [SUPABASE-PROYECTOS.md](./SUPABASE-PROYECTOS.md).
 
-| Proyecto (nombre actual) | Ref                    | Rol       | Usuarios (snapshot) | Pagos | Suscripciones |
-| ------------------------ | ---------------------- | --------- | ------------------- | ----- | ------------- |
-| GymApure – Desarrollo    | `sqjyxmbtgmiorckigrrg` | Dev local | —                   | —     | —             |
-| GymApure – Producción    | `ffjwvlcwhyskddqqojnp` | Render    | 187                 | 128   | 187           |
+| Proyecto (nombre actual) | Ref                  | Rol       | Usuarios (snapshot) | Pagos | Suscripciones |
+| ------------------------ | -------------------- | --------- | ------------------- | ----- | ------------- |
+| GymApure – Desarrollo    | `[DEV_PROJECT_REF]`  | Dev local | —                   | —     | —             |
+| GymApure – Producción    | `[PROD_PROJECT_REF]` | Render    | 187                 | 128   | 187           |
 
 _Cifras de usuarios/pagos del snapshot del 2026-07-11 en el proyecto de producción; pueden variar._
 

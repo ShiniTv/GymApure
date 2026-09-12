@@ -306,14 +306,12 @@ caribean-gym/
 │   ├── test/              # Checklists e integración API (dominios activos)
 │   ├── deploy/            # Preflight, Lighthouse, bundle baseline
 │   ├── dev/               # run-with-env, utilidades locales
-│   ├── lib/               # Helpers compartidos (supabase-refs, auth tests)
-│   └── _archive/          # Legacy (sprint 1–3, SQLite) — ver README
-├── archive/               # Histórico versionado (+ evidencia UX local ignorada)
+│   └── lib/               # Helpers compartidos (supabase-refs, auth tests)
 ├── tests/ux/              # Playwright E2E
 └── docs/                  # Documentación (índice: docs/README.md; QA en docs/qa/)
 ```
 
-**Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`, ref `sqjyxmbtgmiorckigrrg`); producción = **GymApure – Producción** (Render + `.env.prod`, ref `ffjwvlcwhyskddqqojnp`). Guías: [DEPLOY.md](./DEPLOY.md), alternativa [DEPLOY-RAILWAY.md](./DEPLOY-RAILWAY.md).
+**Dev vs prod:** ver [tecnico/SUPABASE-PROYECTOS.md](./tecnico/SUPABASE-PROYECTOS.md). Desarrollo = **GymApure – Desarrollo** (`.env.dev`); producción = **GymApure – Producción** (Render/Railway + `.env.prod`). Guías: [DEPLOY.md](./DEPLOY.md), alternativa [DEPLOY-RAILWAY.md](./DEPLOY-RAILWAY.md).
 
 ### Mapa módulo → archivos clave
 

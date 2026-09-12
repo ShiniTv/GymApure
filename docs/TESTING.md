@@ -49,17 +49,16 @@ Este proyecto usa **pruebas de API por HTTP** y **Playwright** (viewport móvil)
 
 ### Dominios y sprints (debug)
 
-| Comando                                      | Enfoque                                                   |
-| -------------------------------------------- | --------------------------------------------------------- |
-| `test:sprint1` … `test:sprint3`              | Legacy en `scripts/_archive/` (RBAC, trainer, mediciones) |
-| `test:domain-core` / `test:sprint4`          | Alertas de vencimiento y cambio de contraseña             |
-| `test:domain-chat` / `test:sprint5`          | Check-out recepción y reportes CSV                        |
-| `test:domain-notifications` / `test:sprint6` | Chat in-app y settings de vencimiento                     |
-| `test:routine-assign`                        | Asignación de rutina entrenador → miembro                 |
-| `test:exchange-rate`                         | Tasa BCV: lectura, override, historial                    |
-| `test:trainer-shifts`                        | Perfiles entrenador, turnos, filtros                      |
-| `test:routine-exercises`                     | Prescripción por serie en rutinas                         |
-| `test:alerts`                                | Panel alertas y notificaciones usuario                    |
+| Comando                                      | Enfoque                                       |
+| -------------------------------------------- | --------------------------------------------- |
+| `test:domain-core` / `test:sprint4`          | Alertas de vencimiento y cambio de contraseña |
+| `test:domain-chat` / `test:sprint5`          | Check-out recepción y reportes CSV            |
+| `test:domain-notifications` / `test:sprint6` | Chat in-app y settings de vencimiento         |
+| `test:routine-assign`                        | Asignación de rutina entrenador → miembro     |
+| `test:exchange-rate`                         | Tasa BCV: lectura, override, historial        |
+| `test:trainer-shifts`                        | Perfiles entrenador, turnos, filtros          |
+| `test:routine-exercises`                     | Prescripción por serie en rutinas             |
+| `test:alerts`                                | Panel alertas y notificaciones usuario        |
 
 Otros checklists opcionales: `test:payments-checklist`, `test:memberships-checkin`, `test:chat-checklist`, `test:pagination-contracts`, `test:alerts`, `test:exchange-rate`, `test:trainer-shifts`, `test:routine-exercises`.
 

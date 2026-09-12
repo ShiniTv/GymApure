@@ -23,22 +23,20 @@ caribean-gym/
 │   ├── db/                   # BD, seeds, audits
 │   ├── test/                 # Pruebas HTTP / checklists
 │   ├── deploy/               # Release y calidad deploy
-│   ├── lib/                  # Helpers compartidos
-│   └── _archive/             # Legacy (ver README interno)
+│   └── lib/                  # Helpers compartidos
 ├── tests/ux/                 # Playwright
 ├── docs/                     # Documentación (índice: README.md)
 │   ├── manual/
 │   ├── modulos/
 │   ├── tecnico/
 │   └── qa/
-├── archive/                  # Histórico versionado (+ evidencia local ignorada)
 ├── .github/                  # CI / Dependabot
 └── .cursor/skills/           # Skills del agente (proyecto)
 ```
 
 ## No versionar
 
-`node_modules/`, `dist/`, `uploads/`, `test-results/`, `playwright-report/`, `.env*` (salvo `*.example`), `gym.db`, evidencia UX en `archive/ux-audit-evidence/`.
+`node_modules/`, `dist/`, `uploads/`, `test-results/`, `playwright-report/`, `.env*` (salvo `*.example`), `gym.db`.
 
 ## Referencias
 

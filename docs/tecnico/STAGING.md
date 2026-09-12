@@ -8,9 +8,9 @@ Staging es un **tercer entorno** entre desarrollo y producción. Sirve para vali
 
 | Entorno | Nombre / host                                                                           | Ref / DSN                         | Uso                                        |
 | ------- | --------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------ |
-| Dev     | GymApure – Desarrollo (Supabase)                                                        | `sqjyxmbtgmiorckigrrg`            | Desarrollo diario, demo, `db:restore-demo` |
+| Dev     | GymApure – Desarrollo (Supabase)                                                        | `[DEV_PROJECT_REF]`               | Desarrollo diario, demo, `db:restore-demo` |
 | Staging | **Local PG** `gymapure_staging` (actual) o Supabase Staging (cuando el plan lo permita) | `127.0.0.1:5432/gymapure_staging` | QA pre-prod, migraciones, smoke            |
-| Prod    | GymApure – Producción (Supabase) + Render                                               | `ffjwvlcwhyskddqqojnp`            | Usuarios reales del gym                    |
+| Prod    | GymApure – Producción (Supabase) + Render                                               | `[PROD_PROJECT_REF]`              | Usuarios reales del gym                    |
 
 ### Limitación Free (2026-07-28)
 

@@ -25,13 +25,14 @@ export function describeDatabaseTarget(url = getDatabaseUrl()): DatabaseTarget {
 
   const ref = extractSupabaseRef(url);
   if (!ref) return { ref: null, label: 'unknown' };
-  if (ref === DEV_REF) return { ref, label: 'dev' };
-  if (ref === PROD_REF) return { ref, label: 'prod' };
+  if (DEV_REF && ref === DEV_REF) return { ref, label: 'dev' };
+  if (PROD_REF && ref === PROD_REF) return { ref, label: 'prod' };
+  if (process.env.NODE_ENV === 'production') return { ref, label: 'prod' };
   return { ref, label: 'unknown' };
 }
 
 export function isProductionDatabaseUrl(url = getDatabaseUrl()): boolean {
-  return describeDatabaseTarget(url).label === 'prod';
+  return describeDatabaseTarget(url).label === 'prod' || process.env.NODE_ENV === 'production';
 }
 
 export function isDevDatabaseUrl(url = getDatabaseUrl()): boolean {
