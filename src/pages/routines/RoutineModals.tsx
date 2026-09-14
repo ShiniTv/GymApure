@@ -370,7 +370,7 @@ export function RoutineModals({
               formKey={`edit-${editingExercise.routine_exercise_id}`}
               value={editingExercise}
               onChange={(prescription) => {
-                setEditingExercise({ ...editingExercise, ...prescription });
+                setEditingExercise((prev) => (prev ? { ...prev, ...prescription } : prev));
               }}
             />
             <div className="grid grid-cols-2 gap-3">
@@ -380,13 +380,14 @@ export function RoutineModals({
                   type="number"
                   value={editingExercise.rest_seconds}
                   onChange={(e) => {
-                    setEditingExercise({
-                      ...editingExercise,
-                      rest_seconds: parseNonNegativeInt(
-                        e.target.value,
-                        editingExercise.rest_seconds
-                      ),
-                    });
+                    setEditingExercise((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            rest_seconds: parseNonNegativeInt(e.target.value, prev.rest_seconds),
+                          }
+                        : prev
+                    );
                   }}
                 />
               </div>
@@ -396,7 +397,9 @@ export function RoutineModals({
                   type="text"
                   value={editingExercise.weight_suggestion}
                   onChange={(e) => {
-                    setEditingExercise({ ...editingExercise, weight_suggestion: e.target.value });
+                    setEditingExercise((prev) =>
+                      prev ? { ...prev, weight_suggestion: e.target.value } : prev
+                    );
                   }}
                 />
               </div>
