@@ -505,10 +505,16 @@ export function useMemberRoutinePage(id: string | undefined) {
       await parseJsonResponse(res);
       setIsEditingExercise(false);
       setEditingExercise(null);
-      await refreshRoutineExercises(expandedRoutineId);
+      try {
+        await refreshRoutineExercises(expandedRoutineId);
+      } catch {
+        /* refresh is best-effort after a successful save */
+      }
+      toast?.success('Ejercicio actualizado');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo actualizar el ejercicio';
       setEditExerciseError(message);
+      toast?.error(message);
       clientLogger.error('Failed to update routine exercise', err);
     }
   };
