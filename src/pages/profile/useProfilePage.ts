@@ -48,7 +48,11 @@ export function useProfilePage() {
   const isMember = user?.role === 'member';
   const isTrainer = user?.role === 'trainer';
   const { data: trainerProfile } = useTrainerMeQuery(isTrainer && !!user);
-  const { data: profile, isPending: profileLoading } = useProfileQuery(user?.id);
+  const {
+    data: profile,
+    isPending: profileLoading,
+    isError: profileError,
+  } = useProfileQuery(user?.id);
   const { data: measurements = [], isPending: measLoading } = useProfileMeasurementsQuery(user?.id);
   const { data: workouts = [], isPending: histLoading } = useProfileWorkoutHistoryQuery(
     user?.id,
@@ -62,7 +66,7 @@ export function useProfilePage() {
   const updateMeasurementMutation = useUpdateMeasurementMutation(user?.id);
   const deleteMeasurementMutation = useDeleteMeasurementMutation(user?.id);
 
-  const loading = profileLoading;
+  const loading = profileLoading && !profileError;
   const progressLoading = measLoading || (isMember && histLoading);
   const [searchParams, setSearchParams] = useSearchParams();
   const [profileTab, setProfileTab] = useState<ProfileTab>('datos');

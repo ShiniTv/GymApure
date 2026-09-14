@@ -51,6 +51,8 @@ export function useProfileQuery(userId: number | undefined) {
       return parseJsonResponse<UserProfile>(res);
     },
     enabled: Boolean(userId),
+    retry: 2,
+    staleTime: 30_000,
   });
 }
 
@@ -63,6 +65,8 @@ export function useProfileMeasurementsQuery(userId: number | undefined) {
       return Array.isArray(data) ? data : [];
     },
     enabled: Boolean(userId),
+    retry: 2,
+    staleTime: 30_000,
   });
 }
 
@@ -75,6 +79,8 @@ export function useProfileSubscriptionQuery(userId: number | undefined, isMember
       return data?.membership_name ? data : null;
     },
     enabled: Boolean(userId) && isMember,
+    retry: 2,
+    staleTime: 30_000,
   });
 }
 
@@ -87,6 +93,8 @@ export function useProfileWorkoutHistoryQuery(userId: number | undefined, isMemb
       return Array.isArray(data.items) ? data.items : [];
     },
     enabled: Boolean(userId) && isMember,
+    retry: 2,
+    staleTime: 30_000,
   });
 }
 

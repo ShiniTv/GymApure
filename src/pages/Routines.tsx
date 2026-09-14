@@ -351,6 +351,7 @@ export default function Routines() {
             reps: updatedExercise.reps,
             rest_seconds: updatedExercise.rest_seconds,
             weight_suggestion: updatedExercise.weight_suggestion,
+            set_prescription: exercise.set_prescription ?? null,
           }),
         }
       );
@@ -369,6 +370,7 @@ export default function Routines() {
       );
     } catch (err) {
       clientLogger.error('Failed to inline update exercise', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo guardar el cambio');
     }
   };
 
@@ -476,10 +478,19 @@ export default function Routines() {
         body: JSON.stringify({ name: editingRoutine.name, difficulty: editingRoutine.difficulty }),
       });
       await parseJsonResponse(res);
+      setRoutines((prev) =>
+        prev.map((r) =>
+          r.id === editingRoutine.id
+            ? { ...r, name: editingRoutine.name, difficulty: editingRoutine.difficulty }
+            : r
+        )
+      );
       setEditingRoutine(null);
       refreshRoutines();
+      toast?.success('Rutina actualizada');
     } catch (err) {
       clientLogger.error('Failed to update routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo guardar la rutina');
     }
   };
 
@@ -493,8 +504,11 @@ export default function Routines() {
       setDeleteRoutineTarget(null);
       if (expandedRoutineId === deleteRoutineTarget.id) setExpandedRoutineId(null);
       refreshRoutines();
+      toast?.success('Rutina eliminada');
     } catch (err) {
-      setDeleteRoutineError(err instanceof Error ? err.message : 'Error al eliminar');
+      const message = err instanceof Error ? err.message : 'Error al eliminar';
+      setDeleteRoutineError(message);
+      toast?.error(message);
     } finally {
       setDeletingRoutine(false);
     }
@@ -512,8 +526,10 @@ export default function Routines() {
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
+      toast?.success('Ejercicio eliminado');
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo eliminar el ejercicio');
     } finally {
       setDeletingExercise(false);
     }
