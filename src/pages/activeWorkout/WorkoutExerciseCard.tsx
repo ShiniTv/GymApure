@@ -114,7 +114,7 @@ export function WorkoutExerciseCard({
               className={cn(
                 'tap-feedback inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-lg transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95',
                 completed
-                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-900/20'
+                  ? 'bg-success text-white shadow-xs'
                   : 'bg-surface-overlay text-text-secondary can-hover:hover:bg-surface-raised can-hover:hover:text-text'
               )}
               aria-label={completed ? 'Marcar ejercicio como pendiente' : 'Completar ejercicio'}
@@ -240,7 +240,7 @@ export function WorkoutExerciseCard({
               className={cn(
                 'grid items-center gap-2 rounded-lg px-0.5 py-1 transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 setGridClass,
-                isCompleted ? 'bg-emerald-500/5 opacity-85' : 'bg-transparent'
+                isCompleted ? 'bg-success/5 opacity-85' : 'bg-transparent'
               )}
             >
               <div className="flex justify-center">
@@ -414,7 +414,7 @@ export function WorkoutExerciseCard({
             <button
               type="button"
               onClick={onRemoveLastSet}
-              className="border-border text-text-muted can-hover:hover:border-danger/35 can-hover:hover:text-danger can-hover:hover:bg-red-500/10 inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
+              className="border-border text-text-muted can-hover:hover:border-danger/35 can-hover:hover:text-danger can-hover:hover:bg-danger/10 inline-flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg border transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]"
               aria-label="Eliminar última serie"
               title="Eliminar última serie"
             >

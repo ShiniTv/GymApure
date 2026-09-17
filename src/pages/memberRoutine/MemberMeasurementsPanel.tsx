@@ -111,9 +111,7 @@ export function MemberMeasurementsPanel({
                       {weightDelta != null && weightDelta !== 0 && (
                         <span
                           className={`ml-1 text-xs font-semibold ${
-                            weightDelta < 0
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-brand'
+                            weightDelta < 0 ? 'text-success' : 'text-brand'
                           }`}
                         >
                           {weightDelta > 0 ? `+${weightDelta}` : weightDelta}
@@ -197,7 +195,7 @@ export function MemberMeasurementsPanel({
               {weightDelta != null && (
                 <p
                   className={`mt-1.5 text-xs font-semibold ${
-                    weightDelta < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand'
+                    weightDelta < 0 ? 'text-success' : 'text-brand'
                   }`}
                 >
                   {weightDelta > 0 ? `+${weightDelta}` : weightDelta} kg vs anterior

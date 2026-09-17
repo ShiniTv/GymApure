@@ -123,9 +123,7 @@ export function MemberProfilePanel({
                     {savingWeeklyGoal ? '…' : 'Guardar'}
                   </Button>
                 ) : weeklyGoalSaved ? (
-                  <span className="text-small font-medium text-emerald-600 dark:text-emerald-400">
-                    Guardado
-                  </span>
+                  <span className="text-small text-success font-medium">Guardado</span>
                 ) : null}
               </div>
             ) : (
@@ -139,9 +137,7 @@ export function MemberProfilePanel({
         <div className="border-border-subtle text-small mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2">
           {subscription ? (
             <>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-500">
-                {subscription.membership_name}
-              </span>
+              <span className="text-success font-semibold">{subscription.membership_name}</span>
               <span className="text-text-muted">·</span>
               <span className="text-text-muted">{subscription.days_remaining} días</span>
               <span className="text-text-muted">·</span>
@@ -244,9 +240,7 @@ export function MemberProfilePanel({
                 </p>
                 <p>
                   <span className="text-text-muted">GET</span>{' '}
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-500">
-                    {healthProfile.tdee_kcal} kcal
-                  </span>
+                  <span className="text-success font-semibold">{healthProfile.tdee_kcal} kcal</span>
                 </p>
               </div>
               {healthProfile.activity_level && (

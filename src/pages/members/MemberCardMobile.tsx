@@ -49,7 +49,7 @@ export const MemberCardMobile = memo(function MemberCardMobile({
           <span
             className={cn(
               'h-1.5 w-1.5 shrink-0 rounded-full',
-              member.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'
+              member.status === 'active' ? 'bg-success' : 'bg-danger'
             )}
             title={member.status === 'active' ? 'Activo' : 'Inactivo'}
             aria-label={member.status === 'active' ? 'Activo' : 'Inactivo'}

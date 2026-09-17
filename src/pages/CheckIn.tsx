@@ -619,7 +619,7 @@ export default function CheckIn() {
             <div className="flex shrink-0 items-center gap-3">
               {offlineCount > 0 && (
                 <div
-                  className="flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-500"
+                  className="border-warning/30 bg-warning/10 text-warning flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                   title={`${offlineCount} registros guardados sin conexión. Se sincronizarán automáticamente al conectar.`}
                 >
                   <WifiOff className="h-3.5 w-3.5" />

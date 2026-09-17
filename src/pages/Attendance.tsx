@@ -173,7 +173,7 @@ export default function Attendance() {
             href={wa}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] border border-emerald-500/25 text-emerald-600 transition-colors hover:bg-emerald-500/10 dark:text-emerald-400"
+            className="border-success/25 text-success hover:bg-success/10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] border transition-colors"
             title="WhatsApp"
             aria-label={`WhatsApp a ${member.full_name}`}
           >
@@ -227,7 +227,7 @@ export default function Attendance() {
           <Card padding="sm" rounded="xl" className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-text flex items-center gap-2 text-sm font-semibold">
-                <Users className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <Users className="text-warning h-3.5 w-3.5 shrink-0" />
                 Miembros inactivos
               </h3>
               <FilterChips

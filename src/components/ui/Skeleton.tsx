@@ -299,7 +299,7 @@ export function PageShellSkeleton() {
 /** Member Dashboard specific skeleton */
 export function MemberDashboardSkeleton() {
   return (
-    <div className="page-stack" aria-busy="true" aria-label="Cargando panel de socio">
+    <div className="page-stack" role="status" aria-busy="true" aria-label="Cargando panel de socio">
       {/* Hero card placeholder */}
       <Skeleton className="h-36 w-full rounded-[var(--radius-card)] sm:h-44" />
 

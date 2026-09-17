@@ -113,7 +113,7 @@ export function MemberAssignModal({
                 ))}
               </Select>
               {approvedPayments.length === 0 ? (
-                <p className="text-small mt-1.5 text-amber-600 dark:text-amber-400">
+                <p className="text-small text-warning mt-1.5">
                   No hay pagos aprobados. Registra y aprueba un pago primero.
                 </p>
               ) : null}

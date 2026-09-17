@@ -58,7 +58,7 @@ export function PaymentActionModals({
         maxWidth="lg"
         title={
           <>
-            Aprobar <span className="text-emerald-500">pago</span>
+            Aprobar <span className="text-brand">pago</span>
           </>
         }
       >

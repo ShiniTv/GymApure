@@ -130,7 +130,7 @@ export function SettingsOpsHealthCard({
                 className={`mt-0.5 text-lg font-semibold tabular-nums ${
                   opsMetrics.request_metrics.thresholdStatus.errorRate === 'warn'
                     ? 'text-danger'
-                    : 'text-emerald-500'
+                    : 'text-success'
                 }`}
               >
                 {opsMetrics.request_metrics.errorRatePercent}%
@@ -144,7 +144,7 @@ export function SettingsOpsHealthCard({
                 className={`mt-0.5 text-lg font-semibold tabular-nums ${
                   opsMetrics.request_metrics.thresholdStatus.slowRate === 'warn'
                     ? 'text-brand'
-                    : 'text-emerald-500'
+                    : 'text-success'
                 }`}
               >
                 {opsMetrics.request_metrics.slowRatePercent}%
@@ -180,17 +180,15 @@ export function SettingsOpsHealthCard({
               Alertas activas
             </p>
             {opsAlerts.length === 0 ? (
-              <p className="text-small font-bold text-emerald-600">
-                Sin alertas. Operación normal.
-              </p>
+              <p className="text-small text-success font-bold">Sin alertas. Operación normal.</p>
             ) : (
               <div className="space-y-1.5">
                 {opsAlerts.map((alert) => (
                   <div
                     key={alert}
-                    className="border-danger/20 rounded-lg border bg-red-500/5 px-2.5 py-2"
+                    className="border-danger/20 bg-danger/5 rounded-lg border px-2.5 py-2"
                   >
-                    <p className="text-small text-danger dark:text-danger font-bold">{alert}</p>
+                    <p className="text-small text-danger font-bold">{alert}</p>
                   </div>
                 ))}
               </div>

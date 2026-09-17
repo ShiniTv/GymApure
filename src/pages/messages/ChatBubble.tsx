@@ -284,7 +284,7 @@ export const ChatBubble = memo(function ChatBubble({
               {message.client_status === 'sending' ? (
                 <span>Enviando…</span>
               ) : message.client_status === 'failed' ? (
-                <span className="text-red-200">No enviado</span>
+                <span className="text-danger/90 font-medium">No enviado</span>
               ) : (
                 <>
                   <span>
@@ -313,7 +313,7 @@ export const ChatBubble = memo(function ChatBubble({
                 });
               }}
               disabled={sendMessage.isPending}
-              className="text-small text-danger inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 font-semibold hover:bg-red-500/10"
+              className="text-small text-danger hover:bg-danger/10 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 font-semibold"
             >
               <RotateCcw className="h-3 w-3" aria-hidden />
               Reintentar

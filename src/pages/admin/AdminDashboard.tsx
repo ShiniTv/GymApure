@@ -156,19 +156,17 @@ export default function AdminDashboard() {
       {emailConfigured === false && (
         <Link
           to="/settings"
-          className="border-border/70 bg-surface-raised/50 hover:bg-surface-raised flex items-start gap-3 rounded-[var(--radius-card)] border px-4 py-3 transition-colors"
+          className="border-warning/30 bg-warning/5 hover:bg-warning/10 flex items-start gap-3 rounded-[var(--radius-card)] border px-4 py-3 transition-colors"
         >
-          <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <Mail className="text-warning mt-0.5 h-5 w-5 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-              Correo SMTP no configurado
-            </p>
-            <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-300/80">
+            <p className="text-warning text-sm font-semibold">Correo SMTP no configurado</p>
+            <p className="text-text-muted mt-0.5 text-xs">
               Bienvenidas, resets y avisos no se enviarán. Configure SMTP en el servidor o revise
               Configuración.
             </p>
           </div>
-          <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-amber-600" />
+          <ChevronRight className="text-warning mt-1 h-4 w-4 shrink-0" />
         </Link>
       )}
 
@@ -176,11 +174,11 @@ export default function AdminDashboard() {
         {pendingPayments > 0 && (
           <Link
             to="/payments?status=pending"
-            className="border-danger/30 flex items-center justify-between gap-2 rounded-[var(--radius-card)] border bg-red-500/5 px-3 py-2 transition-colors hover:bg-red-500/10"
+            className="border-danger/30 bg-danger/5 hover:bg-danger/10 text-danger flex items-center justify-between gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors"
           >
             <div className="flex min-w-0 items-center gap-2">
               <AlertTriangle className="text-danger h-4 w-4 shrink-0" />
-              <span className="dark:text-danger truncate text-xs font-semibold text-red-700">
+              <span className="text-danger truncate text-xs font-semibold">
                 {pendingPayments} pago{pendingPayments !== 1 ? 's' : ''} pendiente
                 {pendingPayments !== 1 ? 's' : ''}
               </span>
@@ -191,31 +189,31 @@ export default function AdminDashboard() {
         {equipmentOutOfService > 0 && (
           <Link
             to="/equipment"
-            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-orange-500/30 bg-orange-500/5 px-3 py-2 transition-colors hover:bg-orange-500/10"
+            className="border-warning/30 bg-warning/5 hover:bg-warning/10 text-warning flex items-center justify-between gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <Wrench className="h-4 w-4 shrink-0 text-orange-500" />
-              <span className="truncate text-xs font-semibold text-orange-700 dark:text-orange-400">
+              <Wrench className="text-warning h-4 w-4 shrink-0" />
+              <span className="text-warning truncate text-xs font-semibold">
                 {equipmentOutOfService} equipo{equipmentOutOfService !== 1 ? 's' : ''} fuera de
                 servicio
               </span>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-orange-500" />
+            <ChevronRight className="text-warning h-4 w-4 shrink-0" />
           </Link>
         )}
         {demoLeadsPending > 0 && (
           <Link
             to="/demo-leads"
-            className="flex items-center justify-between gap-2 rounded-[var(--radius-card)] border border-sky-500/30 bg-sky-500/5 px-3 py-2 transition-colors hover:bg-sky-500/10"
+            className="border-brand/30 bg-brand/5 hover:bg-brand/10 text-brand flex items-center justify-between gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors"
           >
             <div className="flex min-w-0 items-center gap-2">
-              <UsersRound className="h-4 w-4 shrink-0 text-sky-500" />
-              <span className="truncate text-xs font-semibold text-sky-700 dark:text-sky-400">
+              <UsersRound className="text-brand h-4 w-4 shrink-0" />
+              <span className="text-brand truncate text-xs font-semibold">
                 {demoLeadsPending} demo{demoLeadsPending !== 1 ? 's' : ''} pendiente
                 {demoLeadsPending !== 1 ? 's' : ''}
               </span>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-sky-500" />
+            <ChevronRight className="text-brand h-4 w-4 shrink-0" />
           </Link>
         )}
       </div>
@@ -335,7 +333,7 @@ export default function AdminDashboard() {
                       ? `${pendingOld} con más de 2 días sin revisar`
                       : 'Revisa comprobantes y aprueba renovaciones',
                   count: pendingPayments,
-                  tone: 'border-danger/30 bg-red-500/5 hover:bg-red-500/10 text-red-700 dark:text-danger',
+                  tone: 'border-danger/30 bg-danger/5 hover:bg-danger/10 text-danger',
                   icon: AlertTriangle,
                 });
               }
@@ -349,7 +347,7 @@ export default function AdminDashboard() {
                       ? `${criticalExpiring} críticas · contactar o renovar`
                       : `En los próximos ${alertDays} días`,
                   count: expiringSoon,
-                  tone: 'border-orange-500/30 bg-orange-500/5 hover:bg-orange-500/10 text-orange-700 dark:text-orange-400',
+                  tone: 'border-warning/30 bg-warning/5 hover:bg-warning/10 text-warning',
                   icon: CalendarClock,
                 });
               }
@@ -363,7 +361,7 @@ export default function AdminDashboard() {
                       ? `${equipmentOutOfService} fuera de servicio`
                       : `${equipmentInspectionsDue} inspección${equipmentInspectionsDue !== 1 ? 'es' : ''} pendiente${equipmentInspectionsDue !== 1 ? 's' : ''}`,
                   count: equipmentAlertCount,
-                  tone: 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-800 dark:text-amber-300',
+                  tone: 'border-warning/30 bg-warning/5 hover:bg-warning/10 text-warning',
                   icon: Wrench,
                 });
               }
@@ -373,7 +371,7 @@ export default function AdminDashboard() {
                   to: '/settings',
                   title: 'Correo sin configurar',
                   description: 'Bienvenidas y resets no se enviarán',
-                  tone: 'border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-800 dark:text-amber-300',
+                  tone: 'border-warning/30 bg-warning/5 hover:bg-warning/10 text-warning',
                   icon: Mail,
                 });
               }
@@ -384,7 +382,7 @@ export default function AdminDashboard() {
                   title: 'Solicitudes demo',
                   description: 'Leads pendientes de contactar',
                   count: demoLeadsPending,
-                  tone: 'border-sky-500/30 bg-sky-500/5 hover:bg-sky-500/10 text-sky-800 dark:text-sky-300',
+                  tone: 'border-brand/30 bg-brand/5 hover:bg-brand/10 text-brand',
                   icon: UsersRound,
                 });
               }
@@ -636,7 +634,7 @@ export default function AdminDashboard() {
                     <Link
                       key={item.user_id}
                       to={`/members?expiring=true&q=${encodeURIComponent(item.full_name)}`}
-                      className="border-danger/15 flex items-center justify-between gap-2 rounded-lg border bg-red-500/5 px-2 py-1.5 transition-colors hover:bg-red-500/10"
+                      className="border-danger/15 bg-danger/5 hover:bg-danger/10 flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 transition-colors"
                     >
                       <span className="text-text truncate text-xs font-semibold">
                         {item.full_name}

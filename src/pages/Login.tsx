@@ -275,8 +275,8 @@ export default function Login() {
             <form className="auth-form" onSubmit={handleMfaSubmit} noValidate>
               {error && <Alert variant="error">{error}</Alert>}
 
-              <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-3.5 text-center">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3.5 text-center">
+                <div className="border-warning/20 bg-warning/10 text-warning mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full border">
                   <KeyRound className="h-5 w-5" />
                 </div>
                 <p className="text-xs text-zinc-300">
@@ -338,10 +338,10 @@ export default function Login() {
               {isLocked ? (
                 <Alert variant="error">
                   <div className="flex items-center gap-2 font-semibold">
-                    <Clock className="h-4 w-4 shrink-0 text-red-400" />
+                    <Clock className="text-danger h-4 w-4 shrink-0" />
                     <span>Demasiados intentos fallidos.</span>
                   </div>
-                  <p className="mt-1 text-xs text-red-200 tabular-nums" aria-live="polite">
+                  <p className="text-danger/80 mt-1 text-xs tabular-nums" aria-live="polite">
                     Podrás intentar de nuevo en {formatCountdown(remainingSeconds)}
                   </p>
                 </Alert>
@@ -408,7 +408,7 @@ export default function Login() {
                 <label className="group flex cursor-pointer items-center gap-2 text-xs select-none">
                   <input
                     type="checkbox"
-                    className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-800 text-amber-500 transition focus:ring-1 focus:ring-amber-500 focus:ring-offset-0"
+                    className="text-brand focus:ring-brand h-3.5 w-3.5 rounded border-white/20 bg-white/10 transition focus:ring-1 focus:ring-offset-0"
                     checked={rememberEmail}
                     onChange={(e) => {
                       hapticLight();

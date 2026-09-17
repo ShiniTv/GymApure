@@ -84,36 +84,28 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
       {healthProfile?.tdee_kcal != null && (
         <div
           className={cn(
-            'space-y-3 border-emerald-500/30 bg-emerald-500/5',
+            'border-success/30 bg-success/5 space-y-3',
             CARD_PADDING,
             'border',
-            'border-border/80',
-            'bg-surface',
-            'rounded-xl'
+            'rounded-[var(--radius-card)]'
           )}
         >
-          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+          <div className="text-success flex items-center gap-2">
             <Flame className="h-5 w-5" />
             <h3 className="text-text font-semibold tracking-[-0.01em]">
               Gasto Energético Estimado (TDEE)
             </h3>
           </div>
           <div className={GRID_2COL}>
-            <div className="bg-surface border-border/50 rounded-xl border p-3">
+            <div className="bg-surface border-border/50 rounded-[var(--radius-card)] border p-3">
               <p className="text-text-muted text-sm">Metabolismo Basal (BMR)</p>
               <p className={cn(T.statValue, 'mt-1 text-xl')}>
                 {healthProfile.bmr_kcal ? `${healthProfile.bmr_kcal} kcal` : '—'}
               </p>
             </div>
-            <div className="bg-surface border-border/50 rounded-xl border p-3">
+            <div className="bg-surface border-border/50 rounded-[var(--radius-card)] border p-3">
               <p className="text-text-muted text-sm">Mantenimiento (TDEE)</p>
-              <p
-                className={cn(
-                  T.statValue,
-                  'mt-1 text-xl',
-                  'text-emerald-600 dark:text-emerald-400'
-                )}
-              >
+              <p className={cn(T.statValue, 'mt-1 text-xl', 'text-success')}>
                 {healthProfile.tdee_kcal} kcal/día
               </p>
             </div>

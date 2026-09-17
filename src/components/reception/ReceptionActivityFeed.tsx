@@ -87,9 +87,7 @@ export default function ReceptionActivityFeed({
           className={cn(
             'flex shrink-0 items-center justify-center rounded-md',
             compact ? 'h-7 w-7' : 'p-1.5',
-            row.is_inside
-              ? 'bg-emerald-500/10 text-emerald-600'
-              : 'bg-surface-raised text-text-muted'
+            row.is_inside ? 'bg-success/10 text-success' : 'bg-surface-raised text-text-muted'
           )}
         >
           {row.is_inside ? (

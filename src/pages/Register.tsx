@@ -300,16 +300,16 @@ export default function Register() {
                               'h-1 flex-1 rounded-full transition-colors',
                               strength.score >= level
                                 ? level === 1
-                                  ? 'bg-red-500'
+                                  ? 'bg-danger'
                                   : level === 2
-                                    ? 'bg-yellow-500'
-                                    : 'bg-emerald-500'
-                                : 'bg-zinc-200 dark:bg-zinc-700'
+                                    ? 'bg-warning'
+                                    : 'bg-success'
+                                : 'bg-white/10'
                             )}
                           />
                         ))}
                       </div>
-                      <p className="text-xs font-medium text-zinc-500">
+                      <p className="text-text-muted text-xs font-medium">
                         Fortaleza: {strength.label}
                       </p>
                     </div>
@@ -368,7 +368,7 @@ export default function Register() {
               </div>
             )}
 
-            <p className="text-center text-xs text-zinc-400">
+            <p className="text-text-muted text-center text-xs">
               ¿Ya tienes cuenta?{' '}
               <Link to="/login" className="auth-linear-link font-medium transition-colors">
                 Inicia sesión

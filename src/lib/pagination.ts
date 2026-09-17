@@ -29,10 +29,9 @@ export function parsePaginationQuery(
       : typeof rawLimit === 'string'
         ? parseInt(rawLimit, 10)
         : defaultPageSize;
-  const pageSize = Math.min(
-    maxPageSize,
-    Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : defaultPageSize)
-  );
+  const validLimit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : defaultPageSize;
+  const pageSize = Math.min(maxPageSize, Math.max(1, validLimit));
 
   return { page, pageSize, offset: (page - 1) * pageSize };
 }

@@ -995,9 +995,7 @@ export default function WorkoutHistory() {
                       </p>
                     </div>
                     {omitted ? (
-                      <p className="text-small text-amber-600 dark:text-amber-400">
-                        Sin series registradas
-                      </p>
+                      <p className="text-small text-warning">Sin series registradas</p>
                     ) : (
                       <table className="w-full text-left text-xs">
                         <thead>

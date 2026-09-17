@@ -83,7 +83,7 @@ export function SettingsExchangeRateCard({
           </p>
         </div>
       ) : (
-        <p className="mb-4 text-sm font-medium text-amber-600 dark:text-amber-400">
+        <p className="text-warning mb-4 text-sm font-medium">
           Sin tasa disponible. Usa &quot;Actualizar desde BCV&quot; o ingresa un override manual.
         </p>
       )}

@@ -214,10 +214,8 @@ export default function MfaSecurity() {
               </div>
             )}
 
-            {message ? (
-              <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>
-            ) : null}
-            {error ? <p className="text-danger dark:text-danger mt-3 text-sm">{error}</p> : null}
+            {message ? <p className="text-success mt-3 text-sm font-medium">{message}</p> : null}
+            {error ? <p className="text-danger mt-3 text-sm font-medium">{error}</p> : null}
           </Card>
 
           {/* Setup flow */}

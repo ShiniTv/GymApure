@@ -119,10 +119,10 @@ export function ProfileAthleteHero({
                     className={cn(
                       'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium',
                       subscription.days_remaining > 5
-                        ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        ? 'border-success/30 bg-success/10 text-success border'
                         : subscription.days_remaining > 0
-                          ? 'border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                          : 'border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          ? 'border-warning/30 bg-warning/10 text-warning border'
+                          : 'border-danger/30 bg-danger/10 text-danger border'
                     )}
                   >
                     <Flame className="h-4 w-4" />

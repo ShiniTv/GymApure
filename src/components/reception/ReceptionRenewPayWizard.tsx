@@ -171,7 +171,7 @@ export function ReceptionRenewPayWizard({
           </div>
         )}
         {selectedMember && (
-          <p className="mt-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <p className="text-success mt-1.5 text-xs font-medium">
             {selectedMember.full_name} · {selectedMember.cedula ?? 'Sin cédula'}
           </p>
         )}
@@ -240,7 +240,7 @@ export function ReceptionRenewPayWizard({
 
       {error && <p className="text-danger text-xs font-medium">{error}</p>}
       {success && (
-        <p className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <p className="text-success flex items-center gap-2 text-xs font-medium">
           <CheckCircle className="h-3.5 w-3.5" />
           {success}
         </p>

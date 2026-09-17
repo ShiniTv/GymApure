@@ -121,8 +121,8 @@ function AuditTimelineItem({ log, isLast }: { log: AuditLogRow; isLast: boolean 
       <div
         className={cn(
           'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] ring-4 ring-[var(--color-surface)]',
-          variant === 'success' && 'bg-emerald-500/10 text-emerald-600',
-          variant === 'danger' && 'text-danger bg-red-500/10',
+          variant === 'success' && 'bg-success/10 text-success',
+          variant === 'danger' && 'bg-danger/10 text-danger',
           variant === 'accent' && 'bg-brand/10 text-brand',
           variant === 'default' && 'bg-surface-raised text-text-secondary'
         )}

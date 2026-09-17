@@ -440,7 +440,7 @@ export default function Reception() {
     (messageType === 'success' ? (
       <div
         className={cn(
-          'flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-400',
+          'border-success/20 bg-success/10 text-success flex items-center gap-2 rounded-[var(--radius-card)] border px-4 py-3 text-sm font-medium',
           isCounterMode && 'px-3 py-2.5'
         )}
       >
@@ -450,7 +450,7 @@ export default function Reception() {
     ) : (
       <div
         className={cn(
-          'border-danger/20 dark:text-danger flex items-center gap-2 rounded-xl border bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700',
+          'border-danger/20 text-danger bg-danger/10 flex items-center gap-2 rounded-[var(--radius-card)] border px-4 py-3 text-sm font-medium',
           isCounterMode && 'px-3 py-2.5'
         )}
       >
@@ -582,11 +582,11 @@ export default function Reception() {
           </div>
 
           {lookup.subscription?.status === 'paused' ? (
-            <div className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5">
+            <div className="border-warning/20 bg-warning/5 space-y-2 rounded-[var(--radius-card)] border p-2.5">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <AlertTriangle className="text-warning mt-0.5 h-4 w-4 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                  <p className="text-warning text-xs font-semibold">
                     {lookup.subscription.membership_name} — pausada
                   </p>
                   <p className="text-text-muted text-small mt-0.5">
@@ -605,10 +605,10 @@ export default function Reception() {
               </Button>
             </div>
           ) : lookup.subscription ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-2.5 py-2">
+            <div className="border-success/20 bg-success/5 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-card)] border px-2.5 py-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <p className="text-success text-xs font-semibold">
                     {lookup.subscription.membership_name}
                   </p>
                   {lookup.subscription.days_remaining <= 3 && (

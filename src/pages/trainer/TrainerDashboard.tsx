@@ -274,7 +274,7 @@ function TodayPanel({
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {checkIn ? (
-                              <span className="text-small shrink-0 font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                              <span className="text-small text-success shrink-0 font-semibold tabular-nums">
                                 {checkIn}
                               </span>
                             ) : (
@@ -345,7 +345,7 @@ function TodayPanel({
                         className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                       >
                         <span className="min-w-0 truncate">{m.full_name}</span>
-                        <span className="text-small shrink-0 font-semibold text-amber-600 dark:text-amber-400">
+                        <span className="text-small text-warning shrink-0 font-semibold">
                           {m.days_since}d
                         </span>
                       </Link>

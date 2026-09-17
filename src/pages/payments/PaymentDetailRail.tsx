@@ -99,7 +99,7 @@ export function PaymentDetailRail({
         <div className="mt-4 flex flex-col gap-2">
           <Button
             type="button"
-            className="w-full border-emerald-500/35 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
+            className="border-success/35 bg-success/10 text-success hover:bg-success/20 w-full"
             variant="secondary"
             onClick={() => onApprove(payment)}
             size="md"
@@ -109,7 +109,7 @@ export function PaymentDetailRail({
           </Button>
           <Button
             type="button"
-            className="border-danger/35 text-danger dark:text-danger w-full bg-red-500/10 hover:bg-red-500/20"
+            className="border-danger/35 text-danger bg-danger/10 hover:bg-danger/20 w-full"
             variant="secondary"
             onClick={() => onReject(payment)}
             size="md"

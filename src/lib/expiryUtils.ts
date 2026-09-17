@@ -32,32 +32,32 @@ export function formatExpiryCountdown(days: number, subject = 'membresía'): str
 
 export function expiryNavDotClass(days: number, alertDays = MEMBER_UI_ALERT_DAYS): string {
   const severity = getExpirySeverity(days, alertDays);
-  return severity === 'critical' ? 'bg-red-500' : 'bg-orange-500';
+  return severity === 'critical' ? 'bg-danger' : 'bg-warning';
 }
 
 export function expiryBannerClasses(severity: ExpirySeverity) {
   switch (severity) {
     case 'critical':
       return {
-        container: 'bg-red-500/10',
-        text: 'text-red-700 dark:text-red-400',
-        link: 'text-red-800 dark:text-red-300',
-        badge: 'bg-red-500/10 text-red-600 dark:text-red-500',
-        itemBorder: 'bg-red-500/5',
+        container: 'bg-danger/10 border border-danger/20',
+        text: 'text-danger',
+        link: 'text-danger font-semibold underline',
+        badge: 'bg-danger/15 text-danger',
+        itemBorder: 'bg-danger/5',
       };
     case 'warning':
       return {
-        container: 'bg-orange-500/10',
-        text: 'text-orange-700 dark:text-orange-400',
-        link: 'text-orange-800 dark:text-orange-300',
-        badge: 'bg-orange-500/10 text-orange-600 dark:text-orange-500',
-        itemBorder: 'bg-orange-500/5',
+        container: 'bg-warning/10 border border-warning/20',
+        text: 'text-warning',
+        link: 'text-warning font-semibold underline',
+        badge: 'bg-warning/15 text-warning',
+        itemBorder: 'bg-warning/5',
       };
     default:
       return {
-        container: 'bg-surface',
+        container: 'bg-surface border border-border',
         text: 'text-text-secondary',
-        link: 'text-orange-600 dark:text-orange-500',
+        link: 'text-brand font-semibold underline',
         badge: 'bg-surface-overlay text-text-muted',
         itemBorder: 'bg-surface-raised',
       };
@@ -107,8 +107,7 @@ export function subscriptionPlanNameClass(
   alertDays = MEMBER_UI_ALERT_DAYS
 ): string {
   const severity = getExpirySeverity(daysRemaining, alertDays);
-  if (severity === 'critical') return 'text-red-700 dark:text-red-400';
-  if (severity === 'warning') return 'text-orange-700 dark:text-orange-400';
-  /* emerald-600 fails WCAG AA on white (~3.65:1); 700 is ≥4.5:1 */
-  return 'text-emerald-700 dark:text-emerald-400';
+  if (severity === 'critical') return 'text-danger';
+  if (severity === 'warning') return 'text-warning';
+  return 'text-success';
 }

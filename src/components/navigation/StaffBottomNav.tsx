@@ -195,7 +195,7 @@ export function StaffBottomNav({
                             </span>
                           )}
                           {!item.showUnreadBadge && !item.showNotificationBadge && itemBadge > 0 ? (
-                            <span className="ring-surface text-small absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 text-[0.625rem] leading-none font-bold text-white tabular-nums ring-2">
+                            <span className="ring-surface bg-warning text-small absolute -top-1 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[0.625rem] leading-none font-bold text-white tabular-nums ring-2">
                               {itemBadge > 99 ? '99+' : itemBadge}
                             </span>
                           ) : null}
@@ -285,7 +285,7 @@ export function StaffBottomNav({
                           <item.icon className="operate-icon h-5 w-5" aria-hidden />
                         </span>
                         {moreMenuBadgeCount > 0 ? (
-                          <span className="ring-surface text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-500 px-1 leading-none font-bold text-white tabular-nums ring-2">
+                          <span className="ring-surface bg-warning text-small absolute -top-1 -right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 leading-none font-bold text-white tabular-nums ring-2">
                             {moreMenuBadgeCount > 99 ? '99+' : moreMenuBadgeCount}
                           </span>
                         ) : null}

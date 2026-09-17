@@ -236,8 +236,8 @@ export default function Reports() {
       />
 
       {error && (
-        <Card padding="sm" className="border-danger/30 bg-red-500/10">
-          <p className="text-danger dark:text-danger text-sm font-bold">{error}</p>
+        <Card padding="sm" className="border-danger/30 bg-danger/10">
+          <p className="text-danger text-sm font-bold">{error}</p>
         </Card>
       )}
 

@@ -66,20 +66,26 @@ export function ResponsiveTable<T>({
     </table>
   );
 
-  const desktopContent = <div className={cn('overflow-x-auto', desktopClassName)}>{table}</div>;
+  const desktopContent = (
+    <div className={cn('w-full min-w-0 overflow-x-auto', desktopClassName)}>{table}</div>
+  );
 
   const mobileItems = items.map((item, index) => (
-    <div key={keyExtractor(item)}>{mobile(item, index)}</div>
+    <div key={keyExtractor(item)} className="min-w-0">
+      {mobile(item, index)}
+    </div>
   ));
 
   return (
     <>
-      <div className={cn(mobileHidden, mobileClassName)}>
+      <div className={cn('w-full min-w-0', mobileHidden, mobileClassName)}>
         {virtualizeMobileAt && items.length >= virtualizeMobileAt ? (
           <Virtuoso
             style={{ height: 'min(70vh, 48rem)' }}
             data={items}
-            itemContent={(index, item) => <div className="pb-2.5">{mobile(item, index)}</div>}
+            itemContent={(index, item) => (
+              <div className="min-w-0 pb-2.5">{mobile(item, index)}</div>
+            )}
           />
         ) : mobileWrapper ? (
           mobileWrapper(mobileItems)
@@ -92,13 +98,13 @@ export function ResponsiveTable<T>({
         <Card
           padding="none"
           rounded="xl"
-          className={cn('table-shell overflow-hidden', desktopHidden)}
+          className={cn('table-shell w-full min-w-0 overflow-hidden', desktopHidden)}
         >
           {desktopContent}
         </Card>
       ) : (
-        <div className={cn(desktopHidden, desktopClassName)}>
-          <div className="overflow-x-auto">{table}</div>
+        <div className={cn('w-full min-w-0', desktopHidden, desktopClassName)}>
+          <div className="w-full min-w-0 overflow-x-auto">{table}</div>
         </div>
       )}
     </>

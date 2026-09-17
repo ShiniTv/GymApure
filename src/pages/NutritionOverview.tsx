@@ -31,9 +31,9 @@ import { cn } from '../lib/utils';
 import { useState, useMemo, useEffect } from 'react';
 
 function adherenceBadgeClass(percent: number): string {
-  if (percent >= 75) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-  if (percent >= 50) return 'bg-amber-500/10 text-amber-700 dark:text-amber-400';
-  return 'bg-red-500/10 text-danger dark:text-danger';
+  if (percent >= 75) return 'bg-success/10 text-success';
+  if (percent >= 50) return 'bg-warning/10 text-warning';
+  return 'bg-danger/10 text-danger';
 }
 
 export default function NutritionOverview() {

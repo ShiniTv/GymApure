@@ -142,7 +142,7 @@ export function EquipmentDetailModal({
                       )}
                       <button
                         type="button"
-                        className="text-danger dark:text-danger flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-red-500/10"
+                        className="text-danger dark:text-danger hover:bg-danger/10 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium"
                         onClick={() => {
                           onDetailMoreOpenChange(false);
                           onDeleteOpen();

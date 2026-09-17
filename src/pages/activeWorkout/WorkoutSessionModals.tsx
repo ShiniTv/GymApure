@@ -65,15 +65,15 @@ export function FinishWorkoutModal({
           type="button"
           onClick={() => onConfirm(true)}
           disabled={isSubmitting}
-          className="group can-hover:hover:border-emerald-500 flex w-full items-center justify-between rounded-[var(--radius-card)] border border-emerald-500/20 bg-emerald-500/10 px-4 py-4 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)] disabled:opacity-60 dark:border-emerald-500/25 dark:bg-emerald-500/10"
+          className="group can-hover:hover:border-success border-success/20 bg-success/10 dark:border-success/25 dark:bg-success/10 flex w-full items-center justify-between rounded-[var(--radius-card)] border px-4 py-4 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)] disabled:opacity-60"
         >
           <div className="text-left">
-            <p className="font-semibold text-emerald-600 dark:text-emerald-500">Sí, la logré</p>
-            <p className="mt-0.5 text-xs font-medium text-emerald-600/65 dark:text-emerald-500/65">
+            <p className="text-success font-semibold">Sí, la logré</p>
+            <p className="text-success/70 mt-0.5 text-xs font-medium">
               Todas las series completadas
             </p>
           </div>
-          <div className="can-hover:group-hover:bg-emerald-500 can-hover:group-hover:text-white flex h-7 w-7 items-center justify-center rounded-full border-2 border-emerald-500 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]">
+          <div className="can-hover:group-hover:bg-success can-hover:group-hover:text-white border-success text-success flex h-7 w-7 items-center justify-center rounded-full border-2 transition-[background-color,border-color,color,opacity] duration-150 [transition-timing-function:var(--ease-out)]">
             <CheckCircle className="h-4 w-4" />
           </div>
         </button>

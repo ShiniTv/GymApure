@@ -185,7 +185,7 @@ export function MeasurementModal({
                 {weightDelta != null && (
                   <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
                     {weightDelta < 0 ? (
-                      <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="text-success inline-flex items-center gap-0.5">
                         <TrendingDown className="h-3.5 w-3.5" /> {weightDelta} kg vs previa
                       </span>
                     ) : weightDelta > 0 ? (
@@ -199,7 +199,7 @@ export function MeasurementModal({
                 )}
               </div>
 
-              <div className="border-border/70 bg-surface rounded-xl border p-3.5 shadow-2xs">
+              <div className="border-border/70 bg-surface rounded-[var(--radius-card)] border p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <Label className="text-text font-semibold">Grasa corporal</Label>
                   <span className="text-text-muted text-xs font-medium">% opcional</span>
@@ -220,11 +220,11 @@ export function MeasurementModal({
                 {fatDelta != null && (
                   <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold">
                     {fatDelta < 0 ? (
-                      <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="text-success inline-flex items-center gap-0.5">
                         <TrendingDown className="h-3.5 w-3.5" /> {fatDelta}% vs previa
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                      <span className="text-warning inline-flex items-center gap-0.5">
                         <TrendingUp className="h-3.5 w-3.5" /> +{fatDelta}% vs previa
                       </span>
                     )}

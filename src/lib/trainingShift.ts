@@ -31,9 +31,9 @@ export const LEVEL_LABELS: Record<TrainerLevel, string> = {
 };
 
 export const SHIFT_BADGE_CLASSES: Record<TrainingShift, string> = {
-  diurno: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  vespertino: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
-  nocturno: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
+  diurno: 'bg-warning/10 text-warning border-warning/20',
+  vespertino: 'bg-accent/10 text-accent border-accent/20',
+  nocturno: 'bg-brand/10 text-brand border-brand/20',
 };
 
 export function formatMembershipId(userId: number): string {

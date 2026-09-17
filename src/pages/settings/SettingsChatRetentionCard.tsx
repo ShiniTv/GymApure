@@ -74,10 +74,10 @@ export function SettingsChatRetentionCard({
         <p
           className={`text-small mt-3 leading-snug font-bold ${
             settingsMessageTone === 'success'
-              ? 'text-emerald-600 dark:text-emerald-400'
+              ? 'text-success'
               : settingsMessageTone === 'info'
-                ? 'text-sky-600 dark:text-sky-400'
-                : 'text-danger dark:text-danger'
+                ? 'text-brand'
+                : 'text-danger'
           }`}
         >
           {settingsMessage}

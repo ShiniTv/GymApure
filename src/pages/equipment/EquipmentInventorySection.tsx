@@ -225,8 +225,8 @@ export function EquipmentInventorySection({
         )}
 
         {showAttentionAlert && (
-          <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/5 px-3 py-1.5">
-            <p className="flex min-w-0 items-center gap-2 truncate text-xs font-medium text-orange-800 dark:text-orange-300">
+          <div className="border-warning/25 bg-warning/5 inline-flex w-fit max-w-full items-center gap-2 rounded-xl border px-3 py-1.5">
+            <p className="text-warning flex min-w-0 items-center gap-2 truncate text-xs font-medium">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               {attentionCount} equipo{attentionCount !== 1 ? 's' : ''} requieren atención
             </p>
@@ -234,7 +234,7 @@ export function EquipmentInventorySection({
               type="button"
               variant="secondary"
               size="sm"
-              className="shrink-0 px-2 text-orange-700 dark:text-orange-300"
+              className="text-warning shrink-0 px-2"
               onClick={() => {
                 onFiltersOpenChange(true);
                 if ((statusCounts.maintenance ?? 0) > 0) {

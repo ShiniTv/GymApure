@@ -72,7 +72,7 @@ function KPICard({
 }) {
   const deltaColor = delta
     ? delta < 0
-      ? 'text-emerald-600 dark:text-emerald-400'
+      ? 'text-success'
       : delta > 0
         ? 'text-brand'
         : 'text-text-muted'
@@ -423,7 +423,7 @@ export function ProfileProgresoTab({
                 <p
                   className={cn(
                     'text-sm font-medium',
-                    waistDelta < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand'
+                    waistDelta < 0 ? 'text-success' : 'text-brand'
                   )}
                 >
                   {waistDelta > 0 ? `+${waistDelta}` : waistDelta} cm
@@ -461,7 +461,7 @@ export function ProfileProgresoTab({
                 <p
                   className={cn(
                     'text-sm font-medium',
-                    armDelta < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand'
+                    armDelta < 0 ? 'text-success' : 'text-brand'
                   )}
                 >
                   {armDelta > 0 ? `+${armDelta}` : armDelta} cm
@@ -499,7 +499,7 @@ export function ProfileProgresoTab({
                 <p
                   className={cn(
                     'text-sm font-medium',
-                    legDelta < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand'
+                    legDelta < 0 ? 'text-success' : 'text-brand'
                   )}
                 >
                   {legDelta > 0 ? `+${legDelta}` : legDelta} cm
@@ -549,7 +549,7 @@ export function ProfileProgresoTab({
 
               const deltaColor = delta
                 ? delta < 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-success'
                   : 'text-brand'
                 : 'text-text-muted';
 

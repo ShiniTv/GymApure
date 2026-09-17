@@ -31,9 +31,9 @@ export function SettingsExpiryCard({
         <Card
           padding="md"
           rounded="xl"
-          className="border-danger/30 min-w-0 overflow-hidden bg-red-500/5"
+          className="border-danger/30 bg-danger/5 min-w-0 overflow-hidden"
         >
-          <p className="text-danger dark:text-danger text-sm font-semibold">
+          <p className="text-danger text-sm font-semibold">
             No se pudieron cargar los avisos de membresía. Revisa la conexión e intenta de nuevo.
           </p>
         </Card>
@@ -114,10 +114,10 @@ export function SettingsExpiryCard({
             <p
               className={`text-small mt-3 leading-snug font-bold ${
                 settingsMessageTone === 'success'
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-success'
                   : settingsMessageTone === 'info'
-                    ? 'text-sky-600 dark:text-sky-400'
-                    : 'text-danger dark:text-danger'
+                    ? 'text-brand'
+                    : 'text-danger'
               }`}
             >
               {settingsMessage}

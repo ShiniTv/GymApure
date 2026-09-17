@@ -55,8 +55,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-[40dvh] items-center justify-center p-4">
           <div className="flex max-w-md flex-col items-center gap-3 text-center">
-            <div className="rounded-[var(--radius-card)] bg-red-500/10 p-3">
-              <AlertTriangle className="h-6 w-6 text-red-500" />
+            <div className="bg-danger/10 rounded-[var(--radius-card)] p-3">
+              <AlertTriangle className="text-danger h-6 w-6" />
             </div>
             <h2 className="text-text text-h2 font-semibold">Algo salió mal</h2>
             <p className="text-text-muted text-sm leading-relaxed">
@@ -64,7 +64,7 @@ export class ErrorBoundary extends Component<Props, State> {
               página.
             </p>
             {import.meta.env.DEV && this.state.error?.message ? (
-              <p className="max-w-full rounded-[var(--radius-card)] border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs break-words text-red-600 dark:text-red-400">
+              <p className="border-danger/20 bg-danger/5 text-danger max-w-full rounded-[var(--radius-card)] border px-3 py-2 text-xs break-words">
                 {this.state.error.message}
               </p>
             ) : null}

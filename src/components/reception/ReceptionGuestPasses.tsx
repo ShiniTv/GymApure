@@ -270,7 +270,7 @@ export function ReceptionGuestPasses() {
                   {p.used_at ? (
                     <span className="text-text-muted"> · usado</span>
                   ) : (
-                    <span className="text-amber-600 dark:text-amber-400"> · pendiente</span>
+                    <span className="text-warning"> · pendiente</span>
                   )}
                 </p>
               </div>

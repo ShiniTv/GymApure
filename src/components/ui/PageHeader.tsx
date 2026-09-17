@@ -31,45 +31,22 @@ export function PageHeader({
   className,
   compact,
   variant = 'operate',
-  showTitleOnMobile = false,
+  showTitleOnMobile = true,
 }: PageHeaderProps) {
-  // Operate: island chrome often shows the section — hide H1 on mobile when a subtitle
-  // can stand in. If there is no subtitle, keep the title so the page is never untitled.
-  const hideTitleOnMobile =
-    !showTitleOnMobile && variant === 'operate' && Boolean(subtitle?.trim());
   const titleScale = titleClass[variant];
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-2',
+        'flex min-w-0 flex-col gap-2',
         (badge || action) &&
           'max-lg:flex-row max-lg:items-start max-lg:justify-between lg:flex-row lg:items-center lg:justify-between',
         className
       )}
     >
       <div className="min-w-0 flex-1">
-        <h1
-          className={cn(
-            titleScale,
-            /* Operate keeps ~20px titles; compact only tightens stack spacing. */
-            hideTitleOnMobile && 'hidden lg:block'
-          )}
-        >
-          {title}
-        </h1>
-        {subtitle && (
-          <p
-            className={cn(
-              typography.pageSubtitle,
-              compact && 'mt-0.5',
-              hideTitleOnMobile &&
-                'max-lg:text-text-secondary max-lg:text-sm max-lg:leading-snug max-lg:font-medium'
-            )}
-          >
-            {subtitle}
-          </p>
-        )}
+        <h1 className={cn(titleScale, !showTitleOnMobile && 'hidden lg:block')}>{title}</h1>
+        {subtitle && <p className={cn(typography.pageSubtitle, compact && 'mt-0.5')}>{subtitle}</p>}
       </div>
       {(badge || action) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 self-center sm:gap-2.5">

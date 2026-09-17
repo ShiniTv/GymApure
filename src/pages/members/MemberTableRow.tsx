@@ -91,7 +91,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         label: 'Nutrición',
         icon: UtensilsCrossed,
         onClick: () => navigate(`/members/${member.id}/nutrition`),
-        className: 'hover:bg-emerald-500/10 hover:text-emerald-500',
+        className: 'hover:bg-success/10 hover:text-success',
       },
       {
         key: 'message',
@@ -105,7 +105,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         label: 'Historial',
         icon: History,
         onClick: () => navigate(`/members/${member.id}/history`),
-        className: 'hover:bg-blue-500/10 hover:text-blue-500',
+        className: 'hover:bg-brand/10 hover:text-brand',
       }
     );
   }
@@ -131,7 +131,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         label: 'Membresía',
         icon: CreditCard,
         onClick: () => onAssignSubscription(member),
-        className: 'hover:bg-emerald-500/10 hover:text-emerald-500',
+        className: 'hover:bg-success/10 hover:text-success',
       }
     );
     if (member.subscription_status) {
@@ -140,7 +140,7 @@ export const MemberTableRow = memo(function MemberTableRow({
         label: member.subscription_status === 'paused' ? 'Reanudar' : 'Pausar',
         icon: member.subscription_status === 'paused' ? Play : Pause,
         onClick: () => onMembershipOperation(member),
-        className: 'hover:bg-amber-500/10 hover:text-amber-500',
+        className: 'hover:bg-warning/10 hover:text-warning',
       });
     }
   }
@@ -153,8 +153,8 @@ export const MemberTableRow = memo(function MemberTableRow({
       onClick: () => onToggleStatus(member),
       className:
         member.status === 'active'
-          ? 'hover:bg-amber-500/10 hover:text-amber-500'
-          : 'text-emerald-500 hover:bg-emerald-500/10',
+          ? 'hover:bg-warning/10 hover:text-warning'
+          : 'text-success hover:bg-success/10',
     });
   }
 
@@ -168,7 +168,7 @@ export const MemberTableRow = memo(function MemberTableRow({
       label: member.role === 'trainer' ? 'Eliminar entrenador' : 'Eliminar',
       icon: Trash2,
       onClick: () => onDelete(member),
-      className: 'hover:bg-red-500/10 hover:text-danger',
+      className: 'hover:bg-danger/10 hover:text-danger',
       danger: true,
     });
   }
@@ -197,9 +197,7 @@ export const MemberTableRow = memo(function MemberTableRow({
             {member.membership_name ? (
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-500">
-                    {member.membership_name}
-                  </p>
+                  <p className="text-success text-xs font-semibold">{member.membership_name}</p>
                   {member.subscription_status === 'paused' && (
                     <Badge variant="warning">Pausada</Badge>
                   )}

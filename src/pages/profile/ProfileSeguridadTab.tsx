@@ -19,7 +19,7 @@ interface ProfileSeguridadTabProps {
 }
 
 function PasswordStrengthMeter({ strength }: { strength: ReturnType<typeof passwordStrength> }) {
-  const colors = ['bg-rose-500', 'bg-amber-500', 'bg-emerald-500', 'bg-emerald-600'];
+  const colors = ['bg-danger', 'bg-warning', 'bg-success', 'bg-success'];
   const width = ['25%', '50%', '75%', '100%'];
 
   return (
@@ -286,14 +286,14 @@ export function ProfileSeguridadTab({
             'border',
             'border-border/80',
             'bg-surface',
-            'rounded-xl',
-            'border-rose-500/30',
-            'bg-rose-500/5'
+            'rounded-[var(--radius-card)]',
+            'border-danger/30',
+            'bg-danger/5'
           )}
         >
           <div className="flex items-center gap-2">
-            <div className="rounded-xl bg-rose-500/10 p-2">
-              <Shield className="h-5 w-5 text-rose-500" />
+            <div className="bg-danger/10 rounded-[var(--radius-card)] p-2">
+              <Shield className="text-danger h-5 w-5" />
             </div>
             <div>
               <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
@@ -333,13 +333,11 @@ export function ProfileSeguridadTab({
             >
               <div className="bg-surface border-border/50 rounded-lg border p-2">
                 <Trash2
-                  className={confirmDelete ? 'h-5 w-5 text-rose-500' : 'text-text-muted h-5 w-5'}
+                  className={confirmDelete ? 'text-danger h-5 w-5' : 'text-text-muted h-5 w-5'}
                 />
               </div>
               <div className="text-left">
-                <p
-                  className={confirmDelete ? 'font-medium text-rose-500' : 'text-text font-medium'}
-                >
+                <p className={confirmDelete ? 'text-danger font-medium' : 'text-text font-medium'}>
                   {confirmDelete ? 'Confirmar cierre de cuenta' : 'Cerrar cuenta'}
                 </p>
                 <p className="text-text-muted text-xs">

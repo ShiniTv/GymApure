@@ -136,7 +136,7 @@ export function ReceptionInsideList({
                     {duration.label}
                   </Badge>
                 ) : (
-                  <span className="text-small font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                  <span className="text-small text-success font-semibold tabular-nums">
                     {duration.label}
                   </span>
                 )}

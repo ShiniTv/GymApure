@@ -105,7 +105,7 @@ export default function ResetPassword() {
 
             <Link
               to="/login"
-              className="inline-flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-zinc-400 transition-colors hover:text-zinc-200"
+              className="auth-linear-link inline-flex items-center justify-center gap-1.5 text-center text-xs font-semibold"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Volver al inicio de sesión

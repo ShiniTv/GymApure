@@ -259,7 +259,7 @@ export default function ReceptionWalkInWizard({
   if (success) {
     return (
       <Card padding="md" rounded="xl" className="mx-auto w-full max-w-3xl">
-        <div className="flex items-center gap-3 text-emerald-600">
+        <div className="text-success flex items-center gap-3">
           <CheckCircle className="h-8 w-8 shrink-0" />
           <div>
             <h3 className="text-text text-h2 font-semibold">Registro completado</h3>
@@ -288,7 +288,7 @@ export default function ReceptionWalkInWizard({
             <p
               className={cn(
                 'flex items-center gap-2 font-bold',
-                checkedOut ? 'text-text-muted' : 'text-emerald-600'
+                checkedOut ? 'text-text-muted' : 'text-success'
               )}
             >
               {checkedOut ? (
@@ -406,7 +406,7 @@ export default function ReceptionWalkInWizard({
               i === step
                 ? 'border-brand/40 bg-brand/10 text-brand'
                 : i < step
-                  ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600'
+                  ? 'border-success/30 bg-success/10 text-success'
                   : 'border-border text-text-muted'
             )}
           >
@@ -417,7 +417,7 @@ export default function ReceptionWalkInWizard({
       </div>
 
       {error && (
-        <div className="border-danger/20 text-danger rounded-xl border bg-red-500/10 px-3 py-2 text-xs font-semibold">
+        <div className="border-danger/20 text-danger bg-danger/10 rounded-[var(--radius-card)] border px-3 py-2 text-xs font-semibold">
           {error}
         </div>
       )}
@@ -580,7 +580,7 @@ export default function ReceptionWalkInWizard({
               </label>
             </div>
             {proofFile && (
-              <p className="mt-2 text-center text-xs font-medium text-emerald-600 dark:text-emerald-500">
+              <p className="text-success mt-2 text-center text-xs font-medium">
                 Seleccionado: {proofFile.name}
               </p>
             )}
@@ -641,7 +641,7 @@ export default function ReceptionWalkInWizard({
           </p>
           <p>
             <span className="text-text-muted">Entrada hoy:</span>{' '}
-            <strong className={form.check_in ? 'text-emerald-600' : 'text-text-muted'}>
+            <strong className={form.check_in ? 'text-success' : 'text-text-muted'}>
               {form.check_in ? 'Sí' : 'No'}
             </strong>
           </p>
