@@ -87,9 +87,11 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
           <Tooltip
             contentStyle={{
               borderRadius: '12px',
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-surface)',
-              boxShadow: '0 8px 24px -6px rgba(0,0,0,0.3)',
+              border: '1px solid color-mix(in srgb, var(--color-border) 70%, transparent)',
+              background: 'color-mix(in srgb, var(--color-surface) 85%, transparent)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              boxShadow: '0 8px 32px -4px rgba(0,0,0,0.25), inset 0 1px 0 0 rgba(255,255,255,0.1)',
               fontWeight: 500,
               fontSize: '12px',
               padding: '8px 12px',
@@ -111,7 +113,12 @@ export default function ProfileWeightChart({ data }: ProfileWeightChartProps) {
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#weightGradient)"
-            activeDot={{ r: 5, fill: 'var(--color-brand)', strokeWidth: 2, stroke: '#fff' }}
+            activeDot={{
+              r: 5,
+              fill: 'var(--color-brand)',
+              strokeWidth: 2,
+              stroke: 'var(--color-surface)',
+            }}
           />
 
           {hasFat && (

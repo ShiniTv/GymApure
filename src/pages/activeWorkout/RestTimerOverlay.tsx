@@ -35,7 +35,7 @@ export function RestTimerOverlay({
   return (
     <aside
       aria-label="Temporizador de descanso activo"
-      className="border-border bg-surface/95 animate-in slide-in-from-bottom-4 fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-50 rounded-[var(--radius-modal)] border p-3 shadow-2xl backdrop-blur-md transition-all duration-200 [transition-timing-function:var(--ease-out)] md:right-8 md:bottom-6 md:left-auto md:w-84"
+      className="glass-panel light-catch animate-in slide-in-from-bottom-4 shadow-apple-glass fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-50 rounded-[var(--radius-modal)] p-3 transition-all duration-200 [transition-timing-function:var(--ease-spring)] md:right-8 md:bottom-6 md:left-auto md:w-84"
     >
       {isExpanded ? (
         /* Modo Expandido: Gauge grande y foco en descanso */

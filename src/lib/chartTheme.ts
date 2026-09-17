@@ -10,7 +10,7 @@ export const chartAxisTick = {
 export const chartGridClass = 'text-border';
 
 export const chartTooltipClass =
-  'border-border bg-surface rounded-[var(--radius-card)] border p-3 shadow-xs';
+  'border-border/60 bg-surface/85 backdrop-blur-xl rounded-xl border p-2.5 shadow-lg text-xs';
 
 export const chartHeights = {
   /** Sparkline / weekly mini — 180px */

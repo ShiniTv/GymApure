@@ -39,7 +39,7 @@ export function WorkoutHeader({
   const resetMenuAnchorRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="border-border/70 bg-surface-raised/50 rounded-[var(--radius-card)] border px-3 py-2.5 sm:px-3.5">
+    <div className="glass-panel light-catch shadow-apple-glass rounded-[var(--radius-card)] px-3 py-2.5 sm:px-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <button

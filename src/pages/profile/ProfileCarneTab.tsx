@@ -55,7 +55,7 @@ export function ProfileCarneTab({
   return (
     <div className="mx-auto w-full max-w-md space-y-3">
       {/* Apple Wallet Style Pass */}
-      <div className="border-border/80 bg-surface relative overflow-hidden rounded-xl border p-5 shadow-sm">
+      <div className="glass-panel light-catch shadow-apple-glass relative overflow-hidden rounded-xl p-5">
         {/* Glow de fondo tenue */}
         <div className="from-brand/10 pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-radial to-transparent" />
 
