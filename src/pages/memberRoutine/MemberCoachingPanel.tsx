@@ -282,9 +282,11 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
             Perfil.
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2.5 sm:grid-cols-2">
           <div>
-            <Label htmlFor="assessment-primary-goal">Objetivo principal</Label>
+            <Label htmlFor="assessment-primary-goal" className="text-xs">
+              Objetivo principal
+            </Label>
             <Input
               id="assessment-primary-goal"
               value={assessment.primary_goal}
@@ -292,10 +294,13 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
                 setAssessment({ ...assessment, primary_goal: event.target.value })
               }
               placeholder="Ej: ganar fuerza sin agravar rodilla"
+              className="text-xs"
             />
           </div>
           <div>
-            <Label htmlFor="assessment-experience">Experiencia</Label>
+            <Label htmlFor="assessment-experience" className="text-xs">
+              Experiencia
+            </Label>
             <Select
               id="assessment-experience"
               value={assessment.experience_level || ''}
@@ -305,6 +310,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
                   experience_level: (event.target.value || '') as ExperienceLevel,
                 })
               }
+              className="text-xs"
             >
               <option value="">Sin definir</option>
               <option value="beginner">Principiante</option>
@@ -313,52 +319,64 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="assessment-preferences">Preferencias</Label>
+            <Label htmlFor="assessment-preferences" className="text-xs">
+              Preferencias
+            </Label>
             <Input
               id="assessment-preferences"
               value={assessment.preferences}
               onChange={(event) =>
                 setAssessment({ ...assessment, preferences: event.target.value })
               }
-              placeholder="Horarios, ejercicios que disfruta o evita"
+              placeholder="Horarios, ejercicios favoritos…"
+              className="text-xs"
             />
           </div>
           <div>
-            <Label htmlFor="assessment-equipment">Equipo disponible</Label>
+            <Label htmlFor="assessment-equipment" className="text-xs">
+              Equipo disponible
+            </Label>
             <Input
               id="assessment-equipment"
               value={assessment.equipment_access}
               onChange={(event) =>
                 setAssessment({ ...assessment, equipment_access: event.target.value })
               }
-              placeholder="Gym completo, casa, mancuernas…"
+              placeholder="Gym completo, mancuernas…"
+              className="text-xs"
             />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="assessment-mobility">Movilidad y observaciones</Label>
+            <Label htmlFor="assessment-mobility" className="text-xs">
+              Movilidad y observaciones
+            </Label>
             <textarea
               id="assessment-mobility"
+              rows={2}
               value={assessment.mobility_notes}
               onChange={(event) =>
                 setAssessment({ ...assessment, mobility_notes: event.target.value })
               }
-              className="border-border bg-surface text-text min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-surface text-text focus:border-brand min-h-[52px] w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none"
             />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="assessment-notes">Notas de programación</Label>
+            <Label htmlFor="assessment-notes" className="text-xs">
+              Notas de programación
+            </Label>
             <textarea
               id="assessment-notes"
+              rows={2}
               value={assessment.coaching_notes}
               onChange={(event) =>
                 setAssessment({ ...assessment, coaching_notes: event.target.value })
               }
-              className="border-border bg-surface text-text min-h-20 w-full rounded-lg border px-3 py-2 text-sm"
+              className="border-border bg-surface text-text focus:border-brand min-h-[52px] w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none"
             />
           </div>
         </div>
         <Button
-          className="mt-4"
+          className="mt-3"
           size="sm"
           onClick={() => void saveAssessment()}
           disabled={savingAssessment}

@@ -11,7 +11,7 @@ export default function ThemePalettePicker() {
       <div
         role="radiogroup"
         aria-label="Paleta de colores"
-        className="grid grid-cols-2 gap-2.5 sm:grid-cols-4"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
       >
         {FEATURED_PALETTE_LIST.map((item) => {
           const isActive = palette === item.id;
@@ -23,53 +23,33 @@ export default function ThemePalettePicker() {
               aria-checked={isActive}
               onClick={() => setPalette(item.id)}
               className={cn(
-                'relative flex touch-manipulation flex-col items-start gap-2 rounded-xl border p-3 text-left transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
+                'relative flex touch-manipulation items-center gap-2.5 rounded-xl border p-2.5 text-left transition-[background-color,border-color,color,box-shadow,opacity] duration-150 [transition-timing-function:var(--ease-out)]',
                 'focus-visible:ring-brand/50 focus:outline-none focus-visible:ring-2',
                 isActive
-                  ? 'border-brand bg-brand/5 shadow-sm'
-                  : 'border-border bg-surface can-hover:hover:border-border'
+                  ? 'border-brand bg-brand/5 shadow-2xs'
+                  : 'border-border bg-surface can-hover:hover:border-border/80'
               )}
             >
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="border-border h-5 w-5 shrink-0 rounded-full border"
-                  style={{ backgroundColor: item.swatch.light }}
-                  aria-hidden
-                />
-                <span
-                  className="border-border h-5 w-5 shrink-0 rounded-full border"
-                  style={{ backgroundColor: item.swatch.dark }}
-                  aria-hidden
-                />
+              <div
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-black/10 shadow-xs"
+                style={{
+                  background: `linear-gradient(135deg, ${item.swatch.light} 50%, ${item.swatch.dark} 50%)`,
+                }}
+              >
+                {isActive && (
+                  <Check
+                    className="h-3.5 w-3.5 text-white drop-shadow-sm"
+                    strokeWidth={2.5}
+                    aria-hidden
+                  />
+                )}
               </div>
-              <div className="w-full min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-text truncate text-xs font-semibold">{item.label}</p>
-                <p className="text-text-muted text-small mt-0.5 line-clamp-2 leading-snug">
-                  {item.description}
+                <p className="text-text-muted text-small truncate">
+                  {item.id === 'sky' ? 'Predeterminado' : 'Acento'}
                 </p>
               </div>
-              <div
-                className="border-border-subtle flex w-full items-center gap-2 border-t pt-1"
-                aria-hidden
-              >
-                <span
-                  className="text-small flex h-5 shrink-0 items-center rounded-md px-2 font-semibold text-white"
-                  style={{ backgroundColor: item.swatch.light }}
-                >
-                  Btn
-                </span>
-                <span
-                  className="text-small truncate font-semibold"
-                  style={{ color: item.swatch.light }}
-                >
-                  Enlace
-                </span>
-              </div>
-              {isActive && (
-                <span className="brand-solid absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full">
-                  <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
-                </span>
-              )}
             </button>
           );
         })}

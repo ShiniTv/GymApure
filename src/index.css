@@ -1478,19 +1478,19 @@ body,
 }
 
 .reception-main-pad {
-  padding-bottom: calc(var(--reception-nav-stack) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--reception-nav-stack) + 2rem + env(safe-area-inset-bottom, 0px));
 }
 
 .trainer-main-pad {
-  padding-bottom: calc(var(--trainer-nav-stack) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--trainer-nav-stack) + 2rem + env(safe-area-inset-bottom, 0px));
 }
 
 .admin-main-pad {
-  padding-bottom: calc(var(--admin-nav-stack) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--admin-nav-stack) + 2rem + env(safe-area-inset-bottom, 0px));
 }
 
 .member-main-pad {
-  padding-bottom: calc(var(--member-nav-stack) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--member-nav-stack) + 2rem + env(safe-area-inset-bottom, 0px));
 }
 
 html.member-has-workout-fab .member-main-pad {

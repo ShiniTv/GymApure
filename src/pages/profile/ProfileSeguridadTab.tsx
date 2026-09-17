@@ -112,26 +112,25 @@ export function ProfileSeguridadTab({
     <div className={GRID_ASYMMETRIC}>
       {/* Columna Izquierda: Contraseña */}
       <div
-        className={cn(
-          'space-y-4',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
+        className={cn('space-y-3', CARD_PADDING, 'border-border/80 bg-surface rounded-xl border')}
       >
         <div className="flex items-center gap-2">
-          <Lock className="text-brand h-5 w-5" />
-          <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">Cambiar Contraseña</h3>
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <Lock className="text-brand h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+              Cambiar Contraseña
+            </h3>
+            <p className="text-text-muted text-xs">
+              Mínimo 8 caracteres combinando letras y números
+            </p>
+          </div>
         </div>
-        <p className="text-text-muted text-sm">
-          Usa al menos 8 caracteres combinando letras, números y símbolos
-        </p>
 
-        <form onSubmit={onChangePassword} className="space-y-4">
+        <form onSubmit={onChangePassword} className="space-y-3">
           {passwordError && (
-            <div className="bg-danger/10 border-danger/30 text-danger flex items-center gap-2 rounded-xl border p-3 text-sm font-medium">
+            <div className="bg-danger/10 border-danger/30 text-danger flex items-center gap-2 rounded-xl border p-2.5 text-xs font-medium">
               <svg
                 className="h-4 w-4 flex-shrink-0"
                 viewBox="0 0 24 24"
@@ -149,8 +148,8 @@ export function ProfileSeguridadTab({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="current-password" className="text-text text-sm font-medium">
+          <div className="space-y-1">
+            <Label htmlFor="current-password" className="text-text text-xs font-medium">
               Contraseña actual
             </Label>
             <PasswordInput
@@ -164,8 +163,8 @@ export function ProfileSeguridadTab({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="new-password" className="text-text text-sm font-medium">
+          <div className="space-y-1">
+            <Label htmlFor="new-password" className="text-text text-xs font-medium">
               Nueva contraseña
             </Label>
             <PasswordInput
@@ -178,8 +177,8 @@ export function ProfileSeguridadTab({
             {passwordForm.new_password && <PasswordStrengthMeter strength={strength} />}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password" className="text-text text-sm font-medium">
+          <div className="space-y-1">
+            <Label htmlFor="confirm-password" className="text-text text-xs font-medium">
               Confirmar nueva contraseña
             </Label>
             <PasswordInput
@@ -193,16 +192,17 @@ export function ProfileSeguridadTab({
             />
           </div>
 
-          <div className="border-border/50 border-t pt-3">
+          <div className="border-border/50 border-t pt-2">
             <Button
               type="submit"
+              size="md"
               disabled={
                 passwordSaving ||
                 !passwordForm.current_password ||
                 !passwordForm.new_password ||
                 passwordForm.new_password !== passwordForm.confirm_password
               }
-              className="w-full gap-2 shadow-sm"
+              className="w-full gap-2 shadow-2xs"
             >
               <Lock className="h-4 w-4" />
               <span>{passwordSaving ? 'Actualizando…' : 'Actualizar contraseña'}</span>
@@ -216,24 +216,21 @@ export function ProfileSeguridadTab({
         {/* Notificaciones Push */}
         <div
           className={cn(
-            'space-y-3',
+            'space-y-2.5',
             CARD_PADDING,
-            'border',
-            'border-border/80',
-            'bg-surface',
-            'rounded-xl'
+            'border-border/80 bg-surface rounded-xl border'
           )}
         >
           <div className="flex items-center gap-2">
-            <div className="bg-brand/10 rounded-xl p-2">
-              <Bell className="text-brand h-5 w-5" />
+            <div className="bg-brand/10 rounded-lg p-1.5">
+              <Bell className="text-brand h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+              <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
                 Notificaciones Push
               </h3>
-              <p className="text-text-muted text-sm">
-                Recibe avisos sobre pagos, confirmaciones y mensajes en este dispositivo
+              <p className="text-text-muted text-xs">
+                Avisos de pagos, mensajes y alertas en este dispositivo
               </p>
             </div>
           </div>
@@ -244,36 +241,33 @@ export function ProfileSeguridadTab({
         {role !== 'member' && (
           <div
             className={cn(
-              'space-y-3',
+              'space-y-2.5',
               CARD_PADDING,
-              'border',
-              'border-border/80',
-              'bg-surface',
-              'rounded-xl'
+              'border-border/80 bg-surface rounded-xl border'
             )}
           >
             <div className="flex items-center gap-2">
-              <div className="bg-brand/10 rounded-xl p-2">
-                <ShieldCheck className="text-brand h-5 w-5" />
+              <div className="bg-brand/10 rounded-lg p-1.5">
+                <ShieldCheck className="text-brand h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+                <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
                   Verificación en Dos Pasos (MFA)
                 </h3>
-                <p className="text-text-muted text-sm">
-                  Protege el acceso a tu cuenta mediante códigos de autenticador (Google
-                  Authenticator, Authy, etc.)
+                <p className="text-text-muted text-xs">
+                  Protección adicional con app autenticadora
                 </p>
               </div>
             </div>
             <Link
               to="/security"
-              className="bg-surface border-border/50 text-text hover:bg-surface-raised hover:border-brand/40 inline-flex items-center gap-2 rounded-xl border px-4 py-3 font-semibold transition-all"
+              className="bg-surface border-border/60 text-text hover:bg-surface-raised hover:border-brand/40 flex items-center justify-between rounded-xl border p-2.5 text-xs font-semibold transition-all"
             >
-              <div className="bg-brand/10 rounded-lg p-2">
-                <Key className="text-brand h-5 w-5" />
+              <div className="flex items-center gap-2">
+                <Key className="text-brand h-4 w-4" />
+                <span>Gestionar llaves 2FA</span>
               </div>
-              <span>Gestionar seguridad y llaves 2FA</span>
+              <span className="text-brand text-xs">Configurar →</span>
             </Link>
           </div>
         )}

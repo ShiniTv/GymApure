@@ -49,17 +49,14 @@ export function ProfileDatosTab({
       {isTrainer && trainerProfile && (
         <div
           className={cn(
-            'space-y-3',
+            'space-y-2.5',
             CARD_PADDING,
-            'border',
-            'border-border/80',
-            'bg-surface',
-            'rounded-xl'
+            'border-border/80 bg-surface rounded-xl border'
           )}
         >
           <div className="flex items-center gap-2">
             <svg
-              className="text-brand h-5 w-5"
+              className="text-brand h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -70,23 +67,35 @@ export function ProfileDatosTab({
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <path d="M8 3v18M16 3v18" />
             </svg>
-            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+            <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
               Perfil Profesional de Entrenador
             </h3>
           </div>
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
-              <dt className="text-text-muted text-sm font-medium">Nivel</dt>
-              <dd className="text-text font-semibold">{LEVEL_LABELS[trainerProfile.level]}</dd>
+          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+              <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
+                Nivel
+              </dt>
+              <dd className="text-text mt-0.5 text-sm font-semibold">
+                {LEVEL_LABELS[trainerProfile.level]}
+              </dd>
             </div>
-            <div className="space-y-1">
-              <dt className="text-text-muted text-sm font-medium">Turno</dt>
-              <dd className="text-text font-semibold">{SHIFT_LABELS[trainerProfile.shift]}</dd>
+            <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+              <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
+                Turno
+              </dt>
+              <dd className="text-text mt-0.5 text-sm font-semibold">
+                {SHIFT_LABELS[trainerProfile.shift]}
+              </dd>
             </div>
             {trainerProfile.specialty && (
-              <div className="space-y-1 sm:col-span-2">
-                <dt className="text-text-muted text-sm font-medium">Especialidad</dt>
-                <dd className="text-text truncate font-semibold">{trainerProfile.specialty}</dd>
+              <div className="bg-surface-raised/40 border-border/60 col-span-2 rounded-lg border p-2.5 sm:col-span-1">
+                <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
+                  Especialidad
+                </dt>
+                <dd className="text-text mt-0.5 truncate text-sm font-semibold">
+                  {trainerProfile.specialty}
+                </dd>
               </div>
             )}
           </dl>

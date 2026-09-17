@@ -43,17 +43,19 @@ export function MemberProfilePanel({
   const heightCm = heightCmNumber(member.height);
 
   return (
-    <div className="space-y-2.5">
-      <div className="border-border rounded-xl border px-3 py-2.5">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
-          <div>
-            <p className="text-text-muted text-small font-medium tracking-wide uppercase">Altura</p>
+    <div className="space-y-3">
+      <div className="border-border/80 bg-surface rounded-xl border p-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
+              Altura
+            </p>
             <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
               {heightCm != null ? `${heightCm} cm` : '—'}
             </p>
           </div>
-          <div>
-            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
+          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               {latestMeasurement?.weight != null ? 'Peso actual' : 'Peso inicial'}
             </p>
             <p className="text-text mt-0.5 text-sm font-semibold tabular-nums">
@@ -73,50 +75,49 @@ export function MemberProfilePanel({
               </button>
             )}
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
+          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               Objetivo
             </p>
-            <p className="text-text mt-0.5 text-sm font-semibold">
+            <p className="text-text mt-0.5 truncate text-sm font-semibold">
               {formatMemberGoal(member.goal) ?? '—'}
             </p>
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <p className="text-text-muted text-small font-medium tracking-wide uppercase">
+          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               Meta semanal
             </p>
             {canEditWeeklyGoal ? (
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <div className="border-border inline-flex items-center rounded-lg border">
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <div className="border-border/60 bg-surface inline-flex items-center rounded-md border">
                   <button
                     type="button"
-                    className="text-text-muted hover:text-text inline-flex h-10 w-10 items-center justify-center transition-colors disabled:opacity-40 sm:h-8 sm:w-8"
+                    className="text-text-muted hover:text-text inline-flex h-6 w-6 items-center justify-center transition-colors disabled:opacity-40"
                     aria-label="Bajar meta"
                     disabled={savingWeeklyGoal || weeklyGoal <= 1}
                     onClick={() => onWeeklyGoalChange(Math.max(1, weeklyGoal - 1))}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
                   </button>
-                  <span className="text-text min-w-[2.5rem] text-center text-sm font-semibold tabular-nums">
+                  <span className="text-text min-w-[1.75rem] text-center text-xs font-semibold tabular-nums">
                     {weeklyGoal}
-                    <span className="text-text-muted text-small ml-0.5 font-medium">d</span>
+                    <span className="text-text-muted ml-0.5 font-medium">d</span>
                   </span>
                   <button
                     type="button"
-                    className="text-text-muted hover:text-text inline-flex h-10 w-10 items-center justify-center transition-colors disabled:opacity-40 sm:h-8 sm:w-8"
+                    className="text-text-muted hover:text-text inline-flex h-6 w-6 items-center justify-center transition-colors disabled:opacity-40"
                     aria-label="Subir meta"
                     disabled={savingWeeklyGoal || weeklyGoal >= 7}
                     onClick={() => onWeeklyGoalChange(Math.min(7, weeklyGoal + 1))}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" />
                   </button>
                 </div>
                 {weeklyGoal !== (member.weekly_training_goal ?? 5) ? (
                   <Button
-                    type="button"
                     variant="secondary"
                     size="sm"
-                    className="px-2.5"
+                    className="px-2"
                     disabled={savingWeeklyGoal}
                     onClick={onSaveWeeklyGoal}
                   >
