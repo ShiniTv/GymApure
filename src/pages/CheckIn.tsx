@@ -26,6 +26,7 @@ import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { hapticSuccess, hapticLight } from '../lib/haptics';
+import { playSuccessSound, playErrorSound } from '../lib/soundEffects';
 
 const QrScannerPanel = lazy(() =>
   import('../components/checkin/QrScannerPanel').then((m) => ({ default: m.QrScannerPanel }))
@@ -199,6 +200,7 @@ export default function CheckIn() {
         setStatus('error');
         setMessage('Código QR o cédula no reconocido');
         setExpiryWarning('');
+        playErrorSound();
         processingRef.current = false;
         resetToIdle(4000);
         return;
@@ -237,6 +239,7 @@ export default function CheckIn() {
             setExpiryWarning(data.expiry_warning || '');
             setDurationLabel(data.duration_label || '');
             hapticSuccess();
+            playSuccessSound();
 
             if (isCheckIn) {
               setMessage(
@@ -262,6 +265,7 @@ export default function CheckIn() {
             setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
             setExpiryWarning('');
             hapticLight();
+            playErrorSound();
             if (data.user_name) setUserName(data.user_name);
             processingRef.current = false;
             const autoDelay = isKioskMode ? 4000 : 4000;
@@ -285,6 +289,7 @@ export default function CheckIn() {
           setMessage('Guardado en cola offline. Se sincronizará automáticamente al conectar.');
           setExpiryWarning('');
           hapticSuccess();
+          playSuccessSound();
 
           setCedula('');
           processingRef.current = false;

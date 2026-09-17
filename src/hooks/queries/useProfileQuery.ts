@@ -104,6 +104,9 @@ export function useInvalidateProfile() {
     void qc.invalidateQueries({ queryKey: ['profile', userId] });
     void qc.invalidateQueries({ queryKey: ['profile', userId, 'measurements'] });
     void qc.invalidateQueries({ queryKey: ['member-measurements', userId] });
+    void qc.invalidateQueries({ queryKey: ['health-profile', userId] });
+    void qc.invalidateQueries({ queryKey: ['member-stats', userId] });
+    void qc.invalidateQueries({ queryKey: ['members'] });
   };
 }
 

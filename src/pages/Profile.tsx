@@ -66,6 +66,8 @@ export default function Profile() {
         role={user.role}
         subscription={page.subscription}
         workoutsThisMonth={page.workoutsThisMonth}
+        streakDays={page.streakDays}
+        weeklyGoal={page.weeklyGoal}
         avatarUploading={page.avatarUploading}
         avatarRemoving={page.avatarRemoving}
         onAvatarChange={(e) => void page.handleAvatarChange(e)}

@@ -8,8 +8,9 @@ export async function logAudit(
   const detailsText =
     typeof details === 'string' ? details : details ? JSON.stringify(details) : null;
 
-  await query(
-    'INSERT INTO audit_logs (user_id, action, details) VALUES ($1, $2, $3)',
-    [userId ?? null, action, detailsText]
-  );
+  await query('INSERT INTO audit_logs (user_id, action, details) VALUES ($1, $2, $3)', [
+    userId ?? null,
+    action,
+    detailsText,
+  ]);
 }

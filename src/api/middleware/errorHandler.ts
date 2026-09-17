@@ -5,7 +5,7 @@ import { logger } from '../../lib/logger.ts';
 export class AppError extends Error {
   constructor(
     message: string,
-    public statusCode: number = 500,
+    public statusCode = 500,
     public clientMessage?: string
   ) {
     super(message);
@@ -33,13 +33,17 @@ export const errorHandler: ErrorRequestHandler = (
 
   const isSyntaxError = err instanceof SyntaxError && 'body' in err;
   if (isSyntaxError) {
-    res.status(400).json({ error: 'JSON inválido en la petición', requestId: res.getHeader('X-Request-Id') });
+    res
+      .status(400)
+      .json({ error: 'JSON inválido en la petición', requestId: res.getHeader('X-Request-Id') });
     return;
   }
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
-      error: err.clientMessage ?? (env.NODE_ENV === 'production' ? 'Error en la solicitud' : err.message),
+      error:
+        err.clientMessage ??
+        (env.NODE_ENV === 'production' ? 'Error en la solicitud' : err.message),
       requestId: res.getHeader('X-Request-Id'),
     });
     return;

@@ -93,7 +93,7 @@ export function MemberMeasurementsPanel({
                       {format(new Date(measurement.date), 'dd MMMM yyyy', { locale: es })}
                     </span>
                     {index === 0 && (
-                      <span className="bg-brand/10 py-0.2 text-brand rounded-md px-1.5 text-[10px] font-bold">
+                      <span className="bg-brand/10 py-0.2 text-brand rounded-md px-1.5 text-xs font-bold">
                         Actual
                       </span>
                     )}
@@ -121,7 +121,7 @@ export function MemberMeasurementsPanel({
                       )}
                     </p>
                     {measurement.body_fat_percentage != null && (
-                      <p className="text-text-muted text-[11px]">
+                      <p className="text-text-muted text-xs">
                         {measurement.body_fat_percentage}% grasa
                       </p>
                     )}
@@ -146,7 +146,7 @@ export function MemberMeasurementsPanel({
         <div className="border-border/70 rounded-xl border border-dashed p-6 text-center">
           <Scale className="text-text-muted mx-auto h-8 w-8" />
           <p className="text-text mt-2 text-xs font-bold">Sin mediciones registradas</p>
-          <p className="text-text-muted mt-0.5 text-[11px]">
+          <p className="text-text-muted mt-0.5 text-xs">
             Registra el peso y medidas del socio para llevar un control evolutivo.
           </p>
           {canEdit && (
@@ -225,7 +225,7 @@ export function MemberMeasurementsPanel({
             </Label>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <span className="text-text-muted text-[11px]">Cintura</span>
+                <span className="text-text-muted text-xs">Cintura</span>
                 <Input
                   type="number"
                   step="0.1"
@@ -236,7 +236,7 @@ export function MemberMeasurementsPanel({
                 />
               </div>
               <div>
-                <span className="text-text-muted text-[11px]">Brazo</span>
+                <span className="text-text-muted text-xs">Brazo</span>
                 <Input
                   type="number"
                   step="0.1"
@@ -247,7 +247,7 @@ export function MemberMeasurementsPanel({
                 />
               </div>
               <div>
-                <span className="text-text-muted text-[11px]">Pierna</span>
+                <span className="text-text-muted text-xs">Pierna</span>
                 <Input
                   type="number"
                   step="0.1"

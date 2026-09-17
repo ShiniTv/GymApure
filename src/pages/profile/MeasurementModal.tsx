@@ -167,7 +167,7 @@ export function MeasurementModal({
               <div className="border-border/70 bg-surface rounded-xl border p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <Label className="text-text font-semibold">Peso corporal</Label>
-                  <span className="text-text-muted text-[11px] font-medium">kg</span>
+                  <span className="text-text-muted text-xs font-medium">kg</span>
                 </div>
                 <div className="mt-1.5">
                   <Input
@@ -202,7 +202,7 @@ export function MeasurementModal({
               <div className="border-border/70 bg-surface rounded-xl border p-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <Label className="text-text font-semibold">Grasa corporal</Label>
-                  <span className="text-text-muted text-[11px] font-medium">% opcional</span>
+                  <span className="text-text-muted text-xs font-medium">% opcional</span>
                 </div>
                 <div className="mt-1.5">
                   <Input
@@ -261,7 +261,7 @@ export function MeasurementModal({
             <div className="border-border/70 bg-surface rounded-xl border p-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <Label className="text-text text-xs font-semibold">Cintura</Label>
-                <span className="text-text-muted text-[10px]">cm</span>
+                <span className="text-text-muted text-xs">cm</span>
               </div>
               <Input
                 type="number"
@@ -272,7 +272,7 @@ export function MeasurementModal({
                 className="mt-1 font-semibold tabular-nums"
               />
               {latestMeasurement?.waist != null && !isNaN(numWaist) && (
-                <p className="text-text-muted mt-1 text-[11px] font-medium">
+                <p className="text-text-muted mt-1 text-xs font-medium">
                   Prev: {latestMeasurement.waist} cm
                 </p>
               )}
@@ -281,7 +281,7 @@ export function MeasurementModal({
             <div className="border-border/70 bg-surface rounded-xl border p-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <Label className="text-text text-xs font-semibold">Brazo</Label>
-                <span className="text-text-muted text-[10px]">cm</span>
+                <span className="text-text-muted text-xs">cm</span>
               </div>
               <Input
                 type="number"
@@ -292,7 +292,7 @@ export function MeasurementModal({
                 className="mt-1 font-semibold tabular-nums"
               />
               {latestMeasurement?.arm != null && !isNaN(numArm) && (
-                <p className="text-text-muted mt-1 text-[11px] font-medium">
+                <p className="text-text-muted mt-1 text-xs font-medium">
                   Prev: {latestMeasurement.arm} cm
                 </p>
               )}
@@ -301,7 +301,7 @@ export function MeasurementModal({
             <div className="border-border/70 bg-surface rounded-xl border p-3 shadow-2xs">
               <div className="flex items-center justify-between">
                 <Label className="text-text text-xs font-semibold">Pierna / Muslo</Label>
-                <span className="text-text-muted text-[10px]">cm</span>
+                <span className="text-text-muted text-xs">cm</span>
               </div>
               <Input
                 type="number"
@@ -312,7 +312,7 @@ export function MeasurementModal({
                 className="mt-1 font-semibold tabular-nums"
               />
               {latestMeasurement?.leg != null && !isNaN(numLeg) && (
-                <p className="text-text-muted mt-1 text-[11px] font-medium">
+                <p className="text-text-muted mt-1 text-xs font-medium">
                   Prev: {latestMeasurement.leg} cm
                 </p>
               )}

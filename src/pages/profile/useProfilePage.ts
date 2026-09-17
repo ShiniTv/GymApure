@@ -156,6 +156,8 @@ export function useProfilePage() {
 
   const subscription = memberStats?.stats?.subscription ?? null;
   const workoutsThisMonth = memberStats?.stats?.workoutsThisMonth ?? 0;
+  const streakDays = memberStats?.stats?.workoutStreak ?? 0;
+  const weeklyGoal = memberStats?.stats?.weeklyTrainingGoal ?? 5;
 
   const badgeMember = useMemo((): MemberBadgeData | null => {
     if (!profile?.cedula || !user) return null;
@@ -356,6 +358,8 @@ export function useProfilePage() {
     heightCm: heightCmNumber(profile?.height),
     subscription,
     workoutsThisMonth,
+    streakDays,
+    weeklyGoal,
     badgeMember,
     handleSaveProfile,
     handleAvatarChange,

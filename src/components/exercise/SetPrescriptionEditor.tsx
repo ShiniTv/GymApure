@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Label, Input } from '../ui';
 import type { EffortMode, LoadMode, SetPrescriptionRow } from '../../lib/setPrescription';
 import { resizeSetPrescription } from '../../lib/setPrescription';
@@ -20,7 +21,10 @@ export function SetPrescriptionEditor({
   load,
   onChange,
 }: SetPrescriptionEditorProps) {
-  const rows = value.length === sets ? value : resizeSetPrescription(value, sets, defaultReps);
+  const rows = useMemo(
+    () => (value.length === sets ? value : resizeSetPrescription(value, sets, defaultReps)),
+    [value, sets, defaultReps]
+  );
   const showLoad = load !== 'none';
   const loadLabel = load === 'plates' ? 'Placas' : 'Peso (kg)';
   const effortLabel = effort === 'time' ? 'Segundos' : 'Reps';

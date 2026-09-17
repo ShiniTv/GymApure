@@ -1,88 +1,172 @@
 /**
- * Web Audio API synthesized sound effects.
- * 100% offline, zero external audio asset downloads, instant playback.
+ * Pure Web Audio API synthetic feedback tones.
+ * Zero external asset dependencies, zero network latency.
  */
 
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  if (!audioCtx) {
+  try {
+    if (typeof window === 'undefined') return null;
     const AudioContextClass =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (AudioContextClass) {
-      audioCtx = new AudioContextClass();
+    if (!AudioContextClass) return null;
+    audioCtx ??= new AudioContextClass();
+    if (audioCtx.state === 'suspended') {
+      void audioCtx.resume().catch(() => undefined);
     }
+    return audioCtx;
+  } catch {
+    return null;
   }
-  if (audioCtx?.state === 'suspended') {
-    void audioCtx.resume().catch(() => undefined);
-  }
-  return audioCtx;
 }
 
 /**
- * Soft tick warning sound when rest countdown is at 3, 2, 1 seconds.
+ * Play a bright, clean two-tone chime for success / access granted.
  */
-export function playRestTimerWarningBeep(): void {
+export function playSuccessSound(): void {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
+    const now = ctx.currentTime;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(587.33, now); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
 
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.3);
   } catch {
-    /* AudioContext not allowed or unsupported */
+    // Ignore audio errors
   }
 }
 
 /**
- * Dual ascending chime when the rest timer reaches 0.
- * Clean, sporty and pleasant tone (A5 -> E6).
+ * Play a low warning tone for access denied / error.
+ */
+export function playErrorSound(): void {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now); // A3
+    osc.frequency.setValueAtTime(164.81, now + 0.1); // E3
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.36);
+  } catch {
+    // Ignore audio errors
+  }
+}
+
+/**
+ * Play a light, energizing pop tone for completing a workout set.
+ */
+export function playSetCompleteSound(): void {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.exponentialRampToValueAtTime(1046.5, now + 0.08); // C6
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch {
+    // Ignore audio errors
+  }
+}
+
+/**
+ * Play a short warning beep during rest countdown (final 3 seconds).
+ */
+export function playRestTimerWarningBeep(): void {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now); // A4
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.12);
+  } catch {
+    // Ignore audio errors
+  }
+}
+
+/**
+ * Play a multi-tone chime when rest period finishes.
  */
 export function playRestTimerCompleteChime(): void {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
-
     const now = ctx.currentTime;
 
-    // Tone 1: 880Hz (A5)
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(880, now);
-    gain1.gain.setValueAtTime(0.12, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.16);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-    // Tone 2: 1318.51Hz (E6) - higher chime
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1318.51, now + 0.12);
-    gain2.gain.setValueAtTime(0.15, now + 0.12);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.12);
-    osc2.stop(now + 0.4);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.36);
   } catch {
-    /* AudioContext not allowed or unsupported */
+    // Ignore audio errors
   }
 }

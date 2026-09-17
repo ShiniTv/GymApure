@@ -12,6 +12,7 @@ import { clientLogger } from '../../lib/clientLogger';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { lastSessionLogMap, resolveSetValues } from './setValues';
 import { hapticLight, hapticSuccess } from '../../lib/haptics';
+import { playSetCompleteSound } from '../../lib/soundEffects';
 import { useWorkoutPageTitle } from '../../hooks/usePageTitle';
 import { useToastOptional } from '../../context/ToastContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
@@ -476,6 +477,7 @@ export function useActiveWorkoutPage() {
       });
 
       hapticLight();
+      playSetCompleteSound();
 
       if (exercise.rest_seconds > 0) {
         startRestTimer(exercise.rest_seconds);
@@ -516,6 +518,7 @@ export function useActiveWorkoutPage() {
         setPendingSyncCount(pendingWorkoutLogCount(sessionId));
         toast?.success('Serie guardada offline. Se sincronizará al recuperar conexión.');
         hapticLight();
+        playSetCompleteSound();
         if (exercise.rest_seconds > 0) {
           startRestTimer(exercise.rest_seconds);
         }

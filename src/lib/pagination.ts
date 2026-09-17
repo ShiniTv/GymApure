@@ -13,10 +13,25 @@ export function parsePaginationQuery(
   const defaultPageSize = defaults.pageSize ?? 20;
   const maxPageSize = defaults.maxPageSize ?? 100;
 
-  const page = Math.max(1, parseInt(String(query.page ?? defaultPage), 10) || defaultPage);
+  const rawPage = query.page;
+  const parsedPage =
+    typeof rawPage === 'number'
+      ? rawPage
+      : typeof rawPage === 'string'
+        ? parseInt(rawPage, 10)
+        : defaultPage;
+  const page = Math.max(1, Number.isFinite(parsedPage) ? parsedPage : defaultPage);
+
+  const rawLimit = query.limit ?? query.pageSize;
+  const parsedLimit =
+    typeof rawLimit === 'number'
+      ? rawLimit
+      : typeof rawLimit === 'string'
+        ? parseInt(rawLimit, 10)
+        : defaultPageSize;
   const pageSize = Math.min(
     maxPageSize,
-    Math.max(1, parseInt(String(query.limit ?? query.pageSize ?? defaultPageSize), 10) || defaultPageSize)
+    Math.max(1, Number.isFinite(parsedLimit) ? parsedLimit : defaultPageSize)
   );
 
   return { page, pageSize, offset: (page - 1) * pageSize };

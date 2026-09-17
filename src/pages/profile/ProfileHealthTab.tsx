@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Heart, ShieldAlert, Save, Flame, Zap } from 'lucide-react';
-import { Button, Label, Select, Textarea } from '../../components/ui';
+import { Heart, ShieldAlert, Save, Flame, Zap, Loader2 } from 'lucide-react';
+import { Button, Label } from '../../components/ui';
 import { useToastOptional } from '../../context/ToastContext';
 import {
   useHealthProfileQuery,
@@ -9,17 +9,18 @@ import {
 import type { UserProfile, Measurement } from '../../hooks/queries/useProfileQuery';
 import { HEALTH_CONDITION_FLAGS } from '../../lib/healthConditions';
 import { ACTIVITY_LEVELS, type ActivityLevel } from '../../lib/metabolicRate';
+import { T, CARD_PADDING, SECTION_GAP_LG, GRID_2COL, cn } from './ProfileDesignSystem';
 
 interface ProfileHealthTabProps {
   userId: number;
-  profile: UserProfile;
-  measurements: Measurement[];
+  profile?: UserProfile;
+  measurements?: Measurement[];
   onSwitchToDatos?: () => void;
 }
 
 export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
   const toast = useToastOptional();
-  const { data: healthProfile } = useHealthProfileQuery(userId);
+  const { data: healthProfile, isLoading } = useHealthProfileQuery(userId);
   const updateMutation = useUpdateHealthProfileMutation(userId);
 
   const [conditionFlags, setConditionFlags] = useState<string[]>([]);
@@ -42,10 +43,6 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
     setActivityLevel(healthProfile.activity_level ?? '');
     setHealthConsent(Boolean(healthProfile.consent_current));
   }, [healthProfile]);
-
-  const toggleFlag = (id: string) => {
-    setConditionFlags((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
-  };
 
   const handleSave = async (e: FormEvent, computeMetabolic: boolean) => {
     e.preventDefault();
@@ -73,146 +70,232 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="text-brand h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <form className="w-full space-y-4" onSubmit={(e) => void handleSave(e, false)}>
-      {/* Tarjeta de Tasa Metabólica y Calorías si están calculadas */}
+    <form className={cn('w-full', SECTION_GAP_LG)} onSubmit={(e) => void handleSave(e, false)}>
+      {/* TDEE Card - only show if calculated */}
       {healthProfile?.tdee_kcal != null && (
-        <div className="via-surface to-surface rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 p-4 shadow-2xs">
+        <div
+          className={cn(
+            'space-y-3 border-emerald-500/30 bg-emerald-500/5',
+            CARD_PADDING,
+            'border',
+            'border-border/80',
+            'bg-surface',
+            'rounded-xl'
+          )}
+        >
           <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-            <Flame className="h-4 w-4" />
-            <h2 className="text-sm font-bold">Gasto Energético Estimado (TDEE)</h2>
+            <Flame className="h-5 w-5" />
+            <h3 className="text-text font-semibold tracking-[-0.01em]">
+              Gasto Energético Estimado (TDEE)
+            </h3>
           </div>
-          <div className="mt-2.5 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-            <div className="bg-surface-raised border-border/50 rounded-xl border p-2.5">
-              <span className="text-text-muted">Metabolismo Basal (BMR):</span>
-              <p className="text-text mt-0.5 text-sm font-bold tabular-nums">
+          <div className={GRID_2COL}>
+            <div className="bg-surface border-border/50 rounded-xl border p-3">
+              <p className="text-text-muted text-sm">Metabolismo Basal (BMR)</p>
+              <p className={cn(T.statValue, 'mt-1 text-xl')}>
                 {healthProfile.bmr_kcal ? `${healthProfile.bmr_kcal} kcal` : '—'}
               </p>
             </div>
-            <div className="bg-surface-raised border-border/50 rounded-xl border p-2.5">
-              <span className="text-text-muted">Mantenimiento (TDEE):</span>
-              <p className="mt-0.5 text-sm font-bold text-emerald-600 tabular-nums dark:text-emerald-400">
+            <div className="bg-surface border-border/50 rounded-xl border p-3">
+              <p className="text-text-muted text-sm">Mantenimiento (TDEE)</p>
+              <p
+                className={cn(
+                  T.statValue,
+                  'mt-1 text-xl',
+                  'text-emerald-600 dark:text-emerald-400'
+                )}
+              >
                 {healthProfile.tdee_kcal} kcal/día
               </p>
             </div>
-            <div className="bg-surface-raised border-border/50 col-span-2 rounded-xl border p-2.5 sm:col-span-1">
-              <span className="text-text-muted">Nivel de actividad:</span>
-              <p className="text-text mt-0.5 font-bold capitalize">{activityLevel || 'Moderado'}</p>
+            <div className="bg-surface border-border/50 rounded-xl border p-3">
+              <p className="text-text-muted text-sm">Nivel de actividad</p>
+              <p className="text-text mt-1 font-semibold capitalize">
+                {activityLevel || 'Moderado'}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sección 1: Condiciones de Salud (Chips Seleccionables) */}
-      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
-        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
-          <Heart className="text-brand h-4 w-4" />
-          <span>Condiciones Médicas y Antecedentes</span>
-        </h2>
-        <p className="text-text-muted mt-0.5 text-xs">
-          Selecciona si tienes alguna condición para que tu entrenador adapte los ejercicios
-        </p>
-
-        <div className="mt-3.5 flex flex-wrap gap-2">
-          {HEALTH_CONDITION_FLAGS.map((flag) => {
-            const isSelected = conditionFlags.includes(flag.id);
-            return (
-              <button
-                key={flag.id}
-                type="button"
-                onClick={() => toggleFlag(flag.id)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
-                  isSelected
-                    ? 'bg-brand text-brand-contrast shadow-xs'
-                    : 'bg-surface-raised border-border/70 text-text hover:border-brand/40 border'
-                }`}
-              >
-                <span>{flag.label}</span>
-              </button>
-            );
-          })}
+      {/* Sección 1: Condiciones de Salud */}
+      <div
+        className={cn(
+          'space-y-3',
+          CARD_PADDING,
+          'border',
+          'border-border/80',
+          'bg-surface',
+          'rounded-xl'
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="bg-brand/10 rounded-xl p-2">
+            <Heart className="text-brand h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+              Condiciones Médicas y Antecedentes
+            </h3>
+            <p className="text-text-muted text-sm">
+              Selecciona si tienes alguna condición para que tu entrenador adapte los ejercicios
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          {HEALTH_CONDITION_FLAGS.map((flag) => (
+            <button
+              key={flag.id}
+              type="button"
+              onClick={() =>
+                setConditionFlags((prev) =>
+                  prev.includes(flag.id) ? prev.filter((f) => f !== flag.id) : [...prev, flag.id]
+                )
+              }
+              className={cn(
+                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all',
+                conditionFlags.includes(flag.id)
+                  ? 'bg-brand text-brand-contrast shadow-sm'
+                  : 'bg-surface-raised border-border/50 text-text hover:border-brand/40 hover:bg-surface-raised/80 border'
+              )}
+            >
+              {flag.label}
+              {conditionFlags.includes(flag.id) && (
+                <span className="bg-brand-contrast/50 h-1.5 w-1.5 rounded-full" />
+              )}
+            </button>
+          ))}
         </div>
 
-        <div className="mt-4 space-y-1.5">
-          <Label className="text-text text-xs font-semibold">
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="conditions-notes" className="text-text block text-sm font-medium">
             Detalles de condiciones o recomendaciones médicas
           </Label>
-          <Textarea
-            rows={2}
+          <textarea
+            id="conditions-notes"
+            rows={3}
             placeholder="ej: Cirugía de rodilla hace 2 años, evitar sentadilla profunda con impacto…"
             value={conditionsNotes}
             onChange={(e) => setConditionsNotes(e.target.value)}
-            className="w-full resize-none"
+            className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Sección 2: Limitaciones, Lesiones y Alergias */}
-      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
-        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
-          <ShieldAlert className="h-4 w-4 text-amber-500" />
-          <span>Lesiones, Alergias y Medicamentos</span>
-        </h2>
-
-        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2">
+      <div
+        className={cn(
+          'space-y-3',
+          CARD_PADDING,
+          'border',
+          'border-border/80',
+          'bg-surface',
+          'rounded-xl'
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="bg-brand/10 rounded-xl p-2">
+            <ShieldAlert className="text-brand h-5 w-5" />
+          </div>
           <div>
-            <Label className="text-text text-xs font-semibold">
+            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+              Lesiones, Alergias y Medicamentos
+            </h3>
+            <p className="text-text-muted text-sm">
+              Información relevante para tu seguridad durante el entrenamiento
+            </p>
+          </div>
+        </div>
+        <div className={GRID_2COL}>
+          <div className="space-y-2">
+            <Label htmlFor="limitations-notes" className="text-text text-sm font-medium">
               Lesiones o limitaciones físicas
             </Label>
-            <Textarea
-              rows={2}
+            <textarea
+              id="limitations-notes"
+              rows={3}
               placeholder="ej: Molestia en hombro derecho al hacer press militar…"
               value={limitationsNotes}
               onChange={(e) => setLimitationsNotes(e.target.value)}
-              className="mt-1 w-full resize-none"
+              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
 
-          <div>
-            <Label className="text-text text-xs font-semibold">
+          <div className="space-y-2">
+            <Label htmlFor="allergies-notes" className="text-text text-sm font-medium">
               Alergias o medicamentos habituales
             </Label>
-            <Textarea
-              rows={2}
+            <textarea
+              id="allergies-notes"
+              rows={3}
               placeholder="ej: Alergia a la penicilina, tomo antihipertensivo en las mañanas…"
               value={allergiesNotes}
               onChange={(e) => setAllergiesNotes(e.target.value)}
-              className="mt-1 w-full resize-none"
+              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
       </div>
 
       {/* Sección 3: Parámetros Biometría y Metabolismo */}
-      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-2xs">
-        <h2 className="text-text flex items-center gap-2 text-sm font-bold tracking-tight">
-          <Zap className="text-brand h-4 w-4" />
-          <span>Cálculo Metabólico (Opcional)</span>
-        </h2>
-        <p className="text-text-muted mt-0.5 text-xs">
-          Permite estimar tu gasto calórico diario para planes nutricionales
-        </p>
-
-        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2">
+      <div
+        className={cn(
+          'space-y-3',
+          CARD_PADDING,
+          'border',
+          'border-border/80',
+          'bg-surface',
+          'rounded-xl'
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="bg-brand/10 rounded-xl p-2">
+            <Zap className="text-brand h-5 w-5" />
+          </div>
           <div>
-            <Label className="text-text text-xs font-semibold">Sexo biológico</Label>
-            <Select
+            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
+              Cálculo Metabólico (Opcional)
+            </h3>
+            <p className="text-text-muted text-sm">
+              Permite estimar tu gasto calórico diario para planes nutricionales
+            </p>
+          </div>
+        </div>
+        <div className={GRID_2COL}>
+          <div className="space-y-2">
+            <Label htmlFor="bio-sex" className="text-text text-sm font-medium">
+              Sexo biológico
+            </Label>
+            <select
+              id="bio-sex"
               value={sex}
               onChange={(e) => setSex(e.target.value as 'male' | 'female')}
-              className="mt-1"
+              className="border-border/60 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             >
               <option value="">Seleccionar…</option>
               <option value="male">Masculino</option>
               <option value="female">Femenino</option>
-            </Select>
+            </select>
           </div>
 
-          <div>
-            <Label className="text-text text-xs font-semibold">Nivel de actividad física</Label>
-            <Select
+          <div className="space-y-2">
+            <Label htmlFor="bio-activity-level" className="text-text text-sm font-medium">
+              Nivel de actividad física
+            </Label>
+            <select
+              id="bio-activity-level"
               value={activityLevel}
               onChange={(e) => setActivityLevel(e.target.value)}
-              className="mt-1"
+              className="border-border/60 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             >
               <option value="">Seleccionar nivel…</option>
               {ACTIVITY_LEVELS.map((lvl) => (
@@ -220,43 +303,47 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
                   {lvl.label}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
         </div>
       </div>
 
       {/* Consentimiento y Guardado */}
-      <div className="border-border/70 bg-surface rounded-2xl border p-4 shadow-xs">
-        <label className="flex cursor-pointer items-start gap-2.5">
+      <div
+        className={cn(
+          'space-y-3',
+          CARD_PADDING,
+          'border',
+          'border-border/80',
+          'bg-surface',
+          'rounded-xl'
+        )}
+      >
+        <Label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             checked={healthConsent}
             onChange={(e) => setHealthConsent(e.target.checked)}
-            className="border-border text-brand focus:ring-brand mt-1 h-4 w-4 rounded"
+            className="border-border text-brand focus:ring-brand mt-0.5 h-4 w-4 rounded"
           />
-          <span className="text-text-muted text-xs leading-relaxed">
+          <span className="text-text-muted text-sm leading-relaxed font-normal">
             Confirmo que la información de salud suministrada es veraz y autorizo a los entrenadores
             del gimnasio a utilizarla para adaptar mi prescripción de ejercicios de forma segura.
           </span>
-        </label>
+        </Label>
 
-        <div className="border-border/60 mt-4 flex flex-wrap items-center justify-end gap-2.5 border-t pt-3">
+        <div className="border-border/50 mt-3 flex flex-wrap items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
             variant="secondary"
             disabled={updateMutation.isPending}
             onClick={(e) => void handleSave(e, true)}
-            className="text-xs"
           >
-            <Flame className="text-brand h-3.5 w-3.5" />
+            <Flame className="h-4 w-4" />
             <span>Guardar y recalcular TDEE</span>
           </Button>
 
-          <Button
-            type="submit"
-            disabled={updateMutation.isPending}
-            className="gap-1.5 text-xs font-semibold shadow-sm"
-          >
+          <Button type="submit" disabled={updateMutation.isPending} className="gap-2 shadow-sm">
             <Save className="h-4 w-4" />
             <span>{updateMutation.isPending ? 'Guardando…' : 'Guardar ficha de salud'}</span>
           </Button>

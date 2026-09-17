@@ -83,4 +83,57 @@ describe('routine exercise payloads', () => {
     expect(payload.set_prescription?.[0]?.effort).toBe('time');
     expect(payload.set_prescription?.[0]?.load).toBe('none');
   });
+
+  it('preserves plates when changing from plates to kg load mode', () => {
+    const payload = buildRoutineExerciseUpdatePayload({
+      sets: 3,
+      reps: 10,
+      rest_seconds: 60,
+      weight_suggestion: '',
+      set_prescription: [
+        { set_number: 1, reps: 10, weight_kg: null, plates: 4, effort: 'reps', load: 'plates' },
+        { set_number: 2, reps: 10, weight_kg: null, plates: 5, effort: 'reps', load: 'plates' },
+        { set_number: 3, reps: 10, weight_kg: null, plates: 6, effort: 'reps', load: 'plates' },
+      ],
+    });
+    // Simulate user changing load mode from plates to kg - plates should be preserved in the data
+    expect(payload.set_prescription?.[0]?.plates).toBe(4);
+    expect(payload.set_prescription?.[1]?.plates).toBe(5);
+    expect(payload.set_prescription?.[2]?.plates).toBe(6);
+  });
+
+  it('preserves weight_kg when changing from kg to plates load mode', () => {
+    const payload = buildRoutineExerciseUpdatePayload({
+      sets: 3,
+      reps: 10,
+      rest_seconds: 60,
+      weight_suggestion: '',
+      set_prescription: [
+        { set_number: 1, reps: 10, weight_kg: 50, plates: null, effort: 'reps', load: 'kg' },
+        { set_number: 2, reps: 10, weight_kg: 55, plates: null, effort: 'reps', load: 'kg' },
+        { set_number: 3, reps: 10, weight_kg: 60, plates: null, effort: 'reps', load: 'kg' },
+      ],
+    });
+    // Simulate user changing load mode from kg to plates - weight_kg should be preserved
+    expect(payload.set_prescription?.[0]?.weight_kg).toBe(50);
+    expect(payload.set_prescription?.[1]?.weight_kg).toBe(55);
+    expect(payload.set_prescription?.[2]?.weight_kg).toBe(60);
+  });
+
+  it('preserves per-set reps when resizing sets', () => {
+    const payload = buildRoutineExerciseUpdatePayload({
+      sets: 5,
+      reps: 10,
+      rest_seconds: 60,
+      weight_suggestion: '',
+      set_prescription: [
+        { set_number: 1, reps: 12, weight_kg: null },
+        { set_number: 2, reps: 10, weight_kg: null },
+        { set_number: 3, reps: 8, weight_kg: null },
+        { set_number: 4, reps: 6, weight_kg: null },
+        { set_number: 5, reps: 4, weight_kg: null },
+      ],
+    });
+    expect(payload.set_prescription?.map((row) => row.reps)).toEqual([12, 10, 8, 6, 4]);
+  });
 });

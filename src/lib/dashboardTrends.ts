@@ -30,9 +30,7 @@ export function fillDailyRevenueSeries(
   daily: { date: string; income: string | number }[],
   days: number
 ): { period: string; income: number }[] {
-  const map = new Map(
-    daily.map((row) => [row.date, parseFloat(String(row.income)) || 0])
-  );
+  const map = new Map(daily.map((row) => [row.date, parseFloat(String(row.income)) || 0]));
   const result: { period: string; income: number }[] = [];
 
   for (let i = days - 1; i >= 0; i--) {

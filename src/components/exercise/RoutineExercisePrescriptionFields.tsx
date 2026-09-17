@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Label, Input, SegmentedControl } from '../ui';
 import { SetPrescriptionEditor } from './SetPrescriptionEditor';
 import { parsePositiveInt } from '../../lib/parseFormNumber';
@@ -37,18 +37,27 @@ function applyStyle(
   effort: EffortMode,
   load: LoadMode
 ): RoutineExercisePrescriptionValue {
+  const currentEffort = prescriptionEffort(value.set_prescription);
+
   const amount =
-    effort === prescriptionEffort(value.set_prescription)
+    effort === currentEffort
       ? value.reps
-      : defaultEffortAmount(effort);
+      : effort === 'time'
+        ? defaultEffortAmount(effort)
+        : value.reps;
+
   const base = deriveSetPrescription(value.sets, amount, value.set_prescription);
-  const stamped = stampPrescriptionStyle(base, { effort, load }).map((row) => ({
-    ...row,
-    reps: amount,
-    plates:
-      load === 'plates' ? (row.plates && row.plates > 0 ? row.plates : defaultPlateCount()) : null,
-    weight_kg: load === 'kg' ? row.weight_kg : null,
-  }));
+
+  const stamped = stampPrescriptionStyle(base, { effort, load }).map((row, idx) => {
+    const originalRow = value.set_prescription?.[idx];
+    return {
+      ...row,
+      reps: effort === 'time' ? row.reps : amount,
+      plates: load === 'plates' ? (originalRow?.plates ?? row.plates ?? defaultPlateCount()) : null,
+      weight_kg: load === 'kg' ? (originalRow?.weight_kg ?? row.weight_kg ?? null) : null,
+    };
+  });
+
   return { ...value, reps: amount, set_prescription: stamped };
 }
 
@@ -66,34 +75,42 @@ export function RoutineExercisePrescriptionFields({
 
   useEffect(() => {
     setUseDetailed(hasDetailedSetPrescription(value.set_prescription));
-  }, [formKey]);
+  }, [formKey, value.set_prescription]);
 
   useEffect(() => {
     if (!selectedExerciseName) return;
     const style = inferPrescriptionStyle(selectedExerciseName);
     onChange(applyStyle(value, style.effort, style.load));
-  }, [formKey, selectedExerciseName]);
+  }, [formKey, selectedExerciseName, value.sets, value.reps]);
 
   const enableDetailed = () => {
     setUseDetailed(true);
+    const currentPrescription =
+      value.set_prescription ?? deriveSetPrescription(value.sets, value.reps);
+    const currentEffort = prescriptionEffort(currentPrescription);
+    const currentLoad = prescriptionLoad(currentPrescription);
     onChange({
       ...value,
-      set_prescription: stampPrescriptionStyle(
-        deriveSetPrescription(value.sets, value.reps, value.set_prescription),
-        { effort, load }
-      ),
+      set_prescription: stampPrescriptionStyle(currentPrescription, {
+        effort: currentEffort,
+        load: currentLoad,
+      }),
     });
   };
 
   const disableDetailed = () => {
     setUseDetailed(false);
-    const reps = defaultRepsFromPrescription(value.set_prescription, value.reps);
+    const currentPrescription =
+      value.set_prescription ?? deriveSetPrescription(value.sets, value.reps);
+    const reps = defaultRepsFromPrescription(currentPrescription, value.reps);
+    const currentEffort = prescriptionEffort(currentPrescription);
+    const currentLoad = prescriptionLoad(currentPrescription);
     onChange({
       ...value,
       reps,
       set_prescription: stampPrescriptionStyle(
-        deriveSetPrescription(value.sets, reps, value.set_prescription),
-        { effort, load }
+        deriveSetPrescription(value.sets, reps, currentPrescription),
+        { effort: currentEffort, load: currentLoad }
       ),
     });
   };
@@ -102,6 +119,13 @@ export function RoutineExercisePrescriptionFields({
     load === 'plates'
       ? (value.set_prescription?.[0]?.plates ?? defaultPlateCount())
       : (value.set_prescription?.[0]?.weight_kg ?? '');
+
+  const currentPrescription = useMemo(
+    () => value.set_prescription ?? deriveSetPrescription(value.sets, value.reps),
+    [value.set_prescription, value.sets, value.reps]
+  );
+  const currentEffort = prescriptionEffort(currentPrescription);
+  const currentLoad = prescriptionLoad(currentPrescription);
 
   return (
     <div className="space-y-3">
@@ -117,7 +141,7 @@ export function RoutineExercisePrescriptionFields({
           ]}
         />
         <p className="text-text-muted text-small mt-1">
-          {effort === 'time'
+          {currentEffort === 'time'
             ? 'La serie dura un tiempo fijo. El valor se guarda en segundos.'
             : 'Cuentas repeticiones en cada serie.'}
         </p>
@@ -135,9 +159,9 @@ export function RoutineExercisePrescriptionFields({
           ]}
         />
         <p className="text-text-muted text-small mt-1">
-          {load === 'plates'
+          {currentLoad === 'plates'
             ? 'Stack de polea o máquina: cuántas placas pinchas.'
-            : load === 'kg'
+            : currentLoad === 'kg'
               ? 'Peso libre o discos en kilos.'
               : 'Sin peso: peso corporal, isometrías o cardio.'}
         </p>
@@ -158,7 +182,7 @@ export function RoutineExercisePrescriptionFields({
                 set_prescription: resizeSetPrescription(
                   stampPrescriptionStyle(
                     value.set_prescription ?? deriveSetPrescription(value.sets, value.reps),
-                    { effort, load }
+                    { effort: currentEffort, load: currentLoad }
                   ),
                   nextSets,
                   value.reps
@@ -170,19 +194,23 @@ export function RoutineExercisePrescriptionFields({
         {!useDetailed && (
           <>
             <div>
-              <Label>{effort === 'time' ? 'Segundos por serie' : 'Repeticiones'}</Label>
+              <Label>{currentEffort === 'time' ? 'Segundos por serie' : 'Repeticiones'}</Label>
               <Input
                 type="number"
                 min={1}
                 value={value.reps}
                 onChange={(e) => {
                   const reps = parsePositiveInt(e.target.value, value.reps);
+                  const currentPrescription =
+                    value.set_prescription ?? deriveSetPrescription(value.sets, value.reps);
+                  const currentEffort = prescriptionEffort(currentPrescription);
+                  const currentLoad = prescriptionLoad(currentPrescription);
                   onChange({
                     ...value,
                     reps,
                     set_prescription: stampPrescriptionStyle(
-                      deriveSetPrescription(value.sets, reps, value.set_prescription),
-                      { effort, load }
+                      deriveSetPrescription(value.sets, reps, currentPrescription),
+                      { effort: currentEffort, load: currentLoad }
                     ),
                   });
                 }}
@@ -193,29 +221,31 @@ export function RoutineExercisePrescriptionFields({
                   : 'Mismo número en todas las series.'}
               </p>
             </div>
-            {load !== 'none' ? (
+            {currentLoad !== 'none' ? (
               <div>
-                <Label>{load === 'plates' ? 'Placas' : 'Peso (kg)'}</Label>
+                <Label>{currentLoad === 'plates' ? 'Placas' : 'Peso (kg)'}</Label>
                 <Input
                   type="number"
                   min={0}
-                  step={load === 'kg' ? '0.5' : '1'}
+                  step={currentLoad === 'kg' ? '0.5' : '1'}
                   value={uniformLoadValue}
                   onChange={(e) => {
                     const raw = e.target.value.trim();
                     const n = raw === '' ? null : Number(raw);
                     const parsed = n != null && Number.isFinite(n) ? n : null;
                     const rows = stampPrescriptionStyle(
-                      deriveSetPrescription(value.sets, value.reps, value.set_prescription),
-                      { effort, load }
+                      deriveSetPrescription(value.sets, value.reps, currentPrescription),
+                      { effort: currentEffort, load: currentLoad }
                     ).map((row) =>
-                      load === 'plates' ? { ...row, plates: parsed } : { ...row, weight_kg: parsed }
+                      currentLoad === 'plates'
+                        ? { ...row, plates: parsed }
+                        : { ...row, weight_kg: parsed }
                     );
                     onChange({ ...value, set_prescription: rows });
                   }}
                 />
                 <p className="text-text-muted text-small mt-1">
-                  {load === 'plates'
+                  {currentLoad === 'plates'
                     ? 'Número de placas en el stack de la polea o máquina.'
                     : 'Carga en kilos; déjalo vacío si aún no la defines.'}
                 </p>
@@ -248,8 +278,8 @@ export function RoutineExercisePrescriptionFields({
         <SetPrescriptionEditor
           sets={value.sets}
           defaultReps={defaultRepsFromPrescription(value.set_prescription, value.reps)}
-          effort={effort}
-          load={load}
+          effort={currentEffort}
+          load={currentLoad}
           value={
             value.set_prescription ??
             stampPrescriptionStyle(resizeSetPrescription([], value.sets, value.reps), {

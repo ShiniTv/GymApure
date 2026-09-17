@@ -45,6 +45,7 @@ import { cn, formatMoney } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { useExchangeRateQuery } from '../../hooks/queries/useExchangeRateQuery';
 import { apiFetch, parseJsonSafe } from '../../lib/api';
 import { hapticLight } from '../../lib/haptics';
 
@@ -56,6 +57,7 @@ export default function AdminDashboard() {
   usePageTitle('Panel');
   const adminStats = useAdminStats();
   const { isDesktop } = useBreakpoint();
+  const { data: exchangeRate } = useExchangeRateQuery();
   const [showRevenueChart, setShowRevenueChart] = useState(false);
   const [showExpiringList, setShowExpiringList] = useState(false);
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
@@ -256,10 +258,37 @@ export default function AdminDashboard() {
         <Card padding="sm" rounded="xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className={cn(typography.statLabel, 'leading-tight')}>Cierre de caja · hoy</p>
-              <p className={cn(typography.statValue, 'mt-1')}>{formatMoney(revenueToday)}</p>
+              <div className="flex items-center gap-2">
+                <p className={cn(typography.statLabel, 'leading-tight')}>Cierre de caja · hoy</p>
+                {exchangeRate && (
+                  <span className="bg-brand/10 text-brand inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold">
+                    BCV:{' '}
+                    {exchangeRate.rate.toLocaleString('es-VE', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    Bs/$
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                <p className={cn(typography.statValue)}>{formatMoney(revenueToday)}</p>
+                {exchangeRate && revenueToday > 0 && (
+                  <span className="text-text-muted text-xs font-medium">
+                    (Bs.{' '}
+                    {(revenueToday * exchangeRate.rate).toLocaleString('es-VE', {
+                      maximumFractionDigits: 2,
+                    })}
+                    )
+                  </span>
+                )}
+              </div>
               <p className="text-text-secondary text-small mt-1">
-                Mes {formatMoney(revenueThisMonth)} · acumulado {formatMoney(totalRevenue)}
+                Mes {formatMoney(revenueThisMonth)}
+                {exchangeRate && revenueThisMonth > 0
+                  ? ` (~Bs. ${(revenueThisMonth * exchangeRate.rate).toLocaleString('es-VE', { maximumFractionDigits: 0 })})`
+                  : ''}{' '}
+                · acumulado {formatMoney(totalRevenue)}
                 {pendingPayments > 0
                   ? ` · CxC ${pendingPayments}${pendingOld > 0 ? ` (${pendingOld} +2d)` : ''}`
                   : ''}

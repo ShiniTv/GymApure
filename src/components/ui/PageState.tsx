@@ -8,9 +8,5 @@ interface PageStateProps {
 
 /** Centered loading / empty shell — consistent height across pages */
 export function PageState({ children, className }: PageStateProps) {
-  return (
-    <div className={cn('page-state-center flex-col', className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('page-state-center flex-col', className)}>{children}</div>;
 }
