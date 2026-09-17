@@ -5,7 +5,7 @@ import { Button } from '../../components/ui';
 import { ROLE_LABELS } from '../../lib/roles';
 import { cn } from '../../lib/utils';
 import type { UserProfile } from '../../hooks/queries/useProfileQuery';
-import { GRID_METRIC_STRIP } from './ProfileDesignSystem';
+import { GRID_METRIC_STRIP, SECTION_GAP_LG } from './ProfileDesignSystem';
 
 interface HeroSubscription {
   membership_name: string;
