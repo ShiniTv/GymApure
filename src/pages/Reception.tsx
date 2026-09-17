@@ -22,6 +22,7 @@ import { OperateHeader, OperatePage } from '../components/operate/OperateChrome'
 import { cn } from '../lib/utils';
 import { validateCedula } from '../lib/cedulaUtils';
 import { hapticSuccess, hapticLight } from '../lib/haptics';
+import { playSuccessSound, playErrorSound } from '../lib/soundEffects';
 import { useReceptionShortcuts } from '../hooks/useReceptionShortcuts';
 import ReceptionWalkInWizard from './reception/ReceptionWalkInWizard';
 import ReceptionActivityFeed from '../components/reception/ReceptionActivityFeed';
@@ -279,6 +280,7 @@ export default function Reception() {
           cedula: q,
         });
         hapticSuccess();
+        playSuccessSound();
         setMessageType('success');
         setMessage(formatAttendanceMessage(action, data));
         if (options?.clearInput) {
@@ -292,6 +294,7 @@ export default function Reception() {
         return true;
       } catch {
         hapticLight();
+        playErrorSound();
         setMessageType('error');
         setMessage('Error de red');
         return false;

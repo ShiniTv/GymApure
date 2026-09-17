@@ -29,6 +29,7 @@ import { cn } from '../lib/utils';
 import { typography } from '../lib/typography';
 import { useMemberStatsOptional } from '../context/MemberStatsContext';
 import { WorkoutWeeklyChart } from '../components/workout/WorkoutWeeklyChart';
+import { FitnessRings } from '../components/workout/FitnessRings';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { PullToRefreshContainer } from '../components/PullToRefresh';
 
@@ -538,6 +539,40 @@ export default function WorkoutHistory() {
                 <p className="text-text-muted text-small mt-0.5 leading-snug">
                   Sesiones y ritmo de la semana
                 </p>
+              </div>
+
+              <div className="mb-3">
+                <FitnessRings
+                  size={110}
+                  rings={[
+                    {
+                      label: 'Entrenamientos',
+                      value: workoutsThisWeek,
+                      goal: progress?.weekly_goal || 4,
+                      unit: 'sesiones',
+                      color: '#ff2d55',
+                    },
+                    {
+                      label: 'Regularidad',
+                      value: Math.min(workoutsThisWeek, 7),
+                      goal: 7,
+                      unit: 'días',
+                      color: '#30d158',
+                    },
+                    {
+                      label: 'Meta semanal',
+                      value: Math.min(
+                        progress?.goal_completion_percent ??
+                          Math.round((workoutsThisWeek / (progress?.weekly_goal || 4)) * 100),
+                        100
+                      ),
+                      goal: 100,
+                      unit: '%',
+                      color: '#0c98ff',
+                    },
+                  ]}
+                  className="border-border/40 bg-surface-raised/60 p-2.5 shadow-none"
+                />
               </div>
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {(

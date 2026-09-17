@@ -3,16 +3,19 @@ import {
   BookOpen,
   CheckCircle,
   Edit2,
+  Flame,
   Minus,
   Plus,
   SkipForward,
   Trash2,
+  TrendingUp,
   Video,
 } from 'lucide-react';
 import { Collapse, Input } from '../../components/ui';
 import { formatMuscleGroupLabel } from '../../lib/exerciseMuscleGroups';
 import { cn } from '../../lib/utils';
 import { hapticLight, hapticSuccess } from '../../lib/haptics';
+import { estimateOneRmEpley } from '../../lib/exerciseRecords';
 import {
   ExerciseExecutionSteps,
   executionStepCount,
@@ -179,6 +182,44 @@ export function WorkoutExerciseCard({
                 </span>
               </button>
             )}
+
+            {(() => {
+              const loggedSetsList = Array.from({ length: exercise.sets }).map((_, i) => {
+                const key = `${exercise.id}-${i + 1}`;
+                const log = logs[key];
+                const w = parseFloat(log?.weight || '0') || 0;
+                const r = parseFloat(log?.reps || '0') || 0;
+                return {
+                  weight: w,
+                  reps: r,
+                  est1rm: estimateOneRmEpley(w, r),
+                  completed: log?.completed,
+                };
+              });
+
+              const bestEst1Rm = Math.max(...loggedSetsList.map((s) => s.est1rm), 0);
+              const bestWeight = Math.max(...loggedSetsList.map((s) => s.weight), 0);
+              const priorSet1 = getLastSetHint(exercise.id, 1, lastSessionLogs);
+              const weightOverload =
+                priorSet1 && bestWeight > priorSet1.weight ? bestWeight - priorSet1.weight : null;
+
+              return (
+                <>
+                  {bestEst1Rm > 0 && showLoad && (
+                    <span className="rounded-chip border-border/80 bg-surface-raised text-text inline-flex items-center gap-1 border px-2 py-1 text-xs font-semibold tabular-nums">
+                      <TrendingUp className="text-brand h-3.5 w-3.5" />
+                      <span>1RM est: {bestEst1Rm} kg</span>
+                    </span>
+                  )}
+                  {weightOverload !== null && weightOverload > 0 && (
+                    <span className="rounded-chip inline-flex items-center gap-1 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                      <Flame className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>+{weightOverload} kg vs. sesión ant.</span>
+                    </span>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {exercise.execution && (

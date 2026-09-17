@@ -1,4 +1,5 @@
-import type { RefObject } from 'react';
+import { useState, type RefObject } from 'react';
+import QRCode from 'react-qr-code';
 import {
   AlertTriangle,
   Archive,
@@ -7,6 +8,8 @@ import {
   Hammer,
   MoreHorizontal,
   Pencil,
+  Printer,
+  QrCode,
   Trash2,
 } from 'lucide-react';
 import { formatMoney } from '../../lib/utils';
@@ -60,6 +63,16 @@ export function EquipmentDetailModal({
   onDeleteOpen,
   onStatusChange,
 }: EquipmentDetailModalProps) {
+  const [showQr, setShowQr] = useState(false);
+  const qrUrl =
+    detail && typeof window !== 'undefined'
+      ? `${window.location.origin}/equipment?id=${detail.id}`
+      : '';
+
+  const handlePrintQr = () => {
+    window.print();
+  };
+
   return (
     <Modal
       open={open}
@@ -203,6 +216,37 @@ export function EquipmentDetailModal({
               ))}
             </div>
           )}
+
+          {/* QR Code Section */}
+          <div className="border-border/60 bg-surface-raised rounded-xl border p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <QrCode className="text-brand h-4 w-4" />
+                <span className="text-text text-sm font-semibold">Código QR de la máquina</span>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => setShowQr((v) => !v)}>
+                {showQr ? 'Ocultar QR' : 'Ver QR'}
+              </Button>
+            </div>
+
+            {showQr && qrUrl && (
+              <div className="border-border/40 mt-3 flex flex-col items-center gap-3 border-t pt-3">
+                <div className="rounded-lg bg-white p-3 shadow-xs">
+                  <QRCode value={qrUrl} size={140} level="M" fgColor="#18181b" bgColor="#ffffff" />
+                </div>
+                <div className="text-center">
+                  <p className="text-text text-xs font-semibold">{equipmentDisplayName(detail)}</p>
+                  <p className="text-text-muted text-small mt-0.5 font-mono">
+                    ID #{detail.id} · {detail.serial_number || 'Sin serie'}
+                  </p>
+                </div>
+                <Button variant="secondary" size="sm" onClick={handlePrintQr} className="gap-1.5">
+                  <Printer className="h-3.5 w-3.5" />
+                  Imprimir etiqueta QR
+                </Button>
+              </div>
+            )}
+          </div>
 
           <div>
             <h4 className="text-text mb-2 text-sm font-semibold">Historial</h4>

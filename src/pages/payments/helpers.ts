@@ -46,3 +46,19 @@ export function paymentStatusVariant(status: Payment['status']): 'success' | 'da
 }
 
 export const BS_PAYMENT_METHODS = new Set(['pago_movil', 'transferencia']);
+
+export function buildWhatsAppPaymentReceipt(payment: Payment): string {
+  const dateStr = formatPaymentDate(payment.created_at);
+  const text =
+    `*COMPROBANTE DE PAGO — GymApure*\n` +
+    `--------------------------------\n` +
+    `👤 *Cliente:* ${payment.user_name}\n` +
+    `💵 *Monto:* $${payment.amount_usd} USD\n` +
+    `💳 *Método:* ${formatPaymentMethod(payment.method)}\n` +
+    `🔢 *Referencia:* ${payment.reference || 'N/A'}\n` +
+    `📅 *Fecha:* ${dateStr}\n` +
+    `✅ *Estado:* ${paymentStatusLabel(payment.status)}\n` +
+    `--------------------------------\n` +
+    `_Gracias por entrenar con nosotros en GymApure._`;
+  return encodeURIComponent(text);
+}

@@ -1,8 +1,9 @@
 import { Badge, Button, Card } from '../../components/ui';
-import { Check, X } from 'lucide-react';
+import { Check, MessageCircle, X } from 'lucide-react';
 import { typography } from '../../lib/typography';
 import { cn } from '../../lib/utils';
 import {
+  buildWhatsAppPaymentReceipt,
   formatPaymentDate,
   formatPaymentMethod,
   paymentStatusLabel,
@@ -94,6 +95,18 @@ export function PaymentDetailRail({
           Ver comprobante
         </Button>
       ) : null}
+
+      {payment.status === 'approved' && (
+        <a
+          href={`https://wa.me/?text=${buildWhatsAppPaymentReceipt(payment)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-button mt-3 flex items-center justify-center gap-2 border-emerald-500/30 bg-emerald-500/10 py-2.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+        >
+          <MessageCircle className="h-4 w-4" />
+          Enviar por WhatsApp
+        </a>
+      )}
 
       {isStaff && payment.status === 'pending' ? (
         <div className="mt-4 flex flex-col gap-2">
