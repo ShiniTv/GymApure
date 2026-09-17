@@ -110,25 +110,23 @@ export function MeasurementModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={editingMeasurement ? 'Editar medición corporal' : 'Nueva medición corporal'}
-      maxWidth="xl"
+      title={editingMeasurement ? 'Editar medición' : 'Nueva medición'}
+      maxWidth="md"
       scrollable
     >
-      <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+      <form onSubmit={handleSubmit} className="space-y-3 pt-0.5">
         {/* Selector de Fecha */}
-        <div className="border-border/70 bg-surface-raised/50 rounded-xl border p-3">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <Label className="text-text-muted text-xs font-semibold tracking-wider uppercase">
-              Fecha de la medición
-            </Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              className="max-w-xs font-medium"
-            />
-          </div>
+        <div className="border-border/70 bg-surface-raised/40 flex items-center justify-between gap-3 rounded-xl border p-2.5">
+          <Label className="text-text-secondary text-small font-semibold tracking-wider uppercase">
+            Fecha
+          </Label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className="border-border/70 bg-surface focus:border-brand focus:ring-brand/20 rounded-lg border px-2.5 py-1 text-xs font-semibold tabular-nums focus:ring-2 focus:outline-none"
+          />
         </div>
 
         {/* Selector de Secciones Anatómicas */}
@@ -321,19 +319,23 @@ export function MeasurementModal({
         )}
 
         {/* Footer de Acciones */}
-        <div className="border-border/70 flex items-center justify-end gap-2 border-t pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+        <div className="border-border/70 flex items-center justify-end gap-2 border-t pt-2.5">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={onClose}
+            disabled={submitting}
+          >
             Cancelar
           </Button>
           <Button
             type="submit"
+            size="sm"
             disabled={submitting || (!weight && !bodyFat && !waist && !arm && !leg)}
+            className="font-semibold shadow-2xs"
           >
-            {submitting
-              ? 'Guardando…'
-              : editingMeasurement
-                ? 'Actualizar medición'
-                : 'Guardar medición'}
+            {submitting ? 'Guardando…' : editingMeasurement ? 'Actualizar' : 'Guardar'}
           </Button>
         </div>
       </form>

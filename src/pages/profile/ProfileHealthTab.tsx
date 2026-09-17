@@ -9,7 +9,7 @@ import {
 import type { UserProfile, Measurement } from '../../hooks/queries/useProfileQuery';
 import { HEALTH_CONDITION_FLAGS } from '../../lib/healthConditions';
 import { ACTIVITY_LEVELS, type ActivityLevel } from '../../lib/metabolicRate';
-import { T, CARD_PADDING, SECTION_GAP_LG, GRID_2COL, cn } from './ProfileDesignSystem';
+import { cn } from './ProfileDesignSystem';
 
 interface ProfileHealthTabProps {
   userId: number;
@@ -79,71 +79,60 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
   }
 
   return (
-    <form className={cn('w-full', SECTION_GAP_LG)} onSubmit={(e) => void handleSave(e, false)}>
-      {/* TDEE Card - only show if calculated */}
+    <form className="w-full space-y-3" onSubmit={(e) => void handleSave(e, false)}>
+      {/* TDEE Card - Bento de salud */}
       {healthProfile?.tdee_kcal != null && (
-        <div
-          className={cn(
-            'border-success/30 bg-success/5 space-y-3',
-            CARD_PADDING,
-            'border',
-            'rounded-[var(--radius-card)]'
-          )}
-        >
-          <div className="text-success flex items-center gap-2">
-            <Flame className="h-5 w-5" />
-            <h3 className="text-text font-semibold tracking-[-0.01em]">
-              Gasto Energético Estimado (TDEE)
+        <div className="border-success/30 bg-success/5 space-y-2.5 rounded-xl border p-3.5 shadow-2xs">
+          <div className="text-success flex items-center gap-1.5">
+            <Flame className="h-4 w-4" />
+            <h3 className="text-text text-xs font-bold tracking-tight tracking-wider uppercase">
+              Gasto Energético Estimado
             </h3>
           </div>
-          <div className={GRID_2COL}>
-            <div className="bg-surface border-border/50 rounded-[var(--radius-card)] border p-3">
-              <p className="text-text-muted text-sm">Metabolismo Basal (BMR)</p>
-              <p className={cn(T.statValue, 'mt-1 text-xl')}>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-surface border-border/60 rounded-xl border p-2.5 text-center">
+              <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+                Basal (BMR)
+              </span>
+              <span className="text-text mt-0.5 block text-sm font-bold tabular-nums">
                 {healthProfile.bmr_kcal ? `${healthProfile.bmr_kcal} kcal` : '—'}
-              </p>
+              </span>
             </div>
-            <div className="bg-surface border-border/50 rounded-[var(--radius-card)] border p-3">
-              <p className="text-text-muted text-sm">Mantenimiento (TDEE)</p>
-              <p className={cn(T.statValue, 'mt-1 text-xl', 'text-success')}>
-                {healthProfile.tdee_kcal} kcal/día
-              </p>
+            <div className="bg-surface border-border/60 rounded-xl border p-2.5 text-center">
+              <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+                TDEE Diario
+              </span>
+              <span className="text-success mt-0.5 block text-sm font-bold tabular-nums">
+                {healthProfile.tdee_kcal} kcal
+              </span>
             </div>
-            <div className="bg-surface border-border/50 rounded-xl border p-3">
-              <p className="text-text-muted text-sm">Nivel de actividad</p>
-              <p className="text-text mt-1 font-semibold capitalize">
+            <div className="bg-surface border-border/60 rounded-xl border p-2.5 text-center">
+              <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+                Actividad
+              </span>
+              <span className="text-text mt-0.5 block truncate text-xs font-semibold capitalize">
                 {activityLevel || 'Moderado'}
-              </p>
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sección 1: Condiciones de Salud */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
+      {/* Sección 1: Condiciones Médicas y Antecedentes */}
+      <div className="border-border/80 bg-surface space-y-3 rounded-xl border p-3.5 shadow-2xs sm:p-4">
         <div className="flex items-center gap-2">
-          <div className="bg-brand/10 rounded-xl p-2">
-            <Heart className="text-brand h-5 w-5" />
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <Heart className="text-brand h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-              Condiciones Médicas y Antecedentes
+            <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+              Condiciones Médicas
             </h3>
-            <p className="text-text-muted text-sm">
-              Selecciona si tienes alguna condición para que tu entrenador adapte los ejercicios
-            </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+
+        {/* Chips de selección compactos */}
+        <div className="flex flex-wrap gap-1.5">
           {HEALTH_CONDITION_FLAGS.map((flag) => (
             <button
               key={flag.id}
@@ -154,124 +143,108 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
                 )
               }
               className={cn(
-                'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all',
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
                 conditionFlags.includes(flag.id)
-                  ? 'bg-brand text-brand-contrast shadow-sm'
-                  : 'bg-surface-raised border-border/50 text-text hover:border-brand/40 hover:bg-surface-raised/80 border'
+                  ? 'bg-brand text-brand-contrast font-semibold shadow-2xs'
+                  : 'bg-surface-raised/60 border-border/60 text-text hover:border-brand/40 border'
               )}
             >
               {flag.label}
               {conditionFlags.includes(flag.id) && (
-                <span className="bg-brand-contrast/50 h-1.5 w-1.5 rounded-full" />
+                <span className="bg-brand-contrast/80 h-1.5 w-1.5 rounded-full" />
               )}
             </button>
           ))}
         </div>
 
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="conditions-notes" className="text-text block text-sm font-medium">
-            Detalles de condiciones o recomendaciones médicas
+        <div className="space-y-1 pt-1">
+          <Label
+            htmlFor="conditions-notes"
+            className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+          >
+            Detalles de condiciones o recomendaciones
           </Label>
           <textarea
             id="conditions-notes"
-            rows={3}
-            placeholder="ej: Cirugía de rodilla hace 2 años, evitar sentadilla profunda con impacto…"
+            rows={2}
+            placeholder="ej: Cirugía previa, dolor lumbar recurrente, evitar impacto…"
             value={conditionsNotes}
             onChange={(e) => setConditionsNotes(e.target.value)}
-            className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+            className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[52px] w-full resize-y rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors focus:ring-2 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Sección 2: Limitaciones, Lesiones y Alergias */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
+      <div className="border-border/80 bg-surface space-y-3 rounded-xl border p-3.5 shadow-2xs sm:p-4">
         <div className="flex items-center gap-2">
-          <div className="bg-brand/10 rounded-xl p-2">
-            <ShieldAlert className="text-brand h-5 w-5" />
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <ShieldAlert className="text-brand h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-              Lesiones, Alergias y Medicamentos
-            </h3>
-            <p className="text-text-muted text-sm">
-              Información relevante para tu seguridad durante el entrenamiento
-            </p>
-          </div>
+          <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+            Lesiones, Alergias y Medicamentos
+          </h3>
         </div>
-        <div className={GRID_2COL}>
-          <div className="space-y-2">
-            <Label htmlFor="limitations-notes" className="text-text text-sm font-medium">
-              Lesiones o limitaciones físicas
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="limitations-notes"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
+              Limitaciones físicas
             </Label>
             <textarea
               id="limitations-notes"
-              rows={3}
-              placeholder="ej: Molestia en hombro derecho al hacer press militar…"
+              rows={2}
+              placeholder="ej: Molestia en hombro al hacer press…"
               value={limitationsNotes}
               onChange={(e) => setLimitationsNotes(e.target.value)}
-              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[52px] w-full resize-y rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="allergies-notes" className="text-text text-sm font-medium">
-              Alergias o medicamentos habituales
+          <div className="space-y-1">
+            <Label
+              htmlFor="allergies-notes"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
+              Alergias / Medicación
             </Label>
             <textarea
               id="allergies-notes"
-              rows={3}
-              placeholder="ej: Alergia a la penicilina, tomo antihipertensivo en las mañanas…"
+              rows={2}
+              placeholder="ej: Alergia a medicamentos o tomas diarias…"
               value={allergiesNotes}
               onChange={(e) => setAllergiesNotes(e.target.value)}
-              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[52px] w-full resize-y rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
       </div>
 
       {/* Sección 3: Parámetros Biometría y Metabolismo */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
+      <div className="border-border/80 bg-surface space-y-3 rounded-xl border p-3.5 shadow-2xs sm:p-4">
         <div className="flex items-center gap-2">
-          <div className="bg-brand/10 rounded-xl p-2">
-            <Zap className="text-brand h-5 w-5" />
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <Zap className="text-brand h-4 w-4" />
           </div>
-          <div>
-            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-              Cálculo Metabólico (Opcional)
-            </h3>
-            <p className="text-text-muted text-sm">
-              Permite estimar tu gasto calórico diario para planes nutricionales
-            </p>
-          </div>
+          <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+            Cálculo Metabólico (Opcional)
+          </h3>
         </div>
-        <div className={GRID_2COL}>
-          <div className="space-y-2">
-            <Label htmlFor="bio-sex" className="text-text text-sm font-medium">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="bio-sex"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
               Sexo biológico
             </Label>
             <select
               id="bio-sex"
               value={sex}
               onChange={(e) => setSex(e.target.value as 'male' | 'female')}
-              className="border-border/60 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-xs font-medium transition-colors focus:ring-2 focus:outline-none"
             >
               <option value="">Seleccionar…</option>
               <option value="male">Masculino</option>
@@ -279,15 +252,18 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
             </select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="bio-activity-level" className="text-text text-sm font-medium">
+          <div className="space-y-1">
+            <Label
+              htmlFor="bio-activity-level"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
               Nivel de actividad física
             </Label>
             <select
               id="bio-activity-level"
               value={activityLevel}
               onChange={(e) => setActivityLevel(e.target.value)}
-              className="border-border/60 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-xs font-medium transition-colors focus:ring-2 focus:outline-none"
             >
               <option value="">Seleccionar nivel…</option>
               {ACTIVITY_LEVELS.map((lvl) => (
@@ -301,43 +277,41 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
       </div>
 
       {/* Consentimiento y Guardado */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        <Label className="flex cursor-pointer items-start gap-3">
+      <div className="border-border/80 bg-surface space-y-3 rounded-xl border p-3.5 shadow-2xs">
+        <Label className="flex cursor-pointer items-start gap-2.5">
           <input
             type="checkbox"
             checked={healthConsent}
             onChange={(e) => setHealthConsent(e.target.checked)}
-            className="border-border text-brand focus:ring-brand mt-0.5 h-4 w-4 rounded"
+            className="border-border text-brand focus:ring-brand mt-0.5 h-3.5 w-3.5 rounded"
           />
-          <span className="text-text-muted text-sm leading-relaxed font-normal">
-            Confirmo que la información de salud suministrada es veraz y autorizo a los entrenadores
-            del gimnasio a utilizarla para adaptar mi prescripción de ejercicios de forma segura.
+          <span className="text-text-muted text-xs leading-relaxed font-normal">
+            Confirmo que los datos de salud suministrados son correctos y autorizo a los
+            entrenadores a consultarlos para adaptar mi rutina.
           </span>
         </Label>
 
-        <div className="border-border/50 mt-3 flex flex-wrap items-center justify-end gap-3 border-t pt-3">
+        <div className="border-border/50 flex flex-wrap items-center justify-end gap-2 border-t pt-2.5">
           <Button
             type="button"
+            size="sm"
             variant="secondary"
             disabled={updateMutation.isPending}
             onClick={(e) => void handleSave(e, true)}
+            className="gap-1.5 font-semibold"
           >
-            <Flame className="h-4 w-4" />
-            <span>Guardar y recalcular TDEE</span>
+            <Flame className="h-3.5 w-3.5" />
+            <span>Recalcular TDEE</span>
           </Button>
 
-          <Button type="submit" disabled={updateMutation.isPending} className="gap-2 shadow-sm">
-            <Save className="h-4 w-4" />
-            <span>{updateMutation.isPending ? 'Guardando…' : 'Guardar ficha de salud'}</span>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={updateMutation.isPending}
+            className="gap-1.5 font-semibold shadow-2xs"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span>{updateMutation.isPending ? 'Guardando…' : 'Guardar ficha'}</span>
           </Button>
         </div>
       </div>

@@ -272,74 +272,47 @@ export function ProfileSeguridadTab({
           </div>
         )}
 
-        {/* Privacidad y Datos RGPD */}
-        <div
-          className={cn(
-            'space-y-3',
-            CARD_PADDING,
-            'border',
-            'border-border/80',
-            'bg-surface',
-            'rounded-[var(--radius-card)]',
-            'border-danger/30',
-            'bg-danger/5'
-          )}
-        >
+        {/* Privacidad y Datos */}
+        <div className="border-danger/30 bg-danger/5 space-y-2.5 rounded-xl border p-3.5 shadow-2xs">
           <div className="flex items-center gap-2">
-            <div className="bg-danger/10 rounded-[var(--radius-card)] p-2">
-              <Shield className="text-danger h-5 w-5" />
+            <div className="bg-danger/10 rounded-lg p-1.5">
+              <Shield className="text-danger h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-                Tus Datos y Privacidad
+              <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+                Privacidad y Cuenta
               </h3>
-              <p className="text-text-muted text-sm">
-                Descarga una copia completa de tu información o solicita la anonimización de tu
-                cuenta
-              </p>
+              <p className="text-text-muted text-xs">Exportación de datos y cierre definitivo</p>
             </div>
           </div>
-          <div className="space-y-3">
+
+          <div className="space-y-2 pt-1">
             <Button
               type="button"
+              size="sm"
               variant="secondary"
               disabled={exporting}
               onClick={() => void handleExport()}
-              className="w-full justify-start gap-3"
+              className="w-full justify-start gap-2 text-xs font-semibold shadow-2xs"
             >
-              <div className="bg-surface border-border/50 rounded-lg border p-2">
-                <Download className="text-text-muted h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-text font-medium">Exportar mis datos (JSON)</p>
-                <p className="text-text-muted text-xs">
-                  Descarga una copia completa de tu información
-                </p>
-              </div>
+              <Download className="text-text-muted h-4 w-4" />
+              <span>{exporting ? 'Exportando…' : 'Exportar mis datos (JSON)'}</span>
             </Button>
 
             <Button
               type="button"
+              size="sm"
               variant={confirmDelete ? 'danger' : 'secondary'}
               disabled={deleting}
               onClick={() => void handleDeleteAccount()}
-              className="w-full justify-start gap-3"
+              className="w-full justify-start gap-2 text-xs font-semibold shadow-2xs"
             >
-              <div className="bg-surface border-border/50 rounded-lg border p-2">
-                <Trash2
-                  className={confirmDelete ? 'text-danger h-5 w-5' : 'text-text-muted h-5 w-5'}
-                />
-              </div>
-              <div className="text-left">
-                <p className={confirmDelete ? 'text-danger font-medium' : 'text-text font-medium'}>
-                  {confirmDelete ? 'Confirmar cierre de cuenta' : 'Cerrar cuenta'}
-                </p>
-                <p className="text-text-muted text-xs">
-                  {confirmDelete
-                    ? 'Esta acción es irreversible'
-                    : 'Anonimiza tu cuenta permanentemente'}
-                </p>
-              </div>
+              <Trash2
+                className={confirmDelete ? 'text-danger h-4 w-4' : 'text-text-muted h-4 w-4'}
+              />
+              <span>
+                {confirmDelete ? 'Confirmar eliminación permanente' : 'Cerrar y anonimizar cuenta'}
+              </span>
             </Button>
           </div>
         </div>

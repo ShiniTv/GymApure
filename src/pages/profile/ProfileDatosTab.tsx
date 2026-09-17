@@ -1,17 +1,9 @@
 import React, { FormEvent } from 'react';
-import { Phone, Scale, Target } from 'lucide-react';
-import { Label } from '../../components/ui';
+import { Phone, Scale, Target, Shield, Save } from 'lucide-react';
+import { Button, Label } from '../../components/ui';
 import { LEVEL_LABELS, SHIFT_LABELS } from '../../lib/trainingShift';
-import { cn } from '../../lib/utils';
 import type { UserProfile } from '../../hooks/queries/useProfileQuery';
 import type { ProfileFormState } from './types';
-import {
-  SURFACE,
-  RADIUS_CARD,
-  CARD_PADDING,
-  SECTION_GAP_LG,
-  sectionHeader,
-} from './ProfileDesignSystem';
 
 interface TrainerProfileLike {
   level: keyof typeof LEVEL_LABELS;
@@ -44,35 +36,20 @@ export function ProfileDatosTab({
   onSave,
 }: ProfileDatosTabProps) {
   return (
-    <form onSubmit={onSave} className={cn('w-full', SECTION_GAP_LG)}>
-      {/* Perfil de Entrenador */}
+    <form onSubmit={onSave} className="w-full space-y-3">
+      {/* Perfil de Entrenador (si aplica) */}
       {isTrainer && trainerProfile && (
-        <div
-          className={cn(
-            'space-y-2.5',
-            CARD_PADDING,
-            'border-border/80 bg-surface rounded-xl border'
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <svg
-              className="text-brand h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 3v18M16 3v18" />
-            </svg>
+        <div className="border-border/80 bg-surface rounded-xl border p-3.5 shadow-2xs">
+          <div className="mb-2.5 flex items-center gap-2">
+            <div className="bg-brand/10 rounded-lg p-1.5">
+              <Shield className="text-brand h-4 w-4" />
+            </div>
             <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
               Perfil Profesional de Entrenador
             </h3>
           </div>
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
               <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
                 Nivel
               </dt>
@@ -80,7 +57,7 @@ export function ProfileDatosTab({
                 {LEVEL_LABELS[trainerProfile.level]}
               </dd>
             </div>
-            <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+            <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
               <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
                 Turno
               </dt>
@@ -89,7 +66,7 @@ export function ProfileDatosTab({
               </dd>
             </div>
             {trainerProfile.specialty && (
-              <div className="bg-surface-raised/40 border-border/60 col-span-2 rounded-lg border p-2.5 sm:col-span-1">
+              <div className="bg-surface-raised/40 border-border/60 col-span-2 rounded-xl border p-2.5 sm:col-span-1">
                 <dt className="text-text-muted text-small font-semibold tracking-wider uppercase">
                   Especialidad
                 </dt>
@@ -102,25 +79,22 @@ export function ProfileDatosTab({
         </div>
       )}
 
-      {/* Sección 1: Información de Contacto y Personal */}
-      <div
-        className={cn(
-          'space-y-4',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        {sectionHeader(
-          'Contacto e Identidad',
-          'Datos para notificaciones, recuperación de cuenta y emergencias',
-          Phone
-        )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="profile-phone" className="text-text text-sm font-medium">
+      {/* Sección 1: Información de Contacto e Identidad */}
+      <div className="border-border/80 bg-surface rounded-xl border p-3.5 shadow-2xs sm:p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <Phone className="text-brand h-4 w-4" />
+          </div>
+          <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+            Contacto e Identidad
+          </h3>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="profile-phone"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
               Teléfono de contacto
             </Label>
             <input
@@ -130,12 +104,15 @@ export function ProfileDatosTab({
               placeholder="ej: 0414-1234567"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="profile-dob" className="text-text text-sm font-medium">
+          <div className="space-y-1">
+            <Label
+              htmlFor="profile-dob"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
               Fecha de nacimiento
             </Label>
             <input
@@ -143,31 +120,28 @@ export function ProfileDatosTab({
               type="date"
               value={form.dob}
               onChange={(e) => setForm({ ...form, dob: e.target.value })}
-              className="border-border/60 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
       </div>
 
-      {/* Sección 2: Parámetros Antropométricos Base */}
-      <div
-        className={cn(
-          'space-y-4',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        {sectionHeader(
-          'Parámetros Físicos Iniciales',
-          'Utilizados para cálculos de IMC, tasa metabólica y estimación de calorías',
-          Scale
-        )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="profile-height" className="text-text text-sm font-medium">
+      {/* Sección 2: Parámetros Antropométricos y Objetivo */}
+      <div className="border-border/80 bg-surface rounded-xl border p-3.5 shadow-2xs sm:p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="bg-brand/10 rounded-lg p-1.5">
+            <Scale className="text-brand h-4 w-4" />
+          </div>
+          <h3 className="text-text text-sm font-semibold tracking-[-0.01em]">
+            Parámetros Físicos y Meta
+          </h3>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label
+              htmlFor="profile-height"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
               Estatura / Altura (cm)
             </Label>
             <input
@@ -179,13 +153,16 @@ export function ProfileDatosTab({
               placeholder="ej: 175"
               value={form.height}
               onChange={(e) => setForm({ ...form, height: e.target.value })}
-              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-semibold tabular-nums transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-sm font-semibold tabular-nums transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="profile-initial-weight" className="text-text text-sm font-medium">
-              Peso inicial de referencia (kg)
+          <div className="space-y-1">
+            <Label
+              htmlFor="profile-initial-weight"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
+              Peso inicial (kg)
             </Label>
             <input
               id="profile-initial-weight"
@@ -196,111 +173,57 @@ export function ProfileDatosTab({
               placeholder="ej: 75.0"
               value={form.initial_weight}
               onChange={(e) => setForm({ ...form, initial_weight: e.target.value })}
-              className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-[var(--radius-card)] border px-3 py-2 text-sm font-semibold tabular-nums transition-colors focus:ring-2 focus:outline-none"
+              className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 w-full rounded-xl border px-3 py-2 text-sm font-semibold tabular-nums transition-colors focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
-      </div>
 
-      {/* Sección 3: Objetivo y Enfoque Fitness */}
-      <div
-        className={cn(
-          'space-y-4',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        {sectionHeader(
-          'Objetivo Principal',
-          'Describe tu meta actual (pérdida de grasa, hipertrofia, acondicionamiento, etc.)',
-          Target
-        )}
-        <div className="space-y-1.5">
-          <Label htmlFor="profile-goal" className="text-text text-sm font-medium">
-            Tu objetivo
-          </Label>
+        <div className="mt-3 space-y-1">
+          <div className="mb-1 flex items-center gap-1.5">
+            <Target className="text-brand h-3.5 w-3.5" />
+            <Label
+              htmlFor="profile-goal"
+              className="text-text-secondary text-small block font-semibold tracking-wider uppercase"
+            >
+              Objetivo Fitness
+            </Label>
+          </div>
           <textarea
             id="profile-goal"
-            rows={3}
-            placeholder="ej: Ganar masa muscular y mejorar mi resistencia cardiovascular…"
+            rows={2}
+            placeholder="ej: Ganar masa muscular, mejorar resistencia y composición corporal…"
             value={form.goal}
             onChange={(e) => setForm({ ...form, goal: e.target.value })}
-            className="border-border/60 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[80px] w-full resize-y rounded-[var(--radius-card)] border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
+            className="border-border/70 bg-surface placeholder:text-text-muted focus:border-brand focus:ring-brand/20 min-h-[56px] w-full resize-y rounded-xl border px-3 py-2 text-sm font-medium transition-colors focus:ring-2 focus:outline-none"
           />
         </div>
       </div>
 
       {/* Barra de Guardado */}
-      <div
-        className={cn(
-          SURFACE,
-          RADIUS_CARD,
-          'p-4',
-          'flex',
-          'flex-col',
-          'gap-3',
-          'sm:flex-row',
-          'sm:items-center',
-          'sm:justify-between'
-        )}
-      >
-        <div className="flex items-center gap-3">
+      <div className="border-border/80 bg-surface flex items-center justify-between gap-3 rounded-xl border p-3 shadow-2xs sm:p-3.5">
+        <div>
           {isProfileDirty ? (
-            <span className="text-warning inline-flex items-center gap-2 text-sm font-medium">
+            <span className="text-warning inline-flex items-center gap-1.5 text-xs font-semibold">
               <span className="relative flex h-2 w-2">
                 <span className="bg-warning absolute inset-0 animate-pulse rounded-full" />
                 <span className="bg-warning absolute inset-0 rounded-full" />
               </span>
-              Cambios pendientes
+              Cambios pendientes por guardar
             </span>
           ) : (
-            <span className="text-text-muted text-sm font-medium">Todo guardado</span>
+            <span className="text-text-muted text-xs font-medium">Información actualizada</span>
           )}
         </div>
 
-        <button
+        <Button
           type="submit"
+          size="sm"
           disabled={saving || !isProfileDirty}
-          className={cn(
-            'inline-flex',
-            'items-center',
-            'justify-center',
-            'gap-2',
-            'rounded-[var(--radius-card)]',
-            'px-4',
-            'py-2',
-            'text-sm',
-            'font-semibold',
-            'shadow-sm',
-            'transition-colors',
-            'focus:outline-none',
-            'focus:ring-2',
-            'focus:ring-brand/40',
-            'disabled:opacity-50',
-            'disabled:cursor-not-allowed',
-            saving || !isProfileDirty
-              ? 'bg-surface-raised text-text-muted'
-              : 'bg-brand text-brand-contrast hover:bg-brand-hover'
-          )}
+          className="gap-2 font-semibold shadow-2xs"
         >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
-          <span>{saving ? 'Guardando…' : 'Guardar perfil'}</span>
-        </button>
+          <Save className="h-4 w-4" />
+          <span>{saving ? 'Guardando…' : 'Guardar'}</span>
+        </Button>
       </div>
     </form>
   );

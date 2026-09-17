@@ -1,20 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router';
-import {
-  IdCard,
-  MessageCircle,
-  ScanLine,
-  Printer,
-  Sparkles,
-  QrCode,
-  User,
-  Shield,
-} from 'lucide-react';
+import { IdCard, MessageCircle, ScanLine, Printer, QrCode, User, Shield } from 'lucide-react';
 import { Button, Badge } from '../../components/ui';
 import type { MemberBadgeData } from '../../components/member/MemberBadgeCard';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { SURFACE, CARD_PADDING, SECTION_GAP_LG, GRID_2COL, cn } from './ProfileDesignSystem';
 
 interface ProfileCarneTabProps {
   badgeMember: MemberBadgeData | null;
@@ -29,214 +19,143 @@ export function ProfileCarneTab({
 }: ProfileCarneTabProps) {
   if (!badgeMember) {
     return (
-      <div className="flex justify-center py-16">
-        <div
-          className={cn(
-            'w-full max-w-md',
-            CARD_PADDING,
-            'border',
-            'border-border/80',
-            'bg-surface',
-            'rounded-xl'
-          )}
-        >
-          <div className="py-4 text-center">
-            <div className="bg-surface text-text-muted mx-auto mb-4 w-fit rounded-xl p-3">
-              <IdCard className="h-10 w-10" />
-            </div>
-            <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-              Carnet digital no disponible
-            </h3>
-            <p className="text-text-muted mt-2 text-sm">
-              Se requiere el número de cédula en tu perfil para generar tu credencial de acceso.
-            </p>
-            <div className="mt-6">
-              <Link
-                to="/messages"
-                className="bg-brand text-brand-contrast hover:bg-brand/90 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition-colors"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Escribir a recepción
-              </Link>
-            </div>
+      <div className="flex justify-center py-10">
+        <div className="border-border/80 bg-surface w-full max-w-sm rounded-xl border p-5 text-center shadow-2xs">
+          <div className="bg-surface-raised text-text-muted mx-auto mb-3 w-fit rounded-xl p-3">
+            <IdCard className="h-8 w-8" />
+          </div>
+          <h3 className="text-text text-base font-semibold tracking-[-0.01em]">
+            Carnet digital no disponible
+          </h3>
+          <p className="text-text-muted mt-1 text-xs">
+            Se requiere el número de cédula en tu perfil para generar tu credencial de acceso.
+          </p>
+          <div className="mt-4">
+            <Link
+              to="/messages"
+              className="bg-brand text-brand-contrast hover:bg-brand/90 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold shadow-2xs transition-colors"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Escribir a recepción
+            </Link>
           </div>
         </div>
       </div>
     );
   }
 
+  const isExpired = badgeMember.subscription_end
+    ? new Date(badgeMember.subscription_end) <= new Date()
+    : false;
+
   const membershipEnd = badgeMember.subscription_end
-    ? format(new Date(badgeMember.subscription_end), 'dd MMMM yyyy', { locale: es })
+    ? format(new Date(badgeMember.subscription_end), 'dd MMM yyyy', { locale: es })
     : '—';
 
   return (
-    <div className={cn('space-y-4', SECTION_GAP_LG)}>
-      {/* Header Actions */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="bg-brand/10 text-brand border-brand/20 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold">
-              <Sparkles className="h-3.5 w-3.5" />
-              Credencial Digital de Socio
+    <div className="mx-auto w-full max-w-md space-y-3">
+      {/* Apple Wallet Style Pass */}
+      <div className="border-border/80 bg-surface relative overflow-hidden rounded-xl border p-5 shadow-sm">
+        {/* Glow de fondo tenue */}
+        <div className="from-brand/10 pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-radial to-transparent" />
+
+        {/* Encabezado del pase */}
+        <div className="border-border/50 flex items-center justify-between border-b pb-3.5">
+          <div className="flex items-center gap-2">
+            <div className="bg-brand text-brand-contrast flex h-7 w-7 items-center justify-center rounded-lg shadow-2xs">
+              <Shield className="h-4 w-4" />
             </div>
-            <h2 className="text-text mt-2 text-xl font-bold tracking-[-0.01em]">
-              Tu pase de acceso rápido
-            </h2>
-            <p className="text-text-muted mt-1 text-sm">
-              Muéstralo frente al lector de recepción para registrar tu entrada instantáneamente
-            </p>
+            <div>
+              <p className="text-text text-xs font-bold tracking-tight">GymApure</p>
+              <p className="text-text-muted text-small font-medium tracking-wider uppercase">
+                Pase Digital
+              </p>
+            </div>
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button
-              onClick={onShowScan}
-              className="flex-1 gap-2 font-semibold shadow-sm sm:flex-none"
-            >
-              <ScanLine className="h-4 w-4" />
-              <span>Mostrar QR</span>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={onShowBadgeModal}
-              className="flex-1 gap-2 font-semibold sm:flex-none"
-            >
-              <Printer className="h-4 w-4" />
-              <span>Imprimir / Carnet</span>
-            </Button>
-          </div>
+          <Badge
+            variant={isExpired ? 'danger' : 'success'}
+            className="text-small px-2 py-0.5 font-semibold"
+          >
+            {isExpired ? 'Vencida' : 'Activa'}
+          </Badge>
         </div>
-      </div>
 
-      {/* Badge Card - Front */}
-      <div
-        className={cn(
-          'overflow-hidden',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        <div className="relative overflow-hidden">
-          <div className="from-brand/5 absolute inset-0 bg-gradient-to-br via-transparent to-transparent" />
-          <div className="relative p-6">
-            <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="text-center md:text-left">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-sm">
-                  <Shield className="h-3.5 w-3.5" />
-                  Socio Verificado
-                </div>
-                <h3 className="text-text text-2xl font-bold tracking-[-0.01em]">
-                  {badgeMember.full_name}
-                </h3>
-                <p className="text-text-muted mt-1 font-mono text-sm">C.I. {badgeMember.cedula}</p>
-              </div>
-
-              <div className="flex flex-col items-center gap-3 md:items-end">
-                <div className="rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-                  <QrCode className="h-10 w-10 text-white" />
-                </div>
-                <div className="text-right">
-                  <p className="text-text-muted text-xs">Membresía</p>
-                  <p className="text-text font-semibold">{badgeMember.membership_name ?? '—'}</p>
-                  <p className="text-text-muted mt-1 text-xs">Vence: {membershipEnd}</p>
-                </div>
-              </div>
-            </div>
-
-            {badgeMember.profile_image && (
-              <div className="absolute top-6 right-6 md:top-6 md:right-6">
-                <img
-                  src={badgeMember.profile_image}
-                  alt={badgeMember.full_name}
-                  className="h-20 w-20 rounded-xl object-cover ring-2 ring-white/20"
-                />
+        {/* Datos del Socio & QR */}
+        <div className="py-4 text-center">
+          <div className="mb-3 flex items-center justify-center gap-3">
+            {badgeMember.profile_image ? (
+              <img
+                src={badgeMember.profile_image}
+                alt={badgeMember.full_name}
+                className="border-border/80 h-12 w-12 rounded-full border object-cover"
+              />
+            ) : (
+              <div className="bg-surface-raised border-border/80 flex h-12 w-12 items-center justify-center rounded-full border">
+                <User className="text-text-muted h-6 w-6" />
               </div>
             )}
+            <div className="text-left">
+              <h3 className="text-text text-base font-bold tracking-[-0.01em]">
+                {badgeMember.full_name}
+              </h3>
+              <p className="text-text-secondary font-mono text-xs">C.I. {badgeMember.cedula}</p>
+            </div>
+          </div>
+
+          {/* Código QR Central */}
+          <div className="border-border/60 bg-surface-raised my-2 inline-flex items-center justify-center rounded-xl border p-3 shadow-2xs">
+            <QrCode className="text-text h-24 w-24" />
+          </div>
+          <p className="text-text-muted text-small mt-1 font-medium">
+            Escanea este código en el lector de recepción
+          </p>
+        </div>
+
+        {/* Detalles en Grid Bento */}
+        <div className="border-border/50 grid grid-cols-3 gap-2 border-t pt-3 text-center">
+          <div className="bg-surface-raised/50 border-border/50 rounded-xl border p-2">
+            <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+              Membresía
+            </span>
+            <span className="text-text mt-0.5 block truncate text-xs font-semibold">
+              {badgeMember.membership_name ?? 'General'}
+            </span>
+          </div>
+          <div className="bg-surface-raised/50 border-border/50 rounded-xl border p-2">
+            <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+              Turno
+            </span>
+            <span className="text-text mt-0.5 block truncate text-xs font-semibold capitalize">
+              {badgeMember.training_shift ?? 'Libre'}
+            </span>
+          </div>
+          <div className="bg-surface-raised/50 border-border/50 rounded-xl border p-2">
+            <span className="text-text-muted text-small block font-semibold tracking-wider uppercase">
+              Vence
+            </span>
+            <span className="text-text mt-0.5 block text-xs font-semibold tabular-nums">
+              {membershipEnd}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Badge Card - Back / Details */}
-      <div
-        className={cn(
-          'space-y-3',
-          CARD_PADDING,
-          'border',
-          'border-border/80',
-          'bg-surface',
-          'rounded-xl'
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <User className="text-brand h-5 w-5" />
-          <h3 className="text-text text-lg font-semibold tracking-[-0.01em]">
-            Detalles de la credencial
-          </h3>
-        </div>
-        <dl className={GRID_2COL}>
-          <div className="space-y-1">
-            <dt className="text-text-muted text-sm">Rol</dt>
-            <dd className="text-text font-medium capitalize">{badgeMember.role}</dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="text-text-muted text-sm">Turno</dt>
-            <dd className="text-text font-medium capitalize">
-              {badgeMember.training_shift ?? '—'}
-            </dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="text-text-muted text-sm">Socio desde</dt>
-            <dd className="text-text font-medium">
-              {badgeMember.created_at
-                ? format(new Date(badgeMember.created_at), 'dd MMM yyyy', { locale: es })
-                : '—'}
-            </dd>
-          </div>
-          <div className="space-y-1">
-            <dt className="text-text-muted text-sm">Estado</dt>
-            <dd className="text-text font-medium">
-              <Badge
-                variant={
-                  badgeMember.subscription_end &&
-                  new Date(badgeMember.subscription_end) > new Date()
-                    ? 'success'
-                    : 'default'
-                }
-                className="text-xs"
-              >
-                {badgeMember.subscription_end && new Date(badgeMember.subscription_end) > new Date()
-                  ? 'Activa'
-                  : 'Vencida'}
-              </Badge>
-            </dd>
-          </div>
-        </dl>
-      </div>
-
-      {/* QR Full Screen Hint */}
-      <div className={cn(SURFACE, 'rounded-[var(--radius-card)] p-4')}>
-        <div className="flex items-center gap-3">
-          <div className="bg-brand/10 rounded-xl p-2">
-            <QrCode className="text-brand h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-text font-medium">Escaneo rápido en recepción</p>
-            <p className="text-text-muted text-sm">
-              Toca "Mostrar QR" para ver el código a pantalla completa
-            </p>
-          </div>
-        </div>
+      {/* Acciones de la Credencial */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button size="sm" onClick={onShowScan} className="w-full gap-2 font-semibold shadow-2xs">
+          <ScanLine className="h-3.5 w-3.5" />
+          <span>Pantalla completa</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={onShowBadgeModal}
+          className="w-full gap-2 font-semibold shadow-2xs"
+        >
+          <Printer className="h-3.5 w-3.5" />
+          <span>Imprimir carnet</span>
+        </Button>
       </div>
     </div>
   );

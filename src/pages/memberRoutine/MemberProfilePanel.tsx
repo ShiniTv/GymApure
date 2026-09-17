@@ -44,9 +44,9 @@ export function MemberProfilePanel({
 
   return (
     <div className="space-y-3">
-      <div className="border-border/80 bg-surface rounded-xl border p-3">
+      <div className="border-border/80 bg-surface rounded-xl border p-3.5 shadow-2xs">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+          <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
             <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               Altura
             </p>
@@ -54,7 +54,7 @@ export function MemberProfilePanel({
               {heightCm != null ? `${heightCm} cm` : '—'}
             </p>
           </div>
-          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+          <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
             <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               {latestMeasurement?.weight != null ? 'Peso actual' : 'Peso inicial'}
             </p>
@@ -75,7 +75,7 @@ export function MemberProfilePanel({
               </button>
             )}
           </div>
-          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+          <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
             <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               Objetivo
             </p>
@@ -83,7 +83,7 @@ export function MemberProfilePanel({
               {formatMemberGoal(member.goal) ?? '—'}
             </p>
           </div>
-          <div className="bg-surface-raised/40 border-border/60 rounded-lg border p-2.5">
+          <div className="bg-surface-raised/40 border-border/60 rounded-xl border p-2.5">
             <p className="text-text-muted text-small font-semibold tracking-wider uppercase">
               Meta semanal
             </p>

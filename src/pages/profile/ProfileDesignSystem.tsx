@@ -69,20 +69,28 @@ export function cardInteractive(extra = '') {
   );
 }
 
+// ─── Apple Inset Grouped Patterns ────────────────────────────────
+export const INSET_GROUP =
+  'rounded-xl border border-border/80 bg-surface shadow-2xs overflow-hidden';
+export const INSET_GROUP_SUBTLE =
+  'rounded-xl border border-border/60 bg-surface/80 backdrop-blur-md shadow-2xs overflow-hidden';
+export const FIELD_LABEL =
+  'text-small uppercase tracking-wider font-semibold text-text-secondary mb-1 block';
+
 // ─── Grid Patterns ───────────────────────────────────────────────
 export const GRID_METRIC_STRIP = cn(
-  'grid divide-x divide-y divide-[color:var(--color-border)] overflow-hidden',
-  RADIUS_CARD,
-  'border',
-  SURFACE
+  'grid grid-cols-3 divide-x divide-border/60 overflow-hidden',
+  'rounded-xl',
+  'border border-border/80',
+  'bg-surface shadow-2xs'
 );
 
 export const GRID_ASYMMETRIC = cn(
   'grid gap-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:items-start md:gap-3'
 );
 
-export const GRID_2COL = 'grid grid-cols-2 gap-3 sm:grid-cols-4';
-export const GRID_3COL = 'grid grid-cols-1 gap-3 sm:grid-cols-3';
+export const GRID_2COL = 'grid grid-cols-2 gap-2.5 sm:grid-cols-4';
+export const GRID_3COL = 'grid grid-cols-1 gap-2.5 sm:grid-cols-3';
 
 // ─── Section Helpers ─────────────────────────────────────────────
 export function sectionHeader(title: string, description?: string, Icon?: React.ElementType) {

@@ -62,6 +62,7 @@ export function ProfileModals({
         <div className="flex justify-end gap-2">
           <Button
             type="button"
+            size="sm"
             variant="secondary"
             onClick={onCloseRemoveAvatar}
             disabled={avatarRemoving}
@@ -70,12 +71,13 @@ export function ProfileModals({
           </Button>
           <Button
             type="button"
+            size="sm"
             variant="danger"
             onClick={() => void onConfirmRemoveAvatar()}
             loading={avatarRemoving}
           >
-            <Trash2 className="h-4 w-4" />
-            Quitar foto
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Quitar foto</span>
           </Button>
         </div>
       </Modal>
