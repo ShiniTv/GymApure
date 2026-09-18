@@ -75,6 +75,7 @@ export default function CheckIn() {
   const [userName, setUserName] = useState('');
   const [now, setNow] = useState(new Date());
   const [showManualCedula, setShowManualCedula] = useState(false);
+  const [isBirthday, setIsBirthday] = useState(false);
   const [autoResetCountdown, setAutoResetCountdown] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [offlineCount, setOfflineCount] = useState(() => getOfflineQueue().length);
@@ -238,6 +239,7 @@ export default function CheckIn() {
             setUserName(data.user_name ?? '');
             setExpiryWarning(data.expiry_warning || '');
             setDurationLabel(data.duration_label || '');
+            setIsBirthday(Boolean(data.is_birthday));
             hapticSuccess();
             playSuccessSound();
 
@@ -538,6 +540,13 @@ export default function CheckIn() {
             )}
             {expiryWarning && (
               <p className="text-warning mt-2 text-sm font-semibold">{expiryWarning}</p>
+            )}
+            {isBirthday && (
+              <div className="animate-pop-in mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 via-pink-500/20 to-purple-500/20 px-4 py-1.5 text-xs font-bold text-amber-500 shadow-md sm:text-sm dark:text-amber-300">
+                <span>🎂</span>
+                <span>¡FELIZ CUMPLEAÑOS! Que tengas un gran día</span>
+                <span>🎉</span>
+              </div>
             )}
           </div>
 

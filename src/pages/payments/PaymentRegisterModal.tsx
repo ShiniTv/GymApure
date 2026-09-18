@@ -5,6 +5,7 @@ import { formatBsRateLabel, type ExchangeRate } from '../../hooks/queries/useExc
 import { usePaymentDestinationsQuery } from '../../hooks/queries/usePaymentDestinationsQuery';
 import { PaymentDestinationHint } from '../../components/payments/PaymentDestinationHint';
 import { parsePaymentSms, type ParsedPaymentInfo } from '../../lib/paymentParser';
+import { cn } from '../../lib/utils';
 import {
   formatDenominationBreakdown,
   PAYMENT_METHOD_KEYS,
@@ -97,9 +98,14 @@ export function PaymentRegisterModal({
   const [step, setStep] = useState<WizardStep>(1);
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [manualSmsText, setManualSmsText] = useState('');
+  const [cashReceived, setCashReceived] = useState('');
   const isCashUsd = method === 'efectivo_usd';
   const cashDenoms = destinations?.efectivo_usd.denominations ?? [1, 5, 10, 20, 50, 100];
   const useWizard = isMember || !isStaffPayment;
+
+  const dueNum = parseFloat(amountUsd || '0') || 0;
+  const receivedNum = parseFloat(cashReceived || '0') || 0;
+  const changeUsd = Math.max(0, receivedNum - dueNum);
 
   useEffect(() => {
     if (!open) {
@@ -108,6 +114,7 @@ export function PaymentRegisterModal({
       setStep(1);
       setSmsModalOpen(false);
       setManualSmsText('');
+      setCashReceived('');
     }
   }, [open]);
 
@@ -349,6 +356,80 @@ export function PaymentRegisterModal({
                 </Select>
               </div>
               <PaymentDestinationHint method={method} destinations={destinations} />
+              {isCashUsd && isStaffPayment && (
+                <div className="space-y-2.5 rounded-[var(--radius-card)] border border-emerald-500/20 bg-emerald-500/5 p-3 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold tracking-wide text-emerald-600 uppercase dark:text-emerald-400">
+                      Calculadora de Vuelto Express
+                    </span>
+                    {dueNum > 0 && (
+                      <span className="text-text-muted text-xs">
+                        Monto a cobrar: <strong className="text-text">${dueNum.toFixed(2)}</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Recibido del cliente ($)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder={dueNum > 0 ? String(dueNum) : '0.00'}
+                        value={cashReceived}
+                        onChange={(e) => setCashReceived(e.target.value)}
+                        className="text-base font-bold tabular-nums"
+                      />
+                    </div>
+
+                    <div className="bg-surface-raised/80 border-border/80 flex flex-col justify-center rounded-lg border p-2 text-center">
+                      <span className="text-small text-text-muted font-medium">
+                        {receivedNum >= dueNum && dueNum > 0 ? 'Vuelto a entregar' : 'Faltante'}
+                      </span>
+                      <p
+                        className={cn(
+                          'text-lg font-extrabold tabular-nums',
+                          receivedNum >= dueNum ? 'text-emerald-500' : 'text-danger'
+                        )}
+                      >
+                        ${changeUsd.toFixed(2)} USD
+                      </p>
+                      {changeUsd > 0 && exchangeRate?.rate ? (
+                        <p className="text-small text-text-muted tabular-nums">
+                          ~
+                          {(changeUsd * exchangeRate.rate).toLocaleString('es-VE', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          Bs
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {[10, 20, 50, 100].map((quickBill) => (
+                      <button
+                        key={quickBill}
+                        type="button"
+                        onClick={() => setCashReceived(String(quickBill))}
+                        className="tap-feedback bg-surface-overlay text-text hover:bg-surface-raised rounded px-2 py-1 text-xs font-semibold transition-colors active:scale-95"
+                      >
+                        ${quickBill}
+                      </button>
+                    ))}
+                    {dueNum > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setCashReceived(String(dueNum))}
+                        className="tap-feedback rounded bg-emerald-500/20 px-2 py-1 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/30 active:scale-95 dark:text-emerald-400"
+                      >
+                        Monto exacto
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               {isCashUsd && destinations?.efectivo_usd.enabled ? (
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Billetes (cantidad por denominación)</Label>
