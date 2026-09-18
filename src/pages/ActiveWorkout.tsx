@@ -7,7 +7,8 @@ import { WorkoutHeader } from './activeWorkout/WorkoutHeader';
 import { AddExerciseModal } from './activeWorkout/AddExerciseModal';
 import { SkipExerciseModal } from './activeWorkout/SkipExerciseModal';
 import { ExerciseFocusNav } from './activeWorkout/ExerciseFocusNav';
-import { FinishWorkoutModal, ResetWorkoutModal } from './activeWorkout/WorkoutSessionModals';
+import { ResetWorkoutModal } from './activeWorkout/WorkoutSessionModals';
+import { WorkoutSummaryModal } from '../components/workout/WorkoutSummaryModal';
 import { ActiveWorkoutExerciseList } from './activeWorkout/ActiveWorkoutExerciseList';
 import { useActiveWorkoutPage } from './activeWorkout/useActiveWorkoutPage';
 
@@ -156,7 +157,7 @@ export default function ActiveWorkout() {
         onSkipExercise={page.isMember ? page.openSkipExercise : undefined}
       />
 
-      <FinishWorkoutModal
+      <WorkoutSummaryModal
         open={page.isFinishing}
         timer={page.timer}
         completedCount={page.completedCount}
@@ -165,6 +166,8 @@ export default function ActiveWorkout() {
         totalVolumeKg={page.totalVolumeKg}
         finishError={page.finishError}
         isSubmitting={page.isSubmittingFinish}
+        routineName={routine.name}
+        userName={page.user?.name}
         onClose={() => {
           page.setIsFinishing(false);
           page.setFinishError(null);

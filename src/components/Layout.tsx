@@ -32,6 +32,7 @@ import { NotificationBell } from './notifications/NotificationBell';
 import { useAppFonts } from '../hooks/useAppFonts';
 import { routePrefetchHandlers } from '../lib/routePrefetch';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
+import { WorkoutLiveActivityPill } from './workout/WorkoutLiveActivityPill';
 
 const ROLE_LABELS_LOCAL = ROLE_LABELS;
 
@@ -540,6 +541,7 @@ export default function Layout() {
           }
         />
         <ScrollToTop />
+        <WorkoutLiveActivityPill />
 
         {showMemberBottomNav && <MemberBottomNav />}
         {showReceptionBottomNav && <ReceptionBottomNav />}
