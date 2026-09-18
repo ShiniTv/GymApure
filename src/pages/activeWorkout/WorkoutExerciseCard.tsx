@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useMemo, memo } from 'react';
 import {
   BookOpen,
   CheckCircle,
@@ -34,7 +34,7 @@ const ExerciseVideoPlayer = lazy(() =>
 
 type Exercise = WorkoutRoutine['exercises'][number];
 
-export function WorkoutExerciseCard({
+export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
   exercise,
   index,
   hidden,
@@ -73,6 +73,23 @@ export function WorkoutExerciseCard({
     : 'grid-cols-[2rem_minmax(0,1fr)_2.75rem] sm:grid-cols-[2.25rem_minmax(0,1fr)_3rem]';
   const [showVideo, setShowVideo] = useState(false);
   const [showExecution, setShowExecution] = useState(false);
+
+  const { bestEst1Rm, weightOverload } = useMemo(() => {
+    let maxEst = 0;
+    let maxW = 0;
+    for (let i = 0; i < exercise.sets; i++) {
+      const key = `${exercise.id}-${i + 1}`;
+      const log = logs[key];
+      const w = parseFloat(log?.weight || '0') || 0;
+      const r = parseFloat(log?.reps || '0') || 0;
+      const est = estimateOneRmEpley(w, r);
+      if (est > maxEst) maxEst = est;
+      if (w > maxW) maxW = w;
+    }
+    const priorSet1 = getLastSetHint(exercise.id, 1, lastSessionLogs);
+    const overload = priorSet1 && maxW > priorSet1.weight ? maxW - priorSet1.weight : null;
+    return { bestEst1Rm: maxEst, weightOverload: overload };
+  }, [exercise.id, exercise.sets, logs, lastSessionLogs]);
 
   const handleQuickAdjust = (setNum: number, field: 'weight' | 'reps', delta: number) => {
     hapticLight();
@@ -183,43 +200,18 @@ export function WorkoutExerciseCard({
               </button>
             )}
 
-            {(() => {
-              const loggedSetsList = Array.from({ length: exercise.sets }).map((_, i) => {
-                const key = `${exercise.id}-${i + 1}`;
-                const log = logs[key];
-                const w = parseFloat(log?.weight || '0') || 0;
-                const r = parseFloat(log?.reps || '0') || 0;
-                return {
-                  weight: w,
-                  reps: r,
-                  est1rm: estimateOneRmEpley(w, r),
-                  completed: log?.completed,
-                };
-              });
-
-              const bestEst1Rm = Math.max(...loggedSetsList.map((s) => s.est1rm), 0);
-              const bestWeight = Math.max(...loggedSetsList.map((s) => s.weight), 0);
-              const priorSet1 = getLastSetHint(exercise.id, 1, lastSessionLogs);
-              const weightOverload =
-                priorSet1 && bestWeight > priorSet1.weight ? bestWeight - priorSet1.weight : null;
-
-              return (
-                <>
-                  {bestEst1Rm > 0 && showLoad && (
-                    <span className="rounded-chip border-border/80 bg-surface-raised text-text inline-flex items-center gap-1 border px-2 py-1 text-xs font-semibold tabular-nums">
-                      <TrendingUp className="text-brand h-3.5 w-3.5" />
-                      <span>1RM est: {bestEst1Rm} kg</span>
-                    </span>
-                  )}
-                  {weightOverload !== null && weightOverload > 0 && (
-                    <span className="rounded-chip inline-flex items-center gap-1 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
-                      <Flame className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>+{weightOverload} kg vs. sesión ant.</span>
-                    </span>
-                  )}
-                </>
-              );
-            })()}
+            {bestEst1Rm > 0 && showLoad && (
+              <span className="rounded-chip border-border/80 bg-surface-raised text-text inline-flex items-center gap-1 border px-2 py-1 text-xs font-semibold tabular-nums">
+                <TrendingUp className="text-brand h-3.5 w-3.5" />
+                <span>1RM est: {bestEst1Rm} kg</span>
+              </span>
+            )}
+            {weightOverload !== null && weightOverload > 0 && (
+              <span className="rounded-chip inline-flex items-center gap-1 border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
+                <Flame className="h-3.5 w-3.5 text-emerald-500" />
+                <span>+{weightOverload} kg vs. sesión ant.</span>
+              </span>
+            )}
           </div>
 
           {exercise.execution && (
@@ -466,4 +458,4 @@ export function WorkoutExerciseCard({
       </div>
     </article>
   );
-}
+});

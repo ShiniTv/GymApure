@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { WorkoutExerciseCard } from './WorkoutExerciseCard';
 import type { WorkoutLogEntry } from './types';
 import type { WorkoutRoutine } from '../../hooks/queries/useWorkoutRoutineQuery';
 
 type Exercise = WorkoutRoutine['exercises'][number];
 
-export function ActiveWorkoutExerciseList({
+export const ActiveWorkoutExerciseList = memo(function ActiveWorkoutExerciseList({
   exercises,
   isMobileFocus,
   focusedIndex,
@@ -60,4 +61,4 @@ export function ActiveWorkoutExerciseList({
       ))}
     </div>
   );
-}
+});

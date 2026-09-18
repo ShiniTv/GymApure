@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils';
 
 export function ExerciseFocusNav({
@@ -14,9 +15,9 @@ export function ExerciseFocusNav({
 }) {
   if (exercises.length <= 1) return null;
 
-  return (
+  return createPortal(
     <nav
-      className="border-border bg-bg fixed right-0 bottom-0 left-0 z-40 border-t px-3 py-0.5 pb-[max(0.25rem,env(safe-area-inset-bottom))] md:hidden"
+      className="border-border bg-bg/95 fixed right-0 bottom-0 left-0 z-40 border-t px-3 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur-md md:hidden"
       aria-label="Paginación de ejercicios"
     >
       <div className="mx-auto flex max-w-lg items-center gap-2">
@@ -65,6 +66,7 @@ export function ExerciseFocusNav({
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
-    </nav>
+    </nav>,
+    document.body
   );
 }

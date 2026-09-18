@@ -150,9 +150,7 @@ export default function ActiveWorkout() {
         onToggleComplete={page.toggleExerciseComplete}
         onLogChange={page.handleLogChange}
         onEditSet={page.editSet}
-        onToggleSetComplete={(exerciseId, setNum) =>
-          void page.toggleSetComplete(exerciseId, setNum)
-        }
+        onToggleSetComplete={page.toggleSetComplete}
         onAddSet={page.handleAddSet}
         onRemoveLastSet={page.handleRemoveLastSet}
         onSkipExercise={page.isMember ? page.openSkipExercise : undefined}

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, memo } from 'react';
 import { ArrowLeft, Clock, MoreVertical, Pause, Play, RotateCcw } from 'lucide-react';
 import { AnchoredMenu, Button } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -6,7 +6,7 @@ import { typography } from '../../lib/typography';
 import { formatWorkoutTime } from './utils';
 import { workoutIconBtn } from './styles';
 
-export function WorkoutHeader({
+export const WorkoutHeader = memo(function WorkoutHeader({
   routineName,
   timer,
   isPaused,
@@ -39,7 +39,7 @@ export function WorkoutHeader({
   const resetMenuAnchorRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="glass-panel light-catch shadow-apple-glass rounded-[var(--radius-card)] px-3 py-2.5 sm:px-3.5">
+    <header className="glass-panel light-catch shadow-apple-glass border-border/80 sticky top-0 z-30 rounded-[var(--radius-card)] border px-3 py-2.5 backdrop-blur-xl sm:px-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <button
@@ -160,6 +160,6 @@ export function WorkoutHeader({
           />
         </div>
       </div>
-    </div>
+    </header>
   );
-}
+});

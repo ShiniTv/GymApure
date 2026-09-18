@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { formatWorkoutTime } from './utils';
@@ -32,7 +33,7 @@ export function RestTimerOverlay({
   const pct = restDuration > 0 ? (restTimer / restDuration) * 100 : 0;
   const offset = circumference - (pct / 100) * circumference;
 
-  return (
+  return createPortal(
     <aside
       aria-label="Temporizador de descanso activo"
       className="glass-panel light-catch animate-in slide-in-from-bottom-4 shadow-apple-glass fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 z-50 rounded-[var(--radius-modal)] p-3 transition-all duration-200 [transition-timing-function:var(--ease-spring)] md:right-8 md:bottom-6 md:left-auto md:w-84"
@@ -200,6 +201,7 @@ export function RestTimerOverlay({
           </div>
         </div>
       )}
-    </aside>
+    </aside>,
+    document.body
   );
 }
