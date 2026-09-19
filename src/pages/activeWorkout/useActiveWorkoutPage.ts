@@ -18,6 +18,7 @@ import { useToastOptional } from '../../context/ToastContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { buildRoutineExercisePayload } from '../../lib/routineExercisePayload';
 import { buildPrescriptionLogSeeds, mergeWorkoutLogSeeds } from '../../lib/setPrescription';
+import { estimateOneRmEpley } from '../../lib/exerciseRecords';
 import {
   clearWorkoutLogQueueForSession,
   enqueueWorkoutLog,
@@ -79,6 +80,13 @@ export function useActiveWorkoutPage() {
   const pausePulseTimeoutRef = useRef<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [prCelebration, setPrCelebration] = useState<{
+    exerciseName: string;
+    previous1Rm: number;
+    new1Rm: number;
+    weight: number;
+    reps: number;
+  } | null>(null);
   const { isMobileShell: isMobileFocus } = useBreakpoint();
   const isStartingRef = useRef(false);
   const routineId = id ? Number(id) : null;
@@ -124,6 +132,94 @@ export function useActiveWorkoutPage() {
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const { data: availableExercises = [], isPending: exercisesCatalogLoading } =
     useExercisesCatalogQuery(user?.role !== 'member');
+
+  const completedCount = routine
+    ? routine.exercises.filter((e) => completedExercises[e.id]).length
+    : 0;
+  const progressPct =
+    routine && routine.exercises.length
+      ? Math.round((completedCount / routine.exercises.length) * 100)
+      : 0;
+  const completedSets = Object.values(logs).filter((entry) => entry.completed).length;
+  const totalVolumeKg = Object.values(logs).reduce((sum, entry) => {
+    if (!entry.completed) return sum;
+    const weight = Number.parseFloat(entry.weight ?? '0');
+    const reps = Number.parseInt(entry.reps ?? '0', 10);
+    if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) return sum;
+    return sum + weight * reps;
+  }, 0);
+  const isMember = user?.role === 'member';
+
+  const startSession = async (startRoutineId: number) => {
+    if (!user || !routine || isStartingRef.current || routineBlockedToday) return;
+    isStartingRef.current = true;
+    try {
+      const data = await startWorkoutMutation.mutateAsync({
+        userId: user.id,
+        routineId: startRoutineId,
+      });
+      setSessionId(data.id);
+      setLastSessionLogs(lastSessionLogMap(data.last_session_logs ?? []));
+
+      const savedCompletedStr = localStorage.getItem(
+        `active_workout_completed_exercises_${data.id}`
+      );
+      if (savedCompletedStr) {
+        try {
+          setCompletedExercises(JSON.parse(savedCompletedStr));
+        } catch (e) {
+          clientLogger.error('Failed to parse saved completed exercises', e);
+        }
+      }
+
+      if (data.start_time) {
+        const startTimeStr = data.start_time.endsWith('Z')
+          ? data.start_time
+          : `${data.start_time}Z`;
+        const startTime = new Date(startTimeStr).getTime();
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        setTimer(elapsed > 0 ? elapsed : 0);
+      }
+
+      const seeded = buildPrescriptionLogSeeds(routine.exercises);
+      const apiLogs = Array.isArray(data.logs) ? data.logs : [];
+      const merged = mergeWorkoutLogSeeds(seeded, apiLogs);
+      setLogs(merged);
+
+      if (apiLogs.length > 0) {
+        const maxSetsPerExercise: Record<number, number> = {};
+        apiLogs.forEach((log) => {
+          if (
+            !maxSetsPerExercise[log.exercise_id] ||
+            log.set_number > maxSetsPerExercise[log.exercise_id]
+          ) {
+            maxSetsPerExercise[log.exercise_id] = log.set_number;
+          }
+        });
+        setRoutine((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            exercises: prev.exercises.map((e) => {
+              const maxSet = maxSetsPerExercise[e.id] || 0;
+              return maxSet > e.sets ? { ...e, sets: maxSet } : e;
+            }),
+          };
+        });
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setRoutineBlockedToday(true);
+        setSessionError('Ya completaste esta rutina hoy. Vuelve mañana.');
+        return;
+      }
+      clientLogger.error('Failed to start workout session', err);
+      setSessionError('No se pudo iniciar la sesión. Recarga la página para reintentar.');
+    } finally {
+      isStartingRef.current = false;
+    }
+  };
 
   useEffect(() => {
     if (routineFromQuery) {
@@ -361,77 +457,6 @@ export function useActiveWorkoutPage() {
     setCompletedExercises((prev) => ({ ...prev, [exerciseId]: false }));
   };
 
-  const startSession = async (startRoutineId: number) => {
-    if (!user || !routine || isStartingRef.current || routineBlockedToday) return;
-    isStartingRef.current = true;
-    try {
-      const data = await startWorkoutMutation.mutateAsync({
-        userId: user.id,
-        routineId: startRoutineId,
-      });
-      setSessionId(data.id);
-      setLastSessionLogs(lastSessionLogMap(data.last_session_logs ?? []));
-
-      const savedCompletedStr = localStorage.getItem(
-        `active_workout_completed_exercises_${data.id}`
-      );
-      if (savedCompletedStr) {
-        try {
-          setCompletedExercises(JSON.parse(savedCompletedStr));
-        } catch (e) {
-          clientLogger.error('Failed to parse saved completed exercises', e);
-        }
-      }
-
-      if (data.start_time) {
-        const startTimeStr = data.start_time.endsWith('Z')
-          ? data.start_time
-          : `${data.start_time}Z`;
-        const startTime = new Date(startTimeStr).getTime();
-        const now = Date.now();
-        const elapsed = Math.floor((now - startTime) / 1000);
-        setTimer(elapsed > 0 ? elapsed : 0);
-      }
-
-      const seeded = buildPrescriptionLogSeeds(routine.exercises);
-      const apiLogs = Array.isArray(data.logs) ? data.logs : [];
-      const merged = mergeWorkoutLogSeeds(seeded, apiLogs);
-      setLogs(merged);
-
-      if (apiLogs.length > 0) {
-        const maxSetsPerExercise: Record<number, number> = {};
-        apiLogs.forEach((log) => {
-          if (
-            !maxSetsPerExercise[log.exercise_id] ||
-            log.set_number > maxSetsPerExercise[log.exercise_id]
-          ) {
-            maxSetsPerExercise[log.exercise_id] = log.set_number;
-          }
-        });
-        setRoutine((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            exercises: prev.exercises.map((e) => {
-              const maxSet = maxSetsPerExercise[e.id] || 0;
-              return maxSet > e.sets ? { ...e, sets: maxSet } : e;
-            }),
-          };
-        });
-      }
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setRoutineBlockedToday(true);
-        setSessionError('Ya completaste esta rutina hoy. Vuelve mañana.');
-        return;
-      }
-      clientLogger.error('Failed to start workout session', err);
-      setSessionError('No se pudo iniciar la sesión. Recarga la página para reintentar.');
-    } finally {
-      isStartingRef.current = false;
-    }
-  };
-
   const handleLogChange = (
     exerciseId: number,
     setNum: number,
@@ -502,6 +527,20 @@ export function useActiveWorkoutPage() {
 
       if (exercise.rest_seconds > 0) {
         startRestTimer(exercise.rest_seconds);
+      }
+
+      // Check for personal record (PR) improvement vs last session
+      const newEst = estimateOneRmEpley(weight, reps);
+      const priorSet = lastSessionLogs[`${exerciseId}-${setNum}`];
+      const priorEst = priorSet ? estimateOneRmEpley(priorSet.weight, priorSet.reps) : 0;
+      if (newEst > 0 && priorEst > 0 && newEst > priorEst + 0.5) {
+        setPrCelebration({
+          exerciseName: exercise.name,
+          previous1Rm: priorEst,
+          new1Rm: newEst,
+          weight,
+          reps,
+        });
       }
 
       const allSetsDone = Array.from({ length: exercise.sets }).every((_, i) => {
@@ -666,22 +705,6 @@ export function useActiveWorkoutPage() {
     }
   };
 
-  const completedCount = routine
-    ? routine.exercises.filter((e) => completedExercises[e.id]).length
-    : 0;
-  const progressPct =
-    routine && routine.exercises.length
-      ? Math.round((completedCount / routine.exercises.length) * 100)
-      : 0;
-  const completedSets = Object.values(logs).filter((entry) => entry.completed).length;
-  const totalVolumeKg = Object.values(logs).reduce((sum, entry) => {
-    if (!entry.completed) return sum;
-    const weight = Number.parseFloat(entry.weight ?? '0');
-    const reps = Number.parseInt(entry.reps ?? '0', 10);
-    if (!Number.isFinite(weight) || weight < 0 || !Number.isFinite(reps) || reps < 1) return sum;
-    return sum + weight * reps;
-  }, 0);
-
   const openSkipExercise = (exercise: { id: number; name: string }) => {
     setSkipTarget(exercise);
     setSkipReason('equipment_busy');
@@ -716,8 +739,6 @@ export function useActiveWorkoutPage() {
     }
   };
 
-  const isMember = user?.role === 'member';
-
   return {
     navigate,
     user,
@@ -730,6 +751,8 @@ export function useActiveWorkoutPage() {
     setValidationError,
     pendingSyncCount,
     showCelebration,
+    prCelebration,
+    setPrCelebration,
     isMobileFocus,
     timer,
     isPaused,

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { DashboardSection } from '../../components/admin/DashboardSection';
+import { ExpiryForecastChart } from '../../components/admin/ExpiryForecastChart';
 import { StaffPortalBanner } from '../../components/StaffPortalBanner';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
@@ -598,6 +599,8 @@ export default function AdminDashboard() {
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-3">
+          {expiringList.length > 0 && <ExpiryForecastChart expiringList={expiringList} />}
+
           {expiringList.length > 0 ? (
             <Card padding="sm" rounded="xl">
               <button

@@ -9,6 +9,7 @@ import { SkipExerciseModal } from './activeWorkout/SkipExerciseModal';
 import { ExerciseFocusNav } from './activeWorkout/ExerciseFocusNav';
 import { ResetWorkoutModal } from './activeWorkout/WorkoutSessionModals';
 import { WorkoutSummaryModal } from '../components/workout/WorkoutSummaryModal';
+import { WorkoutPRCelebrationModal } from '../components/workout/WorkoutPRCelebrationModal';
 import { ActiveWorkoutExerciseList } from './activeWorkout/ActiveWorkoutExerciseList';
 import { useActiveWorkoutPage } from './activeWorkout/useActiveWorkoutPage';
 
@@ -173,6 +174,17 @@ export default function ActiveWorkout() {
           page.setFinishError(null);
         }}
         onConfirm={(success) => void page.confirmFinish(success)}
+      />
+
+      <WorkoutPRCelebrationModal
+        open={Boolean(page.prCelebration)}
+        onClose={() => page.setPrCelebration(null)}
+        exerciseName={page.prCelebration?.exerciseName ?? ''}
+        previous1Rm={page.prCelebration?.previous1Rm}
+        new1Rm={page.prCelebration?.new1Rm ?? 0}
+        weight={page.prCelebration?.weight ?? 0}
+        reps={page.prCelebration?.reps ?? 0}
+        userName={page.user?.name}
       />
 
       <ResetWorkoutModal
