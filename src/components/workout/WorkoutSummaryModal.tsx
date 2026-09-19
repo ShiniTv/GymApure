@@ -79,11 +79,25 @@ export function WorkoutSummaryModal({
             {/* Apple Activity Rings Mini */}
             <div className="shrink-0 scale-90">
               <FitnessRings
-                workoutsProgress={completionPct}
-                volumeProgress={volumeRingPct}
-                consistencyProgress={timeRingPct}
                 size={84}
-                strokeWidth={7}
+                showLegend={false}
+                rings={[
+                  {
+                    label: 'Ejercicios',
+                    value: completionPct,
+                    goal: 100,
+                    unit: '%',
+                    color: 'var(--color-brand)',
+                  },
+                  {
+                    label: 'Volumen',
+                    value: volumeRingPct,
+                    goal: 100,
+                    unit: '%',
+                    color: '#10b981',
+                  },
+                  { label: 'Tiempo', value: timeRingPct, goal: 100, unit: '%', color: '#f59e0b' },
+                ]}
               />
             </div>
           </div>

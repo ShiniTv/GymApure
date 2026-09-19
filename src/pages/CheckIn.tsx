@@ -232,6 +232,7 @@ export default function CheckIn() {
             expiry_warning?: string;
             duration_label?: string;
             message?: string;
+            is_birthday?: boolean;
           }>(res);
 
           if (res.ok) {
