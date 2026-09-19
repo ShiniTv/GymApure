@@ -294,27 +294,6 @@ export function useActiveWorkoutPage() {
   }, [user, routine, sessionId, loading, isResetting, routineBlockedToday]);
 
   useEffect(() => {
-    if (!sessionId || !routine) {
-      sessionStorage.removeItem('gymapure_active_session_live');
-      window.dispatchEvent(new Event('workout_session_update'));
-      return;
-    }
-    const liveData = {
-      sessionId,
-      routineId: routine.id,
-      routineName: routine.name,
-      timer,
-      isPaused,
-      completedCount,
-      totalExercises: routine.exercises.length,
-      isResting,
-      restTimer,
-    };
-    sessionStorage.setItem('gymapure_active_session_live', JSON.stringify(liveData));
-    window.dispatchEvent(new Event('workout_session_update'));
-  }, [sessionId, routine, timer, isPaused, completedCount, isResting, restTimer]);
-
-  useEffect(() => {
     if (!sessionId) return;
     const timerId = window.setTimeout(() => {
       localStorage.setItem(`active_workout_logs_${sessionId}`, JSON.stringify(logs));
@@ -625,8 +604,6 @@ export function useActiveWorkoutPage() {
       localStorage.removeItem(`active_workout_logs_${sessionId}`);
       localStorage.removeItem(`active_workout_sets_${sessionId}`);
       localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
-      sessionStorage.removeItem('gymapure_active_session_live');
-      window.dispatchEvent(new Event('workout_session_update'));
       if (success) {
         setRoutineBlockedToday(true);
       }
@@ -686,8 +663,6 @@ export function useActiveWorkoutPage() {
         localStorage.removeItem(`active_workout_logs_${sessionId}`);
         localStorage.removeItem(`active_workout_sets_${sessionId}`);
         localStorage.removeItem(`active_workout_completed_exercises_${sessionId}`);
-        sessionStorage.removeItem('gymapure_active_session_live');
-        window.dispatchEvent(new Event('workout_session_update'));
       }
       setShowResetConfirm(false);
       setSessionId(null);
