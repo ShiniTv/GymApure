@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Heart, ShieldAlert, Save, Flame, Zap, Loader2 } from 'lucide-react';
-import { Button, Label } from '../../components/ui';
+import { Heart, ShieldAlert, Save, Flame, Zap } from 'lucide-react';
+import { Button, Label, Skeleton } from '../../components/ui';
 import { useToastOptional } from '../../context/ToastContext';
 import {
   useHealthProfileQuery,
@@ -72,8 +72,10 @@ export function ProfileHealthTab({ userId }: ProfileHealthTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="text-brand h-8 w-8 animate-spin" />
+      <div className="w-full space-y-3" aria-busy="true" aria-label="Cargando ficha de salud">
+        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="h-36 w-full rounded-xl" />
       </div>
     );
   }

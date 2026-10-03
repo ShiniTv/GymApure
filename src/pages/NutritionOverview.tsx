@@ -16,7 +16,7 @@ import {
   BackToDashboardLink,
   SearchInput,
   FilterChips,
-  Spinner,
+  Skeleton,
 } from '../components/ui';
 import {
   OperateEmpty,
@@ -117,8 +117,19 @@ export default function NutritionOverview() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner />
+        <div className="space-y-4" aria-busy="true" aria-label="Cargando resumen de nutrición">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-14 w-full rounded-xl" />
+          </div>
         </div>
       ) : !data || assignedTotal === 0 ? (
         <EmptyState

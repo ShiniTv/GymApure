@@ -17,12 +17,13 @@ import { Virtuoso } from 'react-virtuoso';
 import {
   Badge,
   Card,
-  Spinner,
   BackToDashboardLink,
   EmptyState,
   SearchInput,
   FilterChips,
   IconButton,
+  Skeleton,
+  ListRowSkeleton,
 } from '../components/ui';
 import {
   OperateHeader,
@@ -246,9 +247,7 @@ export default function Attendance() {
             </p>
             <div className="max-h-[min(42vh,22rem)] min-h-0 overflow-y-auto lg:max-h-none">
               {inactiveLoading ? (
-                <div className="flex justify-center py-6">
-                  <Spinner />
-                </div>
+                <ListRowSkeleton rows={3} />
               ) : inactiveMembers.length === 0 ? (
                 <EmptyState
                   compact
@@ -284,9 +283,7 @@ export default function Attendance() {
           </h3>
           <div className="h-36 sm:h-48 lg:h-56">
             {loading ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner />
-              </div>
+              <Skeleton className="h-full w-full rounded-lg" />
             ) : data.length === 0 ? (
               <EmptyState
                 compact
@@ -295,13 +292,7 @@ export default function Attendance() {
                 description="Aún no hay accesos en 7 días."
               />
             ) : (
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center">
-                    <Spinner />
-                  </div>
-                }
-              >
+              <Suspense fallback={<Skeleton className="h-full w-full rounded-lg" />}>
                 <DailyVolumeChart data={data} />
               </Suspense>
             )}
@@ -315,9 +306,7 @@ export default function Attendance() {
           </h3>
           <div className="h-36 sm:h-48 lg:h-56">
             {loading ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner />
-              </div>
+              <Skeleton className="h-full w-full rounded-lg" />
             ) : hourlyData.length === 0 ? (
               <EmptyState
                 compact
@@ -326,13 +315,7 @@ export default function Attendance() {
                 description="Registra accesos para ver el patrón."
               />
             ) : (
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center">
-                    <Spinner />
-                  </div>
-                }
-              >
+              <Suspense fallback={<Skeleton className="h-full w-full rounded-lg" />}>
                 <HourlyVolumeChart data={hourlyData} />
               </Suspense>
             )}

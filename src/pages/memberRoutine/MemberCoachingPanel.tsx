@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Label, Modal, Spinner, Select } from '../../components/ui';
+import { Button, Card, Input, Label, Modal, Spinner, Select, Skeleton } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { hapticSuccess } from '../../lib/haptics';
@@ -271,8 +271,9 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-6">
-        <Spinner />
+      <div className="space-y-4" aria-busy="true" aria-label="Cargando panel de asesoría">
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }

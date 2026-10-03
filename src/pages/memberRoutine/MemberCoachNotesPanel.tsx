@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 import { Pencil, Trash2, StickyNote } from 'lucide-react';
-import { Button, EmptyState, IconButton, Spinner, Textarea } from '../../components/ui';
+import { Button, EmptyState, IconButton, Textarea, Skeleton } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useToastOptional } from '../../context/ToastContext';
 import { toDisplayErrorMessage } from '../../lib/api';
@@ -96,8 +96,9 @@ export function MemberCoachNotesPanel({ memberId }: MemberCoachNotesPanelProps) 
       </div>
 
       {isPending ? (
-        <div className="flex justify-center py-6">
-          <Spinner />
+        <div className="space-y-3" aria-busy="true" aria-label="Cargando notas">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
         </div>
       ) : isError ? (
         <EmptyState

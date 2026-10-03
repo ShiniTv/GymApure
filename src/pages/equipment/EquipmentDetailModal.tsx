@@ -23,7 +23,7 @@ import {
   equipmentDisplayName,
   type EquipmentStatus,
 } from '../../lib/equipment/constants';
-import { AnchoredMenu, Badge, Button, Modal, Spinner } from '../../components/ui';
+import { AnchoredMenu, Badge, Button, Modal, Skeleton } from '../../components/ui';
 import type { EquipmentItem, MaintenanceEvent } from './types';
 
 interface EquipmentDetailModalProps {
@@ -81,8 +81,10 @@ export function EquipmentDetailModal({
       maxWidth="2xl"
     >
       {detailLoading || !detail ? (
-        <div className="flex justify-center py-8">
-          <Spinner />
+        <div className="space-y-4 py-2" aria-busy="true" aria-label="Cargando equipo">
+          <Skeleton className="h-6 w-32 rounded-full" />
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-36 w-full rounded-xl" />
         </div>
       ) : (
         <div className="space-y-4">

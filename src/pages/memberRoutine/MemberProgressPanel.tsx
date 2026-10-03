@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Trophy, History, ChevronRight, CalendarDays, Target } from 'lucide-react';
 import { lazy, Suspense } from 'react';
-import { Badge, Button, Card, EmptyState, Spinner } from '../../components/ui';
+import { Badge, Button, Card, EmptyState, Skeleton } from '../../components/ui';
 import { OperateMetricStrip } from '../../components/operate/OperateChrome';
 import { useMemberProgressQuery } from '../../hooks/queries/useCoachNotesQuery';
 import { useQuery } from '@tanstack/react-query';
@@ -40,8 +40,14 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-6">
-        <Spinner />
+      <div className="space-y-3" aria-busy="true" aria-label="Cargando progreso">
+        <div className="grid grid-cols-3 gap-2">
+          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-xl" />
+        </div>
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
       </div>
     );
   }
@@ -86,13 +92,7 @@ export function MemberProgressPanel({ memberId }: MemberProgressPanelProps) {
       {progress?.weeks?.length ? (
         <Card padding="sm" rounded="xl">
           <h3 className="text-text mb-2 text-sm font-semibold">Volumen · 8 semanas</h3>
-          <Suspense
-            fallback={
-              <div className="flex h-40 items-center justify-center">
-                <Spinner />
-              </div>
-            }
-          >
+          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
             <WorkoutHistoryCharts weeks={progress.weeks} />
           </Suspense>
         </Card>

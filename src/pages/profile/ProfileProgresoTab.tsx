@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
-import { Button, Spinner, Badge } from '../../components/ui';
+import { Button, Badge, Skeleton } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useToastOptional } from '../../context/ToastContext';
@@ -183,8 +183,15 @@ export function ProfileProgresoTab({
 
   if (progressLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Spinner />
+      <div className="w-full space-y-3" aria-busy="true" aria-label="Cargando progreso">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -346,13 +353,7 @@ export function ProfileProgresoTab({
             <span>Registrar medición</span>
           </Button>
         </div>
-        <Suspense
-          fallback={
-            <div className="flex h-48 items-center justify-center">
-              <Spinner />
-            </div>
-          }
-        >
+        <Suspense fallback={<Skeleton className="h-48 w-full rounded-xl sm:h-56" />}>
           <div className="h-48 w-full sm:h-56">
             <ProfileWeightChart data={chartData} />
           </div>

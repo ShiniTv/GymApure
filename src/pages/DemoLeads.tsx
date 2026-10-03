@@ -12,7 +12,7 @@ import {
   Card,
   EmptyState,
   FilterChips,
-  Spinner,
+  ListRowSkeleton,
 } from '../components/ui';
 import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 
@@ -133,9 +133,7 @@ export default function DemoLeads() {
 
       <Card padding="md" rounded="xl">
         {loading ? (
-          <div className="flex justify-center py-8">
-            <Spinner />
-          </div>
+          <ListRowSkeleton rows={4} />
         ) : leads.length === 0 ? (
           <EmptyState
             icon={UsersRound}

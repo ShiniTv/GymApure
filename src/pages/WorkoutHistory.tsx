@@ -7,7 +7,6 @@ import { format, parseISO } from 'date-fns';
 import { dateLocale as es } from '../lib/dateLocale';
 import {
   Card,
-  Spinner,
   PaginationBar,
   Badge,
   EmptyState,
@@ -19,6 +18,7 @@ import {
   Skeleton,
   ListRowSkeleton,
   StatCardSkeleton,
+  TableRowSkeleton,
 } from '../components/ui';
 import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
 import { clientLogger } from '../lib/clientLogger';
@@ -728,9 +728,7 @@ export default function WorkoutHistory() {
             {/* Mobile card list */}
             <div className="divide-border divide-y lg:hidden">
               {loading ? (
-                <div className="flex justify-center p-4">
-                  <Spinner />
-                </div>
+                <ListRowSkeleton rows={4} />
               ) : (
                 filteredHistory.map((session) => (
                   <button
@@ -811,11 +809,13 @@ export default function WorkoutHistory() {
                 </thead>
                 <tbody className="divide-border divide-y">
                   {loading ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-8 text-center">
-                        <Spinner />
-                      </td>
-                    </tr>
+                    <>
+                      <TableRowSkeleton cols={6} />
+                      <TableRowSkeleton cols={6} />
+                      <TableRowSkeleton cols={6} />
+                      <TableRowSkeleton cols={6} />
+                      <TableRowSkeleton cols={6} />
+                    </>
                   ) : (
                     filteredHistory.map((session) => (
                       <tr
@@ -908,8 +908,10 @@ export default function WorkoutHistory() {
         scrollable
       >
         {detailLoading ? (
-          <div className="flex justify-center py-10">
-            <Spinner />
+          <div className="space-y-4 py-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
           </div>
         ) : sessionDetail ? (
           <div className="space-y-4">

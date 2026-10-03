@@ -10,7 +10,7 @@ import {
   Label,
   Modal,
   Select,
-  Spinner,
+  Skeleton,
   BackToDashboardLink,
 } from '../components/ui';
 import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
@@ -107,8 +107,10 @@ export default function MemberPtBilling() {
       ) : null}
 
       {isPending ? (
-        <div className="flex justify-center py-8">
-          <Spinner />
+        <div className="space-y-2" aria-busy="true" aria-label="Cargando facturas de asesoría">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
         </div>
       ) : invoices.length === 0 ? (
         <EmptyState

@@ -20,7 +20,7 @@ import AuthShell from '../components/AuthShell';
 import AuthBrandHeader from '../components/AuthBrandHeader';
 import BrandName from '../components/BrandName';
 import Logo from '../components/Logo';
-import { Button, Card, SegmentedControl, Spinner, CedulaInput } from '../components/ui';
+import { Button, Card, SegmentedControl, Spinner, CedulaInput, Skeleton } from '../components/ui';
 import { parseBadgeScan } from '../lib/badgeQr';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
@@ -378,9 +378,7 @@ export default function CheckIn() {
             {isKioskMode && !isLargeKioskLayout ? (
               <Suspense
                 fallback={
-                  <div className="mx-auto flex h-[200px] max-w-sm items-center justify-center">
-                    <Spinner size="lg" />
-                  </div>
+                  <Skeleton className="kiosk-scanner-region mx-auto h-[200px] max-h-[40dvh] w-full max-w-sm rounded-[var(--radius-card)]" />
                 }
               >
                 <QrScannerPanel
@@ -702,11 +700,7 @@ export default function CheckIn() {
             <section className="bg-surface-raised hidden flex-col items-center justify-center px-12 py-10 lg:flex">
               <div className="w-full max-w-md space-y-6">
                 <Suspense
-                  fallback={
-                    <div className="bg-surface-overlay flex h-72 w-full items-center justify-center rounded-[var(--radius-card)]">
-                      <Spinner size="lg" />
-                    </div>
-                  }
+                  fallback={<Skeleton className="h-72 w-full rounded-[var(--radius-card)]" />}
                 >
                   <QrScannerPanel
                     active={scannerActive}
