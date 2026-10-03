@@ -1,28 +1,17 @@
-# GymApure — Render Blueprint
-# Docs: docs/DEPLOY.md
+# GymApure — Render Blueprint (Plan Gratuito / Costo CERO $0.00)
+# Docs: docs/PLAN_REDUCCION_COSTOS_APK_ROLES.md
 #
-# MFA (due diligence): REQUIRE_MFA_FOR_STAFF=false por ADR-003 (recepción rápida).
-# Enrolar staff en /security; al 100% enrolados → true + redeploy. Ver docs/tecnico/privacy.md.
+# Arquitectura Monolito: Un solo Web Service ejecuta API, WebSockets y Crons
+# en segundo plano (PROCESS_ROLE=all). No requiere worker ni Redis de pago.
 #
-# Blueprint Sync crea caribean-gym-kv e inyecta REDIS_URL.
-# Tras Sync, configura en Dashboard (obligatorio ops):
-#   DATABASE_SSL_CA (PEM inline o ruta), SENTRY_DSN, VITE_SENTRY_DSN, SMTP_*,
-#   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, MFA_ENCRYPTION_KEY
-#
-# Antes del primer deploy:
-#   1. Crear proyecto Supabase de producción (separado de dev)
-#   2. npm run deploy:release -- --run   (staging si existe) + db:migrate:prod
-#   3. npm run db:create-admin
-#   4. Completar secretos sync: false en Render Dashboard
-#
-# Tras cambios en este archivo:
-#   Render Dashboard → Blueprint → Sync (crea/actualiza Key Value y env vars)
+# Para evitar que el plan free se duerma tras 15 min de inactividad,
+# agrega un monitor gratuito en https://uptimerobot.com hacia /api/health/live
 
 services:
   - type: web
     name: caribean-gym
     runtime: node
-    plan: starter
+    plan: free
     nodeVersion: 22
     buildCommand: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --include=dev && npm run build
     startCommand: npm start
@@ -40,13 +29,10 @@ services:
         value: 'false'
       - key: ENABLE_HIBP_CHECK
         value: 'true'
+      - key: PROCESS_ROLE
+        value: all
       - key: MFA_ENCRYPTION_KEY
         sync: false
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: caribean-gym-kv
-          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: DATABASE_URL
@@ -83,65 +69,7 @@ services:
         sync: false
       - key: ADMIN_NOTIFY_EMAILS
         sync: false
-      - key: PROCESS_ROLE
-        value: web
-
-  - type: worker
-    name: caribean-gym-worker
-    runtime: node
-    plan: starter
-    nodeVersion: 22
-    buildCommand: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --include=dev && npm run build
-    startCommand: npm run start:worker
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: NODE_VERSION
-        value: '22.22.0'
-      - key: PROCESS_ROLE
-        value: worker
-      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
-        value: '1'
+      # Opcional: Si deseas Redis gratis en el futuro, Upstash.com ofrece 10k req/día $0
       - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: caribean-gym-kv
-          property: connectionString
-      - key: JWT_SECRET
-        sync: false
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-      - key: DATABASE_SSL_CA
-        sync: false
-      - key: MFA_ENCRYPTION_KEY
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        sync: false
-      - key: SMTP_SECURE
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: SMTP_FROM
-        sync: false
-      - key: VAPID_SUBJECT
-        sync: false
-      - key: VAPID_PUBLIC_KEY
-        sync: false
-      - key: VAPID_PRIVATE_KEY
         sync: false
 
-  - type: keyvalue
-    name: caribean-gym-kv
-    plan: starter
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []

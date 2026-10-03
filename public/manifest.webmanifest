@@ -1,6 +1,7 @@
 {
   "name": "GymApure",
   "short_name": "GymApure",
+  "id": "/",
   "description": "Gestión de membresías, rutinas, pagos y control de acceso para tu gimnasio.",
   "start_url": "/",
   "scope": "/",
@@ -8,9 +9,11 @@
   "lang": "es",
   "dir": "ltr",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "theme_color": "#0c98ff",
   "background_color": "#0c0c0c",
+  "iarc_rating_id": "",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -37,6 +40,36 @@
       "purpose": "any"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Mi Entrenamiento",
+      "short_name": "Entreno",
+      "description": "Ver tu rutina de hoy y entrenar",
+      "url": "/panel",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rutinas",
+      "short_name": "Rutinas",
+      "description": "Explorar y gestionar rutinas",
+      "url": "/routines",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mensajes",
+      "short_name": "Chat",
+      "description": "Chat con tu entrenador o alumnos",
+      "url": "/messages",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mi Perfil",
+      "short_name": "Perfil",
+      "description": "Ver y editar tu perfil",
+      "url": "/profile",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "screenshots": [
     {
       "src": "/screenshot-narrow.png",
@@ -53,7 +86,21 @@
       "label": "GymApure en escritorio"
     }
   ],
+  "share_target": {
+    "action": "/panel",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "related_applications": [],
   "prefer_related_applications": false,
-  "edge_side_panel": {}
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
