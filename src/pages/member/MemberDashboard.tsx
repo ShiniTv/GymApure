@@ -11,6 +11,7 @@ import {
   Clock,
   CreditCard,
   Dumbbell,
+  MessageSquare,
   UtensilsCrossed,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -43,6 +44,7 @@ const MOBILE_LIST_ROW =
 
 const MEMBER_LINKS = [
   { to: '/routines', icon: Dumbbell, label: 'Rutinas', detail: 'Asignaciones activas' },
+  { to: '/messages', icon: MessageSquare, label: 'Chat', detail: 'Habla con tu entrenador' },
   { to: '/nutrition', icon: UtensilsCrossed, label: 'Nutrición', detail: 'Macros y comidas' },
   { to: '/history', icon: Clock, label: 'Historial', detail: 'Sesiones anteriores' },
   { to: '/payments', icon: CreditCard, label: 'Pagos', detail: 'Reportar o renovar' },
@@ -412,13 +414,21 @@ export default function MemberDashboard() {
           </div>
         </section>
       ) : (
-        <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+        <div className="stagger-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
           <QuickAction
             compact
             to="/routines"
             icon={Dumbbell}
             title="Rutinas"
             description="Asignaciones activas"
+            tone="blue"
+          />
+          <QuickAction
+            compact
+            to="/messages"
+            icon={MessageSquare}
+            title="Mensajes"
+            description="Chat con tu entrenador"
             tone="blue"
           />
           <QuickAction

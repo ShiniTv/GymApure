@@ -24,6 +24,7 @@ import {
   listPendingMemberChoicesForTrainer,
   setTodayRoutineChoice,
 } from '../lib/memberAgency.ts';
+import { getErrorMessage } from '../lib/errors.ts';
 
 const router = asyncRouter();
 
@@ -758,8 +759,7 @@ router.get('/member', authorize(['member']), async (req: AuthRequest, res) => {
       showPtBilling: Boolean(ptContext.rows[0]?.has_trainer || ptContext.rows[0]?.has_pt_invoice),
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
@@ -784,8 +784,7 @@ router.get('/reception', authorize(RECEPTION_STAFF), async (_req, res) => {
       pendingPayments: parseInt(pendingPayments.rows[0]?.count || '0', 10),
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error interno';
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: getErrorMessage(err) });
   }
 });
 
