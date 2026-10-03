@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router';
-import { IdCard, MessageCircle, ScanLine, Printer, QrCode, User, Shield } from 'lucide-react';
+import QRCode from 'react-qr-code';
+import { IdCard, MessageCircle, ScanLine, Printer, User, Shield } from 'lucide-react';
 import { Button, Badge } from '../../components/ui';
 import type { MemberBadgeData } from '../../components/member/MemberBadgeCard';
+import { buildBadgeQrValue } from '../../lib/badgeQr';
 import { format } from 'date-fns';
 import { dateLocale as es } from '../../lib/dateLocale';
 
@@ -104,8 +106,14 @@ export function ProfileCarneTab({
           </div>
 
           {/* Código QR Central */}
-          <div className="border-border/60 bg-surface-raised my-2 inline-flex items-center justify-center rounded-xl border p-3 shadow-2xs">
-            <QrCode className="text-text h-24 w-24" />
+          <div className="my-2 inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
+            <QRCode
+              value={buildBadgeQrValue(badgeMember.cedula)}
+              size={110}
+              level="M"
+              fgColor="#18181b"
+              bgColor="#ffffff"
+            />
           </div>
           <p className="text-text-muted text-small mt-1 font-medium">
             Escanea este código en el lector de recepción

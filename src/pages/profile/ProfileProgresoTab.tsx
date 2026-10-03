@@ -19,6 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useMemberStatsOptional } from '../../context/MemberStatsContext';
 import { useToastOptional } from '../../context/ToastContext';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
+import { hapticLight, hapticSuccess } from '../../lib/haptics';
 import type { Measurement, UserProfile, WorkoutSession } from '../../hooks/queries/useProfileQuery';
 import { cn } from './ProfileDesignSystem';
 
@@ -140,6 +141,7 @@ export function ProfileProgresoTab({
       const data = await parseJsonResponse<{ weekly_training_goal: number }>(res);
       setWeeklyGoal(data.weekly_training_goal);
       await memberStats?.refresh();
+      hapticSuccess();
       toast?.success('Meta semanal actualizada');
     } catch (err) {
       toast?.error(err instanceof Error ? err.message : 'Error al guardar meta');
@@ -222,7 +224,10 @@ export function ProfileProgresoTab({
             <button
               type="button"
               className="border-border/60 bg-surface text-text hover:bg-surface-raised inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border transition-colors"
-              onClick={() => setWeeklyGoal((g) => Math.max(1, g - 1))}
+              onClick={() => {
+                hapticLight();
+                setWeeklyGoal((g) => Math.max(1, g - 1));
+              }}
               aria-label="Reducir meta"
             >
               <Minus className="h-3.5 w-3.5" />
@@ -233,7 +238,10 @@ export function ProfileProgresoTab({
             <button
               type="button"
               className="border-border/60 bg-surface text-text hover:bg-surface-raised inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border transition-colors"
-              onClick={() => setWeeklyGoal((g) => Math.min(7, g + 1))}
+              onClick={() => {
+                hapticLight();
+                setWeeklyGoal((g) => Math.min(7, g + 1));
+              }}
               aria-label="Aumentar meta"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -242,7 +250,10 @@ export function ProfileProgresoTab({
               size="sm"
               variant="secondary"
               disabled={savingGoal || weeklyGoal === (memberStats?.stats?.weeklyTrainingGoal ?? 5)}
-              onClick={() => void saveWeeklyGoal()}
+              onClick={() => {
+                hapticLight();
+                void saveWeeklyGoal();
+              }}
               className="ml-1"
             >
               {savingGoal ? 'Guardando…' : 'Guardar'}
