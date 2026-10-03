@@ -56,6 +56,8 @@ export function ProfileAthleteHero({
                   <img
                     src={avatarUrl}
                     alt={profile.full_name}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : (

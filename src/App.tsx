@@ -8,7 +8,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProgressBar } from './components/ProgressBar';
 import { onRouteChangeForServiceWorker } from './lib/serviceWorkerRegistration';
 import { loadAppFonts } from './lib/fonts';
-import Login from './pages/Login';
 
 const PUBLIC_AUTH_PATHS = new Set([
   '/',
@@ -29,6 +28,7 @@ function reportBoundaryError(error: Error) {
 }
 
 const AuthenticatedShell = lazy(() => import('./components/AuthenticatedShell'));
+const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Members = lazy(() => import('./pages/Members'));
@@ -182,8 +182,22 @@ function AppRoutes() {
       <ProgressBar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<AuthLoader />}>
+                <Login />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <Suspense fallback={<AuthLoader />}>
+                <Login />
+              </Suspense>
+            }
+          />
           <Route
             path="/forgot-password"
             element={

@@ -90,6 +90,8 @@ export function ProfileCarneTab({
               <img
                 src={badgeMember.profile_image}
                 alt={badgeMember.full_name}
+                loading="lazy"
+                decoding="async"
                 className="border-border/80 h-12 w-12 rounded-full border object-cover"
               />
             ) : (

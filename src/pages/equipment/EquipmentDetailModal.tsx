@@ -177,6 +177,8 @@ export function EquipmentDetailModal({
             <img
               src={resolveEquipmentPhotoUrl(detail.photo_url)}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="max-h-48 w-full rounded-xl object-cover"
             />
           )}

@@ -251,6 +251,8 @@ export function EquipmentAddModal({
                 <img
                   src={addPhotoPreview}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="h-24 w-24 shrink-0 rounded-xl object-cover"
                 />
               ) : (

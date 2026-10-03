@@ -85,6 +85,8 @@ export function ChatComposer({
             <img
               src={previewUrl}
               alt="Vista previa"
+              loading="lazy"
+              decoding="async"
               className="h-10 w-10 rounded-lg object-cover"
             />
           ) : (

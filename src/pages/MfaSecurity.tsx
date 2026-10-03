@@ -228,6 +228,7 @@ export default function MfaSecurity() {
                 <img
                   src={setup.qr_data_url}
                   alt="Código QR MFA"
+                  decoding="async"
                   className="border-border bg-surface mx-auto mt-3 h-44 w-44 rounded-xl border p-2 sm:h-48 sm:w-48"
                 />
                 <div className="border-border bg-surface-raised mt-3 flex items-center gap-2 rounded-xl border px-3 py-2">

@@ -266,6 +266,7 @@ export const ChatBubble = memo(function ChatBubble({
                     alt={attachment?.name || 'Imagen adjunta'}
                     className="max-h-56 max-w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                 </a>
               )

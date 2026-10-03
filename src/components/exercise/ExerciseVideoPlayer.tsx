@@ -65,6 +65,8 @@ function HostedExerciseVideo({
             <img
               src={poster}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-cover opacity-50"
               onError={() => setPosterFailed(true)}
             />

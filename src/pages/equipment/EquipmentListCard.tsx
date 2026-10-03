@@ -35,6 +35,8 @@ export function EquipmentListCard({
         <img
           src={resolveEquipmentPhotoUrl(item.photo_url)}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="h-10 w-10 shrink-0 rounded-[var(--radius-button)] object-cover"
         />
       ) : (
