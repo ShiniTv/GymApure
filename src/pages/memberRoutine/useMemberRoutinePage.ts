@@ -5,6 +5,7 @@ import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { useAuth } from '../../context/AuthContext';
 import { useToastOptional } from '../../context/ToastContext';
+import { hapticLight, hapticSuccess } from '../../lib/haptics';
 import { useHealthProfileQuery } from '../../hooks/queries/useHealthProfileQuery';
 import { useExercisesCatalogQuery } from '../../hooks/queries/useExercisesQuery';
 import { useRoutinesLibraryQuery } from '../../hooks/queries/useRoutinesQuery';
@@ -224,8 +225,11 @@ export function useMemberRoutinePage(id: string | undefined) {
         arm: '',
         leg: '',
       });
+      hapticSuccess();
+      toast?.success('Medición registrada');
     } catch (err) {
       clientLogger.error('Failed to add member measurement', err);
+      toast?.error(err instanceof Error ? err.message : 'Error al registrar medición');
     }
   };
 
@@ -267,6 +271,8 @@ export function useMemberRoutinePage(id: string | undefined) {
         prev ? { ...prev, weekly_training_goal: data.weekly_training_goal } : prev
       );
       setWeeklyGoalSaved(true);
+      hapticSuccess();
+      toast?.success('Meta semanal actualizada');
       if (weeklyGoalSavedTimerRef.current) clearTimeout(weeklyGoalSavedTimerRef.current);
       weeklyGoalSavedTimerRef.current = setTimeout(() => {
         setWeeklyGoalSaved(false);
@@ -317,8 +323,10 @@ export function useMemberRoutinePage(id: string | undefined) {
           return r;
         })
       );
+      hapticLight();
     } catch (err) {
       clientLogger.error('Failed to inline update routine exercise', err);
+      toast?.error(err instanceof Error ? err.message : 'Error al actualizar ejercicio');
     }
   };
 
@@ -368,6 +376,7 @@ export function useMemberRoutinePage(id: string | undefined) {
       setIsAssigning(false);
       setAssignForm((prev) => ({ ...prev, routine_id: '' }));
       await refreshUserRoutines();
+      hapticSuccess();
       toast?.success(data.updated ? 'Fechas actualizadas' : 'Rutina asignada');
     } catch (err) {
       clientLogger.error('Failed to assign routine to member', err);
@@ -406,6 +415,7 @@ export function useMemberRoutinePage(id: string | undefined) {
       setIsCreating(false);
       setRoutineForm({ name: '', difficulty: 'Beginner' });
       await refreshUserRoutines();
+      hapticSuccess();
       toast?.success('Rutina creada y asignada');
     } catch (err) {
       clientLogger.error('Failed to create routine for member', err);
@@ -431,8 +441,11 @@ export function useMemberRoutinePage(id: string | undefined) {
       setEditingRoutineId(null);
       setRoutineForm({ name: '', difficulty: 'Beginner' });
       await refreshUserRoutines();
+      hapticSuccess();
+      toast?.success('Rutina actualizada');
     } catch (err) {
       clientLogger.error('Failed to update member routine', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo actualizar la rutina');
     }
   };
 
@@ -460,8 +473,11 @@ export function useMemberRoutinePage(id: string | undefined) {
       await parseJsonResponse(res);
       setUnassignTarget(null);
       await refreshUserRoutines();
+      hapticLight();
+      toast?.success('Rutina desasignada');
     } catch (err) {
       clientLogger.error('Failed to unassign routine from member', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo desasignar la rutina');
     }
   };
 
@@ -569,8 +585,11 @@ export function useMemberRoutinePage(id: string | undefined) {
       await parseJsonResponse(res);
       setDeleteExerciseTarget(null);
       await refreshRoutineExercises(routineId);
+      hapticLight();
+      toast?.success('Ejercicio eliminado de la rutina');
     } catch (err) {
       clientLogger.error('Failed to delete routine exercise', err);
+      toast?.error(err instanceof Error ? err.message : 'No se pudo eliminar el ejercicio');
     }
   };
 
@@ -623,9 +642,12 @@ export function useMemberRoutinePage(id: string | undefined) {
       setIsAddingExercise(false);
       setNewExercise(defaultRoutineExerciseForm());
       await refreshRoutineExercises(expandedRoutineId);
+      hapticSuccess();
+      toast?.success('Ejercicio añadido a la rutina');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo añadir el ejercicio';
       setAddExerciseError(message);
+      toast?.error(message);
       clientLogger.error('Failed to add exercise to routine', err);
     }
   };

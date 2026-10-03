@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, Input, Label, Modal, Spinner, Select } from '../../components/ui';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
+import { hapticSuccess } from '../../lib/haptics';
 import { useToastOptional } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -167,6 +168,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         }),
       });
       await parseJsonResponse<Assessment>(result);
+      hapticSuccess();
       toast?.success('Evaluación guardada');
     } catch (error) {
       clientLogger.error('Failed to save training assessment', error);
@@ -189,6 +191,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
         saved,
         ...previous.filter((item) => item.week_of !== saved.week_of),
       ]);
+      hapticSuccess();
       toast?.success('Seguimiento semanal guardado');
     } catch (error) {
       clientLogger.error('Failed to save weekly checkin', error);
@@ -206,6 +209,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
       });
       await parseJsonResponse(response);
       await loadSuggestions();
+      hapticSuccess();
       toast?.success('Sugerencias actualizadas');
     } catch (error) {
       clientLogger.error('Failed to generate coaching suggestions', error);
@@ -248,6 +252,7 @@ export function MemberCoachingPanel({ memberId }: { memberId: number }) {
       }
       await parseJsonResponse(response);
       await loadSuggestions();
+      hapticSuccess();
       toast?.success(action === 'approve' ? 'Sugerencia aplicada' : 'Sugerencia descartada');
     } catch (error) {
       clientLogger.error('Failed to review coaching suggestion', error);
