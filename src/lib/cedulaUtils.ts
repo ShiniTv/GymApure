@@ -8,8 +8,8 @@ export function canonicalCedula(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
   const digits = cedulaDigits(trimmed);
-  if (digits.length < 5) return trimmed.toUpperCase();
-  const prefixMatch = /^([VEve])-/i.exec(trimmed);
+  if (digits.length < 5) return null;
+  const prefixMatch = /^([VEJvej])[- ]?/i.exec(trimmed);
   const letter = prefixMatch ? prefixMatch[1].toUpperCase() : 'V';
   return `${letter}-${digits}`;
 }

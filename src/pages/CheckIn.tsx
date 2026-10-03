@@ -25,7 +25,7 @@ import { parseBadgeScan } from '../lib/badgeQr';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { cn } from '../lib/utils';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { hapticSuccess, hapticLight } from '../lib/haptics';
+import { hapticSuccess, hapticError, hapticLight } from '../lib/haptics';
 import { playSuccessSound, playErrorSound } from '../lib/soundEffects';
 
 const QrScannerPanel = lazy(() =>
@@ -201,6 +201,7 @@ export default function CheckIn() {
         setStatus('error');
         setMessage('Código QR o cédula no reconocido');
         setExpiryWarning('');
+        hapticError();
         playErrorSound();
         processingRef.current = false;
         resetToIdle(4000);
@@ -267,7 +268,7 @@ export default function CheckIn() {
             setStatus('error');
             setMessage(data.error || (isCheckIn ? 'Ingreso fallido' : 'Salida fallida'));
             setExpiryWarning('');
-            hapticLight();
+            hapticError();
             playErrorSound();
             if (data.user_name) setUserName(data.user_name);
             processingRef.current = false;
