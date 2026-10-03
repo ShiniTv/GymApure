@@ -36,6 +36,7 @@ import {
 } from '../hooks/queries/useNutritionQuery';
 import { apiFetch, parseJsonResponse } from '../lib/api';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { hapticLight, hapticSuccess } from '../lib/haptics';
 
 const emptyMealForm = {
   meal_type: 'lunch' as MealType,
@@ -82,6 +83,7 @@ export default function Nutrition() {
   usePageTitle('Nutrición');
 
   const openAddMeal = () => {
+    hapticLight();
     setEditingLog(null);
     setMealForm(emptyMealForm);
     setAnalysisHints([]);
@@ -97,6 +99,7 @@ export default function Nutrition() {
     carbs_g: string;
     fat_g: string;
   }) => {
+    hapticLight();
     setEditingLog(null);
     setMealForm({ ...emptyMealForm, ...preset });
     setAnalysisHints([]);
@@ -187,6 +190,7 @@ export default function Nutrition() {
         });
         await parseJsonResponse(res);
       }
+      hapticSuccess();
       invalidate(user.id);
       setShowMealModal(false);
     } catch (err) {
@@ -207,6 +211,7 @@ export default function Nutrition() {
     setError('');
     try {
       await apiFetch(`/api/nutrition/logs/${deleteTarget.id}`, { method: 'DELETE' });
+      hapticLight();
       invalidate(user.id);
       setDeleteTarget(null);
     } catch (err) {

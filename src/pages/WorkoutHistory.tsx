@@ -737,7 +737,7 @@ export default function WorkoutHistory() {
                     key={session.id}
                     type="button"
                     onClick={() => void openSessionDetail(session.id)}
-                    className="content-visibility-auto bg-surface hover:bg-surface-raised relative w-full px-3 py-2.5 pl-8 text-left transition-colors"
+                    className="tap-feedback content-visibility-auto bg-surface hover:bg-surface-raised relative w-full px-3 py-2.5 pl-8 text-left transition-colors"
                   >
                     <span
                       className="bg-brand ring-brand/15 absolute top-4 left-3 h-2.5 w-2.5 rounded-full ring-4"

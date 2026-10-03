@@ -326,7 +326,7 @@ export default function ExerciseRecords() {
                   key={row.exercise_id}
                   type="button"
                   onClick={() => void openDetail(row.exercise_id)}
-                  className="hover:bg-surface-raised flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors"
+                  className="tap-feedback hover:bg-surface-raised flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
