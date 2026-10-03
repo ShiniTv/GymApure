@@ -8,6 +8,7 @@ export { Sheet } from './Sheet';
 export { Collapse } from './Collapse';
 export { Alert } from './Alert';
 export { Input, Label } from './Input';
+export { NumericInput } from './NumericInput';
 export { CedulaInput } from './CedulaInput';
 export { SearchInput } from './SearchInput';
 export { PageState } from './PageState';

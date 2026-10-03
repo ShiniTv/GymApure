@@ -103,12 +103,11 @@ export default function Routines() {
   });
   const [cloningRoutineId, setCloningRoutineId] = useState<number | null>(null);
   const [isAssigningFromCalendar, setIsAssigningFromCalendar] = useState(false);
-  const [assignSingleDay, setAssignSingleDay] = useState(false);
   const [assignForm, setAssignForm] = useState({
     user_id: '',
     routine_id: '',
     start_date: format(new Date(), 'yyyy-MM-dd'),
-    end_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    end_date: format(new Date(), 'yyyy-MM-dd'),
   });
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
@@ -319,14 +318,12 @@ export default function Routines() {
   };
 
   const openAssignModal = useCallback(() => {
-    const start = format(new Date(), 'yyyy-MM-dd');
-    const end = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+    const today = format(new Date(), 'yyyy-MM-dd');
     setAssignForm((prev) => ({
       ...prev,
-      start_date: start,
-      end_date: end,
+      start_date: today,
+      end_date: today,
     }));
-    setAssignSingleDay(false);
     setIsAssigningFromCalendar(true);
   }, []);
 
@@ -841,11 +838,7 @@ export default function Routines() {
 
           <RoutineModals
             isAssigningFromCalendar={isAssigningFromCalendar}
-            setIsAssigningFromCalendar={(open) => {
-              setIsAssigningFromCalendar(open);
-              if (!open) setAssignSingleDay(false);
-            }}
-            assignSingleDay={assignSingleDay}
+            setIsAssigningFromCalendar={setIsAssigningFromCalendar}
             assignForm={assignForm}
             setAssignForm={setAssignForm}
             members={members}
@@ -1049,7 +1042,6 @@ export default function Routines() {
                     start_date: dateStr,
                     end_date: dateStr,
                   }));
-                  setAssignSingleDay(true);
                   setIsAssigningFromCalendar(true);
                 }}
                 onAssignOnDay={(dateStr) => {
@@ -1058,7 +1050,6 @@ export default function Routines() {
                     start_date: dateStr,
                     end_date: dateStr,
                   }));
-                  setAssignSingleDay(true);
                   setIsAssigningFromCalendar(true);
                 }}
                 onDropAssign={(dateStr, payload) => {
@@ -1070,7 +1061,6 @@ export default function Routines() {
                       ? { routine_id: String(payload.id) }
                       : { user_id: String(payload.id) }),
                   }));
-                  setAssignSingleDay(true);
                   setIsAssigningFromCalendar(true);
                 }}
                 onNavigateToMemberRoutines={(memberId) => navigate(`/members/${memberId}/routines`)}

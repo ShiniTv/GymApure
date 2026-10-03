@@ -5,6 +5,7 @@ import {
   ModalActions,
   Label,
   Input,
+  NumericInput,
   DifficultySelect,
   Select,
 } from '../../components/ui';
@@ -12,7 +13,6 @@ import { Trash2 } from 'lucide-react';
 import { AssignRoutineForm } from '../../components/routines/AssignRoutineForm';
 import { ExercisePicker } from '../../components/exercise/ExercisePicker';
 import { RoutineExercisePrescriptionFields } from '../../components/exercise/RoutineExercisePrescriptionFields';
-import { parseNonNegativeInt } from '../../lib/parseFormNumber';
 import type { RoutineExerciseForm } from '../../lib/routineExercisePayload';
 import type { Routine, RoutineExercise, Member, ExerciseOption } from './types';
 import type { TrainingShift } from '../../lib/trainingShift';
@@ -318,13 +318,15 @@ export function RoutineModals({
               <div className="grid grid-cols-2 gap-3">
                 <div className="max-w-[8rem]">
                   <Label>Descanso (seg)</Label>
-                  <Input
-                    type="number"
+                  <NumericInput
+                    min={0}
+                    fallback={0}
                     value={newExercise.rest_seconds}
-                    onChange={(e) => {
+                    onChange={(v) => {
+                      if (v === '') return;
                       setNewExercise({
                         ...newExercise,
-                        rest_seconds: parseNonNegativeInt(e.target.value, newExercise.rest_seconds),
+                        rest_seconds: v,
                       });
                     }}
                   />
@@ -376,18 +378,13 @@ export function RoutineModals({
             <div className="grid grid-cols-2 gap-3">
               <div className="max-w-[8rem]">
                 <Label>Descanso (seg)</Label>
-                <Input
-                  type="number"
+                <NumericInput
+                  min={0}
+                  fallback={0}
                   value={editingExercise.rest_seconds}
-                  onChange={(e) => {
-                    setEditingExercise((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            rest_seconds: parseNonNegativeInt(e.target.value, prev.rest_seconds),
-                          }
-                        : prev
-                    );
+                  onChange={(v) => {
+                    if (v === '') return;
+                    setEditingExercise((prev) => (prev ? { ...prev, rest_seconds: v } : prev));
                   }}
                 />
               </div>

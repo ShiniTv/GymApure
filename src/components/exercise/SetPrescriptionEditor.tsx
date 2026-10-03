@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { Label, Input } from '../ui';
+import { Label, Input, NumericInput } from '../ui';
 import type { EffortMode, LoadMode, SetPrescriptionRow } from '../../lib/setPrescription';
 import { resizeSetPrescription } from '../../lib/setPrescription';
-import { parsePositiveInt } from '../../lib/parseFormNumber';
 
 interface SetPrescriptionEditorProps {
   sets: number;
@@ -73,15 +72,14 @@ export function SetPrescriptionEditor({
                 }}
               />
             ) : null}
-            <Input
-              type="number"
+            <NumericInput
               min={1}
+              fallback={1}
               className="h-8 text-xs"
               value={row.reps}
-              onChange={(e) => {
-                updateRow(row.set_number, {
-                  reps: parsePositiveInt(e.target.value, row.reps),
-                });
+              onChange={(v) => {
+                if (v === '') return;
+                updateRow(row.set_number, { reps: v });
               }}
             />
           </div>

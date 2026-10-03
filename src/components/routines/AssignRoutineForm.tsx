@@ -5,7 +5,6 @@ import { parseDateOnly } from '../../lib/dates';
 import { SHIFT_LABELS, type TrainingShift } from '../../lib/trainingShift';
 import { Button, Label, Input, Select, Spinner } from '../ui';
 import { toDisplayErrorMessage } from '../../lib/api';
-import { cn } from '../../lib/utils';
 import { RoutinePicker } from './RoutinePicker';
 
 export interface AssignRoutineFormValue {
@@ -34,6 +33,7 @@ interface AssignRoutineFormProps {
   onChange: (value: AssignRoutineFormValue) => void;
   onSubmit: () => void;
   routines: AssignRoutineOption[];
+  /** @deprecated singleDay is now always true. Kept for API compat but ignored. */
   singleDay?: boolean;
   members?: AssignRoutineMemberOption[];
   memberIdFixed?: string;
@@ -48,22 +48,12 @@ interface AssignRoutineFormProps {
   onCreateMember?: () => void;
 }
 
-const WEEKDAYS: [string, string][] = [
-  ['L', 'Lunes'],
-  ['M', 'Martes'],
-  ['X', 'Miércoles'],
-  ['J', 'Jueves'],
-  ['V', 'Viernes'],
-  ['S', 'Sábado'],
-  ['D', 'Domingo'],
-];
-
 export function AssignRoutineForm({
   value,
   onChange,
   onSubmit,
   routines,
-  singleDay = false,
+  singleDay: _singleDay = true,
   members = [],
   memberIdFixed,
   assignedRoutineIds,
@@ -154,12 +144,12 @@ export function AssignRoutineForm({
         </p>
       ) : null}
 
-      <div className={singleDay ? 'space-y-2' : 'grid grid-cols-2 gap-3'}>
-        {singleDay && singleDayLabel && (
+      <div className="space-y-2">
+        {singleDayLabel ? (
           <p className="text-text-secondary text-xs font-medium capitalize">{singleDayLabel}</p>
-        )}
+        ) : null}
         <div>
-          <Label>{singleDay ? 'Fecha' : 'Inicio'}</Label>
+          <Label>Fecha</Label>
           <Input
             type="date"
             value={value.start_date}
@@ -168,69 +158,13 @@ export function AssignRoutineForm({
               onChange({
                 ...value,
                 start_date: nextStart,
-                ...(singleDay ? { end_date: nextStart } : {}),
+                end_date: nextStart,
               });
             }}
           />
         </div>
-        {!singleDay && (
-          <div>
-            <Label>Fin</Label>
-            <Input
-              type="date"
-              value={value.end_date}
-              onChange={(e) => {
-                onChange({ ...value, end_date: e.target.value });
-              }}
-            />
-          </div>
-        )}
-        {singleDay ? (
-          <p className="text-small text-text-muted">Aparecerá solo este día en el calendario.</p>
-        ) : (
-          <p className="text-small text-text-muted col-span-2">
-            Periodo en que el miembro tendrá esta rutina activa.
-          </p>
-        )}
+        <p className="text-small text-text-muted">Aparecerá solo este día en el calendario.</p>
       </div>
-
-      {!singleDay && (
-        <fieldset>
-          <legend className="text-text-secondary text-sm font-medium">Días programados</legend>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {WEEKDAYS.map(([short, label], index) => {
-              const day = index + 1;
-              const selected = value.scheduled_weekdays?.includes(day) ?? false;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  aria-pressed={selected}
-                  title={label}
-                  onClick={() => {
-                    const current = value.scheduled_weekdays ?? [];
-                    const scheduled_weekdays = selected
-                      ? current.filter((item) => item !== day)
-                      : [...current, day].sort((a, b) => a - b);
-                    onChange({ ...value, scheduled_weekdays });
-                  }}
-                  className={cn(
-                    'text-small h-9 w-9 rounded-[var(--radius-chip)] font-semibold transition-colors',
-                    selected
-                      ? 'brand-solid'
-                      : 'bg-surface-raised text-text-secondary hover:bg-surface-overlay'
-                  )}
-                >
-                  {short}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-small text-text-muted mt-1.5">
-            Opcional. Si no eliges días, la rutina seguirá disponible todos los días.
-          </p>
-        </fieldset>
-      )}
 
       <Button
         className="w-full"

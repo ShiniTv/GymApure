@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Label, Input, SegmentedControl } from '../ui';
+import { Label, Input, NumericInput, SegmentedControl } from '../ui';
 import { SetPrescriptionEditor } from './SetPrescriptionEditor';
-import { parsePositiveInt } from '../../lib/parseFormNumber';
 import type { EffortMode, LoadMode, SetPrescriptionRow } from '../../lib/setPrescription';
 import {
   defaultRepsFromPrescription,
@@ -38,13 +37,13 @@ function applyStyle(
   load: LoadMode
 ): RoutineExercisePrescriptionValue {
   const currentEffort = prescriptionEffort(value.set_prescription);
+  const isSwitchingEffort = effort !== currentEffort;
 
-  const amount =
-    effort === currentEffort
-      ? value.reps
-      : effort === 'time'
-        ? defaultEffortAmount(effort)
-        : value.reps;
+  const amount = !isSwitchingEffort
+    ? value.reps
+    : effort === 'time'
+      ? defaultEffortAmount(effort)
+      : value.reps;
 
   const base = deriveSetPrescription(value.sets, amount, value.set_prescription);
 
@@ -52,7 +51,7 @@ function applyStyle(
     const originalRow = value.set_prescription?.[idx];
     return {
       ...row,
-      reps: effort === 'time' ? row.reps : amount,
+      reps: isSwitchingEffort ? amount : (originalRow?.reps ?? row.reps),
       plates: load === 'plates' ? (originalRow?.plates ?? row.plates ?? defaultPlateCount()) : null,
       weight_kg: load === 'kg' ? (originalRow?.weight_kg ?? row.weight_kg ?? null) : null,
     };
@@ -73,15 +72,18 @@ export function RoutineExercisePrescriptionFields({
   const effort = prescriptionEffort(value.set_prescription);
   const load = prescriptionLoad(value.set_prescription);
 
+  // Only sync detailed mode from prescription data when switching exercises (formKey change).
+  // Do NOT re-evaluate on set_prescription changes — that would immediately uncheck the
+  // checkbox when the user enables detailed mode (rows start uniform).
   useEffect(() => {
     setUseDetailed(hasDetailedSetPrescription(value.set_prescription));
-  }, [formKey, value.set_prescription]);
+  }, [formKey]);
 
   useEffect(() => {
     if (!selectedExerciseName) return;
     const style = inferPrescriptionStyle(selectedExerciseName);
     onChange(applyStyle(value, style.effort, style.load));
-  }, [formKey, selectedExerciseName, value.sets, value.reps]);
+  }, [formKey, selectedExerciseName]);
 
   const enableDetailed = () => {
     setUseDetailed(true);
@@ -170,12 +172,13 @@ export function RoutineExercisePrescriptionFields({
       <div className={useDetailed ? 'max-w-32' : 'grid max-w-lg grid-cols-2 gap-3 sm:grid-cols-3'}>
         <div>
           <Label>Series</Label>
-          <Input
-            type="number"
+          <NumericInput
             min={1}
+            fallback={1}
             value={value.sets}
-            onChange={(e) => {
-              const nextSets = parsePositiveInt(e.target.value, value.sets);
+            onChange={(v) => {
+              if (v === '') return;
+              const nextSets = v;
               onChange({
                 ...value,
                 sets: nextSets,
@@ -195,12 +198,13 @@ export function RoutineExercisePrescriptionFields({
           <>
             <div>
               <Label>{currentEffort === 'time' ? 'Segundos por serie' : 'Repeticiones'}</Label>
-              <Input
-                type="number"
+              <NumericInput
                 min={1}
+                fallback={1}
                 value={value.reps}
-                onChange={(e) => {
-                  const reps = parsePositiveInt(e.target.value, value.reps);
+                onChange={(v) => {
+                  if (v === '') return;
+                  const reps = v;
                   const currentPrescription =
                     value.set_prescription ?? deriveSetPrescription(value.sets, value.reps);
                   const currentEffort = prescriptionEffort(currentPrescription);
@@ -257,7 +261,7 @@ export function RoutineExercisePrescriptionFields({
 
       <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
         <input
-          id="routine-exercise-detailed-prescription"
+          id={`routine-exercise-detailed-prescription-${formKey}`}
           type="checkbox"
           className="text-brand focus:ring-brand mt-0.5 h-4 w-4 rounded"
           checked={useDetailed}
@@ -266,7 +270,10 @@ export function RoutineExercisePrescriptionFields({
             else disableDetailed();
           }}
         />
-        <label htmlFor="routine-exercise-detailed-prescription" className="min-w-0 cursor-pointer">
+        <label
+          htmlFor={`routine-exercise-detailed-prescription-${formKey}`}
+          className="min-w-0 cursor-pointer"
+        >
           <span className="text-text block text-xs font-medium">Variar por serie</span>
           <span className="text-text-muted text-small mt-0.5 block">
             Cambia reps, segundos o placas entre la 1 y la 3. Si todas van igual, déjalo apagado.

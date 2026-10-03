@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { apiFetch, parseJsonResponse } from '../../lib/api';
 import { clientLogger } from '../../lib/clientLogger';
 import { useAuth } from '../../context/AuthContext';
@@ -56,7 +56,7 @@ export function useMemberRoutinePage(id: string | undefined) {
     user_id: '',
     routine_id: '',
     start_date: format(new Date(), 'yyyy-MM-dd'),
-    end_date: format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+    end_date: format(new Date(), 'yyyy-MM-dd'),
     scheduled_weekdays: [],
   });
 
