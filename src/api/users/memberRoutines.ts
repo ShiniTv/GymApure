@@ -12,6 +12,7 @@ import {
 } from '../../lib/trainerAccess.ts';
 import { notifyRoutineAssigned } from '../../lib/chat/eventMessages.ts';
 import { logger } from '../../lib/logger.ts';
+import { getErrorMessage } from '../../lib/errors.ts';
 
 const ROUTINE_EXERCISE_PREVIEW_JOIN = `LEFT JOIN LATERAL (
     SELECT string_agg(preview_names.name, ' · ') AS exercise_preview
@@ -24,10 +25,6 @@ const ROUTINE_EXERCISE_PREVIEW_JOIN = `LEFT JOIN LATERAL (
       LIMIT 3
     ) preview_names
   ) preview ON true`;
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
-}
 
 export function mountUserRoutineRoutes(router: Router): void {
   router.get('/:id/routines', requireMemberAccess('id'), async (req: AuthRequest, res) => {

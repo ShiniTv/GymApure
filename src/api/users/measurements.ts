@@ -4,6 +4,7 @@ import { query } from '../../db/index.ts';
 import { requireMemberAccess } from '../middleware/access.ts';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 import { formatZodError } from '../../lib/passwordPolicy.ts';
+import { getErrorMessage } from '../../lib/errors.ts';
 
 const measurementSchema = z.object({
   date: z
@@ -23,10 +24,6 @@ async function findUserMeasurement(userId: number, measurementId: number) {
     [measurementId, userId]
   );
   return rows[0] ?? null;
-}
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
 }
 
 export function mountUserMeasurementRoutes(router: Router): void {

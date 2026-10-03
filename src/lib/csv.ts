@@ -1,6 +1,22 @@
+function formatCell(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean' || typeof val === 'bigint') {
+    return val.toString();
+  }
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val === 'object') {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return '';
+    }
+  }
+  return '';
+}
+
 export function escapeCsvCell(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const str = String(value);
+  const str = formatCell(value);
   if (/[",\n\r]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }

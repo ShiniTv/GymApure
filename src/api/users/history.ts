@@ -3,10 +3,7 @@ import { query } from '../../db/index.ts';
 import { AuthRequest } from '../middleware/auth.ts';
 import { requireMemberAccess } from '../middleware/access.ts';
 import { parsePaginationQuery, type PaginatedResult } from '../../lib/pagination.ts';
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
-}
+import { getErrorMessage } from '../../lib/errors.ts';
 
 export function mountUserHistoryRoutes(router: Router): void {
   router.get('/:id/history', requireMemberAccess('id'), async (req: AuthRequest, res) => {

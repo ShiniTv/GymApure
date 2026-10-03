@@ -14,6 +14,7 @@ import { LIKE_ESCAPE_CLAUSE, toLikeContainsPattern } from '../lib/sqlLike.ts';
 import { canonicalCedula, cedulaWhereClause } from '../lib/cedulaUtils.ts';
 import { isTrainerLevel, isTrainingShift } from '../lib/trainingShift.ts';
 import { isActiveMember } from '../lib/trainerAccess.ts';
+import { getErrorMessage } from '../lib/errors.ts';
 
 const router = asyncRouter();
 
@@ -31,10 +32,6 @@ const createTrainerSchema = createUserSchema.extend({
   shift: z.enum(['diurno', 'vespertino', 'nocturno']),
   bio: z.string().trim().max(2000).optional().nullable(),
 });
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
-}
 
 export interface TrainerRow {
   id: number;

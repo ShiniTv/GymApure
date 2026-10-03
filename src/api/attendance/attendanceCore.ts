@@ -16,7 +16,7 @@ export type AttendanceActionResult =
 
 export async function performCheckIn(cedula: string): Promise<AttendanceActionResult> {
   const resolved = await resolveKioskUser(cedula);
-  if (resolved.ok === false) {
+  if (!resolved.ok) {
     return {
       ok: false,
       status: resolved.status,
@@ -68,7 +68,7 @@ export async function performCheckIn(cedula: string): Promise<AttendanceActionRe
 
 export async function performCheckOut(cedula: string): Promise<AttendanceActionResult> {
   const resolved = await resolveKioskUser(cedula);
-  if (resolved.ok === false) {
+  if (!resolved.ok) {
     return {
       ok: false,
       status: resolved.status,

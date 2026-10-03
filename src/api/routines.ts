@@ -23,6 +23,7 @@ import {
   notifyMemberExerciseSubstituted,
   notifyMemberSelfAssignedTemplate,
 } from '../lib/chat/eventMessages.ts';
+import { getErrorMessage } from '../lib/errors.ts';
 
 const router = asyncRouter();
 
@@ -63,10 +64,6 @@ interface GroupedAssignment {
   full_name: string;
   profile_image: string | null;
   routines: AssignmentRoutine[];
-}
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
 }
 
 function isMissingColumnError(err: unknown, column: string): boolean {

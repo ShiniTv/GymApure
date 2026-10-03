@@ -28,6 +28,7 @@ import {
   isSystemCatalogExercise,
   mapExerciseListRow,
 } from '../lib/exerciseLibrary.ts';
+import { getErrorMessage } from '../lib/errors.ts';
 import { parseBooleanQuery, parsePaginationQuery, parseSearchQuery } from '../lib/pagination.ts';
 
 const router = asyncRouter();
@@ -51,10 +52,6 @@ const posterUploadUrlSchema = z.object({
   contentType: z.enum(['image/webp', 'image/jpeg']),
   fileSize: z.number().int().positive(),
 });
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
-}
 
 function isExternalVideoUrl(url: string | null | undefined): boolean {
   if (!url) return false;

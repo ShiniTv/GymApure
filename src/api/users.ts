@@ -4,6 +4,7 @@ import { query, withTransaction } from '../db/index.ts';
 import { AuthRequest, authorize } from './middleware/auth.ts';
 import { requireMemberAccess } from './middleware/access.ts';
 import { logAudit } from '../lib/audit.ts';
+import { getErrorMessage } from '../lib/errors.ts';
 import { avatarUpload } from '../lib/uploadStorage.ts';
 import {
   uploadMediaFile,
@@ -56,10 +57,6 @@ const profileSchema = z.object({
     .optional()
     .nullable(),
 });
-
-function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error interno';
-}
 
 router.get(
   '/options',
