@@ -267,10 +267,10 @@ function TodayPanel({
                     {trainingToday.slice(0, TODAY_LIST_CAP).map((m) => {
                       const checkIn = formatCheckIn(m.check_in_time);
                       return (
-                        <li key={`gym-${m.id}`}>
+                        <li key={`gym-${m.id}`} className="flex items-center gap-1">
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {checkIn ? (
@@ -280,6 +280,14 @@ function TodayPanel({
                             ) : (
                               <ChevronRight className="text-text-muted h-3.5 w-3.5 shrink-0" />
                             )}
+                          </Link>
+                          <Link
+                            to={`/messages?member=${m.id}`}
+                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                            aria-label={`Mensaje a ${m.full_name}`}
+                            title={`Chat con ${m.full_name}`}
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
                           </Link>
                         </li>
                       );
@@ -302,10 +310,10 @@ function TodayPanel({
                     {remoteTraining.slice(0, TODAY_LIST_CAP).map((m) => {
                       const started = formatCheckIn(m.started_at);
                       return (
-                        <li key={`remote-${m.id}`}>
+                        <li key={`remote-${m.id}`} className="flex items-center gap-1">
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {started ? (
@@ -313,6 +321,14 @@ function TodayPanel({
                                 {started}
                               </span>
                             ) : null}
+                          </Link>
+                          <Link
+                            to={`/messages?member=${m.id}`}
+                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                            aria-label={`Mensaje a ${m.full_name}`}
+                            title={`Chat con ${m.full_name}`}
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
                           </Link>
                         </li>
                       );

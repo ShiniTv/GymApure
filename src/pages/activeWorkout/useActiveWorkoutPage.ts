@@ -41,6 +41,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { defaultRoutineExerciseForm } from './AddExerciseModal';
 import { useRestTimer } from './useRestTimer';
+import { useScreenWakeLock } from '../../hooks/useScreenWakeLock';
 import type { WorkoutLogEntry } from './types';
 import type { SkipExerciseReason } from './SkipExerciseModal';
 
@@ -87,6 +88,10 @@ export function useActiveWorkoutPage() {
     weight: number;
     reps: number;
   } | null>(null);
+  const [keepScreenOn, setKeepScreenOn] = useState(true);
+  const { isSupported: isWakeLockSupported, isActive: isWakeLockActive } = useScreenWakeLock({
+    enabled: keepScreenOn && Boolean(sessionId) && !isPaused,
+  });
   const { isMobileShell: isMobileFocus } = useBreakpoint();
   const isStartingRef = useRef(false);
   const routineId = id ? Number(id) : null;
@@ -787,5 +792,9 @@ export function useActiveWorkoutPage() {
     skipError,
     openSkipExercise,
     confirmSkipExercise,
+    keepScreenOn,
+    setKeepScreenOn,
+    isWakeLockSupported,
+    isWakeLockActive,
   };
 }

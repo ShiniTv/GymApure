@@ -1,10 +1,11 @@
 import { useRef, useState, memo } from 'react';
-import { ArrowLeft, Clock, MoreVertical, Pause, Play, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Clock, MoreVertical, Pause, Play, RotateCcw, Smartphone } from 'lucide-react';
 import { AnchoredMenu, Button } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { typography } from '../../lib/typography';
 import { formatWorkoutTime } from './utils';
 import { workoutIconBtn } from './styles';
+import { hapticLight } from '../../lib/haptics';
 
 export const WorkoutHeader = memo(function WorkoutHeader({
   routineName,
@@ -16,6 +17,10 @@ export const WorkoutHeader = memo(function WorkoutHeader({
   progressPct,
   sessionId,
   isResetting,
+  isWakeLockSupported,
+  isWakeLockActive,
+  keepScreenOn,
+  onToggleKeepScreenOn,
   onBack,
   onTogglePause,
   onReset,
@@ -30,6 +35,10 @@ export const WorkoutHeader = memo(function WorkoutHeader({
   progressPct: number;
   sessionId: number | null;
   isResetting: boolean;
+  isWakeLockSupported?: boolean;
+  isWakeLockActive?: boolean;
+  keepScreenOn?: boolean;
+  onToggleKeepScreenOn?: () => void;
   onBack: () => void;
   onTogglePause: () => void;
   onReset: () => void;
@@ -79,6 +88,33 @@ export const WorkoutHeader = memo(function WorkoutHeader({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {isWakeLockSupported ? (
+            <button
+              type="button"
+              onClick={() => {
+                hapticLight();
+                onToggleKeepScreenOn?.();
+              }}
+              className={cn(
+                workoutIconBtn,
+                isWakeLockActive
+                  ? 'border-brand/40 bg-brand/15 text-brand shadow-xs'
+                  : 'text-text-muted hover:text-text'
+              )}
+              aria-label={
+                keepScreenOn
+                  ? 'Desactivar pantalla siempre encendida'
+                  : 'Mantener pantalla encendida'
+              }
+              title={
+                keepScreenOn
+                  ? 'Pantalla activa (evita que el móvil se suspenda al entrenar)'
+                  : 'Pantalla activa desactivada'
+              }
+            >
+              <Smartphone className="h-4 w-4" />
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onTogglePause}

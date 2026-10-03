@@ -78,6 +78,10 @@ export default function ActiveWorkout() {
         progressPct={page.progressPct}
         sessionId={page.sessionId}
         isResetting={page.isResetting}
+        isWakeLockSupported={page.isWakeLockSupported}
+        isWakeLockActive={page.isWakeLockActive}
+        keepScreenOn={page.keepScreenOn}
+        onToggleKeepScreenOn={() => page.setKeepScreenOn((v) => !v)}
         onBack={() => page.navigate('/routines')}
         onTogglePause={page.togglePause}
         onReset={page.resetProgress}
