@@ -22,6 +22,7 @@ import {
   getSubscriptionBarStyle,
   subscriptionPlanNameClass,
 } from '../../lib/expiryUtils';
+import { hapticLight } from '../../lib/haptics';
 import { cn, formatDifficulty } from '../../lib/utils';
 import { QuickAction } from '../../components/admin/QuickAction';
 import { MemberHero } from '../../components/member/MemberHero';
@@ -184,7 +185,10 @@ export default function MemberDashboard() {
         <button
           type="button"
           className="flex w-full items-center justify-between gap-2 text-left"
-          onClick={() => setAccesoExtrasOpen((v) => !v)}
+          onClick={() => {
+            hapticLight();
+            setAccesoExtrasOpen((v) => !v);
+          }}
           aria-expanded={accesoExtrasOpen}
         >
           <span className="text-text text-sm font-semibold">Acceso y extras</span>
@@ -464,7 +468,10 @@ export default function MemberDashboard() {
           <button
             type="button"
             className="flex w-full items-center justify-between gap-2 text-left"
-            onClick={() => setMoreOpen((v) => !v)}
+            onClick={() => {
+              hapticLight();
+              setMoreOpen((v) => !v);
+            }}
             aria-expanded={moreOpen}
           >
             <span className="text-text text-sm font-semibold">Más de tu plan</span>
