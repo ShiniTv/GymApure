@@ -52,7 +52,7 @@ export const serverBeforeSend: BeforeSend = (event, hint) => {
     const waiting = extra?.waitingCount;
     const total = extra?.totalCount;
     if (typeof waiting === 'number' && typeof total === 'number') {
-      if (waiting < 3 || total < 8) {
+      if (waiting < 4 || total < 8) {
         return null;
       }
     }

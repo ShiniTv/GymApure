@@ -37,6 +37,15 @@ describe('sentryFilters', () => {
     expect(result).toBeNull();
   });
 
+  it('drops transient pool pressure with 3 waiting clients', () => {
+    const event = {
+      type: 'default',
+      message: 'Database pool waiting',
+      extra: { waitingCount: 3, totalCount: 10 },
+    } as unknown as ErrorEvent;
+    expect(serverBeforeSend(event, emptyHint)).toBeNull();
+  });
+
   it('keeps severe pool pressure samples', () => {
     const event = {
       type: 'default',

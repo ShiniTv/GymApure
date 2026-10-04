@@ -60,7 +60,7 @@ async function reportSlowQuery(durationMs: number, text: string): Promise<void> 
 
 function isSeverePoolPressure(waitingCount: number, totalCount: number): boolean {
   // Ignore brief queue blips; alert only when many clients are waiting near pool capacity.
-  return waitingCount >= 3 && totalCount >= Math.max(6, Math.floor(poolMax * 0.75));
+  return waitingCount >= 4 && totalCount >= Math.max(8, poolMax - 1);
 }
 
 async function reportPoolPressure(): Promise<void> {
