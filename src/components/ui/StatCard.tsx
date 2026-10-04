@@ -47,13 +47,15 @@ function StatCardContent({
 }: Omit<StatCardProps, 'className' | 'to' | 'withIcon'>) {
   if (minimal) {
     return (
-      <>
-        <p className={cn(typography.statLabel, 'leading-tight')}>{title}</p>
-        <p className={cn(typography.statValueSm, 'mt-0.5')}>{value}</p>
+      <div className="flex h-full flex-col justify-between">
+        <div>
+          <p className={cn(typography.statLabel, 'text-text-secondary leading-tight')}>{title}</p>
+          <p className={cn(typography.statValue, 'mt-1 tracking-tight')}>{value}</p>
+        </div>
         {trend ? (
           <span
             className={cn(
-              'mt-1 flex items-center gap-0.5 font-medium',
+              'mt-1.5 flex items-center gap-1 font-medium',
               typography.small,
               trendTone === 'up' && 'text-success',
               trendTone === 'down' && 'text-danger',
@@ -66,7 +68,7 @@ function StatCardContent({
             {trend}
           </span>
         ) : null}
-      </>
+      </div>
     );
   }
 
@@ -155,11 +157,19 @@ export function StatCard({
     return (
       <Link
         to={to}
-        className={cn('block rounded-[var(--radius-card)]', className)}
+        className={cn(
+          'group block rounded-[var(--radius-card)] focus-visible:outline-none',
+          className
+        )}
         aria-label={`${title}: ${value}`}
         title={title}
       >
-        <Card padding={padding} rounded="xl" className={cn('flex h-full flex-col', className)}>
+        <Card
+          padding={padding}
+          rounded="xl"
+          variant="interactive"
+          className={cn('light-catch flex h-full flex-col', className)}
+        >
           {inner}
         </Card>
       </Link>
@@ -168,14 +178,18 @@ export function StatCard({
 
   if (useMinimal) {
     return (
-      <Card padding="sm" rounded="xl" className={className}>
+      <Card padding="sm" rounded="xl" className={cn('light-catch', className)}>
         {inner}
       </Card>
     );
   }
 
   return (
-    <Card padding={padding} rounded="xl" className={cn('flex h-full flex-col', className)}>
+    <Card
+      padding={padding}
+      rounded="xl"
+      className={cn('light-catch flex h-full flex-col', className)}
+    >
       {inner}
     </Card>
   );

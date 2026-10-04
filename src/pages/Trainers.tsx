@@ -255,7 +255,7 @@ export default function Trainers() {
           />
           <Button
             size="md"
-            className="w-11 shrink-0 rounded-xl p-0 sm:w-auto sm:px-4"
+            className="w-9 shrink-0 p-0 sm:w-auto sm:px-3"
             onClick={() => {
               setIsCreating(true);
             }}

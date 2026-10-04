@@ -326,8 +326,9 @@ export default function Exercises() {
             <BackToDashboardLink iconOnly />
             {canEdit ? (
               <Button
+                size="md"
                 onClick={() => void handleOpenModal()}
-                className="min-h-11 gap-1.5 px-2.5 sm:px-4"
+                className="w-9 gap-1.5 px-0 sm:w-auto sm:px-3.5"
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Nuevo ejercicio</span>

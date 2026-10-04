@@ -12,9 +12,9 @@ export default function Equipment() {
   if (page.loading) {
     return (
       <div className="mx-auto w-full max-w-7xl min-w-0 space-y-3 sm:space-y-4">
-        <Skeleton className="h-11 w-11 rounded-[var(--radius-button)]" />
+        <Skeleton className="h-9 w-9 rounded-[var(--radius-button)]" />
         <Skeleton className="h-8 w-48 rounded-lg" />
-        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-9 w-full rounded-xl" />
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />

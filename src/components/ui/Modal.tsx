@@ -218,12 +218,12 @@ export function Modal({
           }
           tabIndex={-1}
           className={cn(
-            'surface-modal relative my-0 w-full outline-none',
+            'surface-modal light-catch relative my-0 w-full outline-none',
             'transition-[opacity,transform] motion-reduce:transform-none motion-reduce:transition-none',
             '[transition-timing-function:var(--ease-drawer)]',
             visible
               ? 'translate-y-0 scale-100 opacity-100'
-              : 'translate-y-3 scale-[0.98] opacity-0 sm:translate-y-2',
+              : 'translate-y-4 scale-[0.97] opacity-0 sm:translate-y-3',
             /* Mobile sheet chrome */
             'max-sm:rounded-t-[var(--radius-sheet)] max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0',
             'max-sm:max-h-[min(92dvh,100%)]',
@@ -246,8 +246,8 @@ export function Modal({
             className={cn(
               'flex shrink-0 items-start gap-3',
               structured
-                ? 'border-border/50 px-ds-4 sm:px-ds-5 border-b py-3.5 sm:py-4'
-                : 'px-ds-4 sm:px-ds-5 pt-1 pb-3 sm:pt-5'
+                ? 'border-border/40 border-b px-4 py-3 sm:px-5 sm:py-3.5'
+                : 'px-4 pt-1 pb-3 sm:px-5 sm:pt-4.5'
             )}
           >
             {icon ? (
@@ -282,8 +282,8 @@ export function Modal({
             id={contentId}
             className={cn(
               structured
-                ? 'scroll-area px-ds-4 sm:px-ds-5 flex-1 overflow-y-auto py-4'
-                : 'px-ds-4 sm:px-ds-5 pb-ds-4 sm:pb-ds-5',
+                ? 'scroll-area flex-1 overflow-y-auto px-4 py-3.5 sm:px-5'
+                : 'px-4 pb-4 sm:px-5 sm:pb-5',
               !children && structured && 'hidden py-0'
             )}
           >
@@ -293,9 +293,9 @@ export function Modal({
           {footer ? (
             <div
               className={cn(
-                'border-border/50 bg-surface/90 dark:bg-surface-raised/95 shrink-0 border-t',
-                'px-ds-4 sm:px-ds-5 py-3 backdrop-blur-md',
-                'pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3.5'
+                'border-border/40 bg-surface/90 dark:bg-surface/95 shrink-0 border-t',
+                'px-4 py-3 sm:px-5',
+                'pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3'
               )}
             >
               {footer}

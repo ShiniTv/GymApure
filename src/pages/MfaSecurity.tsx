@@ -150,7 +150,7 @@ export default function MfaSecurity() {
   const showGuide = !enabled && !setup;
 
   return (
-    <OperatePage maxWidth="max-w-3xl">
+    <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
       <OperateHeader
         icon={ShieldCheck}
         iconTone={enabled ? 'success' : 'warn'}
@@ -163,7 +163,7 @@ export default function MfaSecurity() {
         action={<BackToDashboardLink />}
       />
 
-      <div className="grid gap-3 lg:grid-cols-1 lg:gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:items-stretch">
+      <div className="grid items-start gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-3 sm:space-y-4">
           {/* Status row */}
           <Card padding="md" rounded="xl" className={cn(OPERATE_SURFACE)}>

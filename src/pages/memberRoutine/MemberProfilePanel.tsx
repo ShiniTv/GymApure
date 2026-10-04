@@ -153,7 +153,7 @@ export function MemberProfilePanel({
       </div>
 
       <details className="border-border group rounded-xl border">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 items-center gap-2">
             <span className="text-text text-xs font-semibold">Salud y limitaciones</span>
             {showHealthAlert && (
@@ -227,7 +227,7 @@ export function MemberProfilePanel({
       </details>
 
       <details className="border-border group rounded-xl border">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 marker:content-none [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 marker:content-none [&::-webkit-details-marker]:hidden">
           <span className="text-text text-xs font-semibold">Metabolismo estimado</span>
           <ChevronDown className="text-text-muted h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
         </summary>

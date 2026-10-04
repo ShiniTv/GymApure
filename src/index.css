@@ -19,7 +19,7 @@
     sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
-  --text-h1: 1.25rem; /* 20px — page titles */
+  --text-h1: 1.1875rem; /* 19px — page titles */
   --text-h1--line-height: 1.25;
   --text-h1--letter-spacing: -0.02em;
   --text-h1--font-weight: 600;
@@ -29,8 +29,8 @@
   --text-h2--letter-spacing: -0.015em;
   --text-h2--font-weight: 600;
 
-  --text-base: 0.9375rem; /* 15px — body */
-  --text-base--line-height: 1.5;
+  --text-base: 0.875rem; /* 14px — body */
+  --text-base--line-height: 1.45;
   --text-base--letter-spacing: -0.011em;
   --text-base--font-weight: 400;
 
@@ -39,9 +39,9 @@
   --text-small--letter-spacing: -0.006em;
   --text-small--font-weight: 500;
 
-  /* Form fields — same optical size as body (15px) */
-  --text-input: 0.9375rem;
-  --text-input--line-height: 1.5;
+  /* Form fields — same optical size as body (14px) */
+  --text-input: 0.875rem;
+  --text-input--line-height: 1.45;
   --text-input--letter-spacing: -0.011em;
   --text-input--font-weight: 500;
 
@@ -105,7 +105,7 @@
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.08);
   --shadow-modal: 0 16px 48px -12px rgb(0 0 0 / 0.22), 0 0 0 1px rgb(0 0 0 / 0.04);
-  --shadow-card: none;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06);
   --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.45);
   --shadow-apple-glass: 0 8px 32px 0 rgb(0 0 0 / 0.08);
 
@@ -116,8 +116,8 @@
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring-snappy: cubic-bezier(0.32, 0.72, 0, 1);
 
-  --touch-min: 44px;
-  --touch-comfort: 48px;
+  --touch-min: 36px;
+  --touch-comfort: 40px;
 }
 
 @layer utilities {
@@ -288,14 +288,14 @@
 
   .dark {
     /* Apple Operate dark: deep canvas, lifted sidebar/surfaces */
-    --color-bg: #000000;
-    --color-bg-elevated: #1c1c1e;
-    --color-surface: #1c1c1e;
-    --color-surface-raised: #2c2c2e;
-    --color-surface-overlay: #3a3a3c;
-    --color-surface-dark: #1c1c1e;
-    --color-border: #38383a;
-    --color-border-subtle: #2c2c2e;
+    --color-bg: #0a0a0b;
+    --color-bg-elevated: #161618;
+    --color-surface: #161618;
+    --color-surface-raised: #1e1e21;
+    --color-surface-overlay: #28282c;
+    --color-surface-dark: #161618;
+    --color-border: #2e2e32;
+    --color-border-subtle: #222225;
     --color-text: #fafafa;
     /* AA: secondary/muted on near-black */
     --color-text-secondary: #d4d4d8;
@@ -305,9 +305,9 @@
     --color-brand-hover: #0c98ff;
     --color-warning: #c9b35a;
     --color-warning-hover: #b49c44;
-    --shadow-card: none;
+    --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.25), 0 0 0 1px rgb(255 255 255 / 0.04);
     --shadow-elevated: 0 8px 24px rgb(0 0 0 / 0.35);
-    --shadow-modal: 0 24px 64px -16px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(255 255 255 / 0.04);
+    --shadow-modal: 0 24px 64px -16px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(255 255 255 / 0.06);
   }
 
   body {
@@ -740,10 +740,10 @@ body,
     box-shadow: var(--shadow-card);
   }
 
-  /* Dark: hairline border — Linear window edge */
+  /* Dark: hairline border — Linear window edge with subtle card shadow */
   .dark .surface-card {
     border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
-    box-shadow: none;
+    box-shadow: var(--shadow-card);
   }
 
   .surface-raised {
@@ -766,16 +766,35 @@ body,
   }
 
   .dark .surface-modal {
-    background-color: var(--color-surface-raised);
+    background-color: var(--color-surface);
     border-color: color-mix(in srgb, var(--color-border) 65%, transparent);
   }
 
+  /* Modal form fields — elevated surface with inner depth */
+  .surface-modal
+    input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+  .surface-modal select,
+  .surface-modal textarea {
+    background-color: color-mix(in srgb, var(--color-surface-raised) 70%, var(--color-bg));
+    border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+  .dark
+    .surface-modal
+    input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+  .dark .surface-modal select,
+  .dark .surface-modal textarea {
+    background-color: color-mix(in srgb, var(--color-surface-raised) 85%, var(--color-bg));
+    border-color: color-mix(in srgb, var(--color-border) 65%, transparent);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.22);
+  }
+
   .page-stack {
-    @apply space-y-3 sm:space-y-3.5 lg:space-y-4;
+    @apply space-y-2.5 sm:space-y-3 lg:space-y-3.5;
   }
 
   .page-stack-loose {
-    @apply space-y-4 sm:space-y-5 lg:space-y-6;
+    @apply space-y-3.5 sm:space-y-4 lg:space-y-5;
   }
 
   /* Constrain form / panel width so content does not stretch on tablet widths */
@@ -788,7 +807,7 @@ body,
   }
 
   .panel-wide {
-    @apply w-full max-w-3xl;
+    @apply w-full max-w-4xl;
   }
 
   .panel-narrow {
@@ -796,11 +815,11 @@ body,
   }
 
   .page-stack-tight {
-    @apply space-y-2.5 sm:space-y-3;
+    @apply space-y-1.5 sm:space-y-2;
   }
 
   .form-stack {
-    @apply space-y-3.5;
+    @apply space-y-3;
   }
 
   .page-state-center {
@@ -863,7 +882,7 @@ body,
 
   @media (max-width: 1023px) {
     .nav-link-mobile {
-      @apply min-h-11 gap-3 rounded-[var(--radius-card)] px-3 py-2.5 text-sm;
+      @apply min-h-10 gap-3 rounded-[var(--radius-card)] px-3 py-2 text-sm;
     }
   }
 

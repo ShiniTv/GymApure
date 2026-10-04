@@ -20,13 +20,14 @@ export function Label({ children, htmlFor, className }: LabelProps) {
 export const fieldClassName = cn(
   'w-full bg-surface border rounded-[var(--radius-input)] px-3 py-2',
   'text-input text-text font-medium outline-none',
-  'placeholder:text-text-muted',
-  'min-h-[var(--touch-min)]',
-  'focus:ring-[2px] focus:ring-border focus-visible:ring-[2px] focus-visible:ring-border',
-  'focus:border-border',
+  'placeholder:text-text-muted/70 placeholder:font-normal',
+  'h-9',
+  'focus:ring-[2px] focus:ring-brand/25 focus-visible:ring-[2px] focus-visible:ring-brand/25',
+  'focus:border-brand/60',
   'transition-[border-color,box-shadow,background-color] duration-150',
   'border-border/70 hover:border-border',
-  'dark:bg-bg dark:[color-scheme:dark]'
+  'dark:bg-surface-raised/50 dark:border-border/50 dark:[color-scheme:dark]',
+  'dark:shadow-[inset_0_1px_2px_rgb(0_0_0/0.2)]'
 );
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

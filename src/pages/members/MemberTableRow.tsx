@@ -258,7 +258,7 @@ export const MemberTableRow = memo(function MemberTableRow({
               disabled={action.key === 'pause' && membershipOperationLoading}
               onClick={action.onClick}
               className={cn(
-                'text-text-muted inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-button)] p-1.5 transition-colors disabled:opacity-50',
+                'text-text-muted hover:text-text inline-flex h-7.5 w-7.5 items-center justify-center rounded-lg p-1 transition-colors disabled:opacity-50',
                 action.className
               )}
               title={action.label}

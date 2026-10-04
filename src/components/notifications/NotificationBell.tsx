@@ -9,7 +9,7 @@ const NotificationPanel = lazy(() =>
   import('./NotificationPanel').then((m) => ({ default: m.NotificationPanel }))
 );
 const defaultBtnClass =
-  'text-text-muted hover:bg-surface-raised relative inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-lg transition-colors';
+  'text-text-muted hover:bg-surface-raised relative inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-lg transition-colors';
 
 interface NotificationBellProps {
   className?: string;

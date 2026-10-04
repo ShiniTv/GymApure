@@ -1,4 +1,5 @@
 import { format, parseISO } from 'date-fns';
+import { TrendingUp } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -11,12 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { dateLocale as es } from '../../lib/dateLocale';
-import {
-  chartAxisTick,
-  chartEmptyClass,
-  chartHeights,
-  chartLabelClass,
-} from '../../lib/chartTheme';
+import { chartAxisTick, chartHeights, chartLabelClass } from '../../lib/chartTheme';
 import { typography } from '../../lib/typography';
 import { cn } from '../../lib/utils';
 
@@ -53,8 +49,11 @@ function progressSummary(weeks: ProgressWeekPoint[]) {
 export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProps) {
   if (!hasProgressData(weeks)) {
     return (
-      <div className={cn(chartEmptyClass, 'text-small')}>
-        Completa entrenamientos con series registradas para ver volumen y pesos máximos.
+      <div className="border-border/60 bg-surface-raised/40 text-text-muted flex items-center gap-2.5 rounded-xl border px-3.5 py-3 text-xs">
+        <TrendingUp className="text-brand h-4 w-4 shrink-0" />
+        <span>
+          Completa entrenamientos con series registradas para ver volumen y pesos máximos.
+        </span>
       </div>
     );
   }

@@ -223,7 +223,7 @@ export default function Nutrition() {
 
   if (loading && !plan) {
     return (
-      <OperatePage maxWidth="max-w-4xl">
+      <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
         <div aria-busy="true" aria-label="Cargando nutrición">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
@@ -254,7 +254,7 @@ export default function Nutrition() {
 
   if (!plan) {
     return (
-      <OperatePage maxWidth="max-w-4xl">
+      <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
         <OperateHeader
           icon={UtensilsCrossed}
           title={
@@ -294,7 +294,7 @@ export default function Nutrition() {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <OperatePage maxWidth="max-w-4xl">
+    <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
       <OperateHeader
         icon={UtensilsCrossed}
         title={

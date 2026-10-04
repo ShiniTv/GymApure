@@ -138,7 +138,7 @@ export function ChatComposer({
           type="button"
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
-          className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors"
+          className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors"
           aria-label="Adjuntar imagen o PDF"
         >
           <Paperclip className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function ChatComposer({
           }}
           className={cn(
             fieldClassName,
-            'border-border/80 max-h-24 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto rounded-full px-3.5 py-2 text-sm leading-5',
+            'border-border/80 max-h-24 min-h-9 min-w-0 flex-1 resize-none overflow-y-auto rounded-full px-3.5 py-1.5 text-sm leading-5',
             'bg-surface-raised text-text',
             'placeholder:text-text-muted',
             'caret-[var(--color-brand)]'
@@ -172,7 +172,7 @@ export function ChatComposer({
           size="md"
           disabled={disabled || (!body.trim() && !file)}
           onClick={handleSend}
-          className="w-10 shrink-0 rounded-full p-0"
+          className="w-9 shrink-0 rounded-full p-0"
           aria-label="Enviar mensaje"
         >
           <Send className="h-4 w-4" />

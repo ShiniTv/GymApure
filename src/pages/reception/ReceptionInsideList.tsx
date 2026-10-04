@@ -74,7 +74,7 @@ export function ReceptionInsideList({
         <Button
           variant="secondary"
           size="md"
-          className="tap-feedback w-11 px-0 active:scale-95"
+          className="tap-feedback w-9 px-0 active:scale-95"
           onClick={onRefresh}
           aria-label="Actualizar"
         >
@@ -145,7 +145,7 @@ export function ReceptionInsideList({
               <Button
                 variant="secondary"
                 size="md"
-                className="tap-feedback w-11 shrink-0 px-0 active:scale-95"
+                className="tap-feedback w-9 shrink-0 px-0 active:scale-95"
                 disabled={!m.cedula || actionLoading}
                 loading={checkingOutCedula === m.cedula?.trim()}
                 onClick={() => handleCheckoutClick(m)}

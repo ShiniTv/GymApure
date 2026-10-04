@@ -326,7 +326,7 @@ export function RoutinesLibraryView({
           <div className="flex shrink-0 items-center gap-1.5">
             {isStaff && onCreateFromTemplate && routines.length > 0 ? (
               <IconButton
-                size="lg"
+                size="md"
                 variant="secondary"
                 onClick={onCreateFromTemplate}
                 aria-label="Crear desde plantilla"
@@ -348,7 +348,7 @@ export function RoutinesLibraryView({
               </Button>
             ) : null}
             <IconButton
-              size="lg"
+              size="md"
               variant="secondary"
               onClick={onCreateRoutine}
               aria-label={isMember ? 'Crear mi rutina' : 'Nueva rutina'}

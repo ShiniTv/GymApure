@@ -153,7 +153,7 @@ export function MembersToolbar({
               type="button"
               size="md"
               variant={filtersOpen ? 'secondary' : 'ghost'}
-              className="w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
+              className="w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
               aria-expanded={filtersOpen}
               aria-label="Más filtros"
               onClick={() => setFiltersOpen((open) => !open)}
@@ -165,7 +165,7 @@ export function MembersToolbar({
           {canAddUser && (
             <Button
               size="md"
-              className="w-11 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
+              className="w-9 shrink-0 p-0 sm:w-auto sm:gap-1.5 sm:px-3"
               onClick={() => {
                 onAdd();
               }}
@@ -245,7 +245,7 @@ export function MembersToolbar({
           <button
             type="button"
             onClick={onDismissNoPlanAlert}
-            className="text-text-muted hover:bg-surface-raised hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md"
+            className="text-text-muted hover:bg-surface-raised hover:text-text inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-md"
             aria-label="Cerrar aviso"
           >
             <X className="h-4 w-4" />

@@ -134,20 +134,8 @@ export function useMemberRoutinePage(id: string | undefined) {
 
   useEffect(() => {
     const next = parseCoachingTab(searchParams.get('tab'));
-    if (next === 'mediciones') {
-      setCoachingTab('progreso');
-      setSearchParams(
-        (prev) => {
-          const p = new URLSearchParams(prev);
-          p.set('tab', 'progreso');
-          return p;
-        },
-        { replace: true }
-      );
-      return;
-    }
     if (next) setCoachingTab(next);
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
 
   const changeCoachingTab = (tab: CoachingTab) => {
     setCoachingTab(tab);
@@ -230,6 +218,22 @@ export function useMemberRoutinePage(id: string | undefined) {
     } catch (err) {
       clientLogger.error('Failed to add member measurement', err);
       toast?.error(err instanceof Error ? err.message : 'Error al registrar medición');
+    }
+  };
+
+  const handleDeleteMeasurement = async (measurementId: number) => {
+    if (!id) return;
+    try {
+      const res = await apiFetch(`/api/users/${id}/measurements/${measurementId}`, {
+        method: 'DELETE',
+      });
+      await parseJsonResponse(res);
+      setMeasurements((prev) => prev.filter((m) => m.id !== measurementId));
+      hapticSuccess();
+      toast?.success('Medición eliminada');
+    } catch (err) {
+      clientLogger.error('Failed to delete member measurement', err);
+      toast?.error(err instanceof Error ? err.message : 'Error al eliminar medición');
     }
   };
 
@@ -757,6 +761,7 @@ export function useMemberRoutinePage(id: string | undefined) {
     measurementForm,
     setMeasurementForm,
     handleAddMeasurement,
+    handleDeleteMeasurement,
     expandedRoutineId,
     routineMenuId,
     routineMenuAnchorRef,

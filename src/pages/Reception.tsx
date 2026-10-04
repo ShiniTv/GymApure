@@ -782,7 +782,7 @@ export default function Reception() {
                 <Button
                   variant="secondary"
                   size="md"
-                  className="w-11 px-0"
+                  className="w-9 px-0"
                   title="Modo tablet"
                   aria-label="Modo tablet"
                 >
@@ -792,7 +792,7 @@ export default function Reception() {
               <Button
                 variant="secondary"
                 size="md"
-                className="w-11 px-0"
+                className="w-9 px-0"
                 onClick={() => setCounterMode(false)}
                 title="Salir del mostrador"
                 aria-label="Salir del mostrador"

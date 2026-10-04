@@ -27,7 +27,7 @@ export default function Profile() {
   if (page.loading) {
     return (
       <PageState>
-        <OperatePage maxWidth="max-w-4xl">
+        <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
           <Skeleton className="h-28 w-full rounded-[var(--radius-card)]" />
           <Skeleton className="h-11 w-full rounded-[var(--radius-card)]" />
           <Skeleton className="h-56 w-full rounded-[var(--radius-card)]" />
@@ -38,7 +38,7 @@ export default function Profile() {
 
   if (!page.profile || !page.user) {
     return (
-      <OperatePage maxWidth="max-w-4xl">
+      <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl">
         <EmptyState
           icon={UserCircle}
           title="No se pudo cargar el perfil"
@@ -59,7 +59,7 @@ export default function Profile() {
   const { profile, user } = page;
 
   return (
-    <OperatePage maxWidth="max-w-4xl" className="space-y-4">
+    <OperatePage maxWidth="max-w-5xl 2xl:max-w-6xl" className="space-y-3.5">
       {/* Hero de Atleta / Cuenta */}
       <ProfileAthleteHero
         profile={profile}

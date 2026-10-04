@@ -258,7 +258,7 @@ export function RoutinesCalendarView({
             <button
               type="button"
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-md"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-7.5 w-7.5 items-center justify-center rounded-lg"
               aria-label="Mes anterior"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -266,7 +266,7 @@ export function RoutinesCalendarView({
             <button
               type="button"
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="text-text-muted hover:bg-surface-raised inline-flex h-11 w-11 items-center justify-center rounded-md"
+              className="text-text-muted hover:bg-surface-raised inline-flex h-7.5 w-7.5 items-center justify-center rounded-lg"
               aria-label="Mes siguiente"
             >
               <ChevronRight className="h-4 w-4" />

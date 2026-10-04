@@ -9,11 +9,16 @@ import {
   Input,
   Label,
   Modal,
+  ModalActions,
   Select,
   Skeleton,
   BackToDashboardLink,
 } from '../components/ui';
-import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
+import {
+  OperateHeader,
+  OperatePage,
+  OperateMetricStrip,
+} from '../components/operate/OperateChrome';
 import { PaymentDestinationHint } from '../components/payments/PaymentDestinationHint';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
@@ -59,10 +64,12 @@ export default function MemberPtBilling() {
   const { data: destinations } = useTrainerDestinationsForMemberQuery(trainerId, !!reporting);
   const { data: rateCtx } = useTrainerRateContextForMemberQuery(trainerId, !!reporting);
 
-  const pendingCount = useMemo(
-    () => invoices.filter((i) => i.status === 'pending').length,
-    [invoices]
-  );
+  const stats = useMemo(() => {
+    const pending = invoices.filter((i) => i.status === 'pending').length;
+    const confirmed = invoices.filter((i) => i.status === 'confirmed').length;
+    const total = invoices.reduce((acc, i) => acc + (Number(i.amount_usd) || 0), 0);
+    return { pending, confirmed, total };
+  }, [invoices]);
 
   const openReport = (inv: TrainerInvoice) => {
     setReporting(inv);
@@ -100,11 +107,15 @@ export default function MemberPtBilling() {
         action={<BackToDashboardLink iconOnly />}
       />
 
-      {pendingCount > 0 ? (
-        <p className="text-text-secondary text-xs">
-          {pendingCount} pendiente{pendingCount === 1 ? '' : 's'} · reporta el pago
-        </p>
-      ) : null}
+      {invoices.length > 0 && (
+        <OperateMetricStrip
+          items={[
+            { label: 'Pendientes', value: stats.pending },
+            { label: 'Confirmados', value: stats.confirmed },
+            { label: 'Total', value: `$${stats.total.toFixed(0)}` },
+          ]}
+        />
+      )}
 
       {isPending ? (
         <div className="space-y-2" aria-busy="true" aria-label="Cargando facturas de asesoría">
@@ -127,44 +138,53 @@ export default function MemberPtBilling() {
           }
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {invoices.map((inv) => (
-            <DataCard key={inv.id} className="!space-y-0">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <p className="text-text min-w-0 flex-1 truncate text-sm leading-tight font-semibold">
-                      {inv.title}
-                      {inv.trainer_name ? (
-                        <span className="text-text-muted font-medium"> · {inv.trainer_name}</span>
-                      ) : null}
-                    </p>
+            <DataCard key={inv.id} className="p-3.5 sm:p-4">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-text truncate text-sm font-semibold">{inv.title}</p>
+                    {inv.trainer_name ? (
+                      <span className="text-text-muted text-xs font-normal">
+                        {' '}
+                        · {inv.trainer_name}
+                      </span>
+                    ) : null}
                     <Badge
                       variant={statusVariant(inv.status)}
-                      className="text-small shrink-0 px-1.5 py-0"
+                      className="text-small shrink-0 px-2 py-0.5"
                     >
                       {statusLabel(inv.status)}
                     </Badge>
                   </div>
-                  <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
-                    <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
+                  <div className="text-small text-text-secondary flex flex-wrap items-center gap-2">
+                    <span className="text-brand text-base font-semibold tabular-nums">
+                      ${inv.amount_usd}
+                    </span>
                     {inv.reference ? (
                       <>
-                        <span className="text-text-muted mx-1.5">·</span>
-                        <span className="text-small font-mono">Ref. {inv.reference}</span>
+                        <span className="text-text-muted">·</span>
+                        <span className="text-text-muted font-mono text-xs">
+                          Ref. {inv.reference}
+                        </span>
                       </>
                     ) : null}
                     {inv.rejection_reason ? (
                       <>
-                        <span className="text-text-muted mx-1.5">·</span>
-                        <span>{inv.rejection_reason}</span>
+                        <span className="text-text-muted">·</span>
+                        <span className="text-danger">{inv.rejection_reason}</span>
                       </>
                     ) : null}
-                  </p>
+                  </div>
                 </div>
                 {inv.status === 'pending' ? (
-                  <Button size="sm" className="shrink-0" onClick={() => openReport(inv)}>
-                    {inv.reference ? 'Actualizar' : 'Reportar'}
+                  <Button
+                    size="sm"
+                    className="shrink-0 self-start sm:self-auto"
+                    onClick={() => openReport(inv)}
+                  >
+                    {inv.reference ? 'Actualizar pago' : 'Reportar pago'}
                   </Button>
                 ) : null}
               </div>
@@ -176,31 +196,24 @@ export default function MemberPtBilling() {
       <Modal
         open={!!reporting}
         onClose={() => setReporting(null)}
-        title={<>Reportar pago</>}
+        title="Reportar pago"
         maxWidth="lg"
         scrollable
         footer={
-          <>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="flex-1"
-              onClick={() => setReporting(null)}
-            >
+          <ModalActions>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setReporting(null)}>
               Cancelar
             </Button>
             <Button
               type="button"
               size="sm"
-              className="flex-1"
               onClick={() => void submitReport()}
               disabled={reference.trim().length < 1 || report.isPending}
               loading={report.isPending}
             >
-              Enviar
+              Enviar reporte
             </Button>
-          </>
+          </ModalActions>
         }
       >
         {reporting ? (
@@ -250,10 +263,17 @@ export default function MemberPtBilling() {
             </div>
             <div>
               <Label>Comprobante (opcional)</Label>
-              <label className="border-border hover:border-brand/40 flex cursor-pointer items-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm">
-                <Upload className="text-brand h-4 w-4 shrink-0" />
-                <span className="text-text-secondary truncate">
-                  {file ? file.name : 'Subir imagen o PDF'}
+              <label className="border-border/60 hover:border-brand/50 hover:bg-surface-raised/40 bg-surface-raised/20 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed px-3 py-4 text-center transition-all duration-150">
+                <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-full">
+                  <Upload className="h-4 w-4" />
+                </div>
+                <span className="text-text-secondary text-sm font-medium">
+                  {file ? file.name : 'Subir captura o comprobante (PDF o imagen)'}
+                </span>
+                <span className="text-text-muted text-xs">
+                  {file
+                    ? `${(file.size / 1024).toFixed(0)} KB · clic para cambiar`
+                    : 'PNG, JPG, PDF hasta 10MB'}
                 </span>
                 <input
                   type="file"

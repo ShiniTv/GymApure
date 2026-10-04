@@ -13,11 +13,11 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const sizes: Record<IconButtonSize, string> = {
   /** Compact — lists, toolbars densas (elegante, no oversized) */
-  sm: 'h-8 w-8 min-h-8 min-w-8 rounded-[var(--radius-button)]',
+  sm: 'h-7.5 w-7.5 min-h-[1.875rem] min-w-[1.875rem] rounded-lg',
   /** Default — acciones en cabeceras / modales */
-  md: 'h-9 w-9 min-h-9 min-w-9 rounded-[var(--radius-button)]',
-  /** Form-aligned — same optical height as Input / Select (--touch-min) */
-  lg: 'h-11 w-11 min-h-[var(--touch-min)] min-w-[var(--touch-min)] rounded-[var(--radius-button)]',
+  md: 'h-9 w-9 min-h-[2.25rem] min-w-[2.25rem] rounded-lg',
+  /** Form-aligned */
+  lg: 'h-10 w-10 min-h-10 min-w-10 rounded-lg',
 };
 
 const variants: Record<IconButtonVariant, string> = {

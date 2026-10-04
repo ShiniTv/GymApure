@@ -45,13 +45,18 @@ export function MemberMeasurementsPanel({
       : null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Scale className="text-brand h-4 w-4" />
-          <h3 className="text-text-muted text-xs font-bold tracking-wider uppercase">
-            Seguimiento Biométrico
-          </h3>
+        <div className="flex items-center gap-2.5">
+          <div className="bg-brand/10 text-brand border-brand/20 flex h-9 w-9 items-center justify-center rounded-xl border">
+            <Scale className="h-4.5 w-4.5" />
+          </div>
+          <div>
+            <h2 className="text-text text-base font-semibold tracking-tight">
+              Seguimiento Biométrico
+            </h2>
+            <p className="text-text-muted text-xs">Historial de peso y medidas corporales</p>
+          </div>
         </div>
 
         {canEdit && (
@@ -59,7 +64,7 @@ export function MemberMeasurementsPanel({
             type="button"
             size="sm"
             onClick={() => onAddingChange(true)}
-            className="gap-1.5 px-3 py-1 text-xs"
+            className="gap-1.5 px-3.5"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Registrar</span>
@@ -68,7 +73,7 @@ export function MemberMeasurementsPanel({
       </div>
 
       {measurements.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {measurements.map((measurement, index) => {
             const previous = measurements[index + 1];
             const weightDelta =
@@ -85,32 +90,34 @@ export function MemberMeasurementsPanel({
             return (
               <div
                 key={measurement.id}
-                className="border-border/70 bg-surface-raised/40 hover:bg-surface-raised/70 flex flex-col gap-1.5 rounded-xl border p-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                className="border-border/80 bg-surface hover:bg-surface-raised/50 flex flex-col gap-2 rounded-2xl border p-4 shadow-xs transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-text text-xs font-bold">
+                    <span className="text-text text-sm font-semibold">
                       {format(new Date(measurement.date), 'dd MMMM yyyy', { locale: es })}
                     </span>
                     {index === 0 && (
-                      <span className="bg-brand/10 py-0.2 text-brand rounded-md px-1.5 text-xs font-bold">
+                      <span className="bg-brand/10 border-brand/20 text-brand rounded-md border px-2 py-0.5 text-xs font-semibold">
                         Actual
                       </span>
                     )}
                   </div>
 
                   {perimeters.length > 0 && (
-                    <p className="text-text-muted mt-0.5 text-xs">{perimeters.join(' · ')}</p>
+                    <p className="text-text-muted mt-1 text-xs font-medium">
+                      {perimeters.join(' · ')}
+                    </p>
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
                   <div className="text-right">
-                    <p className="text-text text-sm font-bold tabular-nums">
+                    <p className="text-text text-base font-bold tabular-nums">
                       {measurement.weight != null ? `${measurement.weight} kg` : '—'}
                       {weightDelta != null && weightDelta !== 0 && (
                         <span
-                          className={`ml-1 text-xs font-semibold ${
+                          className={`ml-1.5 text-xs font-semibold ${
                             weightDelta < 0 ? 'text-success' : 'text-brand'
                           }`}
                         >
@@ -119,7 +126,7 @@ export function MemberMeasurementsPanel({
                       )}
                     </p>
                     {measurement.body_fat_percentage != null && (
-                      <p className="text-text-muted text-xs">
+                      <p className="text-text-muted mt-0.5 text-xs font-medium">
                         {measurement.body_fat_percentage}% grasa
                       </p>
                     )}
@@ -129,10 +136,10 @@ export function MemberMeasurementsPanel({
                     <button
                       type="button"
                       onClick={() => void onDelete(measurement.id)}
-                      className="text-text-muted hover:bg-danger/10 hover:text-danger flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                      className="text-text-muted hover:bg-danger/10 hover:text-danger flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                       title="Eliminar medición"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -141,17 +148,18 @@ export function MemberMeasurementsPanel({
           })}
         </div>
       ) : (
-        <div className="border-border/70 rounded-xl border border-dashed p-6 text-center">
-          <Scale className="text-text-muted mx-auto h-8 w-8" />
-          <p className="text-text mt-2 text-xs font-bold">Sin mediciones registradas</p>
-          <p className="text-text-muted mt-0.5 text-xs">
-            Registra el peso y medidas del socio para llevar un control evolutivo.
+        <div className="border-border/70 bg-surface flex flex-col items-center justify-center gap-2 rounded-xl border p-6 text-center shadow-2xs">
+          <Scale className="text-text-muted/50 mb-0.5 h-7 w-7" />
+          <p className="text-text text-xs font-semibold sm:text-sm">Sin mediciones registradas</p>
+          <p className="text-text-muted max-w-sm text-xs">
+            Registra el peso y medidas del socio para llevar un control evolutivo y comparar cambios
+            corporales.
           </p>
           {canEdit && (
             <Button
               type="button"
               size="sm"
-              className="mt-3 gap-1.5 px-3"
+              className="mt-2 h-8 gap-1.5 px-3.5 text-xs"
               onClick={() => onAddingChange(true)}
             >
               <Plus className="h-3.5 w-3.5" />

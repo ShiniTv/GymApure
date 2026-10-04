@@ -143,8 +143,8 @@ export default function AdminDashboard() {
   const equipmentAlertCount = equipmentOutOfService + equipmentInspectionsDue;
   const pendingOld = stats?.pendingPaymentsOlderThan2Days ?? 0;
   const pausedSubs = stats?.pausedSubscriptions ?? 0;
-  const chartExpanded = showRevenueChart || isDesktop;
-  const expiringExpanded = showExpiringList || isDesktop;
+  const chartExpanded = showRevenueChart;
+  const expiringExpanded = showExpiringList;
 
   return (
     <OperatePage>
@@ -605,9 +605,8 @@ export default function AdminDashboard() {
             <Card padding="sm" rounded="xl">
               <button
                 type="button"
-                className="flex w-full min-w-0 items-center gap-2 text-left lg:cursor-default"
+                className="flex w-full min-w-0 cursor-pointer items-center gap-2 text-left transition-opacity hover:opacity-90"
                 onClick={() => {
-                  if (isDesktop) return;
                   hapticLight();
                   setShowExpiringList((v) => !v);
                 }}
@@ -623,12 +622,11 @@ export default function AdminDashboard() {
                       : ''}
                   </p>
                 </div>
-                {!isDesktop &&
-                  (expiringExpanded ? (
-                    <ChevronUp className="text-text-muted h-4 w-4 shrink-0" />
-                  ) : (
-                    <ChevronDown className="text-text-muted h-4 w-4 shrink-0" />
-                  ))}
+                {expiringExpanded ? (
+                  <ChevronUp className="text-text-muted h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronDown className="text-text-muted h-4 w-4 shrink-0" />
+                )}
               </button>
 
               {!expiringExpanded && criticalItems.length > 0 && (
@@ -705,35 +703,33 @@ export default function AdminDashboard() {
           <Card padding="sm" rounded="xl">
             <div className="mb-2 flex items-center justify-between gap-2">
               <h3 className="text-text text-sm font-semibold">Flujo de ingresos</h3>
-              {!isDesktop && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="px-2.5"
-                  onClick={() => {
-                    hapticLight();
-                    setShowRevenueChart((v) => !v);
-                  }}
-                  aria-expanded={chartExpanded}
-                  aria-label={
-                    chartExpanded ? 'Ocultar gráfico de ingresos' : 'Ver gráfico de ingresos'
-                  }
-                  title={chartExpanded ? 'Ocultar' : 'Ver ingresos'}
-                >
-                  {chartExpanded ? (
-                    <>
-                      <ChevronUp className="h-4 w-4" />
-                      <span className="ml-1 hidden text-xs sm:inline">Ocultar</span>
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="h-4 w-4" />
-                      <span className="ml-1 hidden text-xs sm:inline">Ver</span>
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="px-2.5"
+                onClick={() => {
+                  hapticLight();
+                  setShowRevenueChart((v) => !v);
+                }}
+                aria-expanded={chartExpanded}
+                aria-label={
+                  chartExpanded ? 'Ocultar gráfico de ingresos' : 'Ver gráfico de ingresos'
+                }
+                title={chartExpanded ? 'Ocultar' : 'Ver ingresos'}
+              >
+                {chartExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    <span className="ml-1 hidden text-xs sm:inline">Ocultar</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    <span className="ml-1 hidden text-xs sm:inline">Ver</span>
+                  </>
+                )}
+              </Button>
             </div>
             {chartExpanded && (
               <div>

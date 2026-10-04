@@ -138,14 +138,18 @@ export function EquipmentInventorySection({
               <Button
                 variant="secondary"
                 size="md"
-                className="min-w-11 px-0"
+                className="w-9 px-0"
                 onClick={() => onOpenConfig()}
                 aria-label="Zonas y proveedores"
                 title="Zonas y proveedores"
               >
                 <Settings2 className="h-4 w-4" />
               </Button>
-              <Button onClick={() => onOpenAdd()} size="md" className="gap-1.5 px-2.5 sm:px-4">
+              <Button
+                onClick={() => onOpenAdd()}
+                size="md"
+                className="w-9 gap-1.5 px-0 sm:w-auto sm:px-3.5"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Añadir equipo</span>
                 <span className="sr-only sm:hidden">Añadir equipo</span>
@@ -261,7 +265,7 @@ export function EquipmentInventorySection({
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label="Buscar equipo, marca o modelo"
           />
-          <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-11 sm:justify-end">
+          <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-9 sm:justify-end">
             {allItems.length > 0 ? (
               <SegmentedControl
                 variant="compact"

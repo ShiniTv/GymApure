@@ -16,9 +16,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const paddingMap = {
   none: '',
-  sm: 'p-ds-3',
-  md: 'p-ds-3 sm:p-ds-4',
-  lg: 'p-ds-4 sm:p-ds-5',
+  sm: 'p-3',
+  md: 'p-3 sm:p-3.5',
+  lg: 'p-3.5 sm:p-4',
 };
 
 /** Window panels — hairline edge. Radius from `--radius-card`. */
@@ -28,16 +28,16 @@ const roundedMap = {
   '3xl': 'rounded-[var(--radius-card)]',
 };
 
-const surface = 'border border-border/60 bg-surface';
-const surfaceSoft = cn(surface, 'shadow-none');
+const surface = 'border border-border/60 bg-surface shadow-card';
+const surfaceSoft = surface;
 
 const variantMap = {
   default: surfaceSoft,
-  elevated: cn(surface, 'bg-surface-raised border-border/70'),
+  elevated: cn(surface, 'bg-surface-raised border-border/70 shadow-elevated'),
   interactive: cn(
     surfaceSoft,
-    'transition-[background-color,border-color,transform,opacity] duration-150',
-    'hover:bg-surface-raised/80 hover:border-border active:scale-[0.99] active:opacity-90'
+    'transition-[background-color,border-color,transform,box-shadow,opacity] duration-150',
+    'hover:bg-surface-raised/80 hover:border-border hover:shadow-elevated active:scale-[0.99] active:opacity-90'
   ),
   dashed: 'bg-surface border border-dashed border-border/70',
   /** Alias of default — kept for call-site compatibility */

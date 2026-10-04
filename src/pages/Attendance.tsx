@@ -174,7 +174,7 @@ export default function Attendance() {
             href={wa}
             target="_blank"
             rel="noopener noreferrer"
-            className="border-success/25 text-success hover:bg-success/10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-button)] border transition-colors"
+            className="border-success/25 text-success hover:bg-success/10 inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-[var(--radius-button)] border transition-colors"
             title="WhatsApp"
             aria-label={`WhatsApp a ${member.full_name}`}
           >

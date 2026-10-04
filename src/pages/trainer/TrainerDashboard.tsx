@@ -270,7 +270,7 @@ function TodayPanel({
                         <li key={`gym-${m.id}`} className="flex items-center gap-1">
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                            className="hover:text-brand text-text text-small flex min-h-8 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {checkIn ? (
@@ -283,7 +283,7 @@ function TodayPanel({
                           </Link>
                           <Link
                             to={`/messages?member=${m.id}`}
-                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg transition-colors"
                             aria-label={`Mensaje a ${m.full_name}`}
                             title={`Chat con ${m.full_name}`}
                           >
@@ -313,7 +313,7 @@ function TodayPanel({
                         <li key={`remote-${m.id}`} className="flex items-center gap-1">
                           <Link
                             to={`/members/${m.id}/routines`}
-                            className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                            className="hover:text-brand text-text text-small flex min-h-8 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1 font-medium lg:text-sm"
                           >
                             <span className="min-w-0 truncate">{m.full_name}</span>
                             {started ? (
@@ -324,7 +324,7 @@ function TodayPanel({
                           </Link>
                           <Link
                             to={`/messages?member=${m.id}`}
-                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                            className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg transition-colors"
                             aria-label={`Mensaje a ${m.full_name}`}
                             title={`Chat con ${m.full_name}`}
                           >
@@ -358,7 +358,7 @@ function TodayPanel({
                     <li key={m.id} className="flex items-center gap-1">
                       <Link
                         to={`/members/${m.id}/routines`}
-                        className="hover:text-brand text-text text-small flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1.5 font-medium lg:text-sm"
+                        className="hover:text-brand text-text text-small flex min-h-8 min-w-0 flex-1 items-center justify-between gap-2 rounded-md py-1 font-medium lg:text-sm"
                       >
                         <span className="min-w-0 truncate">{m.full_name}</span>
                         <span className="text-small text-warning shrink-0 font-semibold">
@@ -367,7 +367,7 @@ function TodayPanel({
                       </Link>
                       <Link
                         to={`/messages?member=${m.id}`}
-                        className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+                        className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg transition-colors"
                         aria-label={`Mensaje a ${m.full_name}`}
                       >
                         <MessageSquare className="h-3.5 w-3.5" />

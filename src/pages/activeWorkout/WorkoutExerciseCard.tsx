@@ -305,8 +305,8 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
                       enterKeyHint="next"
                       placeholder={priorSet ? String(priorSet.weight) : '0'}
                       className={cn(
-                        'min-h-10 text-center text-sm font-semibold tabular-nums sm:min-h-11 sm:text-base',
-                        !isCompleted ? 'px-6' : 'px-2'
+                        'h-9 text-center text-sm font-semibold tabular-nums',
+                        !isCompleted ? 'px-5' : 'px-2'
                       )}
                       value={logs[key]?.weight || ''}
                       onChange={(e) => onLogChange(setNum, 'weight', e.target.value)}
@@ -364,8 +364,8 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
                     enterKeyHint="done"
                     placeholder={priorSet ? String(priorSet.reps) : exercise.reps.toString()}
                     className={cn(
-                      'min-h-10 text-center text-sm font-semibold tabular-nums sm:min-h-11 sm:text-base',
-                      !isCompleted ? 'px-6' : 'px-2'
+                      'h-9 text-center text-sm font-semibold tabular-nums',
+                      !isCompleted ? 'px-5' : 'px-2'
                     )}
                     value={logs[key]?.reps || ''}
                     onChange={(e) => onLogChange(setNum, 'reps', e.target.value)}
@@ -410,7 +410,7 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
                       hapticLight();
                       onEditSet(setNum);
                     }}
-                    className="bg-brand/10 text-brand can-hover:hover:bg-brand/20 tap-feedback flex h-10 w-10 items-center justify-center rounded-xl transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 sm:h-11 sm:w-11"
+                    className="bg-brand/10 text-brand can-hover:hover:bg-brand/20 tap-feedback flex h-9 w-9 items-center justify-center rounded-lg transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95"
                     title="Editar serie"
                     aria-label={`Editar serie ${setNum}`}
                   >
@@ -423,10 +423,10 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
                       hapticSuccess();
                       onToggleSetComplete(setNum);
                     }}
-                    className="border-border/80 bg-surface-raised text-text-muted can-hover:hover:border-brand can-hover:hover:text-brand tap-feedback flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 sm:h-11 sm:w-11"
+                    className="border-border/80 bg-surface-raised text-text-muted can-hover:hover:border-brand can-hover:hover:text-brand tap-feedback flex h-9 w-9 items-center justify-center rounded-lg border-2 transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95"
                     aria-label={`Marcar serie ${setNum} como hecha`}
                   >
-                    <CheckCircle className="h-5 w-5" />
+                    <CheckCircle className="h-4 w-4" />
                   </button>
                 )}
               </div>

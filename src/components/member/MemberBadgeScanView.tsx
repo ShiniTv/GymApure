@@ -51,10 +51,10 @@ export function MemberBadgeScanView({ open, onClose, member }: MemberBadgeScanVi
       <button
         type="button"
         onClick={onClose}
-        className="bg-surface-raised text-text-secondary absolute top-4 right-4 inline-flex h-11 w-11 items-center justify-center rounded-full"
+        className="bg-surface-raised text-text-secondary hover:text-text absolute top-4 right-4 inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
         aria-label="Cerrar"
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4" />
       </button>
 
       <div className="flex w-full max-w-sm flex-col items-center text-center">

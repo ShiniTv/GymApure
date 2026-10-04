@@ -58,11 +58,11 @@ const variants: Record<ButtonVariant, string> = {
   ),
 };
 
-/** Padding + radius use `--radius-button` (8px); touch: md 44px / lg 48px / sm compact chrome */
+/** Padding + radius use `--radius-button` (8px); calibrated Apple/Linear scale */
 const sizes = {
-  sm: 'min-h-9 px-ds-3 py-ds-2 text-small rounded-button gap-1.5',
-  md: 'min-h-[var(--touch-min)] px-ds-4 py-ds-3 text-sm rounded-button',
-  lg: 'min-h-[var(--touch-comfort)] px-ds-5 py-ds-3 text-base rounded-button',
+  sm: 'h-7.5 px-2.5 text-xs rounded-button gap-1.5 font-medium',
+  md: 'h-9 px-3.5 text-xs sm:text-sm rounded-button gap-2 font-medium',
+  lg: 'h-10 px-4 text-sm rounded-button gap-2 font-medium',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

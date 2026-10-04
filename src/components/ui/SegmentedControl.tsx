@@ -152,7 +152,7 @@ export function SegmentedControl<T extends string>({
                   : cn(
                       isCompact
                         ? 'text-small min-h-8 rounded-md py-1.5 font-semibold'
-                        : 'min-h-[var(--touch-min)] rounded-md py-1.5 text-xs font-semibold',
+                        : 'min-h-[34px] rounded-md py-1.5 text-xs font-semibold sm:min-h-9',
                       !fullWidth && (isCompact ? 'px-2.5' : 'px-3'),
                       active
                         ? 'bg-surface text-text dark:bg-bg shadow-xs'

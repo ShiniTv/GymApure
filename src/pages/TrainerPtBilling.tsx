@@ -344,7 +344,7 @@ export default function TrainerPtBilling() {
           {filteredInvoices.map((inv) => (
             <div
               key={inv.id}
-              className="group border-border/60 flex min-h-[var(--touch-min)] items-center gap-3 border-b px-3 py-2.5 last:border-b-0"
+              className="group border-border/60 hover:bg-surface-raised/40 flex min-h-[var(--touch-min)] items-center gap-3.5 border-b px-3.5 py-3 transition-colors last:border-b-0 sm:px-4 sm:py-3.5"
             >
               <OperateIcon
                 icon={inv.status === 'confirmed' ? CheckCircle2 : inv.reference ? Check : Clock}
@@ -389,7 +389,7 @@ export default function TrainerPtBilling() {
                   <IconButton
                     size="md"
                     variant="secondary"
-                    className="border-success/30 text-success hover:bg-success/10 min-h-11 min-w-11"
+                    className="border-success/30 text-success hover:bg-success/10"
                     aria-label="Confirmar cobro"
                     title="Confirmar"
                     onClick={() =>
@@ -404,7 +404,6 @@ export default function TrainerPtBilling() {
                   <IconButton
                     size="md"
                     variant="danger"
-                    className="min-h-11 min-w-11"
                     aria-label="Rechazar cobro"
                     title="Rechazar"
                     onClick={() => {
@@ -420,7 +419,6 @@ export default function TrainerPtBilling() {
                 <IconButton
                   size="md"
                   variant="secondary"
-                  className="min-h-11 min-w-11"
                   aria-label="Cancelar cobro"
                   title="Cancelar"
                   onClick={() =>
@@ -442,7 +440,7 @@ export default function TrainerPtBilling() {
         <button
           type="button"
           onClick={() => setConfigOpen((o) => !o)}
-          className="tap-feedback text-text hover:bg-surface-overlay group flex min-h-12 w-full items-center gap-3 px-3.5 py-3 text-left transition-colors sm:px-4"
+          className="tap-feedback text-text hover:bg-surface-overlay group flex min-h-10 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors sm:px-4"
           aria-expanded={configOpen}
         >
           <OperateIcon icon={Settings2} tone="neutral" well size="md" />

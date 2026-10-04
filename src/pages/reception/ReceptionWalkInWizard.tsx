@@ -432,7 +432,6 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, full_name: e.target.value });
               }}
               placeholder="Ej: Juan Pérez"
-              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -442,7 +441,7 @@ export default function ReceptionWalkInWizard({
               onChange={(value) => {
                 setForm({ ...form, cedula: value });
               }}
-              className="min-h-11 text-base font-semibold tracking-wider"
+              className="font-semibold tracking-wider"
             />
           </div>
           <div>
@@ -454,7 +453,6 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, email: e.target.value });
               }}
               placeholder="juan@ejemplo.com"
-              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -467,7 +465,6 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, phone: e.target.value });
               }}
               placeholder="0414-0000000"
-              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -543,7 +540,7 @@ export default function ReceptionWalkInWizard({
               onChange={(e) => {
                 setForm({ ...form, method: e.target.value });
               }}
-              className="min-h-11 w-full text-base"
+              className="w-full"
             >
               {PAYMENT_METHODS.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -560,7 +557,6 @@ export default function ReceptionWalkInWizard({
                 setForm({ ...form, reference: e.target.value });
               }}
               placeholder="Nº de referencia o nota"
-              className="min-h-11 text-base"
             />
           </div>
           <div>
@@ -597,7 +593,7 @@ export default function ReceptionWalkInWizard({
               </p>
             )}
           </div>
-          <label className="border-border flex min-h-11 cursor-pointer touch-manipulation items-center gap-3 rounded-[var(--radius-card)] border p-4">
+          <label className="border-border flex cursor-pointer touch-manipulation items-center gap-3 rounded-[var(--radius-card)] border p-3">
             <input
               type="checkbox"
               checked={form.check_in}

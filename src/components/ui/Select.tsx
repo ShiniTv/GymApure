@@ -23,7 +23,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           aria-describedby={error ? errorId : undefined}
           className={cn(
             fieldClassName,
-            'bg-surface text-text cursor-pointer appearance-none pr-9',
+            'text-text cursor-pointer appearance-none pr-9',
             error && 'border-danger focus:border-danger focus:ring-danger/25',
             className
           )}

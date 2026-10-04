@@ -136,14 +136,14 @@ export function ReceptionRenewPayWizard({
             onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && void findMembers()}
             placeholder="Cédula o nombre"
-            className="min-h-11"
+            className="h-9"
           />
           <Button
             variant="secondary"
             onClick={() => void findMembers()}
             loading={loadingSearch}
             disabled={!search.trim()}
-            className="h-11 w-11 shrink-0 px-0"
+            className="h-9 w-9 shrink-0 px-0"
             aria-label="Buscar socio"
           >
             <Search className="h-4 w-4" />

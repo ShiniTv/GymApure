@@ -201,7 +201,7 @@ export function ReceptionGuestPasses() {
                     value={hostSearch}
                     onChange={(e) => setHostSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && void findHost()}
-                    className="min-h-11"
+                    className="h-9"
                     placeholder="Opcional · cédula o nombre del socio"
                   />
                   <Button
@@ -210,7 +210,7 @@ export function ReceptionGuestPasses() {
                     onClick={() => void findHost()}
                     loading={searchingHost}
                     disabled={!hostSearch.trim()}
-                    className="h-11 w-11 shrink-0 px-0"
+                    className="h-9 w-9 shrink-0 px-0"
                     aria-label="Buscar anfitrión"
                   >
                     <Search className="h-4 w-4" />

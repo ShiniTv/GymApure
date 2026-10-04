@@ -326,7 +326,7 @@ export default function ExerciseRecords() {
                   key={row.exercise_id}
                   type="button"
                   onClick={() => void openDetail(row.exercise_id)}
-                  className="tap-feedback hover:bg-surface-raised flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors"
+                  className="tap-feedback hover:bg-surface-raised/80 flex w-full flex-col gap-2.5 px-4 py-3.5 text-left transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -335,25 +335,28 @@ export default function ExerciseRecords() {
                         <p className="text-text-muted text-small capitalize">{row.muscle_group}</p>
                       )}
                     </div>
-                    <Badge variant="default" className="text-small shrink-0 px-1.5 py-0">
+                    <Badge
+                      variant="default"
+                      className="text-small shrink-0 px-2 py-0.5 font-medium"
+                    >
                       {row.session_count} ses.
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-surface-raised/40 grid grid-cols-3 gap-2 rounded-lg p-2 text-center">
                     <div>
-                      <p className="text-text text-sm font-bold tabular-nums">
+                      <p className="text-text text-base font-semibold tracking-tight tabular-nums">
                         {formatKg(row.max_weight_kg)}
                       </p>
                       <p className="text-text-muted text-small">Peso máx.</p>
                     </div>
                     <div>
-                      <p className="text-brand text-sm font-bold tabular-nums">
+                      <p className="text-brand text-base font-semibold tracking-tight tabular-nums">
                         {formatKg(row.estimated_1rm_kg)}
                       </p>
                       <p className="text-text-muted text-small">1RM est.</p>
                     </div>
                     <div>
-                      <p className="text-text text-sm font-bold tabular-nums">
+                      <p className="text-text text-base font-semibold tracking-tight tabular-nums">
                         {row.best_set ? `${row.best_set.reps}` : '—'}
                       </p>
                       <p className="text-text-muted text-small">Reps mejor</p>
@@ -366,47 +369,61 @@ export default function ExerciseRecords() {
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-border-subtle text-text-muted text-small border-b">
-                    <th className="px-4 py-2.5 font-medium">Ejercicio</th>
-                    <th className="px-4 py-2.5 font-medium">Grupo</th>
-                    <th className="px-4 py-2.5 font-medium">Peso máx.</th>
-                    <th className="px-4 py-2.5 font-medium">Mejor serie</th>
-                    <th className="px-4 py-2.5 font-medium">1RM est.</th>
-                    <th className="px-4 py-2.5 font-medium">Última vez</th>
-                    <th className="px-4 py-2.5 font-medium">Sesiones</th>
+                  <tr className="border-border/60 bg-surface-raised/60 text-text-muted text-small border-b backdrop-blur-sm">
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Ejercicio
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Grupo
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Peso máx.
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Mejor serie
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      1RM est.
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Última vez
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold tracking-wider uppercase">
+                      Sesiones
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-border-subtle divide-y">
+                <tbody className="divide-border/50 divide-y">
                   {filteredRecords.map((row) => (
                     <tr
                       key={row.exercise_id}
-                      className="hover:bg-surface-raised cursor-pointer transition-colors"
+                      className="hover:bg-surface-raised/60 even:bg-surface-raised/15 cursor-pointer transition-colors"
                       onClick={() => void openDetail(row.exercise_id)}
                     >
-                      <td className="text-text px-4 py-2.5 font-medium">{row.name}</td>
-                      <td className="text-text-muted px-4 py-2.5 text-xs capitalize">
+                      <td className="text-text px-4 py-3.5 font-medium">{row.name}</td>
+                      <td className="text-text-muted px-4 py-3.5 text-xs capitalize">
                         {row.muscle_group || '—'}
                       </td>
-                      <td className="px-4 py-2.5 tabular-nums">
-                        {formatKg(row.max_weight_kg)} kg
+                      <td className="px-4 py-3.5 tabular-nums">
+                        <span className="font-semibold">{formatKg(row.max_weight_kg)} kg</span>
                         {row.max_weight_reps > 0 && (
-                          <span className="text-text-muted"> × {row.max_weight_reps}</span>
+                          <span className="text-text-muted text-xs"> × {row.max_weight_reps}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 tabular-nums">
+                      <td className="text-text-secondary px-4 py-3.5 tabular-nums">
                         {row.best_set
                           ? `${formatKg(row.best_set.weight)} kg × ${row.best_set.reps}`
                           : '—'}
                       </td>
-                      <td className="text-brand px-4 py-2.5 font-semibold tabular-nums">
+                      <td className="text-brand px-4 py-3.5 font-semibold tabular-nums">
                         {formatKg(row.estimated_1rm_kg)} kg
                       </td>
-                      <td className="text-text-muted px-4 py-2.5 text-xs tabular-nums">
+                      <td className="text-text-muted px-4 py-3.5 text-xs tabular-nums">
                         {row.last_performed
                           ? format(parseISO(row.last_performed), 'dd MMM yyyy', { locale: es })
                           : '—'}
                       </td>
-                      <td className="text-text-secondary px-4 py-2.5 tabular-nums">
+                      <td className="text-text-secondary px-4 py-3.5 tabular-nums">
                         {row.session_count}
                       </td>
                     </tr>
@@ -451,30 +468,32 @@ export default function ExerciseRecords() {
           </div>
         ) : detail ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
-                <p className={cn(typography.statValueSm)}>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <div className="border-border/60 bg-surface shadow-card light-catch rounded-[var(--radius-card)] border px-3.5 py-3 text-center">
+                <p className={cn(typography.statValue, 'text-text')}>
                   {formatKg(detail.summary.max_weight_kg)} kg
                 </p>
-                <p className={cn(typography.small, 'mt-0.5')}>Peso máximo</p>
+                <p className={cn(typography.small, 'mt-1')}>Peso máximo</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
-                <p className={cn(typography.statValueSm, 'text-brand')}>
+              <div className="border-border/60 bg-surface shadow-card light-catch rounded-[var(--radius-card)] border px-3.5 py-3 text-center">
+                <p className={cn(typography.statValue, 'text-brand')}>
                   {formatKg(detail.summary.estimated_1rm_kg)} kg
                 </p>
-                <p className={cn(typography.small, 'mt-0.5')}>1RM estimado</p>
+                <p className={cn(typography.small, 'mt-1')}>1RM estimado</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
-                <p className={cn(typography.statValueSm)}>
+              <div className="border-border/60 bg-surface shadow-card light-catch rounded-[var(--radius-card)] border px-3.5 py-3 text-center">
+                <p className={cn(typography.statValue, 'text-text')}>
                   {detail.summary.best_set
                     ? `${formatKg(detail.summary.best_set.weight)}×${detail.summary.best_set.reps}`
                     : '—'}
                 </p>
-                <p className={cn(typography.small, 'mt-0.5')}>Mejor serie</p>
+                <p className={cn(typography.small, 'mt-1')}>Mejor serie</p>
               </div>
-              <div className="border-border-subtle bg-surface-raised rounded-[var(--radius-card)] border px-3 py-2 text-center">
-                <p className={cn(typography.statValueSm)}>{detail.summary.session_count}</p>
-                <p className={cn(typography.small, 'mt-0.5')}>Sesiones</p>
+              <div className="border-border/60 bg-surface shadow-card light-catch rounded-[var(--radius-card)] border px-3.5 py-3 text-center">
+                <p className={cn(typography.statValue, 'text-text')}>
+                  {detail.summary.session_count}
+                </p>
+                <p className={cn(typography.small, 'mt-1')}>Sesiones</p>
               </div>
             </div>
 
@@ -495,28 +514,39 @@ export default function ExerciseRecords() {
             {detail.reps_at_weight.length > 0 && (
               <div>
                 <h3 className="section-title mb-2">Repeticiones máximas por carga</h3>
-                <div className="border-border-subtle overflow-x-auto rounded-lg border">
+                <div className="border-border/60 bg-surface shadow-card light-catch overflow-x-auto rounded-[var(--radius-card)] border">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-border-subtle bg-surface-raised text-text-muted text-small border-b">
-                        <th className="px-3 py-2 font-medium">Peso</th>
-                        <th className="px-3 py-2 font-medium">Máx. reps</th>
-                        <th className="px-3 py-2 font-medium">1RM est.</th>
-                        <th className="px-3 py-2 font-medium">Origen</th>
+                      <tr className="border-border/60 bg-surface-raised/60 text-text-muted text-small border-b">
+                        <th className="text-small px-3.5 py-2.5 font-semibold tracking-wider uppercase">
+                          Peso
+                        </th>
+                        <th className="text-small px-3.5 py-2.5 font-semibold tracking-wider uppercase">
+                          Máx. reps
+                        </th>
+                        <th className="text-small px-3.5 py-2.5 font-semibold tracking-wider uppercase">
+                          1RM est.
+                        </th>
+                        <th className="text-small px-3.5 py-2.5 font-semibold tracking-wider uppercase">
+                          Origen
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-border-subtle divide-y">
+                    <tbody className="divide-border/50 divide-y">
                       {detail.reps_at_weight.map((row) => (
-                        <tr key={row.weight_kg} className="text-text-secondary">
-                          <td className="px-3 py-1.5 font-medium tabular-nums">
+                        <tr
+                          key={row.weight_kg}
+                          className="text-text-secondary hover:bg-surface-raised/40 even:bg-surface-raised/15 transition-colors"
+                        >
+                          <td className="text-text px-3.5 py-2 font-medium tabular-nums">
                             {formatKg(row.weight_kg)} kg
                           </td>
-                          <td className="px-3 py-1.5 tabular-nums">{row.max_reps}</td>
-                          <td className="px-3 py-1.5 tabular-nums">
+                          <td className="px-3.5 py-2 tabular-nums">{row.max_reps}</td>
+                          <td className="text-brand px-3.5 py-2 font-semibold tabular-nums">
                             {formatKg(row.estimated_1rm_kg)} kg
                           </td>
-                          <td className="px-3 py-1.5">
-                            <Badge variant="default" className="text-small px-1.5 py-0">
+                          <td className="px-3.5 py-2">
+                            <Badge variant="default" className="text-small px-2 py-0.5">
                               {row.source === 'both'
                                 ? 'Log + manual'
                                 : row.source === 'manual'

@@ -122,7 +122,7 @@ export function MemberRoutinesList({
                 isExpanded && 'bg-surface-raised/40'
               )}
             >
-              <div className="flex min-h-12 touch-manipulation items-center gap-2.5 px-3 py-2.5 sm:min-h-[3.25rem]">
+              <div className="flex min-h-10 touch-manipulation items-center gap-2.5 px-3 py-2 sm:min-h-11">
                 <button
                   type="button"
                   onClick={() => onToggleExpand(routine.id)}
@@ -324,7 +324,7 @@ export function MemberRoutinesList({
           <button
             type="button"
             onClick={onAssignRoutine}
-            className="tap-feedback border-border/70 hover:bg-surface-raised/70 text-text flex min-h-11 w-full items-center gap-2.5 border-t px-3 py-2.5 text-left transition-colors"
+            className="tap-feedback border-border/70 hover:bg-surface-raised/70 text-text flex min-h-9 w-full items-center gap-2.5 border-t px-3 py-2 text-left transition-colors"
           >
             <OperateIcon icon={Plus} tone="brand" well size="sm" />
             <span className="min-w-0 flex-1">

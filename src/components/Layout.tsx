@@ -525,7 +525,10 @@ export default function Layout() {
               isAdminMobileShell && 'admin-main-pad'
             )}
           >
-            <div key={location.pathname} className="animate-page-enter mx-auto max-w-7xl min-w-0">
+            <div
+              key={location.pathname}
+              className="animate-page-enter mx-auto w-full max-w-7xl min-w-0 2xl:max-w-[1536px]"
+            >
               <Outlet />
             </div>
           </main>

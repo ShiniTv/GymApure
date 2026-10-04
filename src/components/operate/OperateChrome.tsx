@@ -88,9 +88,11 @@ export function OperateSection({
   className?: string;
 }) {
   return (
-    <section className={cn('space-y-2', className)}>
-      <div className="flex min-h-8 items-center justify-between gap-3">
-        <h2 className="text-text text-sm font-semibold tracking-[-0.01em]">{title}</h2>
+    <section className={cn('space-y-1.5', className)}>
+      <div className="flex min-h-7 items-center justify-between gap-3">
+        <h2 className="text-text text-xs font-semibold tracking-[0.01em] uppercase opacity-60">
+          {title}
+        </h2>
         {action}
       </div>
       {children}
@@ -215,28 +217,27 @@ export function OperateMetricStrip({
 }) {
   return (
     <div
-      className={cn(
-        'grid divide-x divide-[color:var(--color-border)] overflow-hidden rounded-[var(--radius-card)] border',
-        SURFACE
-      )}
+      className="divide-border/60 border-border/70 bg-surface/90 grid divide-x overflow-hidden rounded-xl border shadow-2xs"
       style={{ gridTemplateColumns: `repeat(${Math.max(items.length, 1)}, minmax(0, 1fr))` }}
     >
       {items.map((item) => {
         const body = (
           <>
             {item.icon ? (
-              <OperateIcon icon={item.icon} tone="brand" size="sm" className="mb-0.5" />
+              <OperateIcon icon={item.icon} tone="brand" size="sm" className="mb-0.5 h-3.5 w-3.5" />
             ) : null}
             {loading ? (
-              <Skeleton className="h-5 w-8" />
+              <Skeleton className="h-4.5 w-10 rounded-md" />
             ) : (
-              <span className={typography.statValueSm}>{item.value}</span>
+              <span className="text-text font-sans text-sm leading-snug font-bold tracking-tight tabular-nums sm:text-base">
+                {item.value}
+              </span>
             )}
-            <span className={typography.statLabel}>{item.label}</span>
+            <span className="text-text-muted text-[0.6875rem] font-medium">{item.label}</span>
           </>
         );
         const cellClass =
-          'tap-feedback group hover:bg-surface-raised/60 flex min-h-[var(--touch-min)] flex-col items-center justify-center gap-0.5 px-1.5 py-2 transition-colors sm:min-h-[3.25rem]';
+          'tap-feedback group hover:bg-surface-raised/60 flex flex-col items-center justify-center gap-0 px-2 py-2 sm:py-2.5 transition-colors min-h-[3.25rem]';
 
         if (item.to) {
           return (
@@ -288,7 +289,7 @@ export function OperateEmpty({
   return (
     <div
       className={cn(
-        'flex flex-col items-start gap-3 rounded-[var(--radius-card)] border px-4 py-5 sm:flex-row sm:items-center sm:justify-between',
+        'flex flex-col items-start gap-2.5 rounded-[var(--radius-card)] border px-3.5 py-3.5 sm:flex-row sm:items-center sm:justify-between',
         SURFACE
       )}
     >

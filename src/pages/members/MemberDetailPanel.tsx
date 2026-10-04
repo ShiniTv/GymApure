@@ -97,7 +97,7 @@ export function MemberDetailPanel({
             <button
               type="button"
               onClick={onClose}
-              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition-colors"
+              className="text-text-muted hover:bg-surface-overlay hover:text-text inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors"
               aria-label="Cerrar ficha"
             >
               <X className="h-4 w-4" aria-hidden />
@@ -126,7 +126,7 @@ export function MemberDetailPanel({
           <div
             key={row.label}
             className={cn(
-              'flex min-h-11 items-center justify-between gap-3 px-3 py-2',
+              'flex min-h-9 items-center justify-between gap-3 px-3 py-1.5',
               index > 0 && 'border-border/60 border-t'
             )}
           >
@@ -180,7 +180,7 @@ export function MemberDetailPanel({
               key={action.key}
               type="button"
               onClick={() => run(action)}
-              className="text-danger dark:text-danger tap-feedback hover:bg-danger/10 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-medium transition-colors"
+              className="text-danger dark:text-danger tap-feedback hover:bg-danger/10 flex h-9 w-full items-center justify-center gap-2 rounded-lg py-1.5 text-sm font-medium transition-colors"
             >
               <OperateIcon icon={action.icon} tone="danger" size="sm" />
               {action.label}

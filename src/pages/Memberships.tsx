@@ -135,11 +135,11 @@ export default function Memberships() {
             <BackToDashboardLink />
             <Button
               size="md"
-              className="w-11 shrink-0 rounded-xl p-0 whitespace-nowrap sm:w-auto sm:px-4"
+              className="w-9 shrink-0 p-0 whitespace-nowrap sm:w-auto sm:px-3"
               onClick={openCreate}
               aria-label="Nuevo plan"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Nuevo plan</span>
             </Button>
           </>
