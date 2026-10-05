@@ -19,25 +19,32 @@ interface ExerciseLibraryViewProps {
   videoOnly?: boolean;
   skipClientFilter?: boolean;
   layoutView?: ExerciseLayoutView;
+  selectedExerciseId?: number | null;
+  onSelectExercise?: (id: number) => void;
   onEdit?: (exercise: Exercise) => void;
   onDelete?: (exercise: Exercise) => void;
   onCreate?: () => void;
   onClearFilters?: () => void;
+  columnsClassName?: string;
 }
 
 function ExerciseCardGrid({
   items,
   hideMuscle,
   readOnly,
+  selectedExerciseId,
   onOpen,
+  columnsClassName = 'grid min-w-0 gap-2.5 sm:grid-cols-2 sm:gap-3',
 }: {
   items: Exercise[];
   hideMuscle: boolean;
   readOnly: boolean;
+  selectedExerciseId?: number | null;
   onOpen: (id: number) => void;
+  columnsClassName?: string;
 }) {
   return (
-    <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+    <div className={columnsClassName}>
       {items.map((exercise) => (
         <ExerciseListCard
           key={exercise.id}
@@ -45,6 +52,7 @@ function ExerciseCardGrid({
           onOpen={onOpen}
           hideMuscle={hideMuscle}
           readOnly={readOnly}
+          isSelected={selectedExerciseId === exercise.id}
         />
       ))}
     </div>
@@ -59,10 +67,13 @@ export function ExerciseLibraryView({
   videoOnly = false,
   skipClientFilter = false,
   layoutView = 'flat',
+  selectedExerciseId = null,
+  onSelectExercise,
   onEdit,
   onDelete,
   onCreate,
   onClearFilters,
+  columnsClassName,
 }: ExerciseLibraryViewProps) {
   const [detailId, setDetailId] = useState<number | null>(null);
   const filteredExercises = skipClientFilter
@@ -114,6 +125,13 @@ export function ExerciseLibraryView({
     );
   }
 
+  const handleOpenExercise = (id: number) => {
+    onSelectExercise?.(id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setDetailId(id);
+    }
+  };
+
   return (
     <>
       {layoutView === 'groups' ? (
@@ -130,7 +148,9 @@ export function ExerciseLibraryView({
                 items={group.items}
                 hideMuscle
                 readOnly={readOnly}
-                onOpen={setDetailId}
+                selectedExerciseId={selectedExerciseId}
+                onOpen={handleOpenExercise}
+                columnsClassName={columnsClassName}
               />
             </section>
           ))}
@@ -145,9 +165,10 @@ export function ExerciseLibraryView({
             <div className="pb-2 sm:pr-1">
               <ExerciseListCard
                 exercise={exercise}
-                onOpen={setDetailId}
+                onOpen={handleOpenExercise}
                 hideMuscle={hideMuscle}
                 readOnly={readOnly}
+                isSelected={selectedExerciseId === exercise.id}
               />
             </div>
           )}
@@ -157,7 +178,9 @@ export function ExerciseLibraryView({
           items={filteredExercises}
           hideMuscle={hideMuscle}
           readOnly={readOnly}
-          onOpen={setDetailId}
+          selectedExerciseId={selectedExerciseId}
+          onOpen={handleOpenExercise}
+          columnsClassName={columnsClassName}
         />
       )}
 

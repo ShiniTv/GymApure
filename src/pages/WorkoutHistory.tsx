@@ -731,11 +731,18 @@ export default function WorkoutHistory() {
                 <ListRowSkeleton rows={4} />
               ) : (
                 filteredHistory.map((session) => (
-                  <button
+                  <div
                     key={session.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => void openSessionDetail(session.id)}
-                    className="tap-feedback content-visibility-auto bg-surface hover:bg-surface-raised relative w-full px-3 py-2.5 pl-8 text-left transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        void openSessionDetail(session.id);
+                      }
+                    }}
+                    className="tap-feedback content-visibility-auto bg-surface hover:bg-surface-raised relative w-full cursor-pointer px-3 py-2.5 pl-8 text-left transition-colors"
                   >
                     <span
                       className="bg-brand ring-brand/15 absolute top-4 left-3 h-2.5 w-2.5 rounded-full ring-4"
@@ -790,7 +797,7 @@ export default function WorkoutHistory() {
                         </button>
                       )}
                     </div>
-                  </button>
+                  </div>
                 ))
               )}
             </div>

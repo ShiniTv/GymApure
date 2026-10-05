@@ -1,16 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
-import {
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Clock,
-  Landmark,
-  Plus,
-  Save,
-  Settings2,
-  X,
-} from 'lucide-react';
+import { Check, CheckCircle2, Clock, Landmark, Plus, Settings2, X } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -20,6 +10,7 @@ import {
   Input,
   Label,
   Modal,
+  SearchInput,
   Select,
   Spinner,
 } from '../components/ui';
@@ -28,19 +19,19 @@ import {
   OperateEmpty,
   OperateHeader,
   OperateIcon,
-  OperateList,
   OperateMetricStrip,
   OperatePage,
-  OPERATE_SURFACE,
 } from '../components/operate/OperateChrome';
+import {
+  TrainerPtBillingInspector,
+  type InspectorTab,
+} from '../components/trainer/TrainerPtBillingInspector';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useToastOptional } from '../context/ToastContext';
 import { toDisplayErrorMessage } from '../lib/api';
 import { cn } from '../lib/utils';
 import {
   defaultPaymentDestinations,
-  DEFAULT_USD_DENOMINATIONS,
-  PAYMENT_METHOD_LABELS,
   type PaymentDestinations,
 } from '../lib/paymentDestinationsCore';
 import {
@@ -59,9 +50,7 @@ import {
   type TrainerInvoice,
 } from '../hooks/queries/useTrainerBillingQuery';
 
-const SURFACE = OPERATE_SURFACE + ' rounded-[var(--radius-card)]';
-
-type InvoiceFilter = 'all' | 'awaiting' | 'confirm' | 'done';
+type InvoiceFilter = 'all' | 'confirm' | 'awaiting' | 'done';
 
 function hasEnabledDestination(dest: PaymentDestinations): boolean {
   return (
@@ -109,6 +98,11 @@ export default function TrainerPtBilling() {
   const rejectInv = useRejectTrainerInvoiceMutation();
   const cancelInv = useCancelTrainerInvoiceMutation();
 
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>('invoice');
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [memberId, setMemberId] = useState('');
   const [title, setTitle] = useState('Sesión personalizada');
   const [amount, setAmount] = useState('');
@@ -121,8 +115,6 @@ export default function TrainerPtBilling() {
   const [euroNote, setEuroNote] = useState('');
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [destOpen, setDestOpen] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
   const [chargeOpen, setChargeOpen] = useState(false);
   const [destWizardOpen, setDestWizardOpen] = useState(false);
   const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>('confirm');
@@ -132,7 +124,17 @@ export default function TrainerPtBilling() {
   const awaitingConfirm = pendingInvoices.filter((invoice) => Boolean(invoice.reference));
   const activeOffers = offers.filter((offer) => offer.active);
   const destReady = hasEnabledDestination(destForm);
-  const doneCount = invoices.filter((inv) => matchesFilter(inv, 'done')).length;
+  const doneInvoices = invoices.filter((inv) => matchesFilter(inv, 'done'));
+
+  const totalEarnedUsd = useMemo(() => {
+    return invoices
+      .filter((inv) => inv.status === 'confirmed')
+      .reduce((sum, inv) => sum + (Number(inv.amount_usd) || 0), 0);
+  }, [invoices]);
+
+  const totalPendingUsd = useMemo(() => {
+    return pendingInvoices.reduce((sum, inv) => sum + (Number(inv.amount_usd) || 0), 0);
+  }, [pendingInvoices]);
 
   useEffect(() => {
     if (loadingInvoices) return;
@@ -146,9 +148,35 @@ export default function TrainerPtBilling() {
     });
   }, [loadingInvoices, awaitingConfirm.length, awaitingPay.length]);
 
-  const filteredInvoices = useMemo(
-    () => invoices.filter((inv) => matchesFilter(inv, invoiceFilter)),
-    [invoices, invoiceFilter]
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      const matchFilter = matchesFilter(inv, invoiceFilter);
+      if (!matchFilter) return false;
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        inv.member_name.toLowerCase().includes(q) ||
+        inv.title.toLowerCase().includes(q) ||
+        (inv.reference && inv.reference.toLowerCase().includes(q))
+      );
+    });
+  }, [invoices, invoiceFilter, searchTerm]);
+
+  // Auto-select first invoice when list changes if none selected or if selected is no longer in filter
+  useEffect(() => {
+    if (filteredInvoices.length > 0) {
+      const exists = filteredInvoices.some((inv) => inv.id === selectedInvoiceId);
+      if (!exists && selectedInvoiceId !== null) {
+        setSelectedInvoiceId(filteredInvoices[0].id);
+      } else if (selectedInvoiceId === null) {
+        setSelectedInvoiceId(filteredInvoices[0].id);
+      }
+    }
+  }, [filteredInvoices, selectedInvoiceId]);
+
+  const selectedInvoice = useMemo(
+    () => invoices.find((inv) => inv.id === selectedInvoiceId) ?? null,
+    [invoices, selectedInvoiceId]
   );
 
   useEffect(() => {
@@ -175,7 +203,7 @@ export default function TrainerPtBilling() {
 
   const onCreateInvoice = async () => {
     try {
-      await createInvoice.mutateAsync({
+      const res = await createInvoice.mutateAsync({
         member_id: Number(memberId),
         title: title.trim() || 'Cobro PT',
         amount_usd: Number(amount),
@@ -185,6 +213,9 @@ export default function TrainerPtBilling() {
       setAmount('');
       setChargeOpen(false);
       setInvoiceFilter('awaiting');
+      if (res && typeof res === 'object' && 'id' in res) {
+        setSelectedInvoiceId((res as { id: number }).id);
+      }
     } catch (err) {
       toast?.error(toDisplayErrorMessage(err));
     }
@@ -197,8 +228,9 @@ export default function TrainerPtBilling() {
         price_usd: Number(offerPrice),
         billing_unit: 'session',
       });
-      toast?.success('Guardaste la tarifa');
+      toast?.success('Tarifa guardada con éxito');
       setOfferPrice('');
+      setOfferTitle('');
     } catch (err) {
       toast?.error(toDisplayErrorMessage(err));
     }
@@ -206,13 +238,34 @@ export default function TrainerPtBilling() {
 
   const onSaveDest = () => {
     void updateDest.mutateAsync(destForm).then(
-      () => toast?.success('Guardaste los datos de cobro PT'),
+      () => toast?.success('Guardaste tus cuentas de cobro'),
       (err) => toast?.error(toDisplayErrorMessage(err))
     );
   };
 
+  const onSaveRate = () => {
+    void updateRate
+      .mutateAsync({
+        rate_preference: ratePref,
+        euro_rate: ratePref === 'euro' ? Number(euroRate) : null,
+        euro_rate_note: euroNote,
+      })
+      .then(
+        () => toast?.success('Preferencia de tasa actualizada'),
+        (err) => toast?.error(toDisplayErrorMessage(err))
+      );
+  };
+
+  const handleSelectInvoice = (inv: TrainerInvoice) => {
+    setSelectedInvoiceId(inv.id);
+    setInspectorTab('invoice');
+    if (window.innerWidth < 1024) {
+      setMobileDetailOpen(true);
+    }
+  };
+
   return (
-    <OperatePage maxWidth="max-w-5xl">
+    <OperatePage maxWidth="max-w-7xl">
       <OperateHeader
         icon={Landmark}
         title={
@@ -222,10 +275,10 @@ export default function TrainerPtBilling() {
         }
         subtitle={
           loadingInvoices
-            ? 'Cargando cola…'
+            ? 'Cargando registros de asesoría…'
             : awaitingConfirm.length > 0
-              ? `${awaitingConfirm.length} por confirmar`
-              : 'Pendientes, confirmaciones y datos de cobro'
+              ? `${awaitingConfirm.length} cobro(s) con pago reportado por verificar`
+              : 'Gestión de cobros 1:1, verificación de pagos, tarifas y cuentas'
         }
         action={
           <>
@@ -233,645 +286,422 @@ export default function TrainerPtBilling() {
             <span className="hidden sm:inline-flex">
               <BackToDashboardLink />
             </span>
-            <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
+            <Button
+              size="md"
+              className="shadow-brand/20 gap-1.5 shadow-md"
+              onClick={() => setChargeOpen(true)}
+            >
               <Plus className="operate-icon h-4 w-4" />
-              Nuevo
+              Nuevo Cobro
             </Button>
           </>
         }
       />
 
-      {!destReady ? (
+      {!destReady && !loadingInvoices ? (
         <OperateCallout
           icon={Settings2}
           tone="warn"
           onClick={() => {
-            setConfigOpen(true);
-            setDestOpen(true);
+            setInspectorTab('destinations');
+            if (window.innerWidth < 1024) {
+              setMobileDetailOpen(true);
+            }
           }}
         >
-          <span className="text-text font-medium">Configura tus datos de cobro</span>
-          <span className="text-text-muted"> · para que el cliente sepa a dónde transferir</span>
+          <span className="text-text font-semibold">Configura tus datos de cobro</span>
+          <span className="text-text-muted">
+            {' '}
+            · Agrega pago móvil, cuenta bancaria o Zelle para que los clientes sepan a dónde pagar.
+          </span>
         </OperateCallout>
       ) : null}
 
+      {/* KPI Stats Strip */}
       <OperateMetricStrip
         loading={loadingInvoices}
         items={[
           {
-            label: 'Todos',
-            value: invoices.length,
+            label: 'Total Facturado',
+            value: `$${(totalEarnedUsd + totalPendingUsd).toFixed(0)}`,
+            subtext: `${invoices.length} registro(s)`,
             icon: Landmark,
             onClick: () => setInvoiceFilter('all'),
           },
           {
-            label: 'Esperando',
-            value: awaitingPay.length,
-            icon: Clock,
-            onClick: () => setInvoiceFilter('awaiting'),
-          },
-          {
-            label: 'Confirmar',
+            label: 'Por Confirmar',
             value: awaitingConfirm.length,
+            subtext: awaitingConfirm.length > 0 ? '¡Reportes listos!' : 'Al día',
             icon: Check,
             onClick: () => setInvoiceFilter('confirm'),
           },
           {
-            label: 'Cerrados',
-            value: doneCount,
+            label: 'Esperando Pago',
+            value: awaitingPay.length,
+            subtext: `$${totalPendingUsd.toFixed(0)} en cola`,
+            icon: Clock,
+            onClick: () => setInvoiceFilter('awaiting'),
+          },
+          {
+            label: 'Cobrado / Cerrados',
+            value: `$${totalEarnedUsd.toFixed(0)}`,
+            subtext: `${doneInvoices.length} cobro(s)`,
             icon: CheckCircle2,
             onClick: () => setInvoiceFilter('done'),
           },
         ]}
       />
 
-      <FilterChips
-        options={[
-          { value: 'all', label: 'Todos', count: invoices.length },
-          { value: 'awaiting', label: 'Esperando', count: awaitingPay.length },
-          { value: 'confirm', label: 'Por confirmar', count: awaitingConfirm.length },
-          { value: 'done', label: 'Cerrados', count: doneCount },
-        ]}
-        value={invoiceFilter}
-        onChange={(v) => setInvoiceFilter(v as InvoiceFilter)}
-      />
+      {/* 2-Column Master-Detail Layout */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(23rem,27rem)] lg:items-start">
+        {/* LEFT COLUMN: Controls + Invoices List */}
+        <div className="space-y-4">
+          {/* Filter Chips & Search Bar */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <FilterChips
+              options={[
+                { value: 'confirm', label: 'Por confirmar', count: awaitingConfirm.length },
+                { value: 'awaiting', label: 'Esperando', count: awaitingPay.length },
+                { value: 'all', label: 'Todos', count: invoices.length },
+                { value: 'done', label: 'Cerrados', count: doneInvoices.length },
+              ]}
+              value={invoiceFilter}
+              onChange={(v) => setInvoiceFilter(v as InvoiceFilter)}
+            />
 
-      {loadingInvoices ? (
-        <OperateList loading rows={4} />
-      ) : invoices.length === 0 ? (
-        <OperateEmpty
-          icon={Landmark}
-          title="Sin cobros aún"
-          description={
-            members.length === 0
-              ? 'Asigna miembros o crea una rutina; luego envía el primer cobro.'
-              : 'Pulsa Nuevo para enviar un cobro al cliente.'
-          }
-          action={
-            members.length === 0 ? (
-              <Link to="/members">
-                <Button size="sm" variant="secondary">
-                  Ver mis miembros
-                </Button>
-              </Link>
-            ) : (
-              <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
-                <Plus className="operate-icon h-4 w-4" />
-                Nuevo cobro
-              </Button>
-            )
-          }
-        />
-      ) : filteredInvoices.length === 0 ? (
-        <OperateEmpty
-          icon={Landmark}
-          title="No hay cobros en este filtro"
-          description="Cambia el filtro o crea un cobro nuevo."
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="secondary" onClick={() => setInvoiceFilter('all')}>
-                Ver todos
-              </Button>
-              <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
-                <Plus className="operate-icon h-4 w-4" />
-                Nuevo cobro
-              </Button>
-            </div>
-          }
-        />
-      ) : (
-        <OperateList>
-          {filteredInvoices.map((inv) => (
-            <div
-              key={inv.id}
-              className="group border-border/60 hover:bg-surface-raised/40 flex min-h-[var(--touch-min)] items-center gap-3.5 border-b px-3.5 py-3 transition-colors last:border-b-0 sm:px-4 sm:py-3.5"
-            >
-              <OperateIcon
-                icon={inv.status === 'confirmed' ? CheckCircle2 : inv.reference ? Check : Clock}
-                tone={
-                  inv.status === 'confirmed'
-                    ? 'success'
-                    : inv.status === 'rejected' || inv.status === 'cancelled'
-                      ? 'danger'
-                      : inv.reference
-                        ? 'brand'
-                        : 'warn'
-                }
-                well
-                size="md"
+            <div className="w-full sm:w-64">
+              <SearchInput
+                placeholder="Buscar cliente, concepto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-xs"
               />
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <p className="text-text min-w-0 flex-1 truncate text-sm font-medium tracking-[-0.011em]">
-                    {inv.member_name}
-                  </p>
-                  <Badge
-                    variant={statusVariant(inv.status)}
-                    className="text-small shrink-0 px-1.5 py-0"
-                  >
-                    {statusLabel(inv.status, Boolean(inv.reference))}
-                  </Badge>
-                </div>
-                <p className="text-text-secondary text-small mt-0.5 truncate leading-snug">
-                  <span className="text-brand font-semibold tabular-nums">${inv.amount_usd}</span>
-                  <span className="text-text-muted mx-1.5">·</span>
-                  <span>{inv.title}</span>
-                  {inv.reference ? (
-                    <>
-                      <span className="text-text-muted mx-1.5">·</span>
-                      <span className="text-small font-mono">Ref. {inv.reference}</span>
-                    </>
-                  ) : null}
-                </p>
-              </div>
-              {inv.status === 'pending' && inv.reference ? (
-                <div className="flex shrink-0 items-center gap-1">
-                  <IconButton
-                    size="md"
-                    variant="secondary"
-                    className="border-success/30 text-success hover:bg-success/10"
-                    aria-label="Confirmar cobro"
-                    title="Confirmar"
-                    onClick={() =>
-                      void confirmInv.mutateAsync(inv.id).then(
-                        () => toast?.success('Confirmaste el cobro'),
-                        (err) => toast?.error(toDisplayErrorMessage(err))
-                      )
-                    }
-                  >
-                    <Check className="operate-icon h-4 w-4" strokeWidth={2.25} />
-                  </IconButton>
-                  <IconButton
-                    size="md"
-                    variant="danger"
-                    aria-label="Rechazar cobro"
-                    title="Rechazar"
-                    onClick={() => {
-                      setRejectId(inv.id);
-                      setRejectReason('');
-                    }}
-                  >
-                    <X className="operate-icon h-4 w-4" strokeWidth={2.25} />
-                  </IconButton>
-                </div>
-              ) : null}
-              {inv.status === 'pending' && !inv.reference ? (
-                <IconButton
-                  size="md"
-                  variant="secondary"
-                  aria-label="Cancelar cobro"
-                  title="Cancelar"
-                  onClick={() =>
-                    void cancelInv.mutateAsync(inv.id).then(
-                      () => toast?.success('Cancelaste el cobro'),
-                      (err) => toast?.error(toDisplayErrorMessage(err))
-                    )
-                  }
-                >
-                  <X className="operate-icon h-4 w-4" />
-                </IconButton>
-              ) : null}
-            </div>
-          ))}
-        </OperateList>
-      )}
-
-      <div className={cn(SURFACE, 'overflow-hidden')}>
-        <button
-          type="button"
-          onClick={() => setConfigOpen((o) => !o)}
-          className="tap-feedback text-text hover:bg-surface-overlay group flex min-h-10 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors sm:px-4"
-          aria-expanded={configOpen}
-        >
-          <OperateIcon icon={Settings2} tone="neutral" well size="md" />
-          <span className="min-w-0 flex-1 text-sm font-semibold tracking-[-0.011em]">
-            Configuración
-          </span>
-          <ChevronDown
-            className={cn(
-              'operate-icon text-text-muted h-4 w-4 shrink-0 transition-transform duration-160',
-              configOpen && 'rotate-180'
-            )}
-            aria-hidden
-          />
-        </button>
-
-        {configOpen ? (
-          <div className="border-border/60 space-y-3 border-t p-3.5 sm:p-4">
-            <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-              <div className="space-y-3">
-                <h3 className="text-text text-sm font-semibold">Mis tarifas</h3>
-                {loadingOffers ? (
-                  <Spinner />
-                ) : (
-                  <ul className="divide-border/60 divide-y">
-                    {offers.map((o) => (
-                      <li
-                        key={o.id}
-                        className="flex items-center justify-between gap-3 py-2 text-sm first:pt-0 last:pb-0"
-                      >
-                        <span
-                          className={
-                            o.active ? 'truncate' : 'text-text-muted truncate line-through'
-                          }
-                        >
-                          {o.title}
-                        </span>
-                        <span className="shrink-0 font-semibold tabular-nums">${o.price_usd}</span>
-                      </li>
-                    ))}
-                    {offers.length === 0 ? (
-                      <li className="text-text-muted text-small py-1">Sin tarifas aún</li>
-                    ) : null}
-                  </ul>
-                )}
-                <div className="space-y-2.5">
-                  <div>
-                    <Label>Nombre</Label>
-                    <Input
-                      placeholder="Ej. Sesión 1:1"
-                      value={offerTitle}
-                      onChange={(e) => setOfferTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Precio USD</Label>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={offerPrice}
-                      onChange={(e) => setOfferPrice(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => void onCreateOffer()}
-                    disabled={!offerTitle.trim() || !offerPrice || createOffer.isPending}
-                    loading={createOffer.isPending}
-                  >
-                    Guardar tarifa
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-text text-sm font-semibold">Tasa de referencia</h3>
-                <div>
-                  <Label>Preferencia</Label>
-                  <Select
-                    value={ratePref}
-                    onChange={(e) => setRatePref(e.target.value as 'bcv' | 'euro')}
-                  >
-                    <option value="bcv">Tasa BCV (oficial del gym)</option>
-                    <option value="euro">Tasa manual</option>
-                  </Select>
-                </div>
-                {ratePref === 'euro' ? (
-                  <>
-                    <div>
-                      <Label>Bs por 1 USD</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={euroRate}
-                        onChange={(e) => setEuroRate(e.target.value)}
-                        placeholder="Ej. 85.50"
-                      />
-                    </div>
-                    <div>
-                      <Label>Nota (opcional)</Label>
-                      <Input
-                        value={euroNote}
-                        onChange={(e) => setEuroNote(e.target.value)}
-                        placeholder="Referencia del día"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-text-secondary text-small leading-snug">
-                    {rateCtx?.bcv_bs_per_usd
-                      ? `BCV vigente: ${rateCtx.bcv_bs_per_usd.toLocaleString('es-VE')} Bs/USD`
-                      : 'Sin tasa BCV disponible aún'}
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="w-full"
-                  loading={updateRate.isPending}
-                  onClick={() => {
-                    void updateRate
-                      .mutateAsync({
-                        rate_preference: ratePref,
-                        euro_rate: ratePref === 'euro' ? Number(euroRate) : null,
-                        euro_rate_note: euroNote,
-                      })
-                      .then(
-                        () => toast?.success('Preferencia de tasa guardada'),
-                        (err) => toast?.error(toDisplayErrorMessage(err))
-                      );
-                  }}
-                >
-                  Guardar tasa
-                </Button>
-              </div>
-            </div>
-
-            <div id="pt-dest-section" className="border-border/60 border-t pt-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <button
-                  type="button"
-                  onClick={() => setDestOpen((o) => !o)}
-                  className="text-text hover:bg-surface-overlay flex min-w-0 flex-1 items-start gap-3 rounded-lg p-1 text-left transition-colors"
-                  aria-expanded={destOpen}
-                >
-                  <span className="bg-brand/10 text-brand mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                    <Landmark className="h-3.5 w-3.5" aria-hidden />
-                  </span>
-                  <span className="min-w-0 flex-1 pt-0.5">
-                    <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                      Datos de cobro
-                      {!destReady ? (
-                        <span className="text-warning text-small font-medium">pendiente</span>
-                      ) : (
-                        <span className="text-text-muted text-small font-medium">listo</span>
-                      )}
-                      <ChevronDown
-                        className={cn(
-                          'text-text-muted h-3.5 w-3.5 shrink-0 transition-transform',
-                          destOpen && 'rotate-180'
-                        )}
-                        aria-hidden
-                      />
-                    </span>
-                    <span className="text-text-muted text-small mt-1 block leading-snug">
-                      Teléfono, cuenta o Zelle que verá el cliente
-                    </span>
-                  </span>
-                </button>
-                {destOpen ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-full shrink-0 sm:w-auto"
-                    disabled={updateDest.isPending}
-                    loading={updateDest.isPending}
-                    onClick={onSaveDest}
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                    Guardar datos
-                  </Button>
-                ) : null}
-              </div>
-
-              {destOpen ? (
-                <div className="border-border/60 mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={destForm.pago_movil.enabled}
-                      onChange={(e) =>
-                        setDestForm((f) => ({
-                          ...f,
-                          pago_movil: { ...f.pago_movil, enabled: e.target.checked },
-                        }))
-                      }
-                    />
-                    {PAYMENT_METHOD_LABELS.pago_movil}
-                  </label>
-                  <Input
-                    placeholder="Teléfono"
-                    value={destForm.pago_movil.phone}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        pago_movil: { ...f.pago_movil, phone: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Cédula"
-                    value={destForm.pago_movil.holder_cedula}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        pago_movil: { ...f.pago_movil, holder_cedula: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Banco"
-                    className="sm:col-span-2"
-                    value={destForm.pago_movil.bank_name}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        pago_movil: { ...f.pago_movil, bank_name: e.target.value },
-                      }))
-                    }
-                  />
-
-                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={destForm.transferencia.enabled}
-                      onChange={(e) =>
-                        setDestForm((f) => ({
-                          ...f,
-                          transferencia: { ...f.transferencia, enabled: e.target.checked },
-                        }))
-                      }
-                    />
-                    {PAYMENT_METHOD_LABELS.transferencia}
-                  </label>
-                  <Input
-                    placeholder="Titular"
-                    value={destForm.transferencia.holder_name}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        transferencia: { ...f.transferencia, holder_name: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Cédula"
-                    value={destForm.transferencia.holder_cedula}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        transferencia: { ...f.transferencia, holder_cedula: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Banco"
-                    value={destForm.transferencia.bank_name}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        transferencia: { ...f.transferencia, bank_name: e.target.value },
-                      }))
-                    }
-                  />
-                  <Select
-                    value={destForm.transferencia.account_type}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        transferencia: {
-                          ...f.transferencia,
-                          account_type: e.target.value as 'corriente' | 'ahorro' | '',
-                        },
-                      }))
-                    }
-                  >
-                    <option value="">Tipo de cuenta…</option>
-                    <option value="corriente">Corriente</option>
-                    <option value="ahorro">Ahorro</option>
-                  </Select>
-                  <Input
-                    placeholder="Número de cuenta"
-                    className="sm:col-span-2"
-                    value={destForm.transferencia.account_number}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        transferencia: { ...f.transferencia, account_number: e.target.value },
-                      }))
-                    }
-                  />
-
-                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={destForm.zelle.enabled}
-                      onChange={(e) =>
-                        setDestForm((f) => ({
-                          ...f,
-                          zelle: { ...f.zelle, enabled: e.target.checked },
-                        }))
-                      }
-                    />
-                    {PAYMENT_METHOD_LABELS.zelle}
-                  </label>
-                  <Input
-                    placeholder="Correo Zelle"
-                    className="sm:col-span-2"
-                    value={destForm.zelle.email}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        zelle: { ...f.zelle, email: e.target.value },
-                      }))
-                    }
-                  />
-
-                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={destForm.usdt.enabled}
-                      onChange={(e) =>
-                        setDestForm((f) => ({
-                          ...f,
-                          usdt: { ...f.usdt, enabled: e.target.checked },
-                        }))
-                      }
-                    />
-                    {PAYMENT_METHOD_LABELS.usdt}
-                  </label>
-                  <Input
-                    placeholder="Correo Binance"
-                    value={destForm.usdt.binance_email}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        usdt: { ...f.usdt, binance_email: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Binance ID"
-                    value={destForm.usdt.binance_id}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        usdt: { ...f.usdt, binance_id: e.target.value },
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Red / activo (ej. USDT TRC20)"
-                    className="sm:col-span-2"
-                    value={destForm.usdt.network}
-                    onChange={(e) =>
-                      setDestForm((f) => ({
-                        ...f,
-                        usdt: { ...f.usdt, network: e.target.value },
-                      }))
-                    }
-                  />
-
-                  <label className="mt-3 flex items-center gap-2.5 text-sm font-semibold sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={destForm.efectivo_usd.enabled}
-                      onChange={(e) =>
-                        setDestForm((f) => ({
-                          ...f,
-                          efectivo_usd: { ...f.efectivo_usd, enabled: e.target.checked },
-                        }))
-                      }
-                    />
-                    {PAYMENT_METHOD_LABELS.efectivo_usd}
-                  </label>
-                  <div className="flex flex-wrap gap-2 sm:col-span-2">
-                    {DEFAULT_USD_DENOMINATIONS.map((d) => (
-                      <label
-                        key={d}
-                        className="border-border text-small inline-flex items-center gap-1.5 rounded-[var(--radius-chip)] border px-2.5 py-1.5"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={destForm.efectivo_usd.denominations.includes(d)}
-                          onChange={(e) => {
-                            setDestForm((f) => {
-                              const set = new Set(f.efectivo_usd.denominations);
-                              if (e.target.checked) set.add(d);
-                              else set.delete(d);
-                              return {
-                                ...f,
-                                efectivo_usd: {
-                                  ...f.efectivo_usd,
-                                  denominations: [...set].sort((a, b) => a - b),
-                                },
-                              };
-                            });
-                          }}
-                        />
-                        ${d}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
-        ) : null}
+
+          {/* List Content */}
+          {loadingInvoices ? (
+            <div className="space-y-2.5">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="border-border/60 bg-surface/80 flex h-20 animate-pulse rounded-xl border p-4"
+                />
+              ))}
+            </div>
+          ) : invoices.length === 0 ? (
+            <OperateEmpty
+              icon={Landmark}
+              title="Sin cobros registrados aún"
+              description={
+                members.length === 0
+                  ? 'Asigna miembros o crea una rutina; luego envía el primer cobro.'
+                  : 'Pulsa el botón superior para enviar un cobro de entrenamiento 1:1 a un cliente.'
+              }
+              action={
+                members.length === 0 ? (
+                  <Link to="/members">
+                    <Button size="sm" variant="secondary">
+                      Ver mis miembros
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button size="md" className="gap-1.5" onClick={() => setChargeOpen(true)}>
+                    <Plus className="operate-icon h-4 w-4" />
+                    Nuevo cobro
+                  </Button>
+                )
+              }
+            />
+          ) : filteredInvoices.length === 0 ? (
+            <OperateEmpty
+              icon={Landmark}
+              title="No hay cobros en este filtro"
+              description="Prueba cambiando los filtros de búsqueda o crea un nuevo cobro."
+              action={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setInvoiceFilter('all');
+                      setSearchTerm('');
+                    }}
+                  >
+                    Ver todos los cobros
+                  </Button>
+                  <Button size="sm" className="gap-1.5" onClick={() => setChargeOpen(true)}>
+                    <Plus className="operate-icon h-4 w-4" />
+                    Nuevo cobro
+                  </Button>
+                </div>
+              }
+            />
+          ) : (
+            <div className="space-y-2.5">
+              {filteredInvoices.map((inv) => {
+                const isSelected = selectedInvoiceId === inv.id;
+                const isConfirmWaiting = inv.status === 'pending' && Boolean(inv.reference);
+
+                return (
+                  <div
+                    key={inv.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSelectInvoice(inv)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleSelectInvoice(inv);
+                    }}
+                    className={cn(
+                      'border-border/70 bg-surface/90 hover:border-brand/40 hover:bg-surface-raised/60 group relative flex cursor-pointer items-center justify-between gap-3.5 rounded-xl border p-3.5 transition-all duration-150',
+                      isSelected &&
+                        'border-brand/70 ring-brand/30 bg-surface-raised/90 shadow-brand/5 shadow-md ring-2'
+                    )}
+                  >
+                    {/* Left Icon with well */}
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <OperateIcon
+                        icon={
+                          inv.status === 'confirmed' ? CheckCircle2 : inv.reference ? Check : Clock
+                        }
+                        tone={
+                          inv.status === 'confirmed'
+                            ? 'success'
+                            : inv.status === 'rejected' || inv.status === 'cancelled'
+                              ? 'danger'
+                              : inv.reference
+                                ? 'brand'
+                                : 'warn'
+                        }
+                        well
+                        size="md"
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p
+                            className={cn(
+                              'truncate text-sm font-semibold tracking-[-0.011em]',
+                              isSelected ? 'text-brand' : 'text-text'
+                            )}
+                          >
+                            {inv.member_name}
+                          </p>
+                          <Badge
+                            variant={statusVariant(inv.status)}
+                            className="shrink-0 px-1.5 py-0 text-[10px]"
+                          >
+                            {statusLabel(inv.status, Boolean(inv.reference))}
+                          </Badge>
+                          {isConfirmWaiting && (
+                            <span className="bg-brand inline-block h-2 w-2 shrink-0 animate-pulse rounded-full" />
+                          )}
+                        </div>
+
+                        <div className="text-text-muted mt-1 flex flex-wrap items-center gap-2 text-xs">
+                          <span className="text-brand font-bold tabular-nums">
+                            ${inv.amount_usd} USD
+                          </span>
+                          <span>·</span>
+                          <span className="text-text-secondary max-w-[14rem] truncate">
+                            {inv.title}
+                          </span>
+                          {inv.reference && (
+                            <>
+                              <span>·</span>
+                              <span className="text-brand font-mono text-[11px] font-semibold">
+                                Ref: {inv.reference}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Buttons on hover or selection */}
+                    <div
+                      className="flex shrink-0 items-center gap-1.5"
+                      role="none"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {inv.status === 'pending' && inv.reference ? (
+                        <>
+                          <IconButton
+                            size="sm"
+                            variant="secondary"
+                            className="border-success/40 text-success hover:bg-success/15"
+                            aria-label="Confirmar cobro"
+                            title="Confirmar"
+                            onClick={() =>
+                              void confirmInv.mutateAsync(inv.id).then(
+                                () => toast?.success('Cobro confirmado exitosamente'),
+                                (err) => toast?.error(toDisplayErrorMessage(err))
+                              )
+                            }
+                          >
+                            <Check className="h-4 w-4" strokeWidth={2.5} />
+                          </IconButton>
+                          <IconButton
+                            size="sm"
+                            variant="danger"
+                            aria-label="Rechazar cobro"
+                            title="Rechazar"
+                            onClick={() => {
+                              setRejectId(inv.id);
+                              setRejectReason('');
+                            }}
+                          >
+                            <X className="h-4 w-4" strokeWidth={2.5} />
+                          </IconButton>
+                        </>
+                      ) : null}
+
+                      {inv.status === 'pending' && !inv.reference ? (
+                        <IconButton
+                          size="sm"
+                          variant="secondary"
+                          aria-label="Cancelar cobro"
+                          title="Cancelar"
+                          onClick={() =>
+                            void cancelInv.mutateAsync(inv.id).then(
+                              () => toast?.success('Cobro cancelado'),
+                              (err) => toast?.error(toDisplayErrorMessage(err))
+                            )
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </IconButton>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN: Sticky Inspector Panel on Desktop */}
+        <div className="hidden lg:sticky lg:top-20 lg:block">
+          <TrainerPtBillingInspector
+            selectedInvoice={selectedInvoice}
+            rateCtx={rateCtx}
+            offers={offers}
+            loadingOffers={loadingOffers}
+            destForm={destForm}
+            setDestForm={setDestForm}
+            onSaveDest={onSaveDest}
+            isSavingDest={updateDest.isPending}
+            ratePref={ratePref}
+            setRatePref={setRatePref}
+            euroRate={euroRate}
+            setEuroRate={setEuroRate}
+            euroNote={euroNote}
+            setEuroNote={setEuroNote}
+            onSaveRate={onSaveRate}
+            isSavingRate={updateRate.isPending}
+            offerTitle={offerTitle}
+            setOfferTitle={setOfferTitle}
+            offerPrice={offerPrice}
+            setOfferPrice={setOfferPrice}
+            onCreateOffer={() => void onCreateOffer()}
+            isCreatingOffer={createOffer.isPending}
+            activeTab={inspectorTab}
+            onTabChange={setInspectorTab}
+            onConfirmInvoice={(inv) =>
+              void confirmInv.mutateAsync(inv.id).then(
+                () => toast?.success('Confirmaste el cobro'),
+                (err) => toast?.error(toDisplayErrorMessage(err))
+              )
+            }
+            onOpenRejectModal={(inv) => {
+              setRejectId(inv.id);
+              setRejectReason('');
+            }}
+            onCancelInvoice={(inv) =>
+              void cancelInv.mutateAsync(inv.id).then(
+                () => toast?.success('Cancelaste el cobro'),
+                (err) => toast?.error(toDisplayErrorMessage(err))
+              )
+            }
+            onOpenNewCharge={() => setChargeOpen(true)}
+            className="max-h-[calc(100vh-6rem)]"
+          />
+        </div>
       </div>
 
+      {/* MOBILE DETAIL MODAL */}
+      <Modal
+        open={mobileDetailOpen}
+        onClose={() => setMobileDetailOpen(false)}
+        title={
+          inspectorTab === 'invoice'
+            ? 'Detalle del Cobro'
+            : inspectorTab === 'rates'
+              ? 'Tarifas y Tasa'
+              : 'Cuentas Receptoras'
+        }
+        maxWidth="md"
+        scrollable
+      >
+        <TrainerPtBillingInspector
+          selectedInvoice={selectedInvoice}
+          rateCtx={rateCtx}
+          offers={offers}
+          loadingOffers={loadingOffers}
+          destForm={destForm}
+          setDestForm={setDestForm}
+          onSaveDest={onSaveDest}
+          isSavingDest={updateDest.isPending}
+          ratePref={ratePref}
+          setRatePref={setRatePref}
+          euroRate={euroRate}
+          setEuroRate={setEuroRate}
+          euroNote={euroNote}
+          setEuroNote={setEuroNote}
+          onSaveRate={onSaveRate}
+          isSavingRate={updateRate.isPending}
+          offerTitle={offerTitle}
+          setOfferTitle={setOfferTitle}
+          offerPrice={offerPrice}
+          setOfferPrice={setOfferPrice}
+          onCreateOffer={() => void onCreateOffer()}
+          isCreatingOffer={createOffer.isPending}
+          activeTab={inspectorTab}
+          onTabChange={setInspectorTab}
+          onConfirmInvoice={(inv) => {
+            void confirmInv.mutateAsync(inv.id).then(
+              () => {
+                toast?.success('Confirmaste el cobro');
+                setMobileDetailOpen(false);
+              },
+              (err) => toast?.error(toDisplayErrorMessage(err))
+            );
+          }}
+          onOpenRejectModal={(inv) => {
+            setRejectId(inv.id);
+            setRejectReason('');
+          }}
+          onCancelInvoice={(inv) => {
+            void cancelInv.mutateAsync(inv.id).then(
+              () => {
+                toast?.success('Cancelaste el cobro');
+                setMobileDetailOpen(false);
+              },
+              (err) => toast?.error(toDisplayErrorMessage(err))
+            );
+          }}
+          onOpenNewCharge={() => {
+            setMobileDetailOpen(false);
+            setChargeOpen(true);
+          }}
+        />
+      </Modal>
+
+      {/* NEW CHARGE MODAL */}
       <Modal
         open={chargeOpen}
         onClose={() => setChargeOpen(false)}
-        title={<>Nuevo cobro</>}
+        title={<>Nuevo Cobro de Entrenamiento</>}
         maxWidth="md"
         scrollable
         footer={
@@ -893,7 +723,7 @@ export default function TrainerPtBilling() {
               disabled={!memberId || !amount || createInvoice.isPending || members.length === 0}
               loading={createInvoice.isPending}
             >
-              Enviar
+              Enviar Cobro
             </Button>
           </>
         }
@@ -933,11 +763,11 @@ export default function TrainerPtBilling() {
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ej. Sesión 1:1"
+                placeholder="Ej. Sesión 1:1, Plan Mensual"
               />
             </div>
             <div>
-              <Label>Tarifa</Label>
+              <Label>Tarifa predefinida (opcional)</Label>
               <Select
                 value={offerId}
                 onChange={(e) => {
@@ -952,7 +782,7 @@ export default function TrainerPtBilling() {
                 <option value="">Monto manual</option>
                 {activeOffers.map((o) => (
                   <option key={o.id} value={o.id}>
-                    {o.title} — ${o.price_usd}
+                    {o.title} — ${o.price_usd} USD
                   </option>
                 ))}
               </Select>
@@ -981,10 +811,11 @@ export default function TrainerPtBilling() {
         )}
       </Modal>
 
+      {/* REJECT MODAL */}
       <Modal
         open={rejectId != null}
         onClose={() => setRejectId(null)}
-        title={<>Rechazar cobro</>}
+        title={<>Rechazar Cobro</>}
         maxWidth="sm"
         footer={
           <>
@@ -1021,15 +852,16 @@ export default function TrainerPtBilling() {
         }
       >
         <div>
-          <Label>Motivo</Label>
+          <Label>Motivo de rechazo para el cliente</Label>
           <Input
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Mínimo 3 caracteres"
+            placeholder="Ej. Referencia no coincide con la cuenta"
           />
         </div>
       </Modal>
 
+      {/* DESTINATION WIZARD */}
       <Modal
         open={destWizardOpen}
         onClose={() => {
@@ -1040,7 +872,7 @@ export default function TrainerPtBilling() {
           }
           setDestWizardOpen(false);
         }}
-        title="¿Dónde te pagan?"
+        title="¿Dónde te pagan tus alumnos?"
         maxWidth="sm"
         footer={
           <>
@@ -1058,7 +890,7 @@ export default function TrainerPtBilling() {
                 setDestWizardOpen(false);
               }}
             >
-              Después
+              Más tarde
             </Button>
             <Button
               type="button"
@@ -1071,18 +903,20 @@ export default function TrainerPtBilling() {
                   /* ignore */
                 }
                 setDestWizardOpen(false);
-                setConfigOpen(true);
-                setDestOpen(true);
+                setInspectorTab('destinations');
+                if (window.innerWidth < 1024) {
+                  setMobileDetailOpen(true);
+                }
               }}
             >
-              Configurar
+              Configurar Cuentas
             </Button>
           </>
         }
       >
         <p className="text-text-secondary text-sm leading-relaxed">
-          Antes del primer cobro, publica pago móvil, transferencia u otro método para que el
-          cliente sepa a dónde transferir.
+          Antes de tu primer cobro, configura tus datos de Pago Móvil, transferencia o Zelle para
+          que tus alumnos puedan reportar sus comprobantes de forma rápida y sencilla.
         </p>
       </Modal>
     </OperatePage>

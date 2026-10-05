@@ -85,7 +85,7 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
       <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
         <div className={chartHeights.panel}>
           <p className={cn(chartLabelClass, 'mb-1.5')}>Volumen (kg)</p>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <BarChart data={weeks}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis
@@ -108,7 +108,7 @@ export default function WorkoutHistoryCharts({ weeks }: WorkoutHistoryChartsProp
         </div>
         <div className={chartHeights.panel}>
           <p className={cn(chartLabelClass, 'mb-1.5')}>Peso máximo (kg)</p>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={weeks}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} className="text-border" />
               <XAxis

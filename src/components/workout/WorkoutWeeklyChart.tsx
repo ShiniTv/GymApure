@@ -14,7 +14,7 @@ const LazyChart = lazy(() =>
     default: function WeeklyVolumeMiniChart({ data }: { data: { day: string; count: number }[] }) {
       const { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } = mod;
       return (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={0}>
           <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <XAxis
               dataKey="day"

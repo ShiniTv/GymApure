@@ -129,11 +129,14 @@ export function NotificationPanel({
     if (item.source === 'persisted' && item.notificationId != null) {
       void markRead.mutateAsync(item.notificationId).finally(() => {
         onClose();
-        void navigate(item.href);
+        if (item.href) void navigate(item.href);
       });
       return;
     }
     onClose();
+    if (item.href) {
+      void navigate(item.href);
+    }
   };
 
   const handleMarkAll = () => {

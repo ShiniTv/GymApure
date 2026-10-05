@@ -7,7 +7,17 @@ import {
   useInvalidateExercises,
   type Exercise,
 } from '../hooks/queries/useExercisesQuery';
-import { Plus, Video, Dumbbell, ChevronDown, Minus, SlidersHorizontal } from 'lucide-react';
+import {
+  Plus,
+  Video,
+  Dumbbell,
+  ChevronDown,
+  Minus,
+  SlidersHorizontal,
+  Layers,
+  Film,
+  Sparkles,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { canOperateExercises } from '../lib/roles';
 import {
@@ -26,7 +36,11 @@ import {
   Card,
   Skeleton,
 } from '../components/ui';
-import { OperateHeader, OperatePage } from '../components/operate/OperateChrome';
+import {
+  OperateHeader,
+  OperateMetricStrip,
+  OperatePage,
+} from '../components/operate/OperateChrome';
 import {
   MUSCLE_GROUPS,
   filterExercises,
@@ -36,6 +50,7 @@ import {
   ExerciseLibraryView,
   type ExerciseLayoutView,
 } from '../components/exercise/ExerciseLibraryView';
+import { ExerciseDetailInspector } from '../components/exercise/ExerciseDetailInspector';
 import { getYouTubeEmbedUrl } from '../lib/exerciseVideo';
 import { cn } from '../lib/utils';
 import { clientLogger } from '../lib/clientLogger';
@@ -114,6 +129,18 @@ export default function Exercises() {
     [catalogList]
   );
 
+  const activeMuscleCount = useMemo(
+    () => Object.values(muscleCounts).filter((c) => c > 0).length,
+    [muscleCounts]
+  );
+
+  const customCount = useMemo(
+    () => catalogList.filter((e) => e.owner_trainer_id != null || e.forked_from_id != null).length,
+    [catalogList]
+  );
+
+  const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
+
   const filteredForDisplay = useMemo(() => {
     let list = filterExercises(catalogList, {
       search: debouncedSearch,
@@ -122,6 +149,19 @@ export default function Exercises() {
     if (videoOnly) list = list.filter((e) => exerciseHasVideo(e));
     return list;
   }, [catalogList, debouncedSearch, muscleFilter, videoOnly]);
+
+  useEffect(() => {
+    if (filteredForDisplay.length > 0) {
+      if (
+        selectedExerciseId == null ||
+        !filteredForDisplay.some((e) => e.id === selectedExerciseId)
+      ) {
+        setSelectedExerciseId(filteredForDisplay[0].id);
+      }
+    } else {
+      setSelectedExerciseId(null);
+    }
+  }, [filteredForDisplay, selectedExerciseId]);
 
   const refreshExercises = () => invalidateExercises();
 
@@ -258,7 +298,7 @@ export default function Exercises() {
 
   if (exercisesError && !loading) {
     return (
-      <OperatePage maxWidth="max-w-6xl">
+      <OperatePage maxWidth="max-w-7xl">
         <OperateHeader
           icon={Dumbbell}
           title={
@@ -284,7 +324,7 @@ export default function Exercises() {
 
   if (loading) {
     return (
-      <OperatePage maxWidth="max-w-6xl">
+      <OperatePage maxWidth="max-w-7xl">
         <OperateHeader
           icon={Dumbbell}
           title={
@@ -295,6 +335,11 @@ export default function Exercises() {
           subtitle="Catálogo para armar rutinas"
           action={<BackToDashboardLink iconOnly />}
         />
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
+        </div>
         <Skeleton className="h-11 w-full rounded-xl" />
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -306,7 +351,7 @@ export default function Exercises() {
   }
 
   return (
-    <OperatePage maxWidth="max-w-6xl">
+    <OperatePage maxWidth="max-w-7xl">
       <OperateHeader
         icon={Dumbbell}
         title={
@@ -339,125 +384,183 @@ export default function Exercises() {
         }
       />
 
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <SearchInput
-          containerClassName="min-w-0 w-full flex-1"
-          placeholder="Buscar ejercicio…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-          }}
-          aria-label="Buscar por nombre o grupo muscular"
-        />
-        <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-11 sm:justify-end">
-          {filteredForDisplay.length > 0 || hasActiveFilters ? (
-            <SegmentedControl
-              variant="compact"
-              value={layoutView}
-              onChange={setLayoutView}
-              className="w-fit max-w-full"
-              options={[
-                { value: 'flat', label: 'Lista' },
-                { value: 'groups', label: 'Grupos' },
-              ]}
+      {/* Top KPI Metrics Strip */}
+      <OperateMetricStrip
+        loading={loading}
+        items={[
+          {
+            label: 'Total',
+            value: catalogList.length,
+            icon: Dumbbell,
+            onClick: () => {
+              setMuscleFilter('all');
+              setVideoOnly(false);
+            },
+          },
+          {
+            label: 'Videos',
+            value: videoCount,
+            icon: Film,
+            onClick: () => setVideoOnly((v) => !v),
+          },
+          {
+            label: 'Grupos',
+            value: activeMuscleCount,
+            icon: Layers,
+          },
+          {
+            label: 'Propios',
+            value: customCount,
+            icon: Sparkles,
+          },
+        ]}
+      />
+
+      {/* Main Two-Column Master-Detail Layout */}
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,27rem)] xl:grid-cols-[minmax(0,1.25fr)_minmax(26rem,30rem)]">
+        {/* Left Column: Explorer / List */}
+        <div className="min-w-0 space-y-3">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <SearchInput
+              containerClassName="min-w-0 w-full flex-1"
+              placeholder="Buscar por nombre o músculo…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
+              aria-label="Buscar por nombre o grupo muscular"
             />
+            <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:h-11 sm:justify-end">
+              {filteredForDisplay.length > 0 || hasActiveFilters ? (
+                <SegmentedControl
+                  variant="compact"
+                  value={layoutView}
+                  onChange={setLayoutView}
+                  className="w-fit max-w-full"
+                  options={[
+                    { value: 'flat', label: 'Lista' },
+                    { value: 'groups', label: 'Grupos' },
+                  ]}
+                />
+              ) : null}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className={cn(
+                  'gap-1.5 px-2.5',
+                  filtersOpen && 'bg-surface-overlay',
+                  filterChipCount > 0 && 'text-brand'
+                )}
+                onClick={() => setFiltersOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+                aria-label="Filtros"
+                title="Filtros"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden md:inline">Filtros</span>
+                {filterChipCount > 0 ? (
+                  <span className="text-text-muted text-small rounded-md px-1.5 font-semibold tabular-nums">
+                    {filterChipCount}
+                  </span>
+                ) : null}
+              </Button>
+            </div>
+          </div>
+
+          {filtersOpen ? (
+            <Card padding="sm" rounded="xl" className="space-y-3">
+              <FilterChips
+                className="w-fit max-w-full"
+                ariaLabel="Grupo muscular"
+                options={[
+                  { value: '', label: 'Grupos', count: catalogList.length },
+                  ...MUSCLE_GROUPS.filter(
+                    (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
+                  ).map((group) => ({
+                    value: group,
+                    label: group,
+                    count: muscleCounts[group] ?? 0,
+                  })),
+                ]}
+                value={muscleFilter}
+                onChange={setMuscleFilter}
+              />
+              {videoCount > 0 || videoOnly ? (
+                <FilterChips
+                  className="w-fit max-w-full"
+                  ariaLabel="Video"
+                  options={[
+                    { value: 'all', label: 'Video' },
+                    { value: 'video', label: 'Con video', count: videoCount },
+                  ]}
+                  value={videoOnly ? 'video' : 'all'}
+                  onChange={(value) => setVideoOnly(value === 'video')}
+                />
+              ) : null}
+              {filterChipCount > 0 ? (
+                <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
+                  Limpiar filtros
+                </Button>
+              ) : null}
+            </Card>
           ) : null}
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className={cn(
-              'gap-1.5 px-2.5',
-              filtersOpen && 'bg-surface-overlay',
-              filterChipCount > 0 && 'text-brand'
-            )}
-            onClick={() => setFiltersOpen((open) => !open)}
-            aria-expanded={filtersOpen}
-            aria-label="Filtros"
-            title="Filtros"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="hidden md:inline">Filtros</span>
-            {filterChipCount > 0 ? (
-              <span className="text-text-muted text-small rounded-md px-1.5 font-semibold tabular-nums">
-                {filterChipCount}
-              </span>
+
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <p className="text-text-muted text-small min-w-0 truncate">{resultsLabel}</p>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-brand text-small shrink-0 font-semibold hover:underline"
+              >
+                Limpiar
+              </button>
             ) : null}
-          </Button>
+          </div>
+
+          <ExerciseLibraryView
+            exercises={filteredForDisplay}
+            readOnly={readOnly}
+            search={debouncedSearch}
+            muscleFilter={muscleFilter}
+            videoOnly={videoOnly}
+            skipClientFilter
+            layoutView={layoutView}
+            selectedExerciseId={selectedExerciseId}
+            onSelectExercise={setSelectedExerciseId}
+            columnsClassName="grid min-w-0 gap-2.5 sm:grid-cols-2"
+            onClearFilters={hasActiveFilters ? clearFilters : undefined}
+            onEdit={canEdit ? (exercise) => void handleOpenModal(exercise) : undefined}
+            onDelete={
+              canEdit
+                ? (exercise) => {
+                    setDeleteError(null);
+                    setDeleteTarget(exercise);
+                  }
+                : undefined
+            }
+            onCreate={canEdit ? () => void handleOpenModal() : undefined}
+          />
+        </div>
+
+        {/* Right Column: Sticky Inspector on Desktop */}
+        <div className="hidden min-w-0 lg:sticky lg:top-20 lg:block">
+          <ExerciseDetailInspector
+            exerciseId={selectedExerciseId}
+            readOnly={readOnly}
+            onEdit={canEdit ? (exercise) => void handleOpenModal(exercise) : undefined}
+            onDelete={
+              canEdit
+                ? (exercise) => {
+                    setDeleteError(null);
+                    setDeleteTarget(exercise);
+                  }
+                : undefined
+            }
+          />
         </div>
       </div>
-
-      {filtersOpen ? (
-        <Card padding="sm" rounded="xl" className="space-y-3">
-          <FilterChips
-            className="w-fit max-w-full"
-            ariaLabel="Grupo muscular"
-            options={[
-              { value: '', label: 'Grupos', count: catalogList.length },
-              ...MUSCLE_GROUPS.filter(
-                (group) => (muscleCounts[group] ?? 0) > 0 || muscleFilter === group
-              ).map((group) => ({
-                value: group,
-                label: group,
-                count: muscleCounts[group] ?? 0,
-              })),
-            ]}
-            value={muscleFilter}
-            onChange={setMuscleFilter}
-          />
-          {videoCount > 0 || videoOnly ? (
-            <FilterChips
-              className="w-fit max-w-full"
-              ariaLabel="Video"
-              options={[
-                { value: 'all', label: 'Video' },
-                { value: 'video', label: 'Con video', count: videoCount },
-              ]}
-              value={videoOnly ? 'video' : 'all'}
-              onChange={(value) => setVideoOnly(value === 'video')}
-            />
-          ) : null}
-          {filterChipCount > 0 ? (
-            <Button type="button" variant="secondary" size="sm" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          ) : null}
-        </Card>
-      ) : null}
-
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="text-text-muted text-small min-w-0 truncate">{resultsLabel}</p>
-        {hasActiveFilters ? (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="text-brand text-small shrink-0 font-semibold hover:underline"
-          >
-            Limpiar
-          </button>
-        ) : null}
-      </div>
-
-      <ExerciseLibraryView
-        exercises={filteredForDisplay}
-        readOnly={readOnly}
-        search={debouncedSearch}
-        muscleFilter={muscleFilter}
-        videoOnly={videoOnly}
-        skipClientFilter
-        layoutView={layoutView}
-        onClearFilters={hasActiveFilters ? clearFilters : undefined}
-        onEdit={canEdit ? (exercise) => void handleOpenModal(exercise) : undefined}
-        onDelete={
-          canEdit
-            ? (exercise) => {
-                setDeleteError(null);
-                setDeleteTarget(exercise);
-              }
-            : undefined
-        }
-        onCreate={canEdit ? () => void handleOpenModal() : undefined}
-      />
 
       {canEdit && (
         <>

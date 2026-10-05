@@ -27,6 +27,12 @@ pool.on('connect', (client) => {
   void client.query('SET statement_timeout = 30000');
 });
 
+pool.on('error', (err) => {
+  logger.warn('Error en cliente inactivo del pool de BD (se reemplazará automáticamente)', {
+    message: err?.message,
+  });
+});
+
 let lastPoolWaitLogAt = 0;
 
 export function getPoolMetrics(): {
