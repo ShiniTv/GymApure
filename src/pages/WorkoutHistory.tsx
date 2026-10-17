@@ -60,6 +60,7 @@ interface SessionExercise {
   logs: SessionLog[];
   session_best?: { weight: number; reps: number } | null;
   is_all_time_pr?: boolean;
+  load_mode?: 'kg' | 'plates' | 'none';
 }
 
 interface SessionDetail {
@@ -1008,12 +1009,21 @@ export default function WorkoutHistory() {
             <div className="space-y-3">
               {sessionDetail.exercises.map((exercise) => {
                 const omitted = exercise.logs.length === 0;
+                const loadMode = exercise.load_mode ?? 'kg';
+                const showLoad = loadMode !== 'none';
+                const loadHeader = loadMode === 'plates' ? 'Placas' : 'Peso';
+                const loadUnit = loadMode === 'plates' ? 'placas' : 'kg';
                 return (
                   <div key={exercise.exercise_id} className="border-border rounded-lg border p-3">
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div>
                         <div className="flex flex-wrap items-center gap-1.5">
                           <p className="text-text text-sm font-semibold">{exercise.name}</p>
+                          {loadMode === 'plates' && (
+                            <Badge variant="default" className="text-small px-1.5 py-0">
+                              Placas
+                            </Badge>
+                          )}
                           {exercise.is_all_time_pr && (
                             <Badge variant="success" className="text-small px-1.5 py-0">
                               Nueva marca
@@ -1029,7 +1039,9 @@ export default function WorkoutHistory() {
                           <p className="text-text-secondary text-small mt-0.5">
                             Mejor serie:{' '}
                             <span className="font-semibold tabular-nums">
-                              {exercise.session_best.weight} kg × {exercise.session_best.reps}
+                              {showLoad
+                                ? `${exercise.session_best.weight} ${loadUnit} × ${exercise.session_best.reps}`
+                                : `${exercise.session_best.reps} reps`}
                             </span>
                           </p>
                         )}
@@ -1045,7 +1057,7 @@ export default function WorkoutHistory() {
                         <thead>
                           <tr className="text-text-muted text-small">
                             <th className="pb-1 font-medium">Serie</th>
-                            <th className="pb-1 font-medium">Peso</th>
+                            {showLoad && <th className="pb-1 font-medium">{loadHeader}</th>}
                             <th className="pb-1 font-medium">Reps</th>
                           </tr>
                         </thead>
@@ -1053,7 +1065,11 @@ export default function WorkoutHistory() {
                           {exercise.logs.map((log) => (
                             <tr key={log.set_number} className="text-text">
                               <td className="py-0.5 tabular-nums">{log.set_number}</td>
-                              <td className="py-0.5 tabular-nums">{log.weight} kg</td>
+                              {showLoad && (
+                                <td className="py-0.5 tabular-nums">
+                                  {log.weight} {loadUnit}
+                                </td>
+                              )}
                               <td className="py-0.5 tabular-nums">{log.reps}</td>
                             </tr>
                           ))}

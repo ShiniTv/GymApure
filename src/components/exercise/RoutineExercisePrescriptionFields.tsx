@@ -69,6 +69,7 @@ export function RoutineExercisePrescriptionFields({
   const [useDetailed, setUseDetailed] = useState(() =>
     hasDetailedSetPrescription(value.set_prescription)
   );
+  const [timeUnit, setTimeUnit] = useState<'seconds' | 'minutes'>('seconds');
   const effort = prescriptionEffort(value.set_prescription);
   const load = prescriptionLoad(value.set_prescription);
 
@@ -77,6 +78,7 @@ export function RoutineExercisePrescriptionFields({
   // checkbox when the user enables detailed mode (rows start uniform).
   useEffect(() => {
     setUseDetailed(hasDetailedSetPrescription(value.set_prescription));
+    setTimeUnit('seconds');
   }, [formKey]);
 
   useEffect(() => {
@@ -197,31 +199,52 @@ export function RoutineExercisePrescriptionFields({
         {!useDetailed && (
           <>
             <div>
-              <Label>{currentEffort === 'time' ? 'Segundos por serie' : 'Repeticiones'}</Label>
+              {currentEffort === 'time' ? (
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <Label className="mb-0">Tiempo por serie</Label>
+                  <SegmentedControl
+                    variant="compact"
+                    value={timeUnit}
+                    onChange={(unit) => setTimeUnit(unit)}
+                    options={[
+                      { value: 'seconds', label: 'Seg' },
+                      { value: 'minutes', label: 'Min' },
+                    ]}
+                  />
+                </div>
+              ) : (
+                <Label>Repeticiones</Label>
+              )}
               <NumericInput
                 min={1}
                 fallback={1}
-                value={value.reps}
+                value={
+                  currentEffort === 'time' && timeUnit === 'minutes'
+                    ? Math.max(1, Math.round(value.reps / 60))
+                    : value.reps
+                }
                 onChange={(v) => {
                   if (v === '') return;
-                  const reps = v;
-                  const currentPrescription =
+                  const reps = currentEffort === 'time' && timeUnit === 'minutes' ? v * 60 : v;
+                  const basePrescription =
                     value.set_prescription ?? deriveSetPrescription(value.sets, value.reps);
-                  const currentEffort = prescriptionEffort(currentPrescription);
-                  const currentLoad = prescriptionLoad(currentPrescription);
+                  const prescEffort = prescriptionEffort(basePrescription);
+                  const prescLoad = prescriptionLoad(basePrescription);
                   onChange({
                     ...value,
                     reps,
                     set_prescription: stampPrescriptionStyle(
-                      deriveSetPrescription(value.sets, reps, currentPrescription),
-                      { effort: currentEffort, load: currentLoad }
+                      deriveSetPrescription(value.sets, reps, basePrescription),
+                      { effort: prescEffort, load: prescLoad }
                     ),
                   });
                 }}
               />
               <p className="text-text-muted text-small mt-1">
-                {effort === 'time'
-                  ? 'Tiempo de trabajo de cada serie (plancha, isometría, holds).'
+                {currentEffort === 'time'
+                  ? timeUnit === 'minutes'
+                    ? 'En minutos; se convierte a segundos automáticamente.'
+                    : 'Tiempo de trabajo de cada serie (plancha, isometría, holds).'
                   : 'Mismo número en todas las series.'}
               </p>
             </div>
@@ -287,6 +310,7 @@ export function RoutineExercisePrescriptionFields({
           defaultReps={defaultRepsFromPrescription(value.set_prescription, value.reps)}
           effort={currentEffort}
           load={currentLoad}
+          timeUnit={timeUnit}
           value={
             value.set_prescription ??
             stampPrescriptionStyle(resizeSetPrescription([], value.sets, value.reps), {

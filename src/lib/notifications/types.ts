@@ -34,6 +34,7 @@ export interface NotificationsListResponse {
   total: number;
   page: number;
   limit: number;
+  unread_count: number;
 }
 
 export function mapPersistedToItem(row: PersistedNotification): NotificationItem {

@@ -9,6 +9,7 @@ interface SetPrescriptionEditorProps {
   value: SetPrescriptionRow[];
   effort: EffortMode;
   load: LoadMode;
+  timeUnit?: 'seconds' | 'minutes';
   onChange: (rows: SetPrescriptionRow[]) => void;
 }
 
@@ -18,6 +19,7 @@ export function SetPrescriptionEditor({
   value,
   effort,
   load,
+  timeUnit = 'seconds',
   onChange,
 }: SetPrescriptionEditorProps) {
   const rows = useMemo(
@@ -26,7 +28,7 @@ export function SetPrescriptionEditor({
   );
   const showLoad = load !== 'none';
   const loadLabel = load === 'plates' ? 'Placas' : 'Peso (kg)';
-  const effortLabel = effort === 'time' ? 'Segundos' : 'Reps';
+  const effortLabel = effort === 'time' ? (timeUnit === 'minutes' ? 'Min' : 'Seg') : 'Reps';
 
   const updateRow = (setNumber: number, patch: Partial<SetPrescriptionRow>) => {
     onChange(rows.map((row) => (row.set_number === setNumber ? { ...row, ...patch } : row)));
@@ -76,10 +78,15 @@ export function SetPrescriptionEditor({
               min={1}
               fallback={1}
               className="h-8 text-xs"
-              value={row.reps}
+              value={
+                effort === 'time' && timeUnit === 'minutes'
+                  ? Math.max(1, Math.round(row.reps / 60))
+                  : row.reps
+              }
               onChange={(v) => {
                 if (v === '') return;
-                updateRow(row.set_number, { reps: v });
+                const reps = effort === 'time' && timeUnit === 'minutes' ? v * 60 : v;
+                updateRow(row.set_number, { reps });
               }}
             />
           </div>

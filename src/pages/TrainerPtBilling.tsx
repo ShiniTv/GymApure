@@ -155,7 +155,7 @@ export default function TrainerPtBilling() {
       if (!searchTerm.trim()) return true;
       const q = searchTerm.toLowerCase();
       return (
-        inv.member_name.toLowerCase().includes(q) ||
+        inv.member_name?.toLowerCase().includes(q) ||
         inv.title.toLowerCase().includes(q) ||
         (inv.reference && inv.reference.toLowerCase().includes(q))
       );

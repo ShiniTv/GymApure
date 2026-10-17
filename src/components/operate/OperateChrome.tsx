@@ -210,6 +210,7 @@ export function OperateMetricStrip({
     to?: string;
     label: string;
     value: number | string;
+    subtext?: string;
     icon?: LucideIcon;
     onClick?: () => void;
   }[];

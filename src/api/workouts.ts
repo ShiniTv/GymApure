@@ -568,9 +568,10 @@ router.get(
         muscle_group: string;
         planned_sets: number;
         planned_reps: number;
+        set_prescription: unknown;
       }>(
         `SELECT re.exercise_id, e.name, e.muscle_group,
-              re.sets AS planned_sets, re.reps AS planned_reps
+              re.sets AS planned_sets, re.reps AS planned_reps, re.set_prescription
        FROM routine_exercises re
        JOIN exercises e ON e.id = re.exercise_id
        WHERE re.routine_id = $1
@@ -667,18 +668,35 @@ router.get(
     let setsPlanned = 0;
     let totalVolumeKg = 0;
 
+    function parseLoadMode(prescriptionJson: unknown): 'kg' | 'plates' | 'none' {
+      if (!Array.isArray(prescriptionJson) || prescriptionJson.length === 0) return 'kg';
+      const first = prescriptionJson[0] as Record<string, unknown>;
+      if (first.load === 'plates') return 'plates';
+      if (first.load === 'none') return 'none';
+      if (first.load === 'kg') return 'kg';
+      // Fallback: infer from stored values
+      const hasPlates = prescriptionJson.some(
+        (r) =>
+          (r as Record<string, unknown>).plates != null &&
+          Number((r as Record<string, unknown>).plates) > 0
+      );
+      return hasPlates ? 'plates' : 'kg';
+    }
+
     const mapExercise = (
       exerciseId: number,
       name: string,
       muscleGroup: string,
       plannedSets: number,
       plannedReps: number,
-      logs: { set_number: number; weight: number; reps: number }[]
+      logs: { set_number: number; weight: number; reps: number }[],
+      loadMode: 'kg' | 'plates' | 'none' = 'kg'
     ) => {
       setsLogged += logs.length;
       setsPlanned += plannedSets;
       for (const log of logs) {
-        totalVolumeKg += log.weight * log.reps;
+        // Only add to volume when unit is kg; plates is a count, not mass
+        if (loadMode !== 'plates') totalVolumeKg += log.weight * log.reps;
       }
       const sessionBest = pickBestSet(logs);
       const priorBest = priorBestByExercise.get(exerciseId) ?? null;
@@ -692,6 +710,7 @@ router.get(
         logs,
         session_best: sessionBest,
         is_all_time_pr: isAllTimePr,
+        load_mode: loadMode,
       };
     };
 
@@ -704,7 +723,8 @@ router.get(
         row.muscle_group,
         row.planned_sets,
         row.planned_reps,
-        logs
+        logs,
+        parseLoadMode(row.set_prescription)
       );
     });
 

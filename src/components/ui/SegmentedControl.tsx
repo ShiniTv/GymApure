@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface SegmentedOption<T extends string> {
   value: T;
-  label: string;
+  label: ReactNode;
   icon?: LucideIcon;
   accent?: 'brand' | 'check-out';
   count?: number;
@@ -18,6 +18,8 @@ interface SegmentedControlProps<T extends string> {
   /** Stretch tabs to fill the container width */
   fullWidth?: boolean;
   variant?: 'default' | 'kiosk' | 'compact';
+  /** Convenience size shortcut — 'sm' applies the compact variant */
+  size?: 'sm';
   /** Horizontal scroll — better for many tabs on mobile */
   layout?: 'wrap' | 'scroll';
   /** Accessible name when used as filters (not section tabs) */
@@ -36,10 +38,12 @@ export function SegmentedControl<T extends string>({
   options,
   className,
   fullWidth = false,
-  variant = 'default',
+  variant: variantProp = 'default',
+  size,
   layout = 'wrap',
   ariaLabel,
 }: SegmentedControlProps<T>) {
+  const variant = size === 'sm' ? 'compact' : variantProp;
   const isKiosk = variant === 'kiosk';
   const isCompact = variant === 'compact';
   const scroll = layout === 'scroll' && !isKiosk;
