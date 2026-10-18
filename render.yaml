@@ -1,5 +1,5 @@
 # GymApure — Render Blueprint (Plan Gratuito / Costo CERO $0.00)
-# Docs: docs/PLAN_REDUCCION_COSTOS_APK_ROLES.md
+# Docs: docs/DEPLOY.md
 #
 # Arquitectura Monolito: Un solo Web Service ejecuta API, WebSockets y Crons
 # en segundo plano (PROCESS_ROLE=all). No requiere worker ni Redis de pago.
