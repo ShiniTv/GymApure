@@ -54,4 +54,22 @@ describe('sentryFilters', () => {
     } as unknown as ErrorEvent;
     expect(serverBeforeSend(event, emptyHint)).toEqual(event);
   });
+
+  it('drops slow query warnings for trivial SELECT 1 health probes', () => {
+    const event = {
+      type: 'default',
+      message: 'Slow database query',
+      extra: { durationMs: 3600, query: 'SELECT 1' },
+    } as unknown as ErrorEvent;
+    expect(serverBeforeSend(event, emptyHint)).toBeNull();
+  });
+
+  it('keeps legitimate slow queries for actual business tables', () => {
+    const event = {
+      type: 'default',
+      message: 'Slow database query',
+      extra: { durationMs: 4500, query: 'SELECT * FROM workout_sessions WHERE user_id = $1' },
+    } as unknown as ErrorEvent;
+    expect(serverBeforeSend(event, emptyHint)).toEqual(event);
+  });
 });

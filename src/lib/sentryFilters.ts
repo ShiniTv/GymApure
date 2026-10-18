@@ -58,5 +58,14 @@ export const serverBeforeSend: BeforeSend = (event, hint) => {
     }
   }
 
+  // Drop trivial healthcheck probes (SELECT 1) that spike from TCP/TLS cold-start handshakes.
+  if (event.message === 'Slow database query' || text.includes('Slow database query')) {
+    const extra = (event as ErrorEvent & { extra?: { query?: string } }).extra;
+    const queryText = extra?.query ?? '';
+    if (/^SELECT\s+1;?$/i.test(queryText.trim()) || text.includes('SELECT 1')) {
+      return null;
+    }
+  }
+
   return event;
 };

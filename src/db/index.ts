@@ -16,7 +16,7 @@ const poolMax = resolvePgPoolMax(env.DATABASE_URL);
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
   max: poolMax,
-  idleTimeoutMillis: 30_000,
+  idleTimeoutMillis: 60_000,
   // Supabase pooler (cold start / red lenta) puede tardar >5s; 5s provocaba timeout al arrancar dev.
   // CI: ráfagas de Playwright + bcrypt necesitan más margen antes de fallar la cola del pool.
   connectionTimeoutMillis: isCI || env.NODE_ENV === 'development' ? 30_000 : 10_000,
@@ -50,6 +50,12 @@ export function getPoolMetrics(): {
 async function reportSlowQuery(durationMs: number, text: string): Promise<void> {
   const preview = text.replace(/\s+/g, ' ').trim().slice(0, 120);
   logger.warn('Consulta lenta', { durationMs: Math.round(durationMs), query: preview });
+
+  // Trivial connection probes (e.g. SELECT 1 for healthchecks) suffer from TCP/TLS cold-start latency,
+  // not slow SQL queries. Do not pollute Sentry with infrastructure cold-start alerts.
+  if (/^SELECT\s+1;?$/i.test(preview)) {
+    return;
+  }
 
   if (env.SENTRY_DSN) {
     try {
