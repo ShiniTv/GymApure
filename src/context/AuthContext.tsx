@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router';
 import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
 import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
+import { queryClient } from '../lib/queryClient';
 import type { UserRole } from '../lib/roles';
 
 interface User {
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutLocal = useCallback(
     (message?: string) => {
+      queryClient.clear();
       setUser(null);
       if (message) {
         sessionStorage.setItem('auth:session-message', message);
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logoutLocal]);
 
   const login = useCallback((userData: User) => {
+    queryClient.clear();
     setUser(userData);
   }, []);
 

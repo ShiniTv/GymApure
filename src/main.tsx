@@ -21,6 +21,7 @@ if (SENTRY_DSN) {
   void import('@sentry/react').then((Sentry) => {
     Sentry.init({
       dsn: SENTRY_DSN,
+      tunnel: '/api/sentry-tunnel',
       environment: import.meta.env.MODE,
       integrations: [
         Sentry.browserTracingIntegration(),

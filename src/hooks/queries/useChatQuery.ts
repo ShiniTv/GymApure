@@ -179,7 +179,10 @@ export function useChatMessagesQuery(conversationId: number | null, enabled = tr
     queryKey: chatMessagesKey(conversationId ?? 0),
     queryFn: () => fetchMessages(conversationId!),
     enabled: enabled && conversationId != null,
-    refetchInterval: enabled && conversationId != null ? chatPollInterval(isConnected) : false,
+    refetchInterval: (query) => {
+      if (query.state.error) return false;
+      return enabled && conversationId != null ? chatPollInterval(isConnected) : false;
+    },
   });
 }
 

@@ -82,7 +82,7 @@ async function startServer() {
               directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'"],
-                workerSrc: ["'self'"],
+                workerSrc: ["'self'", 'blob:'],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co'],
                 mediaSrc: ["'self'", 'blob:', 'https://*.supabase.co'],
@@ -124,6 +124,51 @@ async function startServer() {
   app.use(compression({ threshold: 1024, level: 6 }));
 
   app.use(corsMiddleware);
+
+  // Sentry Tunnel para reenviar envelopes evitando ad-blockers (Brave / uBlock)
+  app.post(
+    '/api/sentry-tunnel',
+    express.raw({ type: () => true, limit: '2mb' }),
+    async (req, res) => {
+      try {
+        const rawBody = req.body;
+        if (!Buffer.isBuffer(rawBody) || rawBody.length === 0) {
+          return res.status(400).json({ error: 'Payload de telemetría inválido' });
+        }
+        const envelope = rawBody.toString('utf8');
+        const firstLine = envelope.split('\n')[0];
+        if (!firstLine) {
+          return res.status(400).json({ error: 'Cabecera de sobre faltante' });
+        }
+        const header = JSON.parse(firstLine);
+        const dsnString = typeof header?.dsn === 'string' ? header.dsn : null;
+        if (!dsnString) {
+          return res.status(400).json({ error: 'DSN ausente en el sobre' });
+        }
+        const dsn = new URL(dsnString);
+        if (!dsn.hostname.endsWith('sentry.io')) {
+          return res.status(400).json({ error: 'Host de Sentry no autorizado' });
+        }
+        const projectId = dsn.pathname.replace(/^\//, '');
+        if (!projectId || !/^\d+$/.test(projectId)) {
+          return res.status(400).json({ error: 'ID de proyecto inválido' });
+        }
+        const upstreamUrl = `https://${dsn.hostname}/api/${projectId}/envelope/`;
+        const upstreamResponse = await fetch(upstreamUrl, {
+          method: 'POST',
+          body: rawBody,
+          headers: {
+            'Content-Type': 'application/x-sentry-envelope',
+          },
+        });
+        const responseText = await upstreamResponse.text();
+        return res.status(upstreamResponse.status).send(responseText);
+      } catch {
+        return res.status(500).json({ error: 'Error en túnel de telemetría' });
+      }
+    }
+  );
+
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser());

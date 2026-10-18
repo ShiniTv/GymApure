@@ -98,10 +98,11 @@ export function StaffChatView() {
   const conversations = conversationsPage?.items ?? [];
   const conversationsTotal = conversationsPage?.total ?? 0;
   const conversationsPageSize = conversationsPage?.pageSize ?? 50;
-  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
-    selectedId,
-    selectedId != null
-  );
+  const {
+    data: messagesData,
+    isPending: loadingMessages,
+    isError: messagesError,
+  } = useChatMessagesQuery(selectedId, selectedId != null);
 
   const conversationMemberIds = useMemo(
     () => new Set(conversations.map((c) => c.member_id)),
@@ -167,10 +168,10 @@ export function StaffChatView() {
   }, [conversations, selectedId]);
 
   useEffect(() => {
-    if (selectedId != null) {
+    if (selectedId != null && !messagesError && messagesData) {
       markRead.mutate(selectedId);
     }
-  }, [selectedId]);
+  }, [selectedId, messagesData?.messages.length, messagesError]);
 
   useEffect(() => {
     setThreadSearch('');

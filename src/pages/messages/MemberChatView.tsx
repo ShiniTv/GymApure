@@ -177,16 +177,32 @@ export function MemberChatView() {
     };
   }, [selectedChannel, conversationByChannel, openChannel, toast, setSearchParams]);
 
-  const { data: messagesData, isPending: loadingMessages } = useChatMessagesQuery(
-    activeConversation?.id ?? null,
-    activeConversation?.id != null
-  );
+  const {
+    data: messagesData,
+    isPending: loadingMessages,
+    isError: messagesError,
+  } = useChatMessagesQuery(activeConversation?.id ?? null, activeConversation?.id != null);
 
   useEffect(() => {
-    if (activeConversation?.id != null) {
+    if (activeConversation?.id != null && !messagesError && messagesData) {
       markRead.mutate(activeConversation.id);
     }
-  }, [activeConversation?.id, messagesData?.messages.length]);
+  }, [activeConversation?.id, messagesData?.messages.length, messagesError]);
+
+  useEffect(() => {
+    if (messagesError && activeConversation) {
+      setActiveConversation(null);
+      openingForRef.current = null;
+      setSearchParams({}, { replace: true });
+    }
+  }, [messagesError, activeConversation, setSearchParams]);
+
+  useEffect(() => {
+    return () => {
+      setActiveConversation(null);
+      openingForRef.current = null;
+    };
+  }, []);
 
   const openChannelView = (channel: ChatStaffChannel) => {
     setSearchParams({ channel }, { replace: false });

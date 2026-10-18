@@ -24,7 +24,11 @@ import {
   listPendingMemberChoicesForTrainer,
   setTodayRoutineChoice,
 } from '../lib/memberAgency.ts';
-import { getCachedTrainerStats, setCachedTrainerStats } from '../lib/trainerStatsCache.ts';
+import {
+  getCachedTrainerStats,
+  getStaleTrainerStats,
+  setCachedTrainerStats,
+} from '../lib/trainerStatsCache.ts';
 import { getErrorMessage } from '../lib/errors.ts';
 
 const router = asyncRouter();
@@ -299,88 +303,120 @@ router.get('/admin', authorize(['admin']), async (req, res) => {
   }
 });
 
-router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => {
-  const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
-  const cacheKey = trainerId ?? 'all';
-  const cached = getCachedTrainerStats(cacheKey);
-  if (cached) {
-    return res.json(cached);
-  }
+const trainerStatsRebuildInFlight = new Map<string, Promise<void>>();
 
+async function buildTrainerStats(trainerId: number | null) {
   const alertDays = await getExpiryAlertDays();
 
-  try {
-    const todayWorkoutsSql = trainerId
-      ? `SELECT COUNT(*)::text AS count FROM workout_sessions ws
-         JOIN routines r ON r.id = ws.routine_id
-         WHERE ${sqlTodayRange('ws.start_time')} AND r.trainer_id = $1`
-      : `SELECT COUNT(*)::text AS count FROM workout_sessions WHERE ${sqlTodayRange('start_time')}`;
+  const countsSql = trainerId
+    ? `SELECT
+         (SELECT COUNT(DISTINCT member_id) FROM (
+            SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+            UNION
+            SELECT ur.user_id AS member_id FROM user_routines ur
+            JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+         ) t)::text AS assigned_count,
+         (SELECT COUNT(DISTINCT u.id) FROM users u
+          JOIN attendance a ON a.user_id = u.id
+          WHERE a.check_in_time >= NOW() - INTERVAL '2 hours'
+            AND a.check_out_time IS NULL
+            AND u.id IN (
+              SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+              UNION
+              SELECT DISTINCT ur.user_id FROM user_routines ur
+              JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+            ))::text AS active_count,
+         (SELECT COUNT(*) FROM workout_sessions ws
+          JOIN routines r ON r.id = ws.routine_id
+          WHERE ${sqlTodayRange('ws.start_time')} AND r.trainer_id = $1)::text AS today_workouts_count,
+         (SELECT COUNT(*) FROM routines WHERE trainer_id = $1)::text AS routines_count,
+         (SELECT COUNT(*) FROM (
+            SELECT member_id AS user_id FROM trainer_member_assignments WHERE trainer_id = $1
+            UNION
+            SELECT DISTINCT ur.user_id FROM user_routines ur
+            JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+          ) assigned
+          WHERE NOT EXISTS (
+            SELECT 1 FROM user_routines ur
+            JOIN routines r ON r.id = ur.routine_id
+            WHERE ur.user_id = assigned.user_id
+              AND r.trainer_id = $1
+              AND ur.start_date <= CURRENT_DATE
+              AND ur.end_date >= CURRENT_DATE
+          ))::text AS members_without_routines_count`
+    : `SELECT
+         (SELECT COUNT(DISTINCT user_id) FROM user_routines)::text AS assigned_count,
+         (SELECT COUNT(*) FROM attendance
+          WHERE check_in_time >= NOW() - INTERVAL '2 hours'
+            AND check_out_time IS NULL)::text AS active_count,
+         (SELECT COUNT(*) FROM workout_sessions WHERE ${sqlTodayRange('start_time')})::text AS today_workouts_count,
+         (SELECT COUNT(*) FROM routines)::text AS routines_count,
+         (SELECT COUNT(*) FROM users WHERE role = 'member')::text AS total_members_count`;
 
-    const routinesSql = trainerId
-      ? 'SELECT COUNT(*)::text AS count FROM routines WHERE trainer_id = $1'
-      : 'SELECT COUNT(*)::text AS count FROM routines';
+  const recentSql = trainerId
+    ? `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
+       FROM workout_sessions ws
+       JOIN users u ON ws.user_id = u.id
+       JOIN routines r ON ws.routine_id = r.id
+       WHERE r.trainer_id = $1
+       ORDER BY ws.start_time DESC
+       LIMIT 5`
+    : `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
+       FROM workout_sessions ws
+       JOIN users u ON ws.user_id = u.id
+       JOIN routines r ON ws.routine_id = r.id
+       ORDER BY ws.start_time DESC
+       LIMIT 5`;
 
-    const assignedMembersSql = trainerId
-      ? `SELECT COUNT(DISTINCT member_id)::text AS count FROM (
-           SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
-           UNION
-           SELECT ur.user_id AS member_id FROM user_routines ur
-           JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
-         ) t`
-      : `SELECT COUNT(DISTINCT user_id)::text AS count FROM user_routines`;
+  // Wave 1: Core consolidated counts & recent activities (only 2 parallel queries)
+  const [countsRes, recentRes] = await Promise.all([
+    query<{
+      assigned_count: string;
+      active_count: string;
+      today_workouts_count: string;
+      routines_count: string;
+      members_without_routines_count?: string;
+      total_members_count?: string;
+    }>(countsSql, trainerId ? [trainerId] : []),
+    query<{ user_id: number; full_name: string; routine_name: string; start_time: string }>(
+      recentSql,
+      trainerId ? [trainerId] : []
+    ),
+  ]);
 
-    const recentSql = trainerId
-      ? `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
-         FROM workout_sessions ws
-         JOIN users u ON ws.user_id = u.id
-         JOIN routines r ON ws.routine_id = r.id
-         WHERE r.trainer_id = $1
-         ORDER BY ws.start_time DESC
-         LIMIT 5`
-      : `SELECT u.id AS user_id, u.full_name, r.name AS routine_name, ws.start_time
-         FROM workout_sessions ws
-         JOIN users u ON ws.user_id = u.id
-         JOIN routines r ON ws.routine_id = r.id
-         ORDER BY ws.start_time DESC
-         LIMIT 5`;
+  const countsRow = countsRes.rows[0] ?? {
+    assigned_count: '0',
+    active_count: '0',
+    today_workouts_count: '0',
+    routines_count: '0',
+  };
 
-    const membersWithoutRoutinesSql = trainerId
-      ? `SELECT COUNT(*)::text AS count
-         FROM (
-           SELECT member_id AS user_id FROM trainer_member_assignments WHERE trainer_id = $1
-           UNION
-           SELECT DISTINCT ur.user_id
-           FROM user_routines ur
-           JOIN routines r ON r.id = ur.routine_id
-           WHERE r.trainer_id = $1
-         ) assigned
-         WHERE NOT EXISTS (
-           SELECT 1 FROM user_routines ur
-           JOIN routines r ON r.id = ur.routine_id
-           WHERE ur.user_id = assigned.user_id
-             AND r.trainer_id = $1
-             AND ur.start_date <= CURRENT_DATE
-             AND ur.end_date >= CURRENT_DATE
-         )`
-      : null;
+  const assignedCount = parseInt(countsRow.assigned_count || '0', 10);
+  const totalCount = trainerId ? assignedCount : parseInt(countsRow.total_members_count || '0', 10);
+  const activeNow = parseInt(countsRow.active_count || '0', 10);
+  const todayWorkouts = parseInt(countsRow.today_workouts_count || '0', 10);
+  const routinesCreated = parseInt(countsRow.routines_count || '0', 10);
+  const membersWithoutRoutines = parseInt(countsRow.members_without_routines_count || '0', 10);
 
-    const assignedActiveNowSql = trainerId
-      ? `SELECT COUNT(DISTINCT u.id)::text AS count
-         FROM users u
-         JOIN attendance a ON a.user_id = u.id
-         WHERE a.check_in_time >= NOW() - INTERVAL '2 hours'
-           AND a.check_out_time IS NULL
-           AND u.id IN (
-             SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
-             UNION
-             SELECT DISTINCT ur.user_id FROM user_routines ur
-             JOIN routines r ON r.id = ur.routine_id
-             WHERE r.trainer_id = $1
-           )`
-      : null;
+  let expiringMembers: { id: number; full_name: string; days_remaining: number }[] = [];
+  let inactiveMembers: {
+    id: number;
+    full_name: string;
+    last_workout: string | null;
+    days_since: number;
+  }[] = [];
+  let trainingToday: { id: number; full_name: string; check_in_time: string }[] = [];
+  let membersWithoutAssessment: { id: number; full_name: string }[] = [];
+  let staleCheckins: { id: number; full_name: string; days_since: number }[] = [];
+  let recoveryAlerts: { id: number; full_name: string; discomfort: number; energy: number }[] = [];
+  let remoteTrainingNow: { id: number; full_name: string; started_at: string }[] = [];
+  let memberChoices: Awaited<ReturnType<typeof listPendingMemberChoicesForTrainer>> = [];
 
-    const expiringMembersSql = trainerId
-      ? `SELECT DISTINCT u.id, u.full_name, sub.days_remaining
+  if (trainerId) {
+    // Wave 2: Expiring & Inactive members (2 parallel queries)
+    const [expiringRes, inactiveRes] = await Promise.all([
+      query<{ id: number; full_name: string; days_remaining: number }>(
+        `SELECT DISTINCT u.id, u.full_name, sub.days_remaining
          FROM users u
          JOIN LATERAL (
            SELECT GREATEST(0, s.end_date - CURRENT_DATE)::int AS days_remaining
@@ -397,215 +433,200 @@ router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => 
          )
            AND sub.days_remaining IS NOT NULL AND sub.days_remaining <= $2
          ORDER BY sub.days_remaining ASC
-         LIMIT 5`
-      : null;
-
-    // Batch 1: Core counts and recent activities (max 5 parallel queries, avoiding pool contention)
-    const [assignedRes, activeRes, workoutsRes, routinesRes, recentRes, totalRes] =
-      await Promise.all([
-        query<{ count: string }>(assignedMembersSql, trainerId ? [trainerId] : []),
-        query<{ count: string }>(
-          trainerId && assignedActiveNowSql
-            ? assignedActiveNowSql
-            : `SELECT COUNT(*)::text AS count FROM attendance
-               WHERE check_in_time >= NOW() - INTERVAL '2 hours'
-                 AND check_out_time IS NULL`,
-          trainerId ? [trainerId] : []
-        ),
-        query<{ count: string }>(todayWorkoutsSql, trainerId ? [trainerId] : []),
-        query<{ count: string }>(routinesSql, trainerId ? [trainerId] : []),
-        query<{ user_id: number; full_name: string; routine_name: string; start_time: string }>(
-          recentSql,
-          trainerId ? [trainerId] : []
-        ),
-        trainerId
-          ? Promise.resolve(null)
-          : query<{ count: string }>(
-              "SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'"
-            ),
-      ]);
-
-    const assignedCount = parseInt(assignedRes.rows[0]?.count || '0', 10);
-    const totalCount = trainerId ? assignedCount : parseInt(totalRes?.rows[0]?.count || '0', 10);
-
-    let membersWithoutRoutines = 0;
-    let expiringMembers: { id: number; full_name: string; days_remaining: number }[] = [];
-    let inactiveMembers: {
-      id: number;
-      full_name: string;
-      last_workout: string | null;
-      days_since: number;
-    }[] = [];
-    let trainingToday: { id: number; full_name: string; check_in_time: string }[] = [];
-    let membersWithoutAssessment: { id: number; full_name: string }[] = [];
-    let staleCheckins: { id: number; full_name: string; days_since: number }[] = [];
-    let recoveryAlerts: { id: number; full_name: string; discomfort: number; energy: number }[] =
-      [];
-    let remoteTrainingNow: { id: number; full_name: string; started_at: string }[] = [];
-    let memberChoices: Awaited<ReturnType<typeof listPendingMemberChoicesForTrainer>> = [];
-
-    // Batch 2 & 3: Trainer-specific lists executed in two micro-batches (max 4 concurrent queries each)
-    if (trainerId) {
-      const [withoutRoutinesRes, expiringRes, inactiveRes, trainingTodayRes] = await Promise.all([
-        membersWithoutRoutinesSql
-          ? query<{ count: string }>(membersWithoutRoutinesSql, [trainerId])
-          : Promise.resolve({ rows: [{ count: '0' }] }),
-        expiringMembersSql
-          ? query<{ id: number; full_name: string; days_remaining: number }>(expiringMembersSql, [
-              trainerId,
-              alertDays,
-            ])
-          : Promise.resolve({ rows: [] }),
-        query<{
-          id: number;
-          full_name: string;
-          last_workout: string | null;
-          days_since: number;
-        }>(
-          `SELECT u.id, u.full_name,
-                  MAX(ws.start_time)::text AS last_workout,
-                  COALESCE((CURRENT_DATE - MAX(ws.start_time)::date), 999)::int AS days_since
-           FROM users u
-           LEFT JOIN workout_sessions ws ON ws.user_id = u.id
-           WHERE u.role = 'member' AND u.status = 'active'
-             AND (
-               u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
-               OR u.id IN (
-                 SELECT ur.user_id FROM user_routines ur
-                 JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
-               )
-             )
-           GROUP BY u.id, u.full_name
-           HAVING COALESCE(MAX(ws.start_time)::date, DATE '1970-01-01')
-                  < CURRENT_DATE - INTERVAL '2 days'
-           ORDER BY days_since DESC
-           LIMIT 8`,
-          [trainerId]
-        ),
-        query<{ id: number; full_name: string; check_in_time: string }>(
-          `SELECT u.id, u.full_name, a.check_in_time::text
-           FROM attendance a
-           JOIN users u ON u.id = a.user_id
-           WHERE ${sqlTodayRange('a.check_in_time')}
-             AND a.check_out_time IS NULL
-             AND (
-               u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
-               OR u.id IN (
-                 SELECT ur.user_id FROM user_routines ur
-                 JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
-               )
-             )
-           ORDER BY a.check_in_time DESC
-           LIMIT 12`,
-          [trainerId]
-        ),
-      ]);
-
-      const [noAssessmentRes, staleCheckinsRes, recoveryRes, remoteRes, choices] =
-        await Promise.all([
-          query<{ id: number; full_name: string }>(
-            `SELECT u.id, u.full_name
-             FROM users u
-             WHERE u.id IN (
-               SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
-               UNION
+         LIMIT 5`,
+        [trainerId, alertDays]
+      ),
+      query<{
+        id: number;
+        full_name: string;
+        last_workout: string | null;
+        days_since: number;
+      }>(
+        `SELECT u.id, u.full_name,
+                MAX(ws.start_time)::text AS last_workout,
+                COALESCE((CURRENT_DATE - MAX(ws.start_time)::date), 999)::int AS days_since
+         FROM users u
+         LEFT JOIN workout_sessions ws ON ws.user_id = u.id
+         WHERE u.role = 'member' AND u.status = 'active'
+           AND (
+             u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+             OR u.id IN (
                SELECT ur.user_id FROM user_routines ur
                JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
              )
-               AND NOT EXISTS (
-                 SELECT 1 FROM member_training_assessments assessment
-                 WHERE assessment.member_id = u.id
-               )
-             ORDER BY u.full_name ASC
-             LIMIT 8`,
-            [trainerId]
-          ),
-          query<{ id: number; full_name: string; days_since: number }>(
-            `SELECT u.id, u.full_name,
-                    COALESCE((CURRENT_DATE - MAX(checkin.week_of)), 999)::int AS days_since
-             FROM users u
-             LEFT JOIN member_weekly_checkins checkin ON checkin.member_id = u.id
-             WHERE u.id IN (
-               SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
-               UNION
+           )
+         GROUP BY u.id, u.full_name
+         HAVING COALESCE(MAX(ws.start_time)::date, DATE '1970-01-01')
+                < CURRENT_DATE - INTERVAL '2 days'
+         ORDER BY days_since DESC
+         LIMIT 8`,
+        [trainerId]
+      ),
+    ]);
+
+    expiringMembers = expiringRes.rows;
+    inactiveMembers = inactiveRes.rows;
+
+    // Wave 3: Training today & assessments (2 parallel queries)
+    const [trainingTodayRes, noAssessmentRes] = await Promise.all([
+      query<{ id: number; full_name: string; check_in_time: string }>(
+        `SELECT u.id, u.full_name, a.check_in_time::text
+         FROM attendance a
+         JOIN users u ON u.id = a.user_id
+         WHERE ${sqlTodayRange('a.check_in_time')}
+           AND a.check_out_time IS NULL
+           AND (
+             u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+             OR u.id IN (
                SELECT ur.user_id FROM user_routines ur
                JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
              )
-             GROUP BY u.id, u.full_name
-             HAVING COALESCE(MAX(checkin.week_of), DATE '1970-01-01')
-                    < CURRENT_DATE - INTERVAL '7 days'
-             ORDER BY days_since DESC, u.full_name ASC
-             LIMIT 8`,
-            [trainerId]
-          ),
-          query<{ id: number; full_name: string; discomfort: number; energy: number }>(
-            `SELECT DISTINCT ON (u.id) u.id, u.full_name, feedback.discomfort, feedback.energy
-             FROM workout_feedback feedback
-             JOIN workout_sessions ws ON ws.id = feedback.workout_session_id
-             JOIN users u ON u.id = ws.user_id
-             WHERE (feedback.discomfort >= 4 OR feedback.energy <= 2)
-               AND (
-                 u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
-                 OR u.id IN (
-                   SELECT ur.user_id FROM user_routines ur
-                   JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
-                 )
-               )
-             ORDER BY u.id, feedback.updated_at DESC
-             LIMIT 8`,
-            [trainerId]
-          ),
-          query<{ id: number; full_name: string; started_at: string }>(
-            `SELECT u.id, u.full_name, rs.started_at::text
-             FROM member_remote_sessions rs
-             JOIN users u ON u.id = rs.member_id
-             WHERE rs.ended_at IS NULL
-               AND rs.started_at >= NOW() - INTERVAL '4 hours'
-               AND (
-                 u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
-                 OR u.id IN (
-                   SELECT ur.user_id FROM user_routines ur
-                   JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
-                 )
-               )
-             ORDER BY rs.started_at DESC
-             LIMIT 12`,
-            [trainerId]
-          ),
-          listPendingMemberChoicesForTrainer(trainerId),
-        ]);
+           )
+         ORDER BY a.check_in_time DESC
+         LIMIT 12`,
+        [trainerId]
+      ),
+      query<{ id: number; full_name: string }>(
+        `SELECT u.id, u.full_name
+         WHERE u.id IN (
+           SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+           UNION
+           SELECT ur.user_id FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+         )
+           AND NOT EXISTS (
+             SELECT 1 FROM member_training_assessments assessment
+             WHERE assessment.member_id = u.id
+           )
+         ORDER BY u.full_name ASC
+         LIMIT 8`,
+        [trainerId]
+      ),
+    ]);
 
-      membersWithoutRoutines = parseInt(withoutRoutinesRes.rows[0]?.count || '0', 10);
-      expiringMembers = expiringRes.rows;
-      inactiveMembers = inactiveRes.rows;
-      trainingToday = trainingTodayRes.rows;
-      membersWithoutAssessment = noAssessmentRes.rows;
-      staleCheckins = staleCheckinsRes.rows;
-      recoveryAlerts = recoveryRes.rows;
-      remoteTrainingNow = remoteRes.rows;
-      memberChoices = choices;
-    }
+    trainingToday = trainingTodayRes.rows;
+    membersWithoutAssessment = noAssessmentRes.rows;
 
-    const payload = {
-      totalMembers: totalCount,
-      activeNow: parseInt(activeRes.rows[0]?.count || '0', 10),
-      todayWorkouts: parseInt(workoutsRes.rows[0]?.count || '0', 10),
-      routinesCreated: parseInt(routinesRes.rows[0]?.count || '0', 10),
-      assignedMembers: assignedCount,
-      recentActivities: recentRes.rows,
-      membersWithoutRoutines,
-      expiringMembers,
-      inactiveMembers,
-      trainingToday,
-      membersWithoutAssessment,
-      staleCheckins,
-      recoveryAlerts,
-      remoteTrainingNow,
-      remoteActiveNow: remoteTrainingNow.length,
-      memberChoices,
-      expiryAlertDays: alertDays,
-    };
+    // Wave 4: Stale checkins & recovery alerts (2 parallel queries)
+    const [staleCheckinsRes, recoveryRes] = await Promise.all([
+      query<{ id: number; full_name: string; days_since: number }>(
+        `SELECT u.id, u.full_name,
+                COALESCE((CURRENT_DATE - MAX(checkin.week_of)), 999)::int AS days_since
+         FROM users u
+         LEFT JOIN member_weekly_checkins checkin ON checkin.member_id = u.id
+         WHERE u.id IN (
+           SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
+           UNION
+           SELECT ur.user_id FROM user_routines ur
+           JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+         )
+         GROUP BY u.id, u.full_name
+         HAVING COALESCE(MAX(checkin.week_of), DATE '1970-01-01')
+                < CURRENT_DATE - INTERVAL '7 days'
+         ORDER BY days_since DESC, u.full_name ASC
+         LIMIT 8`,
+        [trainerId]
+      ),
+      query<{ id: number; full_name: string; discomfort: number; energy: number }>(
+        `SELECT DISTINCT ON (u.id) u.id, u.full_name, feedback.discomfort, feedback.energy
+         FROM workout_feedback feedback
+         JOIN workout_sessions ws ON ws.id = feedback.workout_session_id
+         JOIN users u ON u.id = ws.user_id
+         WHERE (feedback.discomfort >= 4 OR feedback.energy <= 2)
+           AND (
+             u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+             OR u.id IN (
+               SELECT ur.user_id FROM user_routines ur
+               JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+             )
+           )
+         ORDER BY u.id, feedback.updated_at DESC
+         LIMIT 8`,
+        [trainerId]
+      ),
+    ]);
 
+    staleCheckins = staleCheckinsRes.rows;
+    recoveryAlerts = recoveryRes.rows;
+
+    // Wave 5: Remote sessions & member choices (2 parallel queries)
+    const [remoteRes, choices] = await Promise.all([
+      query<{ id: number; full_name: string; started_at: string }>(
+        `SELECT u.id, u.full_name, rs.started_at::text
+         FROM member_remote_sessions rs
+         JOIN users u ON u.id = rs.member_id
+         WHERE rs.ended_at IS NULL
+           AND rs.started_at >= NOW() - INTERVAL '4 hours'
+           AND (
+             u.id IN (SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1)
+             OR u.id IN (
+               SELECT ur.user_id FROM user_routines ur
+               JOIN routines r ON r.id = ur.routine_id WHERE r.trainer_id = $1
+             )
+           )
+         ORDER BY rs.started_at DESC
+         LIMIT 12`,
+        [trainerId]
+      ),
+      listPendingMemberChoicesForTrainer(trainerId),
+    ]);
+
+    remoteTrainingNow = remoteRes.rows;
+    memberChoices = choices;
+  }
+
+  return {
+    totalMembers: totalCount,
+    activeNow,
+    todayWorkouts,
+    routinesCreated,
+    assignedMembers: assignedCount,
+    recentActivities: recentRes.rows,
+    membersWithoutRoutines,
+    expiringMembers,
+    inactiveMembers,
+    trainingToday,
+    membersWithoutAssessment,
+    staleCheckins,
+    recoveryAlerts,
+    remoteTrainingNow,
+    remoteActiveNow: remoteTrainingNow.length,
+    memberChoices,
+    expiryAlertDays: alertDays,
+  };
+}
+
+function refreshTrainerStatsInBackground(cacheKey: string, trainerId: number | null): void {
+  if (trainerStatsRebuildInFlight.has(cacheKey)) return;
+  const promise = buildTrainerStats(trainerId)
+    .then((payload) => {
+      setCachedTrainerStats(cacheKey, payload);
+    })
+    .catch(() => {
+      /* keep stale payload; next request can retry */
+    })
+    .finally(() => {
+      trainerStatsRebuildInFlight.delete(cacheKey);
+    });
+  trainerStatsRebuildInFlight.set(cacheKey, promise);
+}
+
+router.get('/trainer', authorize(['trainer']), async (req: AuthRequest, res) => {
+  const trainerId = req.user!.role === 'trainer' ? req.user!.id : null;
+  const cacheKey = trainerId ? String(trainerId) : 'all';
+  const cached = getCachedTrainerStats(cacheKey);
+  if (cached) {
+    return res.json(cached);
+  }
+
+  const stale = getStaleTrainerStats(cacheKey);
+  if (stale) {
+    refreshTrainerStatsInBackground(cacheKey, trainerId);
+    return res.json(stale);
+  }
+
+  try {
+    const payload = await buildTrainerStats(trainerId);
     setCachedTrainerStats(cacheKey, payload);
     res.json(payload);
   } catch (err: unknown) {
